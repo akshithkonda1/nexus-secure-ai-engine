@@ -85,7 +85,7 @@ Nexus is built like **enterprise security teams expect**:
 ---
 
 ## Getting Started
-```bash
+ Language: bash
 # 1. Clone repository
 git clone https://github.com/akshiththeindian/nexus.git
 cd nexus
@@ -106,7 +106,7 @@ Kubernetes Integreation for separations of the InfraOps and LogAnalyzer.Ai
 Development of the LogAnalyzer and InfraOps Companion Programs
 Completions of the Azure, AWS and GCP Cloud Integration files for Multi Cloud Integrations
 
-## License & Collaboration
+License & Collaboration
 
 
 This project is licensed under the Creative Commons Attribution–NonCommercial 4.0 International (CC BY-NC 4.0) License with custom Nexus-specific terms.
@@ -129,7 +129,7 @@ No Additional Restrictions — You may not apply further restrictions that limit
 I am open to enterprise collaboration, feature development, or joint deployment of Nexus with FAANG-level teams and other innovators.
 If you want to develop and scale Nexus commercially, I’m happy to work together under a structured paid licensing and development agreement.
 
-📧 Contact for Licensing & Collaboration: akkikonda2000@gmail.com
-🔗 Full License: Creative Commons BY-NC 4.0
+Contact for Licensing & Collaboration: akkikonda2000@gmail.com
+Full License: Creative Commons BY-NC 4.0
 
 Failure to follow licensing terms will constitute a violation and may result in legal action.
