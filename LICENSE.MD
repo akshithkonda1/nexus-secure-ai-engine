@@ -1,39 +1,32 @@
-Nexus is protected by a Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License
+---
 
-SPDX-License-Identifier: CC-BY-NC-4.0
+## License & Commercial Use
 
-=======================================================================
+![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-orange)
+![Commercial Use Prohibited](https://img.shields.io/badge/Commercial%20Use-Prohibited-red)
 
-By exercising the Licensed Rights (defined below), You accept and agree 
-to be bound by the terms and conditions of this Creative Commons 
-Attribution-NonCommercial 4.0 International Public License ("Public License").
+This project is licensed under the **Creative Commons Attribution–NonCommercial 4.0 International (CC BY-NC 4.0)** License with **custom Nexus-specific terms**.
 
 You are free to:
+- **Share** — Copy and redistribute the material in any medium or format.
+- **Adapt** — Remix, transform, and build upon the material.
 
-- Share — copy and redistribute the material in any medium or format.
-- Adapt — remix, transform, and build upon the material.
+**Under the following terms:**
+1. **Attribution Required & Pre-Approval for Commercial Use** — You must give credit, provide a link to this license, and **contact the Licensor** to obtain written consent and a signed legal agreement before any commercial use of the Nexus Platform.
+2. **NonCommercial by Default** — No commercial use is allowed without explicit approval. All commercial use agreements must be discussed directly with the Licensor and structured under a licensing arrangement.
+3. **No Additional Restrictions** — You may not apply further restrictions that limit others from using Nexus under these terms.
 
-Under the following terms:
+---
 
-1. Attribution — You must give appropriate credit, provide a link to the license, 
-   and indicate if changes were made. You may do so in any reasonable manner, 
-   but not in any way that suggests the licensor endorses you or your use.
+### Call to Action: Commercial Licensing
+If you wish to use Nexus in a **commercial product, paid service, or for-profit environment**, you **must**:
 
-2. NonCommercial — You may not use the material for commercial purposes without 
-   explicit written permission from the Licensor.
+1. Contact the Licensor (details below).
+2. Negotiate a **paid licensing agreement**.
+3. Receive **written consent and signed legal documentation** before deployment.
 
-3. No additional restrictions — You may not apply legal terms or technological 
-   measures that legally restrict others from doing anything the license permits.
+**Contact for Licensing**: akkikonda2000@gmail.com
 
-Commercial licensing inquiries must be sent to:
-Akshith Konda  
-Email: akkikonda2000@gmail.com
+**Failure to follow these steps will constitute a license violation and may result in legal action.**
 
-Full License Text:
-https://creativecommons.org/licenses/by-nc/4.0/legalcode
-
-=======================================================================
-
-Disclaimer:
-This license applies only to the contents of this repository. Any commercial use 
-without explicit written consent from the Licensor is strictly prohibited.
+🔗 Full License Text: [Creative Commons BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
