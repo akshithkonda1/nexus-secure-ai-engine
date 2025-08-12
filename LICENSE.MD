@@ -5,7 +5,7 @@
 ![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-orange)
 ![Commercial Use Prohibited](https://img.shields.io/badge/Commercial%20Use-Prohibited-red)
 
-This project is licensed under the **Creative Commons Attribution–NonCommercial 4.0 International (CC BY-NC 4.0)** License with **custom Nexus-specific terms**.
+## This project is licensed under the **Creative Commons Attribution–NonCommercial 4.0 International (CC BY-NC 4.0)** License with **custom Nexus-specific terms**.
 
 You are free to:
 - **Share** — Copy and redistribute the material in any medium or format.
