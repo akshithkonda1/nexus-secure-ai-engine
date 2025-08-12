@@ -1,9 +1,5 @@
 # nexus-secure-ai-engine
 
-
-![Nexus.ai Banner](https://github.com/user-attachments/assets/banner-placeholder.png)  
-*(Banner: “Nexus.ai – Secure AI Aggregation & Encrypted Delivery”)*  
-
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-orange)
 ![Status](https://img.shields.io/badge/status-Demonstrator-yellow)
