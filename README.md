@@ -6,13 +6,13 @@
 
 ---
 
-# 🚀 Nexus.ai — Secure. Scalable. Smart.
+#  Nexus.ai — Secure. Scalable. Smart.
 
 > **The AI debate engine that verifies answers before they reach you** — combining multiple AI models, real-time web context, and enterprise-grade encryption.
 
 ---
 
-## 📌 Quick Snapshot
+## Quick Snapshot
 | Category       | Details |
 |----------------|---------|
 | **Status**     | Demonstrator — production-ready design, safe mode active |
@@ -22,9 +22,10 @@
 
 ---
 
-## 🌟 What is Nexus.ai?
+## What is Nexus.ai?
 Nexus.ai is a **cloud-native AI orchestration platform** that:
 - Gathers responses from **multiple AI models** (GPT-4o, Claude, Gemini, Perplexity, etc.).
+- Is **Cloud Vendor Neutral** so whether an individual or enterprise prefers AWS, Azure or GCP, they have the choice.
 - Enriches them with **real-time search results** from trusted sources.
 - **Validates, ranks, and encrypts** before delivering to the user.
 
@@ -33,20 +34,20 @@ Nexus.ai is a **cloud-native AI orchestration platform** that:
 ---
 
 ## 🎯 Why It Matters
-Without validation, AI can:
+Without validation, AI can and will eventually:
 - Hallucinate facts.
 - Miss critical updates.
 - Leak sensitive information.
 
 **Nexus fixes that** by:
-- Cross-checking results across **multiple AI engines**.
-- Adding **live web context**.
-- Encrypting everything **end-to-end**.
-- Scaling to handle **millions of secure requests** without changing architecture.
+- Cross-checking results across **multiple AI engines** and can be scaled to include an infinite amount.
+- Adding **live web context** via web scraping and live search.
+- Encrypting everything **end-to-end** using **256 bit Encryption**.
+- Scaling to handle **millions of secure requests** without changing architecture and designed to scale infinitely.
 
 ---
 
-## 🔑 Core Features (With Impact)
+##  Core Features (With Impact)
 - **Multi-Model AI Debate** — Ensures balanced, bias-resistant answers.  
 - **Live Web Context** — Keeps information relevant and up-to-date.  
 - **Encrypted by Default** — AES-256 protection prevents data leaks.  
@@ -57,14 +58,13 @@ Without validation, AI can:
 
 ---
 
-## 🏗 System at a Glance
-
-![Architecture Diagram](https://github.com/user-attachments/assets/arch-diagram-placeholder.png)  
+## System at a Glance
 
 **Design Principles:** Safety • Scalability • Security
 
 **Key Infrastructure Highlights:**
 - **Security:** AES-256, IAM, AWS KMS, VPC isolation, CloudTrail monitoring.
+- **Containerized Programming**: Nexus and its companion programs InfraOps Companion and LogAnalyzer.AI are designed to operate within Nexus but also to operate as individual programs.
 - **Storage:**  
   - **Hot:** S3 for logs/backups, DynamoDB for instant lookups.  
   - **Warm:** RDS & Aurora for structured data.  
