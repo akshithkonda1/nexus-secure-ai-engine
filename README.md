@@ -1,3 +1,8 @@
+<!-- Repo Banner -->
+<p align="center">
+  <img src="assets/banner_nexus_suite.png" alt="Nexus Suite Banner" width="100%">
+</p>
+
 # nexus-secure-ai-engine
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
@@ -6,7 +11,7 @@
 
 ---
 
-#  Nexus.ai — Secure. Scalable. Smart.
+# Nexus.ai — Secure. Scalable. Smart.
 
 > **The AI debate engine that verifies answers before they reach you** — combining multiple AI models, real-time web context, and enterprise-grade encryption.
 
@@ -22,10 +27,10 @@
 
 ---
 
-## What is Nexus.ai?
+## <img src="assets/logo_nexus.png" alt="Nexus Logo" width="180px"><br>What is Nexus.ai?
 Nexus.ai is a **cloud-native AI orchestration platform** that:
 - Gathers responses from **multiple AI models** (GPT-4o, Claude, Gemini, Perplexity, etc.).
-- Is **Cloud Vendor Neutral** so whether an individual or enterprise prefers AWS, Azure or GCP, they have the choice.
+- Is **Cloud Vendor Neutral** — AWS, Azure, GCP all supported.
 - Enriches them with **real-time search results** from trusted sources.
 - **Validates, ranks, and encrypts** before delivering to the user.
 
@@ -40,21 +45,39 @@ Without validation, AI can and will eventually:
 - Leak sensitive information.
 
 **Nexus fixes that** by:
-- Cross-checking results across **multiple AI engines** and can be scaled to include an infinite amount.
-- Adding **live web context** via web scraping and live search.
-- Encrypting everything **end-to-end** using **256 bit Encryption**.
-- Scaling to handle **millions of secure requests** without changing architecture and designed to scale infinitely.
+- Cross-checking results across **multiple AI engines**.
+- Adding **live web context** via scraping and search.
+- Encrypting everything **end-to-end** with AES-256.
+- Scaling to handle **millions of secure requests**.
 
 ---
 
-##  Core Features (With Impact)
-- **Multi-Model AI Debate** — Ensures balanced, bias-resistant answers.  
-- **Live Web Context** — Keeps information relevant and up-to-date.  
-- **Encrypted by Default** — AES-256 protection prevents data leaks.  
-- **Smart Ranking Algorithms** — Filters out noise, prioritizes accuracy.  
-- **Cloud-Native Architecture** — Scales seamlessly with AWS services.  
-- **Safe Demonstrator Mode** — Run without live API keys for zero risk.  
-- **Full Audit Trails** — Compliance-friendly logging with TTL retention.  
+## Core Features (With Impact)
+- **Multi-Model AI Debate** — Balanced, bias-resistant answers.  
+- **Live Web Context** — Relevant and up-to-date information.  
+- **Encrypted by Default** — AES-256 protection prevents leaks.  
+- **Smart Ranking Algorithms** — Filters noise, prioritizes truth.  
+- **Cloud-Native Architecture** — Seamless AWS scalability.  
+- **Safe Demonstrator Mode** — No live API keys required.  
+- **Full Audit Trails** — Compliance-ready logging with TTL retention.  
+
+---
+
+## <img src="assets/logo_infraops.png" alt="InfraOps Logo" width="180px"><br>InfraOps Companion (Coming Soon)
+A **machine learning & LLM-enabled operations manager** for real-time infrastructure monitoring, automation, and observability.  
+- Predictive anomaly detection  
+- Auto-remediation workflows  
+- Multi-cloud monitoring dashboard  
+- SIEM integration ready  
+
+---
+
+## <img src="assets/logo_loganalyzer.png" alt="LogAnalyzer.AI Logo" width="180px"><br>LogAnalyzer.AI (Coming Soon)
+An **LLM-powered log intelligence platform** to detect anomalies in AI and cloud systems.  
+- Natural language log queries  
+- Pattern detection for AI hallucinations  
+- API call trend analysis  
+- Root cause AI-assisted insights  
 
 ---
 
@@ -62,30 +85,29 @@ Without validation, AI can and will eventually:
 
 **Design Principles:** Safety • Scalability • Security
 
-**Key Infrastructure Highlights:**
+**Infrastructure Highlights:**
 - **Security:** AES-256, IAM, AWS KMS, VPC isolation, CloudTrail monitoring.
-- **Containerized Programming**: Nexus and its companion programs InfraOps Companion and LogAnalyzer.AI are designed to operate within Nexus but also to operate as individual programs.
+- **Containerized Design:** Each tool operates independently or integrated.  
 - **Storage:**  
-  - **Hot:** S3 for logs/backups, DynamoDB for instant lookups.  
-  - **Warm:** RDS & Aurora for structured data.  
-  - **Cold:** Glacier for archival.  
-- **Compute:** EC2 + ECS/Fargate for horizontal model scaling.
+  - Hot: S3 for logs/backups, DynamoDB for instant lookups.  
+  - Warm: RDS & Aurora for structured data.  
+  - Cold: Glacier for archival.  
+- **Compute:** EC2 + ECS/Fargate for horizontal scaling.
 - **Observability:** CloudWatch, automated snapshots, tiered storage rollover.
 
 ---
 
-## Security Model — Simple Explanation
-Nexus is built like **enterprise security teams expect**:
-- **No hardcoded secrets** — all credentials stored in `.env` or AWS Secrets Manager.
-- **All requests encrypted** — at rest and in transit.
-- **API key scopes** — permissions tailored per integration.
+## Security Model
+- **No hardcoded secrets** — `.env` or AWS Secrets Manager only.
+- **Encrypted requests** — at rest and in transit.
+- **API key scopes** — granular permissions per integration.
 - **Attack resistance** — DoS protection, HTTPS enforcement.
-- **Controlled logging** — Retained only as long as necessary.
+- **Controlled logging** — Retained only as necessary.
 
 ---
 
 ## Getting Started
- Language: bash
+```bash
 # 1. Clone repository
 git clone https://github.com/akshiththeindian/nexus.git
 cd nexus
@@ -99,37 +121,3 @@ cp .env.example .env
 
 # 4. Run the app
 python Nexus_FlaskApp.py
-
-
-## Future Enhancements
-Kubernetes Integreation for separations of the InfraOps and LogAnalyzer.Ai
-Development of the LogAnalyzer and InfraOps Companion Programs
-Completions of the Azure, AWS and GCP Cloud Integration files for Multi Cloud Integrations
-
-License & Collaboration
-
-
-This project is licensed under the Creative Commons Attribution–NonCommercial 4.0 International (CC BY-NC 4.0) License with custom Nexus-specific terms.
-
-You are free to:
-
-Share — Copy and redistribute the material in any medium or format.
-
-Adapt — Remix, transform, and build upon the material.
-
-Under the following terms:
-
-Attribution & Pre-Approval for Commercial Use — You must give credit, provide a link to this license, and contact the Licensor to obtain written consent and a signed legal agreement before any commercial use of the Nexus Platform.
-
-NonCommercial by Default — No commercial use is allowed without explicit approval. All commercial use agreements must be discussed directly with the Licensor and structured under a licensing arrangement.
-
-No Additional Restrictions — You may not apply further restrictions that limit others from using Nexus under these terms.
-
-## Open to Collaboration
-I am open to enterprise collaboration, feature development, or joint deployment of Nexus with FAANG-level teams and other innovators.
-If you want to develop and scale Nexus commercially, I’m happy to work together under a structured paid licensing and development agreement.
-
-Contact for Licensing & Collaboration: akkikonda2000@gmail.com
-Full License: Creative Commons BY-NC 4.0
-
-Failure to follow licensing terms will constitute a violation and may result in legal action.
