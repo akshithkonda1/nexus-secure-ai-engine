@@ -21,7 +21,8 @@
 | Category       | Details |
 |----------------|---------|
 | **Status**     | Demonstrator — production-ready design, safe mode active |
-| **Tech Stack** | Python 3.10+, Flask, AWS (S3, RDS, DynamoDB, Glacier, ECS, KMS), Terraform |
+| **Tech Stack** | Python 3.10+, Flask, Terraform
+| **Cloud Stack**| **AWS** (S3, RDS, DynamoDB, Glacier, ECS, KMS), **Azure** (Blob Storage, Key Vault, Cosmos DB, AKS), **GCP** (GCS, Cloud SQL/Spanner, BigQuery, GKE, KMS) |
 | **Core Focus** | Secure AI aggregation, encrypted delivery, scalable cloud architecture |
 | **License**    | CC BY-NC 4.0 — Non-commercial use only without written consent |
 
@@ -43,7 +44,7 @@ Without validation, AI can and will eventually:
 - Hallucinate facts.
 - Miss critical updates.
 - Leak sensitive information.
-- Make critical errors that no one wants.
+- Make critical errors that no one wants to see.
 
 **Nexus fixes that** by:
 - Cross-checking results across **multiple AI engines**, allowing them to debate cohesively and formulate together what the answer is to a particular problem.
@@ -59,7 +60,7 @@ Without validation, AI can and will eventually:
 - **Encrypted by Default** — AES-256 protection prevents leaks.  
 - **Smart Ranking Algorithms** — Filters noise, prioritizes truth.  
 - **Cloud-Native Architecture** — Seamless AWS scalability.  
-- **Safe Demonstrator Mode** — No live API keys required.  
+- **Safe Demonstrator Mode** — No live API keys required but can be tooled to that extent.  
 - **Full Audit Trails** — Compliance-ready logging with TTL retention.  
 
 ---
@@ -71,30 +72,39 @@ A **machine learning & LLM-enabled operations manager** for real-time infrastruc
 - Multi-cloud monitoring dashboard  
 - SIEM integration ready  
 
----
+InfraOps Companion delivers unified, multi-cloud observability and automation for infrastructure and development teams. It integrates seamlessly with Nexus or other AI-driven platforms, providing end-to-end visibility across AWS, Azure, and GCP environments. Designed for large-scale, production-critical systems, InfraOps Companion continuously monitors workflows for anomalies, performance degradation, and operational risks. It proactively surfaces root causes, recommends targeted resolutions, and enables automated remediation — preventing minor issues from escalating into major outages. Built for scalability, security, and resilience, it empowers engineering teams to maintain high availability and performance in mission-critical AI applications.
 
-## <img src="assets/logo_loganalyzer.png" alt="LogAnalyzer.AI Logo" width="180px"><br>LogAnalyzer.AI (Coming Soon)
-An **LLM-powered log intelligence platform** to detect anomalies in AI and cloud systems.  
-- Natural language log queries  
-- Pattern detection for AI hallucinations  
-- API call trend analysis  
-- Root cause AI-assisted insights  
 
 ---
 
-## System at a Glance
+LogAnalyzer.AI is an enterprise-grade, LLM-powered observability platform purpose-built for AI and multi-cloud environments. It transforms raw log data into actionable intelligence by enabling:
 
-**Design Principles:** Safety • Scalability • Security
+- Natural language log queries for rapid investigation without complex syntax
 
-**Infrastructure Highlights:**
-- **Security:** AES-256, IAM, AWS KMS, VPC isolation, CloudTrail monitoring.
-- **Containerized Design:** Each tool operates independently or integrated.  
-- **Storage:**  
-  - Hot: S3 for logs/backups, DynamoDB for instant lookups.  
-  - Warm: RDS & Aurora for structured data.  
-  - Cold: Glacier for archival.  
-- **Compute:** EC2 + ECS/Fargate for horizontal scaling.
-- **Observability:** CloudWatch, automated snapshots, tiered storage rollover.
+- Advanced pattern detection to identify AI hallucinations, drift, and anomalous behaviors in real time
+
+- Cross-platform API call trend analysis to reveal systemic issues before they impact production
+
+- AI-assisted root cause insights that accelerate mean time to resolution (MTTR) and prevent recurrence
+
+Engineered for scalability, security, and operational excellence, LogAnalyzer.AI empowers engineering, SRE, and security teams to maintain trust, reliability, and peak performance in mission-critical AI workloads.
+
+---
+
+## System at a Glance  
+
+**Design Principles:** **Safety • Scalability • Security**  
+
+**Infrastructure Highlights:**  
+
+- **Security:** AES-256 encryption, role-based access control (RBAC), multi-cloud KMS integration, network isolation, and full audit logging.  
+- **Containerized Design:** Each tool is fully containerized for independent operation or seamless integration within larger ecosystems.  
+- **Storage Tiers:**  
+  - **Hot:** Object storage for real-time logs/backups, distributed NoSQL databases for instant lookups.  
+  - **Warm:** Relational databases for structured datasets and transactional operations.  
+  - **Cold:** Archival storage for cost-optimized long-term retention.  
+- **Compute:** Elastic container orchestration and scalable VM instances across AWS, Azure, and GCP.  
+- **Observability:** Native cloud monitoring, automated snapshots, and tiered storage rollover across providers.  
 
 ---
 
