@@ -11,7 +11,7 @@
 
 ---
 
-# Nexus — Secure. Scalable. Smart.
+# Nexus — Secure, Scalable, Smart.
 
 > **The AI debate engine that validates answers before they reach you** — combining multiple LLMs, real-time web intelligence, and enterprise-grade encryption.
 
@@ -97,7 +97,7 @@ An **LLM-powered log intelligence platform** for AI and multi-cloud ecosystems.
 ---
 
 ## System at a Glance  
-**Design Principles:** **Safety • Scalability • Security**  
+**Design Principles:** **Safety, Scalability, Security**  
 
 **Infrastructure Highlights:**  
 - **Security:** AES-256, RBAC, multi-cloud KMS, network segmentation, audit logging.  
