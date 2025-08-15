@@ -11,7 +11,7 @@
 
 ---
 
-# Nexus.ai — Secure. Scalable. Smart.
+# Nexus — Secure. Scalable. Smart.
 
 > **The AI debate engine that verifies answers before they reach you** — combining multiple AI models, real-time web context, and enterprise-grade encryption.
 
@@ -38,14 +38,15 @@ Nexus.ai is a **cloud-native AI orchestration platform** that:
 
 ---
 
-## 🎯 Why It Matters
+##  Why It Matters
 Without validation, AI can and will eventually:
 - Hallucinate facts.
 - Miss critical updates.
 - Leak sensitive information.
+- Make critical errors that no one wants.
 
 **Nexus fixes that** by:
-- Cross-checking results across **multiple AI engines**.
+- Cross-checking results across **multiple AI engines**, allowing them to debate cohesively and formulate together what the answer is to a particular problem.
 - Adding **live web context** via scraping and search.
 - Encrypting everything **end-to-end** with AES-256.
 - Scaling to handle **millions of secure requests**.
