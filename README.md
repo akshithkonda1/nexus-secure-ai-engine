@@ -131,15 +131,49 @@ An **LLM-powered log intelligence platform** for AI and multi-cloud ecosystems.
 ## Getting Started
 ```bash
 # 1. Clone repository
-git clone https://github.com/akshiththeindian/nexus.git
+git clone https://github.com/akshiththeindian/nexus-secure-ai-engine.git
+cd nexus-secure-ai-engine
+
+
+Choose the module you want to start:
+# Core engine
 cd nexus
 
-# 2. Install dependencies
+# Infrastructure observability
+cd infra-ops
+
+# Log intelligence platform
+cd log-analyzer
+
+# 2. Install dependencies for the program you want to run:
+Each Program has its own requirements.txt
 pip install -r requirements.txt
 
 # 3. Setup environment
 cp .env.example .env
-# Add API keys or leave blank for demo mode
+#Add your API keys, secrets, or leave blank to run in demonstrator mode.
+For production, integrate with cloud secrets managers (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager).
 
 # 4. Run the app
+ Run the FlaskApp that Corresponds with the program you desire:
+# Example: running Nexus engine
 python Nexus_FlaskApp.py
+
+## Multi-Cloud Deployment Quickstart
+
+Nexus modules are deployable to any major cloud using Terraform for infrastructure and Kubernetes for orchestration. Below are minimal, production-oriented examples that you can adapt to your environment.
+
+### Prerequisites
+- Terraform ≥ 1.5 installed
+- kubectl ≥ 1.27 installed
+- Docker or compatible OCI builder
+- Cloud CLI configured (one or more): `aws` / `az` / `gcloud`
+- A container registry (ECR/ACR/GCR/Artifact Registry) and a repository created
+
+---
+
+### 1) Containerize the Module (any module: `nexus`, `infra-ops`, or `log-analyzer`)
+```bash
+# From the module directory (e.g., ./nexus)
+docker build -t <REGISTRY>/<PROJECT>/nexus:<TAG> .
+docker push <REGISTRY>/<PROJECT>/nexus:<TAG>
