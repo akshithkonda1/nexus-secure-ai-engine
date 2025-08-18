@@ -29,7 +29,7 @@
 ---
 
 ## <img src="assets/logo_nexus.png" alt="Nexus Logo" width="180px"><br>What is Nexus.ai?
-Nexus.ai is a **vendor-neutral, cloud-native AI orchestration platform** designed to:
+Nexus is a **vendor-neutral, cloud-native AI orchestration platform** designed to:
 - Aggregate responses from **multiple AI models** (LLMs, proprietary, and open-source).
 - Enrich results with **live, verifiable context** from trusted sources.
 - **Validate, rank, and encrypt** outputs before delivery.
@@ -52,7 +52,7 @@ Unlike most AI systems that simply generate output, Nexus:
 Unchecked AI can:
 - Hallucinate or fabricate facts.
 - Miss critical real-time updates.
-- Expose sensitive information.
+- Expose sensitive information (especially critical in Government Environments).
 - Introduce costly operational errors.
 
 **Nexus mitigates these risks** by:
