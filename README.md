@@ -74,27 +74,52 @@ Unchecked AI can:
 
 ---
 
-## <img src="assets/logo_infraops.png" alt="InfraOps Logo" width="180px"><br>InfraOps Companion (Coming Soon)
-A **machine learning & LLM-powered operations manager** for real-time infrastructure observability and automated remediation.  
-- Predictive anomaly detection  
-- Automated incident resolution workflows  
-- Multi-cloud operational dashboards  
-- SIEM integration-ready for enterprise security
+## <img src="assets/logo_infraops.png" alt="InfraOps Logo" width="180px"><br>
 
-**Designed for mission-critical workloads**, InfraOps Companion continuously monitors distributed systems for anomalies, surfaces root causes, and executes automated resolutions — preventing downtime and reducing MTTR.
+#  InfraOps Companion (Coming Soon)
 
----
+**InfraOps Companion** is a **machine learning & LLM-powered operations manager** for real-time infrastructure observability and automated remediation across multi-cloud environments.
 
-## <img src="assets/logo_loganalyzer.png" alt="LogAnalyzer.AI Logo" width="180px"><br>LogAnalyzer.AI (Coming Soon)
-An **LLM-powered log intelligence platform** for AI and multi-cloud ecosystems.  
-- **Natural Language Queries** — Search logs without learning query syntax.  
-- **AI Hallucination & Drift Detection** — Identify abnormal model behaviors in real time.  
-- **API Call Pattern Analysis** — Detect systemic issues before they scale.  
-- **Root Cause AI Insights** — Accelerate MTTR and improve resilience.
+# Key Capabilities
 
-**Engineered for scale**, LogAnalyzer.AI helps engineering, SRE, and security teams maintain **trust, uptime, and reliability** in AI-integrated environments.
+* **Predictive Anomaly Detection** — Anticipates failures before they impact workloads.
+* **Automated Incident Resolution** — Executes pre-defined or LLM-assisted remediation workflows to reduce MTTR.
+* **Multi-Cloud Operational Dashboards** — Unified visibility across AWS, Azure, and GCP resources.
+* **SIEM Integration Ready** — Hooks into enterprise security stacks for compliance and incident correlation.
+* **Mission-Critical Resilience** — Designed for zero-downtime environments and distributed systems.
 
----
+# Why It Matters
+
+InfraOps Companion continuously ingests telemetry from distributed systems, applies **ML-based anomaly detection** and **semantic analysis**, then triggers **auto-remediation playbooks** or human-in-the-loop responses. The result:
+
+* Lower operational overhead
+* Faster root-cause analysis
+* Higher uptime and resilience
+* Reduced costs from outages and escalations
+
+## <img src="assets/logo_loganalyzer.png" alt="LogAnalyzer.AI Logo" width="180px"><br>
+
+# LogAnalyzer.AI (Coming Soon)
+
+**LogAnalyzer.AI** is an **LLM-powered log intelligence platform** purpose-built for AI and multi-cloud ecosystems. It transforms raw logs into actionable insights with natural language, machine learning, and anomaly detection.
+
+### Key Capabilities
+
+* **Natural Language Queries** — Interrogate logs conversationally without complex syntax.
+* **AI Hallucination & Drift Detection** — Monitor and surface unusual model behaviors in real time.
+* **API Call Pattern Analysis** — Spot emerging systemic risks before they propagate.
+* **Root Cause AI Insights** — Accelerate mean time to resolution (MTTR) with automated context and recommendations.
+
+### Why It Matters
+
+As enterprises integrate AI into mission-critical workflows, **observability and trust** become as important as scalability. LogAnalyzer.AI provides:
+
+* Early warning of abnormal AI and system behavior
+* Rich root-cause insights to shorten incident lifecycles
+* Scalable log intelligence across multi-cloud infrastructures
+* Improved **uptime, resilience, and user trust**
+
+
 
 ## System at a Glance  
 **Design Principles:** **Safety, Scalability, Security**  
