@@ -20,7 +20,7 @@
 ## Quick Snapshot
 | Category       | Details |
 |----------------|---------|
-| **Status**     | Demonstrator — production-grade design, running in safe mode |
+| **Status**     | Demonstrator — production-grade design, needs API and Cloud Setup|
 | **Tech Stack** | Python 3.10+, Flask, Terraform |
 | **Cloud Stack**| **AWS** (S3, RDS, DynamoDB, Glacier, ECS, KMS), **Azure** (Blob Storage, Key Vault, Cosmos DB, AKS), **GCP** (GCS, Cloud SQL/Spanner, BigQuery, GKE, KMS) |
 | **Core Focus** | Multi-cloud AI orchestration, secure data flow, scalable low-latency architecture |
