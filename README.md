@@ -69,7 +69,7 @@ Unchecked AI can:
 - **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.  
 - **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.  
 - **Multi-Cloud Ready** — Operates across AWS, Azure, and GCP.  
-- **Safe Demonstrator Mode** — No secrets embedded, instant production capability.  
+- **Demonstrator,setup required** — No secrets embedded, instant production capability.  
 - **Compliance-Grade Logging** — Full audit trails with configurable TTL.
 
 ---
