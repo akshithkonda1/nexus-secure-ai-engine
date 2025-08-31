@@ -162,7 +162,7 @@ cd nexus-secure-ai-engine
 
 Choose the module you want to start:
 # Core engine
-cd nexus
+cd nexus.ai
 
 # Infrastructure observability
 cd infra-ops
