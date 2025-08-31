@@ -9,7 +9,7 @@ from typing import Dict, Any
 
 from flask import Flask, request, jsonify
 
-# Optional addons (graceful fallbacks)
+# Optional addons
 try:
     from flask_cors import CORS
 except Exception:
@@ -23,34 +23,25 @@ try:
     from flask_limiter.util import get_remote_address
 except Exception:
     Limiter = None
-    def get_remote_address(): return request.remote_addr
+    def get_remote_address(): return request.remote_addr  # type: ignore
 try:
     from bleach import clean as bleach_clean
 except Exception:
-    def bleach_clean(x): return x
+    def bleach_clean(x): return x  # type: ignore
 
-# ---------- Config ----------
-try:
-    from config import load_and_validate
-except Exception as e:
-    raise RuntimeError("config.py with load_and_validate() is required") from e
-
-# ---------- Connectors ----------
+# Connectors (expects bootstrap.py to expose _make_connectors)
 try:
     from bootstrap import _make_connectors as make_connectors
 except Exception as e:
     raise RuntimeError("bootstrap.py with _make_connectors(cfg) is required") from e
 
-# ---------- Engine ----------
+# Engine (use nexus_engine from your repo)
 try:
-    from engine import Engine
-except Exception:
-    class Engine:
-        def __init__(self, **_): pass
-        def run(self, session_id: str, query: str):
-            return {"answers": {}, "ranking": {"tfidf": [], "semantic": [], "preferred": None}}
+    from nexus_engine import Engine
+except Exception as e:
+    raise RuntimeError("nexus_engine.py with Engine is required") from e
 
-# ---------- Memory / Compute ----------
+# Memory / Compute
 try:
     from memory_compute import (
         InMemoryStore,
@@ -58,16 +49,31 @@ try:
         FirestoreMemoryStore,
         AzureBlobMemoryStore,
         MultiMemoryStore,
-        ping_memory_store,
-        verify_memory_writes,
         health_suite,
     )
 except Exception as e:
     raise RuntimeError("memory_compute.py is required") from e
 
-def _build_memory(cfg) -> MultiMemoryStore:
+# Lightweight env-driven config object
+class Cfg:
+    pass
+
+def _env_list(name: str, default_csv: str) -> list[str]:
+    return [s.strip() for s in os.getenv(name, default_csv).split(",") if s.strip()]
+
+def _build_cfg() -> Cfg:
+    cfg = Cfg()
+    cfg.memory_providers = _env_list("NEXUS_MEM_PROVIDERS", "aws")
+    cfg.memory_fanout_writes = os.getenv("NEXUS_MEM_FANOUT", "1") not in {"0", "false", "False"}
+    cfg.encrypt = os.getenv("NEXUS_ENCRYPT", "1") not in {"0", "false", "False"}
+    cfg.alpha_semantic = float(os.getenv("NEXUS_ALPHA_SEMANTIC", "0.5"))
+    cfg.max_context_messages = int(os.getenv("NEXUS_MAX_CTX", "8"))
+    # any fields your make_connectors() expects can be added here (e.g., secret providers)
+    return cfg
+
+def _build_memory(cfg: Cfg) -> MultiMemoryStore:
     stores = []
-    for p in (getattr(cfg, "memory_providers", None) or []):
+    for p in (getattr(cfg, "memory_providers", []) or []):
         pl = p.strip().lower()
         if pl == "aws":
             stores.append(DynamoDBMemoryStore(
@@ -83,15 +89,13 @@ def _build_memory(cfg) -> MultiMemoryStore:
                 prefix=os.getenv("NEXUS_AZ_PREFIX", "nexus"),
                 connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
             ))
-        elif pl in {"memory", "local"}:
-            stores.append(InMemoryStore())
         else:
             stores.append(InMemoryStore())
     if not stores:
         stores.append(InMemoryStore())
     return MultiMemoryStore(stores, fanout_writes=getattr(cfg, "memory_fanout_writes", True))
 
-# ---------- Optional AWS (for audit/scope/webhooks) ----------
+# Optional AWS (audit/scope/webhooks)
 try:
     import boto3
     from boto3.dynamodb.conditions import Key
@@ -99,7 +103,7 @@ except Exception:
     boto3 = None
     Key = None
 
-# ---------- Logging ----------
+# Logging
 logger = logging.getLogger("nexus.main")
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -107,7 +111,7 @@ if not logger.handlers:
     logger.addHandler(h)
 logger.setLevel(logging.INFO)
 
-# ---------- Flask ----------
+# Flask
 app = Flask(__name__)
 start_time = dt.utcnow()
 
@@ -150,18 +154,14 @@ def require_api_key(f):
         return f(*args, **kwargs)
     return decorated
 
-# ---------- Config load ----------
 def _base_dir() -> Path:
     return Path(os.getenv("NEXUS_CONFIG_DIR", Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()))
 
 BASE_DIR = _base_dir()
 BASE_DIR.mkdir(parents=True, exist_ok=True)
-CFG_PATH = os.getenv("NEXUS_CONFIG_PATH", str(BASE_DIR / "nexus_config.json"))
-cfg, errs = load_and_validate(paths=[CFG_PATH] if CFG_PATH else None)
-if errs:
-    raise SystemExit(" | ".join(errs))
 
-# ---------- Build memory, connectors, engine ----------
+# Build cfg, memory, connectors, engine
+cfg = _build_cfg()
 memory = _build_memory(cfg)
 connectors = make_connectors(cfg)
 engine = Engine(
@@ -173,7 +173,7 @@ engine = Engine(
     max_context_messages=getattr(cfg, "max_context_messages", 8),
 )
 
-# ---------- Optional DynamoDB tables ----------
+# Optional DynamoDB tables
 audit_table = scope_table = webhook_table = None
 if boto3:
     try:
@@ -250,7 +250,7 @@ def enforce_https_and_size():
     if request.content_length and request.content_length > 2 * 1024 * 1024:
         return jsonify({"error": "Request too large"}), 413
 
-# ---------- Routes ----------
+# Routes
 @app.route("/", methods=["GET"])
 @require_api_key
 def home():
@@ -403,7 +403,6 @@ def register_webhook():
 def list_webhooks():
     return jsonify({"webhooks": _webhook_list()}), 200
 
-# ---------- Entry ----------
 if __name__ == "__main__":
     host = os.getenv("FLASK_HOST", "0.0.0.0")
     port = int(os.getenv("FLASK_PORT", "5000"))
