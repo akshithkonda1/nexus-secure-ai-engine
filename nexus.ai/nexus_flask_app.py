@@ -1,12 +1,15 @@
-# nexus_flask_app.py
+# main.py
 from __future__ import annotations
-import os, logging, traceback, hmac, time, json
+import os, logging, traceback, hmac, time
 from datetime import datetime as dt
-from urllib.parse import urlparse
 from functools import wraps
+from pathlib import Path
+from urllib.parse import urlparse
+from typing import Dict, Any
+
 from flask import Flask, request, jsonify
 
-# Optional deps (graceful fallback)
+# Optional addons (graceful fallbacks)
 try:
     from flask_cors import CORS
 except Exception:
@@ -26,16 +29,19 @@ try:
 except Exception:
     def bleach_clean(x): return x
 
-# Config
-from config import load_and_validate
+# ---------- Config ----------
+try:
+    from config import load_and_validate
+except Exception as e:
+    raise RuntimeError("config.py with load_and_validate() is required") from e
 
-# Connectors (keep using bootstrap’s factory)
+# ---------- Connectors ----------
 try:
     from bootstrap import _make_connectors as make_connectors
 except Exception as e:
-    raise RuntimeError("bootstrap.py with _make_connectors is required") from e
+    raise RuntimeError("bootstrap.py with _make_connectors(cfg) is required") from e
 
-# Engine (NoOp fallback)
+# ---------- Engine ----------
 try:
     from engine import Engine
 except Exception:
@@ -44,48 +50,40 @@ except Exception:
         def run(self, session_id: str, query: str):
             return {"answers": {}, "ranking": {"tfidf": [], "semantic": [], "preferred": None}}
 
-# Memory/Compute (integrated here)
+# ---------- Memory / Compute ----------
 try:
     from memory_compute import (
-        MultiMemoryStore,
+        InMemoryStore,
         DynamoDBMemoryStore,
         FirestoreMemoryStore,
         AzureBlobMemoryStore,
-        InMemoryStore,
+        MultiMemoryStore,
         ping_memory_store,
+        verify_memory_writes,
+        health_suite,
     )
-except Exception:
-    class InMemoryStore:
-        def recent(self, *a, **k): return []
-        def save(self, *a, **k): return True
-    class _Multi:
-        def __init__(self, stores, fanout_writes=True):
-            self.stores = stores
-            self.primary = stores[0] if stores else InMemoryStore()
-    MultiMemoryStore = _Multi
-    def DynamoDBMemoryStore(*a, **k): return InMemoryStore()
-    def FirestoreMemoryStore(*a, **k): return InMemoryStore()
-    def AzureBlobMemoryStore(*a, **k): return InMemoryStore()
-    def ping_memory_store(_): return {"ok": True}
+except Exception as e:
+    raise RuntimeError("memory_compute.py is required") from e
 
-def _make_memory_from_cfg(cfg):
+def _build_memory(cfg) -> MultiMemoryStore:
     stores = []
-    for p in (cfg.memory_providers or []):
-        p = p.lower().strip()
-        if p == "aws":
+    for p in (getattr(cfg, "memory_providers", None) or []):
+        pl = p.strip().lower()
+        if pl == "aws":
             stores.append(DynamoDBMemoryStore(
                 os.getenv("NEXUS_DDB_MESSAGES", "nexus_messages"),
                 os.getenv("NEXUS_DDB_INDEX", "nexus_memindex"),
+                os.getenv("AWS_REGION", "us-east-1"),
             ))
-        elif p == "gcp":
+        elif pl == "gcp":
             stores.append(FirestoreMemoryStore(os.getenv("NEXUS_FS_PREFIX", "nexus")))
-        elif p == "azure":
+        elif pl == "azure":
             stores.append(AzureBlobMemoryStore(
                 container=os.getenv("NEXUS_AZ_CONTAINER", "nexus-messages"),
                 prefix=os.getenv("NEXUS_AZ_PREFIX", "nexus"),
                 connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
             ))
-        elif p == "memory":
+        elif pl in {"memory", "local"}:
             stores.append(InMemoryStore())
         else:
             stores.append(InMemoryStore())
@@ -93,7 +91,7 @@ def _make_memory_from_cfg(cfg):
         stores.append(InMemoryStore())
     return MultiMemoryStore(stores, fanout_writes=getattr(cfg, "memory_fanout_writes", True))
 
-# DynamoDB (optional)
+# ---------- Optional AWS (for audit/scope/webhooks) ----------
 try:
     import boto3
     from boto3.dynamodb.conditions import Key
@@ -101,22 +99,18 @@ except Exception:
     boto3 = None
     Key = None
 
-# -----------------------------------------------------------------------------
-# App & logging
-# -----------------------------------------------------------------------------
-logger = logging.getLogger("nexus_app")
+# ---------- Logging ----------
+logger = logging.getLogger("nexus.main")
 if not logger.handlers:
     h = logging.StreamHandler()
     h.setFormatter(logging.Formatter('{"ts":"%(asctime)s","lvl":"%(levelname)s","msg":"%(message)s"}'))
     logger.addHandler(h)
 logger.setLevel(logging.INFO)
 
+# ---------- Flask ----------
 app = Flask(__name__)
 start_time = dt.utcnow()
 
-# -----------------------------------------------------------------------------
-# Security config
-# -----------------------------------------------------------------------------
 AUTHORIZED_API_KEYS = set(filter(None, os.getenv("AUTHORIZED_API_KEYS", "").split(",")))
 TRUSTED_ORIGINS = set(filter(None, os.getenv("TRUSTED_ORIGINS", "").split(",")))
 if not AUTHORIZED_API_KEYS or not TRUSTED_ORIGINS:
@@ -156,28 +150,30 @@ def require_api_key(f):
         return f(*args, **kwargs)
     return decorated
 
-# -----------------------------------------------------------------------------
-# Config, connectors, memory, engine
-# -----------------------------------------------------------------------------
-cfg_path = os.getenv("NEXUS_CONFIG_PATH", "nexus_config.json")
-cfg, errs = load_and_validate(paths=[cfg_path] if cfg_path else None)
+# ---------- Config load ----------
+def _base_dir() -> Path:
+    return Path(os.getenv("NEXUS_CONFIG_DIR", Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()))
+
+BASE_DIR = _base_dir()
+BASE_DIR.mkdir(parents=True, exist_ok=True)
+CFG_PATH = os.getenv("NEXUS_CONFIG_PATH", str(BASE_DIR / "nexus_config.json"))
+cfg, errs = load_and_validate(paths=[CFG_PATH] if CFG_PATH else None)
 if errs:
     raise SystemExit(" | ".join(errs))
 
-memory = _make_memory_from_cfg(cfg)
+# ---------- Build memory, connectors, engine ----------
+memory = _build_memory(cfg)
 connectors = make_connectors(cfg)
 engine = Engine(
     connectors=connectors,
     memory=memory,
     resolver_like=None,
-    encrypt=cfg.encrypt,
-    alpha_semantic=cfg.alpha_semantic,
-    max_context_messages=cfg.max_context_messages,
+    encrypt=getattr(cfg, "encrypt", True),
+    alpha_semantic=getattr(cfg, "alpha_semantic", 0.5),
+    max_context_messages=getattr(cfg, "max_context_messages", 8),
 )
 
-# -----------------------------------------------------------------------------
-# Optional DynamoDB tables
-# -----------------------------------------------------------------------------
+# ---------- Optional DynamoDB tables ----------
 audit_table = scope_table = webhook_table = None
 if boto3:
     try:
@@ -188,7 +184,7 @@ if boto3:
     except Exception as e:
         logger.warning(f"DynamoDB disabled: {e}")
 
-def _audit_put(item: dict) -> None:
+def _audit_put(item: Dict[str, Any]) -> None:
     if audit_table:
         try: audit_table.put_item(Item=item)
         except Exception as e: logger.warning(f"audit put failed: {e}")
@@ -233,9 +229,6 @@ def _webhook_store(url: str, event_type: str) -> bool:
             logger.warning(f"webhook put failed: {e}")
     return False
 
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
 def sanitize_input(data):
     if isinstance(data, dict): return {k: sanitize_input(v) for k,v in data.items()}
     if isinstance(data, list): return [sanitize_input(v) for v in data]
@@ -257,9 +250,7 @@ def enforce_https_and_size():
     if request.content_length and request.content_length > 2 * 1024 * 1024:
         return jsonify({"error": "Request too large"}), 413
 
-# -----------------------------------------------------------------------------
-# Routes
-# -----------------------------------------------------------------------------
+# ---------- Routes ----------
 @app.route("/", methods=["GET"])
 @require_api_key
 def home():
@@ -281,19 +272,12 @@ def status():
     model_report = {}
     for name, conn in connectors.items():
         try:
-            degraded = False
-            if hasattr(conn, "health_check"):
-                degraded = bool(conn.health_check())
+            degraded = bool(conn.health_check()) if hasattr(conn, "health_check") else False
             model_report[name] = "Degraded" if degraded else "Healthy"
         except Exception as e:
             model_report[name] = f"Error: {e}"
 
-    mem_report = []
-    try:
-        for s in getattr(memory, "stores", []):
-            mem_report.append(ping_memory_store(s))
-    except Exception as e:
-        mem_report.append({"ok": False, "error": str(e)})
+    mem_report = health_suite(memory)
 
     return jsonify({
         "status": "🟢 Running",
@@ -419,9 +403,7 @@ def register_webhook():
 def list_webhooks():
     return jsonify({"webhooks": _webhook_list()}), 200
 
-# -----------------------------------------------------------------------------
-# Entry
-# -----------------------------------------------------------------------------
+# ---------- Entry ----------
 if __name__ == "__main__":
     host = os.getenv("FLASK_HOST", "0.0.0.0")
     port = int(os.getenv("FLASK_PORT", "5000"))
