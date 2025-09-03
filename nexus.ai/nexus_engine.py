@@ -24,7 +24,7 @@
 #             cohere.chat, cohere.generate, tgi.generate, generic.json - Nexus is compatible with these adapters. Nexus is designed that all you need is the cloud infrastucture and just add them to secrets manager this approach allows us to add basically infinite models.  
 # - Web: Google CSE, Bing, Tavily, DuckDuckGo(HTML) + BeautifulSoup scraper - Nexus uses deep search and web scraping to validate AI Results.
 # - Robustness: shared retry helper with backoff+jitter for all web calls - Nexus is built for reliability and robustness not for one time use or to be broken easily
-# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node - Infrastructure is a core part of Nexus to that degree, Nexus is geared to ensure that the infra is healthy and can support operations. We run health checks and other operations.
+# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node - Infrastructure is a core part of Nexus to that degree, Nexus is geared to ensure that the infra is healthy and can support operations. We run health checks and other operations to make sure the infrastructure is all good to conduct day to day operations
 
 from __future__ import annotations
 
@@ -1005,6 +1005,7 @@ def build_web_retriever_from_env(
 #End of Engine code# 
 #Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
 # #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
+
 
 
 
