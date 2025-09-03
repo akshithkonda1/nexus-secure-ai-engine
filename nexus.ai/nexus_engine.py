@@ -15,33 +15,16 @@
 
 #Nexus was developed by Akshith Konda.
 
-#What is Nexus?
 
-#Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
-
-#It integrates web scraping capabilities for real-time data retrieval, supports secure data encryption, and offers advanced response aggregation techniques to deliver the best possible answers.
-
-#Nexus is built to be extensible and infinitely scalable, allowing for easy integration of new AI models and data sources, making it a versatile tool for developers and researchers alike, but it is also designed to be user-friendly, with a focus on providing clear and actionable insights.
-
-#Nexus is not just a tool for AI enthusiasts; it is a powerful platform that can be used in various applications, from academic research to business intelligence, and it aims to democratize access to advanced AI capabilities by making Gen AI replies more accurate and more correct.
-
-#Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries. 
-# Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
-
-#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating and web search and webscraping technoologies allow it to give you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
-
-#Nexus was developed by Akshith Konda.
 # nexus_engine.py
-# engine.py
-# Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
+# Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo) - Do Not Edit the schema this changes functionality and Nexus may not work the same, adding search engines is okay but anything to the schema could change function.
 # Adds BeautifulSoup scraping to enrich/verify sources and pull photos (og:image).
-# engine.py
-# Nexus Engine — resilient model debate + verified web evidence + autonomous health checks
+# Nexus Engine Debate — resilient model debate + verified web evidence + autonomous health checks - Allows for Core Debate with proofs, and allows for deep health verification 
 # - Adapters: openai.chat, openai.responses, anthropic.messages, gemini.generate,
-#             cohere.chat, cohere.generate, tgi.generate, generic.json
-# - Web: Google CSE, Bing, Tavily, DuckDuckGo(HTML) + BeautifulSoup scraper
-# - Robustness: shared retry helper with backoff+jitter for all web calls
-# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node
+#             cohere.chat, cohere.generate, tgi.generate, generic.json - Nexus is compatible with these adapters. Nexus is designed that all you need is the cloud infrastucture and just add them to secrets manager this approach allows us to add basically infinite models.  
+# - Web: Google CSE, Bing, Tavily, DuckDuckGo(HTML) + BeautifulSoup scraper - Nexus uses deep search and web scraping to validate AI Results.
+# - Robustness: shared retry helper with backoff+jitter for all web calls - Nexus is built for reliability and robustness not for one time use or to be broken easily
+# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node - Infrastructure is a core part of Nexus to that degree, Nexus is geared to ensure that the infra is healthy and can support operations. We run health checks and other operations.
 
 from __future__ import annotations
 
@@ -1022,6 +1005,7 @@ def build_web_retriever_from_env(
 #End of Engine code# 
 #Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
 # #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
+
 
 
 
