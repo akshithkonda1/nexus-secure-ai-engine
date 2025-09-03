@@ -1,91 +1,117 @@
+# bootstrap.py
 from __future__ import annotations
-import os, json, argparse
-from pathlib import Path
+import os, json, logging
+from typing import Dict, Any, List, Optional
+from urllib.parse import urlparse
 
-from config import load_and_validate
-# Expect your existing modules
-try:
-    from engine import Engine
-except Exception:
-    class Engine:
-        def __init__(self, **_): pass
-        def run(self, *_a, **_k): return {"answers": {}, "ranking": {}}
+from nexus_config import SecretResolver
+from nexus_engine import ModelConnector
 
-try:
-    from memory_compute import MultiMemoryStore, DynamoDBMemoryStore, FirestoreMemoryStore, AzureBlobMemoryStore, InMemoryStore, ping_memory_store
-except Exception:
-    class InMemoryStore: 
-        def recent(self, *a, **k): return []
-        def save(self, *a, **k): return True
-    class MultiMemoryStore:
-        def __init__(self, stores, fanout_writes=True): self.stores=stores; self.primary=stores[0]
-    def DynamoDBMemoryStore(*a, **k): return InMemoryStore()
-    def FirestoreMemoryStore(*a, **k): return InMemoryStore()
-    def AzureBlobMemoryStore(*a, **k): return InMemoryStore()
-    def ping_memory_store(_): return {"ok": True}
+log = logging.getLogger("nexus.bootstrap")
+if not log.handlers:
+    h = logging.StreamHandler()
+    h.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s'))
+    log.addHandler(h)
+log.setLevel(logging.INFO)
 
-def _make_memory(providers, fanout=True):
-    stores=[]
-    for p in providers:
-        if p=="aws": stores.append(DynamoDBMemoryStore(os.getenv("NEXUS_DDB_MESSAGES","nexus_messages"), os.getenv("NEXUS_DDB_INDEX","nexus_memindex")))
-        elif p=="gcp": stores.append(FirestoreMemoryStore(os.getenv("NEXUS_FS_PREFIX","nexus")))
-        elif p=="azure": stores.append(AzureBlobMemoryStore(container=os.getenv("NEXUS_AZ_CONTAINER","nexus-messages"), prefix=os.getenv("NEXUS_AZ_PREFIX","nexus")))
-        else: stores.append(InMemoryStore())
-    return MultiMemoryStore(stores, fanout_writes=fanout)
+def _is_https(url: Optional[str]) -> bool:
+    if not url or not isinstance(url, str): return False
+    try:
+        p = urlparse(url); return p.scheme == "https" and bool(p.netloc)
+    except Exception:
+        return False
 
-def _make_connectors(cfg, resolver_like=None):
-    # Keep minimal: rely on secret_overrides keys
-    def https(u: str) -> bool: return isinstance(u, str) and u.startswith("https://")
-    conns={}
-    if cfg.engine_mode in {"direct","mixed"} and cfg.secret_overrides.get("GPT_ENDPOINT"):
-        ep = cfg.secret_overrides["GPT_ENDPOINT"]
-        key = cfg.secret_overrides.get("OPENAI_API_KEY")
-        if https(ep):
-            from functools import partial
-            import requests
-            def _q(endpoint, key, prompt, params=None):
-                r = requests.post(endpoint, json={"prompt":prompt, **(params or {})},
-                                  headers={"Authorization": f"Bearer {key}"} if key else None, timeout=12)
-                r.raise_for_status()
-                try: return {"text": r.json()}
-                except Exception: return {"text": r.text}
-            conns["ChatGPT"] = type("DirectConn",(object,),{"query": staticmethod(partial(_q, ep, key))})
-    if cfg.engine_mode in {"delegates","mixed"} and cfg.secret_overrides.get("NEXUS_SECRET_GPT_DELEGATE"):
-        spec = cfg.secret_overrides["NEXUS_SECRET_GPT_DELEGATE"]
-        if spec.startswith("aws:lambda:"):
-            fn_region = spec.split(":",2)[-1]
-            fn, region = (fn_region.split("@")+[os.getenv("AWS_REGION","us-east-1")])[:2]
-            try:
-                import boto3, json as _j
-                lam = boto3.client("lambda", region_name=region)
-                def _q(prompt, params=None):
-                    p = _j.dumps({"prompt":prompt, "params": params or {}}).encode("utf-8")
-                    body = lam.invoke(FunctionName=fn, Payload=p)["Payload"].read()
-                    try: return _j.loads(body.decode("utf-8"))
-                    except Exception: return {"text": body.decode("utf-8","replace")}
-                conns["ChatGPT"] = type("LambdaConn",(object,),{"query": staticmethod(_q)})
-            except Exception:
-                pass
-    return conns
+def _provider_list(env_name: str, default_csv: str) -> List[str]:
+    return [s.strip().lower() for s in os.getenv(env_name, default_csv).split(",") if s.strip()]
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default=os.getenv("NEXUS_CONFIG_PATH", str(Path.cwd() / "nexus_config.json")))
-    args = ap.parse_args()
+def _build_resolver() -> SecretResolver:
+    providers = _provider_list("NEXUS_SECRETS_PROVIDERS", "aws,azure,gcp")
+    overrides: Dict[str, str] = {k: v for k, v in os.environ.items() if k.startswith("NEXUS_SECRET_")}
+    for k in ("AZURE_KEYVAULT_URL", "GCP_PROJECT"):
+        if os.getenv(k): overrides[k] = os.getenv(k)  # type: ignore
+    ttl = int(os.getenv("NEXUS_SECRET_TTL_SECONDS", "600"))
+    return SecretResolver(providers=providers, overrides=overrides, ttl_seconds=ttl)
 
-    cfg, errs = load_and_validate(paths=[args.config] if args.config else None)
-    if errs: raise SystemExit("\n".join(errs))
+def _load_catalog(resolver: SecretResolver) -> Dict[str, Any]:
+    raw = os.getenv("NEXUS_MODELS_JSON")
+    if raw:
+        try: return json.loads(raw)
+        except Exception as e: raise RuntimeError(f"NEXUS_MODELS_JSON is not valid JSON: {e}")
+    doc = resolver.get("MODELS_JSON")
+    if not doc:
+        raise RuntimeError(
+            "Model catalog not found. Set NEXUS_MODELS_JSON (raw JSON) or "
+            "provide NEXUS_SECRET_MODELS_JSON (+ optional _FIELD) pointing to your catalog in the cloud secrets manager."
+        )
+    try: return json.loads(doc)
+    except Exception as e: raise RuntimeError(f"Catalog secret content is not valid JSON: {e}")
 
-    mem = _make_memory(cfg.memory_providers, cfg.memory_fanout_writes)
-    conns = _make_connectors(cfg)
+def _resolve_auth_token(resolver: SecretResolver, auth: Dict[str, Any]) -> str:
+    if auth.get("value"): return str(auth["value"])
+    sec = auth.get("secret")
+    if not sec: raise RuntimeError("auth.secret or auth.value is required")
+    tok = resolver.get(str(sec))
+    if not tok: raise RuntimeError(f"Secret '{sec}' could not be resolved")
+    return tok
 
-    eng = Engine(connectors=conns, memory=mem, resolver_like=None,
-                 encrypt=cfg.encrypt, alpha_semantic=cfg.alpha_semantic,
-                 max_context_messages=cfg.max_context_messages)
+def _headers_for_model(resolver: SecretResolver, model: Dict[str, Any]) -> Dict[str, str]:
+    headers = dict(model.get("headers") or {})
+    auth = model.get("auth")
+    if not isinstance(auth, dict): raise RuntimeError(f"Model '{model.get('name')}' is missing 'auth' block")
+    atype = (auth.get("type") or "bearer").lower()
+    if atype == "bearer":
+        headers["Authorization"] = f"Bearer {_resolve_auth_token(resolver, auth)}"
+    elif atype == "header":
+        headers[auth.get("header") or "X-API-Key"] = _resolve_auth_token(resolver, auth)
+    else:
+        raise RuntimeError(f"Unsupported auth.type '{atype}' for model '{model.get('name')}'")
+    return headers
 
-    health = {"connectors": list(conns.keys()),
-              "memory": [ping_memory_store(s) for s in getattr(mem, "stores", [])]}
-    print(json.dumps({"status":"ok","health":health}, indent=2))
+def _validate_model_block(m: Dict[str, Any]) -> None:
+    if not m.get("name"): raise RuntimeError("Every model must have a 'name'")
+    if not _is_https(m.get("endpoint")): raise RuntimeError(f"Model '{m.get('name')}' must use an https:// endpoint")
 
-if __name__ == "__main__":
-    main()
+def _adapter_of(model: Dict[str, Any], defaults: Dict[str, Any]) -> str:
+    return str(model.get("adapter") or defaults.get("adapter") or "openai.chat")
+
+def _int_or(model: Dict[str, Any], key: str, default_val: int) -> int:
+    try: return int(model.get(key, default_val))
+    except Exception: return default_val
+
+def make_connectors(_cfg=None) -> Dict[str, ModelConnector]:
+    """
+    Build connectors from a dynamic catalog.
+    Env/Secrets:
+      - NEXUS_MODELS_JSON (raw JSON) OR NEXUS_SECRET_MODELS_JSON (+ optional _FIELD)
+      - NEXUS_SECRETS_PROVIDERS=aws,azure,gcp (order tried)
+      - Per-model secrets referenced by `auth.secret` in the catalog
+    """
+    resolver = _build_resolver()
+    catalog = _load_catalog(resolver)
+    defaults = dict(catalog.get("defaults") or {})
+    models = catalog.get("models")
+    if not isinstance(models, list) or not models:
+        raise RuntimeError("Model catalog must contain a non-empty 'models' array")
+
+    connectors: Dict[str, ModelConnector] = {}
+    for m in models:
+        if not isinstance(m, dict): continue
+        _validate_model_block(m)
+        name = str(m["name"])
+        endpoint = str(m["endpoint"])
+        timeout = _int_or(m, "timeout", int(defaults.get("timeout", 12)))
+        max_retries = _int_or(m, "max_retries", int(defaults.get("max_retries", 3)))
+        adapter = _adapter_of(m, defaults)
+        headers = _headers_for_model(resolver, m)
+
+        try:
+            conn = ModelConnector(name=name, endpoint=endpoint, headers=headers,
+                                  timeout=timeout, max_retries=max_retries, adapter=adapter)
+        except TypeError:
+            # Backwards compatible with older ModelConnector signature
+            conn = ModelConnector(name=name, endpoint=endpoint, headers=headers,
+                                  timeout=timeout, max_retries=max_retries)
+        connectors[name] = conn
+
+    log.info("Built %d connectors: %s", len(connectors), ", ".join(sorted(connectors.keys())))
+    return connectors
