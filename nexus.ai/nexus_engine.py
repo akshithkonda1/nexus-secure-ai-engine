@@ -28,7 +28,7 @@
 #Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries. 
 # Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
 
-#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
+#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating and web search and webscraping technoologies allow it to give you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
 
 #Nexus was developed by Akshith Konda.
 # nexus_engine.py
@@ -1022,5 +1022,6 @@ def build_web_retriever_from_env(
 #End of Engine code# 
 #Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
 # #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
+
 
 
