@@ -15,7 +15,6 @@
 
 #Nexus was developed by Akshith Konda.
 
-
 # nexus_engine.py
 # Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo) - Do Not Edit the schema this changes functionality and Nexus may not work the same, adding search engines is okay but anything to the schema could change function.
 # Adds BeautifulSoup scraping to enrich/verify sources and pull photos (og:image).
@@ -26,34 +25,6 @@
 # - Robustness: shared retry helper with backoff+jitter for all web calls - Nexus is built for reliability and robustness not for one time use or to be broken easily
 # - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node - Infrastructure is a core part of Nexus to that degree, Nexus is geared to ensure that the infra is healthy and can support operations. We run health checks and other operations to make sure the infrastructure is all good to conduct day to day operations
 
-# -------------------------------------------------------------------------------------------
-# SCHEMA: Do NOT change. Returned payload contains ALL non-optional keys:
-# {
-#   "answer": str,
-#   "winner": str,
-#   "winner_ref": { "name": str, "adapter": str, "endpoint": str },
-#   "participants": [str, ...],
-#   "code": [ {language, code}, ... ],
-#   "sources": [ {url, title, snippet}, ... ],
-#   "photos": [ {url, caption}, ... ]
-# }
-# -------------------------------------------------------------------------------------------
-# engine.py
-# Nexus Engine — resilient model debate + verified web evidence + autonomous health checks + tenant/user isolation
-# AES-256-GCM ENCRYPTION IS MANDATORY.
-# -------------------------------------------------------------------------------------------
-# SCHEMA: Do NOT change. Returned payload contains ALL non-optional keys:
-# {
-#   "answer": str,
-#   "winner": str,
-#   "winner_ref": { "name": str, "adapter": str, "endpoint": str },
-#   "participants": [str, ...],
-#   "code": [ {language, code}, ... ],
-#   "sources": [ {url, title, snippet}, ... ],
-#   "photos": [ {url, caption}, ... ]
-# }
-# -------------------------------------------------------------------------------------------
-# engine.py
 # Nexus Engine — resilient model debate + verified web evidence + autonomous health checks + tenant/user isolation
 # AES-256-GCM ENCRYPTION IS MANDATORY.
 # -------------------------------------------------------------------------------------------
@@ -1225,9 +1196,3 @@ def build_web_retriever_from_env(
 #End of Engine code# 
 #Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
 # #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
-
-
-
-
-
-
