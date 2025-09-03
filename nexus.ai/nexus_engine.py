@@ -31,735 +31,678 @@
 #It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
 
 #Nexus was developed by Akshith Konda.
-
-# nexus_config.py
-# Production-ready configuration & bootstrap for Nexus (+ wizard for shared infra)
-# - SecretResolver with TTL cache, multi-cloud providers, and strict validation
-# - Cloud health checks (safe, lazy imports, bounded errors)
-# - Memory wiring (multi-provider, ordered read / fan-out write)
-# - Connector construction with HTTPS enforcement and auth header controls
-# - Engine assembly (no circular imports)
-# - Interactive wizard for Nexus + InfraOps + Log Analyzer shared cloud setup
+# nexus_engine.py
+# engine.py
+# Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
+# Adds BeautifulSoup scraping to enrich/verify sources and pull photos (og:image).
 
 from __future__ import annotations
 
-import json
-import logging
-import os
-import re
-import time
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlparse
+import json, logging, os, re, time, html
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Callable
+from urllib.parse import urlparse, quote_plus
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# -----------------------------------------------------------------------------#
-# Structured logging (JSON) with basic redaction
-# -----------------------------------------------------------------------------#
-class JsonFormatter(logging.Formatter):
-    REDACT_KEYS = ("password", "secret", "token", "key", "authorization", "auth")
+import requests
+from bs4 import BeautifulSoup  # NEW
 
-    def format(self, record: logging.LogRecord) -> str:
-        payload = {
-            "ts": int(time.time()),
-            "level": record.levelname,
-            "logger": record.name,
-            "msg": record.getMessage(),
-        }
-        extra = getattr(record, "extra", None)
-        if isinstance(extra, dict):
-            safe = {}
-            for k, v in extra.items():
-                if any(rk in k.lower() for rk in self.REDACT_KEYS):
-                    safe[k] = "***"
-                else:
-                    safe[k] = v
-            payload.update(safe)
-        return json.dumps(payload, ensure_ascii=False)
-
-logger = logging.getLogger("nexus.config")
-if not logger.handlers:
+log = logging.getLogger("nexus.engine")
+if not log.handlers:
     h = logging.StreamHandler()
-    h.setFormatter(JsonFormatter())
-    logger.addHandler(h)
-logger.setLevel(logging.INFO)
+    h.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s %(name)s: %(message)s'))
+    log.addHandler(h)
+log.setLevel(logging.INFO)
 
-# -----------------------------------------------------------------------------#
-# Local imports (module names must match filenames)
-# -----------------------------------------------------------------------------#
-from nexus_engine import ModelConnector, Engine
-from nexus_memory_compute import (
-    MultiMemoryStore, DynamoDBMemoryStore, FirestoreMemoryStore, AzureBlobMemoryStore,
-    ping_memory_store, verify_memory_writes, load_terraform_outputs, backup_to_targets
-)
+# =============================
+# ModelConnector + Adapters
+# =============================
 
-# -----------------------------------------------------------------------------#
-# Utilities
-# -----------------------------------------------------------------------------#
-CONFIG_JSON_PATH = os.path.join(os.path.dirname(__file__), "nexus_shared_config.json")
-
-def _is_https_url(url: Optional[str]) -> bool:
-    if not url or not isinstance(url, str):
-        return False
-    try:
-        p = urlparse(url)
-        return p.scheme == "https" and bool(p.netloc)
-    except Exception:
-        return False
-
-def _coalesce_env(*names: str, default: Optional[str] = None) -> Optional[str]:
-    for n in names:
-        v = os.getenv(n)
-        if v:
-            return v
-    return default
-
-# -----------------------------------------------------------------------------#
-# Secrets (multi-cloud) with TTL cache + overrides
-# -----------------------------------------------------------------------------#
-class SecretResolver:
-    """
-    Resolution order per logical name `name`:
-      1) overrides[name]
-      2) cloud secret via providers in order ['aws','azure','gcp'] using overrides:
-         - NEXUS_SECRET_<name> (secret id/key) + optional NEXUS_SECRET_<name>_FIELD (JSON field path)
-    """
-    def __init__(self, providers: List[str], overrides: Optional[Dict[str, str]] = None, ttl_seconds: int = 600):
-        prov = [p.strip().lower() for p in (providers or []) if p.strip()]
-        if not prov:
-            raise RuntimeError("SecretResolver requires at least one provider, e.g., ['aws']")
-        self.providers = prov
-        self.ov = overrides or {}
-        self.ttl = max(1, int(ttl_seconds))
-        self._cache: Dict[str, Optional[str]] = {}
-        self._ts: Dict[str, float] = {}
-        self._aws_sm = None
-        self._az_client_obj = None
-        self._gcp_sm = None
-
-    def get(self, name: str, default: Optional[str] = None) -> Optional[str]:
-        now = time.time()
-        try:
-            if name in self._cache and (now - self._ts.get(name, 0.0)) < self.ttl:
-                return self._cache[name]
-            # 1) Direct override
-            if name in self.ov and self.ov[name] is not None:
-                self._cache[name] = self.ov[name]; self._ts[name] = now
-                return self.ov[name]
-            # 2) Secret indirection
-            sid = self.ov.get(f"NEXUS_SECRET_{name}")
-            field = self.ov.get(f"NEXUS_SECRET_{name}_FIELD")
-            if sid:
-                for p in self.providers:
-                    try:
-                        if p == "aws":
-                            val = self._aws_get(sid, field)
-                        elif p == "azure":
-                            val = self._az_get(sid, field)
-                        elif p == "gcp":
-                            val = self._gcp_get(sid, field)
-                        else:
-                            continue
-                        if val:
-                            self._cache[name] = val; self._ts[name] = now
-                            return val
-                    except Exception as e:
-                        logger.error("secret resolve failed", extra={"provider": p, "name": name, "error": str(e)})
-            # 3) Default
-            self._cache[name] = default; self._ts[name] = now
-            return default
-        except Exception as e:
-            logger.error("secret resolve fatal", extra={"name": name, "error": str(e)})
-            return default
-
-    # --- AWS
-    def _aws_client(self):
-        if self._aws_sm is None:
-            try:
-                import boto3
-                self._aws_sm = boto3.client("secretsmanager")
-            except Exception as e:
-                raise RuntimeError(f"AWS Secrets Manager client init failed: {e}")
-        return self._aws_sm
-
-    def _aws_get(self, secret_id: str, field: Optional[str]) -> Optional[str]:
-        raw = self._aws_client().get_secret_value(SecretId=secret_id).get("SecretString")
-        return _json_field(raw, field) if raw is not None else None
-
-    # --- Azure
-    def _az_client(self):
-        if self._az_client_obj is None:
-            try:
-                from azure.identity import DefaultAzureCredential
-                from azure.keyvault.secrets import SecretClient
-                url = self.ov.get("AZURE_KEYVAULT_URL") or os.getenv("AZURE_KEYVAULT_URL")
-                if not url:
-                    raise RuntimeError("AZURE_KEYVAULT_URL required for Azure secret resolution")
-                self._az_client_obj = SecretClient(vault_url=url, credential=DefaultAzureCredential())
-            except Exception as e:
-                raise RuntimeError(f"Azure Key Vault client init failed: {e}")
-        return self._az_client_obj
-
-    def _az_get(self, name: str, field: Optional[str]) -> Optional[str]:
-        v = self._az_client().get_secret(name).value
-        return _json_field(v, field)
-
-    # --- GCP
-    def _gcp_client(self):
-        if self._gcp_sm is None:
-            try:
-                from google.cloud import secretmanager
-                self._gcp_sm = secretmanager.SecretManagerServiceClient()
-            except Exception as e:
-                raise RuntimeError(f"GCP Secret Manager client init failed: {e}")
-        return self._gcp_sm
-
-    def _gcp_get(self, secret_id: str, field: Optional[str]) -> Optional[str]:
-        client = self._gcp_client()
-        if "/" in secret_id:
-            name = f"{secret_id}/versions/latest" if "/versions/" not in secret_id else secret_id
-        else:
-            project = self.ov.get("GCP_PROJECT") or os.getenv("GCP_PROJECT")
-            if not project:
-                raise RuntimeError("GCP_PROJECT required for short secret ids")
-            name = f"projects/{project}/secrets/{secret_id}/versions/latest"
-        raw = client.access_secret_version(request={"name": name}).payload.data.decode("utf-8")
-        return _json_field(raw, field)
-
-def _json_field(raw: Optional[str], field: Optional[str]) -> Optional[str]:
-    if raw is None or not field:
-        return raw
-    try:
-        cur: Any = json.loads(raw)
-    except Exception:
-        return None
-    for part in field.split("."):
-        if isinstance(cur, dict) and part in cur:
-            cur = cur[part]
-        else:
-            return None
-    return cur if isinstance(cur, str) else json.dumps(cur)
-
-# -----------------------------------------------------------------------------#
-# Cloud pings (ANY connected cloud passes). Non-fatal; bounded calls.
-# -----------------------------------------------------------------------------#
-def ping_clouds() -> Dict[str, Dict[str, Any]]:
-    status: Dict[str, Dict[str, Any]] = {}
-
-    # AWS
-    try:
-        import boto3
-        sts = boto3.client("sts"); _ = sts.get_caller_identity()
-        s3  = boto3.client("s3");  _ = s3.list_buckets()
-        ec2 = boto3.client("ec2"); _ = ec2.describe_regions(AllRegions=False)
-        status["aws"] = {"connected": True, "services": ["sts", "s3", "ec2"]}
-    except Exception as e:
-        status["aws"] = {"connected": False, "error": str(e)}
-
-    # Azure
-    try:
-        from azure.storage.blob import BlobServiceClient
-        conn = _coalesce_env("AZURE_STORAGE_CONNECTION_STRING")
-        if conn:
-            svc = BlobServiceClient.from_connection_string(conn)
-            _ = svc.get_service_properties()
-            status["azure"] = {"connected": True, "services": ["blob"]}
-        else:
-            status["azure"] = {"connected": False, "error": "AZURE_STORAGE_CONNECTION_STRING not set"}
-    except Exception as e:
-        status["azure"] = {"connected": False, "error": str(e)}
-
-    # GCP
-    try:
-        from google.cloud import storage
-        client = storage.Client()
-        _ = list(client.list_buckets(page_size=1))
-        status["gcp"] = {"connected": True, "services": ["gcs"]}
-    except Exception as e:
-        status["gcp"] = {"connected": False, "error": str(e)}
-
-    return status
-
-# -----------------------------------------------------------------------------#
-# Wiring helpers (connectors + memory)
-# -----------------------------------------------------------------------------#
-def make_connectors(resolver: SecretResolver, timeout: int = 12, retries: int = 3) -> Dict[str, ModelConnector]:
-    """
-    Build model connectors from secrets/env. Enforces HTTPS endpoints and sets Authorization
-    only when a key/token is present (prevents sending 'Bearer None').
-    NOTE: If you prefer cloud delegates only, set require_any_connector=False in NexusConfig
-    and let the engine (delegate-aware) handle *_DELEGATE overrides.
-    """
-    api_key             = resolver.get("OPENAI_API_KEY") or _coalesce_env("OPENAI_API_KEY")
-    gpt_endpoint        = resolver.get("GPT_ENDPOINT") or _coalesce_env("GPT_ENDPOINT")
-    claude_endpoint     = resolver.get("CLAUDE_ENDPOINT") or _coalesce_env("CLAUDE_ENDPOINT")
-    gemini_endpoint     = resolver.get("GEMINI_ENDPOINT") or _coalesce_env("GEMINI_ENDPOINT")
-    perplexity_endpoint = resolver.get("PERPLEXITY_ENDPOINT") or _coalesce_env("PERPLEXITY_ENDPOINT")
-
-    conns: Dict[str, ModelConnector] = {}
-
-    def add(name: str, ep: Optional[str], key: Optional[str]):
-        if not ep:
-            return
-        if not _is_https_url(ep):
-            raise ValueError(f"Connector endpoint for {name} must be HTTPS: {ep}")
-        headers = {"Authorization": f"Bearer {key}"} if key else None
-        conns[name] = ModelConnector(name, ep, headers=headers, timeout=timeout, max_retries=retries)
-
-    add("ChatGPT",    gpt_endpoint,        api_key)
-    add("Claude",     claude_endpoint,     api_key)
-    add("Gemini",     gemini_endpoint,     api_key)
-    add("Perplexity", perplexity_endpoint, api_key)
-
-    return conns
-
-def make_memory(preferred: List[str], tf_outputs: Optional[Dict[str, Any]] = None) -> MultiMemoryStore:
-    """
-    Create a MultiMemoryStore with ordered providers. The first provider is the primary reader;
-    writes fan out to all stores.
-    """
-    stores: List[Any] = []
-    tf_outputs = tf_outputs or {}
-    for p in preferred or []:
-        pl = p.strip().lower()
-        if pl == "aws":
-            msg_tbl = tf_outputs.get("ddb_messages_table") or os.getenv("NEXUS_DDB_MESSAGES", "nexus_messages")
-            idx_tbl = tf_outputs.get("ddb_index_table")    or os.getenv("NEXUS_DDB_INDEX", "nexus_memindex")
-            stores.append(DynamoDBMemoryStore(msg_tbl, idx_tbl))
-        elif pl == "gcp":
-            fs_prefix = tf_outputs.get("fs_prefix") or os.getenv("NEXUS_FS_PREFIX", "nexus")
-            stores.append(FirestoreMemoryStore(fs_prefix))
-        elif pl == "azure":
-            container = tf_outputs.get("az_blob_container") or os.getenv("NEXUS_AZ_CONTAINER", "nexus-messages")
-            prefix    = tf_outputs.get("az_blob_prefix")    or os.getenv("NEXUS_AZ_PREFIX", "nexus")
-            conn      = tf_outputs.get("az_blob_connection_string") or os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-            stores.append(AzureBlobMemoryStore(container=container, prefix=prefix, connection_string=conn))
-        else:
-            raise RuntimeError(f"Unknown memory provider: {p}")
-    if not stores:
-        raise RuntimeError("No memory providers configured")
-    return MultiMemoryStore(stores)
-
-# -----------------------------------------------------------------------------#
-# Public bootstrap: the simple, opinionated entrypoint
-# -----------------------------------------------------------------------------#
-@dataclass
-class NexusConfig:
-    # Choose any subset in order of read priority; writes fan-out to all.
-    memory_providers: List[str] = field(default_factory=lambda: ["aws"])
-    # Secrets providers order + overrides
-    secret_providers: List[str] = field(default_factory=lambda: ["aws"])
-    secret_overrides: Dict[str, str] = field(default_factory=dict)
-    secret_ttl_seconds: int = 600
-    # Backups: list of targets (provider, bucket/container/vault, key, tier)
-    backup_targets: List[Dict[str, Any]] = field(default_factory=list)
-    backup_min_success: int = 1
-    # Optional path to terraform outputs JSON file
-    terraform_outputs_path: Optional[str] = None
-    # Engine options
-    encrypt: bool = True
-    http_timeout_seconds: int = 12
-    http_max_retries: int = 3
-    # Startup write test toggles
-    verify_memory_write: bool = True
-    memory_write_trials: int = 2
-    # Optional: require at least one connector present
-    require_any_connector: bool = True
-
-def bootstrap_from_preferences(cfg: NexusConfig) -> Tuple[Engine, Dict[str, Any]]:
-    """
-    Assemble the Engine and return (engine, health dict).
-    Raises on critical configuration issues (e.g., no connectors when required).
-    """
-    tf_out = load_terraform_outputs(cfg.terraform_outputs_path)
-
-    # Secrets
-    resolver = SecretResolver(cfg.secret_providers, cfg.secret_overrides, cfg.secret_ttl_seconds)
-
-    # Connectors
-    connectors = make_connectors(resolver, timeout=cfg.http_timeout_seconds, retries=cfg.http_max_retries)
-    if cfg.require_any_connector and not connectors:
-        raise RuntimeError("No model endpoints configured. Set GPT/Claude/Gemini/Perplexity endpoints in secrets/env.")
-
-    # Memory
-    memory = make_memory(cfg.memory_providers, tf_out)
-
-    # Cloud & memory health (non-fatal; collected for visibility)
-    clouds = ping_clouds()
-    try:
-        mem_health = [ping_memory_store(s) for s in memory.stores]
-    except Exception as e:
-        mem_health = [{"ok": False, "error": str(e)}]
-
-    write_ok, write_ids = (True, [])
-    if cfg.verify_memory_write:
-        try:
-            write_ok, write_ids = verify_memory_writes(memory.primary, "__nexus_ping__", trials=max(1, cfg.memory_write_trials))
-        except Exception as e:
-            write_ok, write_ids = (False, [])
-            logger.error("memory write verify failed", extra={"error": str(e)})
-
-    backup_report = None
-    test_path = os.getenv("NEXUS_BACKUP_TEST_FILE")
-    if cfg.backup_targets and test_path and os.path.isfile(test_path):
-        try:
-            backup_report = backup_to_targets(test_path, cfg.backup_targets, min_success=max(1, cfg.backup_min_success))
-            if not backup_report.get("ok"):
-                raise RuntimeError(f"Backup quorum failed: {backup_report}")
-        except Exception as e:
-            raise RuntimeError(f"Backup self-check failed: {e}")
-
-    # Engine
-    eng = Engine(
-        connectors=connectors,
-        memory_store=memory,
-        resolver_like=resolver,
-        encrypt=cfg.encrypt,
-    )
-
-    health = {
-        "clouds": clouds,
-        "memory": mem_health,
-        "memoryWriteOK": write_ok,
-        "memoryWriteIDs": write_ids,
-        "backupReport": backup_report,
-        "connectors": sorted(list(connectors.keys())),
+class ModelConnector:
+    """HTTP connector with pluggable 'adapters' to normalize request/response shapes."""
+    _ADAPTERS: Dict[str, Callable[["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str]], Tuple[str, Dict[str, Any]]]] = {}
+    _ALIASES: Dict[str, str] = {
+        "mistral.chat":"openai.chat",
+        "openrouter.chat":"openai.chat",
+        "together.chat":"openai.chat",
+        "groq.chat":"openai.chat",
+        "deepseek.chat":"openai.chat",
+        "perplexity.chat":"openai.chat",
+        "pplx.chat":"openai.chat",
+        "azure.openai.chat":"openai.chat",
+        "github.models":"openai.chat",
     }
-    return eng, health
 
-# -----------------------------------------------------------------------------#
-# Interactive Wizard (for Nexus + InfraOps + Log Analyzer)
-# -----------------------------------------------------------------------------#
-_REGION_RE = re.compile(r"^[a-z]{2}-[a-z]+-\d+$")  # e.g., us-east-1
+    def __init__(self, name: str, endpoint: str, headers: Optional[Dict[str, str]] = None,
+                 timeout: int = 12, max_retries: int = 3, adapter: str = "openai.chat"):
+        self.name = name
+        self.endpoint = endpoint
+        self.headers = headers or {}
+        self.timeout = int(timeout)
+        self.max_retries = int(max_retries)
+        self.adapter = (adapter or "openai.chat").lower()
 
-def _ask(prompt: str, default: Optional[str] = None, allow_blank: bool = False) -> str:
-    while True:
-        raw = input(f"{prompt}{f' [{default}]' if default else ''}: ").strip()
-        if not raw and default is not None:
-            return default
-        if raw or allow_blank:
-            return raw
-        print("Please enter a value.")
+    @classmethod
+    def register_adapter(cls, key: str, fn: Callable[["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str]], Tuple[str, Dict[str, Any]]]) -> None:
+        cls._ADAPTERS[key.lower()] = fn
 
-def _ask_int(prompt: str, *, min_value: Optional[int] = None, max_value: Optional[int] = None) -> int:
-    while True:
-        raw = input(f"{prompt}: ").strip()
+    @classmethod
+    def register_alias(cls, alias: str, target: str) -> None:
+        cls._ALIASES[alias.lower()] = target.lower()
+
+    def _resolve_adapter(self) -> str:
+        a = (self.adapter or "").lower()
+        return self._ALIASES.get(a, a)
+
+    def _post(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        last_err = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                r = requests.post(self.endpoint, json=payload, headers=self.headers, timeout=self.timeout)
+                if r.status_code >= 400:
+                    raise RuntimeError(f"{self.name} HTTP {r.status_code}: {r.text[:200]}")
+                try:
+                    return r.json()
+                except Exception:
+                    return {"text": r.text}
+            except Exception as e:
+                last_err = e
+                time.sleep(min(0.25 * attempt, 1.5))
+        raise RuntimeError(f"{self.name} request failed after {self.max_retries} retries: {last_err}")
+
+    def health_check(self) -> bool:
         try:
-            val = int(raw)
-            if min_value is not None and val < min_value:
-                print(f"Value must be ≥ {min_value}."); continue
-            if max_value is not None and val > max_value:
-                print(f"Value must be ≤ {max_value}."); continue
-            return val
+            r = requests.options(self.endpoint, headers=self.headers, timeout=min(self.timeout, 4))
+            return r.status_code >= 400
         except Exception:
-            print("Please enter a whole number.")
+            return True
 
-def _confirm(prompt: str, default: bool = True) -> bool:
-    suffix = "[Y/n]" if default else "[y/N]"
-    while True:
-        raw = input(f"{prompt} {suffix}: ").strip().lower()
-        if not raw: return default
-        if raw in ("y", "yes"): return True
-        if raw in ("n", "no"):  return False
-        print("Please enter y or n.")
+    def infer(self, prompt: str, *, history: Optional[List[Dict[str, str]]] = None, model_name: Optional[str] = None) -> Tuple[str, Dict[str, Any]]:
+        key = self._resolve_adapter()
+        fn = self._ADAPTERS.get(key) or self._ADAPTERS.get("generic.json")
+        return fn(self, prompt, history, model_name)  # (text, meta)
 
-def _ask_choice(prompt: str, options: List[str], multi: bool = False) -> List[str]:
-    print(prompt)
-    for i, opt in enumerate(options, 1):
-        print(f"  {i}) {opt}")
-    while True:
-        raw = input(f"Enter {'comma-separated numbers' if multi else 'a number'}: ").strip()
-        parts = [p.strip() for p in raw.split(",")] if multi else [raw]
-        try:
-            idxs = [int(p) for p in parts if p]
-            if not idxs: raise ValueError
-            if any(i < 1 or i > len(options) for i in idxs): raise ValueError
-            chosen = []
-            seen = set()
-            for i in idxs:
-                if options[i-1] not in seen:
-                    chosen.append(options[i-1]); seen.add(options[i-1])
-            return chosen
-        except Exception:
-            print("Invalid selection, try again.")
+# ---- adapters (unchanged from prior answer; trimmed for brevity) ----
 
-def _ask_https(prompt: str) -> str:
-    while True:
-        url = _ask(prompt)
-        if _is_https_url(url):
-            return url
-        print("Must be an https:// URL")
+def _first_str(d: Any, keys: Tuple[str, ...]) -> Optional[str]:
+    if isinstance(d, dict):
+        for k in keys:
+            v = d.get(k)
+            if isinstance(v, str) and v.strip():
+                return v
+    return None
 
-def _ask_region(default: str = "us-east-1") -> str:
-    while True:
-        r = _ask("AWS region", default=default)
-        if _REGION_RE.match(r): return r
-        print("Region should look like 'us-east-1'.")
+def _adapt_openai_chat(self: ModelConnector, prompt, history, model_name):
+    msgs = [{"role": m["role"], "content": m["content"]} for m in (history or []) if m.get("role") in {"system","user","assistant"} and "content" in m]
+    msgs.append({"role":"user","content":prompt})
+    payload = {"model": model_name or self.name, "messages": msgs, "temperature": 0.2}
+    data = self._post(payload)
+    text = ""
+    try:
+        text = data["choices"][0]["message"]["content"]
+    except Exception:
+        text = _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-def _ask_b64_key(prompt: str) -> str:
-    val = _ask(prompt + " (base64; 32 bytes) — press Enter to skip", allow_blank=True)
-    if not val: return ""
-    if not re.fullmatch(r"[A-Za-z0-9+/=]+", val):
-        print("That doesn't look like base64. Ignoring; engine will generate an ephemeral key.")
-        return ""
-    return val
+def _adapt_openai_responses(self: ModelConnector, prompt, history, model_name):
+    payload = {"model": model_name or self.name, "input":[{"role":"user","content":[{"type":"text","text":prompt}]}]}
+    data = self._post(payload)
+    text = data.get("output_text") or _first_str(data, ("text","answer","completion")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-def _configure_aws(overrides: Dict[str, str], shared: Dict[str, Any]) -> Tuple[List[str], List[Dict[str, Any]], Dict[str, str]]:
-    print("\nAWS configuration")
-    acct = _ask("AWS Account ID (optional)", allow_blank=True)
-    region = _ask_region()
-    ddb_table = _ask("DynamoDB table name for messages", default="nexus_messages")
-    ddb_index = _ask("DynamoDB GSI name for memory index", default="nexus_memindex")
-    cw_group  = _ask("CloudWatch Log Group for shared logs (InfraOps/Log Analyzer)", default="/aws/nexus/shared")
-    s3_backup = _ask("S3 bucket for backups/exports (optional)", allow_blank=True)
-    s3_prefix = _ask("S3 key prefix for backups (optional)", allow_blank=True) if s3_backup else ""
-
-    # Model calling mode
-    mode = _ask_choice("Model invocation mode on AWS?", ["Delegates (Lambda) — recommended", "Direct HTTPS endpoints (dev)"], multi=False)[0]
-    if mode.startswith("Delegates"):
-        gpt_fn   = _ask("Lambda for GPT (e.g., nexus-gpt-proxy)", allow_blank=True)
-        claude_fn= _ask("Lambda for Claude", allow_blank=True)
-        gemini_fn= _ask("Lambda for Gemini", allow_blank=True)
-        pplx_fn  = _ask("Lambda for Perplexity", allow_blank=True)
-        if gpt_fn:    overrides["NEXUS_SECRET_GPT_DELEGATE"]        = f"aws:lambda:{gpt_fn}@{region}"
-        if claude_fn: overrides["NEXUS_SECRET_CLAUDE_DELEGATE"]     = f"aws:lambda:{claude_fn}@{region}"
-        if gemini_fn: overrides["NEXUS_SECRET_GEMINI_DELEGATE"]     = f"aws:lambda:{gemini_fn}@{region}"
-        if pplx_fn:   overrides["NEXUS_SECRET_PERPLEXITY_DELEGATE"] = f"aws:lambda:{pplx_fn}@{region}"
-        shared["prefer_delegates"] = True
+def _adapt_anthropic_messages(self: ModelConnector, prompt, history, model_name):
+    msgs = [{"role": m["role"], "content": m["content"]} for m in (history or []) if m.get("role") in {"user","assistant"} and "content" in m]
+    if not msgs or msgs[-1]["role"] != "user":
+        msgs.append({"role":"user","content":prompt})
+    payload = {"model": model_name or self.name, "messages": msgs, "max_tokens": 512, "temperature": 0.2}
+    data = self._post(payload)
+    parts = data.get("content")
+    if isinstance(parts, list) and parts and isinstance(parts[0], dict) and "text" in parts[0]:
+        text = parts[0]["text"]
     else:
-        # Endpoints + secret IDs (NOT keys)
-        if _confirm("Configure GPT endpoint?", True):
-            overrides["GPT_ENDPOINT"] = _ask_https("GPT HTTPS endpoint")
-            overrides["NEXUS_SECRET_OPENAI_API_KEY"] = _ask("Secret ID for OpenAI API key (AWS SM)")
-            field = _ask("Optional JSON field path in secret (e.g., apiKey)", allow_blank=True)
-            if field: overrides["NEXUS_SECRET_OPENAI_API_KEY_FIELD"] = field
-        if _confirm("Configure Claude endpoint?", False):
-            overrides["CLAUDE_ENDPOINT"] = _ask_https("Claude HTTPS endpoint")
-            overrides["NEXUS_SECRET_ANTHROPIC_API_KEY"] = _ask("Secret ID for Anthropic API key (AWS SM)")
-        if _confirm("Configure Gemini endpoint?", False):
-            overrides["GEMINI_ENDPOINT"] = _ask_https("Gemini HTTPS endpoint")
-            overrides["NEXUS_SECRET_GOOGLE_API_KEY"] = _ask("Secret ID for Google API key (AWS SM)")
-        if _confirm("Configure Perplexity endpoint?", False):
-            overrides["PERPLEXITY_ENDPOINT"] = _ask_https("Perplexity HTTPS endpoint")
-            overrides["NEXUS_SECRET_PERPLEXITY_API_KEY"] = _ask("Secret ID for Perplexity API key (AWS SM)")
-        shared["prefer_delegates"] = shared.get("prefer_delegates", False)
+        text = data.get("text") or _first_str(data, ("answer","completion","output","text")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-    # Memory env (for runtime)
-    os.environ["NEXUS_DDB_MESSAGES"] = ddb_table
-    os.environ["NEXUS_DDB_INDEX"] = ddb_index
+def _adapt_gemini_generate(self: ModelConnector, prompt, history, model_name):
+    contents = [{"role":"user","parts":[{"text":prompt}]}]
+    payload = {"model": model_name or self.name, "contents": contents, "generationConfig":{"temperature":0.2}}
+    data = self._post(payload)
+    try:
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception:
+        text = _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-    # Shared logging & backups (for InfraOps & Log Analyzer)
-    shared.setdefault("logs", {})["aws"] = {"account": acct, "region": region, "cloudwatch_group": cw_group}
-    backups: List[Dict[str, Any]] = []
-    if s3_backup:
-        backups.append({"provider": "aws", "bucket": s3_backup, "key": s3_prefix or "backups/", "tier": "STANDARD"})
+def _adapt_cohere_chat(self: ModelConnector, prompt, history, model_name):
+    chat_hist=[]
+    for m in (history or []):
+        r,c=m.get("role"),m.get("content")
+        if r in {"USER","user"}: chat_hist.append({"role":"USER","message":c})
+        elif r in {"CHATBOT","assistant"}: chat_hist.append({"role":"CHATBOT","message":c})
+    payload={"model":model_name or self.name,"message":prompt,"chat_history":chat_hist}
+    data=self._post(payload)
+    text=data.get("text") or data.get("reply") or data.get("answer") or json.dumps(data)[:1000]
+    return text, {"usage": data.get("meta") or data.get("usage")}
 
-    # Encryption key (optional)
-    data_key_b64 = _ask_b64_key("Encryption data key for at-rest (optional)")
-    if data_key_b64:
-        overrides["NEXUS_DATA_KEY_B64"] = data_key_b64
+def _adapt_cohere_generate(self: ModelConnector, prompt, history, model_name):
+    payload={"model":model_name or self.name,"prompt":prompt}
+    data=self._post(payload)
+    try:
+        text=data["generations"][0]["text"]
+    except Exception:
+        text=_first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("meta") or data.get("usage")}
 
-    providers = ["aws"]
-    return providers, backups, overrides
-
-def _configure_gcp(overrides: Dict[str, str], shared: Dict[str, Any]) -> Tuple[List[str], List[Dict[str, Any]], Dict[str, str]]:
-    print("\nGCP configuration")
-    project = _ask("GCP Project ID")
-    region  = _ask("Preferred GCP region", default="us-central1")
-    fs_prefix = _ask("Firestore prefix for memory", default="nexus")
-    log_sink  = _ask("GCP Logging sink name for shared logs (optional)", allow_blank=True)
-    gcs_bucket= _ask("GCS bucket for backups/exports (optional)", allow_blank=True)
-    gcs_prefix= _ask("GCS prefix for backups (optional)", allow_blank=True) if gcs_bucket else ""
-
-    mode = _ask_choice("Model invocation mode on GCP?", ["Delegates (Cloud Run) — recommended", "Direct HTTPS endpoints (dev)"], multi=False)[0]
-    if mode.startswith("Delegates"):
-        gemini_url = _ask_https("Cloud Run URL for Gemini delegate") if _confirm("Configure Gemini delegate?", True) else ""
-        gpt_url    = _ask_https("Cloud Run URL for GPT delegate") if _confirm("Configure GPT delegate?", False) else ""
-        pplx_url   = _ask_https("Cloud Run URL for Perplexity delegate") if _confirm("Configure Perplexity delegate?", False) else ""
-        if gemini_url: overrides["NEXUS_SECRET_GEMINI_DELEGATE"] = f"gcp:run:{gemini_url}"
-        if gpt_url:    overrides["NEXUS_SECRET_GPT_DELEGATE"]    = f"gcp:run:{gpt_url}"
-        if pplx_url:   overrides["NEXUS_SECRET_PERPLEXITY_DELEGATE"] = f"gcp:run:{pplx_url}"
-        shared["prefer_delegates"] = True
+def _adapt_tgi_generate(self: ModelConnector, prompt, history, model_name):
+    payload={"inputs":prompt,"parameters":{"temperature":0.2}}
+    data=self._post(payload)
+    if isinstance(data, dict):
+        text = data.get("generated_text") or _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    elif isinstance(data, list) and data:
+        text = data[0].get("generated_text") or json.dumps(data[0])[:1000]
     else:
-        if _confirm("Configure Gemini endpoint?", True):
-            overrides["GEMINI_ENDPOINT"] = _ask_https("Gemini HTTPS endpoint")
-            overrides["NEXUS_SECRET_GOOGLE_API_KEY"] = _ask("Secret ID for Google API key (GCP SM)")
-        if _confirm("Configure GPT endpoint?", False):
-            overrides["GPT_ENDPOINT"] = _ask_https("GPT HTTPS endpoint")
-            overrides["NEXUS_SECRET_OPENAI_API_KEY"] = _ask("Secret ID for OpenAI API key (GCP SM)")
-        if _confirm("Configure Perplexity endpoint?", False):
-            overrides["PERPLEXITY_ENDPOINT"] = _ask_https("Perplexity HTTPS endpoint")
-            overrides["NEXUS_SECRET_PERPLEXITY_API_KEY"] = _ask("Secret ID for Perplexity API key (GCP SM)")
-        shared["prefer_delegates"] = shared.get("prefer_delegates", False)
+        text = json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-    overrides["GCP_PROJECT"] = project
-    os.environ["NEXUS_FS_PREFIX"] = fs_prefix
+def _adapt_generic_json(self: ModelConnector, prompt, history, model_name):
+    payload={"model":model_name or self.name,"prompt":prompt,"history":history or []}
+    data=self._post(payload)
+    text=_first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    return text, {"usage": data.get("usage")}
 
-    shared.setdefault("logs", {})["gcp"] = {"project": project, "region": region, "sink": log_sink}
-    backups: List[Dict[str, Any]] = []
-    if gcs_bucket:
-        backups.append({"provider": "gcp", "bucket": gcs_bucket, "key": gcs_prefix or "backups/", "tier": "STANDARD"})
+ModelConnector.register_adapter("openai.chat", _adapt_openai_chat)
+ModelConnector.register_adapter("openai.responses", _adapt_openai_responses)
+ModelConnector.register_adapter("anthropic.messages", _adapt_anthropic_messages)
+ModelConnector.register_adapter("gemini.generate", _adapt_gemini_generate)
+ModelConnector.register_adapter("cohere.chat", _adapt_cohere_chat)
+ModelConnector.register_adapter("cohere.generate", _adapt_cohere_generate)
+ModelConnector.register_adapter("tgi.generate", _adapt_tgi_generate)
+ModelConnector.register_adapter("generic.json", _adapt_generic_json)
 
-    data_key_b64 = _ask_b64_key("Encryption data key for at-rest (optional)")
-    if data_key_b64:
-        overrides["NEXUS_DATA_KEY_B64"] = data_key_b64
+# =============================
+# Web retrieval (+ BeautifulSoup enrichment)
+# =============================
 
-    providers = ["gcp"]
-    return providers, backups, overrides
+def _is_https(url: str) -> bool:
+    try:
+        p = urlparse(url); return p.scheme == "https" and bool(p.netloc)
+    except Exception: return False
 
-def _configure_azure(overrides: Dict[str, str], shared: Dict[str, Any]) -> Tuple[List[str], List[Dict[str, Any]], Dict[str, str]]:
-    print("\nAzure configuration")
-    kv_url  = _ask_https("Azure Key Vault URL (e.g., https://YOUR-VAULT.vault.azure.net)")
-    az_cont = _ask("Azure Blob container for memory", default="nexus-messages")
-    az_pref = _ask("Azure Blob prefix for memory", default="nexus")
-    la_ws   = _ask("Log Analytics workspace ID for shared logs (optional)", allow_blank=True)
-    sa_conn = _ask("Azure Storage connection string (for Blob) — optional", allow_blank=True)
-    bak_cont= _ask("Azure Blob container for backups (optional)", allow_blank=True)
-    bak_pref= _ask("Backups prefix (optional)", allow_blank=True) if bak_cont else ""
+@dataclass
+class WebSource:
+    url: str
+    title: Optional[str] = None
+    snippet: Optional[str] = None
+    image: Optional[str] = None
+    score: Optional[float] = None
 
-    mode = _ask_choice("Model invocation mode on Azure?", ["Delegates (Function/APIM) — recommended", "Direct HTTPS endpoints (dev)"], multi=False)[0]
-    if mode.startswith("Delegates"):
-        claude_fn = _ask_https("Function URL for Claude delegate") if _confirm("Configure Claude delegate?", True) else ""
-        gpt_fn    = _ask_https("Function URL for GPT delegate") if _confirm("Configure GPT delegate?", False) else ""
-        gemini_fn = _ask_https("Function URL for Gemini delegate") if _confirm("Configure Gemini delegate?", False) else ""
-        if claude_fn: overrides["NEXUS_SECRET_CLAUDE_DELEGATE"] = f"azure:function:{claude_fn}"
-        if gpt_fn:    overrides["NEXUS_SECRET_GPT_DELEGATE"]    = f"azure:function:{gpt_fn}"
-        if gemini_fn: overrides["NEXUS_SECRET_GEMINI_DELEGATE"] = f"azure:function:{gemini_fn}"
-        shared["prefer_delegates"] = True
-    else:
-        if _confirm("Configure Claude endpoint?", True):
-            overrides["CLAUDE_ENDPOINT"] = _ask_https("Claude HTTPS endpoint")
-            overrides["NEXUS_SECRET_ANTHROPIC_API_KEY"] = _ask("Secret ID for Anthropic API key (Key Vault name)")
-        if _confirm("Configure GPT endpoint?", False):
-            overrides["GPT_ENDPOINT"] = _ask_https("GPT HTTPS endpoint")
-            overrides["NEXUS_SECRET_OPENAI_API_KEY"] = _ask("Secret ID for OpenAI API key (Key Vault name)")
-        if _confirm("Configure Gemini endpoint?", False):
-            overrides["GEMINI_ENDPOINT"] = _ask_https("Gemini HTTPS endpoint")
-            overrides["NEXUS_SECRET_GOOGLE_API_KEY"] = _ask("Secret ID for Google API key (Key Vault name)")
-        shared["prefer_delegates"] = shared.get("prefer_delegates", False)
+class SearchProvider:
+    name: str = "base"
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        raise NotImplementedError
 
-    overrides["AZURE_KEYVAULT_URL"] = kv_url
-    os.environ["NEXUS_AZ_CONTAINER"] = az_cont
-    os.environ["NEXUS_AZ_PREFIX"] = az_pref
-    if sa_conn:
-        os.environ["AZURE_STORAGE_CONNECTION_STRING"] = sa_conn
+class GenericJSONSearch(SearchProvider):
+    name = "generic.json"
+    def __init__(self, endpoint: str, headers: Optional[Dict[str,str]] = None, timeout: int = 10):
+        if not _is_https(endpoint):
+            raise ValueError("Search endpoint must be HTTPS")
+        self.endpoint, self.headers, self.timeout = endpoint, (headers or {}), int(timeout)
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        r = requests.post(self.endpoint, json={"q": query, "k": int(k), "images": bool(images)},
+                          headers=self.headers, timeout=self.timeout)
+        r.raise_for_status()
+        data = r.json() if r.headers.get("content-type","").startswith("application/json") else {}
+        out=[]
+        for it in data.get("results", []):
+            u = it.get("url")
+            if isinstance(u, str) and _is_https(u):
+                out.append(WebSource(url=u, title=it.get("title"), snippet=it.get("snippet"),
+                                     image=(it.get("image") if images else None), score=it.get("score")))
+        return out[:k]
 
-    shared.setdefault("logs", {})["azure"] = {"key_vault": kv_url, "log_analytics_workspace": la_ws}
-    backups: List[Dict[str, Any]] = []
-    if bak_cont:
-        backups.append({"provider": "azure", "container": bak_cont, "key": bak_pref or "backups/", "tier": "Hot"})
+class TavilySearch(SearchProvider):
+    name = "tavily"
+    def __init__(self, api_key: str, timeout: int = 10):
+        self.api_key, self.timeout = api_key, int(timeout)
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        url = "https://api.tavily.com/search"
+        payload = {"api_key": self.api_key, "query": query, "max_results": int(k), "include_images": bool(images)}
+        r = requests.post(url, json=payload, timeout=self.timeout); r.raise_for_status()
+        data = r.json(); out=[]
+        for it in data.get("results", []):
+            u = it.get("url")
+            if isinstance(u, str) and _is_https(u):
+                out.append(WebSource(url=u, title=it.get("title"), snippet=it.get("content"), image=it.get("image")))
+        return out[:k]
 
-    data_key_b64 = _ask_b64_key("Encryption data key for at-rest (optional)")
-    if data_key_b64:
-        overrides["NEXUS_DATA_KEY_B64"] = data_key_b64
+class BingWebSearch(SearchProvider):
+    name = "bing"
+    def __init__(self, api_key: str, timeout: int = 10):
+        self.api_key, self.timeout = api_key, int(timeout)
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        url = f"https://api.bing.microsoft.com/v7.0/search?q={requests.utils.quote(query)}&count={int(k)}"
+        r = requests.get(url, headers={"Ocp-Apim-Subscription-Key": self.api_key}, timeout=self.timeout)
+        r.raise_for_status(); data = r.json()
+        items = (data.get("webPages") or {}).get("value", []); out=[]
+        for it in items:
+            u = it.get("url")
+            if isinstance(u, str) and _is_https(u):
+                out.append(WebSource(url=u, title=it.get("name"), snippet=it.get("snippet")))
+        if images:
+            iu = f"https://api.bing.microsoft.com/v7.0/images/search?q={requests.utils.quote(query)}&count={int(k)}"
+            ir = requests.get(iu, headers={"Ocp-Apim-Subscription-Key": self.api_key}, timeout=self.timeout)
+            if ir.ok:
+                idata = ir.json()
+                for i in (idata.get("value") or [])[:k]:
+                    cu = i.get("contentUrl"); hp = i.get("hostPageUrl")
+                    if isinstance(cu, str) and _is_https(cu) and isinstance(hp, str) and _is_https(hp):
+                        out.append(WebSource(url=hp, title=i.get("name"), image=cu))
+        return out[:max(k, len(out))]
 
-    providers = ["azure"]
-    return providers, backups, overrides
+# NEW: Google Custom Search
+class GoogleCSESearch(SearchProvider):
+    name = "google.cse"
+    def __init__(self, api_key: str, cx: str, timeout: int = 10):
+        self.key, self.cx, self.timeout = api_key, cx, int(timeout)
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        base = "https://www.googleapis.com/customsearch/v1"
+        params = {"key": self.key, "cx": self.cx, "q": query, "num": int(min(10, k))}
+        r = requests.get(base, params=params, timeout=self.timeout); r.raise_for_status()
+        data = r.json(); out=[]
+        for it in data.get("items", [])[:k]:
+            link = it.get("link")
+            if isinstance(link, str) and _is_https(link):
+                out.append(WebSource(url=link, title=it.get("title"), snippet=it.get("snippet")))
+        if images:
+            params_img = {"key": self.key, "cx": self.cx, "q": query, "searchType":"image", "num": int(min(10, k))}
+            ir = requests.get(base, params=params_img, timeout=self.timeout)
+            if ir.ok:
+                idata = ir.json()
+                for i in idata.get("items", [])[:k]:
+                    link = i.get("image", {}).get("contextLink") or i.get("link")
+                    if isinstance(link, str) and _is_https(link):
+                        out.append(WebSource(url=link, title=i.get("title"), image=i.get("link")))
+        return out[:max(k, len(out))]
 
-def run_setup_wizard() -> NexusConfig:
-    print("Welcome to the Nexus setup wizard.\n")
-    # Age gate
-    name = _ask("What is your name")
-    age  = _ask_int("What is your age", min_value=0)
-    if age < 10:
-        print(f"Sorry {name}, you must be 10 or older to use this system.")
-        raise SystemExit(1)
-    print(f"Hi {name}! Let's configure your shared cloud infrastructure for Nexus, InfraOps, and Log Analyzer.\n")
-
-    # Choose clouds
-    clouds = _ask_choice("Which cloud provider(s) will you use? (multi-select)", ["AWS", "Azure", "GCP"], multi=True)
-
-    # Base collections
-    overrides: Dict[str, str] = {}
-    secret_providers: List[str] = []
-    memory_providers: List[str] = []
-    backup_targets: List[Dict[str, Any]] = []
-    shared: Dict[str, Any] = {"apps": ["Nexus", "InfraOps", "LogAnalyzer"]}
-
-    # Configure per-cloud
-    for c in clouds:
-        if c == "AWS":
-            prov, backs, overrides = _configure_aws(overrides, shared)
-            secret_providers += prov; memory_providers += prov; backup_targets += backs
-        elif c == "GCP":
-            prov, backs, overrides = _configure_gcp(overrides, shared)
-            secret_providers += prov; memory_providers += prov; backup_targets += backs
-        elif c == "Azure":
-            prov, backs, overrides = _configure_azure(overrides, shared)
-            secret_providers += prov; memory_providers += prov; backup_targets += backs
-
-    # De-duplicate while preserving order
-    def _uniq(seq: List[str]) -> List[str]:
-        seen, out = set(), []
-        for s in seq:
-            if s not in seen:
-                seen.add(s); out.append(s)
+# NEW: DuckDuckGo (HTML) via BeautifulSoup parsing
+class DuckDuckGoHTMLSearch(SearchProvider):
+    name = "duckduckgo.html"
+    UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
+    def __init__(self, timeout: int = 10):
+        self.timeout = int(timeout)
+    def search(self, query: str, *, k: int = 5, images: bool = False) -> List[WebSource]:
+        # Lightweight HTML endpoint; parses titles/links/snippets.
+        url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
+        r = requests.get(url, headers={"User-Agent": self.UA}, timeout=self.timeout)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+        out: List[WebSource] = []
+        for res in soup.select("div.result"):
+            a = res.select_one("a.result__a")
+            if not a: 
+                a = res.find("a", attrs={"class": lambda c: c and "result__a" in c})
+            if not a or not a.get("href"):
+                continue
+            href = a.get("href")
+            if not isinstance(href, str) or not href.startswith("http"):
+                continue
+            # DDG may include non-https; filter to https
+            if not _is_https(href):
+                continue
+            title = a.get_text(" ", strip=True)
+            sn = res.select_one("a.result__snippet") or res.select_one("div.result__snippet")
+            snippet = sn.get_text(" ", strip=True) if sn else None
+            out.append(WebSource(url=href, title=title, snippet=snippet))
+            if len(out) >= k:
+                break
+        # Images: we do not use DDG images endpoint here; scraper (below) will pull og:image
         return out
 
-    secret_providers = _uniq([p.lower() for p in secret_providers]) or ["aws", "azure", "gcp"]
-    memory_providers = _uniq([p.lower() for p in memory_providers]) or ["aws"]
+# NEW: Minimal HTML scraper to enrich + verify
+class HtmlScraper:
+    UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
+    def __init__(self, timeout: int = 8):
+        self.timeout = int(timeout)
 
-    # Shared knobs
-    ttl_sec = _ask_int("Secret cache TTL (seconds)", min_value=60)
-    run_health = _confirm("Run health checks at startup?", False)
-    require_connectors = not shared.get("prefer_delegates", False)  # if delegates, allow engine to provide connectors
+    def enrich(self, src: WebSource) -> WebSource:
+        try:
+            r = requests.get(src.url, headers={"User-Agent": self.UA}, timeout=self.timeout)
+            if not r.ok:
+                return src
+            soup = BeautifulSoup(r.text, "html.parser")
+            # title
+            title = src.title or (soup.title.get_text(strip=True) if soup.title else None)
+            # description
+            meta_desc = soup.find("meta", attrs={"name":"description"}) or soup.find("meta", attrs={"property":"og:description"})
+            desc = src.snippet or (meta_desc.get("content").strip() if meta_desc and meta_desc.get("content") else None)
+            if not desc:
+                # fall back to first meaningful paragraph
+                p = soup.find("p")
+                if p:
+                    desc = p.get_text(" ", strip=True)
+            # image
+            og_img = soup.find("meta", attrs={"property":"og:image"}) or soup.find("meta", attrs={"name":"og:image"})
+            image = src.image or (og_img.get("content") if og_img and og_img.get("content") else None)
+            return WebSource(url=src.url, title=title, snippet=desc, image=image, score=src.score)
+        except Exception:
+            return src
 
-    cfg = NexusConfig(
-        memory_providers=memory_providers,
-        secret_providers=secret_providers,
-        secret_overrides=overrides,
-        secret_ttl_seconds=ttl_sec,
-        backup_targets=backup_targets,
-        backup_min_success=1 if backup_targets else 0,
-        terraform_outputs_path=None,
-        encrypt=True,
-        http_timeout_seconds=12,
-        http_max_retries=3,
-        verify_memory_write=True,
-        memory_write_trials=2,
-        require_any_connector=require_connectors,
-    )
+# Retriever orchestrator
+class WebRetriever:
+    def __init__(self, providers: List[SearchProvider], scraper: Optional[HtmlScraper] = None):
+        if not providers: raise RuntimeError("At least one search provider is required")
+        self.providers = providers
+        self.scraper = scraper
+    def search_all(self, query: str, *, k_per_provider: int = 5, want_images: bool = False, max_total: int = 12) -> List[WebSource]:
+        results: List[WebSource] = []
+        with ThreadPoolExecutor(max_workers=min(8, len(self.providers))) as pool:
+            futs = [pool.submit(p.search, query, k=k_per_provider, images=want_images) for p in self.providers]
+            for f in as_completed(futs):
+                try: results.extend(f.result() or [])
+                except Exception as e: log.warning("search provider failed: %s", e)
+        # de-dup & enrich
+        uniq: List[WebSource] = []
+        seen = set()
+        for s in results:
+            if s.url not in seen:
+                seen.add(s.url)
+                uniq.append(self.scraper.enrich(s) if self.scraper else s)
+        return uniq[:max_total]
 
-    # Persist a shared JSON for other apps (InfraOps/Log Analyzer)
-    shared_json = {
-        "owner": {"name": name, "age_ok": True},
-        "secret_providers": secret_providers,
-        "memory_providers": memory_providers,
-        "secret_overrides": overrides,   # contains delegate specs and non-secret context (no API keys)
-        "backups": backup_targets,
-        "logs": shared.get("logs", {}),
-        "prefer_delegates": shared.get("prefer_delegates", False),
-    }
-    try:
-        with open(CONFIG_JSON_PATH, "w", encoding="utf-8") as f:
-            json.dump(shared_json, f, indent=2)
-        print(f"\nSaved shared config: {CONFIG_JSON_PATH}")
-    except Exception as e:
-        logger.error("failed to write shared config", extra={"error": str(e)})
+# =============================
+# Result Policies (unchanged)
+# =============================
 
-    return cfg
+class ResultPolicy:
+    name: str = "base"
+    def aggregate(self, prompt: str, *, answers: Dict[str, str], latencies: Dict[str, float],
+                  errors: Dict[str, str], metas: Dict[str, Dict[str, Any]],
+                  context: Optional[List[Dict[str, str]]] = None, params: Optional[Dict[str, Any]] = None
+                  ) -> Dict[str, Any]:
+        raise NotImplementedError
 
-# -----------------------------------------------------------------------------#
-# CLI bootstrap
-# -----------------------------------------------------------------------------#
-if __name__ == "__main__":
-    # Run the wizard by default for simpler onboarding; set NEXUS_WIZARD=0 to skip.
-    if os.getenv("NEXUS_WIZARD", "1") == "1":
-        cfg = run_setup_wizard()
-    else:
-        # Non-interactive fallback (single-cloud AWS quick bootstrap)
-        cfg = NexusConfig(
-            memory_providers=[os.getenv("NEXUS_MEM", "aws")],
-            secret_providers=[os.getenv("NEXUS_SECRETS", "aws")],
-            secret_overrides={},
-            backup_targets=[],
-            verify_memory_write=(os.getenv("NEXUS_VERIFY_WRITE", "1") != "0"),
+class FastestPolicy(ResultPolicy):
+    name = "fastest"
+    def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
+        if not answers: return {"result":"", "winner":None, "policy":self.name, "reason":"no answer"}
+        winner = min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
+        return {"result": answers[winner], "winner": winner, "policy": self.name}
+
+class ConsensusSimplePolicy(ResultPolicy):
+    name = "consensus.simple"
+    @staticmethod
+    def _tokset(s: str) -> set: return set((s or "").lower().split())
+    @staticmethod
+    def _jac(a: set, b: set) -> float:
+        if not a and not b: return 0.0
+        return len(a & b) / float(len(a | b) or 1)
+    def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
+        if not answers: return {"result":"", "winner":None, "policy":self.name, "reason":"no answer"}
+        toks = {k: self._tokset(v) for k, v in answers.items()}
+        scores = {}
+        for k in answers.keys():
+            others = [self._jac(toks[k], toks[o]) for o in toks.keys() if o != k]
+            scores[k] = sum(others)/len(others) if others else 0.0
+        winner = max(scores, key=scores.get)
+        return {"result": answers[winner], "winner": winner, "policy": self.name}
+
+_POLICIES: Dict[str, ResultPolicy] = {
+    FastestPolicy.name: FastestPolicy(),
+    ConsensusSimplePolicy.name: ConsensusSimplePolicy(),
+}
+def get_policy(name: Optional[str]) -> ResultPolicy:
+    return _POLICIES.get((name or "").lower(), _POLICIES["consensus.simple"])
+
+# =============================
+# Config + helpers
+# =============================
+
+@dataclass
+class EngineConfig:
+    max_context_messages: int = 8
+    max_parallel: Optional[int] = None
+    default_policy: str = os.getenv("NEXUS_RESULT_POLICY", "consensus.simple")
+    min_sources_required: int = max(1, int(os.getenv("NEXUS_MIN_SOURCES", "2")))
+    search_k_per_provider: int = 5
+    search_max_total: int = 12
+    scrape_timeout: int = 8
+
+_CODE_RE = re.compile(r"```(?P<lang>[a-zA-Z0-9_\-+. ]*)\n(?P<body>[\s\S]*?)```", re.MULTILINE)
+
+def _extract_code_blocks(text: str) -> List[Dict[str, str]]:
+    blocks: List[Dict[str, str]] = []
+    for m in _CODE_RE.finditer(text or ""):
+        lang = (m.group("lang") or "").strip() or None
+        body = (m.group("body") or "").strip()
+        if body: blocks.append({"language": lang, "code": body})
+    return blocks
+
+_STOP = set("""
+a an the and or but if while then of in on for with without about across against between into through during before after above below to from up down under over again further
+is are was were be been being do does did doing have has had having i you he she it we they them me my your our their this that these those as at by can could should would will may might
+""".split())
+
+def _keywords(s: str, k: int = 24) -> List[str]:
+    toks = re.findall(r"[A-Za-z0-9_]{3,}", (s or "").lower())
+    toks = [t for t in toks if t not in _STOP]
+    # keep top-K unique in order of appearance
+    seen, out = set(), []
+    for t in toks:
+        if t not in seen:
+            seen.add(t); out.append(t)
+        if len(out) >= k:
+            break
+    return out
+
+def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[str]) -> float:
+    if not (title or snippet):
+        return 0.0
+    keys = _keywords(answer_text)
+    hay = f"{title or ''} {snippet or ''}".lower()
+    matches = sum(1 for k in keys if k in hay)
+    return matches / float(max(1, len(keys)))
+
+# =============================
+# Engine — strict schema output (+ scrape/verify)
+# =============================
+
+class Engine:
+    """
+    Returns payload with ALL non-optional keys:
+      {
+        "answer": str,
+        "winner": str,
+        "participants": [str, ...],
+        "code": [ {language, code}, ... ],
+        "sources": [ {url, title, snippet}, ... ],  # verified >= min_sources_required
+        "photos": [ {url, caption}, ... ]
+      }
+    """
+    def __init__(self, connectors: Dict[str, ModelConnector], *,
+                 memory=None, web: WebRetriever, config: Optional[EngineConfig] = None):
+        if not connectors:
+            raise RuntimeError("No connectors configured.")
+        if web is None:
+            raise RuntimeError("WebRetriever is required (verification sources are mandatory).")
+        self.connectors = connectors
+        self.memory = memory
+        self.web = web
+        self.config = config or EngineConfig()
+        if self.config.max_parallel is None:
+            self.config.max_parallel = min(16, max(1, len(connectors)))
+        self.scraper = HtmlScraper(timeout=self.config.scrape_timeout)
+
+    def _history_for(self, session_id: str) -> List[Dict[str, str]]:
+        try:
+            if not self.memory: return []
+            msgs = self.memory.recent(session_id, limit=self.config.max_context_messages)
+            out=[]
+            for m in msgs:
+                r,t=m.get("role"),m.get("text")
+                if r in {"system","user","assistant"} and isinstance(t,str):
+                    out.append({"role": r, "content": t})
+            return out
+        except Exception:
+            return []
+
+    def _infer_one(self, name: str, conn: ModelConnector, prompt: str, history: List[Dict[str, str]]) -> Tuple[str, str, float]:
+        t0 = time.time()
+        try:
+            text, _meta = conn.infer(prompt, history=history, model_name=name)
+            return name, text, round(time.time()-t0, 3)
+        except Exception:
+            return name, "", round(time.time()-t0, 3)
+
+    def _collect_sources(self, queries: List[str], *, want_images: bool, k_per_provider: int, max_total: int) -> List[WebSource]:
+        results: List[WebSource] = []
+        for q in queries:
+            if len(results) >= max_total: break
+            try:
+                batch = self.web.search_all(q, k_per_provider=k_per_provider, want_images=want_images, max_total=max_total)
+                seen = {s.url for s in results}
+                for s in batch:
+                    if s.url not in seen:
+                        # ensure enriched via scraper (in case retriever had no scraper)
+                        results.append(self.scraper.enrich(s))
+                        seen.add(s.url)
+            except Exception as e:
+                log.warning("web search failed: %s", e)
+        return results[:max_total]
+
+    def _rank_and_verify(self, answer_text: str, sources: List[WebSource], need: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        # Score by evidence overlap (title+snippet vs answer keywords)
+        scored: List[Tuple[float, WebSource]] = []
+        for s in sources:
+            sc = _evidence_score(answer_text, s.title, s.snippet)
+            scored.append((sc, s))
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        web_refs: List[Dict[str, Any]] = []
+        photos: List[Dict[str, Any]] = []
+        for sc, s in scored:
+            if s.url and (s.title or s.snippet):
+                web_refs.append({"url": s.url, "title": s.title, "snippet": s.snippet})
+                if s.image:
+                    photos.append({"url": s.image, "caption": s.title})
+            if len(web_refs) >= need:
+                break
+        return web_refs, photos
+
+    def run(self, session_id: str, query: str, *,
+            policy_name: Optional[str] = None,
+            want_photos: bool = False) -> Dict[str, Any]:
+
+        if self.memory:
+            try: self.memory.save(session_id, "user", query, {"ephemeral": False})
+            except Exception: log.warning("memory save failed", exc_info=True)
+
+        history = self._history_for(session_id)
+        participants = list(self.connectors.keys())
+
+        # 1) Run models
+        answers: Dict[str, str] = {}
+        latencies: Dict[str, float] = {}
+        with ThreadPoolExecutor(max_workers=int(self.config.max_parallel or 4)) as pool:
+            futs = [pool.submit(self._infer_one, n, c, query, history) for n, c in self.connectors.items()]
+            for f in as_completed(futs):
+                name, text, dt = f.result()
+                latencies[name] = dt
+                if text: answers[name] = text
+        if not answers:
+            raise RuntimeError("No model produced an answer.")
+
+        # 2) Policy
+        policy = get_policy(policy_name or self.config.default_policy)
+        agg = policy.aggregate(query, answers=answers, latencies=latencies, errors={}, metas={}, context=history, params=None)
+        winner = agg.get("winner") or min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
+        answer_text = (agg.get("result") or answers[winner]).strip()
+
+        # 3) Web verification (mandatory)
+        sources = self._collect_sources(
+            queries=[query, answer_text],
+            want_images=want_photos,
+            k_per_provider=self.config.search_k_per_provider,
+            max_total=self.config.search_max_total,
         )
-    try:
-        engine, health = bootstrap_from_preferences(cfg)
-        print(json.dumps(health, indent=2))
-    except Exception as e:
-        logger.error("bootstrap failed", extra={"error": str(e)})
-        raise
+        web_refs, photos = self._rank_and_verify(answer_text, sources, self.config.min_sources_required)
+
+        if len(web_refs) < self.config.min_sources_required:
+            # Try a salient sentence quote
+            salient = answer_text.split(".")[0].strip()
+            if salient:
+                extra = self._collect_sources(
+                    queries=[f"\"{salient}\""],
+                    want_images=False,
+                    k_per_provider=max(2, self.config.search_k_per_provider//2),
+                    max_total=self.config.search_max_total,
+                )
+                extra_refs, _ = self._rank_and_verify(answer_text, extra, self.config.min_sources_required - len(web_refs))
+                for r in extra_refs:
+                    if all(r["url"] != e["url"] for e in web_refs):
+                        web_refs.append(r)
+                        if len(web_refs) >= self.config.min_sources_required:
+                            break
+
+        if len(web_refs) < self.config.min_sources_required:
+            raise RuntimeError(f"Insufficient verification sources (need ≥ {self.config.min_sources_required}).")
+
+        # 4) Extract code
+        code_blocks = _extract_code_blocks(answer_text)
+
+        # 5) Persist assistant
+        if self.memory:
+            try: self.memory.save(session_id, "assistant", answer_text, {"ephemeral": False})
+            except Exception: log.warning("memory save (assistant) failed", exc_info=True)
+
+        # 6) Strict schema
+        return {
+            "answer": answer_text,
+            "winner": winner,
+            "participants": participants,
+            "code": code_blocks,
+            "sources": web_refs,                 # verified (>= min_sources_required)
+            "photos": photos if want_photos else [],
+        }
+
+# =============================
+# Builder: WebRetriever from env
+# =============================
+
+def build_web_retriever_from_env(headers: Optional[Dict[str, str]] = None) -> Optional[WebRetriever]:
+    providers: List[SearchProvider] = []
+    hdrs = dict(headers or {})
+
+    # Generic JSON search gateway (optional)
+    gen_ep = os.getenv("NEXUS_SEARCH_ENDPOINT")
+    gen_key = os.getenv("NEXUS_SEARCH_KEY")
+    if gen_ep:
+        if gen_key: hdrs["Authorization"] = f"Bearer {gen_key}"
+        providers.append(GenericJSONSearch(gen_ep, headers=hdrs))
+
+    # Tavily (optional)
+    tav_key = os.getenv("TAVILY_API_KEY")
+    if tav_key: providers.append(TavilySearch(tav_key))
+
+    # Bing (optional)
+    bing_key = os.getenv("BING_SEARCH_KEY")
+    if bing_key: providers.append(BingWebSearch(bing_key))
+
+    # Google CSE (NEW; official)
+    g_key = os.getenv("GOOGLE_CSE_KEY")
+    g_cx  = os.getenv("GOOGLE_CSE_CX")
+    if g_key and g_cx:
+        providers.append(GoogleCSESearch(g_key, g_cx))
+
+    # DuckDuckGo HTML (NEW; no key)
+    if os.getenv("NEXUS_ENABLE_DDG", "1") not in {"0", "false", "False"}:
+        providers.append(DuckDuckGoHTMLSearch())
+
+    scraper = HtmlScraper(timeout=int(os.getenv("NEXUS_SCRAPE_TIMEOUT", "8")))
+    return WebRetriever(providers, scraper=scraper) if providers else None
+
+
+
 #End of Engine code# 
 #Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
 # #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
+
