@@ -377,7 +377,150 @@ def register_webhook():
 @require_api_key
 def list_webhooks():
     return jsonify({"webhooks": _webhook_list()}), 200
+# --- Autonomous Health Monitor ------------------------------------------------
+import threading, atexit
 
+class HealthMonitor:
+    def __init__(self, *, engine, connectors, memory, audit_put=None,
+                 interval_sec=3600, web_check=True):
+        self.engine = engine
+        self.connectors = connectors
+        self.memory = memory
+        self.audit_put = audit_put
+        self.interval = max(60, int(interval_sec))
+        self.web_check = bool(web_check)
+        self._last = None
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thr = threading.Thread(target=self._loop,
+                                     name="nexus.health",
+                                     daemon=True)
+
+    def start(self):
+        self._thr.start()
+
+    def stop(self):
+        self._stop.set()
+        try:
+            self._thr.join(timeout=2)
+        except Exception:
+            pass
+
+    def snapshot(self):
+        # Lazy imports to avoid circulars and to work even if some modules are missing
+        try:
+            from nexus_config import ping_clouds
+        except Exception:
+            def ping_clouds(): return {"aws":{"connected":False}, "azure":{"connected":False}, "gcp":{"connected":False}}
+
+        try:
+            from memory_compute import health_suite, node_health
+        except Exception:
+            def node_health(): return {"pid": os.getpid(), "host": socket.gethostname(), "time": int(time.time())}
+            def health_suite(_): return {"primary":"unknown","providers":[],"pings":[],"writeVerify":{"ok":False,"ids":[]},"node":node_health()}
+
+        snap = {
+            "ts": dt.utcnow().isoformat() + "Z",
+            "uptime": str(dt.utcnow() - start_time).split(".")[0],
+            "node": node_health(),
+            "clouds": ping_clouds(),
+            "memory": health_suite(self.memory),
+            "models": {},
+            "web": {"providers": [], "ok": 0}
+        }
+
+        # Model connector health (True => degraded per your connector semantics)
+        for name, conn in self.connectors.items():
+            try:
+                degraded = bool(conn.health_check()) if hasattr(conn, "health_check") else True
+                snap["models"][name] = "Degraded" if degraded else "Healthy"
+            except Exception as e:
+                snap["models"][name] = f"Error: {e}"
+
+        # Verify web providers (if engine has a retriever)
+        if self.web_check and hasattr(self.engine, "web") and getattr(self.engine, "web"):
+            ok = 0
+            providers = []
+            for p in getattr(self.engine.web, "providers", []):
+                label = getattr(p, "name", p.__class__.__name__)
+                try:
+                    res = p.search("site:wikipedia.org test", k=1, images=False)
+                    providers.append({"name": label, "ok": bool(res)})
+                    ok += int(bool(res))
+                except Exception as e:
+                    providers.append({"name": label, "ok": False, "error": str(e)})
+            snap["web"]["providers"] = providers
+            snap["web"]["ok"] = ok
+
+        return snap
+
+    def _loop(self):
+        while not self._stop.is_set():
+            try:
+                snap = self.snapshot()
+                with self._lock:
+                    self._last = snap
+                # Persist to audit table if available
+                if callable(self.audit_put):
+                    try:
+                        self.audit_put({
+                            "user_id": "__system__",
+                            "timestamp": dt.utcnow().isoformat(),
+                            "event": "health.snapshot",
+                            "payload": snap,
+                            "log_type": "health",
+                            "ttl": int(time.time()) + 60*60*24*90
+                        })
+                    except Exception:
+                        logger.warning("health snapshot audit put failed", exc_info=True)
+            except Exception:
+                logger.exception("health snapshot failed")
+            # Sleep until next interval (interruptible)
+            self._stop.wait(self.interval)
+
+    def last(self):
+        with self._lock:
+            return self._last
+
+# Instantiate + start (controlled by env)
+if os.getenv("NEXUS_HEALTH_ENABLE", "1") not in {"0", "false", "False"}:
+    _health = HealthMonitor(
+        engine=engine,
+        connectors=connectors,
+        memory=memory,
+        audit_put=_audit_put if " _audit_put" not in globals() else _audit_put,  # use if defined
+        interval_sec=int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600")),
+        web_check=os.getenv("NEXUS_HEALTH_WEB_CHECK", "1") not in {"0", "false", "False"},
+    )
+    _health.start()
+    atexit.register(lambda: _health.stop())
+else:
+    _health = None
+# -----------------------------------------------------------------------------
+
+
+# --- Health monitor endpoints -------------------------------------------------
+@app.route("/health/last", methods=["GET"])
+@require_api_key
+def health_last():
+    if _health and _health.last():
+        return jsonify(_health.last()), 200
+    # If monitor disabled or first run not completed, compute one synchronously
+    if _health:
+        snap = _health.snapshot()
+        return jsonify(snap), 200
+    # Fall back to existing lightweight health
+    return jsonify({"status":"ok","uptime": _uptime(), "note":"monitor disabled"}), 200
+
+@app.route("/health/run", methods=["POST"])
+@require_api_key
+@limiter.limit("5 per hour")
+def health_run():
+    if not _health:
+        return jsonify({"error": "monitor disabled"}), 400
+    snap = _health.snapshot()
+    return jsonify(snap), 200
+# -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
 # Entrypoint
 # -----------------------------------------------------------------------------
@@ -387,3 +530,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in {"true","1","yes"}
     logger.info(f"Starting Nexus on {host}:{port} debug={debug_mode}")
     app.run(host=host, port=port, debug=debug_mode)
+
