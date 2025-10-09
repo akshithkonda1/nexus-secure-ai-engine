@@ -1,35 +1,3 @@
-#What is Nexus?
-
-#Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
-
-#It integrates web scraping capabilities for real-time data retrieval, supports secure data encryption, and offers advanced response aggregation techniques to deliver the best possible answers.
-
-#Nexus is built to be extensible and infinitely scalable, allowing for easy integration of new AI models and data sources, making it a versatile tool for developers and researchers alike, but it is also designed to be user-friendly, with a focus on providing clear and actionable insights.
-
-#Nexus is not just a tool for AI enthusiasts; it is a powerful platform that can be used in various applications, from academic research to business intelligence, and it aim to democratize access to advanced AI capabilities by making Gen AI replies more accurate and more correct.
-
-#Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries. 
-# Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
-
-#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
-
-#Nexus was developed by Akshith Konda.
-
-
-#Nexus was developed by Akshith Konda.
-# nexus_engine.py
-# engine.py
-# Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
-# Adds BeautifulSoup scraping to enrich/verify sources and pull photos (og:image).
-# engine.py
-# Nexus Engine — resilient model debate + verified web evidence + autonomous health checks
-# - Adapters: openai.chat, openai.responses, anthropic.messages, gemini.generate,
-#             cohere.chat, cohere.generate, tgi.generate, generic.json
-# - Web: Google CSE, Bing, Tavily, DuckDuckGo(HTML) + BeautifulSoup scraper
-# - Robustness: shared retry helper with backoff+jitter for all web calls
-# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node
-
-
 """Secure multi-model orchestration with strict schema guarantees.
 
 This module implements the Nexus engine: a security-focused orchestrator that
@@ -55,6 +23,8 @@ object is reserved for additive telemetry (schema version, policy selection,
 latency metrics) that clients may ignore safely.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -67,7 +37,7 @@ import shutil
 from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import uuid
 
@@ -311,6 +281,24 @@ def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
             return True
     return False
 
+
+def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
+    if not patterns:
+        return False
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return True
+    for pat in patterns or []:
+        pat = (pat or "").strip().lower()
+        if not pat:
+            continue
+        if pat.startswith("*.") and host.endswith(pat[1:]):
+            return True
+        if host == pat:
+            return True
+    return False
+
 # =========================================================
 # Retry helper (used by search providers and scraper)
 # =========================================================
@@ -335,6 +323,138 @@ def _retry_call(
             sleep_s = random.uniform(0, capped + jitter)
             time.sleep(sleep_s)
     raise last  # pragma: no cover
+
+
+MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
+MAX_MODEL_REQUEST_BYTES = int(os.getenv("NEXUS_MAX_MODEL_REQUEST_BYTES", str(512 * 1024)))
+MAX_MODEL_TIMEOUT = float(os.getenv("NEXUS_MAX_MODEL_TIMEOUT", "10.0"))
+MAX_SCRAPE_BYTES = int(os.getenv("NEXUS_MAX_SCRAPE_BYTES", str(40 * 1024)))
+MAX_DEADLINE_SECONDS = int(os.getenv("NEXUS_MAX_REQUEST_DEADLINE_SECONDS", "60"))
+
+
+def _load_scrape_denylist() -> List[str]:
+    defaults = ["doubleclick.net", "googletagmanager.com", "google-analytics.com"]
+    raw = os.getenv("NEXUS_DENY_WEB_DOMAINS", "").strip()
+    if not raw:
+        return defaults
+    items = [p.strip() for p in raw.split(",") if p.strip()]
+    return items or defaults
+
+
+_SCRAPE_DENYLIST = _load_scrape_denylist()
+_SCRAPE_ALLOWLIST = [
+    p.strip().lower()
+    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
+    if p.strip()
+]
+_RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
+
+CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
+CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
+CIRCUIT_MAX_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_MAX_COOL_SECONDS", "120.0"))
+
+RATE_LIMIT_PER_MIN = max(1, int(os.getenv("NEXUS_RATE_LIMIT_PER_MIN", "60")))
+RATE_LIMIT_BURST = max(1, int(os.getenv("NEXUS_RATE_LIMIT_BURST", str(RATE_LIMIT_PER_MIN))))
+MAX_CONCURRENT_REQUESTS = max(1, int(os.getenv("NEXUS_MAX_CONCURRENT_REQUESTS", "32")))
+CONCURRENCY_WAIT_SECONDS = float(os.getenv("NEXUS_CONCURRENCY_WAIT_SECONDS", "5"))
+
+
+class _CircuitBreaker:
+    def __init__(self) -> None:
+        self.failures = 0
+        self.open_until = 0.0
+        self._lock = threading.Lock()
+
+    def allow(self) -> Tuple[bool, float]:
+        with self._lock:
+            now = time.monotonic()
+            if now < self.open_until:
+                return False, max(0.0, self.open_until - now)
+            return True, 0.0
+
+    def record_success(self) -> None:
+        with self._lock:
+            self.failures = 0
+            self.open_until = 0.0
+
+    def record_failure(self) -> float:
+        with self._lock:
+            self.failures += 1
+            if self.failures < CIRCUIT_THRESHOLD:
+                return 0.0
+            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
+            self.open_until = time.monotonic() + cool
+            return cool
+
+
+class RateLimiter:
+    def __init__(self, per_minute: int, burst: int) -> None:
+        self.per_minute = per_minute
+        self.burst = max(burst, per_minute)
+        self._hits: Dict[str, Deque[float]] = {}
+        self._lock = threading.Lock()
+
+    def try_acquire(self, key: str, now: Optional[float] = None) -> Tuple[bool, float]:
+        stamp = now or time.time()
+        with self._lock:
+            q = self._hits.setdefault(key, deque())
+            cutoff = stamp - 60.0
+            while q and q[0] < cutoff:
+                q.popleft()
+            if len(q) >= self.burst:
+                # Burst window check fires first; callers should treat retry_in as a hard backoff before
+                # re-evaluating the rolling per-minute quota.
+                retry_in = max(0.0, q[0] + 60.0 - stamp)
+                return False, retry_in
+            if len(q) >= self.per_minute:
+                idx = -self.per_minute
+                retry_in = max(0.0, q[idx] + 60.0 - stamp)
+                if retry_in > 0:
+                    return False, retry_in
+            q.append(stamp)
+            return True, 0.0
+
+
+_GLOBAL_RATE_LIMITER = RateLimiter(RATE_LIMIT_PER_MIN, RATE_LIMIT_BURST)
+_GLOBAL_CONCURRENCY_SEMAPHORE = threading.BoundedSemaphore(MAX_CONCURRENT_REQUESTS)
+
+
+def _check_payload_size(payload: Dict[str, Any]) -> None:
+    try:
+        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    except Exception as exc:
+        raise NexusError("Failed to serialize payload", details={"error": str(exc)}) from exc
+    if len(raw) > MAX_MODEL_REQUEST_BYTES:
+        raise PayloadTooLargeError(
+            f"Payload exceeds {MAX_MODEL_REQUEST_BYTES} bytes limit",
+            details={"max_bytes": MAX_MODEL_REQUEST_BYTES, "observed_bytes": len(raw)},
+        )
+
+
+def _remaining_timeout(deadline: Optional[float], default: float) -> float:
+    if deadline is None:
+        return max(0.2, min(default, MAX_MODEL_TIMEOUT))
+    remaining = max(0.0, deadline - time.monotonic())
+    if remaining <= 0:
+        raise DeadlineExceeded("No time remaining for request")
+    return max(0.2, min(remaining, MAX_MODEL_TIMEOUT))
+
+
+def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
+    total = 0
+    chunks: List[bytes] = []
+    for chunk in stream.iter_content(chunk_size=65536):
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > max_bytes:
+            stream.close()
+            raise PayloadTooLargeError(
+                f"Response exceeded {max_bytes} bytes",
+                details={"max_bytes": max_bytes},
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
@@ -905,6 +1025,14 @@ class GenericJSONSearch(_BaseHTTPProvider):
         if not _is_https_or_local(endpoint):
             raise ValueError("Search endpoint must be HTTPS or explicit localhost in non-prod")
         self.endpoint, self.headers = endpoint, (headers or {})
+        parsed = urlparse(endpoint)
+        host = (parsed.hostname or "").lower()
+        env = os.getenv("NEXUS_ENV", "").lower()
+        if parsed.scheme == "http" and host in {"127.0.0.1", "localhost"} and env not in {"prod", "production"}:
+            log.warning(
+                "search_localhost_enabled",
+                extra={"endpoint": endpoint, "env": os.getenv("NEXUS_ENV", "")},
+            )
     def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
@@ -1145,7 +1273,11 @@ class HtmlScraper:
                 or soup.find("meta", attrs={"name":"og:image"})
                 or soup.find("meta", attrs={"name":"twitter:image"})
             )
-            image = src.image or (og_img.get("content") if og_img and og_img.get("content") else None)
+            if og_img and og_img.get("content"):
+                image_candidate = urljoin(src.url, og_img.get("content"))
+            else:
+                image_candidate = None
+            image = src.image or image_candidate
             return WebSource(url=src.url, title=title, snippet=desc, image=image, score=src.score)
         except DeadlineExceeded:
             return src
@@ -2180,7 +2312,3 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
-
-
-
-
