@@ -27,11 +27,8 @@
 # - Robustness: shared retry helper with backoff+jitter for all web calls
 # - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node"""Secure multi-model orchestration with strict schema guarantees.
 
-This module implements the Nexus engine: a security-focused orchestrator that
-routes prompts to multiple AI connectors, verifies answers against web
-evidence, and enforces tenant isolation through AES-256-GCM encryption. The
-response schema is contractually fixed and must continue to expose the
-following non-optional keys for downstream clients:
+#This module implements the Nexus engine: a security-focused orchestrator that routes prompts to multiple AI connectors, verifies answers against web evidence, and enforces tenant isolation through AES-256-GCM encryption. 
+#The response schema is contractually fixed and must continue to expose the following non-optional keys for downstream clients:
 
     {
         "answer": str,
@@ -43,9 +40,8 @@ following non-optional keys for downstream clients:
         "photos": [{"url": str, "caption": str | None}, ...]
     }
 
-The contract above is intentionally narrow; additive fields require explicit
-version bumps and client coordination.
-"""
+#The contract above is intentionally narrow; additive fields require explicit version bumps and client coordination.
+
 
 from __future__ import annotations
 
@@ -2108,4 +2104,5 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
 
