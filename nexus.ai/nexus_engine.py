@@ -1,45 +1,3 @@
-"""Secure multi-model orchestration with strict schema guarantees.
-
-This module implements the Nexus engine: a security-focused orchestrator that
-routes prompts to multiple AI connectors, verifies answers against web
-evidence, and enforces tenant isolation through AES-256-GCM encryption. The
-response schema is contractually fixed and must continue to expose the
-following non-optional keys for downstream clients:
-
-    {
-        "answer": str,
-        "winner": str,
-        "winner_ref": {"name": str, "adapter": str, "endpoint": str},
-        "participants": [str, ...],
-        "code": [{"language": str | None, "code": str}, ...],
-        "sources": [{"url": str, "title": str | None, "snippet": str | None}, ...],
-        "photos": [{"url": str, "caption": str | None}, ...]
-    }
-
-The contract above is intentionally narrow; additive fields require explicit
-version bumps and client coordination.
-"""
-
-from __future__ import annotations
-
-import json
-import logging
-import os
-import random
-import re
-import time
-import math
-import threading
-import shutil
-from collections import Counter, deque
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
-from urllib.parse import quote_plus, urlparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import uuid
-
-ENGINE_SCHEMA_VERSION = "1.1.0"
-"""Version identifier for the response contract exposed by :class:`Engine`."""
 #What is Nexus?
 
 #Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive a nuanced understanding of user queries.
@@ -2663,5 +2621,6 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
 
 
