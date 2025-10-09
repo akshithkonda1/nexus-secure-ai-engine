@@ -1,3 +1,35 @@
+#What is Nexus?
+
+#Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
+
+#It integrates web scraping capabilities for real-time data retrieval, supports secure data encryption, and offers advanced response aggregation techniques to deliver the best possible answers.
+
+#Nexus is built to be extensible and infinitely scalable, allowing for easy integration of new AI models and data sources, making it a versatile tool for developers and researchers alike, but it is also designed to be user-friendly, with a focus on providing clear and actionable insights.
+
+#Nexus is not just a tool for AI enthusiasts; it is a powerful platform that can be used in various applications, from academic research to business intelligence, and it aim to democratize access to advanced AI capabilities by making Gen AI replies more accurate and more correct.
+
+#Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries. 
+# Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
+
+#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
+
+#Nexus was developed by Akshith Konda.
+
+
+#Nexus was developed by Akshith Konda.
+# nexus_engine.py
+# engine.py
+# Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
+# Adds BeautifulSoup scraping to enrich/verify sources and pull photos (og:image).
+# engine.py
+# Nexus Engine — resilient model debate + verified web evidence + autonomous health checks
+# - Adapters: openai.chat, openai.responses, anthropic.messages, gemini.generate,
+#             cohere.chat, cohere.generate, tgi.generate, generic.json
+# - Web: Google CSE, Bing, Tavily, DuckDuckGo(HTML) + BeautifulSoup scraper
+# - Robustness: shared retry helper with backoff+jitter for all web calls
+# - Health: hourly (configurable) background checks for connectors, search, scraper, memory, node
+
+
 """Secure multi-model orchestration with strict schema guarantees.
 
 This module implements the Nexus engine: a security-focused orchestrator that
@@ -2148,6 +2180,7 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
 
 
 
