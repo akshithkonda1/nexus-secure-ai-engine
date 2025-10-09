@@ -34,6 +34,9 @@ Nexus is a **vendor-neutral, cloud-native AI orchestration platform** designed t
 - Enrich results with **live, verifiable context** from trusted sources.
 - **Validate, rank, and encrypt** outputs before delivery.
 
+It provides a **comprehensive and nuanced** orchestration layer for developers and researchers, aiming to democratize access to
+measured AI assistance while keeping security-first guardrails in place.
+
 **In plain English:** Nexus is an **AI firewall** — ensuring every answer is **accurate, secure, and production-ready**.
 
 ---
@@ -64,12 +67,13 @@ Unchecked AI can:
 ---
 
 ## Core Features (With Impact)
-- **Multi-Model AI Debate** — Truth-prioritized, bias-resistant outputs.  
-- **Live Context Injection** — Always relevant, always current.  
-- **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.  
-- **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.  
-- **Multi-Cloud Ready** — Operates across AWS, Azure, and GCP.  
-- **Demonstrator,setup required** — No secrets embedded, instant production capability.  
+- **Multi-Model AI Debate** — Truth-prioritized, bias-resistant outputs that converge on a consensus answer with ≥2 independent
+  sources.
+- **Live Context Injection** — Always relevant, always current.
+- **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.
+- **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.
+- **Horizontally Scalable** — Operates across AWS, Azure, and GCP without single-region bottlenecks.
+- **Demonstrator,setup required** — No secrets embedded, instant production capability.
 - **Compliance-Grade Logging** — Full audit trails with configurable TTL.
 
 ---
