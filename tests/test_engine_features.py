@@ -113,12 +113,13 @@ def test_engine_run_includes_schema_and_policy(monkeypatch):
     engine = _make_engine(sources, min_sources=2)
     result = engine.run("session", "question")
 
-    assert result["schema_version"] == nexus_engine.ENGINE_SCHEMA_VERSION
-    assert result["policy"] == "consensus.simple"
-    assert isinstance(result["latencies"], dict) and result["latencies"]
-    assert "alpha" in result["latencies"]
+    assert "meta" in result
+    assert result["meta"]["schema_version"] == nexus_engine.ENGINE_SCHEMA_VERSION
+    assert result["meta"]["policy"] == "consensus.simple"
+    assert isinstance(result["meta"]["latencies"], dict) and result["meta"]["latencies"]
+    assert "alpha" in result["meta"]["latencies"]
     assert len(result["sources"]) >= 2
-    assert "policy_scores" in result
+    assert "policy_scores" in result["meta"]
 
 
 def test_circuit_breaker_opens_after_threshold():
