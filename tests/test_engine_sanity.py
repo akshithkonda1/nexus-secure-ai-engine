@@ -1,4 +1,5 @@
 import ast
+import collections
 import pathlib
 from typing import List
 
@@ -57,6 +58,60 @@ def test_engine_has_no_duplicate_uppercase_constants():
             else:
                 seen[name] = node.lineno
     assert not duplicates, f"Duplicate uppercase constants detected: {duplicates}"
+
+
+def test_engine_specific_symbols_defined_once():
+    tree = ast.parse(MODULE_PATH.read_text())
+
+    # Count functions/classes
+    symbol_counts = collections.Counter()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            symbol_counts[node.name] += 1
+
+    expected_symbols = [
+        "_host_blocked",
+        "_remaining_timeout",
+        "_check_payload_size",
+        "_limit_body",
+        "_CircuitBreaker",
+        "RateLimiter",
+        "NexusError",
+        "MisconfigurationError",
+        "RateLimitExceeded",
+        "VerificationError",
+        "DeadlineExceeded",
+        "CircuitOpenError",
+        "PayloadTooLargeError",
+        "ConnectorError",
+    ]
+    for name in expected_symbols:
+        assert symbol_counts.get(name, 0) == 1, f"Expected exactly one definition of {name}, found {symbol_counts.get(name, 0)}"
+
+    # Count uppercase constant assignments
+    constant_counts = collections.Counter()
+    for node in tree.body:
+        targets: List[str] = []
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id.isupper():
+                    targets.append(target.id)
+        elif isinstance(node, ast.AnnAssign):
+            target = node.target
+            if isinstance(target, ast.Name) and target.id.isupper():
+                targets.append(target.id)
+        for target_name in targets:
+            constant_counts[target_name] += 1
+
+    expected_constants = [
+        "MAX_MODEL_RESPONSE_BYTES",
+        "MAX_MODEL_REQUEST_BYTES",
+        "MAX_MODEL_TIMEOUT",
+        "MAX_SCRAPE_BYTES",
+        "MAX_DEADLINE_SECONDS",
+    ]
+    for const in expected_constants:
+        assert constant_counts.get(const, 0) == 1, f"Expected exactly one assignment of {const}, found {constant_counts.get(const, 0)}"
 
 
 def test_consensus_simple_policy_uses_blended_score(monkeypatch):

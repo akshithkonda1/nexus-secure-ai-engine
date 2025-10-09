@@ -32,17 +32,17 @@ import random
 import re
 import time
 import math
-import requests
 import threading
 import shutil
 from collections import Counter, deque
 from dataclasses import dataclass
-from bs4 import BeautifulSoup
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import uuid
+
+ENGINE_SCHEMA_VERSION = "1.1.0"
+"""Version identifier for the response contract exposed by :class:`Engine`."""
 
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
@@ -314,6 +314,24 @@ def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
             return True
     return False
 
+
+def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
+    if not patterns:
+        return False
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return True
+    for pat in patterns or []:
+        pat = (pat or "").strip().lower()
+        if not pat:
+            continue
+        if pat.startswith("*.") and host.endswith(pat[1:]):
+            return True
+        if host == pat:
+            return True
+    return False
+
 # =========================================================
 # Retry helper (used by search providers and scraper)
 # =========================================================
@@ -338,6 +356,138 @@ def _retry_call(
             sleep_s = random.uniform(0, capped + jitter)
             time.sleep(sleep_s)
     raise last  # pragma: no cover
+
+
+MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
+MAX_MODEL_REQUEST_BYTES = int(os.getenv("NEXUS_MAX_MODEL_REQUEST_BYTES", str(512 * 1024)))
+MAX_MODEL_TIMEOUT = float(os.getenv("NEXUS_MAX_MODEL_TIMEOUT", "10.0"))
+MAX_SCRAPE_BYTES = int(os.getenv("NEXUS_MAX_SCRAPE_BYTES", str(40 * 1024)))
+MAX_DEADLINE_SECONDS = int(os.getenv("NEXUS_MAX_REQUEST_DEADLINE_SECONDS", "60"))
+
+
+def _load_scrape_denylist() -> List[str]:
+    defaults = ["doubleclick.net", "googletagmanager.com", "google-analytics.com"]
+    raw = os.getenv("NEXUS_DENY_WEB_DOMAINS", "").strip()
+    if not raw:
+        return defaults
+    items = [p.strip() for p in raw.split(",") if p.strip()]
+    return items or defaults
+
+
+_SCRAPE_DENYLIST = _load_scrape_denylist()
+_SCRAPE_ALLOWLIST = [
+    p.strip().lower()
+    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
+    if p.strip()
+]
+_RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
+
+CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
+CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
+CIRCUIT_MAX_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_MAX_COOL_SECONDS", "120.0"))
+
+RATE_LIMIT_PER_MIN = max(1, int(os.getenv("NEXUS_RATE_LIMIT_PER_MIN", "60")))
+RATE_LIMIT_BURST = max(1, int(os.getenv("NEXUS_RATE_LIMIT_BURST", str(RATE_LIMIT_PER_MIN))))
+MAX_CONCURRENT_REQUESTS = max(1, int(os.getenv("NEXUS_MAX_CONCURRENT_REQUESTS", "32")))
+CONCURRENCY_WAIT_SECONDS = float(os.getenv("NEXUS_CONCURRENCY_WAIT_SECONDS", "5"))
+
+
+class _CircuitBreaker:
+    def __init__(self) -> None:
+        self.failures = 0
+        self.open_until = 0.0
+        self._lock = threading.Lock()
+
+    def allow(self) -> Tuple[bool, float]:
+        with self._lock:
+            now = time.monotonic()
+            if now < self.open_until:
+                return False, max(0.0, self.open_until - now)
+            return True, 0.0
+
+    def record_success(self) -> None:
+        with self._lock:
+            self.failures = 0
+            self.open_until = 0.0
+
+    def record_failure(self) -> float:
+        with self._lock:
+            self.failures += 1
+            if self.failures < CIRCUIT_THRESHOLD:
+                return 0.0
+            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
+            self.open_until = time.monotonic() + cool
+            return cool
+
+
+class RateLimiter:
+    def __init__(self, per_minute: int, burst: int) -> None:
+        self.per_minute = per_minute
+        self.burst = max(burst, per_minute)
+        self._hits: Dict[str, Deque[float]] = {}
+        self._lock = threading.Lock()
+
+    def try_acquire(self, key: str, now: Optional[float] = None) -> Tuple[bool, float]:
+        stamp = now or time.time()
+        with self._lock:
+            q = self._hits.setdefault(key, deque())
+            cutoff = stamp - 60.0
+            while q and q[0] < cutoff:
+                q.popleft()
+            if len(q) >= self.burst:
+                # Burst window check fires first; callers should treat retry_in as a hard backoff before
+                # re-evaluating the rolling per-minute quota.
+                retry_in = max(0.0, q[0] + 60.0 - stamp)
+                return False, retry_in
+            if len(q) >= self.per_minute:
+                idx = -self.per_minute
+                retry_in = max(0.0, q[idx] + 60.0 - stamp)
+                if retry_in > 0:
+                    return False, retry_in
+            q.append(stamp)
+            return True, 0.0
+
+
+_GLOBAL_RATE_LIMITER = RateLimiter(RATE_LIMIT_PER_MIN, RATE_LIMIT_BURST)
+_GLOBAL_CONCURRENCY_SEMAPHORE = threading.BoundedSemaphore(MAX_CONCURRENT_REQUESTS)
+
+
+def _check_payload_size(payload: Dict[str, Any]) -> None:
+    try:
+        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    except Exception as exc:
+        raise NexusError("Failed to serialize payload", details={"error": str(exc)}) from exc
+    if len(raw) > MAX_MODEL_REQUEST_BYTES:
+        raise PayloadTooLargeError(
+            f"Payload exceeds {MAX_MODEL_REQUEST_BYTES} bytes limit",
+            details={"max_bytes": MAX_MODEL_REQUEST_BYTES, "observed_bytes": len(raw)},
+        )
+
+
+def _remaining_timeout(deadline: Optional[float], default: float) -> float:
+    if deadline is None:
+        return max(0.2, min(default, MAX_MODEL_TIMEOUT))
+    remaining = max(0.0, deadline - time.monotonic())
+    if remaining <= 0:
+        raise DeadlineExceeded("No time remaining for request")
+    return max(0.2, min(remaining, MAX_MODEL_TIMEOUT))
+
+
+def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
+    total = 0
+    chunks: List[bytes] = []
+    for chunk in stream.iter_content(chunk_size=65536):
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > max_bytes:
+            stream.close()
+            raise PayloadTooLargeError(
+                f"Response exceeded {max_bytes} bytes",
+                details={"max_bytes": max_bytes},
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
