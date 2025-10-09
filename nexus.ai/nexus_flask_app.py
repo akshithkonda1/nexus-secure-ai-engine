@@ -1,6 +1,11 @@
 # flask_app.py
 from __future__ import annotations
-import os, logging, traceback, hmac, time, socket
+import os
+import logging
+import traceback
+import hmac
+import time
+import socket
 from datetime import datetime as dt
 from functools import wraps
 from urllib.parse import urlparse
@@ -8,20 +13,13 @@ from typing import Dict, Any
 
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
---- a/nexus.ai/nexus_flask_app.py
-+++ b/nexus.ai/nexus_flask_app.py
-@@
- import os
- import time
-+import socket
-@@
--           def node_health(): return {"pid": os.getpid(), "host": socket.gethostname(), "time": int(time.time())}
-+            def node_health():
-+                return {
-+                    "pid": os.getpid(),
-+                    "host": socket.gethostname(),
-+                    "time": int(time.time())
-+                }
+ 
+def node_health():
+return {
+         "pid": os.getpid(),
+         "host": socket.gethostname(),
+         "time": int(time.time())
+                }
 
 # Optional deps
 try:
@@ -544,5 +542,6 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in {"true","1","yes"}
     logger.info(f"Starting Nexus on {host}:{port} debug={debug_mode}")
     app.run(host=host, port=port, debug=debug_mode)
+
 
 
