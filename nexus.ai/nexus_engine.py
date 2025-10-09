@@ -56,6 +56,7 @@ import logging
 import os
 import random
 import re
+import requests
 import time
 import math
 import threading
@@ -65,6 +66,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import uuid
 
 ENGINE_SCHEMA_VERSION = "1.1.0"
@@ -2490,5 +2492,6 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
 
 
