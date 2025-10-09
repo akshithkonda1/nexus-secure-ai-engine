@@ -72,8 +72,15 @@ import uuid
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
 
-ENGINE_SCHEMA_VERSION = "1.1.0"
-"""Version identifier for the response contract exposed by :class:`Engine`."""
+    def record_failure(self) -> float:
+       with self._lock:
+            self.failures += 1
+            if self.failures < CIRCUIT_THRESHOLD:
+                return 0.0
+            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
+            self.open_until = time.monotonic() + cool
+            return cool
+
 
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
@@ -2492,6 +2499,7 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
 
 
 
