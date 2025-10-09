@@ -903,6 +903,8 @@ class ConsensusSimplePolicy(ResultPolicy):
             jac_score = sum(jac_vals) / len(jac_vals) if jac_vals else 0.0
             bm25_score = sum(bm25_vals) / len(bm25_vals) if bm25_vals else 0.0
             scores[k] = 0.6 * jac_score + 0.4 * bm25_score
+            others = [self._jac(toks[k], toks[o]) for o in toks.keys() if o != k]
+            scores[k] = sum(others)/len(others) if others else 0.0
         winner = max(scores, key=scores.get)
         return {"result": answers[winner], "winner": winner, "policy": self.name}
 
