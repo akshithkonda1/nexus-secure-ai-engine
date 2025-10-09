@@ -73,16 +73,6 @@ ENGINE_SCHEMA_VERSION = "1.1.0"
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
 
-    def record_failure(self) -> float:
-        with self._lock:
-            self.failures += 1
-            if self.failures < CIRCUIT_THRESHOLD:
-                return 0.0
-            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
-            self.open_until = time.monotonic() + cool
-            return cool
-
-
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
         self.per_minute = per_minute
@@ -171,13 +161,6 @@ class Crypter:
         return Crypter(key)
 
 _SCRAPE_DENYLIST = _load_scrape_denylist()
-
-    def decrypt(self, token: str, *, aad: bytes) -> str:
-        import base64
-        raw = base64.b64decode(token.encode("ascii"))
-        nonce, ct = raw[:12], raw[12:]
-        pt = self._aes.decrypt(nonce, ct, aad)
-        return pt.decode("utf-8")
 
 
 class NexusError(Exception):
