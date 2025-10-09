@@ -245,6 +245,38 @@ class ConnectorError(NexusError):
     pass
 
 
+class NexusError(Exception):
+    """Base exception for Nexus engine errors."""
+
+
+class MisconfigurationError(NexusError):
+    pass
+
+
+class RateLimitExceeded(NexusError):
+    pass
+
+
+class VerificationError(NexusError):
+    pass
+
+
+class DeadlineExceeded(NexusError):
+    pass
+
+
+class CircuitOpenError(NexusError):
+    pass
+
+
+class PayloadTooLargeError(NexusError):
+    pass
+
+
+class ConnectorError(NexusError):
+    pass
+
+
 def _is_https(url: str) -> bool:
     try:
         p = urlparse(url); return p.scheme == "https" and bool(p.netloc)
@@ -265,6 +297,25 @@ def _host_allowed(url: str, patterns: Optional[List[str]]) -> bool:
             continue
         if pat.startswith("*."):
             if host.endswith(pat[1:]):  # ".example.com"
+                return True
+        elif host == pat:
+            return True
+    return False
+
+
+def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
+    if not patterns:
+        return False
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return True
+    for pat in patterns:
+        pat = pat.strip().lower()
+        if not pat:
+            continue
+        if pat.startswith("*."):
+            if host.endswith(pat[1:]):
                 return True
         elif host == pat:
             return True
@@ -1626,17 +1677,14 @@ def get_policy(name: Optional[str]) -> ResultPolicy:
 # =========================================================
 @dataclass
 class EngineConfig:
-    max_context_messages: int = 8
-    max_parallel: Optional[int] = None
-    default_policy: str = os.getenv("NEXUS_RESULT_POLICY", "consensus.simple")
-    min_sources_required: int = max(1, int(os.getenv("NEXUS_MIN_SOURCES", "2")))
-    search_k_per_provider: int = 5
-    search_max_total: int = 12
-    scrape_timeout: int = 8
-    default_deadline_ms: Optional[int] = (
-        int(os.getenv("NEXUS_DEFAULT_DEADLINE_MS")) if os.getenv("NEXUS_DEFAULT_DEADLINE_MS") else None
-    )
-class EngineConfig:
+    """Runtime knobs for the Nexus engine.
+
+    default_deadline_ms is expressed in **milliseconds** to align with adapter and
+    gateway level time budgets. Keeping the unit explicit here helps avoid
+    accidental second/millisecond mixups when callers propagate request
+    deadlines through the system.
+    """
+
     max_context_messages: int = 8
     max_parallel: Optional[int] = None
     default_policy: str = os.getenv("NEXUS_RESULT_POLICY", "consensus.simple")
@@ -1806,15 +1854,6 @@ class Engine:
         self.connectors = connectors
         self.memory = memory
         self.web = web
-        self.config = config or EngineConfig()
-        self.access = access
-        self.crypter = crypter
-
-        if self.config.max_parallel is None:
-            self.config.max_parallel = min(16, max(1, len(connectors)))
-        if web.scraper is None:
-            web.scraper = HtmlScraper(timeout=self.config.scrape_timeout)
-        self.scraper = web.scraper
         self.config = config or EngineConfig()
         self.access = access
         self.crypter = crypter
