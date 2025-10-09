@@ -581,9 +581,51 @@ class ConsensusSimplePolicy(ResultPolicy):
         winner = max(scores, key=scores.get)
         return {"result": answers[winner], "winner": winner, "policy": self.name}
 
+
+class ConsensusWeightedPolicy(ResultPolicy):
+    """Consensus policy that blends similarity, verbosity, and latency heuristics."""
+
+    name = "consensus.weighted"
+
+    @staticmethod
+    def _tokens(text: str) -> List[str]:
+        return [t for t in re.findall(r"[A-Za-z0-9_]+", (text or "").lower()) if t not in _STOP]
+
+    @staticmethod
+    def _similarity(a: List[str], b: List[str]) -> float:
+        if not a or not b:
+            return 0.0
+        sa, sb = set(a), set(b)
+        inter = len(sa & sb)
+        union = len(sa | sb) or 1
+        jaccard = inter / union
+        len_ratio = 1.0 - abs(len(a) - len(b)) / float(max(len(a), len(b)) or 1)
+        return 0.85 * jaccard + 0.15 * max(0.0, len_ratio)
+
+    def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
+        if not answers:
+            return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
+
+        tokens = {name: self._tokens(text) for name, text in answers.items()}
+
+        scores: Dict[str, float] = {}
+        for name, toks in tokens.items():
+            peers = [self._similarity(toks, tokens[peer]) for peer in tokens.keys() if peer != name]
+            consensus = sum(peers) / len(peers) if peers else 0.0
+            length_bonus = min(len(toks) / 400.0, 0.05)
+            latency = latencies.get(name)
+            latency_bonus = 0.0
+            if isinstance(latency, (int, float)) and latency > 0:
+                latency_bonus = min(0.1, 0.05 + 0.5 / (1.0 + latency))
+            scores[name] = consensus + length_bonus + latency_bonus
+
+        winner = max(scores, key=scores.get)
+        return {"result": answers[winner], "winner": winner, "policy": self.name, "scores": scores}
+
 _POLICIES: Dict[str, ResultPolicy] = {
     FastestPolicy.name: FastestPolicy(),
     ConsensusSimplePolicy.name: ConsensusSimplePolicy(),
+    ConsensusWeightedPolicy.name: ConsensusWeightedPolicy(),
 }
 def get_policy(name: Optional[str]) -> ResultPolicy:
     return _POLICIES.get((name or "").lower(), _POLICIES["consensus.simple"])
