@@ -1,5 +1,6 @@
 import ast
 import pathlib
+from typing import List
 
 import pytest
 
@@ -34,6 +35,28 @@ def test_engine_has_no_duplicate_top_level_definitions():
             else:
                 seen[name] = node.lineno
     assert not duplicates, f"Duplicate top-level definitions detected: {duplicates}"
+
+
+def test_engine_has_no_duplicate_uppercase_constants():
+    tree = ast.parse(MODULE_PATH.read_text())
+    seen = {}
+    duplicates = []
+    for node in tree.body:
+        names: List[str] = []
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id.isupper():
+                    names.append(target.id)
+        elif isinstance(node, ast.AnnAssign):
+            target = node.target
+            if isinstance(target, ast.Name) and target.id.isupper():
+                names.append(target.id)
+        for name in names:
+            if name in seen:
+                duplicates.append(name)
+            else:
+                seen[name] = node.lineno
+    assert not duplicates, f"Duplicate uppercase constants detected: {duplicates}"
 
 
 def test_consensus_simple_policy_uses_blended_score(monkeypatch):
