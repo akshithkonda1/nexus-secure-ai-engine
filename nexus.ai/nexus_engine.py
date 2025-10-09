@@ -1194,5 +1194,6 @@ def build_web_retriever_from_env(
     return WebRetriever(providers, scraper=scraper)
 
 #End of Engine code# 
-#Nexus is an advanced orchestration engine for LLMs and memory stores across AWS, Azure, and GCP, designed for secure, scalable AI applications.
-# #It supports dynamic secret resolution, multi-cloud memory management, and flexible model connectors.
+#Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
+#It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
+#Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
