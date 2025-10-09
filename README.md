@@ -28,13 +28,20 @@
 
 ---
 
-## <img src="assets/logo_nexus.png" alt="Nexus Logo" width="180px"><br>What is Nexus.ai?
-Nexus is a **vendor-neutral, cloud-native AI orchestration platform** designed to:
-- Aggregate responses from **multiple AI models** (LLMs, proprietary, and open-source).
-- Enrich results with **live, verifiable context** from trusted sources.
-- **Validate, rank, and encrypt** outputs before delivery.
+## What is Nexus?
 
-**In plain English:** Nexus is an **AI firewall** — ensuring every answer is **accurate, secure, and production-ready**.
+Nexus is a security-focused AI engine that aggregates and analyzes responses from multiple AI models plus traditional search
+engines and media to deliver a comprehensive and nuanced answer to user queries. It pairs live web retrieval and scraping with
+strict schema guarantees and cryptographic isolation.
+
+Nexus integrates 256-bit AES-GCM encryption for data at rest and in motion (with tenant/instance/user-scoped AAD), and uses
+response aggregation policies—including model "debate" and consensus—to improve reliability. It’s horizontally scalable and
+easily extensible: new models and data sources can be onboarded without rewriting the core engine.
+
+Built for developers and researchers yet friendly to end users, Nexus focuses on clear, actionable insights verified against the
+web.
+
+Nexus was developed by Akshith Konda.
 
 ---
 
@@ -64,12 +71,13 @@ Unchecked AI can:
 ---
 
 ## Core Features (With Impact)
-- **Multi-Model AI Debate** — Truth-prioritized, bias-resistant outputs.  
-- **Live Context Injection** — Always relevant, always current.  
-- **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.  
-- **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.  
-- **Multi-Cloud Ready** — Operates across AWS, Azure, and GCP.  
-- **Demonstrator,setup required** — No secrets embedded, instant production capability.  
+- **Multi-Model AI Debate** — Truth-prioritized, bias-resistant outputs that converge on a consensus answer with ≥2 independent
+  sources.
+- **Live Context Injection** — Always relevant, always current.
+- **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.
+- **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.
+- **Horizontally Scalable** — Operates across AWS, Azure, and GCP without single-region bottlenecks.
+- **Demonstrator,setup required** — No secrets embedded, instant production capability.
 - **Compliance-Grade Logging** — Full audit trails with configurable TTL.
 
 ---
