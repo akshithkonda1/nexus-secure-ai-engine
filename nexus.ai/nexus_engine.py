@@ -21,7 +21,12 @@ The contract above is intentionally narrow; additive fields require explicit
 version bumps and client coordination.
 """
 
-from __future__ import annotations
+    def allow(self) -> Tuple[bool, float]:
+        with self._lock:
+            now = time.monotonic()
+            if now < self.open_until:
+                return False, max(0.0, self.open_until - now)
+            return True, 0.0
 
 import json
 import logging
@@ -42,9 +47,22 @@ import uuid
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
 
-import requests
-from bs4 import BeautifulSoup
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # REQUIRED
+    def record_failure(self) -> float:
+        with self._lock:
+            self.failures += 1
+            if self.failures < CIRCUIT_THRESHOLD:
+                return 0.0
+            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
+            self.open_until = time.monotonic() + cool
+            return cool
+
+
+class RateLimiter:
+    def __init__(self, per_minute: int, burst: int) -> None:
+        self.per_minute = per_minute
+        self.burst = max(burst, per_minute)
+        self._hits: Dict[str, Deque[float]] = {}
+        self._lock = threading.Lock()
 
 # =========================================================
 # Logging
@@ -84,15 +102,14 @@ if not log.handlers:
     log.addHandler(handler)
 log.setLevel(_log_level())
 
-# =========================================================
-# Security primitives (encryption + scoping + endpoint allow-list)
-# =========================================================
 
-@dataclass
-class AccessContext:
-    tenant_id: str
-    instance_id: str
-    user_id: str  # required to bind AAD
+def _remaining_timeout(deadline: Optional[float], default: float) -> float:
+    if deadline is None:
+        return max(0.2, min(default, MAX_MODEL_TIMEOUT))
+    remaining = max(0.0, deadline - time.monotonic())
+    if remaining <= 0:
+        raise DeadlineExceeded("No time remaining for request")
+    return max(0.2, min(remaining, MAX_MODEL_TIMEOUT))
 
 
 class Crypter:
@@ -115,11 +132,7 @@ class Crypter:
         key = base64.b64decode(b64)
         return Crypter(key)
 
-    def encrypt(self, plaintext: str, *, aad: bytes) -> str:
-        import os as _os, base64
-        nonce = _os.urandom(12)
-        ct = self._aes.encrypt(nonce, plaintext.encode("utf-8"), aad)
-        return base64.b64encode(nonce + ct).decode("ascii")
+_SCRAPE_DENYLIST = _load_scrape_denylist()
 
     def decrypt(self, token: str, *, aad: bytes) -> str:
         import base64
@@ -1951,3 +1964,6 @@ def build_web_retriever_from_env(
 #Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 #It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
 #Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
+
+
