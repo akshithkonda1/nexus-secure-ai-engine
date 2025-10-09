@@ -193,6 +193,102 @@ class ConnectorError(NexusError):
     default_message = "Connector invocation failed"
 
 
+class NexusError(Exception):
+    """Base exception for Nexus engine errors."""
+
+
+class MisconfigurationError(NexusError):
+    pass
+
+
+class RateLimitExceeded(NexusError):
+    pass
+
+
+class VerificationError(NexusError):
+    pass
+
+
+class DeadlineExceeded(NexusError):
+    pass
+
+
+class CircuitOpenError(NexusError):
+    pass
+
+
+class PayloadTooLargeError(NexusError):
+    pass
+
+
+class ConnectorError(NexusError):
+    pass
+
+
+class NexusError(Exception):
+    """Base exception for Nexus engine errors."""
+
+
+class MisconfigurationError(NexusError):
+    pass
+
+
+class RateLimitExceeded(NexusError):
+    pass
+
+
+class VerificationError(NexusError):
+    pass
+
+
+class DeadlineExceeded(NexusError):
+    pass
+
+
+class CircuitOpenError(NexusError):
+    pass
+
+
+class PayloadTooLargeError(NexusError):
+    pass
+
+
+class ConnectorError(NexusError):
+    pass
+
+
+class NexusError(Exception):
+    """Base exception for Nexus engine errors."""
+
+
+class MisconfigurationError(NexusError):
+    pass
+
+
+class RateLimitExceeded(NexusError):
+    pass
+
+
+class VerificationError(NexusError):
+    pass
+
+
+class DeadlineExceeded(NexusError):
+    pass
+
+
+class CircuitOpenError(NexusError):
+    pass
+
+
+class PayloadTooLargeError(NexusError):
+    pass
+
+
+class ConnectorError(NexusError):
+    pass
+
+
 def _is_https(url: str) -> bool:
     try:
         p = urlparse(url); return p.scheme == "https" and bool(p.netloc)
@@ -213,6 +309,44 @@ def _host_allowed(url: str, patterns: Optional[List[str]]) -> bool:
             continue
         if pat.startswith("*."):
             if host.endswith(pat[1:]):  # ".example.com"
+                return True
+        elif host == pat:
+            return True
+    return False
+
+
+def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
+    if not patterns:
+        return False
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return True
+    for pat in patterns:
+        pat = pat.strip().lower()
+        if not pat:
+            continue
+        if pat.startswith("*."):
+            if host.endswith(pat[1:]):
+                return True
+        elif host == pat:
+            return True
+    return False
+
+
+def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
+    if not patterns:
+        return False
+    try:
+        host = urlparse(url).netloc.lower()
+    except Exception:
+        return True
+    for pat in patterns:
+        pat = pat.strip().lower()
+        if not pat:
+            continue
+        if pat.startswith("*."):
+            if host.endswith(pat[1:]):
                 return True
         elif host == pat:
             return True
@@ -385,6 +519,114 @@ def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
                 f"Response exceeded {max_bytes} bytes",
                 details={"max_bytes": max_bytes},
             )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+_MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
+_MAX_MODEL_REQUEST_BYTES = int(os.getenv("NEXUS_MAX_MODEL_REQUEST_BYTES", str(512 * 1024)))
+_MAX_MODEL_TIMEOUT = float(os.getenv("NEXUS_MAX_MODEL_TIMEOUT", "10.0"))
+_MAX_SCRAPE_BYTES = int(os.getenv("NEXUS_MAX_SCRAPE_BYTES", str(40 * 1024)))
+_MAX_DEADLINE_SECONDS = int(os.getenv("NEXUS_MAX_REQUEST_DEADLINE_SECONDS", "60"))
+
+_CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
+_CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
+_CIRCUIT_MAX_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_MAX_COOL_SECONDS", "120.0"))
+
+_RATE_LIMIT_PER_MIN = max(1, int(os.getenv("NEXUS_RATE_LIMIT_PER_MIN", "60")))
+_RATE_LIMIT_BURST = max(1, int(os.getenv("NEXUS_RATE_LIMIT_BURST", str(_RATE_LIMIT_PER_MIN))))
+_MAX_CONCURRENT_REQUESTS = max(1, int(os.getenv("NEXUS_MAX_CONCURRENT_REQUESTS", "32")))
+_CONCURRENCY_WAIT_SECONDS = float(os.getenv("NEXUS_CONCURRENCY_WAIT_SECONDS", "5"))
+
+
+class _CircuitBreaker:
+    def __init__(self) -> None:
+        self.failures = 0
+        self.open_until = 0.0
+        self._lock = threading.Lock()
+
+    def allow(self) -> Tuple[bool, float]:
+        with self._lock:
+            now = time.monotonic()
+            if now < self.open_until:
+                return False, max(0.0, self.open_until - now)
+            return True, 0.0
+
+    def record_success(self) -> None:
+        with self._lock:
+            self.failures = 0
+            self.open_until = 0.0
+
+    def record_failure(self) -> float:
+        with self._lock:
+            self.failures += 1
+            if self.failures < _CIRCUIT_THRESHOLD:
+                return 0.0
+            cool = min(_CIRCUIT_MAX_COOL, _CIRCUIT_BASE_COOL * (2 ** (self.failures - _CIRCUIT_THRESHOLD)))
+            self.open_until = time.monotonic() + cool
+            return cool
+
+
+class RateLimiter:
+    def __init__(self, per_minute: int, burst: int) -> None:
+        self.per_minute = per_minute
+        self.burst = max(burst, per_minute)
+        self._hits: Dict[str, Deque[float]] = {}
+        self._lock = threading.Lock()
+
+    def try_acquire(self, key: str, now: Optional[float] = None) -> Tuple[bool, float]:
+        stamp = now or time.time()
+        with self._lock:
+            q = self._hits.setdefault(key, deque())
+            cutoff = stamp - 60.0
+            while q and q[0] < cutoff:
+                q.popleft()
+            if len(q) >= self.burst:
+                retry_in = max(0.0, q[0] + 60.0 - stamp)
+                return False, retry_in
+            if len(q) >= self.per_minute:
+                idx = -self.per_minute
+                retry_in = max(0.0, q[idx] + 60.0 - stamp)
+                if retry_in > 0:
+                    return False, retry_in
+            q.append(stamp)
+            return True, 0.0
+
+
+_GLOBAL_RATE_LIMITER = RateLimiter(_RATE_LIMIT_PER_MIN, _RATE_LIMIT_BURST)
+_GLOBAL_CONCURRENCY_SEMAPHORE = threading.BoundedSemaphore(_MAX_CONCURRENT_REQUESTS)
+
+
+def _check_payload_size(payload: Dict[str, Any]) -> None:
+    try:
+        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    except Exception as exc:
+        raise NexusError(f"Failed to serialize payload: {exc}") from exc
+    if len(raw) > _MAX_MODEL_REQUEST_BYTES:
+        raise PayloadTooLargeError(
+            f"Payload exceeds {_MAX_MODEL_REQUEST_BYTES} bytes limit"
+        )
+
+
+def _remaining_timeout(deadline: Optional[float], default: float) -> float:
+    if deadline is None:
+        return min(default, _MAX_MODEL_TIMEOUT)
+    remaining = max(0.0, deadline - time.monotonic())
+    if remaining <= 0:
+        raise DeadlineExceeded("No time remaining for request")
+    return min(remaining, _MAX_MODEL_TIMEOUT)
+
+
+def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
+    total = 0
+    chunks: List[bytes] = []
+    for chunk in stream.iter_content(chunk_size=65536):
+        if not chunk:
+            continue
+        total += len(chunk)
+        if total > max_bytes:
+            stream.close()
+            raise PayloadTooLargeError(f"Response exceeded {max_bytes} bytes")
         chunks.append(chunk)
     return b"".join(chunks)
 
