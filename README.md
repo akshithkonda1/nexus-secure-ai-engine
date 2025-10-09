@@ -28,16 +28,20 @@
 
 ---
 
-## <img src="assets/logo_nexus.png" alt="Nexus Logo" width="180px"><br>What is Nexus.ai?
-Nexus is a **vendor-neutral, cloud-native AI orchestration platform** designed to:
-- Aggregate responses from **multiple AI models** (LLMs, proprietary, and open-source).
-- Enrich results with **live, verifiable context** from trusted sources.
-- **Validate, rank, and encrypt** outputs before delivery.
+## What is Nexus?
 
-It provides a **comprehensive and nuanced** orchestration layer for developers and researchers, aiming to democratize access to
-measured AI assistance while keeping security-first guardrails in place.
+Nexus is a security-focused AI engine that aggregates and analyzes responses from multiple AI models plus traditional search
+engines and media to deliver a comprehensive and nuanced answer to user queries. It pairs live web retrieval and scraping with
+strict schema guarantees and cryptographic isolation.
 
-**In plain English:** Nexus is an **AI firewall** — ensuring every answer is **accurate, secure, and production-ready**.
+Nexus integrates 256-bit AES-GCM encryption for data at rest and in motion (with tenant/instance/user-scoped AAD), and uses
+response aggregation policies—including model "debate" and consensus—to improve reliability. It’s horizontally scalable and
+easily extensible: new models and data sources can be onboarded without rewriting the core engine.
+
+Built for developers and researchers yet friendly to end users, Nexus focuses on clear, actionable insights verified against the
+web.
+
+Nexus was developed by Akshith Konda.
 
 ---
 
