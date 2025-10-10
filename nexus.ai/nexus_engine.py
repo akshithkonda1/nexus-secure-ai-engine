@@ -55,7 +55,6 @@ import logging
 import os
 import random
 import re
-import requests
 import time
 import math
 import threading
@@ -64,7 +63,57 @@ from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
-import requests
+
+try:
+    import requests  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - exercised only when optional deps missing
+    from types import SimpleNamespace
+    from urllib.parse import quote as _urllib_quote
+
+    class _RequestsUnavailableSession:
+        """Minimal stub that surfaces a clear error when HTTP features are invoked."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            self._error = RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def request(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise self._error
+
+        get = post = put = delete = head = options = request
+
+        def close(self) -> None:  # pragma: no cover - nothing to clean up in stub
+            return None
+
+    class _RequestsUnavailableResponse:
+        """Placeholder response used solely for type annotations."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            self.headers = {}
+            self.status_code = 0
+
+        def iter_content(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def raise_for_status(self) -> None:
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def json(self):  # type: ignore[no-untyped-def]
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+    requests = SimpleNamespace(  # type: ignore[assignment]
+        Session=_RequestsUnavailableSession,
+        Response=_RequestsUnavailableResponse,
+        utils=SimpleNamespace(quote=lambda value, safe="": _urllib_quote(value, safe=safe)),
+    )
+
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -72,16 +121,6 @@ import uuid
 
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
-
-    def record_failure(self) -> float:
-       with self._lock:
-            self.failures += 1
-            if self.failures < CIRCUIT_THRESHOLD:
-                return 0.0
-            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
-            self.open_until = time.monotonic() + cool
-            return cool
-
 
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
@@ -169,9 +208,6 @@ class Crypter:
         import base64
         key = base64.b64decode(b64)
         return Crypter(key)
-
-_SCRAPE_DENYLIST = _load_scrape_denylist()
-
 
 class NexusError(Exception):
     """Base exception for Nexus engine errors with structured metadata."""
@@ -401,6 +437,7 @@ _SCRAPE_ALLOWLIST = [
 ]
 _RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
 
+
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
 CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
 CIRCUIT_MAX_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_MAX_COOL_SECONDS", "120.0"))
@@ -524,14 +561,6 @@ def _load_scrape_denylist() -> List[str]:
     items = [p.strip() for p in raw.split(",") if p.strip()]
     return items or defaults
 
-
-_SCRAPE_DENYLIST = _load_scrape_denylist()
-_SCRAPE_ALLOWLIST = [
-    p.strip().lower()
-    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
-    if p.strip()
-]
-_RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
 
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
 CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
@@ -661,14 +690,6 @@ def _load_scrape_denylist() -> List[str]:
     return items or defaults
 
 
-_SCRAPE_DENYLIST = _load_scrape_denylist()
-_SCRAPE_ALLOWLIST = [
-    p.strip().lower()
-    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
-    if p.strip()
-]
-_RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
-
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
 CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))
 CIRCUIT_MAX_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_MAX_COOL_SECONDS", "120.0"))
@@ -792,14 +813,6 @@ def _load_scrape_denylist() -> List[str]:
     items = [p.strip() for p in raw.split(",") if p.strip()]
     return items or defaults
 
-
-_SCRAPE_DENYLIST = _load_scrape_denylist()
-_SCRAPE_ALLOWLIST = [
-    p.strip().lower()
-    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
-    if p.strip()
-]
-_RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
 
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
 CIRCUIT_BASE_COOL = float(os.getenv("NEXUS_CIRCUIT_BREAKER_BASE_COOL_SECONDS", "2.0"))

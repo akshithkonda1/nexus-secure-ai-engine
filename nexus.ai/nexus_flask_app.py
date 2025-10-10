@@ -13,13 +13,14 @@ from typing import Dict, Any
 
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
- 
+
+
 def node_health():
-return {
-         "pid": os.getpid(),
-         "host": socket.gethostname(),
-         "time": int(time.time())
-                }
+    return {
+        "pid": os.getpid(),
+        "host": socket.gethostname(),
+        "time": int(time.time()),
+    }
 
 # Optional deps
 try:
