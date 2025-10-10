@@ -63,7 +63,57 @@ from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
-import requests
+
+try:
+    import requests  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - exercised only when optional deps missing
+    from types import SimpleNamespace
+    from urllib.parse import quote as _urllib_quote
+
+    class _RequestsUnavailableSession:
+        """Minimal stub that surfaces a clear error when HTTP features are invoked."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            self._error = RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def request(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise self._error
+
+        get = post = put = delete = head = options = request
+
+        def close(self) -> None:  # pragma: no cover - nothing to clean up in stub
+            return None
+
+    class _RequestsUnavailableResponse:
+        """Placeholder response used solely for type annotations."""
+
+        def __init__(self, *args, **kwargs) -> None:
+            self.headers = {}
+            self.status_code = 0
+
+        def iter_content(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def raise_for_status(self) -> None:
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+        def json(self):  # type: ignore[no-untyped-def]
+            raise RuntimeError(
+                "The optional 'requests' dependency is required for HTTP operations."
+            )
+
+    requests = SimpleNamespace(  # type: ignore[assignment]
+        Session=_RequestsUnavailableSession,
+        Response=_RequestsUnavailableResponse,
+        utils=SimpleNamespace(quote=lambda value, safe="": _urllib_quote(value, safe=safe)),
+    )
+
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
