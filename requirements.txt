@@ -1,0 +1,2 @@
+# Delegates to the core Nexus engine dependencies
+-r nexus.ai/requirements.txt
