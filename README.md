@@ -5,6 +5,7 @@
 
 # nexus-secure-ai-engine
 
+![Build](https://img.shields.io/badge/build-Passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-orange)
 ![Status](https://img.shields.io/badge/status-Demonstrator-yellow)
@@ -117,6 +118,14 @@ InfraOps Companion continuously ingests telemetry from distributed systems, appl
 * **AI Hallucination & Drift Detection** — Monitor and surface unusual model behaviors in real time.
 * **API Call Pattern Analysis** — Spot emerging systemic risks before they propagate.
 * **Root Cause AI Insights** — Accelerate mean time to resolution (MTTR) with automated context and recommendations.
+
+---
+
+## Next Recommended Steps
+
+1. **Tag the Stable Build** — `git tag -a v1.0.0 -m "Stable build: Nexus engine passes CI" && git push origin v1.0.0`
+2. **Add Deployment Automation (Optional)** — Configure a deployment stage (Docker build, S3/ECR push) to streamline releases.
+3. **Expand Testing Coverage** — Start structured load or integration testing with simulated API calls, encryption/decryption checks, and rate-limit verification.
 
 ### Why It Matters
 
