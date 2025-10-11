@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import pathlib
 import sys
 import threading
@@ -8,6 +9,8 @@ import pytest
 
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 if "nexus.ai.nexus_engine" in sys.modules:
     nexus_engine = sys.modules["nexus.ai.nexus_engine"]
@@ -77,6 +80,7 @@ def reset_engine_state(monkeypatch):
     monkeypatch.setattr(nexus_engine, "_SCRAPE_DENYLIST", [])
     monkeypatch.setattr(nexus_engine, "_SCRAPE_ALLOWLIST", [])
     monkeypatch.setattr(nexus_engine, "_RESPECT_ROBOTS", False)
+    nexus_engine._reset_robots_cache()
     yield
 
 
@@ -184,3 +188,103 @@ def test_allowlist_filters_sources(monkeypatch):
     result = engine.run("session", "question")
     assert result["sources"]
     assert all("allowed.example" in src["url"] for src in result["sources"])
+
+
+def test_html_scraper_respects_robots_rules(monkeypatch):
+    monkeypatch.setattr(nexus_engine, "_RESPECT_ROBOTS", True)
+    nexus_engine._reset_robots_cache()
+
+    class _StubResponse:
+        def __init__(self, text: str, status: int = 200):
+            self._text = text
+            self.text = text
+            self.status_code = status
+            self.ok = status < 400
+            self.headers = {"content-length": str(len(text))}
+            self.encoding = "utf-8"
+
+        def iter_content(self, chunk_size=65536):  # pragma: no cover - simple generator
+            yield self._text.encode(self.encoding or "utf-8")
+
+        def close(self):  # pragma: no cover - nothing to clean
+            pass
+
+    class _SessionStub:
+        def __init__(self, routes):
+            self.routes = dict(routes)
+            self.calls = []
+
+        def get(self, url, **kwargs):
+            self.calls.append(url)
+            factory = self.routes.get(url)
+            if factory is None:
+                raise AssertionError(f"Unexpected URL requested: {url}")
+            return factory()
+
+    robots_url = "https://site.test/robots.txt"
+
+    session = _SessionStub({robots_url: lambda: _StubResponse("User-agent: *\nDisallow: /private")})
+    scraper = nexus_engine.HtmlScraper(session=session)
+    src = nexus_engine.WebSource(url="https://site.test/private/page")
+
+    blocked = scraper.enrich(src)
+    assert blocked is src
+    assert session.calls == [robots_url]
+
+    def _unexpected():  # pragma: no cover - ensures cache prevents refetch
+        raise AssertionError("robots.txt should not be fetched twice")
+
+    session.routes[robots_url] = _unexpected
+    blocked_again = scraper.enrich(src)
+    assert blocked_again is src
+    assert session.calls == [robots_url]
+
+
+def test_html_scraper_fetches_when_robots_allows(monkeypatch):
+    monkeypatch.setattr(nexus_engine, "_RESPECT_ROBOTS", True)
+    nexus_engine._reset_robots_cache()
+
+    class _StubResponse:
+        def __init__(self, text: str, status: int = 200):
+            self._text = text
+            self.text = text
+            self.status_code = status
+            self.ok = status < 400
+            self.headers = {"content-length": str(len(text))}
+            self.encoding = "utf-8"
+
+        def iter_content(self, chunk_size=65536):  # pragma: no cover - simple generator
+            yield self._text.encode(self.encoding or "utf-8")
+
+        def close(self):  # pragma: no cover - nothing to clean
+            pass
+
+    class _SessionStub:
+        def __init__(self, routes):
+            self.routes = dict(routes)
+            self.calls = []
+
+        def get(self, url, **kwargs):
+            self.calls.append(url)
+            factory = self.routes.get(url)
+            if factory is None:
+                raise AssertionError(f"Unexpected URL requested: {url}")
+            return factory()
+
+    robots_url = "https://site.test/robots.txt"
+    page_url = "https://site.test/allowed"
+
+    session = _SessionStub(
+        {
+            robots_url: lambda: _StubResponse("User-agent: *\nAllow: /"),
+            page_url: lambda: _StubResponse(
+                "<html><head><title>Doc</title></head><body><p>Hello</p></body></html>"
+            ),
+        }
+    )
+    scraper = nexus_engine.HtmlScraper(session=session)
+    src = nexus_engine.WebSource(url=page_url)
+
+    enriched = scraper.enrich(src)
+    assert enriched.url == page_url
+    assert session.calls == [robots_url, page_url]
