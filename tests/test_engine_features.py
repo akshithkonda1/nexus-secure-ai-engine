@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import pathlib
 import sys
 import threading
@@ -8,6 +9,8 @@ import pytest
 
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 if "nexus.ai.nexus_engine" in sys.modules:
     nexus_engine = sys.modules["nexus.ai.nexus_engine"]
