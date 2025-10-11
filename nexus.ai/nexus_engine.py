@@ -64,9 +64,16 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
 
+_ALLOW_TEST_FALLBACKS = os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
+
 try:
     import requests  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - exercised only when optional deps missing
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised only when optional deps missing
+    if not _ALLOW_TEST_FALLBACKS:
+        raise RuntimeError(
+            "The 'requests' dependency is required. Install it or set "
+            "NEXUS_ALLOW_TEST_FALLBACKS=1 to use the limited test stub."
+        ) from exc
     from types import SimpleNamespace
     from urllib.parse import quote as _urllib_quote
 
@@ -116,7 +123,13 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only when optional d
 
 try:  # pragma: no cover - optional dependency
     from bs4 import BeautifulSoup  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - test fallback
+except ModuleNotFoundError as exc:  # pragma: no cover - test fallback
+    if not _ALLOW_TEST_FALLBACKS:
+        raise RuntimeError(
+            "The 'beautifulsoup4' dependency is required. Install it or set "
+            "NEXUS_ALLOW_TEST_FALLBACKS=1 to use the limited test stub."
+        ) from exc
+
     class BeautifulSoup:  # type: ignore[override]
         def __init__(self, *args, **kwargs) -> None:
             self._content = ""
@@ -131,7 +144,12 @@ except ModuleNotFoundError:  # pragma: no cover - test fallback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 try:  # pragma: no cover - exercised in environments without optional deps
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for tests
+except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback for tests
+    if not _ALLOW_TEST_FALLBACKS:
+        raise RuntimeError(
+            "The 'cryptography' dependency is required for AES-GCM support. Install it "
+            "or set NEXUS_ALLOW_TEST_FALLBACKS=1 to use the insecure test shim."
+        ) from exc
     import hashlib
     import hmac
 

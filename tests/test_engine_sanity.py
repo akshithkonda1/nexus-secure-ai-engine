@@ -1,5 +1,6 @@
 import ast
 import collections
+import os
 import pathlib
 from typing import List
 
@@ -7,6 +8,8 @@ import pytest
 
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 
 def _load_module():
