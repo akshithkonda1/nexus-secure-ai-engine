@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo.tmp"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "./tsconfig.app.json" }
+  ]
+}
