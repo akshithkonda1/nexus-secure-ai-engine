@@ -63,6 +63,9 @@ from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
+from urllib.robotparser import RobotFileParser
+
+_ALLOW_TEST_FALLBACKS = os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
 
 _ALLOW_TEST_FALLBACKS = os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
 
@@ -513,6 +516,10 @@ _SCRAPE_ALLOWLIST = [
     if p.strip()
 ]
 _RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
+_ROBOTS_CACHE_TTL_SECONDS = max(0, int(os.getenv("NEXUS_ROBOTS_CACHE_TTL_SECONDS", "1800")))
+_ROBOTS_MAX_BYTES = int(os.getenv("NEXUS_ROBOTS_MAX_BYTES", str(128 * 1024)))
+_ROBOTS_CACHE: Dict[str, Tuple[float, Optional[RobotFileParser]]] = {}
+_ROBOTS_CACHE_LOCK = threading.Lock()
 
 
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
@@ -591,10 +598,127 @@ def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
 
 
 
+def _reset_robots_cache() -> None:
+    with _ROBOTS_CACHE_LOCK:
+        _ROBOTS_CACHE.clear()
 
 
+def _download_robots_rules(
+    base_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> Optional[RobotFileParser]:
+    robots_url = urljoin(base_url, "/robots.txt")
+    try:
+        timeout = _remaining_timeout(deadline, 2.0)
+        response = session.get(
+            robots_url,
+            headers={"User-Agent": user_agent},
+            timeout=max(0.1, timeout),
+            stream=True,
+        )
+    except Exception as exc:
+        log.debug(
+            "robots_fetch_failed",
+            extra={"base_url": base_url, "error": str(exc)},
+        )
+        return None
+
+    try:
+        if not getattr(response, "ok", False):
+            return None
+        declared = response.headers.get("content-length") if hasattr(response, "headers") else None
+        declared_bytes: Optional[int] = None
+        if declared:
+            try:
+                declared_bytes = int(declared)
+            except ValueError:
+                declared_bytes = None
+        if declared_bytes and declared_bytes > _ROBOTS_MAX_BYTES:
+            log.warning(
+                "robots_txt_declared_too_large",
+                extra={"base_url": base_url, "declared_bytes": declared_bytes},
+            )
+            return None
+        try:
+            body = _limit_body(response, max_bytes=_ROBOTS_MAX_BYTES)
+        except PayloadTooLargeError:
+            log.warning(
+                "robots_txt_stream_too_large",
+                extra={"base_url": base_url, "max_bytes": _ROBOTS_MAX_BYTES},
+            )
+            return None
+        text = body.decode(getattr(response, "encoding", None) or "utf-8", errors="ignore")
+        parser = RobotFileParser()
+        parser.set_url(robots_url)
+        parser.parse(text.splitlines())
+        return parser
+    except Exception as exc:
+        log.debug(
+            "robots_txt_parse_failed",
+            extra={"base_url": base_url, "error": str(exc)},
+        )
+        return None
+    finally:
+        try:
+            response.close()
+        except Exception:
+            pass
 
 
+def _get_robots_parser(
+    base_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> Optional[RobotFileParser]:
+    now = time.monotonic()
+    with _ROBOTS_CACHE_LOCK:
+        cached = _ROBOTS_CACHE.get(base_url)
+        if cached and (now - cached[0]) < _ROBOTS_CACHE_TTL_SECONDS:
+            return cached[1]
+
+    parser = _download_robots_rules(
+        base_url,
+        session=session,
+        user_agent=user_agent,
+        deadline=deadline,
+    )
+    with _ROBOTS_CACHE_LOCK:
+        _ROBOTS_CACHE[base_url] = (time.monotonic(), parser)
+    return parser
+
+
+def _robots_can_fetch(
+    target_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> bool:
+    parsed = urlparse(target_url)
+    if not parsed.scheme or not parsed.netloc:
+        return True
+    base = f"{parsed.scheme}://{parsed.netloc}"
+    parser = _get_robots_parser(
+        base,
+        session=session,
+        user_agent=user_agent,
+        deadline=deadline,
+    )
+    if parser is None:
+        return True
+    try:
+        return parser.can_fetch(user_agent, target_url)
+    except Exception as exc:
+        log.debug(
+            "robots_can_fetch_error",
+            extra={"base_url": base, "error": str(exc)},
+        )
+        return True
 
 
 @dataclass
@@ -1142,21 +1266,17 @@ class HtmlScraper:
         if _SCRAPE_ALLOWLIST and not _host_allowed(src.url, _SCRAPE_ALLOWLIST):
             return src
 
-        if _RESPECT_ROBOTS:
-            try:
-                parsed = urlparse(src.url)
-                base = f"{parsed.scheme}://{parsed.netloc}"
-                robots = self._session.get(
-                    f"{base}/robots.txt",
-                    headers={"User-Agent": self.UA},
-                    timeout=2,
-                )
-                # TODO: replace this coarse check with a full robots.txt parser once
-                # deployment includes centralised crawl governance.
-                if robots.ok and "Disallow: /" in robots.text:
-                    return src
-            except Exception:
-                pass
+        if _RESPECT_ROBOTS and not _robots_can_fetch(
+            src.url,
+            session=self._session,
+            user_agent=self.UA,
+            deadline=deadline,
+        ):
+            log.debug(
+                "robots_disallowed",
+                extra={"url": src.url},
+            )
+            return src
 
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
