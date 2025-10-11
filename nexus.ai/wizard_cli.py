@@ -1,7 +1,7 @@
 from __future__ import annotations
-import sys, os, json
-from pathlib import Path
-from config import NexusConfig, save_config
+import sys, os
+
+from nexus_config import NexusConfig, save_config
 
 def _input(prompt: str, default: str = "") -> str:
     try:

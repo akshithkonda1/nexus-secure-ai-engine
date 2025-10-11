@@ -1,10 +1,13 @@
 import importlib.util
 import json
+import os
 import pathlib
 import sys
 import types
 
 import pytest
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 if "bs4" not in sys.modules:
     bs4_stub = types.ModuleType("bs4")
