@@ -9,7 +9,9 @@
     "preview": "vite preview --port 4173",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "clean": "tsc -b --clean && rimraf dist .tsbuild"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.24.3",
