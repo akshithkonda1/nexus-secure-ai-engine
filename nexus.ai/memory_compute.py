@@ -27,7 +27,6 @@ logger.setLevel(getattr(logging, _LOG_LEVEL, logging.INFO))
 
 # ---------- Errors & helpers ----------
 
-
 class MemoryStoreError(RuntimeError):
     """Raised when a backing memory store is misconfigured or unhealthy."""
 
@@ -126,6 +125,13 @@ class InMemoryStore(MemoryStore):
                 "meta": payload,
             }
         )
+        self._data.setdefault(session_id, []).append({
+            "id": mid,
+            "ts": ts,
+            "role": role,
+            "text": text,
+            "meta": payload,
+        })
         logger.debug(f"InMemoryStore.save session={session_id} role={role} mid={mid}")
         return mid
 
@@ -165,13 +171,7 @@ class DynamoDBMemoryStore(MemoryStore):
         mid = uuid.uuid4().hex
         ts = _now_ms()
         payload = _copy_meta(meta)
-        item: Dict[str, Any] = {
-            "session_id": session_id,
-            "ts": ts,
-            "id": mid,
-            "role": role,
-            "text": text,
-        }
+        item: Dict[str, Any] = {"session_id": session_id, "ts": ts, "id": mid, "role": role, "text": text}
         if payload:
             item["meta_json"] = json.dumps(payload, ensure_ascii=False)
             if payload.get("ephemeral"):
@@ -358,6 +358,7 @@ class MultiMemoryStore:
     def save(
         self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
+    def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         payload = _copy_meta(meta)
         ids: List[str] = []
         errors: List[str] = []
