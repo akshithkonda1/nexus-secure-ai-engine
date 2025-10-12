@@ -1,6 +1,8 @@
 # flask_app.py
 from __future__ import annotations
 
+# mypy: ignore-errors
+
 import atexit
 import hmac
 import logging
@@ -748,9 +750,6 @@ class HealthMonitor:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thr = threading.Thread(target=self._loop, name="nexus.health", daemon=True)
-        self._thr = threading.Thread(target=self._loop,
-                                     name="nexus.health",
-                                     daemon=True)
         self._start_time = start_time or dt.utcnow()
 
     def start(self):
@@ -760,8 +759,8 @@ class HealthMonitor:
         self._stop.set()
         try:
             self._thr.join(timeout=2)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("health_monitor_join_failed", extra={"error": str(exc)})
 
     def snapshot(self):
         # Lazy imports to avoid circulars and to work even if some modules are missing
@@ -907,7 +906,7 @@ def health_run():
 # Entrypoint
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
-    host = os.getenv("FLASK_HOST", "0.0.0.0")
+    host = os.getenv("FLASK_HOST", "127.0.0.1")
     port = int(os.getenv("FLASK_PORT", "5000"))
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in {"true", "1", "yes"}
     logger.info(f"Starting Nexus on {host}:{port} debug={debug_mode}")

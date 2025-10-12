@@ -4,8 +4,31 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from pathlib import Path
 import os
 import json
+import time
+import logging
 
 # Pure, side-effect free
+
+log = logging.getLogger("nexus.config")
+
+__all__ = [
+    "ConfigError",
+    "NexusConfig",
+    "load_config",
+    "load_and_validate",
+    "save_config",
+    "validate_config",
+    "SecretResolver",
+]
+
+
+class ConfigError(ValueError):
+    """Raised when configuration sources cannot be coerced to the expected types."""
+
+
+_BOOL_TRUE = {"1", "true", "yes", "y", "on"}
+_BOOL_FALSE = {"0", "false", "no", "n", "off"}
+
 
 __all__ = [
     "ConfigError",
@@ -47,8 +70,8 @@ def _base_dir() -> Path:
     try:
         if "__file__" in globals():
             return Path(__file__).resolve().parent
-    except Exception:
-        pass
+    except Exception as exc:
+        log.debug("config_base_dir_resolution_failed", extra={"error": str(exc)})
     return Path.cwd()
 
 

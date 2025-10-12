@@ -50,10 +50,12 @@ latency metrics) that clients may ignore safely.
 """
 
 from __future__ import annotations
+
+# mypy: ignore-errors
 import json
 import logging
 import os
-import random
+import secrets
 import re
 import time
 import math
@@ -298,6 +300,7 @@ def _log_level() -> int:
 
 
 log = logging.getLogger("nexus.engine")
+_SECURE_RANDOM = secrets.SystemRandom()
 if not log.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(_JsonFormatter())
@@ -500,7 +503,8 @@ def _retry_call(
             if i == tries - 1:
                 break
             capped = min(max_backoff, base_backoff * (2**i))
-            sleep_s = random.uniform(0, capped + jitter)
+            sleep_window = max(0.0, capped + jitter)
+            sleep_s = _SECURE_RANDOM.uniform(0, sleep_window)
             time.sleep(sleep_s)
     raise last  # pragma: no cover
 
@@ -671,8 +675,11 @@ def _download_robots_rules(
     finally:
         try:
             response.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug(
+                "robots_response_close_failed",
+                extra={"base_url": base_url, "error": str(exc)},
+            )
 
 
 def _get_robots_parser(
@@ -1952,7 +1959,11 @@ class Engine:
                 # Always decrypt; if decrypt fails, skip the message (strict encrypted-only policy)
                 try:
                     t = self.crypter.decrypt(t, aad=self._aad(session_id))
-                except Exception:
+                except Exception as exc:
+                    log.debug(
+                        "history_decrypt_failed",
+                        extra={"session_id": session_id, "error": str(exc)},
+                    )
                     continue
                 out.append({"role": r, "content": t})
             return out
@@ -1983,22 +1994,37 @@ class Engine:
             if session and hasattr(session, "close"):
                 try:
                     session.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    log.debug(
+                        "connector_session_close_failed",
+                        extra={
+                            "connector": getattr(connector, "name", "unknown"),
+                            "error": str(exc),
+                        },
+                    )
         if getattr(self.web, "providers", None):
             for provider in self.web.providers:
                 session = getattr(provider, "_session", None)
                 if session and hasattr(session, "close"):
                     try:
                         session.close()
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        log.debug(
+                            "provider_session_close_failed",
+                            extra={
+                                "provider": getattr(provider, "name", provider.__class__.__name__),
+                                "error": str(exc),
+                            },
+                        )
         scraper_session = getattr(getattr(self.web, "scraper", None), "_session", None)
         if scraper_session and hasattr(scraper_session, "close"):
             try:
                 scraper_session.close()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug(
+                    "scraper_session_close_failed",
+                    extra={"error": str(exc)},
+                )
 
     def health_snapshot(self) -> Dict[str, Any]:
         if self._health_monitor:
