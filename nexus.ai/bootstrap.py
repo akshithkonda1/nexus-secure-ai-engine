@@ -21,9 +21,7 @@ class BootstrapError(RuntimeError):
 log = logging.getLogger("nexus.bootstrap")
 if not log.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
-    )
+    handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s"))
     log.addHandler(handler)
 log.setLevel(logging.INFO)
 
@@ -168,9 +166,7 @@ def _load_catalog(resolver: SecretResolver, cfg: Optional[Any]) -> Dict[str, Any
 
     path_env = os.getenv("NEXUS_MODELS_PATH")
     if path_env:
-        return _parse_catalog_json(
-            _read_file(Path(path_env)), source="NEXUS_MODELS_PATH"
-        )
+        return _parse_catalog_json(_read_file(Path(path_env)), source="NEXUS_MODELS_PATH")
 
     raw_env = os.getenv("NEXUS_MODELS_JSON")
     if raw_env:
@@ -232,9 +228,7 @@ def _headers_for_model(resolver: SecretResolver, model: Dict[str, Any]) -> Dict[
         header_name = str(auth.get("header") or "X-API-Key")
         headers[header_name] = _resolve_auth_token(resolver, auth)
     else:
-        raise BootstrapError(
-            f"Unsupported auth.type '{auth_type}' for model '{name}'"
-        )
+        raise BootstrapError(f"Unsupported auth.type '{auth_type}' for model '{name}'")
     return headers
 
 
@@ -306,9 +300,7 @@ def make_connectors(_cfg: Optional[Any] = None) -> Dict[str, ModelConnector]:
             raise BootstrapError(f"Duplicate model name '{name}' in catalog")
 
         endpoint = str(model["endpoint"]).strip()
-        timeout = _int_from_model(
-            model, "timeout", int(defaults.get("timeout", 12)), minimum=1
-        )
+        timeout = _int_from_model(model, "timeout", int(defaults.get("timeout", 12)), minimum=1)
         max_retries = _int_from_model(
             model, "max_retries", int(defaults.get("max_retries", 3)), minimum=0
         )

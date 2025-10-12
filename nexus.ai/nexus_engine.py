@@ -73,6 +73,7 @@ def _allow_test_fallbacks() -> bool:
 
     return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
 
+
 try:
     import requests  # type: ignore
 except ModuleNotFoundError as exc:  # pragma: no cover - exercised only when optional deps missing

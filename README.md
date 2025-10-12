@@ -198,21 +198,6 @@ pytest
 NEXUS_API_KEY=replace-with-key \
 NEXUS_BASE_URL=https://localhost:8443 \
   k6 run tests/load/k6-smoke.js
-
-# 4. Run the contributor quality gates (optional)
-pip install -r requirements-dev.txt
-ruff check .
-black --check .
-pytest
-
-# 5. Execute the load smoke test against a running stack
-NEXUS_API_KEY=replace-with-key \
-NEXUS_BASE_URL=https://localhost:8443 \
-  k6 run tests/load/k6-smoke.js
-```
-
-> **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
-
 ```
 
 > **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
