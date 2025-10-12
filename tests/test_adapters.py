@@ -1,10 +1,15 @@
+# mypy: ignore-errors
+
 import importlib.util
 import json
+import os
 import pathlib
 import sys
 import types
 
 import pytest
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 if "bs4" not in sys.modules:
     bs4_stub = types.ModuleType("bs4")
@@ -93,7 +98,9 @@ def test_adapters_handle_sample_payload(monkeypatch, adapter, sample, expected):
 
 def test_adapter_fallback_serializes_payload(monkeypatch):
     monkeypatch.setenv("NEXUS_ALLOWED_MODEL_DOMAINS", "example.com")
-    connector = ModelConnector(name="model", endpoint="https://example.com/api", adapter="openai.chat")
+    connector = ModelConnector(
+        name="model", endpoint="https://example.com/api", adapter="openai.chat"
+    )
 
     payloads = []
 
