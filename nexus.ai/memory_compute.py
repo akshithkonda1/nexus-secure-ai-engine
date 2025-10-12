@@ -9,7 +9,7 @@ import socket
 import time
 import uuid
 from functools import lru_cache
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 # ---------- Logging ----------
 _LOG_LEVEL = os.getenv("NEXUS_LOG_LEVEL", "INFO").upper()
@@ -56,15 +56,17 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
-def _meta_dict(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _meta_dict(meta: Mapping[str, Any] | None) -> Dict[str, Any]:
     if meta is None:
         return {}
-    if not isinstance(meta, dict):
-        raise MemoryStoreError("meta payloads must be dictionaries")
-    return dict(meta)
+    if isinstance(meta, dict):
+        return dict(meta)
+    if isinstance(meta, Mapping):
+        return dict(meta)
+    raise MemoryStoreError("meta payloads must be mappings")
 
 
-def _copy_meta(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _copy_meta(meta: Mapping[str, Any] | None) -> Dict[str, Any]:
     payload = _meta_dict(meta)
     try:
         json.dumps(payload, ensure_ascii=False)
@@ -288,8 +290,9 @@ class AzureBlobMemoryStore(MemoryStore):
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
-        payload = {"id": mid, "ts": ts, "role": role, "text": text, "meta": _copy_meta(meta)}
-        if payload["meta"].get("ephemeral"):
+        meta_payload = _copy_meta(meta)
+        payload = {"id": mid, "ts": ts, "role": role, "text": text, "meta": meta_payload}
+        if meta_payload.get("ephemeral"):
             payload["ttl"] = int(time.time()) + _ttl_seconds()
         line = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
         bc = self._blob(session_id)
@@ -355,7 +358,9 @@ class MultiMemoryStore:
     def primary(self) -> MemoryStore:
         return self.stores[0]
 
-    def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
+    def save(
+        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+    ) -> str:
         payload = _copy_meta(meta)
         ids: List[str] = []
         errors: List[str] = []
@@ -435,7 +440,9 @@ def verify_memory_writes(
     try:
         got = primary.recent(session_id, limit=attempts)
     except Exception as exc:
-        logger.warning(f"verify_memory_writes recent failed backend={primary.__class__.__name__} err={exc}")
+        logger.warning(
+            f"verify_memory_writes recent failed backend={primary.__class__.__name__} err={exc}"
+        )
         got = []
     ok = len(got) >= attempts
     logger.debug(f"verify_memory_writes ok={ok} wrote={len(ids)} read={len(got)}")

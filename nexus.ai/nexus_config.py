@@ -252,3 +252,69 @@ def load_and_validate(
 ) -> Tuple[NexusConfig, List[str]]:
     cfg = load_config(paths, env_prefix)
     return cfg, validate_config(cfg)
+
+
+class SecretResolver:
+    """Resolve secrets across environment overrides and provider backends."""
+
+    def __init__(
+        self,
+        providers: Iterable[str] | None = None,
+        overrides: Optional[Dict[str, Any]] = None,
+        ttl_seconds: int = 600,
+    ) -> None:
+        normalized: List[str] = []
+        seen: set[str] = set()
+        for provider in providers or []:
+            if not isinstance(provider, str):
+                continue
+            cleaned = provider.strip().lower()
+            if cleaned and cleaned not in seen:
+                seen.add(cleaned)
+                normalized.append(cleaned)
+        if not normalized:
+            normalized = ["aws"]
+
+        ttl = _coerce_int("ttl_seconds", ttl_seconds)
+        if ttl <= 0:
+            raise ConfigError("ttl_seconds must be a positive integer")
+
+        self.providers = normalized
+        self.ttl_seconds = ttl
+        self._overrides: Dict[str, Any] = {
+            str(k): v for k, v in (overrides or {}).items() if v is not None
+        }
+        self._cache: Dict[str, Tuple[float, Any]] = {}
+
+    def _normalize(self, key: str) -> str:
+        cleaned = str(key or "").strip()
+        if not cleaned:
+            raise ConfigError("Secret keys must be non-empty strings")
+        return cleaned.upper()
+
+    def _store(self, key: str, value: Any) -> Any:
+        expires = time.time() + float(self.ttl_seconds)
+        self._cache[key] = (expires, value)
+        return value
+
+    def get(self, key: str, default: Any = None) -> Any:
+        normalized = self._normalize(key)
+        cached = self._cache.get(normalized)
+        now = time.time()
+        if cached and cached[0] > now:
+            return cached[1]
+
+        direct_candidates = (
+            normalized,
+            f"NEXUS_SECRET_{normalized}",
+            key,
+        )
+        for candidate in direct_candidates:
+            if candidate in self._overrides:
+                return self._store(normalized, self._overrides[candidate])
+
+        env_value = os.getenv(f"NEXUS_SECRET_{normalized}")
+        if env_value is not None:
+            return self._store(normalized, env_value)
+
+        return default
