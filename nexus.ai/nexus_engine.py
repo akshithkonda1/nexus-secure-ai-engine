@@ -1,18 +1,18 @@
-#What is Nexus?
+# What is Nexus?
 
-#Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
+# Nexus is a sophisticated AI engine designed to aggregate and analyze responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
 
-#It integrates web scraping capabilities for real-time data retrieval, supports secure data encryption, and offers advanced response aggregation techniques to deliver the best possible answers.
+# It integrates web scraping capabilities for real-time data retrieval, supports secure data encryption, and offers advanced response aggregation techniques to deliver the best possible answers.
 
-#Nexus is built to be extensible and infinitely scalable, allowing for easy integration of new AI models and data sources, making it a versatile tool for developers and researchers alike, but it is also designed to be user-friendly, with a focus on providing clear and actionable insights.
+# Nexus is built to be extensible and infinitely scalable, allowing for easy integration of new AI models and data sources, making it a versatile tool for developers and researchers alike, but it is also designed to be user-friendly, with a focus on providing clear and actionable insights.
 
-#Nexus is not just a tool for AI enthusiasts; it is a powerful platform that can be used in various applications, from academic research to business intelligence, and it aims to democratize access to advanced AI capabilities by making Gen AI replies more accurate and more correct.
+# Nexus is not just a tool for AI enthusiasts; it is a powerful platform that can be used in various applications, from academic research to business intelligence, and it aims to democratize access to advanced AI capabilities by making Gen AI replies more accurate and more correct.
 
-#Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries. 
-#Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
-#It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
+# Nexus is a cutting-edge AI engine that aggregates and analyzes responses from multiple AI models and traditional search engines and media, providing a comprehensive and nuanced understanding of user queries.
+# Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
+# It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
 
-#Nexus was developed by Akshith Konda.
+# Nexus was developed by Akshith Konda.
 # nexus_engine.py
 # engine.py
 # Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
@@ -50,6 +50,8 @@ latency metrics) that clients may ignore safely.
 """
 
 from __future__ import annotations
+
+# mypy: ignore-errors
 import json
 import logging
 import os
@@ -61,12 +63,27 @@ import threading
 import shutil
 from collections import Counter, deque
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
+from urllib.robotparser import RobotFileParser
+
+
+@lru_cache(maxsize=1)
+def _allow_test_fallbacks() -> bool:
+    """Return whether optional dependency fallbacks are permitted."""
+
+    return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
+
 
 try:
     import requests  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - exercised only when optional deps missing
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised only when optional deps missing
+    if not _allow_test_fallbacks():
+        raise RuntimeError(
+            "The 'requests' dependency is required. Install it or set "
+            "NEXUS_ALLOW_TEST_FALLBACKS=1 to use the limited test stub."
+        ) from exc
     from types import SimpleNamespace
     from urllib.parse import quote as _urllib_quote
 
@@ -116,7 +133,13 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only when optional d
 
 try:  # pragma: no cover - optional dependency
     from bs4 import BeautifulSoup  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - test fallback
+except ModuleNotFoundError as exc:  # pragma: no cover - test fallback
+    if not _allow_test_fallbacks():
+        raise RuntimeError(
+            "The 'beautifulsoup4' dependency is required. Install it or set "
+            "NEXUS_ALLOW_TEST_FALLBACKS=1 to use the limited test stub."
+        ) from exc
+
     class BeautifulSoup:  # type: ignore[override]
         def __init__(self, *args, **kwargs) -> None:
             self._content = ""
@@ -129,9 +152,15 @@ except ModuleNotFoundError:  # pragma: no cover - test fallback
 
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 try:  # pragma: no cover - exercised in environments without optional deps
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for tests
+except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback for tests
+    if not _allow_test_fallbacks():
+        raise RuntimeError(
+            "The 'cryptography' dependency is required for AES-GCM support. Install it "
+            "or set NEXUS_ALLOW_TEST_FALLBACKS=1 to use the insecure test shim."
+        ) from exc
     import hashlib
     import hmac
 
@@ -189,7 +218,7 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for tests
         def decrypt(self, nonce: bytes, data: bytes, aad: Optional[bytes]) -> bytes:
             if len(data) < self._TAG_SIZE:
                 raise ValueError("Ciphertext too short")
-            ciphertext, tag = data[:-self._TAG_SIZE], data[-self._TAG_SIZE :]
+            ciphertext, tag = data[: -self._TAG_SIZE], data[-self._TAG_SIZE :]
             expected_tag = self._mac(nonce, aad, ciphertext)
             if not hmac.compare_digest(tag, expected_tag):
                 raise ValueError("Authentication failed")
@@ -197,10 +226,12 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for tests
             plaintext = bytes(b ^ k for b, k in zip(ciphertext, stream))
             return plaintext
 
+
 import uuid
 
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
+
 
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
@@ -235,6 +266,7 @@ class RateLimiter:
 
             hits.append(now)
             return True, 0.0
+
 
 # =========================================================
 # Logging
@@ -289,18 +321,22 @@ class Crypter:
     AES-256-GCM encrypt/decrypt with per-message nonce and AAD bound to tenant/instance/user/session.
     No plaintext path. No ephemeral keys. Key must come from a secret resolver.
     """
+
     def encrypt(self, plaintext: str, *, aad: bytes) -> str:
         import base64, os
+
         nonce = os.urandom(12)
         ct = self._aes.encrypt(nonce, plaintext.encode("utf-8"), aad)
         return base64.b64encode(nonce + ct).decode("ascii")
 
     def decrypt(self, token: str, *, aad: bytes) -> str:
         import base64
+
         raw = base64.b64decode(token.encode("ascii"))
         nonce, ct = raw[:12], raw[12:]
         pt = self._aes.decrypt(nonce, ct, aad)
         return pt.decode("utf-8")
+
     def __init__(self, key_bytes: bytes):
         if len(key_bytes) != 32:
             raise ValueError("AES-256 requires a 32-byte key.")
@@ -311,10 +347,14 @@ class Crypter:
         # Mandatory key in secrets manager; no env/dev fallback; no ephemeral generation.
         b64 = resolver.get("NEXUS_DATA_KEY_B64")
         if not b64:
-            raise MisconfigurationError("NEXUS_DATA_KEY_B64 not found in secrets manager (encryption is mandatory).")
+            raise MisconfigurationError(
+                "NEXUS_DATA_KEY_B64 not found in secrets manager (encryption is mandatory)."
+            )
         import base64
+
         key = base64.b64decode(b64)
         return Crypter(key)
+
 
 class NexusError(Exception):
     """Base exception for Nexus engine errors with structured metadata."""
@@ -441,11 +481,6 @@ def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
     return False
 
 
-
-
-
-
-
 # =========================================================
 # Retry helper (used by search providers and scraper)
 # =========================================================
@@ -466,7 +501,7 @@ def _retry_call(
             last = e
             if i == tries - 1:
                 break
-            capped = min(max_backoff, base_backoff * (2 ** i))
+            capped = min(max_backoff, base_backoff * (2**i))
             sleep_s = random.uniform(0, capped + jitter)
             time.sleep(sleep_s)
     raise last  # pragma: no cover
@@ -490,11 +525,13 @@ def _load_scrape_denylist() -> List[str]:
 
 _SCRAPE_DENYLIST = _load_scrape_denylist()
 _SCRAPE_ALLOWLIST = [
-    p.strip().lower()
-    for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",")
-    if p.strip()
+    p.strip().lower() for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",") if p.strip()
 ]
 _RESPECT_ROBOTS = os.getenv("NEXUS_RESPECT_ROBOTS", "0").lower() in {"1", "true", "yes"}
+_ROBOTS_CACHE_TTL_SECONDS = max(0, int(os.getenv("NEXUS_ROBOTS_CACHE_TTL_SECONDS", "1800")))
+_ROBOTS_MAX_BYTES = int(os.getenv("NEXUS_ROBOTS_MAX_BYTES", str(128 * 1024)))
+_ROBOTS_CACHE: Dict[str, Tuple[float, Optional[RobotFileParser]]] = {}
+_ROBOTS_CACHE_LOCK = threading.Lock()
 
 
 CIRCUIT_THRESHOLD = max(1, int(os.getenv("NEXUS_CIRCUIT_BREAKER_THRESHOLD", "3")))
@@ -530,11 +567,11 @@ class _CircuitBreaker:
             self.failures += 1
             if self.failures < CIRCUIT_THRESHOLD:
                 return 0.0
-            cool = min(CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD)))
+            cool = min(
+                CIRCUIT_MAX_COOL, CIRCUIT_BASE_COOL * (2 ** (self.failures - CIRCUIT_THRESHOLD))
+            )
             self.open_until = time.monotonic() + cool
             return cool
-
-
 
 
 _GLOBAL_RATE_LIMITER = RateLimiter(RATE_LIMIT_PER_MIN, RATE_LIMIT_BURST)
@@ -551,8 +588,6 @@ def _check_payload_size(payload: Dict[str, Any]) -> None:
             f"Payload exceeds {MAX_MODEL_REQUEST_BYTES} bytes limit",
             details={"max_bytes": MAX_MODEL_REQUEST_BYTES, "observed_bytes": len(raw)},
         )
-
-
 
 
 def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
@@ -572,11 +607,127 @@ def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
     return b"".join(chunks)
 
 
+def _reset_robots_cache() -> None:
+    with _ROBOTS_CACHE_LOCK:
+        _ROBOTS_CACHE.clear()
 
 
+def _download_robots_rules(
+    base_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> Optional[RobotFileParser]:
+    robots_url = urljoin(base_url, "/robots.txt")
+    try:
+        timeout = _remaining_timeout(deadline, 2.0)
+        response = session.get(
+            robots_url,
+            headers={"User-Agent": user_agent},
+            timeout=max(0.1, timeout),
+            stream=True,
+        )
+    except Exception as exc:
+        log.debug(
+            "robots_fetch_failed",
+            extra={"base_url": base_url, "error": str(exc)},
+        )
+        return None
+
+    try:
+        if not getattr(response, "ok", False):
+            return None
+        declared = response.headers.get("content-length") if hasattr(response, "headers") else None
+        declared_bytes: Optional[int] = None
+        if declared:
+            try:
+                declared_bytes = int(declared)
+            except ValueError:
+                declared_bytes = None
+        if declared_bytes and declared_bytes > _ROBOTS_MAX_BYTES:
+            log.warning(
+                "robots_txt_declared_too_large",
+                extra={"base_url": base_url, "declared_bytes": declared_bytes},
+            )
+            return None
+        try:
+            body = _limit_body(response, max_bytes=_ROBOTS_MAX_BYTES)
+        except PayloadTooLargeError:
+            log.warning(
+                "robots_txt_stream_too_large",
+                extra={"base_url": base_url, "max_bytes": _ROBOTS_MAX_BYTES},
+            )
+            return None
+        text = body.decode(getattr(response, "encoding", None) or "utf-8", errors="ignore")
+        parser = RobotFileParser()
+        parser.set_url(robots_url)
+        parser.parse(text.splitlines())
+        return parser
+    except Exception as exc:
+        log.debug(
+            "robots_txt_parse_failed",
+            extra={"base_url": base_url, "error": str(exc)},
+        )
+        return None
+    finally:
+        try:
+            response.close()
+        except Exception:
+            pass
 
 
+def _get_robots_parser(
+    base_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> Optional[RobotFileParser]:
+    now = time.monotonic()
+    with _ROBOTS_CACHE_LOCK:
+        cached = _ROBOTS_CACHE.get(base_url)
+        if cached and (now - cached[0]) < _ROBOTS_CACHE_TTL_SECONDS:
+            return cached[1]
 
+    parser = _download_robots_rules(
+        base_url,
+        session=session,
+        user_agent=user_agent,
+        deadline=deadline,
+    )
+    with _ROBOTS_CACHE_LOCK:
+        _ROBOTS_CACHE[base_url] = (time.monotonic(), parser)
+    return parser
+
+
+def _robots_can_fetch(
+    target_url: str,
+    *,
+    session: requests.Session,
+    user_agent: str,
+    deadline: Optional[float],
+) -> bool:
+    parsed = urlparse(target_url)
+    if not parsed.scheme or not parsed.netloc:
+        return True
+    base = f"{parsed.scheme}://{parsed.netloc}"
+    parser = _get_robots_parser(
+        base,
+        session=session,
+        user_agent=user_agent,
+        deadline=deadline,
+    )
+    if parser is None:
+        return True
+    try:
+        return parser.can_fetch(user_agent, target_url)
+    except Exception as exc:
+        log.debug(
+            "robots_can_fetch_error",
+            extra={"base_url": base, "error": str(exc)},
+        )
+        return True
 
 
 @dataclass
@@ -586,58 +737,19 @@ class AccessContext:
     user_id: str
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # =========================================================
 # ModelConnector + Adapters
 # =========================================================
 class ModelConnector:
     """HTTP connector with pluggable adapters to normalize request/response shapes."""
-    _ADAPTERS: Dict[str, Callable[["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str], Optional[float]], Tuple[str, Dict[str, Any]]]] = {}
+
+    _ADAPTERS: Dict[
+        str,
+        Callable[
+            ["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str], Optional[float]],
+            Tuple[str, Dict[str, Any]],
+        ],
+    ] = {}
     _ALIASES: Dict[str, str] = {
         "mistral.chat": "openai.chat",
         "openrouter.chat": "openai.chat",
@@ -675,7 +787,11 @@ class ModelConnector:
         parsed = urlparse(self.endpoint)
         host = (parsed.hostname or "").lower()
         env = os.getenv("NEXUS_ENV", "").lower()
-        local_dev = parsed.scheme == "http" and host in {"127.0.0.1", "localhost"} and env not in {"prod", "production"}
+        local_dev = (
+            parsed.scheme == "http"
+            and host in {"127.0.0.1", "localhost"}
+            and env not in {"prod", "production"}
+        )
         allow_env = os.getenv("NEXUS_ALLOWED_MODEL_DOMAINS", "").strip()
         allow = [s for s in (p.strip() for p in allow_env.split(",")) if s]
         allow_all = os.getenv("NEXUS_ALLOW_ALL_MODELS", "0").lower() in {"1", "true", "yes"}
@@ -687,13 +803,18 @@ class ModelConnector:
                 extra={"endpoint": self.endpoint, "env": os.getenv("NEXUS_ENV", "")},
             )
         if allow and not local_dev and not _host_allowed(self.endpoint, allow):
-            raise MisconfigurationError(f"Endpoint host not allowed by NEXUS_ALLOWED_MODEL_DOMAINS: {self.endpoint}")
+            raise MisconfigurationError(
+                f"Endpoint host not allowed by NEXUS_ALLOWED_MODEL_DOMAINS: {self.endpoint}"
+            )
 
     @classmethod
     def register_adapter(
         cls,
         key: str,
-        fn: Callable[["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str], Optional[float]], Tuple[str, Dict[str, Any]]],
+        fn: Callable[
+            ["ModelConnector", str, Optional[List[Dict[str, str]]], Optional[str], Optional[float]],
+            Tuple[str, Dict[str, Any]],
+        ],
     ) -> None:
         cls._ADAPTERS[key.lower()] = fn
 
@@ -733,7 +854,10 @@ class ModelConnector:
                 if declared and int(declared) > MAX_MODEL_RESPONSE_BYTES:
                     raise PayloadTooLargeError(
                         f"Response exceeds {MAX_MODEL_RESPONSE_BYTES} bytes limit",
-                        details={"max_bytes": MAX_MODEL_RESPONSE_BYTES, "declared_bytes": int(declared)},
+                        details={
+                            "max_bytes": MAX_MODEL_RESPONSE_BYTES,
+                            "declared_bytes": int(declared),
+                        },
                     )
                 body = _limit_body(resp, max_bytes=MAX_MODEL_RESPONSE_BYTES)
                 text = body.decode(resp.encoding or "utf-8", errors="ignore")
@@ -773,7 +897,9 @@ class ModelConnector:
     def health_check(self) -> bool:
         """Return True if degraded/unhealthy, False if healthy."""
         try:
-            r = self._session.options(self.endpoint, headers=self.headers, timeout=min(self.timeout, 4))
+            r = self._session.options(
+                self.endpoint, headers=self.headers, timeout=min(self.timeout, 4)
+            )
             return r.status_code >= 400
         except Exception:
             return True
@@ -790,6 +916,7 @@ class ModelConnector:
         fn = self._ADAPTERS.get(key) or self._ADAPTERS.get("generic.json")
         bounded_history = _limit_history(history)
         return fn(self, prompt, bounded_history, model_name, deadline)  # (text, meta)
+
 
 # ---- utilities for adapters ----
 _ADAPTER_HISTORY_LIMIT = max(0, int(os.getenv("NEXUS_ADAPTER_HISTORY_LIMIT", "16")))
@@ -821,84 +948,133 @@ def _first_str(d: Any, keys: Tuple[str, ...]) -> Optional[str]:
                 return v
     return None
 
+
 # ---- adapters ----
 def _adapt_openai_chat(self: ModelConnector, prompt, history, model_name, deadline=None):
-    msgs = [{"role": m["role"], "content": m["content"]} for m in (history or []) if m.get("role") in {"system","user","assistant"} and "content" in m]
-    msgs.append({"role":"user","content":prompt})
+    msgs = [
+        {"role": m["role"], "content": m["content"]}
+        for m in (history or [])
+        if m.get("role") in {"system", "user", "assistant"} and "content" in m
+    ]
+    msgs.append({"role": "user", "content": prompt})
     payload = {"model": model_name or self.name, "messages": msgs, "temperature": 0.2}
     data = self._post(payload, deadline=deadline)
     text = ""
     try:
         text = data["choices"][0]["message"]["content"]
     except Exception:
-        text = _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+        text = (
+            _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
+        )
     return text, {"usage": data.get("usage")}
+
 
 def _adapt_openai_responses(self: ModelConnector, prompt, history, model_name, deadline=None):
-    payload = {"model": model_name or self.name, "input":[{"role":"user","content":[{"type":"text","text":prompt}]}]}
+    payload = {
+        "model": model_name or self.name,
+        "input": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
+    }
     data = self._post(payload, deadline=deadline)
-    text = data.get("output_text") or _first_str(data, ("text","answer","completion")) or json.dumps(data)[:1000]
+    text = (
+        data.get("output_text")
+        or _first_str(data, ("text", "answer", "completion"))
+        or json.dumps(data)[:1000]
+    )
     return text, {"usage": data.get("usage")}
 
+
 def _adapt_anthropic_messages(self: ModelConnector, prompt, history, model_name, deadline=None):
-    msgs = [{"role": m["role"], "content": m["content"]} for m in (history or []) if m.get("role") in {"user","assistant"} and "content" in m]
+    msgs = [
+        {"role": m["role"], "content": m["content"]}
+        for m in (history or [])
+        if m.get("role") in {"user", "assistant"} and "content" in m
+    ]
     if not msgs or msgs[-1]["role"] != "user":
-        msgs.append({"role":"user","content":prompt})
-    payload = {"model": model_name or self.name, "messages": msgs, "max_tokens": 512, "temperature": 0.2}
+        msgs.append({"role": "user", "content": prompt})
+    payload = {
+        "model": model_name or self.name,
+        "messages": msgs,
+        "max_tokens": 512,
+        "temperature": 0.2,
+    }
     data = self._post(payload, deadline=deadline)
     parts = data.get("content")
     if isinstance(parts, list) and parts and isinstance(parts[0], dict) and "text" in parts[0]:
         text = parts[0]["text"]
     else:
-        text = data.get("text") or _first_str(data, ("answer","completion","output","text")) or json.dumps(data)[:1000]
+        text = (
+            data.get("text")
+            or _first_str(data, ("answer", "completion", "output", "text"))
+            or json.dumps(data)[:1000]
+        )
     return text, {"usage": data.get("usage")}
 
+
 def _adapt_gemini_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
-    contents = [{"role":"user","parts":[{"text":prompt}]}]
-    payload = {"model": model_name or self.name, "contents": contents, "generationConfig":{"temperature":0.2}}
+    contents = [{"role": "user", "parts": [{"text": prompt}]}]
+    payload = {
+        "model": model_name or self.name,
+        "contents": contents,
+        "generationConfig": {"temperature": 0.2},
+    }
     data = self._post(payload, deadline=deadline)
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]
     except Exception:
-        text = _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+        text = (
+            _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
+        )
     return text, {"usage": data.get("usage")}
 
+
 def _adapt_cohere_chat(self: ModelConnector, prompt, history, model_name, deadline=None):
-    chat_hist=[]
-    for m in (history or []):
-        r,c=m.get("role"),m.get("content")
-        if r in {"USER","user"}: chat_hist.append({"role":"USER","message":c})
-        elif r in {"CHATBOT","assistant"}: chat_hist.append({"role":"CHATBOT","message":c})
-    payload={"model":model_name or self.name,"message":prompt,"chat_history":chat_hist}
-    data=self._post(payload, deadline=deadline)
-    text=data.get("text") or data.get("reply") or data.get("answer") or json.dumps(data)[:1000]
+    chat_hist = []
+    for m in history or []:
+        r, c = m.get("role"), m.get("content")
+        if r in {"USER", "user"}:
+            chat_hist.append({"role": "USER", "message": c})
+        elif r in {"CHATBOT", "assistant"}:
+            chat_hist.append({"role": "CHATBOT", "message": c})
+    payload = {"model": model_name or self.name, "message": prompt, "chat_history": chat_hist}
+    data = self._post(payload, deadline=deadline)
+    text = data.get("text") or data.get("reply") or data.get("answer") or json.dumps(data)[:1000]
     return text, {"usage": data.get("meta") or data.get("usage")}
+
 
 def _adapt_cohere_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
-    payload={"model":model_name or self.name,"prompt":prompt}
-    data=self._post(payload, deadline=deadline)
+    payload = {"model": model_name or self.name, "prompt": prompt}
+    data = self._post(payload, deadline=deadline)
     try:
-        text=data["generations"][0]["text"]
+        text = data["generations"][0]["text"]
     except Exception:
-        text=_first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+        text = (
+            _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
+        )
     return text, {"usage": data.get("meta") or data.get("usage")}
 
+
 def _adapt_tgi_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
-    payload={"inputs":prompt,"parameters":{"temperature":0.2}}
-    data=self._post(payload, deadline=deadline)
+    payload = {"inputs": prompt, "parameters": {"temperature": 0.2}}
+    data = self._post(payload, deadline=deadline)
     if isinstance(data, dict):
-        text = data.get("generated_text") or _first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+        text = (
+            data.get("generated_text")
+            or _first_str(data, ("text", "output", "answer", "completion"))
+            or json.dumps(data)[:1000]
+        )
     elif isinstance(data, list) and data:
         text = data[0].get("generated_text") or json.dumps(data[0])[:1000]
     else:
         text = json.dumps(data)[:1000]
     return text, {"usage": data.get("usage")}
 
+
 def _adapt_generic_json(self: ModelConnector, prompt, history, model_name, deadline=None):
-    payload={"model":model_name or self.name,"prompt":prompt,"history":history or []}
-    data=self._post(payload, deadline=deadline)
-    text=_first_str(data, ("text","output","answer","completion")) or json.dumps(data)[:1000]
+    payload = {"model": model_name or self.name, "prompt": prompt, "history": history or []}
+    data = self._post(payload, deadline=deadline)
+    text = _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
     return text, {"usage": data.get("usage")}
+
 
 ModelConnector.register_adapter("openai.chat", _adapt_openai_chat)
 ModelConnector.register_adapter("openai.responses", _adapt_openai_responses)
@@ -908,6 +1084,7 @@ ModelConnector.register_adapter("cohere.chat", _adapt_cohere_chat)
 ModelConnector.register_adapter("cohere.generate", _adapt_cohere_generate)
 ModelConnector.register_adapter("tgi.generate", _adapt_tgi_generate)
 ModelConnector.register_adapter("generic.json", _adapt_generic_json)
+
 
 # =========================================================
 # Web retrieval (+ BeautifulSoup enrichment with retries)
@@ -920,19 +1097,32 @@ class WebSource:
     image: Optional[str] = None
     score: Optional[float] = None
 
+
 class SearchProvider:
     name: str = "base"
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         raise NotImplementedError
+
 
 class _BaseHTTPProvider(SearchProvider):
     def __init__(self, timeout: int = 10, session: Optional[requests.Session] = None):
         self.timeout = int(timeout)
         self._session = session or requests.Session()
 
+
 class GenericJSONSearch(_BaseHTTPProvider):
     name = "generic.json"
-    def __init__(self, endpoint: str, headers: Optional[Dict[str,str]] = None, timeout: int = 10, session: Optional[requests.Session] = None):
+
+    def __init__(
+        self,
+        endpoint: str,
+        headers: Optional[Dict[str, str]] = None,
+        timeout: int = 10,
+        session: Optional[requests.Session] = None,
+    ):
         super().__init__(timeout=timeout, session=session)
         if not _is_https_or_local(endpoint):
             raise ValueError("Search endpoint must be HTTPS or explicit localhost in non-prod")
@@ -940,12 +1130,19 @@ class GenericJSONSearch(_BaseHTTPProvider):
         parsed = urlparse(endpoint)
         host = (parsed.hostname or "").lower()
         env = os.getenv("NEXUS_ENV", "").lower()
-        if parsed.scheme == "http" and host in {"127.0.0.1", "localhost"} and env not in {"prod", "production"}:
+        if (
+            parsed.scheme == "http"
+            and host in {"127.0.0.1", "localhost"}
+            and env not in {"prod", "production"}
+        ):
             log.warning(
                 "search_localhost_enabled",
                 extra={"endpoint": endpoint, "env": os.getenv("NEXUS_ENV", "")},
             )
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
             r = self._session.post(
@@ -954,49 +1151,84 @@ class GenericJSONSearch(_BaseHTTPProvider):
                 headers=self.headers,
                 timeout=max(0.1, timeout),
             )
-            r.raise_for_status(); return r
+            r.raise_for_status()
+            return r
+
         try:
             r = _retry_call(_do)
         except DeadlineExceeded:
             return []
-        data = r.json() if r.headers.get("content-type","").startswith("application/json") else {}
-        out=[]
+        data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+        out = []
         for it in data.get("results", []):
             u = it.get("url")
             if isinstance(u, str) and _is_https(u):
-                out.append(WebSource(url=u, title=it.get("title"), snippet=it.get("snippet"),
-                                     image=(it.get("image") if images else None), score=it.get("score")))
+                out.append(
+                    WebSource(
+                        url=u,
+                        title=it.get("title"),
+                        snippet=it.get("snippet"),
+                        image=(it.get("image") if images else None),
+                        score=it.get("score"),
+                    )
+                )
         return out[:k]
+
 
 class TavilySearch(_BaseHTTPProvider):
     name = "tavily"
+
     def __init__(self, api_key: str, timeout: int = 10, session: Optional[requests.Session] = None):
         super().__init__(timeout=timeout, session=session)
         self.api_key = api_key
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         url = "https://api.tavily.com/search"
-        payload = {"api_key": self.api_key, "query": query, "max_results": int(k), "include_images": bool(images)}
+        payload = {
+            "api_key": self.api_key,
+            "query": query,
+            "max_results": int(k),
+            "include_images": bool(images),
+        }
+
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
             r = self._session.post(url, json=payload, timeout=max(0.1, timeout))
-            r.raise_for_status(); return r
+            r.raise_for_status()
+            return r
+
         try:
             r = _retry_call(_do)
         except DeadlineExceeded:
             return []
-        data = r.json(); out=[]
+        data = r.json()
+        out = []
         for it in data.get("results", []):
             u = it.get("url")
             if isinstance(u, str) and _is_https(u):
-                out.append(WebSource(url=u, title=it.get("title"), snippet=it.get("content"), image=it.get("image")))
+                out.append(
+                    WebSource(
+                        url=u,
+                        title=it.get("title"),
+                        snippet=it.get("content"),
+                        image=it.get("image"),
+                    )
+                )
         return out[:k]
+
 
 class BingWebSearch(_BaseHTTPProvider):
     name = "bing"
+
     def __init__(self, api_key: str, timeout: int = 10, session: Optional[requests.Session] = None):
         super().__init__(timeout=timeout, session=session)
         self.api_key = api_key
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         def _do_web():
             timeout = _remaining_timeout(deadline, self.timeout)
             url = f"https://api.bing.microsoft.com/v7.0/search?q={requests.utils.quote(query)}&count={int(k)}"
@@ -1005,18 +1237,22 @@ class BingWebSearch(_BaseHTTPProvider):
                 headers={"Ocp-Apim-Subscription-Key": self.api_key},
                 timeout=max(0.1, timeout),
             )
-            r.raise_for_status(); return r
+            r.raise_for_status()
+            return r
+
         try:
             r = _retry_call(_do_web)
         except DeadlineExceeded:
             return []
         data = r.json()
-        items = (data.get("webPages") or {}).get("value", []); out=[]
+        items = (data.get("webPages") or {}).get("value", [])
+        out = []
         for it in items:
             u = it.get("url")
             if isinstance(u, str) and _is_https(u):
                 out.append(WebSource(url=u, title=it.get("name"), snippet=it.get("snippet")))
         if images:
+
             def _do_img():
                 timeout = _remaining_timeout(deadline, self.timeout)
                 iu = f"https://api.bing.microsoft.com/v7.0/images/search?q={requests.utils.quote(query)}&count={int(k)}"
@@ -1025,43 +1261,68 @@ class BingWebSearch(_BaseHTTPProvider):
                     headers={"Ocp-Apim-Subscription-Key": self.api_key},
                     timeout=max(0.1, timeout),
                 )
-                ir.raise_for_status(); return ir
+                ir.raise_for_status()
+                return ir
+
             try:
                 ir = _retry_call(_do_img)
             except DeadlineExceeded:
                 return out
             idata = ir.json()
             for i in (idata.get("value") or [])[:k]:
-                cu = i.get("contentUrl"); hp = i.get("hostPageUrl")
+                cu = i.get("contentUrl")
+                hp = i.get("hostPageUrl")
                 if isinstance(cu, str) and _is_https(cu) and isinstance(hp, str) and _is_https(hp):
                     out.append(WebSource(url=hp, title=i.get("name"), image=cu))
-        return out[:max(k, len(out))]
+        return out[: max(k, len(out))]
+
 
 class GoogleCSESearch(_BaseHTTPProvider):
     name = "google.cse"
-    def __init__(self, api_key: str, cx: str, timeout: int = 10, session: Optional[requests.Session] = None):
+
+    def __init__(
+        self, api_key: str, cx: str, timeout: int = 10, session: Optional[requests.Session] = None
+    ):
         super().__init__(timeout=timeout, session=session)
         self.key, self.cx = api_key, cx
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         base = "https://www.googleapis.com/customsearch/v1"
+
         def _do_search():
             timeout = _remaining_timeout(deadline, self.timeout)
             params = {"key": self.key, "cx": self.cx, "q": query, "num": int(min(10, k))}
-            r = self._session.get(base, params=params, timeout=max(0.1, timeout)); r.raise_for_status(); return r
+            r = self._session.get(base, params=params, timeout=max(0.1, timeout))
+            r.raise_for_status()
+            return r
+
         try:
             r = _retry_call(_do_search)
         except DeadlineExceeded:
             return []
-        data = r.json(); out=[]
+        data = r.json()
+        out = []
         for it in data.get("items", [])[:k]:
             link = it.get("link")
             if isinstance(link, str) and _is_https(link):
                 out.append(WebSource(url=link, title=it.get("title"), snippet=it.get("snippet")))
         if images:
+
             def _do_img():
                 timeout = _remaining_timeout(deadline, self.timeout)
-                params_img = {"key": self.key, "cx": self.cx, "q": query, "searchType":"image", "num": int(min(10, k))}
-                ir = self._session.get(base, params=params_img, timeout=max(0.1, timeout)); ir.raise_for_status(); return ir
+                params_img = {
+                    "key": self.key,
+                    "cx": self.cx,
+                    "q": query,
+                    "searchType": "image",
+                    "num": int(min(10, k)),
+                }
+                ir = self._session.get(base, params=params_img, timeout=max(0.1, timeout))
+                ir.raise_for_status()
+                return ir
+
             try:
                 ir = _retry_call(_do_img)
             except DeadlineExceeded:
@@ -1071,12 +1332,16 @@ class GoogleCSESearch(_BaseHTTPProvider):
                 link = (i.get("image", {}) or {}).get("contextLink") or i.get("link")
                 if isinstance(link, str) and _is_https(link):
                     out.append(WebSource(url=link, title=i.get("title"), image=i.get("link")))
-        return out[:max(k, len(out))]
+        return out[: max(k, len(out))]
+
 
 class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
     name = "duckduckgo.html"
     UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
-    def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None) -> List[WebSource]:
+
+    def search(
+        self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
+    ) -> List[WebSource]:
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
             url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
@@ -1086,7 +1351,9 @@ class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
                 timeout=max(0.1, timeout),
                 stream=True,
             )
-            r.raise_for_status(); return r
+            r.raise_for_status()
+            return r
+
         try:
             r = _retry_call(_do)
         except DeadlineExceeded:
@@ -1095,7 +1362,9 @@ class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
         soup = BeautifulSoup(body.decode(r.encoding or "utf-8", errors="ignore"), "html.parser")
         out: List[WebSource] = []
         for res in soup.select("div.result"):
-            a = res.select_one("a.result__a") or res.find("a", attrs={"class": lambda c: c and "result__a" in c})
+            a = res.select_one("a.result__a") or res.find(
+                "a", attrs={"class": lambda c: c and "result__a" in c}
+            )
             if not a or not a.get("href"):
                 continue
             href = a.get("href")
@@ -1111,6 +1380,7 @@ class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
                 break
         return out
 
+
 class HtmlScraper:
     UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
 
@@ -1124,21 +1394,17 @@ class HtmlScraper:
         if _SCRAPE_ALLOWLIST and not _host_allowed(src.url, _SCRAPE_ALLOWLIST):
             return src
 
-        if _RESPECT_ROBOTS:
-            try:
-                parsed = urlparse(src.url)
-                base = f"{parsed.scheme}://{parsed.netloc}"
-                robots = self._session.get(
-                    f"{base}/robots.txt",
-                    headers={"User-Agent": self.UA},
-                    timeout=2,
-                )
-                # TODO: replace this coarse check with a full robots.txt parser once
-                # deployment includes centralised crawl governance.
-                if robots.ok and "Disallow: /" in robots.text:
-                    return src
-            except Exception:
-                pass
+        if _RESPECT_ROBOTS and not _robots_can_fetch(
+            src.url,
+            session=self._session,
+            user_agent=self.UA,
+            deadline=deadline,
+        ):
+            log.debug(
+                "robots_disallowed",
+                extra={"url": src.url},
+            )
+            return src
 
         def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
@@ -1169,8 +1435,12 @@ class HtmlScraper:
                     if isinstance(attr, str) and attr.lower().startswith("on"):
                         del tag.attrs[attr]
             title = src.title or (soup.title.get_text(strip=True) if soup.title else None)
-            meta_desc = soup.find("meta", attrs={"name":"description"}) or soup.find("meta", attrs={"property":"og:description"})
-            desc = src.snippet or (meta_desc.get("content").strip() if meta_desc and meta_desc.get("content") else None)
+            meta_desc = soup.find("meta", attrs={"name": "description"}) or soup.find(
+                "meta", attrs={"property": "og:description"}
+            )
+            desc = src.snippet or (
+                meta_desc.get("content").strip() if meta_desc and meta_desc.get("content") else None
+            )
             if not desc:
                 paragraphs = soup.find_all("p")
                 for p in paragraphs:
@@ -1181,9 +1451,9 @@ class HtmlScraper:
             desc = _sanitize(desc)
             title = _sanitize(title)
             og_img = (
-                soup.find("meta", attrs={"property":"og:image"})
-                or soup.find("meta", attrs={"name":"og:image"})
-                or soup.find("meta", attrs={"name":"twitter:image"})
+                soup.find("meta", attrs={"property": "og:image"})
+                or soup.find("meta", attrs={"name": "og:image"})
+                or soup.find("meta", attrs={"name": "twitter:image"})
             )
             if og_img and og_img.get("content"):
                 image_candidate = urljoin(src.url, og_img.get("content"))
@@ -1196,13 +1466,16 @@ class HtmlScraper:
         except Exception:
             return src
 
+
 class WebRetriever:
     def __init__(self, providers: List[SearchProvider], scraper: Optional[HtmlScraper] = None):
         if not providers:
             raise MisconfigurationError("At least one search provider is required")
         env = os.getenv("NEXUS_ENV", "").lower()
         if env in {"prod", "production"} and not _SCRAPE_ALLOWLIST:
-            raise MisconfigurationError("In production, NEXUS_SCRAPE_ALLOW_DOMAINS must be configured")
+            raise MisconfigurationError(
+                "In production, NEXUS_SCRAPE_ALLOW_DOMAINS must be configured"
+            )
         self.providers = providers
         self.scraper = scraper
 
@@ -1224,7 +1497,11 @@ class WebRetriever:
             for p in self.providers:
                 if deadline and time.monotonic() >= deadline:
                     break
-                futs.append(pool.submit(p.search, query, k=k_per_provider, images=want_images, deadline=deadline))
+                futs.append(
+                    pool.submit(
+                        p.search, query, k=k_per_provider, images=want_images, deadline=deadline
+                    )
+                )
             for f in as_completed(futs):
                 try:
                     chunk = f.result() or []
@@ -1261,40 +1538,61 @@ class WebRetriever:
                 break
         return uniq[:max_total]
 
+
 # =========================================================
 # Result policies
 # =========================================================
 class ResultPolicy:
     name: str = "base"
-    def aggregate(self, prompt: str, *, answers: Dict[str, str], latencies: Dict[str, float],
-                  errors: Dict[str, str], metas: Dict[str, Dict[str, Any]],
-                  context: Optional[List[Dict[str, str]]] = None, params: Optional[Dict[str, Any]] = None
-                  ) -> Dict[str, Any]:
+
+    def aggregate(
+        self,
+        prompt: str,
+        *,
+        answers: Dict[str, str],
+        latencies: Dict[str, float],
+        errors: Dict[str, str],
+        metas: Dict[str, Dict[str, Any]],
+        context: Optional[List[Dict[str, str]]] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         raise NotImplementedError
+
 
 class FastestPolicy(ResultPolicy):
     name = "fastest"
+
     def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
-        if not answers: return {"result":"", "winner":None, "policy":self.name, "reason":"no answer"}
+        if not answers:
+            return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
         winner = min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
         return {"result": answers[winner], "winner": winner, "policy": self.name}
 
+
 class ConsensusSimplePolicy(ResultPolicy):
     name = "consensus.simple"
+
     @staticmethod
-    def _tokset(s: str) -> set: return set((s or "").lower().split())
+    def _tokset(s: str) -> set:
+        return set((s or "").lower().split())
+
     @staticmethod
     def _jac(a: set, b: set) -> float:
-        if not a and not b: return 0.0
+        if not a and not b:
+            return 0.0
         return len(a & b) / float(len(a | b) or 1)
+
     def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
-        if not answers: return {"result":"", "winner":None, "policy":self.name, "reason":"no answer"}
+        if not answers:
+            return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
         toks = {k: self._tokset(v) for k, v in answers.items()}
         scores = {}
         for k in answers.keys():
             other_keys = [o for o in toks.keys() if o != k]
             jac_vals = [self._jac(toks[k], toks[o]) for o in other_keys]
-            bm25_vals = _bm25_scores(answers[k], [answers[o] for o in other_keys]) if other_keys else []
+            bm25_vals = (
+                _bm25_scores(answers[k], [answers[o] for o in other_keys]) if other_keys else []
+            )
             jac_score = sum(jac_vals) / len(jac_vals) if jac_vals else 0.0
             bm25_score = sum(bm25_vals) / len(bm25_vals) if bm25_vals else 0.0
             scores[k] = 0.6 * jac_score + 0.4 * bm25_score
@@ -1342,13 +1640,17 @@ class ConsensusWeightedPolicy(ResultPolicy):
         winner = max(scores, key=scores.get)
         return {"result": answers[winner], "winner": winner, "policy": self.name, "scores": scores}
 
+
 _POLICIES: Dict[str, ResultPolicy] = {
     FastestPolicy.name: FastestPolicy(),
     ConsensusSimplePolicy.name: ConsensusSimplePolicy(),
     ConsensusWeightedPolicy.name: ConsensusWeightedPolicy(),
 }
+
+
 def get_policy(name: Optional[str]) -> ResultPolicy:
     return _POLICIES.get((name or "").lower(), _POLICIES["consensus.simple"])
+
 
 # =========================================================
 # Config + helpers (IR scoring, domain boosts)
@@ -1371,36 +1673,47 @@ class EngineConfig:
     search_max_total: int = 12
     scrape_timeout: int = 8
     default_deadline_ms: Optional[int] = (
-        int(os.getenv("NEXUS_DEFAULT_DEADLINE_MS")) if os.getenv("NEXUS_DEFAULT_DEADLINE_MS") else None
+        int(os.getenv("NEXUS_DEFAULT_DEADLINE_MS"))
+        if os.getenv("NEXUS_DEFAULT_DEADLINE_MS")
+        else None
     )
+
 
 _CODE_RE = re.compile(
     r"```(?P<lang>[a-zA-Z0-9_\-+. ]*)\r?\n(?P<body>[\s\S]*?)```",
     re.MULTILINE,
 )
 
+
 def _extract_code_blocks(text: str) -> List[Dict[str, str]]:
     blocks: List[Dict[str, str]] = []
     for m in _CODE_RE.finditer(text or ""):
         lang = (m.group("lang") or "").strip() or None
         body = (m.group("body") or "").strip()
-        if body: blocks.append({"language": lang, "code": body})
+        if body:
+            blocks.append({"language": lang, "code": body})
     return blocks
 
-_STOP = set("""
+
+_STOP = set(
+    """
 a an the and or but if while then of in on for with without about across against between into through during before after above below to from up down under over again further
 is are was were be been being do does did doing have has had having i you he she it we they them me my your our their this that these those as at by can could should would will may might
-""".split())
+""".split()
+)
+
 
 def _tokenize(s: str) -> List[str]:
     return re.findall(r"[A-Za-z0-9_]{3,}", (s or "").lower())
+
 
 def _keywords(s: str, k: int = 24) -> List[str]:
     toks = [t for t in _tokenize(s) if t not in _STOP]
     seen, out = set(), []
     for t in toks:
         if t not in seen:
-            seen.add(t); out.append(t)
+            seen.add(t)
+            out.append(t)
         if len(out) >= k:
             break
     return out
@@ -1423,7 +1736,9 @@ def _sanitize(txt: Optional[str]) -> Optional[str]:
     return txt
 
 
-def _bm25_scores(answer_text: str, docs: List[str], *, k1: float = 1.2, b: float = 0.75) -> List[float]:
+def _bm25_scores(
+    answer_text: str, docs: List[str], *, k1: float = 1.2, b: float = 0.75
+) -> List[float]:
     q_terms = [t for t in _tokenize(answer_text) if t not in _STOP]
     if not q_terms:
         return [0.0] * len(docs)
@@ -1459,28 +1774,39 @@ def _bm25_scores(answer_text: str, docs: List[str], *, k1: float = 1.2, b: float
         scores.append(s)
     return scores
 
+
 def _load_domain_boosts() -> Dict[str, float]:
     raw = os.getenv("NEXUS_DOMAIN_BOOSTS", "").strip()
     if not raw:
         return {
-            "who.int": 1.30, "cdc.gov": 1.30, "nih.gov": 1.30,
-            "nasa.gov": 1.20, "nature.com": 1.20, "sciencedirect.com": 1.15,
-            "arxiv.org": 1.12, "wikipedia.org": 1.10, "bbc.co.uk": 1.08,
-            "nytimes.com": 1.05, "ft.com": 1.05
+            "who.int": 1.30,
+            "cdc.gov": 1.30,
+            "nih.gov": 1.30,
+            "nasa.gov": 1.20,
+            "nature.com": 1.20,
+            "sciencedirect.com": 1.15,
+            "arxiv.org": 1.12,
+            "wikipedia.org": 1.10,
+            "bbc.co.uk": 1.08,
+            "nytimes.com": 1.05,
+            "ft.com": 1.05,
         }
     try:
         if raw.startswith("{"):
             return {str(k).lower(): float(v) for k, v in json.loads(raw).items()}
         out: Dict[str, float] = {}
         for pair in raw.split(";"):
-            if not pair.strip(): continue
+            if not pair.strip():
+                continue
             dom, mult = pair.split("=", 1)
             out[dom.strip().lower()] = float(mult.strip())
         return out
     except Exception:
         return {}
 
+
 _DOMAIN_BOOSTS = _load_domain_boosts()
+
 
 def _host_of(url: str) -> Optional[str]:
     try:
@@ -1503,6 +1829,7 @@ def _boost_for(url: str) -> float:
         return _DOMAIN_BOOSTS[h]
     return 1.0
 
+
 def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[str]) -> float:
     doc = f"{title or ''} {snippet or ''}".strip()
     if not doc:
@@ -1512,6 +1839,7 @@ def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[st
     hay = doc.lower()
     overlap = sum(1 for k in keys if k in hay) / float(max(1, len(keys)))
     return bm25 + 0.1 * overlap
+
 
 # =========================================================
 # Engine — strict schema + verified sources + isolation/encryption (MANDATORY AES)
@@ -1530,20 +1858,27 @@ class Engine:
         "meta": { "schema_version": str, ... }
       }
     """
+
     SCHEMA_VERSION: str = ENGINE_SCHEMA_VERSION
 
-    def __init__(self, connectors: Dict[str, ModelConnector], *,
-                 memory,
-                 web: WebRetriever,
-                 access: AccessContext,
-                 crypter: Crypter,
-                 config: Optional[EngineConfig] = None):
+    def __init__(
+        self,
+        connectors: Dict[str, ModelConnector],
+        *,
+        memory,
+        web: WebRetriever,
+        access: AccessContext,
+        crypter: Crypter,
+        config: Optional[EngineConfig] = None,
+    ):
         self.schema_version = ENGINE_SCHEMA_VERSION
         # Encryption is MANDATORY — crypter and access are required.
         if not connectors:
             raise MisconfigurationError("No connectors configured.")
         if web is None:
-            raise MisconfigurationError("WebRetriever is required (verification sources are mandatory).")
+            raise MisconfigurationError(
+                "WebRetriever is required (verification sources are mandatory)."
+            )
         if not isinstance(access, AccessContext):
             raise MisconfigurationError("AccessContext is required (tenant/instance/user scoping).")
         if not isinstance(crypter, Crypter):
@@ -1571,24 +1906,32 @@ class Engine:
 
     # ---- isolation helpers ----
     def _scoped_session(self, session_id: str) -> str:
-        return f"{self.access.tenant_id}:{self.access.instance_id}:{self.access.user_id}:{session_id}"
+        return (
+            f"{self.access.tenant_id}:{self.access.instance_id}:{self.access.user_id}:{session_id}"
+        )
 
     def _aad(self, session_id: str) -> bytes:
-        return f"{self.access.tenant_id}|{self.access.instance_id}|{self.access.user_id}|{session_id}".encode("utf-8")
+        return f"{self.access.tenant_id}|{self.access.instance_id}|{self.access.user_id}|{session_id}".encode(
+            "utf-8"
+        )
 
-    def _save_mem(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None):
+    def _save_mem(
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
+    ):
         if not self.memory:
             return
         sid = self._scoped_session(session_id)
         meta = dict(meta or {})
-        meta.update({
-            "nexus_scope": {
-                "tenant": self.access.tenant_id,
-                "instance": self.access.instance_id,
-                "user": self.access.user_id,
-            },
-            "enc": "aesgcm",  # always encrypted
-        })
+        meta.update(
+            {
+                "nexus_scope": {
+                    "tenant": self.access.tenant_id,
+                    "instance": self.access.instance_id,
+                    "user": self.access.user_id,
+                },
+                "enc": "aesgcm",  # always encrypted
+            }
+        )
         payload = self.crypter.encrypt(text, aad=self._aad(session_id))
         try:
             self.memory.save(sid, role, payload, meta)
@@ -1604,8 +1947,9 @@ class Engine:
             msgs = self.memory.recent(sid, limit=self.config.max_context_messages) or []
             out: List[Dict[str, str]] = []
             for m in msgs:
-                r = m.get("role"); t = m.get("text")
-                if r not in {"system","user","assistant"} or not isinstance(t, str):
+                r = m.get("role")
+                t = m.get("text")
+                if r not in {"system", "user", "assistant"} or not isinstance(t, str):
                     continue
                 # Always decrypt; if decrypt fails, skip the message (strict encrypted-only policy)
                 try:
@@ -1685,27 +2029,34 @@ class Engine:
         try:
             if history:
                 if self.config.max_context_messages:
-                    bounded_history = history[-self.config.max_context_messages:]
+                    bounded_history = history[-self.config.max_context_messages :]
                 else:
                     bounded_history = list(history)
             else:
                 bounded_history = []
-            text, _meta = conn.infer(prompt, history=bounded_history, model_name=name, deadline=deadline)
+            text, _meta = conn.infer(
+                prompt, history=bounded_history, model_name=name, deadline=deadline
+            )
             if isinstance(text, str) and not text.strip():
                 text = ""
-            return name, text, round(time.time()-t0, 3)
+            return name, text, round(time.time() - t0, 3)
         except NexusError as exc:
             log.warning(
                 "connector_failed",
-                extra={"request_id": request_id, "session_id": session_id, "connector": name, "error": str(exc)},
+                extra={
+                    "request_id": request_id,
+                    "session_id": session_id,
+                    "connector": name,
+                    "error": str(exc),
+                },
             )
-            return name, "", round(time.time()-t0, 3)
+            return name, "", round(time.time() - t0, 3)
         except Exception as exc:
             log.warning(
                 "connector_exception",
                 extra={"request_id": request_id, "connector": name, "error": str(exc)},
             )
-            return name, "", round(time.time()-t0, 3)
+            return name, "", round(time.time() - t0, 3)
 
     def _collect_sources(
         self,
@@ -1753,7 +2104,9 @@ class Engine:
                 )
         return results[:max_total]
 
-    def _rank_and_verify(self, answer_text: str, sources: List[WebSource], need: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def _rank_and_verify(
+        self, answer_text: str, sources: List[WebSource], need: int
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         scored: List[Tuple[float, WebSource]] = []
         for s in sources:
             base = _evidence_score(answer_text, s.title, s.snippet)
@@ -1824,7 +2177,9 @@ class Engine:
                 details={"retry_after_seconds": round(retry_in, 3)},
             )
 
-        effective_deadline_ms = deadline_ms if deadline_ms is not None else self.config.default_deadline_ms
+        effective_deadline_ms = (
+            deadline_ms if deadline_ms is not None else self.config.default_deadline_ms
+        )
         if effective_deadline_ms is not None:
             effective_deadline_ms = min(effective_deadline_ms, MAX_DEADLINE_SECONDS * 1000)
             deadline = time.monotonic() + (effective_deadline_ms / 1000.0)
@@ -1904,13 +2259,15 @@ class Engine:
                 deadline=deadline,
                 request_id=request_id,
             )
-            web_refs, photos = self._rank_and_verify(answer_text, sources, self.config.min_sources_required)
+            web_refs, photos = self._rank_and_verify(
+                answer_text, sources, self.config.min_sources_required
+            )
 
             if len(web_refs) < self.config.min_sources_required:
                 salient = answer_text.split(".")[0].strip()
                 if salient:
                     extra = self._collect_sources(
-                        queries=[f"\"{salient}\""],
+                        queries=[f'"{salient}"'],
                         want_images=False,
                         k_per_provider=max(2, search_k_per_provider // 2),
                         max_total=search_max_total,
@@ -1964,7 +2321,7 @@ class Engine:
                 "winner_ref": winner_ref,
                 "participants": participants,
                 "code": code_blocks,
-                "sources": web_refs,                 # verified (>= min_sources_required)
+                "sources": web_refs,  # verified (>= min_sources_required)
                 "photos": photos if want_photos else [],
             }
             payload["meta"] = {
@@ -1977,6 +2334,7 @@ class Engine:
         finally:
             _GLOBAL_CONCURRENCY_SEMAPHORE.release()
 
+
 # =========================================================
 # Health Monitor (autonomous backend checks)
 # =========================================================
@@ -1985,6 +2343,7 @@ class HealthConfig:
     interval_seconds: int = int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600"))  # default: 1 hour
     search_probe: str = os.getenv("NEXUS_HEALTH_SEARCH_QUERY", "nexus health check")
     include_memory_check: bool = True
+
 
 class HealthMonitor:
     def __init__(self, engine: Engine, interval_seconds: int = 3600, autostart: bool = True):
@@ -2060,7 +2419,7 @@ class HealthMonitor:
                 err = str(e)
             connectors[name] = {
                 "degraded": bool(degraded),
-                "latency_ms": int((time.time()-t0)*1000),
+                "latency_ms": int((time.time() - t0) * 1000),
                 "adapter": getattr(conn, "adapter", None),
                 "endpoint": getattr(conn, "endpoint", None),
                 "error": err,
@@ -2086,7 +2445,7 @@ class HealthMonitor:
                 web[p.name] = {
                     "ok": bool(ok),
                     "enriched": bool(enriched),
-                    "latency_ms": int((time.time()-t0)*1000),
+                    "latency_ms": int((time.time() - t0) * 1000),
                     "error": err,
                 }
         components["web"] = web
@@ -2105,7 +2464,7 @@ class HealthMonitor:
                     {"ephemeral": True, "enc": "aesgcm", "ttl_seconds": 300},
                 )
                 got = self.engine.memory.recent(self.engine._scoped_session(sid), limit=1)
-                mem = {"ok": bool(got), "latency_ms": int((time.time()-t0)*1000)}
+                mem = {"ok": bool(got), "latency_ms": int((time.time() - t0) * 1000)}
             except Exception as e:
                 mem = {"ok": False, "error": str(e)}
         components["memory"] = mem
@@ -2128,9 +2487,15 @@ class HealthMonitor:
         info: Dict[str, Any] = {"pid": os.getpid(), "time": int(time.time())}
         try:
             import psutil  # type: ignore
+
             info["cpu_percent"] = psutil.cpu_percent(interval=0.0)
             vm = psutil.virtual_memory()
-            info["memory"] = {"total": vm.total, "available": vm.available, "used": vm.used, "percent": vm.percent}
+            info["memory"] = {
+                "total": vm.total,
+                "available": vm.available,
+                "used": vm.used,
+                "percent": vm.percent,
+            }
         except Exception:
             info["cpu_percent"] = None
             info["memory"] = {"total": None, "available": None, "used": None, "percent": None}
@@ -2141,10 +2506,16 @@ class HealthMonitor:
             info["load"] = {"1": None, "5": None, "15": None}
         try:
             total, used, free = shutil.disk_usage(os.getcwd())
-            info["disk"] = {"total": total, "used": used, "free": free, "percent": round(used/total*100, 2) if total else None}
+            info["disk"] = {
+                "total": total,
+                "used": used,
+                "free": free,
+                "percent": round(used / total * 100, 2) if total else None,
+            }
         except Exception:
             info["disk"] = {"total": None, "used": None, "free": None, "percent": None}
         return info
+
 
 # =========================================================
 # Secrets-aware web retriever builder
@@ -2154,19 +2525,29 @@ try:
 except Exception:
     SecretResolver = None  # type: ignore
 
+
 def _ensure_resolver(resolver: Optional["SecretResolver"]) -> "SecretResolver":
     if resolver:
         return resolver
     if SecretResolver is None:
-        raise MisconfigurationError("SecretResolver not available; ensure nexus_config.py is on PYTHONPATH.")
-    providers = [s.strip().lower() for s in os.getenv("NEXUS_SECRETS_PROVIDERS", "aws,azure,gcp").split(",") if s.strip()]
-    overrides: Dict[str, str] = {k: v for k, v in os.environ.items() if k.startswith("NEXUS_SECRET_")}
+        raise MisconfigurationError(
+            "SecretResolver not available; ensure nexus_config.py is on PYTHONPATH."
+        )
+    providers = [
+        s.strip().lower()
+        for s in os.getenv("NEXUS_SECRETS_PROVIDERS", "aws,azure,gcp").split(",")
+        if s.strip()
+    ]
+    overrides: Dict[str, str] = {
+        k: v for k, v in os.environ.items() if k.startswith("NEXUS_SECRET_")
+    }
     for k in ("AZURE_KEYVAULT_URL", "GCP_PROJECT"):
         v = os.getenv(k)
         if v:
             overrides[k] = v
     ttl = int(os.getenv("NEXUS_SECRET_TTL_SECONDS", "600"))
     return SecretResolver(providers=providers, overrides=overrides, ttl_seconds=ttl)
+
 
 def build_web_retriever_from_env(
     headers: Optional[Dict[str, str]] = None,
@@ -2187,7 +2568,11 @@ def build_web_retriever_from_env(
     base_headers = dict(headers or {})
     sess = requests.Session()
 
-    allow_external = os.getenv("NEXUS_ALLOW_THIRD_PARTY_SEARCH", "1").lower() not in {"0", "false", "no"}
+    allow_external = os.getenv("NEXUS_ALLOW_THIRD_PARTY_SEARCH", "1").lower() not in {
+        "0",
+        "false",
+        "no",
+    }
 
     gen_ep = r.get("SEARCH_GATEWAY_ENDPOINT") or os.getenv("NEXUS_SEARCH_ENDPOINT")
     gen_key = r.get("SEARCH_GATEWAY_KEY")
@@ -2207,7 +2592,7 @@ def build_web_retriever_from_env(
             providers.append(BingWebSearch(bing_key, session=sess))
 
         g_key = r.get("GOOGLE_CSE_KEY")
-        g_cx  = r.get("GOOGLE_CSE_CX")
+        g_cx = r.get("GOOGLE_CSE_CX")
         if g_key and g_cx:
             providers.append(GoogleCSESearch(g_key, g_cx, session=sess))
 
@@ -2220,7 +2605,8 @@ def build_web_retriever_from_env(
     scraper = HtmlScraper(timeout=int(os.getenv("NEXUS_SCRAPE_TIMEOUT", "8")), session=sess)
     return WebRetriever(providers, scraper=scraper)
 
-#End of Engine code# 
-#Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
-#It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
-#Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
+
+# End of Engine code#
+# Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
+# It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.
+# Nexus also delivers flexible connector plumbing so new model providers and data planes can be onboarded without rewriting the core engine.
