@@ -9,3 +9,7 @@ __pycache__/
 *.log
 .idea/
 .vscode/
+
+node_modules/
+Frontend/node_modules/
+nexus.ai/frontend/node_modules/
