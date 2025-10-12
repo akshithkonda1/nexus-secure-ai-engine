@@ -1,7 +1,15 @@
 # memory_compute.py
 from __future__ import annotations
-import os, json, time, uuid, socket, shutil, logging
-from typing import Any, Dict, List, Optional, Tuple
+
+import json
+import logging
+import os
+import shutil
+import socket
+import time
+import uuid
+from functools import lru_cache
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 # ---------- Logging ----------
 _LOG_LEVEL = os.getenv("NEXUS_LOG_LEVEL", "INFO").upper()
@@ -11,6 +19,61 @@ if not logger.handlers:
     _h.setFormatter(logging.Formatter('{"ts":"%(asctime)s","lvl":"%(levelname)s","logger":"%(name)s","msg":"%(message)s"}'))
     logger.addHandler(_h)
 logger.setLevel(getattr(logging, _LOG_LEVEL, logging.INFO))
+
+
+# ---------- Errors & helpers ----------
+
+class MemoryStoreError(RuntimeError):
+    """Raised when a backing memory store is misconfigured or unhealthy."""
+
+
+def _assert_positive(value: int, name: str) -> int:
+    if value <= 0:
+        raise MemoryStoreError(f"{name} must be a positive integer (got {value})")
+    return value
+
+
+@lru_cache(maxsize=1)
+def _ttl_seconds() -> int:
+    """Resolve the TTL for ephemeral records, validating the environment override."""
+    raw_env = os.getenv("NEXUS_MEM_TTL_SECONDS", "3600")
+    raw = (raw_env if raw_env is not None else "3600").strip()
+    if not raw:
+        raise MemoryStoreError("NEXUS_MEM_TTL_SECONDS cannot be empty")
+    try:
+        ttl = int(raw)
+    except ValueError as exc:
+        raise MemoryStoreError("NEXUS_MEM_TTL_SECONDS must be an integer") from exc
+    return _assert_positive(ttl, "NEXUS_MEM_TTL_SECONDS")
+
+
+def _now_ms() -> int:
+    return int(time.time() * 1000)
+
+
+def _meta_dict(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if meta is None:
+        return {}
+    if not isinstance(meta, dict):
+        raise MemoryStoreError("meta payloads must be dictionaries")
+    return dict(meta)
+
+
+def _copy_meta(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    payload = _meta_dict(meta)
+    try:
+        json.dumps(payload, ensure_ascii=False)
+    except TypeError as exc:
+        raise MemoryStoreError("meta payloads must be JSON serialisable") from exc
+    return payload
+
+
+def _normalize_limit(limit: int) -> int:
+    try:
+        lim = int(limit)
+    except (TypeError, ValueError):
+        raise MemoryStoreError("limit must be an integer")
+    return _assert_positive(lim, "limit")
 
 
 # ---------- Base ----------
@@ -39,14 +102,22 @@ class InMemoryStore(MemoryStore):
 
     def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         mid = uuid.uuid4().hex
-        ts = int(time.time() * 1000)
-        self._data.setdefault(session_id, []).append({"id": mid, "ts": ts, "role": role, "text": text, "meta": meta or {}})
+        ts = _now_ms()
+        payload = _copy_meta(meta)
+        self._data.setdefault(session_id, []).append({
+            "id": mid,
+            "ts": ts,
+            "role": role,
+            "text": text,
+            "meta": payload,
+        })
         logger.debug(f"InMemoryStore.save session={session_id} role={role} mid={mid}")
         return mid
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        lim = _normalize_limit(limit)
         msgs = self._data.get(session_id, [])
-        msgs = sorted(msgs, key=lambda x: x["ts"])[-limit:]
+        msgs = sorted(msgs, key=lambda x: x["ts"])[-lim:]
         logger.debug(f"InMemoryStore.recent session={session_id} count={len(msgs)}")
         return [{"role": m["role"], "text": m["text"], "ts": m["ts"]} for m in msgs]
 
@@ -70,20 +141,22 @@ class DynamoDBMemoryStore(MemoryStore):
 
     def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         mid = uuid.uuid4().hex
-        ts = int(time.time() * 1000)
+        ts = _now_ms()
+        payload = _copy_meta(meta)
         item: Dict[str, Any] = {"session_id": session_id, "ts": ts, "id": mid, "role": role, "text": text}
-        if meta:
-            item["meta_json"] = json.dumps(meta, ensure_ascii=False)
-            if meta.get("ephemeral"):
-                item["ttl"] = int(time.time()) + int(os.getenv("NEXUS_MEM_TTL_SECONDS", "3600"))
+        if payload:
+            item["meta_json"] = json.dumps(payload, ensure_ascii=False)
+            if payload.get("ephemeral"):
+                item["ttl"] = int(time.time()) + _ttl_seconds()
         self._table.put_item(Item=item)
         logger.debug(f"DynamoDB.save session={session_id} role={role} mid={mid}")
         return mid
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        lim = _normalize_limit(limit)
         qargs: Dict[str, Any] = {
             "KeyConditionExpression": self._Key("session_id").eq(session_id),
-            "Limit": limit,
+            "Limit": lim,
             "ScanIndexForward": False,
         }
         if self._gsi:
@@ -91,7 +164,7 @@ class DynamoDBMemoryStore(MemoryStore):
         resp = self._table.query(**qargs)
         items = resp.get("Items", [])
         items.sort(key=lambda x: x.get("ts", 0))
-        out = [{"role": it.get("role",""), "text": it.get("text",""), "ts": it.get("ts",0)} for it in items[-limit:]]
+        out = [{"role": it.get("role", ""), "text": it.get("text", ""), "ts": it.get("ts", 0)} for it in items[-lim:]]
         logger.debug(f"DynamoDB.recent session={session_id} count={len(out)}")
         return out
 
@@ -111,17 +184,18 @@ class FirestoreMemoryStore(MemoryStore):
 
     def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         mid = uuid.uuid4().hex
-        ts = int(time.time() * 1000)
-        payload: Dict[str, Any] = {"id": mid, "ts": ts, "role": role, "text": text, "meta": meta or {}}
-        if meta and meta.get("ephemeral"):
-            payload["ttl"] = int(time.time()) + int(os.getenv("NEXUS_MEM_TTL_SECONDS", "3600"))
+        ts = _now_ms()
+        payload: Dict[str, Any] = {"id": mid, "ts": ts, "role": role, "text": text, "meta": _copy_meta(meta)}
+        if payload["meta"].get("ephemeral"):
+            payload["ttl"] = int(time.time()) + _ttl_seconds()
         self._fs.collection(self._col).document(session_id).collection("messages").document(mid).set(payload)
         logger.debug(f"Firestore.save session={session_id} role={role} mid={mid}")
         return mid
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        lim = _normalize_limit(limit)
         msgs_ref = (self._fs.collection(self._col).document(session_id)
-                    .collection("messages").order_by("ts", direction="DESCENDING").limit(limit))
+                    .collection("messages").order_by("ts", direction="DESCENDING").limit(lim))
         msgs = [d.to_dict() for d in msgs_ref.stream()]
         msgs = list(reversed(msgs))
         out = [{"role": m.get("role",""), "text": m.get("text",""), "ts": m.get("ts",0)} for m in msgs]
@@ -156,8 +230,11 @@ class AzureBlobMemoryStore(MemoryStore):
 
     def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         mid = uuid.uuid4().hex
-        ts = int(time.time() * 1000)
-        line = (json.dumps({"id": mid, "ts": ts, "role": role, "text": text, "meta": meta or {}}, ensure_ascii=False) + "\n").encode("utf-8")
+        ts = _now_ms()
+        payload = {"id": mid, "ts": ts, "role": role, "text": text, "meta": _copy_meta(meta)}
+        if payload["meta"].get("ephemeral"):
+            payload["ttl"] = int(time.time()) + _ttl_seconds()
+        line = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
         bc = self._blob(session_id)
         try:
             try:
@@ -177,6 +254,7 @@ class AzureBlobMemoryStore(MemoryStore):
         return mid
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        lim = _normalize_limit(limit)
         bc = self._blob(session_id)
         try:
             raw = bc.download_blob(max_concurrency=1).readall().decode("utf-8")
@@ -185,7 +263,7 @@ class AzureBlobMemoryStore(MemoryStore):
             return []
         lines = [l for l in raw.splitlines() if l.strip()]
         out: List[Dict[str, Any]] = []
-        for l in lines[-limit:]:
+        for l in lines[-lim:]:
             try:
                 m = json.loads(l)
                 out.append({"role": m.get("role",""), "text": m.get("text",""), "ts": m.get("ts",0)})
@@ -198,45 +276,67 @@ class AzureBlobMemoryStore(MemoryStore):
 # ---------- Multi-store ----------
 class MultiMemoryStore:
     """Orchestrates multiple stores: read-primary, fan-out writes."""
-    def __init__(self, stores: List[MemoryStore], fanout_writes: bool = True):
-        self.stores = list(stores) if stores else [InMemoryStore()]
-        self.fanout = fanout_writes
-        logger.info(f"MultiMemoryStore initialized providers={[s.__class__.__name__ for s in self.stores]} fanout={self.fanout}")
+
+    def __init__(self, stores: Iterable[MemoryStore], fanout_writes: bool = True):
+        resolved = [s for s in (stores or []) if s is not None]
+        if not resolved:
+            resolved = [InMemoryStore()]
+        for s in resolved:
+            if not isinstance(s, MemoryStore):
+                raise MemoryStoreError("All stores must inherit from MemoryStore")
+        self.stores = resolved
+        self.fanout = bool(fanout_writes)
+        logger.info(
+            "MultiMemoryStore initialized providers=%s fanout=%s",
+            [s.__class__.__name__ for s in self.stores],
+            self.fanout,
+        )
 
     @property
     def primary(self) -> MemoryStore:
         return self.stores[0]
 
     def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
+        payload = _copy_meta(meta)
         ids: List[str] = []
+        errors: List[str] = []
         for i, s in enumerate(self.stores):
             try:
-                mid = s.save(session_id, role, text, meta)
+                mid = s.save(session_id, role, text, dict(payload))
                 ids.append(mid)
                 if not self.fanout:
                     break
             except Exception as e:
-                logger.warning(f"write failed backend={s.__class__.__name__} err={e}")
+                err = f"write failed backend={s.__class__.__name__} err={e}"
+                errors.append(err)
+                logger.warning(err)
                 continue
         ok = bool(ids)
+        if not ok:
+            raise MemoryStoreError(
+                f"Failed to persist message for session {session_id}; attempted {len(self.stores)} stores",
+            )
+        if errors:
+            logger.debug("MultiMemoryStore.save partial failures=%s", errors)
         logger.debug(f"MultiMemoryStore.save session={session_id} wrote={len(ids)} ok={ok}")
         return ids[0] if ids else ""
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
+        lim = _normalize_limit(limit)
         try:
-            out = self.primary.recent(session_id, limit)
+            out = self.primary.recent(session_id, lim)
             logger.debug(f"MultiMemoryStore.recent primary={self.primary.__class__.__name__} count={len(out)}")
             return out
         except Exception as e:
             logger.warning(f"primary recent failed; trying fallbacks err={e}")
             for s in self.stores[1:]:
                 try:
-                    out = s.recent(session_id, limit)
+                    out = s.recent(session_id, lim)
                     logger.debug(f"MultiMemoryStore.recent fallback={s.__class__.__name__} count={len(out)}")
                     return out
                 except Exception as e2:
                     logger.warning(f"fallback recent failed backend={s.__class__.__name__} err={e2}")
-            return []
+        return []
 
 
 # ---------- Health ----------
@@ -250,12 +350,20 @@ def ping_memory_store(store: MemoryStore) -> Dict[str, Any]:
 
 def verify_memory_writes(primary: MemoryStore, session_id: str, trials: int = 2) -> Tuple[bool, List[str]]:
     ids: List[str] = []
-    trials = max(1, trials)
-    for i in range(trials):
-        ids.append(primary.save(session_id, "system", f"__verify__{i}", {"ephemeral": True}))
+    attempts = _assert_positive(trials, "trials")
+    for i in range(attempts):
+        try:
+            ids.append(primary.save(session_id, "system", f"__verify__{i}", {"ephemeral": True}))
+        except Exception as exc:
+            logger.warning(f"verify_memory_writes save failed backend={primary.__class__.__name__} err={exc}")
+            break
         time.sleep(0.001)
-    got = primary.recent(session_id, limit=trials)
-    ok = len(got) >= trials
+    try:
+        got = primary.recent(session_id, limit=attempts)
+    except Exception as exc:
+        logger.warning(f"verify_memory_writes recent failed backend={primary.__class__.__name__} err={exc}")
+        got = []
+    ok = len(got) >= attempts
     logger.debug(f"verify_memory_writes ok={ok} wrote={len(ids)} read={len(got)}")
     return (ok, ids)
 

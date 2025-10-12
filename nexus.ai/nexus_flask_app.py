@@ -1,17 +1,42 @@
 # flask_app.py
 from __future__ import annotations
-import os
-import logging
-import traceback
+
+import atexit
 import hmac
-import time
+import logging
+import os
 import socket
+import threading
+import time
+import traceback
+from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime as dt
 from functools import wraps
+from typing import Any
 from urllib.parse import urlparse
-from typing import Dict, Any
 
-from flask import Flask, request, jsonify
+from bootstrap import BootstrapError, _build_resolver, make_connectors
+from flask import Flask, jsonify, request
+from memory_compute import (
+    AzureBlobMemoryStore,
+    DynamoDBMemoryStore,
+    FirestoreMemoryStore,
+    InMemoryStore,
+    MemoryStoreError,
+    MultiMemoryStore,
+    health_suite,
+)
+from nexus_config import ConfigError, NexusConfig, load_and_validate
+from nexus_engine import (
+    AccessContext,
+    Crypter,
+    Engine,
+    EngineConfig,
+    SearchProvider,
+    WebRetriever,
+    build_web_retriever_from_env,
+)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -22,41 +47,267 @@ def node_health():
         "time": int(time.time()),
     }
 
+def _allow_test_fallbacks() -> bool:
+    return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes", "y", "on"}
+
+
+class AppInitializationError(RuntimeError):
+    """Raised when the Flask gateway cannot start with the current environment."""
+
+
+@dataclass(frozen=True)
+class GatewaySettings:
+    api_keys: tuple[str, ...]
+    trusted_origins: tuple[str, ...]
+    request_max_bytes: int
+    enforce_https: bool
+    rate_limits: tuple[str, ...]
+    rate_limit_storage_url: str
+
+
+_BOOL_TRUE = {"1", "true", "yes", "y", "on"}
+_BOOL_FALSE = {"0", "false", "no", "n", "off"}
+
+
+def _dedupe(seq: Iterable[str]) -> tuple[str, ...]:
+    seen = set()
+    ordered: list[str] = []
+    for item in seq:
+        if item not in seen:
+            seen.add(item)
+            ordered.append(item)
+    return tuple(ordered)
+
+
+def _csv_env(name: str, *, required: bool) -> tuple[str, ...]:
+    raw = os.getenv(name, "")
+    if not raw:
+        if required:
+            raise AppInitializationError(f"Environment variable '{name}' must be set")
+        return tuple()
+    parts = [part.strip() for part in raw.replace("\n", ",").split(",") if part.strip()]
+    values = _dedupe(parts)
+    if required and not values:
+        raise AppInitializationError(f"Environment variable '{name}' must contain at least one value")
+    return values
+
+
+def _bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in _BOOL_TRUE:
+        return True
+    if normalized in _BOOL_FALSE:
+        return False
+    raise AppInitializationError(f"Environment variable '{name}' must be a boolean value")
+
+
+def _int_env(name: str, default: int, *, minimum: int = 1) -> int:
+    raw = os.getenv(name)
+    value_str = str(default) if raw is None else raw.strip()
+    if not value_str:
+        raise AppInitializationError(f"Environment variable '{name}' cannot be empty")
+    try:
+        value = int(value_str)
+    except ValueError as exc:
+        raise AppInitializationError(f"Environment variable '{name}' must be an integer") from exc
+    if value < minimum:
+        raise AppInitializationError(f"Environment variable '{name}' must be >= {minimum}")
+    return value
+
+
+def _load_gateway_settings() -> GatewaySettings:
+    api_keys = _csv_env("AUTHORIZED_API_KEYS", required=True)
+    origins = _csv_env("TRUSTED_ORIGINS", required=True)
+    for origin in origins:
+        parsed = urlparse(origin)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise AppInitializationError("TRUSTED_ORIGINS must list valid https:// origins")
+    max_bytes = _int_env("NEXUS_MAX_REQUEST_BYTES", 2 * 1024 * 1024, minimum=1024)
+    enforce_https = _bool_env("NEXUS_ENFORCE_HTTPS", True)
+    rate_limits = _csv_env("NEXUS_RATE_LIMITS", required=False) or (
+        "200/day",
+        "50/hour",
+    )
+    storage_url = os.getenv("NEXUS_RATE_LIMIT_STORAGE_URL", "memory://").strip() or "memory://"
+    env = os.getenv("NEXUS_ENV", "").lower()
+    if env in {"prod", "production"} and storage_url == "memory://":
+        raise AppInitializationError(
+            "NEXUS_RATE_LIMIT_STORAGE_URL must be configured with a persistent backend in production",
+        )
+    return GatewaySettings(
+        api_keys=api_keys,
+        trusted_origins=origins,
+        request_max_bytes=max_bytes,
+        enforce_https=enforce_https,
+        rate_limits=tuple(rate_limits),
+        rate_limit_storage_url=storage_url,
+    )
+
+
+def _load_nexus_config() -> NexusConfig:
+    paths = list(_csv_env("NEXUS_CONFIG_PATHS", required=False)) or None
+    try:
+        cfg, errors = load_and_validate(paths=paths)
+    except ConfigError as exc:
+        raise AppInitializationError(f"Unable to load Nexus configuration: {exc}") from exc
+    if errors:
+        raise AppInitializationError("; ".join(errors))
+    return cfg
+
 # Optional deps
 try:
     from flask_cors import CORS
-except Exception:
+except Exception as exc:  # pragma: no cover - depends on deployment extras
+    if not _allow_test_fallbacks():
+        raise AppInitializationError("flask-cors is required for production deployments") from exc
     CORS = None
 try:
     from flask_talisman import Talisman
-except Exception:
+except Exception as exc:  # pragma: no cover - depends on deployment extras
+    if not _allow_test_fallbacks():
+        raise AppInitializationError("flask-talisman is required for production deployments") from exc
     Talisman = None
 try:
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
-except Exception:
+except Exception as exc:  # pragma: no cover - depends on deployment extras
+    if not _allow_test_fallbacks():
+        raise AppInitializationError("flask-limiter is required for production deployments") from exc
     Limiter = None
-    def get_remote_address(): return request.remote_addr  # type: ignore
+
+    def get_remote_address():  # type: ignore
+        return request.remote_addr  # type: ignore[attr-defined]
 try:
     from bleach import clean as bleach_clean
-except Exception:
-    def bleach_clean(x): return x  # type: ignore
+except Exception as exc:  # pragma: no cover - depends on deployment extras
+    if not _allow_test_fallbacks():
+        raise AppInitializationError("bleach is required for input sanitisation") from exc
 
-# Memory / compute
-from memory_compute import (
-    InMemoryStore, DynamoDBMemoryStore, FirestoreMemoryStore, AzureBlobMemoryStore,
-    MultiMemoryStore, health_suite,
-)
-
-# Connectors (expects bootstrap.py exposes _make_connectors(cfg))
-from bootstrap import _make_connectors as make_connectors
-
-# Engine
-from nexus_engine import Engine
+    def bleach_clean(x):  # type: ignore
+        return x
 
 # -----------------------------------------------------------------------------
 # App & logging
 # -----------------------------------------------------------------------------
+GATEWAY_SETTINGS = _load_gateway_settings()
+AUTHORIZED_API_KEYS = set(GATEWAY_SETTINGS.api_keys)
+TRUSTED_ORIGINS = set(GATEWAY_SETTINGS.trusted_origins)
+MAX_REQUEST_BYTES = GATEWAY_SETTINGS.request_max_bytes
+ENFORCE_HTTPS = GATEWAY_SETTINGS.enforce_https
+
+CORE_CONFIG = _load_nexus_config()
+
+
+def build_memory(cfg: NexusConfig) -> MultiMemoryStore:
+    providers = cfg.memory_providers or ["memory"]
+    stores = []
+    for provider in providers:
+        normalized = provider.lower()
+        try:
+            if normalized == "aws":
+                table = os.getenv("NEXUS_DDB_MESSAGES", "nexus_messages").strip()
+                index = os.getenv("NEXUS_DDB_INDEX", "nexus_memindex").strip()
+                region = os.getenv("AWS_REGION", "us-east-1").strip() or "us-east-1"
+                if not table:
+                    raise AppInitializationError("NEXUS_DDB_MESSAGES cannot be empty for AWS memory provider")
+                stores.append(
+                    DynamoDBMemoryStore(
+                        table,
+                        index or None,
+                        region,
+                    ),
+                )
+            elif normalized == "gcp":
+                prefix = os.getenv("NEXUS_FS_PREFIX", "nexus").strip() or "nexus"
+                stores.append(FirestoreMemoryStore(prefix))
+            elif normalized == "azure":
+                container = os.getenv("NEXUS_AZ_CONTAINER", "nexus-messages").strip() or "nexus-messages"
+                prefix = os.getenv("NEXUS_AZ_PREFIX", "nexus").strip() or "nexus"
+                connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+                if not connection_string or not connection_string.strip():
+                    raise AppInitializationError(
+                        "AZURE_STORAGE_CONNECTION_STRING is required for Azure memory provider",
+                    )
+                stores.append(
+                    AzureBlobMemoryStore(
+                        container=container,
+                        prefix=prefix,
+                        connection_string=connection_string,
+                    ),
+                )
+            else:
+                stores.append(InMemoryStore())
+        except (ImportError, MemoryStoreError, RuntimeError) as exc:
+            raise AppInitializationError(
+                f"Failed to initialise memory provider '{provider}': {exc}",
+            ) from exc
+    if not stores:
+        stores.append(InMemoryStore())
+    return MultiMemoryStore(stores, fanout_writes=cfg.memory_fanout_writes)
+
+
+def _build_access_context() -> AccessContext:
+    tenant = (os.getenv("NEXUS_TENANT_ID") or "").strip()
+    instance = (os.getenv("NEXUS_INSTANCE_ID") or "").strip()
+    user = (os.getenv("NEXUS_DEFAULT_USER_ID") or "__gateway__").strip() or "__gateway__"
+    if not tenant:
+        raise AppInitializationError("NEXUS_TENANT_ID must be configured")
+    if not instance:
+        raise AppInitializationError("NEXUS_INSTANCE_ID must be configured")
+    return AccessContext(tenant, instance, user)
+
+
+memory = build_memory(CORE_CONFIG)
+
+try:
+    connectors = make_connectors(CORE_CONFIG)
+except BootstrapError as exc:
+    raise AppInitializationError(f"Unable to build model connectors: {exc}") from exc
+
+if not CORE_CONFIG.encrypt:
+    raise AppInitializationError("Encryption is mandatory for Nexus deployments; set encrypt=true in configuration")
+
+try:
+    secret_resolver = _build_resolver(CORE_CONFIG)
+except Exception as exc:
+    raise AppInitializationError(f"Unable to initialise secret resolver: {exc}") from exc
+
+try:
+    crypter = Crypter.from_resolver(secret_resolver)
+except Exception as exc:
+    raise AppInitializationError(f"Unable to initialise crypter: {exc}") from exc
+
+web_retriever = build_web_retriever_from_env(resolver=secret_resolver)
+if web_retriever is None:
+    if _allow_test_fallbacks():
+        class _StubProvider(SearchProvider):
+            name = "stub"
+
+            def search(self, query: str, *, k: int = 5, images: bool = False, deadline: float | None = None):  # type: ignore[override]
+                return []
+
+        web_retriever = WebRetriever([_StubProvider()])
+    else:
+        raise AppInitializationError(
+            "No search providers configured. Set SEARCH_GATEWAY_* secrets or enable third-party search providers.",
+        )
+
+access_context = _build_access_context()
+
+engine_config = EngineConfig(max_context_messages=CORE_CONFIG.max_context_messages)
+
+engine = Engine(
+    connectors=connectors,
+    memory=memory,
+    web=web_retriever,
+    access=access_context,
+    crypter=crypter,
+    config=engine_config,
+)
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
@@ -69,13 +320,20 @@ logger.setLevel(logging.INFO)
 
 start_time = dt.utcnow()
 
-# -----------------------------------------------------------------------------
-# Security & guards
-# -----------------------------------------------------------------------------
-AUTHORIZED_API_KEYS = set(filter(None, os.getenv("AUTHORIZED_API_KEYS", "").split(",")))
-TRUSTED_ORIGINS = set(filter(None, os.getenv("TRUSTED_ORIGINS", "").split(",")))
-if not AUTHORIZED_API_KEYS or not TRUSTED_ORIGINS:
-    raise RuntimeError("Set AUTHORIZED_API_KEYS and TRUSTED_ORIGINS env vars.")
+app.config.update(
+    {
+        "NEXUS_GATEWAY_SETTINGS": GATEWAY_SETTINGS,
+        "NEXUS_CORE_CONFIG": CORE_CONFIG,
+        "NEXUS_ENGINE": engine,
+        "NEXUS_CONNECTORS": connectors,
+        "NEXUS_MEMORY": memory,
+        "NEXUS_SECRET_RESOLVER": secret_resolver,
+        "NEXUS_CRYPTER": crypter,
+        "NEXUS_WEB_RETRIEVER": web_retriever,
+        "NEXUS_ACCESS_CONTEXT": access_context,
+        "NEXUS_START_TIME": start_time,
+    },
+)
 
 if Talisman:
     Talisman(app, content_security_policy={"default-src": ["'self'"]}, force_https=True)
@@ -83,13 +341,20 @@ if CORS:
     CORS(app, origins=list(TRUSTED_ORIGINS), allow_headers=["Content-Type","X-API-Key"], methods=["GET","POST","OPTIONS"])
 
 if Limiter:
-    limiter = Limiter(app, key_func=lambda: request.headers.get("X-API-Key") or get_remote_address(),
-                      default_limits=["200/day", "50/hour"])
+    limiter = Limiter(
+        key_func=lambda: request.headers.get("X-API-Key") or get_remote_address(),
+        default_limits=list(GATEWAY_SETTINGS.rate_limits),
+        storage_uri=GATEWAY_SETTINGS.rate_limit_storage_url,
+        strategy=os.getenv("NEXUS_RATE_LIMIT_STRATEGY", "fixed-window"),
+    )
+    limiter.init_app(app)
 else:
     class _NoLimit:
         def limit(self, *_a, **_k):
             def _wrap(f): return f
             return _wrap
+        def init_app(self, *_a, **_k):  # pragma: no cover - no-op for tests
+            return self
     limiter = _NoLimit()
 
 def _ct_eq(a: str, b: str) -> bool:
@@ -109,9 +374,9 @@ def require_api_key(f):
 
 @app.before_request
 def enforce_https_and_size():
-    if not app.debug and request.headers.get("X-Forwarded-Proto","https").lower() != "https":
+    if ENFORCE_HTTPS and not app.debug and request.headers.get("X-Forwarded-Proto","https").lower() != "https":
         return jsonify({"error":"HTTPS required"}), 403
-    if request.content_length and request.content_length > 2 * 1024 * 1024:
+    if request.content_length and request.content_length > MAX_REQUEST_BYTES:
         return jsonify({"error":"Request too large"}), 413
 
 @app.errorhandler(Exception)
@@ -126,60 +391,8 @@ def sanitize_input(data):
     return data
 
 def _uptime() -> str:
-    return str(dt.utcnow() - start_time).split(".")[0]
-
-# -----------------------------------------------------------------------------
-# Lightweight cfg -> memory/connectors/engine
-# -----------------------------------------------------------------------------
-class Cfg: pass
-
-def _env_list(name: str, default_csv: str) -> list[str]:
-    return [s.strip() for s in os.getenv(name, default_csv).split(",") if s.strip()]
-
-def build_cfg() -> Cfg:
-    c = Cfg()
-    c.memory_providers = _env_list("NEXUS_MEM_PROVIDERS", "aws")
-    c.memory_fanout_writes = os.getenv("NEXUS_MEM_FANOUT","1") not in {"0","false","False"}
-    c.encrypt = os.getenv("NEXUS_ENCRYPT","1") not in {"0","false","False"}
-    c.alpha_semantic = float(os.getenv("NEXUS_ALPHA_SEMANTIC","0.5"))
-    c.max_context_messages = int(os.getenv("NEXUS_MAX_CTX","8"))
-    return c
-
-def build_memory(cfg: Cfg) -> MultiMemoryStore:
-    stores = []
-    for p in getattr(cfg, "memory_providers", []) or []:
-        pl = p.lower()
-        if pl == "aws":
-            stores.append(DynamoDBMemoryStore(
-                os.getenv("NEXUS_DDB_MESSAGES","nexus_messages"),
-                os.getenv("NEXUS_DDB_INDEX","nexus_memindex"),
-                os.getenv("AWS_REGION","us-east-1"),
-            ))
-        elif pl == "gcp":
-            stores.append(FirestoreMemoryStore(os.getenv("NEXUS_FS_PREFIX","nexus")))
-        elif pl == "azure":
-            stores.append(AzureBlobMemoryStore(
-                container=os.getenv("NEXUS_AZ_CONTAINER","nexus-messages"),
-                prefix=os.getenv("NEXUS_AZ_PREFIX","nexus"),
-                connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING"),
-            ))
-        else:
-            stores.append(InMemoryStore())
-    if not stores:
-        stores.append(InMemoryStore())
-    return MultiMemoryStore(stores, fanout_writes=getattr(cfg, "memory_fanout_writes", True))
-
-cfg = build_cfg()
-memory = build_memory(cfg)
-connectors = make_connectors(cfg)
-engine = Engine(
-    connectors=connectors,
-    memory=memory,
-    resolver_like=None,
-    encrypt=cfg.encrypt,
-    alpha_semantic=cfg.alpha_semantic,
-    max_context_messages=cfg.max_context_messages,
-)
+    origin = app.config.get("NEXUS_START_TIME", start_time)
+    return str(dt.utcnow() - origin).split(".")[0]
 
 # Optional DynamoDB resources for audit/scope/webhooks
 try:
@@ -194,7 +407,7 @@ except Exception:
     Key = None
     audit_table = scope_table = webhook_table = None
 
-def _audit_put(item: Dict[str, Any]) -> None:
+def _audit_put(item: dict[str, Any]) -> None:
     if audit_table:
         try: audit_table.put_item(Item=item)
         except Exception as e: logger.warning(f"audit put failed: {e}")
@@ -232,7 +445,7 @@ def _webhook_store(url: str, event_type: str) -> bool:
             if u.scheme != "https" or not u.netloc: return False
             webhook_table.put_item(Item={
                 "url": url, "event": event_type, "created_at": dt.utcnow().isoformat(),
-                "ttl": int(time.time()) + 60*60*24*30
+                "ttl": int(time.time()) + 60*60*24*30,
             })
             return True
         except Exception as e:
@@ -249,7 +462,7 @@ def home():
         "message": "✅ Nexus AI is secure and online",
         "version": os.getenv("APP_VERSION", "1.0.0"),
         "uptime": _uptime(),
-        "routes": ["/debate","/backup","/status","/log","/auth/scope","/webhooks/register","/webhooks/list","/audit","/auth/scope/<user_id>"]
+        "routes": ["/debate","/backup","/status","/log","/auth/scope","/webhooks/register","/webhooks/list","/audit","/auth/scope/<user_id>"],
     }), 200
 
 @app.route("/health", methods=["GET"])
@@ -263,7 +476,7 @@ def status():
     model_report = {}
     for name, conn in connectors.items():
         try:
-            degraded = bool(getattr(conn, "health_check")()) if hasattr(conn, "health_check") else False
+            degraded = bool(conn.health_check()) if hasattr(conn, "health_check") else False
             model_report[name] = "Degraded" if degraded else "Healthy"
         except Exception as e:
             model_report[name] = f"Error: {e}"
@@ -296,7 +509,7 @@ def debate():
             "prompt": prompt,
             "context": context,
             "log_type": "debate",
-            "ttl": int(time.time()) + 60*60*24*90
+            "ttl": int(time.time()) + 60*60*24*90,
         })
         return jsonify(result), 200
     except Exception:
@@ -391,11 +604,19 @@ def register_webhook():
 def list_webhooks():
     return jsonify({"webhooks": _webhook_list()}), 200
 # --- Autonomous Health Monitor ------------------------------------------------
-import threading, atexit
 
 class HealthMonitor:
-    def __init__(self, *, engine, connectors, memory, audit_put=None,
-                 interval_sec=3600, web_check=True):
+    def __init__(
+        self,
+        *,
+        engine,
+        connectors,
+        memory,
+        audit_put=None,
+        interval_sec=3600,
+        web_check=True,
+        start_time: dt | None = None,
+    ):
         self.engine = engine
         self.connectors = connectors
         self.memory = memory
@@ -408,6 +629,7 @@ class HealthMonitor:
         self._thr = threading.Thread(target=self._loop,
                                      name="nexus.health",
                                      daemon=True)
+        self._start_time = start_time or dt.utcnow()
 
     def start(self):
         self._thr.start()
@@ -434,12 +656,12 @@ class HealthMonitor:
 
         snap = {
             "ts": dt.utcnow().isoformat() + "Z",
-            "uptime": str(dt.utcnow() - start_time).split(".")[0],
+            "uptime": str(dt.utcnow() - self._start_time).split(".")[0],
             "node": node_health(),
             "clouds": ping_clouds(),
             "memory": health_suite(self.memory),
             "models": {},
-            "web": {"providers": [], "ok": 0}
+            "web": {"providers": [], "ok": 0},
         }
 
         # Model connector health (True => degraded per your connector semantics)
@@ -451,7 +673,7 @@ class HealthMonitor:
                 snap["models"][name] = f"Error: {e}"
 
         # Verify web providers (if engine has a retriever)
-        if self.web_check and hasattr(self.engine, "web") and getattr(self.engine, "web"):
+        if self.web_check and hasattr(self.engine, "web") and self.engine.web:
             ok = 0
             providers = []
             for p in getattr(self.engine.web, "providers", []):
@@ -482,7 +704,7 @@ class HealthMonitor:
                             "event": "health.snapshot",
                             "payload": snap,
                             "log_type": "health",
-                            "ttl": int(time.time()) + 60*60*24*90
+                            "ttl": int(time.time()) + 60*60*24*90,
                         })
                     except Exception:
                         logger.warning("health snapshot audit put failed", exc_info=True)
@@ -501,14 +723,17 @@ if os.getenv("NEXUS_HEALTH_ENABLE", "1") not in {"0", "false", "False"}:
         engine=engine,
         connectors=connectors,
         memory=memory,
-        audit_put=_audit_put if " _audit_put" not in globals() else _audit_put,  # use if defined
+        audit_put=_audit_put,
         interval_sec=int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600")),
         web_check=os.getenv("NEXUS_HEALTH_WEB_CHECK", "1") not in {"0", "false", "False"},
+        start_time=start_time,
     )
     _health.start()
+    app.config["NEXUS_HEALTH_MONITOR"] = _health
     atexit.register(lambda: _health.stop())
 else:
     _health = None
+    app.config["NEXUS_HEALTH_MONITOR"] = None
 # -----------------------------------------------------------------------------
 
 
