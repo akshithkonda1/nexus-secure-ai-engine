@@ -9,16 +9,15 @@ import socket
 import threading
 import time
 import traceback
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime as dt
 from functools import wraps
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urlparse
 
+from bootstrap import BootstrapError, _build_resolver, make_connectors
 from flask import Flask, jsonify, request
-from werkzeug.middleware.proxy_fix import ProxyFix
-
-from bootstrap import BootstrapError, make_connectors, _build_resolver
 from memory_compute import (
     AzureBlobMemoryStore,
     DynamoDBMemoryStore,
@@ -38,6 +37,7 @@ from nexus_engine import (
     WebRetriever,
     build_web_retriever_from_env,
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 def node_health():
@@ -57,19 +57,21 @@ class AppInitializationError(RuntimeError):
 
 @dataclass(frozen=True)
 class GatewaySettings:
-    api_keys: Tuple[str, ...]
-    trusted_origins: Tuple[str, ...]
+    api_keys: tuple[str, ...]
+    trusted_origins: tuple[str, ...]
     request_max_bytes: int
     enforce_https: bool
+    rate_limits: tuple[str, ...]
+    rate_limit_storage_url: str
 
 
 _BOOL_TRUE = {"1", "true", "yes", "y", "on"}
 _BOOL_FALSE = {"0", "false", "no", "n", "off"}
 
 
-def _dedupe(seq: Iterable[str]) -> Tuple[str, ...]:
+def _dedupe(seq: Iterable[str]) -> tuple[str, ...]:
     seen = set()
-    ordered: List[str] = []
+    ordered: list[str] = []
     for item in seq:
         if item not in seen:
             seen.add(item)
@@ -77,7 +79,7 @@ def _dedupe(seq: Iterable[str]) -> Tuple[str, ...]:
     return tuple(ordered)
 
 
-def _csv_env(name: str, *, required: bool) -> Tuple[str, ...]:
+def _csv_env(name: str, *, required: bool) -> tuple[str, ...]:
     raw = os.getenv(name, "")
     if not raw:
         if required:
@@ -125,7 +127,24 @@ def _load_gateway_settings() -> GatewaySettings:
             raise AppInitializationError("TRUSTED_ORIGINS must list valid https:// origins")
     max_bytes = _int_env("NEXUS_MAX_REQUEST_BYTES", 2 * 1024 * 1024, minimum=1024)
     enforce_https = _bool_env("NEXUS_ENFORCE_HTTPS", True)
-    return GatewaySettings(api_keys=api_keys, trusted_origins=origins, request_max_bytes=max_bytes, enforce_https=enforce_https)
+    rate_limits = _csv_env("NEXUS_RATE_LIMITS", required=False) or (
+        "200/day",
+        "50/hour",
+    )
+    storage_url = os.getenv("NEXUS_RATE_LIMIT_STORAGE_URL", "memory://").strip() or "memory://"
+    env = os.getenv("NEXUS_ENV", "").lower()
+    if env in {"prod", "production"} and storage_url == "memory://":
+        raise AppInitializationError(
+            "NEXUS_RATE_LIMIT_STORAGE_URL must be configured with a persistent backend in production",
+        )
+    return GatewaySettings(
+        api_keys=api_keys,
+        trusted_origins=origins,
+        request_max_bytes=max_bytes,
+        enforce_https=enforce_https,
+        rate_limits=tuple(rate_limits),
+        rate_limit_storage_url=storage_url,
+    )
 
 
 def _load_nexus_config() -> NexusConfig:
@@ -199,7 +218,7 @@ def build_memory(cfg: NexusConfig) -> MultiMemoryStore:
                         table,
                         index or None,
                         region,
-                    )
+                    ),
                 )
             elif normalized == "gcp":
                 prefix = os.getenv("NEXUS_FS_PREFIX", "nexus").strip() or "nexus"
@@ -210,20 +229,20 @@ def build_memory(cfg: NexusConfig) -> MultiMemoryStore:
                 connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
                 if not connection_string or not connection_string.strip():
                     raise AppInitializationError(
-                        "AZURE_STORAGE_CONNECTION_STRING is required for Azure memory provider"
+                        "AZURE_STORAGE_CONNECTION_STRING is required for Azure memory provider",
                     )
                 stores.append(
                     AzureBlobMemoryStore(
                         container=container,
                         prefix=prefix,
                         connection_string=connection_string,
-                    )
+                    ),
                 )
             else:
                 stores.append(InMemoryStore())
         except (ImportError, MemoryStoreError, RuntimeError) as exc:
             raise AppInitializationError(
-                f"Failed to initialise memory provider '{provider}': {exc}"
+                f"Failed to initialise memory provider '{provider}': {exc}",
             ) from exc
     if not stores:
         stores.append(InMemoryStore())
@@ -267,13 +286,13 @@ if web_retriever is None:
         class _StubProvider(SearchProvider):
             name = "stub"
 
-            def search(self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None):  # type: ignore[override]
+            def search(self, query: str, *, k: int = 5, images: bool = False, deadline: float | None = None):  # type: ignore[override]
                 return []
 
         web_retriever = WebRetriever([_StubProvider()])
     else:
         raise AppInitializationError(
-            "No search providers configured. Set SEARCH_GATEWAY_* secrets or enable third-party search providers."
+            "No search providers configured. Set SEARCH_GATEWAY_* secrets or enable third-party search providers.",
         )
 
 access_context = _build_access_context()
@@ -313,7 +332,7 @@ app.config.update(
         "NEXUS_WEB_RETRIEVER": web_retriever,
         "NEXUS_ACCESS_CONTEXT": access_context,
         "NEXUS_START_TIME": start_time,
-    }
+    },
 )
 
 if Talisman:
@@ -324,7 +343,9 @@ if CORS:
 if Limiter:
     limiter = Limiter(
         key_func=lambda: request.headers.get("X-API-Key") or get_remote_address(),
-        default_limits=["200/day", "50/hour"],
+        default_limits=list(GATEWAY_SETTINGS.rate_limits),
+        storage_uri=GATEWAY_SETTINGS.rate_limit_storage_url,
+        strategy=os.getenv("NEXUS_RATE_LIMIT_STRATEGY", "fixed-window"),
     )
     limiter.init_app(app)
 else:
@@ -386,7 +407,7 @@ except Exception:
     Key = None
     audit_table = scope_table = webhook_table = None
 
-def _audit_put(item: Dict[str, Any]) -> None:
+def _audit_put(item: dict[str, Any]) -> None:
     if audit_table:
         try: audit_table.put_item(Item=item)
         except Exception as e: logger.warning(f"audit put failed: {e}")
@@ -424,7 +445,7 @@ def _webhook_store(url: str, event_type: str) -> bool:
             if u.scheme != "https" or not u.netloc: return False
             webhook_table.put_item(Item={
                 "url": url, "event": event_type, "created_at": dt.utcnow().isoformat(),
-                "ttl": int(time.time()) + 60*60*24*30
+                "ttl": int(time.time()) + 60*60*24*30,
             })
             return True
         except Exception as e:
@@ -441,7 +462,7 @@ def home():
         "message": "✅ Nexus AI is secure and online",
         "version": os.getenv("APP_VERSION", "1.0.0"),
         "uptime": _uptime(),
-        "routes": ["/debate","/backup","/status","/log","/auth/scope","/webhooks/register","/webhooks/list","/audit","/auth/scope/<user_id>"]
+        "routes": ["/debate","/backup","/status","/log","/auth/scope","/webhooks/register","/webhooks/list","/audit","/auth/scope/<user_id>"],
     }), 200
 
 @app.route("/health", methods=["GET"])
@@ -455,7 +476,7 @@ def status():
     model_report = {}
     for name, conn in connectors.items():
         try:
-            degraded = bool(getattr(conn, "health_check")()) if hasattr(conn, "health_check") else False
+            degraded = bool(conn.health_check()) if hasattr(conn, "health_check") else False
             model_report[name] = "Degraded" if degraded else "Healthy"
         except Exception as e:
             model_report[name] = f"Error: {e}"
@@ -488,7 +509,7 @@ def debate():
             "prompt": prompt,
             "context": context,
             "log_type": "debate",
-            "ttl": int(time.time()) + 60*60*24*90
+            "ttl": int(time.time()) + 60*60*24*90,
         })
         return jsonify(result), 200
     except Exception:
@@ -640,7 +661,7 @@ class HealthMonitor:
             "clouds": ping_clouds(),
             "memory": health_suite(self.memory),
             "models": {},
-            "web": {"providers": [], "ok": 0}
+            "web": {"providers": [], "ok": 0},
         }
 
         # Model connector health (True => degraded per your connector semantics)
@@ -652,7 +673,7 @@ class HealthMonitor:
                 snap["models"][name] = f"Error: {e}"
 
         # Verify web providers (if engine has a retriever)
-        if self.web_check and hasattr(self.engine, "web") and getattr(self.engine, "web"):
+        if self.web_check and hasattr(self.engine, "web") and self.engine.web:
             ok = 0
             providers = []
             for p in getattr(self.engine.web, "providers", []):
@@ -683,7 +704,7 @@ class HealthMonitor:
                             "event": "health.snapshot",
                             "payload": snap,
                             "log_type": "health",
-                            "ttl": int(time.time()) + 60*60*24*90
+                            "ttl": int(time.time()) + 60*60*24*90,
                         })
                     except Exception:
                         logger.warning("health snapshot audit put failed", exc_info=True)

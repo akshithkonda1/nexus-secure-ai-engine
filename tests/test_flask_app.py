@@ -5,10 +5,9 @@ import json
 import pathlib
 import sys
 import types
+from typing import Any
 
 import pytest
-
-from typing import Any, Dict
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_flask_app.py"
 
@@ -27,8 +26,8 @@ def flask_loader(monkeypatch):
     nexus_config = importlib.import_module("nexus_config")
 
     class DummyResolver:
-        store: Dict[str, str] = {}
-        last_init: Dict[str, Any] | None = None
+        store: dict[str, str] = {}
+        last_init: dict[str, Any] | None = None
 
         def __init__(self, providers, overrides, ttl_seconds):
             DummyResolver.last_init = {
@@ -70,7 +69,7 @@ def _set_base_env(monkeypatch, resolver_cls, *, request_bytes=None):
                 "name": "stub",
                 "endpoint": "https://example.com/api",
                 "auth": {"type": "bearer", "value": "token"},
-            }
+            },
         ],
     }
     monkeypatch.setenv("AUTHORIZED_API_KEYS", "test-key")
@@ -82,6 +81,8 @@ def _set_base_env(monkeypatch, resolver_cls, *, request_bytes=None):
     monkeypatch.setenv("NEXUS_TENANT_ID", "tenant-test")
     monkeypatch.setenv("NEXUS_INSTANCE_ID", "instance-test")
     monkeypatch.setenv("NEXUS_DEFAULT_USER_ID", "user-test")
+    monkeypatch.setenv("NEXUS_RATE_LIMIT_STORAGE_URL", "memory://")
+    monkeypatch.setenv("NEXUS_RATE_LIMITS", "100/minute, 1000/day")
     if request_bytes is not None:
         monkeypatch.setenv("NEXUS_MAX_REQUEST_BYTES", str(request_bytes))
     else:
@@ -100,6 +101,7 @@ def test_app_initialization_populates_config(monkeypatch, flask_loader):
     assert module.app.config["NEXUS_ENGINE"] is module.engine
     assert module.app.config["NEXUS_MEMORY"] is module.memory
     assert module.app.config["NEXUS_GATEWAY_SETTINGS"].api_keys == ("test-key",)
+    assert module.app.config["NEXUS_GATEWAY_SETTINGS"].rate_limits == ("100/minute", "1000/day")
 
 
 def test_missing_api_keys_raises(monkeypatch, flask_loader):
@@ -120,3 +122,15 @@ def test_rejects_non_https_origins(monkeypatch, flask_loader):
         flask_loader()
     assert excinfo.type.__name__ == "AppInitializationError"
     assert "https://" in str(excinfo.value)
+
+
+def test_production_requires_rate_limit_storage(monkeypatch, flask_loader):
+    _set_base_env(monkeypatch, flask_loader.resolver_class)
+    monkeypatch.setenv("NEXUS_ENV", "prod")
+    monkeypatch.setenv("NEXUS_RATE_LIMIT_STORAGE_URL", "memory://")
+
+    with pytest.raises(Exception) as excinfo:
+        flask_loader()
+
+    assert excinfo.type.__name__ == "AppInitializationError"
+    assert "NEXUS_RATE_LIMIT_STORAGE_URL" in str(excinfo.value)
