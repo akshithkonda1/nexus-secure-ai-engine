@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import TopBar from '../components/TopBar';
 import ChatList from '../components/chat/ChatList';
 import Composer from '../components/chat/Composer';
@@ -7,11 +7,12 @@ import ResultCard from '../components/right-rail/ResultCard';
 import AnswersCard from '../components/right-rail/AnswersCard';
 import AuditTrailCard from '../components/right-rail/AuditTrailCard';
 import SecurityCard from '../components/right-rail/SecurityCard';
-import SessionsDrawer from '../components/drawers/SessionsDrawer';
+import ChatSidebar from '../components/sidebar/ChatSidebar';
 import { genId } from '../lib/id';
 import { priorityTier } from '../lib/priority';
 import type { Message } from '../types/chat';
 import { SessionService } from '../state/sessions';
+import type { SessionRow } from '../state/sessions';
 import { useDarkMode } from '../hooks/useDarkMode';
 
 const ProfileModal = React.lazy(()=> import('../components/modals/ProfileModal'));
@@ -19,16 +20,14 @@ const ProfileModal = React.lazy(()=> import('../components/modals/ProfileModal')
 const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
   const { isDark, setIsDark } = useDarkMode();
   const [profileOpen,setProfileOpen]=useState(false);
-  const [sessionsOpen,setSessionsOpen]=useState(false);
-  const [sessionTab,setSessionTab]=useState<'active'|'archived'|'deleted'>('active');
 
-  const [sessions,setSessions]=useState(()=>SessionService.list());
-  const [archived,setArchived]=useState(()=>SessionService.listArchived());
-  const [deleted,setDeleted]=useState(()=>SessionService.listDeleted());
+  const [sessions,setSessions]=useState<SessionRow[]>(()=>SessionService.list());
+  const [archived,setArchived]=useState<SessionRow[]>(()=>SessionService.listArchived());
+  const [deleted,setDeleted]=useState<SessionRow[]>(()=>SessionService.listDeleted());
   const refreshSessions=()=>{ setSessions(SessionService.list()); setArchived(SessionService.listArchived()); setDeleted(SessionService.listDeleted()); };
   const [activeSessionId,setActiveSessionId]=useState<string|null>(()=> sessions[0]?.id || null);
-  const allSessions=useMemo(()=>[...sessions,...archived,...deleted],[sessions,archived,deleted]);
-  const activeSession=useMemo(()=> allSessions.find((s:any)=>s.id===activeSessionId)||null,[allSessions,activeSessionId]);
+  const allSessions=useMemo<SessionRow[]>(()=>[...sessions,...archived,...deleted],[sessions,archived,deleted]);
+  const activeSession=useMemo(()=> allSessions.find((s)=>s.id===activeSessionId)||null,[allSessions,activeSessionId]);
   const [messages,setMessages]=useState<Message[]>(()=> activeSessionId? SessionService.messages(activeSessionId) : []);
   useEffect(()=>{ setMessages(activeSessionId? SessionService.messages(activeSessionId) : []); }, [activeSessionId]);
 
@@ -72,31 +71,42 @@ const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
   }, []);
   useEffect(()=>{ const exists=allSessions.some((s:any)=>s.id===activeSessionId); if(!exists){ const fb=(sessions?.[0]||archived?.[0]||deleted?.[0]||null) as any; setActiveSessionId(fb? fb.id : null); } }, [allSessions,sessions,archived,deleted,activeSessionId]);
 
-  const counts={ active:sessions.length, archived:archived.length, deleted:deleted.length };
-
   return (
-    <div className="min-h-screen bg-token text-token p-4">
+    <div className="chatgpt-app">
       <ThemeStyles/>
-      <TopBar isDark={isDark} onToggleTheme={()=>setIsDark(!isDark)} onOpenProfile={()=>setProfileOpen(true)} />
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <section className="xl:col-span-7 space-y-3">
-          <div className="flex items-center gap-2 mb-1">
-            <button className="p-2 rounded-xl card-token" onClick={()=>setSessionsOpen(true)} aria-label="Open sessions">☰</button>
-            <div className="text-sm font-semibold">Chat {activeSession? <span className="opacity-70">— {activeSession.title}{activeSession.deletedAt? ' • deleted' : activeSession.archivedAt? ' • archived':''}</span>:null}</div>
-            <button className="ml-auto p-2 rounded-xl card-token" onClick={onOpenSettings} aria-label="Open settings">⚙</button>
-          </div>
+      <div className="chatgpt-shell">
+        <ChatSidebar
+          sessions={sessions}
+          archived={archived}
+          deleted={deleted}
+          activeSessionId={activeSessionId}
+          onSelect={setActiveSessionId}
+          onNewChat={()=>{ const s=SessionService.create('New chat'); refreshSessions(); setActiveSessionId(s.id); }}
+          onRename={(id)=>{ const cur=allSessions.find((s)=>s.id===id); const t=prompt('Rename session', cur?.title||''); if(t && t.trim()){ SessionService.update(id,{title:t.trim()}); refreshSessions(); } }}
+          onArchive={(id)=>{ SessionService.archive(id); refreshSessions(); if(id===activeSessionId){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }}
+          onRestore={(id)=>{ SessionService.restore(id); refreshSessions(); setActiveSessionId(id); }}
+          onSoftDelete={(id)=>{ SessionService.softDelete(id); refreshSessions(); if(id===activeSessionId){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }}
+          onDestroy={(id)=>{ if(!confirm('Permanently destroy this session?')) return; SessionService.remove(id); refreshSessions(); if(id===activeSessionId){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }}
+          onOpenSettings={onOpenSettings}
+          onToggleTheme={()=>setIsDark(!isDark)}
+          isDark={isDark}
+        />
+        <main className="chatgpt-main">
+          <TopBar isDark={isDark} onToggleTheme={()=>setIsDark(!isDark)} onOpenProfile={()=>setProfileOpen(true)} />
           <ChatList messages={messages}/>
-          <Composer onSend={send} disabled={running}/>
-        </section>
-        <section className="xl:col-span-5 space-y-6">
+          <div className="chatgpt-composer-area">
+            <Composer onSend={send} disabled={running}/>
+            <p className="chatgpt-composer-hint">Nexus may produce inaccurate information. Verify critical responses before sharing.</p>
+          </div>
+        </main>
+        <aside className="chatgpt-right-rail">
           <ResultCard running={running} result={result}/>
           <AnswersCard running={running} answers={answers}/>
           <AuditTrailCard events={events}/>
           <SecurityCard redactPII={true} uiSessionId={uiSessionId}/>
-        </section>
+        </aside>
       </div>
       <Suspense fallback={null}>{profileOpen && <ProfileModal open={profileOpen} onClose={()=>setProfileOpen(false)} />}</Suspense>
-      <SessionsDrawer open={sessionsOpen} onClose={()=>setSessionsOpen(false)} sessionTab={sessionTab} setSessionTab={setSessionTab} filteredList={(sessionTab==='archived'? archived : sessionTab==='deleted'? deleted : sessions)} activeSessionId={activeSessionId} setActiveSessionId={setActiveSessionId} onNewChat={()=>{ const s=SessionService.create('New chat'); refreshSessions(); setActiveSessionId(s.id); setSessionsOpen(false); }} onRename={(id)=>{ const cur=allSessions.find((s:any)=>s.id===id); const t=prompt('Rename session', cur?.title||''); if(t && t.trim()){ SessionService.update(id,{title:t.trim()}); refreshSessions(); } }} onArchive={(id)=>{ SessionService.archive(id); refreshSessions(); if(id===activeSessionId && sessionTab!=='archived'){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }} onRestore={(id)=>{ SessionService.restore(id); refreshSessions(); setActiveSessionId(id); }} onSoftDelete={(id)=>{ SessionService.softDelete(id); refreshSessions(); if(id===activeSessionId && sessionTab!=='deleted'){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }} onDestroy={(id)=>{ if(!confirm('Permanently destroy this session?')) return; SessionService.remove(id); refreshSessions(); if(id===activeSessionId){ setActiveSessionId(SessionService.list()?.[0]?.id||null); } }} counts={counts} />
     </div>
   );
 };
