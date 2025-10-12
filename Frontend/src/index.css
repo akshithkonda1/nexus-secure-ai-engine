@@ -221,6 +221,14 @@ input, textarea { border: none; outline: none; background: transparent; }
 
 .chatgpt-composer-hint { font-size: 0.7rem; opacity: 0.55; text-align: center; }
 
+.chatgpt-main-disclaimer {
+  font-size: 0.7rem;
+  opacity: 0.45;
+  text-align: center;
+  padding: 0 2rem 2rem;
+  margin: 0;
+}
+
 .chatgpt-right-rail {
   width: 320px;
   border-left: 1px solid rgb(var(--sidebar-border));
