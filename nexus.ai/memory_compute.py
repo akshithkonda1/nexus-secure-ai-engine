@@ -9,7 +9,7 @@ import socket
 import time
 import uuid
 from functools import lru_cache
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 # ---------- Logging ----------
 _LOG_LEVEL = os.getenv("NEXUS_LOG_LEVEL", "INFO").upper()
@@ -26,7 +26,6 @@ logger.setLevel(getattr(logging, _LOG_LEVEL, logging.INFO))
 
 
 # ---------- Errors & helpers ----------
-
 
 class MemoryStoreError(RuntimeError):
     """Raised when a backing memory store is misconfigured or unhealthy."""
@@ -56,17 +55,15 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 
-def _meta_dict(meta: Mapping[str, Any] | None) -> Dict[str, Any]:
+def _meta_dict(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     if meta is None:
         return {}
-    if isinstance(meta, dict):
-        return dict(meta)
-    if isinstance(meta, Mapping):
-        return dict(meta)
-    raise MemoryStoreError("meta payloads must be mappings")
+    if not isinstance(meta, dict):
+        raise MemoryStoreError("meta payloads must be dictionaries")
+    return dict(meta)
 
 
-def _copy_meta(meta: Mapping[str, Any] | None) -> Dict[str, Any]:
+def _copy_meta(meta: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     payload = _meta_dict(meta)
     try:
         json.dumps(payload, ensure_ascii=False)
@@ -88,11 +85,7 @@ class MemoryStore:
     """Abstract interface for chat history storage backends."""
 
     def save(
-        self,
-        session_id: str,
-        role: str,
-        text: str,
-        meta: Mapping[str, Any] | None = None,
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         raise NotImplementedError
 
@@ -118,7 +111,7 @@ class InMemoryStore(MemoryStore):
         logger.info("InMemoryStore initialized")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -132,6 +125,13 @@ class InMemoryStore(MemoryStore):
                 "meta": payload,
             }
         )
+        self._data.setdefault(session_id, []).append({
+            "id": mid,
+            "ts": ts,
+            "role": role,
+            "text": text,
+            "meta": payload,
+        })
         logger.debug(f"InMemoryStore.save session={session_id} role={role} mid={mid}")
         return mid
 
@@ -166,18 +166,12 @@ class DynamoDBMemoryStore(MemoryStore):
         )
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
         payload = _copy_meta(meta)
-        item: Dict[str, Any] = {
-            "session_id": session_id,
-            "ts": ts,
-            "id": mid,
-            "role": role,
-            "text": text,
-        }
+        item: Dict[str, Any] = {"session_id": session_id, "ts": ts, "id": mid, "role": role, "text": text}
         if payload:
             item["meta_json"] = json.dumps(payload, ensure_ascii=False)
             if payload.get("ephemeral"):
@@ -221,7 +215,7 @@ class FirestoreMemoryStore(MemoryStore):
         logger.info(f"FirestoreMemoryStore initialized collection_prefix={self._col}")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -290,7 +284,7 @@ class AzureBlobMemoryStore(MemoryStore):
         return self._svc.get_blob_client(container=self._container, blob=name)
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -362,8 +356,9 @@ class MultiMemoryStore:
         return self.stores[0]
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
+    def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         payload = _copy_meta(meta)
         ids: List[str] = []
         errors: List[str] = []
