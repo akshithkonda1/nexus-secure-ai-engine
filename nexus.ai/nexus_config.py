@@ -37,6 +37,7 @@ __all__ = [
     "load_and_validate",
     "save_config",
     "validate_config",
+    "SecretResolver",
 ]
 
 
