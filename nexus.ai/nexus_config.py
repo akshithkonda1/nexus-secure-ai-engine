@@ -30,6 +30,24 @@ _BOOL_TRUE = {"1", "true", "yes", "y", "on"}
 _BOOL_FALSE = {"0", "false", "no", "n", "off"}
 
 
+__all__ = [
+    "ConfigError",
+    "NexusConfig",
+    "load_config",
+    "load_and_validate",
+    "save_config",
+    "validate_config",
+]
+
+
+class ConfigError(ValueError):
+    """Raised when configuration sources cannot be coerced to the expected types."""
+
+
+_BOOL_TRUE = {"1", "true", "yes", "y", "on"}
+_BOOL_FALSE = {"0", "false", "no", "n", "off"}
+
+
 @dataclass
 class NexusConfig:
     engine_mode: str = "mixed"  # delegates|direct|mixed
