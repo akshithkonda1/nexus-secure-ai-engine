@@ -748,6 +748,9 @@ class HealthMonitor:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thr = threading.Thread(target=self._loop, name="nexus.health", daemon=True)
+        self._thr = threading.Thread(target=self._loop,
+                                     name="nexus.health",
+                                     daemon=True)
         self._start_time = start_time or dt.utcnow()
 
     def start(self):

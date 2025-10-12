@@ -88,7 +88,7 @@ class MemoryStore:
     """Abstract interface for chat history storage backends."""
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         raise NotImplementedError
 
@@ -114,7 +114,7 @@ class InMemoryStore(MemoryStore):
         logger.info("InMemoryStore initialized")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -162,7 +162,7 @@ class DynamoDBMemoryStore(MemoryStore):
         )
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -217,7 +217,7 @@ class FirestoreMemoryStore(MemoryStore):
         logger.info(f"FirestoreMemoryStore initialized collection_prefix={self._col}")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -286,7 +286,7 @@ class AzureBlobMemoryStore(MemoryStore):
         return self._svc.get_blob_client(container=self._container, blob=name)
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ) -> str:
         mid = uuid.uuid4().hex
         ts = _now_ms()
@@ -392,6 +392,7 @@ class MultiMemoryStore:
             logger.debug(
                 f"MultiMemoryStore.recent primary={self.primary.__class__.__name__} count={len(out)}"
             )
+            logger.debug(f"MultiMemoryStore.recent primary={self.primary.__class__.__name__} count={len(out)}")
             return out
         except Exception as e:
             logger.warning(f"primary recent failed; trying fallbacks err={e}")
@@ -451,7 +452,7 @@ def verify_memory_writes(
 def _cpu_health() -> Dict[str, Any]:
     info: Dict[str, Any] = {"count": os.cpu_count() or 0}
     try:
-        import psutil
+        import psutil  # type: ignore
 
         info["percent"] = psutil.cpu_percent(interval=0.0)
     except Exception:
@@ -467,7 +468,7 @@ def _cpu_health() -> Dict[str, Any]:
 
 def _mem_health() -> Dict[str, Any]:
     try:
-        import psutil
+        import psutil  # type: ignore
 
         vm = psutil.virtual_memory()
         return {
