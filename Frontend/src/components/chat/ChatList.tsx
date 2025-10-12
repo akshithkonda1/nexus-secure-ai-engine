@@ -5,8 +5,12 @@ const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
   const listRef = useRef<HTMLDivElement|null>(null);
   useEffect(()=>{ listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior:'smooth'}); }, [messages]);
   return (
-    <div ref={listRef} className="card-token rounded-2xl p-4 max-h-[60vh] overflow-auto" aria-label="Conversation">
-      {messages.length===0? <div className="text-sm opacity-70">Start the conversation—your messages and assistant answers will appear here.</div> : messages.map(m=> <MessageBubble key={m.id} msg={m} />)}
+    <div ref={listRef} className="chatgpt-thread" aria-label="Conversation">
+      {messages.length===0? (
+        <div className="chatgpt-thread-empty">
+          Ask anything to begin. The secure assistant will synthesize vetted answers here.
+        </div>
+      ) : messages.map(m=> <MessageBubble key={m.id} msg={m} />)}
     </div>
   );
 };

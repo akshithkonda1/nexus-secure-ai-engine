@@ -7,16 +7,18 @@ const ProfileModal: React.FC<{ open:boolean; onClose: ()=>void }>=({open,onClose
   const Title = useMemo(() => ({ profile: 'Profile & Settings', billing: 'Plan & Billing' }[tab]), [tab]);
   if(!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-black/40" onClick={onClose}/>
-      <div className="relative w-[600px] max-w-[95vw]">
+    <div className="chatgpt-modal-overlay" role="dialog" aria-modal onClick={onClose}>
+      <div className="chatgpt-modal-panel" onClick={e=>e.stopPropagation()}>
         <Card>
-          <div className="flex items-center gap-2 mb-3"><div className="font-semibold">{Title}</div><button className="ml-auto p-2 rounded-xl card-token" onClick={onClose} aria-label="Close">✕</button></div>
-          <div className="flex gap-2 mb-3">
-            <button onClick={()=>setTab('profile')} onMouseEnter={()=>import('./tabs/ProfileTab')} onFocus={()=>import('./tabs/ProfileTab')} className={`px-3 py-2 rounded-xl text-sm ${tab==='profile'?'muted-token':'card-token'}`}>Profile</button>
-            <button onClick={()=>setTab('billing')} onMouseEnter={()=>import('./tabs/BillingTab')} onFocus={()=>import('./tabs/BillingTab')} className={`px-3 py-2 rounded-xl text-sm ${tab==='billing'?'muted-token':'card-token'}`}>Plan & Billing</button>
+          <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1rem' }}>
+            <div style={{ fontWeight:600 }}>{Title}</div>
+            <button className="chatgpt-modal-close" onClick={onClose} aria-label="Close">✕</button>
           </div>
-          <Suspense fallback={<div className="text-sm opacity-70">Loading…</div>}>
+          <div className="chatgpt-modal-tabs">
+            <button onClick={()=>setTab('profile')} onMouseEnter={()=>import('./tabs/ProfileTab')} onFocus={()=>import('./tabs/ProfileTab')} className={`chatgpt-modal-tab ${tab==='profile'?'is-active':''}`}>Profile</button>
+            <button onClick={()=>setTab('billing')} onMouseEnter={()=>import('./tabs/BillingTab')} onFocus={()=>import('./tabs/BillingTab')} className={`chatgpt-modal-tab ${tab==='billing'?'is-active':''}`}>Plan & Billing</button>
+          </div>
+          <Suspense fallback={<div style={{ fontSize:'0.85rem', opacity:0.6 }}>Loading…</div>}>
             {tab==='profile'? <ProfileTab/> : <BillingTab/>}
           </Suspense>
         </Card>
