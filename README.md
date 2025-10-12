@@ -202,6 +202,10 @@ NEXUS_BASE_URL=https://localhost:8443 \
 
 > **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
 
+```
+
+> **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
+
 ## Multi-Cloud Deployment Quickstart
 
 Nexus modules are deployable to any major cloud using Terraform for infrastructure and Kubernetes for orchestration. Below are minimal, production-oriented examples that you can adapt to your environment.
