@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-# mypy: ignore-errors
 
 import importlib.util
 import pathlib

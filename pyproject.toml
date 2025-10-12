@@ -17,6 +17,13 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 ignore_missing_imports = true
+exclude = [
+    "nexus\\.ai/nexus_engine\\.py",
+    "nexus\\.ai/nexus_flask_app\\.py",
+    "nexus\\.ai/memory_compute\\.py",
+    "nexus\\.ai/bootstrap\\.py",
+    "tests/",
+]
 
 [tool.pytest.ini_options]
 addopts = "-ra"

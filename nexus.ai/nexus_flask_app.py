@@ -1,7 +1,6 @@
 # flask_app.py
 from __future__ import annotations
 
-# mypy: ignore-errors
 
 import atexit
 import hmac

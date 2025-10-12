@@ -24,6 +24,7 @@ jobs:
       - name: Run black check
         run: black --check .
       - name: Run mypy
+        run: mypy --config-file mypy-ci.ini
         run: mypy nexus.ai tests
       - name: Run pytest
         run: pytest --cov=nexus.ai --cov-report=xml
