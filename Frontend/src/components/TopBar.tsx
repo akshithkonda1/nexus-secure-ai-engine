@@ -1,10 +1,10 @@
 import React from 'react';
-import { Moon, ShieldCheck, Sparkles, Sun, UserCircle2 } from 'lucide-react';
+import { Moon, ShieldCheck, Sun, UserCircle2 } from 'lucide-react';
 const TopBar: React.FC<{ isDark: boolean; onToggleTheme: ()=>void; onOpenProfile: ()=>void }>=({isDark,onToggleTheme,onOpenProfile})=> (
   <header className="chatgpt-main-header">
     <div className="chatgpt-brand">
       <span className="chatgpt-brand-title flex items-center gap-2">
-        <Sparkles size={18} /> Nexus
+        Nexus
       </span>
       <span className="chatgpt-brand-subtitle flex items-center gap-1">
         <ShieldCheck size={14} /> Zero-trust orchestration workspace

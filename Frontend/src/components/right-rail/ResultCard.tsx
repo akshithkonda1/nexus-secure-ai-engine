@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import CollapsibleCard from '../primitives/CollapsibleCard';
 import ResultSkeleton from '../primitives/ResultSkeleton';
 import Placeholder from '../primitives/Placeholder';
@@ -18,7 +19,10 @@ const ResultCard: React.FC<{ running:boolean; result: null | { confidence:number
             {result!.votes.map((v:any,i:number)=>(
               <div key={i} className="chatgpt-vote-tile">
                 <strong>{v.model}</strong>
-                <div className="chatgpt-vote-meta">Agreement: {v.agrees? '✔️':'✖️'}</div>
+                <div className={`chatgpt-vote-agreement ${v.agrees? 'agree':'disagree'}`}>
+                  {v.agrees? <CheckCircle2 size={16}/> : <XCircle size={16}/>}
+                  <span>{v.agrees? 'Agreed':'Disagreed'}</span>
+                </div>
                 <div className="chatgpt-vote-meta">Score: {v.score}</div>
               </div>
             ))}

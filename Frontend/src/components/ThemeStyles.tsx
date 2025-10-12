@@ -15,6 +15,7 @@ export const ThemeStyles: React.FC = () => (
       --assistant-bubble: 247 247 248;
       --user-bubble: 59 130 246;
       --user-bubble-text: 255 255 255;
+      --danger: 220 38 38;
       --shadow: 15 23 42 / 8%;
       --app-gradient: radial-gradient(circle at top, rgba(255,255,255,0.8), rgba(247,247,248,0.95) 45%, rgba(239,239,244,0.85));
       color-scheme: light;
@@ -33,6 +34,7 @@ export const ThemeStyles: React.FC = () => (
       --assistant-bubble: 52 53 65;
       --user-bubble: 59 130 246;
       --user-bubble-text: 236 236 241;
+      --danger: 248 113 113;
       --shadow: 15 23 42 / 35%;
       --app-gradient: radial-gradient(circle at 20% 20%, rgba(63,63,80,0.45), rgba(17,18,24,0.92));
       color-scheme: dark;
