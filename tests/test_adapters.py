@@ -96,7 +96,9 @@ def test_adapters_handle_sample_payload(monkeypatch, adapter, sample, expected):
 
 def test_adapter_fallback_serializes_payload(monkeypatch):
     monkeypatch.setenv("NEXUS_ALLOWED_MODEL_DOMAINS", "example.com")
-    connector = ModelConnector(name="model", endpoint="https://example.com/api", adapter="openai.chat")
+    connector = ModelConnector(
+        name="model", endpoint="https://example.com/api", adapter="openai.chat"
+    )
 
     payloads = []
 

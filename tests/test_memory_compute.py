@@ -32,7 +32,9 @@ verify_memory_writes = _mod.verify_memory_writes
 
 
 class FailingStore(MemoryStore):
-    def save(self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None) -> str:
+    def save(
+        self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None
+    ) -> str:
         raise MemoryStoreError("fail save")
 
     def recent(self, session_id: str, limit: int = 8):
@@ -43,7 +45,9 @@ class RecordingStore(MemoryStore):
     def __init__(self):
         self.saved: list[Dict[str, Any]] = []
 
-    def save(self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None) -> str:
+    def save(
+        self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None
+    ) -> str:
         self.saved.append({"session": session_id, "role": role, "text": text, "meta": meta or {}})
         return "ok"
 
@@ -115,7 +119,9 @@ def test_verify_memory_writes_handles_failures():
             super().__init__()
             self.calls = 0
 
-        def save(self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None) -> str:
+        def save(
+            self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None
+        ) -> str:
             self.calls += 1
             if self.calls == 1:
                 raise MemoryStoreError("first write boom")

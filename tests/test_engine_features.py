@@ -71,7 +71,9 @@ class _PassthroughScraper:
 @pytest.fixture(autouse=True)
 def reset_engine_state(monkeypatch):
     monkeypatch.setenv("NEXUS_HEALTH_AUTORUN", "0")
-    monkeypatch.setattr(nexus_engine, "_GLOBAL_RATE_LIMITER", nexus_engine.RateLimiter(10_000, 10_000))
+    monkeypatch.setattr(
+        nexus_engine, "_GLOBAL_RATE_LIMITER", nexus_engine.RateLimiter(10_000, 10_000)
+    )
     monkeypatch.setattr(
         nexus_engine,
         "_GLOBAL_CONCURRENCY_SEMAPHORE",
@@ -170,7 +172,9 @@ def test_check_payload_size_enforces_limit(monkeypatch):
 
 def test_verification_fallback_collects_additional_sources(monkeypatch):
     primary = [nexus_engine.WebSource(url="https://first.example/a", title="A", snippet="primary")]
-    fallback = [nexus_engine.WebSource(url="https://second.example/b", title="B", snippet="secondary")]
+    fallback = [
+        nexus_engine.WebSource(url="https://second.example/b", title="B", snippet="secondary")
+    ]
     engine = _make_engine([primary, [], fallback], min_sources=2)
     result = engine.run("session", "Need more evidence")
     assert len(result["sources"]) >= 2
