@@ -279,9 +279,12 @@ class AzureBlobMemoryStore(MemoryStore):
         self._prefix = prefix
         try:
             self._svc.create_container(container)
-            logger.info(f"AzureBlobMemoryStore created container={container}")
-        except Exception:
-            logger.info(f"AzureBlobMemoryStore using existing container={container}")
+            logger.info("AzureBlobMemoryStore created container=%s", container)
+        except Exception as exc:
+            logger.debug(
+                "AzureBlobMemoryStore container exists",
+                extra={"container": container, "error": str(exc)},
+            )
 
     def _blob(self, session_id: str):
         name = f"{self._prefix}/{session_id}.jsonl"
@@ -301,8 +304,11 @@ class AzureBlobMemoryStore(MemoryStore):
         try:
             try:
                 bc.create_append_blob()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "AzureBlobMemoryStore append blob already exists",
+                    extra={"session": session_id, "error": str(exc)},
+                )
             bc.append_block(line)
             logger.debug(f"AzureBlob.append session={session_id} mid={mid}")
         except Exception as e:
@@ -310,8 +316,11 @@ class AzureBlobMemoryStore(MemoryStore):
             old = b""
             try:
                 old = bc.download_blob(max_concurrency=1).readall()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug(
+                    "AzureBlobMemoryStore download fallback failed",
+                    extra={"session": session_id, "error": str(exc)},
+                )
             bc.upload_blob(old + line, overwrite=True)
         return mid
 
@@ -331,7 +340,11 @@ class AzureBlobMemoryStore(MemoryStore):
                 out.append(
                     {"role": m.get("role", ""), "text": m.get("text", ""), "ts": m.get("ts", 0)}
                 )
-            except Exception:
+            except Exception as exc:
+                logger.debug(
+                    "AzureBlobMemoryStore skipping corrupt line",
+                    extra={"session": session_id, "error": str(exc)},
+                )
                 continue
         logger.debug(f"AzureBlob.recent session={session_id} count={len(out)}")
         return out
