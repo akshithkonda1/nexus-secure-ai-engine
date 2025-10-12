@@ -1,5 +1,6 @@
 import ast
 import collections
+import os
 import pathlib
 from typing import List
 
@@ -7,6 +8,8 @@ import pytest
 
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+
+os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 
 def _load_module():
@@ -86,7 +89,9 @@ def test_engine_specific_symbols_defined_once():
         "ConnectorError",
     ]
     for name in expected_symbols:
-        assert symbol_counts.get(name, 0) == 1, f"Expected exactly one definition of {name}, found {symbol_counts.get(name, 0)}"
+        assert (
+            symbol_counts.get(name, 0) == 1
+        ), f"Expected exactly one definition of {name}, found {symbol_counts.get(name, 0)}"
 
     # Count uppercase constant assignments
     constant_counts = collections.Counter()
@@ -111,7 +116,9 @@ def test_engine_specific_symbols_defined_once():
         "MAX_DEADLINE_SECONDS",
     ]
     for const in expected_constants:
-        assert constant_counts.get(const, 0) == 1, f"Expected exactly one assignment of {const}, found {constant_counts.get(const, 0)}"
+        assert (
+            constant_counts.get(const, 0) == 1
+        ), f"Expected exactly one assignment of {const}, found {constant_counts.get(const, 0)}"
 
 
 def test_consensus_simple_policy_uses_blended_score(monkeypatch):

@@ -8,7 +8,7 @@
 ![Build](https://img.shields.io/badge/build-Passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-orange)
-![Status](https://img.shields.io/badge/status-Demonstrator-yellow)
+![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen)
 
 ---
 
@@ -21,7 +21,7 @@
 ## Quick Snapshot
 | Category       | Details |
 |----------------|---------|
-| **Status**     | Demonstrator — production-grade design, needs API and Cloud Setup|
+| **Status**     | Production Ready — automated CI/CD, hardened dependencies, Dockerized deployment |
 | **Tech Stack** | Python 3.10+, Flask, Terraform |
 | **Cloud Stack**| **AWS** (S3, RDS, DynamoDB, Glacier, ECS, KMS), **Azure** (Blob Storage, Key Vault, Cosmos DB, AKS), **GCP** (GCS, Cloud SQL/Spanner, BigQuery, GKE, KMS) |
 | **Core Focus** | Multi-cloud AI orchestration, secure data flow, scalable low-latency architecture |
@@ -51,7 +51,7 @@ Unlike most AI systems that simply generate output, Nexus:
 1. Forces **multi-model debate** to reduce bias and hallucinations.
 2. Validates answers against **real-time, authoritative sources**.
 3. Embeds **production-grade security** from the first line of code.
-4. Operates in **safe demonstrator mode** with a direct path to live deployment.
+4. Ships with **release-pipeline automation** so teams can promote builds confidently.
 5. Integrates seamlessly into **existing enterprise ecosystems** without lock-in.
 
 ---
@@ -78,7 +78,7 @@ Unchecked AI can:
 - **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.
 - **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.
 - **Horizontally Scalable** — Operates across AWS, Azure, and GCP without single-region bottlenecks.
-- **Demonstrator,setup required** — No secrets embedded, instant production capability.
+- **Release automation included** — GitHub Actions builds, tests, and signs off artefacts on every change.
 - **Compliance-Grade Logging** — Full audit trails with configurable TTL.
 
 ---
@@ -121,20 +121,25 @@ InfraOps Companion continuously ingests telemetry from distributed systems, appl
 
 ---
 
-## Next Recommended Steps
+## Release Checklist
 
-1. **Tag the Stable Build** — `git tag -a v1.0.0 -m "Stable build: Nexus engine passes CI" && git push origin v1.0.0`
-2. **Add Deployment Automation (Optional)** — Configure a deployment stage (Docker build, S3/ECR push) to streamline releases.
-3. **Expand Testing Coverage** — Start structured load or integration testing with simulated API calls, encryption/decryption checks, and rate-limit verification.
+1. **Verify CI/CD status** — The `CI` GitHub Actions workflow executes `ruff`, `black`, `mypy`, `pytest`, `bandit`, and `pip-audit`. Branch protection should block merges unless the workflow is green.
+2. **Tag the stable build** — `git tag -a v1.0.0 -m "Stable build: Nexus engine passes CI" && git push origin v1.0.0`.
+3. **Promote artefacts** — Build the multi-stage container with `docker compose build` or via your CI registry publishing job. The provided `Dockerfile` emits a slim, non-root runtime image ready for production orchestrators.
+4. **Run load validation** — Execute `k6 run tests/load/k6-smoke.js` against a staging environment and capture the latency histogram in your release notes.
 
 ### Why It Matters
 
-As enterprises integrate AI into mission-critical workflows, **observability and trust** become as important as scalability. LogAnalyzer.AI provides:
+Automated linting, security scanning, and dependency audits prevent regressions from landing in production. The container build paired with the load test script ensures parity between CI artefacts and deployed workloads while proving the performance envelope before every release.
 
-* Early warning of abnormal AI and system behavior
-* Rich root-cause insights to shorten incident lifecycles
-* Scalable log intelligence across multi-cloud infrastructures
-* Improved **uptime, resilience, and user trust**
+## Operations & Security Playbooks
+
+- [Security policy](SECURITY.md) — disclosure process, hardening checklist, and dependency management expectations.
+- [Operations guide](docs/OPERATIONS.md) — deployment workflow, health probes, observability hooks, and backup guidance.
+- [Health monitor runbook](docs/runbooks/health-monitor.md) — how to respond to failed background snapshots.
+- [Rate limiter runbook](docs/runbooks/rate-limiter.md) — steps to diagnose 429 storms or Redis exhaustion.
+
+These documents are the canonical source for SRE and security teams preparing a Nexus production rollout.
 
 
 
@@ -176,30 +181,26 @@ As enterprises integrate AI into mission-critical workflows, **observability and
 git clone https://github.com/akshiththeindian/nexus-secure-ai-engine.git
 cd nexus-secure-ai-engine
 
-
-Choose the module you want to start:
-# Core engine
-cd nexus.ai
-
-# Infrastructure observability
-cd infra-ops
-
-# Log intelligence platform
-cd log-analyzer
-
-# 2. Install dependencies for the program you want to run:
-Each Program has its own requirements.txt
-pip install -r requirements.txt
-
-# 3. Setup environment
+# 2. Create a local environment file
 cp .env.example .env
-#Add your API keys, secrets, or leave blank to run in demonstrator mode.
-For production, integrate with cloud secrets managers (AWS Secrets Manager, Azure Key Vault, GCP Secret Manager).
+# Edit .env with production values (API keys, trusted origins, Redis, DynamoDB, etc.).
 
-# 4. Run the app
- Run the FlaskApp that Corresponds with the program you desire:
-# Example: running Nexus engine
-python Nexus_FlaskApp.py
+# 3. Run the stack locally (Redis + Nexus gateway)
+docker compose up --build
+
+# 4. Run the contributor quality gates (optional)
+pip install -r requirements-dev.txt
+ruff check .
+black --check .
+pytest
+
+# 5. Execute the load smoke test against a running stack
+NEXUS_API_KEY=replace-with-key \
+NEXUS_BASE_URL=https://localhost:8443 \
+  k6 run tests/load/k6-smoke.js
+```
+
+> **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
 
 ## Multi-Cloud Deployment Quickstart
 
@@ -219,6 +220,8 @@ Nexus modules are deployable to any major cloud using Terraform for infrastructu
 # From the module directory (e.g., ./nexus)
 docker build -t <REGISTRY>/<PROJECT>/nexus:<TAG> .
 docker push <REGISTRY>/<PROJECT>/nexus:<TAG>
+
+```
 
 ---
 
