@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+exclude = [".git", "__pycache__", "build", "dist", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+minversion = "7.0"
+pythonpath = ["nexus.ai"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
