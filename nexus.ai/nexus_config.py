@@ -374,6 +374,7 @@ def load_config(
     )
 
 
+
 def validate_config(cfg: NexusConfig) -> List[str]:
     errs: List[str] = []
     if cfg.engine_mode not in {"delegates", "direct", "mixed"}:
@@ -404,6 +405,7 @@ def validate_config(cfg: NexusConfig) -> List[str]:
             "no connectors configured per engine_mode; add *_DELEGATE or *_ENDPOINT + *_API_KEY"
         )
     return errs
+
 
 def save_config(cfg: NexusConfig, path: Optional[str] = None) -> str:
     out = Path(path or (_base_dir() / "nexus_config.json"))
