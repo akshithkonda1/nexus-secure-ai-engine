@@ -42,9 +42,7 @@ def test_load_config_rejects_invalid_boolean(monkeypatch):
 
 def test_load_config_reads_saved_structure(tmp_path):
     config_path = tmp_path / "config.json"
-    config_path.write_text(
-        json.dumps({"config": {"engine_mode": "direct", "secret_ttl_seconds": 42}})
-    )
+    config_path.write_text(json.dumps({"config": {"engine_mode": "direct", "secret_ttl_seconds": 42}}))
     cfg = nexus_config.load_config(paths=[str(config_path)], include_defaults=False)
     assert cfg.engine_mode == "direct"
     assert cfg.secret_ttl_seconds == 42

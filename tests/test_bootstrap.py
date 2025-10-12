@@ -30,7 +30,6 @@ def _bootstrap_with_stub(monkeypatch):
 
     nexus_config = importlib.import_module("nexus_config")
     if not hasattr(nexus_config, "SecretResolver"):
-
         class _PlaceholderResolver:
             def __init__(self, *_a, **_k):  # pragma: no cover - should be patched in tests
                 raise RuntimeError("SecretResolver placeholder should be patched")

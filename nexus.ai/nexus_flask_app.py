@@ -47,7 +47,6 @@ def node_health():
         "time": int(time.time()),
     }
 
-
 def _allow_test_fallbacks() -> bool:
     return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes", "y", "on"}
 
@@ -172,24 +171,18 @@ try:
     from flask_talisman import Talisman
 except Exception as exc:  # pragma: no cover - depends on deployment extras
     if not _allow_test_fallbacks():
-        raise AppInitializationError(
-            "flask-talisman is required for production deployments"
-        ) from exc
+        raise AppInitializationError("flask-talisman is required for production deployments") from exc
     Talisman = None
 try:
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
 except Exception as exc:  # pragma: no cover - depends on deployment extras
     if not _allow_test_fallbacks():
-        raise AppInitializationError(
-            "flask-limiter is required for production deployments"
-        ) from exc
+        raise AppInitializationError("flask-limiter is required for production deployments") from exc
     Limiter = None
 
     def get_remote_address():  # type: ignore
         return request.remote_addr  # type: ignore[attr-defined]
-
-
 try:
     from bleach import clean as bleach_clean
 except Exception as exc:  # pragma: no cover - depends on deployment extras
@@ -283,9 +276,7 @@ except BootstrapError as exc:
     raise AppInitializationError(f"Unable to build model connectors: {exc}") from exc
 
 if not CORE_CONFIG.encrypt:
-    raise AppInitializationError(
-        "Encryption is mandatory for Nexus deployments; set encrypt=true in configuration"
-    )
+    raise AppInitializationError("Encryption is mandatory for Nexus deployments; set encrypt=true in configuration")
 
 try:
     secret_resolver = _build_resolver(CORE_CONFIG)
@@ -300,7 +291,6 @@ except Exception as exc:
 web_retriever = build_web_retriever_from_env(resolver=secret_resolver)
 if web_retriever is None:
     if _allow_test_fallbacks():
-
         class _StubProvider(SearchProvider):
             name = "stub"
 
@@ -741,6 +731,9 @@ class HealthMonitor:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thr = threading.Thread(target=self._loop, name="nexus.health", daemon=True)
+        self._thr = threading.Thread(target=self._loop,
+                                     name="nexus.health",
+                                     daemon=True)
         self._start_time = start_time or dt.utcnow()
 
     def start(self):

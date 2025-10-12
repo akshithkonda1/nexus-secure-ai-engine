@@ -355,9 +355,7 @@ class MultiMemoryStore:
     def primary(self) -> MemoryStore:
         return self.stores[0]
 
-    def save(
-        self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def save(self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None) -> str:
         payload = _copy_meta(meta)
         ids: List[str] = []
         errors: List[str] = []
@@ -389,6 +387,7 @@ class MultiMemoryStore:
             logger.debug(
                 f"MultiMemoryStore.recent primary={self.primary.__class__.__name__} count={len(out)}"
             )
+            logger.debug(f"MultiMemoryStore.recent primary={self.primary.__class__.__name__} count={len(out)}")
             return out
         except Exception as e:
             logger.warning(f"primary recent failed; trying fallbacks err={e}")
@@ -436,9 +435,7 @@ def verify_memory_writes(
     try:
         got = primary.recent(session_id, limit=attempts)
     except Exception as exc:
-        logger.warning(
-            f"verify_memory_writes recent failed backend={primary.__class__.__name__} err={exc}"
-        )
+        logger.warning(f"verify_memory_writes recent failed backend={primary.__class__.__name__} err={exc}")
         got = []
     ok = len(got) >= attempts
     logger.debug(f"verify_memory_writes ok={ok} wrote={len(ids)} read={len(got)}")
