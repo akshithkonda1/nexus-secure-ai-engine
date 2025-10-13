@@ -3,6 +3,10 @@ on:
   push: { branches: ["**"] }
   pull_request: {}
 
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
 jobs:
   qa:
     runs-on: ubuntu-latest
