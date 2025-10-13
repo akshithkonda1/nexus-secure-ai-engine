@@ -79,6 +79,7 @@ def _set_base_env(monkeypatch, resolver_cls, *, request_bytes=None):
     monkeypatch.setenv("NEXUS_MODELS_JSON", json.dumps(catalog))
     monkeypatch.setenv("NEXUS_ALLOW_TEST_FALLBACKS", "1")
     monkeypatch.setenv("NEXUS_HEALTH_ENABLE", "0")
+    monkeypatch.setenv("NEXUS_ENFORCE_HTTPS", "0")
     monkeypatch.setenv("NEXUS_ALLOW_ALL_MODELS", "1")
     monkeypatch.setenv("NEXUS_TENANT_ID", "tenant-test")
     monkeypatch.setenv("NEXUS_INSTANCE_ID", "instance-test")
@@ -136,3 +137,30 @@ def test_production_requires_rate_limit_storage(monkeypatch, flask_loader):
 
     assert excinfo.type.__name__ == "AppInitializationError"
     assert "NEXUS_RATE_LIMIT_STORAGE_URL" in str(excinfo.value)
+
+
+def test_healthz_sets_request_id(monkeypatch, flask_loader):
+    _set_base_env(monkeypatch, flask_loader.resolver_class)
+    module = flask_loader()
+    client = module.app.test_client()
+
+    resp = client.get("/healthz")
+    assert resp.status_code == 200
+    generated_rid = resp.headers.get("X-Request-ID")
+    assert generated_rid is not None and len(generated_rid) == 32
+
+    resp = client.get("/healthz", headers={"X-Request-ID": "abc123"})
+    assert resp.status_code == 200
+    assert resp.headers.get("X-Request-ID") == "abc123"
+
+
+def test_readyz_reports_ok(monkeypatch, flask_loader):
+    _set_base_env(monkeypatch, flask_loader.resolver_class)
+    module = flask_loader()
+    module.connectors = {"stub": types.SimpleNamespace(health_check=lambda: False)}  # type: ignore[attr-defined]
+    client = module.app.test_client()
+
+    resp = client.get("/readyz")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "ok"
