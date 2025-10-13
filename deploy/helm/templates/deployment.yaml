@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: nexus-alpha }
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector: { matchLabels: { app: nexus-alpha } }
+  template:
+    metadata:
+      labels: { app: nexus-alpha }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext: { runAsNonRoot: true }
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports: [{ containerPort: 8080 }]
+          env:
+            - name: APP_ENV
+              value: "{{ .Values.env.APP_ENV }}"
+            - name: APP_LOG_LEVEL
+              value: "{{ .Values.env.APP_LOG_LEVEL }}"
+            - name: HTTP_TIMEOUT_SECONDS
+              value: "{{ .Values.env.HTTP_TIMEOUT_SECONDS }}"
+          envFrom:
+            - secretRef: { name: nexus-secrets }
+          readinessProbe: { httpGet: { path: /readyz, port: 8080 }, periodSeconds: 5 }
+          livenessProbe:  { httpGet: { path: /healthz, port: 8080 }, periodSeconds: 10 }
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata: { name: nexus-alpha-svc }
+spec:
+  selector: { app: nexus-alpha }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexus-alpha
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+{{- toYaml .Values.ingress.tls | nindent 4 }}
+  rules:
+{{- toYaml .Values.ingress.hosts | nindent 4 }}
+{{- end }}

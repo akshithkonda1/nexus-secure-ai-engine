@@ -19,6 +19,20 @@ from functools import wraps
 from typing import Any
 from urllib.parse import urlparse
 
+try:
+    from api.bootstrap_alpha import wire_alpha
+except ModuleNotFoundError:  # pragma: no cover - test harness path
+    import importlib.util
+    from pathlib import Path
+
+    _bootstrap_path = Path(__file__).resolve().parents[1] / "api" / "bootstrap_alpha.py"
+    spec = importlib.util.spec_from_file_location("api.bootstrap_alpha", _bootstrap_path)
+    module = importlib.util.module_from_spec(spec)
+    if spec and spec.loader:
+        spec.loader.exec_module(module)
+        wire_alpha = module.wire_alpha  # type: ignore[attr-defined]
+    else:  # pragma: no cover - defensive
+        raise
 from bootstrap import BootstrapError, _build_resolver, make_connectors
 from flask import Flask, Response, g, has_request_context, jsonify, request
 from memory_compute import (
@@ -385,6 +399,7 @@ app.config.update(
         "NEXUS_WEB_RETRIEVER": web_retriever,
         "NEXUS_ACCESS_CONTEXT": access_context,
         "NEXUS_START_TIME": start_time,
+        "ALPHA_ACCESS_TOKEN": (os.getenv("ALPHA_ACCESS_TOKEN") or "").strip(),
     },
 )
 
@@ -395,6 +410,12 @@ if Talisman:
         force_https=ENFORCE_HTTPS,
         force_https_permanent=False,
         strict_transport_security=ENFORCE_HTTPS,
+        permissions_policy={
+            "geolocation": "()",
+            "microphone": "()",
+            "camera": "()",
+            "browsing-topics": "()",
+        },
     )
 if CORS:
     CORS(
@@ -954,6 +975,13 @@ class HealthMonitor:
     def last(self):
         with self._lock:
             return self._last
+
+
+# Apply production alpha bootstrap (metrics, security headers, gating)
+try:
+    wire_alpha(app)
+except Exception as exc:  # pragma: no cover - should fail fast
+    raise AppInitializationError(f"Failed to apply alpha bootstrap: {exc}") from exc
 
 
 # Instantiate + start (controlled by env)

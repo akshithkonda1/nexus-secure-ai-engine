@@ -164,3 +164,27 @@ def test_readyz_reports_ok(monkeypatch, flask_loader):
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["status"] == "ok"
+
+
+def test_security_headers_applied(monkeypatch, flask_loader):
+    _set_base_env(monkeypatch, flask_loader.resolver_class)
+    module = flask_loader()
+    client = module.app.test_client()
+
+    resp = client.get("/healthz")
+    assert resp.status_code == 200
+    assert resp.headers["Strict-Transport-Security"].startswith("max-age=63072000")
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    policy = resp.headers["Permissions-Policy"]
+    for directive in ("geolocation=()", "microphone=()", "camera=()"):
+        assert directive in policy
+
+
+def test_metrics_endpoint(monkeypatch, flask_loader):
+    _set_base_env(monkeypatch, flask_loader.resolver_class)
+    module = flask_loader()
+    client = module.app.test_client()
+
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    assert resp.mimetype == "text/plain"
