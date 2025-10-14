@@ -4,6 +4,7 @@ FROM python:3.11-slim AS builder
 ENV PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY requirements.txt ./
+COPY requirements/ requirements/
 COPY nexus/ai/requirements.txt nexus/ai/requirements.txt
 RUN pip install --upgrade pip setuptools wheel \
     && pip wheel --wheel-dir /wheels -r requirements.txt

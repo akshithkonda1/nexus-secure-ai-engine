@@ -25,7 +25,7 @@ except ModuleNotFoundError:  # pragma: no cover - test harness path
     import importlib.util
     from pathlib import Path
 
-    _bootstrap_path = Path(__file__).resolve().parents[1] / "api" / "bootstrap_alpha.py"
+    _bootstrap_path = Path(__file__).resolve().parents[2] / "api" / "bootstrap_alpha.py"
     spec = importlib.util.spec_from_file_location("api.bootstrap_alpha", _bootstrap_path)
     module = importlib.util.module_from_spec(spec)
     if spec and spec.loader:
@@ -33,9 +33,9 @@ except ModuleNotFoundError:  # pragma: no cover - test harness path
         wire_alpha = module.wire_alpha  # type: ignore[attr-defined]
     else:  # pragma: no cover - defensive
         raise
-from bootstrap import BootstrapError, _build_resolver, make_connectors
+from .bootstrap import BootstrapError, _build_resolver, make_connectors
 from flask import Flask, Response, g, has_request_context, jsonify, request
-from memory_compute import (
+from .memory_compute import (
     AzureBlobMemoryStore,
     DynamoDBMemoryStore,
     FirestoreMemoryStore,
@@ -44,8 +44,8 @@ from memory_compute import (
     MultiMemoryStore,
     health_suite,
 )
-from nexus_config import ConfigError, NexusConfig, load_and_validate
-from nexus_engine import (
+from .nexus_config import ConfigError, NexusConfig, load_and_validate
+from .nexus_engine import (
     AccessContext,
     Crypter,
     Engine,
@@ -885,7 +885,7 @@ class HealthMonitor:
     def snapshot(self):
         # Lazy imports to avoid circulars and to work even if some modules are missing
         try:
-            from nexus_config import ping_clouds
+            from .nexus_config import ping_clouds
         except Exception:
 
             def ping_clouds():
@@ -896,7 +896,7 @@ class HealthMonitor:
                 }
 
         try:
-            from memory_compute import health_suite, node_health
+            from .memory_compute import health_suite, node_health
         except Exception:
 
             def node_health():

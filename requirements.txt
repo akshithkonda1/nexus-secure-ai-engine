@@ -1,2 +1,2 @@
-# Delegates to the core Nexus engine dependencies
--r nexus/ai/requirements.txt
+# Delegates to the shared dependency set used by runtime and tooling
+-r requirements/base.txt
