@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { runNexus } from "./api/nexus";
 import {
   Sun,
   Moon,
@@ -576,28 +577,15 @@ export default function EnhancedChatLayout() {
       models: selectedModels,
       modelSpecialization,
     });
-    setResult(null);
-    setTimeout(() => {
-      // Per-model answers (mock)
-      const answers = selectedModels.map((id, i) => ({
-        model: MODELS.find((m) => m.id === id)?.label || id,
-        ms: 700 + i * 120 + Math.floor(Math.random() * 300),
-        text: `Answer from ${id}: ${text}`,
-      }));
-      const confidence = Math.min(
-        0.98,
-        0.55 + selectedModels.length * 0.08 + (crossCheck ? 0.06 : 0)
-      );
-      const res = {
-        confidence: +confidence.toFixed(2),
-        votes: answers.map((a, i) => ({
-          model: a.model,
-          agrees: i % 2 === 0,
-          score: +(confidence - i * 0.05).toFixed(2),
-        })),
-        explanations: ["Cross-checked claims.", "Applied consensus threshold."],
-        answers,
-      };
+    const applyResult = (
+      answers: { model: string; ms: number; text: string }[],
+      res: {
+        confidence: number;
+        votes: { model: string; agrees: boolean; score: number }[];
+        explanations: string[];
+        answers: { model: string; ms: number; text: string }[];
+      }
+    ) => {
       setResult(res);
       setRunning(false);
       log("orchestrate.finish", {
@@ -605,7 +593,6 @@ export default function EnhancedChatLayout() {
         models: res.votes.length,
       });
 
-      // Overall chat answer (consensus text; tie-break by highest vote score)
       const normalized = answers.map((a) =>
         a.text.replace(/^Answer from [^:]+:\\s*/, "").trim()
       );
@@ -658,7 +645,94 @@ export default function EnhancedChatLayout() {
       setMessages(finalMsgs);
       SessionService.saveMessages(sid, finalMsgs);
       setTimeout(() => inputRef.current?.focus(), 30);
-    }, 600);
+    };
+
+    setResult(null);
+    (async () => {
+      try {
+        const apiBase = (import.meta as any).env?.VITE_NEXUS_API_BASE;
+        if (apiBase) {
+          const data = await runNexus(text, { wantPhotos: false });
+          const winnerModel = data.winner_ref?.name || data.winner || "winner";
+          const latencySec =
+            (data.meta?.latencies && data.meta.latencies[winnerModel]) || 0.7;
+          const answers = [
+            {
+              model: winnerModel,
+              ms: Math.max(400, Math.min(2000, (latencySec || 0.7) * 1000)),
+              text: data.answer,
+            },
+          ];
+          const votes = (data.participants || []).map((p, i) => ({
+            model: p,
+            agrees: p === winnerModel,
+            score: p === winnerModel ? 0.95 : Math.max(0.1, 0.6 - i * 0.03),
+          }));
+          const res = {
+            confidence: votes.length
+              ? Math.max(...votes.map((v) => v.score))
+              : 0.9,
+            votes,
+            explanations: [
+              data.meta?.policy
+                ? `Policy: ${data.meta.policy}`
+                : "Aggregated and verified.",
+              data.meta?.schema_version
+                ? `Schema ${data.meta.schema_version}`
+                : "",
+            ].filter(Boolean),
+            answers,
+          };
+          applyResult(answers, res);
+          (window as any).__nexusSources = data.sources;
+          (window as any).__nexusMeta = data.meta;
+        } else {
+          setTimeout(() => {
+            const answers = selectedModels.map((id, i) => ({
+              model: MODELS.find((m) => m.id === id)?.label || id,
+              ms: 700 + i * 120 + Math.floor(Math.random() * 300),
+              text: `Answer from ${id}: ${text}`,
+            }));
+            const confidence = Math.min(
+              0.98,
+              0.55 + selectedModels.length * 0.08 + (crossCheck ? 0.06 : 0)
+            );
+            const res = {
+              confidence: +confidence.toFixed(2),
+              votes: answers.map((a, i) => ({
+                model: a.model,
+                agrees: i % 2 === 0,
+                score: +(confidence - i * 0.05).toFixed(2),
+              })),
+              explanations: [
+                "Cross-checked claims.",
+                "Applied consensus threshold.",
+              ],
+              answers,
+            };
+            applyResult(answers, res);
+          }, 650);
+        }
+      } catch (e: any) {
+        setRunning(false);
+        const code = e?.code || e?.status;
+        const retryAfter = e?.retryAfter;
+        if (code === 429 && typeof retryAfter === "number") {
+          alert(`Rate limited. Please retry in ${retryAfter} seconds.`);
+        } else if (code === 504) {
+          alert(
+            "The request timed out (deadline_exceeded). Try again with a longer deadline."
+          );
+        } else if (code === 502 || code === "verification_failed") {
+          alert(
+            "Upstream verification/connectors are unavailable. Please try again shortly."
+          );
+        } else {
+          alert(e?.message || "Request failed.");
+        }
+        console.error("Nexus API error", e);
+      }
+    })();
   }, [
     input,
     running,
