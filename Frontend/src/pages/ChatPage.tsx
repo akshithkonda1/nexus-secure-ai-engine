@@ -96,8 +96,9 @@ const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
           <ChatList messages={messages}/>
           <div className="chatgpt-composer-area">
             <Composer onSend={send} disabled={running}/>
-            <p className="chatgpt-composer-hint">Nexus may produce inaccurate information. Verify critical responses before sharing.</p>
+            <p className="chatgpt-composer-hint">Nexus is an experimental AI platform—responses are verified but not guaranteed to be accurate or final.</p>
           </div>
+          <p className="chatgpt-main-disclaimer">Nexus may produce inaccurate information. Verify critical responses before sharing.</p>
         </main>
         <aside className="chatgpt-right-rail">
           <ResultCard running={running} result={result}/>
