@@ -1,6 +1,6 @@
 # mypy: ignore-errors
 
-import importlib.util
+import importlib
 import json
 import os
 import pathlib
@@ -27,15 +27,12 @@ if "bs4" not in sys.modules:
     bs4_stub.BeautifulSoup = _DummySoup
     sys.modules["bs4"] = bs4_stub
 
-sys.modules.setdefault("nexus", types.ModuleType("nexus"))
-sys.modules.setdefault("nexus.ai", types.ModuleType("nexus.ai"))
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai"
+module_dir = str(MODULE_PATH)
+if module_dir not in sys.path:
+    sys.path.insert(0, module_dir)
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
-spec = importlib.util.spec_from_file_location("nexus.ai.nexus_engine", MODULE_PATH)
-nexus_engine = importlib.util.module_from_spec(spec)
-sys.modules["nexus.ai.nexus_engine"] = nexus_engine
-spec.loader.exec_module(nexus_engine)
-ModelConnector = nexus_engine.ModelConnector
+ModelConnector = importlib.import_module("nexus.ai.nexus_engine").ModelConnector
 
 
 @pytest.mark.parametrize(
