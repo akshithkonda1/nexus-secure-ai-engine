@@ -2,6 +2,7 @@
 Flask alpha bootstrap: health/ready endpoints, Prometheus metrics, size limits, timeouts,
 and security headers. Import and call `wire_alpha(app)` in your Flask app factory.
 """
+
 from __future__ import annotations
 
 import logging
@@ -44,6 +45,7 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for offli
 
     def generate_latest() -> bytes:
         return b"# metrics disabled\n"
+
 
 LOG = logging.getLogger("nexus_alpha")
 APP_START = time.time()
@@ -164,18 +166,21 @@ def wire_alpha(app):
         return _security_headers(resp)
 
     if not _wrap_endpoint(app, "healthz", _instrument):
+
         @app.route("/healthz", methods=["GET"])
         @_instrument
         def healthz():  # pragma: no cover - thin wrapper
             return jsonify({"ok": True, "uptime_s": int(time.time() - APP_START)}), 200
 
     if not _wrap_endpoint(app, "readyz", _instrument):
+
         @app.route("/readyz", methods=["GET"])
         @_instrument
         def readyz():  # pragma: no cover - thin wrapper
             return jsonify({"ready": True}), 200
 
     if "metrics" not in app.view_functions:
+
         @app.route("/metrics", methods=["GET"])
         def metrics():  # pragma: no cover - scrape endpoint
             if PROM_REGISTRY is not None:
@@ -186,6 +191,7 @@ def wire_alpha(app):
 
     feedback_chain = _chain(_instrument, _enforce_limits, _alpha_token_required)
     if not _wrap_endpoint(app, "feedback", feedback_chain):
+
         @app.route("/feedback", methods=["POST"])
         @feedback_chain
         def feedback():
