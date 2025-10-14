@@ -13,7 +13,13 @@ from typing import Any, TypeVar, cast
 from flask import Response, current_app, jsonify, request
 
 try:  # pragma: no cover - exercised via integration tests
-    from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+    from prometheus_client import (
+        CONTENT_TYPE_LATEST,
+        CollectorRegistry,
+        Counter,
+        Histogram,
+        generate_latest,
+    )
 except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for offline envs
     CONTENT_TYPE_LATEST = "text/plain; version=0.0.4"
 
@@ -42,8 +48,23 @@ except ModuleNotFoundError:  # pragma: no cover - lightweight fallback for offli
 LOG = logging.getLogger("nexus_alpha")
 APP_START = time.time()
 
-REQ_COUNT = Counter("http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"])
-REQ_LAT = Histogram("http_request_duration_seconds", "Request duration (s)", ["endpoint"])
+if "CollectorRegistry" in globals():
+    PROM_REGISTRY = CollectorRegistry()
+else:
+    PROM_REGISTRY = None
+
+REQ_COUNT = Counter(
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "endpoint", "status"],
+    registry=PROM_REGISTRY,
+)
+REQ_LAT = Histogram(
+    "http_request_duration_seconds",
+    "Request duration (s)",
+    ["endpoint"],
+    registry=PROM_REGISTRY,
+)
 
 MAX_BODY_BYTES = 1_000_000  # 1 MB
 REQUEST_TIMEOUT_S = 30  # app-level soft timeout (reserved for future use)
@@ -157,7 +178,11 @@ def wire_alpha(app):
     if "metrics" not in app.view_functions:
         @app.route("/metrics", methods=["GET"])
         def metrics():  # pragma: no cover - scrape endpoint
-            return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+            if PROM_REGISTRY is not None:
+                payload = generate_latest(PROM_REGISTRY)
+            else:
+                payload = generate_latest()
+            return Response(payload, mimetype=CONTENT_TYPE_LATEST)
 
     feedback_chain = _chain(_instrument, _enforce_limits, _alpha_token_required)
     if not _wrap_endpoint(app, "feedback", feedback_chain):
