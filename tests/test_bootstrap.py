@@ -1,5 +1,4 @@
 import importlib
-import importlib.util
 import json
 import pathlib
 import sys
@@ -7,7 +6,7 @@ from typing import Any, Dict
 
 import pytest
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "bootstrap.py"
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai" / "bootstrap.py"
 
 
 def _load_bootstrap():
@@ -15,12 +14,7 @@ def _load_bootstrap():
     if module_dir not in sys.path:
         sys.path.insert(0, module_dir)
     sys.modules.pop("nexus.ai.bootstrap", None)
-    spec = importlib.util.spec_from_file_location("nexus.ai.bootstrap", MODULE_PATH)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    return importlib.import_module("nexus.ai.bootstrap")
 
 
 def _bootstrap_with_stub(monkeypatch):
@@ -28,7 +22,7 @@ def _bootstrap_with_stub(monkeypatch):
     if module_dir not in sys.path:
         sys.path.insert(0, module_dir)
 
-    nexus_config = importlib.import_module("nexus_config")
+    nexus_config = importlib.import_module("nexus.ai.nexus_config")
     if not hasattr(nexus_config, "SecretResolver"):
 
         class _PlaceholderResolver:
@@ -60,7 +54,9 @@ def _bootstrap_with_stub(monkeypatch):
             return DummyResolver.store.get(key)
 
     monkeypatch.setattr(bootstrap, "SecretResolver", DummyResolver)
-    monkeypatch.setattr(importlib.import_module("nexus_config"), "SecretResolver", DummyResolver)
+    monkeypatch.setattr(
+        importlib.import_module("nexus.ai.nexus_config"), "SecretResolver", DummyResolver
+    )
     return bootstrap, DummyResolver
 
 

@@ -7,24 +7,19 @@ from typing import List
 import pytest
 
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai" / "nexus_engine.py"
 
 os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
 
 def _load_module():
-    import importlib.util
+    import importlib
     import sys
 
-    existing = sys.modules.get("nexus.ai.nexus_engine")
-    if existing:
-        return existing
+    if str(MODULE_PATH.parent) not in sys.path:
+        sys.path.insert(0, str(MODULE_PATH.parent))
 
-    spec = importlib.util.spec_from_file_location("nexus.ai.nexus_engine", MODULE_PATH)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    return importlib.import_module("nexus.ai.nexus_engine")
 
 
 def test_engine_has_no_duplicate_top_level_definitions():

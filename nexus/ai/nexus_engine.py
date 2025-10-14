@@ -2544,7 +2544,7 @@ class HealthMonitor:
 # Secrets-aware web retriever builder
 # =========================================================
 try:
-    from nexus_config import SecretResolver  # your existing resolver
+    from .nexus_config import SecretResolver  # your existing resolver
 except Exception:
     SecretResolver = None  # type: ignore
 

@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urlparse
 
-from nexus_config import SecretResolver
-from nexus_engine import ModelConnector
+from .nexus_config import SecretResolver
+from .nexus_engine import ModelConnector
 
 __all__ = ["BootstrapError", "make_connectors", "_make_connectors"]
 

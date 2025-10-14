@@ -1,6 +1,6 @@
 # mypy: ignore-errors
 
-import importlib.util
+import importlib
 import os
 import pathlib
 import sys
@@ -10,18 +10,15 @@ import time
 import pytest
 
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_engine.py"
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai"
 
 os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
 
-if "nexus.ai.nexus_engine" in sys.modules:
-    nexus_engine = sys.modules["nexus.ai.nexus_engine"]
-else:
-    spec = importlib.util.spec_from_file_location("nexus.ai.nexus_engine", MODULE_PATH)
-    nexus_engine = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = nexus_engine
-    assert spec.loader is not None
-    spec.loader.exec_module(nexus_engine)
+module_dir = str(MODULE_PATH)
+if module_dir not in sys.path:
+    sys.path.insert(0, module_dir)
+
+nexus_engine = importlib.import_module("nexus.ai.nexus_engine")
 
 
 class MemoryStub:

@@ -1,28 +1,20 @@
 from typing import Any, Dict
 
 
-import importlib.util
+import importlib
 import pathlib
 import sys
 
 import pytest
 
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "memory_compute.py"
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai"
 
 
-def _load_module():
-    existing = sys.modules.get("nexus.ai.memory_compute")
-    if existing:
-        return existing
-    spec = importlib.util.spec_from_file_location("nexus.ai.memory_compute", MODULE_PATH)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+if str(MODULE_PATH) not in sys.path:
+    sys.path.insert(0, str(MODULE_PATH))
 
-
-_mod = _load_module()
+_mod = importlib.import_module("nexus.ai.memory_compute")
 
 InMemoryStore = _mod.InMemoryStore
 MemoryStore = _mod.MemoryStore
