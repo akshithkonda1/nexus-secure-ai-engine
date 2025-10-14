@@ -3,6 +3,7 @@ from __future__ import annotations
 
 
 import atexit
+import contextvars
 import hmac
 import logging
 import os
@@ -10,6 +11,7 @@ import socket
 import threading
 import time
 import traceback
+import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime as dt
@@ -17,8 +19,22 @@ from functools import wraps
 from typing import Any
 from urllib.parse import urlparse
 
+try:
+    from api.bootstrap_alpha import wire_alpha
+except ModuleNotFoundError:  # pragma: no cover - test harness path
+    import importlib.util
+    from pathlib import Path
+
+    _bootstrap_path = Path(__file__).resolve().parents[1] / "api" / "bootstrap_alpha.py"
+    spec = importlib.util.spec_from_file_location("api.bootstrap_alpha", _bootstrap_path)
+    module = importlib.util.module_from_spec(spec)
+    if spec and spec.loader:
+        spec.loader.exec_module(module)
+        wire_alpha = module.wire_alpha  # type: ignore[attr-defined]
+    else:  # pragma: no cover - defensive
+        raise
 from bootstrap import BootstrapError, _build_resolver, make_connectors
-from flask import Flask, jsonify, request
+from flask import Flask, Response, g, has_request_context, jsonify, request
 from memory_compute import (
     AzureBlobMemoryStore,
     DynamoDBMemoryStore,
@@ -334,14 +350,37 @@ engine = Engine(
     config=engine_config,
 )
 
+_request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "nexus_request_id", default="-"
+)
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
 logger = logging.getLogger("nexus.flask")
 if not logger.handlers:
     h = logging.StreamHandler()
+
+    class _RequestContextFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover - logging
+            record.request_id = _request_id_ctx.get("-")
+            record.http_path = getattr(record, "http_path", "-")
+            record.http_method = getattr(record, "http_method", "-")
+            if has_request_context():
+                try:
+                    record.http_path = request.path
+                    record.http_method = request.method
+                except RuntimeError:
+                    record.http_path = record.http_path or "-"
+                    record.http_method = record.http_method or "-"
+            return True
+
+    h.addFilter(_RequestContextFilter())
     h.setFormatter(
-        logging.Formatter('{"ts":"%(asctime)s","lvl":"%(levelname)s","msg":"%(message)s"}')
+        logging.Formatter(
+            '{"ts":"%(asctime)s","lvl":"%(levelname)s","request_id":"%(request_id)s"'
+            ',"method":"%(http_method)s","path":"%(http_path)s","msg":"%(message)s"}'
+        )
     )
     logger.addHandler(h)
 logger.setLevel(logging.INFO)
@@ -360,11 +399,24 @@ app.config.update(
         "NEXUS_WEB_RETRIEVER": web_retriever,
         "NEXUS_ACCESS_CONTEXT": access_context,
         "NEXUS_START_TIME": start_time,
+        "ALPHA_ACCESS_TOKEN": (os.getenv("ALPHA_ACCESS_TOKEN") or "").strip(),
     },
 )
 
 if Talisman:
-    Talisman(app, content_security_policy={"default-src": ["'self'"]}, force_https=True)
+    Talisman(
+        app,
+        content_security_policy={"default-src": ["'self'"]},
+        force_https=ENFORCE_HTTPS,
+        force_https_permanent=False,
+        strict_transport_security=ENFORCE_HTTPS,
+        permissions_policy={
+            "geolocation": "()",
+            "microphone": "()",
+            "camera": "()",
+            "browsing-topics": "()",
+        },
+    )
 if CORS:
     CORS(
         app,
@@ -418,6 +470,35 @@ def require_api_key(f):
 
 
 @app.before_request
+def _assign_request_id():
+    header_rid = (request.headers.get("X-Request-ID") or "").strip()
+    rid = header_rid or uuid.uuid4().hex
+    g.request_id = rid
+    token = _request_id_ctx.set(rid)
+    g._request_id_token = token
+
+
+@app.after_request
+def _inject_request_id(response: Response):
+    rid = getattr(g, "request_id", None)
+    if rid:
+        response.headers.setdefault("X-Request-ID", rid)
+    return response
+
+
+@app.teardown_request
+def _reset_request_id(_exc):
+    token = getattr(g, "_request_id_token", None)
+    if token:
+        try:
+            _request_id_ctx.reset(token)
+        except ValueError:  # pragma: no cover - defensive
+            _request_id_ctx.set("-")
+    else:
+        _request_id_ctx.set("-")
+
+
+@app.before_request
 def enforce_https_and_size():
     if (
         ENFORCE_HTTPS
@@ -433,6 +514,31 @@ def enforce_https_and_size():
 def global_error(e):
     logger.error("Unhandled: %s", traceback.format_exc())
     return jsonify({"error": "Internal server error"}), 500
+
+
+def _readiness_report() -> tuple[bool, dict[str, Any]]:
+    ready = True
+    detail: dict[str, Any] = {"connectors": {}, "memory": {}, "web": {}}
+    for name, conn in connectors.items():
+        try:
+            degraded = bool(conn.health_check()) if hasattr(conn, "health_check") else False
+            detail["connectors"][name] = "degraded" if degraded else "ok"
+            if degraded:
+                ready = False
+        except Exception as exc:  # pragma: no cover - exercised via unit tests
+            detail["connectors"][name] = f"error: {exc}"
+            ready = False
+    try:
+        detail["memory"] = health_suite(memory)
+    except Exception as exc:  # pragma: no cover - defensive
+        detail["memory_error"] = str(exc)
+        ready = False
+    providers = []
+    if getattr(web_retriever, "providers", None):
+        for provider in web_retriever.providers:
+            providers.append(getattr(provider, "name", provider.__class__.__name__))
+    detail["web"]["providers"] = providers
+    return ready, detail
 
 
 def sanitize_input(data):
@@ -556,6 +662,21 @@ def home():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "uptime": _uptime()}), 200
+
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return jsonify({"status": "ok", "uptime": _uptime()}), 200
+
+
+@app.route("/readyz", methods=["GET"])
+def readyz():
+    ready, detail = _readiness_report()
+    status = 200 if ready else 503
+    payload = {"status": "ok" if ready else "error", "uptime": _uptime()}
+    if not ready:
+        payload["detail"] = detail
+    return jsonify(payload), status
 
 
 @app.route("/status", methods=["GET"])
@@ -854,6 +975,13 @@ class HealthMonitor:
     def last(self):
         with self._lock:
             return self._last
+
+
+# Apply production alpha bootstrap (metrics, security headers, gating)
+try:
+    wire_alpha(app)
+except Exception as exc:  # pragma: no cover - should fail fast
+    raise AppInitializationError(f"Failed to apply alpha bootstrap: {exc}") from exc
 
 
 # Instantiate + start (controlled by env)

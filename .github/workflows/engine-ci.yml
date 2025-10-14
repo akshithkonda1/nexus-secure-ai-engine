@@ -1,0 +1,57 @@
+name: engine-ci
+on:
+  push:
+    branches: ["**"]
+  pull_request: {}
+
+jobs:
+  test:
+    name: Pytest (engine)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+    env:
+      # Allow engine's optional dependency fallbacks (offline-safe)
+      NEXUS_ALLOW_TEST_FALLBACKS: "1"
+      # Keep prod-only constraints relaxed in CI
+      NEXUS_ENV: "ci"
+      NEXUS_ALLOW_ALL_MODELS: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install test deps
+        run: |
+          python -m pip install -U pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements-dev.txt
+
+      - name: Run pytest
+        run: |
+          python -m pytest -q --junitxml=pytest-report.xml
+          python -m coverage run -m pytest -q || true
+          python -m coverage xml -o coverage.xml || true
+          python -m coverage report -m || true
+
+      - name: Upload test report (JUnit)
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python-version }}
+          path: pytest-report.xml
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+          if-no-files-found: warn
+          retention-days: 7
