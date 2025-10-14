@@ -1,6 +1,6 @@
 # mypy: ignore-errors
 
-import importlib.util
+import importlib
 import json
 import os
 from pathlib import Path
@@ -8,16 +8,12 @@ import sys
 
 import pytest
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_config.py"
+MODULE_PATH = Path(__file__).resolve().parents[1] / "nexus" / "ai"
+module_dir = str(MODULE_PATH)
+if module_dir not in sys.path:
+    sys.path.insert(0, module_dir)
 
-if "nexus.ai.nexus_config" in sys.modules:
-    nexus_config = sys.modules["nexus.ai.nexus_config"]
-else:
-    spec = importlib.util.spec_from_file_location("nexus.ai.nexus_config", MODULE_PATH)
-    nexus_config = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = nexus_config
-    assert spec.loader is not None
-    spec.loader.exec_module(nexus_config)
+nexus_config = importlib.import_module("nexus.ai.nexus_config")
 
 
 @pytest.fixture(autouse=True)

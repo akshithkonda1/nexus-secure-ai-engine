@@ -28,7 +28,7 @@ exclude = [
 [tool.pytest.ini_options]
 addopts = "-ra"
 minversion = "7.0"
-pythonpath = ["nexus.ai"]
+pythonpath = ["."]
 
 [tool.bandit]
 exclude_dirs = ["tests"]

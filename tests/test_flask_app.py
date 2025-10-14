@@ -2,7 +2,6 @@
 
 import base64
 import importlib
-import importlib.util
 import json
 import pathlib
 import sys
@@ -11,7 +10,7 @@ from typing import Any
 
 import pytest
 
-MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus.ai" / "nexus_flask_app.py"
+MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / "nexus" / "ai" / "nexus_flask_app.py"
 
 
 @pytest.fixture
@@ -20,12 +19,8 @@ def flask_loader(monkeypatch):
     if module_dir not in sys.path:
         sys.path.insert(0, module_dir)
 
-    sys.modules.setdefault("nexus", types.ModuleType("nexus"))
-    pkg = sys.modules.setdefault("nexus.ai", types.ModuleType("nexus.ai"))
-    if not hasattr(pkg, "__path__"):
-        pkg.__path__ = [module_dir]
-
-    nexus_config = importlib.import_module("nexus_config")
+    importlib.import_module("nexus.ai")
+    nexus_config = importlib.import_module("nexus.ai.nexus_config")
 
     class DummyResolver:
         store: dict[str, str] = {}
@@ -51,11 +46,8 @@ def flask_loader(monkeypatch):
     def _load():
         for name in ("nexus.ai.nexus_flask_app", "nexus.ai.bootstrap"):
             sys.modules.pop(name, None)
-        spec = importlib.util.spec_from_file_location("nexus.ai.nexus_flask_app", MODULE_PATH)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = module
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
+        module = importlib.import_module("nexus.ai.nexus_flask_app")
+        importlib.reload(module)
         return module
 
     _load.resolver_class = DummyResolver  # type: ignore[attr-defined]
