@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-config
+data:
+  allowed_model_domains: "api.openai.com"
+  scrape_allow: "wikipedia.org,arxiv.org,bbc.co.uk,nytimes.com,ft.com,nature.com"

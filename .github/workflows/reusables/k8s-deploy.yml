@@ -1,0 +1,64 @@
+name: k8s-deploy
+on:
+  workflow_call:
+    inputs:
+      env_name: { required: true, type: string }
+      namespace: { required: true, type: string }
+      image_tag: { required: true, type: string }
+      domain: { required: false, type: string, default: "" }
+    secrets:
+      K8S_CLUSTER: { required: true }
+      K8S_NAMESPACE: { required: false }
+      K8S_SA_TOKEN: { required: false }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env_name }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # If your cloud offers OIDC -> kubectl setup, insert that step here.
+      # Otherwise use a kubeconfig secret (not ideal).
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Write kubeconfig
+        run: echo "${{ secrets.K8S_CLUSTER }}" > kubeconfig && chmod 600 kubeconfig
+      - name: Use kubeconfig
+        run: export KUBECONFIG=$PWD/kubeconfig && kubectl version --client=true
+
+      - name: Apply namespace & config
+        run: |
+          export KUBECONFIG=$PWD/kubeconfig
+          kubectl apply -f infra/k8s/namespace.yaml
+          kubectl apply -f infra/k8s/configmap.yaml
+          kubectl apply -f infra/k8s/service.yaml
+          kubectl apply -f infra/k8s/hpa.yaml
+          [ -f infra/k8s/ingress.yaml ] && kubectl apply -f infra/k8s/ingress.yaml || true
+
+      - name: Set image and deploy
+        run: |
+          export KUBECONFIG=$PWD/kubeconfig
+          IMAGE="ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}"
+          kubectl -n ${{ inputs.namespace }} set image deploy/nexus nexus=$IMAGE --record=true || \
+            kubectl -n ${{ inputs.namespace }} apply -f infra/k8s/deployment.yaml
+
+      - name: Wait for rollout
+        run: |
+          export KUBECONFIG=$PWD/kubeconfig
+          kubectl -n ${{ inputs.namespace }} rollout status deploy/nexus --timeout=180s
+
+      - name: Post-deploy smoke
+        run: |
+          export KUBECONFIG=$PWD/kubeconfig
+          SVC_IP=$(kubectl -n ${{ inputs.namespace }} get svc nexus -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          SVC_HOST=${SVC_IP:-"localhost"}
+          echo "Using $SVC_HOST"
+          for i in {1..30}; do
+            curl -fsS http://$SVC_HOST:8080/readyz && exit 0 || sleep 2
+          done
+          exit 1
