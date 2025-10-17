@@ -1,0 +1,14 @@
+name: CD Dev
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusables/k8s-deploy.yml
+    with:
+      env_name: dev
+      namespace: nexus-dev
+      image_tag: ${{ github.sha }}
+    secrets:
+      K8S_CLUSTER: ${{ secrets.K8S_DEV_CLUSTER }}

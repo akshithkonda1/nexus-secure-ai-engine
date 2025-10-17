@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: nexus }
+  template:
+    metadata:
+      labels: { app: nexus }
+    spec:
+      containers:
+        - name: nexus
+          image: ghcr.io/OWNER/REPO:latest
+          ports: [{ containerPort: 8080 }]
+          env:
+            - { name: NEXUS_ENV, value: "prod" }
+            - { name: NEXUS_DATA_KEY_B64, valueFrom: { secretKeyRef: { name: nexus-secrets, key: data_key_b64 } } }
+            - { name: NEXUS_ALLOWED_MODEL_DOMAINS, valueFrom: { configMapKeyRef: { name: nexus-config, key: allowed_model_domains } } }
+            - { name: NEXUS_SCRAPE_ALLOW_DOMAINS, valueFrom: { configMapKeyRef: { name: nexus-config, key: scrape_allow } } }
+            - { name: NEXUS_ALLOW_THIRD_PARTY_SEARCH, value: "1" }
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 12
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 10

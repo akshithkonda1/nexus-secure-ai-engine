@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-staging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-prod
