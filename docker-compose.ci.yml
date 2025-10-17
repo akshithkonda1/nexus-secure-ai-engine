@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  nexus:
+    image: ghcr.io/OWNER/nexus:${GITHUB_SHA:-dev}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports: ["8080:8080"]
+    environment:
+      NEXUS_ENV: dev
+      NEXUS_ALLOW_ALL_MODELS: "1"
+      NEXUS_ALLOW_THIRD_PARTY_SEARCH: "0"
+      NEXUS_ENABLE_DDG: "1"
+      NEXUS_SCRAPE_ALLOW_DOMAINS: "wikipedia.org,arxiv.org,bbc.co.uk,nytimes.com"
+      NEXUS_DATA_KEY_B64: "dGhpcy1pcy1ub3QtcmVhbC1rZXktcmVwbGFjZS13aXRoLXNlY3JldA=="
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
