@@ -1,0 +1,71 @@
+name: Perf Test (Locust)
+on:
+  workflow_dispatch:
+    inputs:
+      users:
+        description: "Target users"
+        required: false
+        default: "200"
+      spawn:
+        description: "Spawn rate (users/sec)"
+        required: false
+        default: "20"
+      minutes:
+        description: "Duration (minutes)"
+        required: false
+        default: "10"
+      image:
+        description: "Docker image (optional)"
+        required: false
+        default: "94e1f18e223d3bb91ee83e6c4711866641bec9c2130cd8288ae269dafc6c5f8c"
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Nexus (dev wiring)
+        run: |
+          docker rm -f nexus-alpha || true
+          docker run -d --name nexus-alpha -p 8080:8080 \
+            -e NEXUS_ENV=dev \
+            -e NEXUS_ALLOW_ALL_MODELS=1 \
+            -e NEXUS_ALLOW_THIRD_PARTY_SEARCH=0 \
+            -e NEXUS_ENABLE_DDG=1 \
+            -e NEXUS_SCRAPE_ALLOW_DOMAINS="wikipedia.org,arxiv.org,bbc.co.uk,nytimes.com" \
+            -e NEXUS_DATA_KEY_B64="$(openssl rand -base64 32)" \
+            ${{ github.event.inputs.image }}
+          for i in {1..30}; do curl -fsS http://localhost:8080/readyz && break || sleep 2; done
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Locust
+        run: pip install locust
+
+      - name: Run Locust (headless)
+        env:
+          BASE_URL: http://localhost:8080
+          API_KEY: test-key-123
+          DEADLINE_MS: "6000"
+        run: |
+          duration="${{ github.event.inputs.minutes || '10' }}m"
+          users="${{ github.event.inputs.users || '200' }}"
+          spawn="${{ github.event.inputs.spawn || '20' }}"
+          locust -f load/locustfile.py \
+            --headless -u "$users" -r "$spawn" -t "$duration" \
+            --host http://localhost:8080 \
+            --html locust-report.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: locust-report
+          path: locust-report.html
+
+      - name: Stop Nexus
+        if: always()
+        run: docker rm -f nexus-alpha || true

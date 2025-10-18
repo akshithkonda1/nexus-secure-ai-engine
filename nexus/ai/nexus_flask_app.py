@@ -50,8 +50,10 @@ from .nexus_engine import (
     Crypter,
     Engine,
     EngineConfig,
+    MisconfigurationError,
     SearchProvider,
     WebRetriever,
+    build_connectors_cloud_first,
     build_web_retriever_from_env,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -295,19 +297,30 @@ def _build_access_context() -> AccessContext:
 memory = build_memory(CORE_CONFIG)
 
 try:
-    connectors = make_connectors(CORE_CONFIG)
-except BootstrapError as exc:
+    secret_resolver = _build_resolver(CORE_CONFIG)
+except Exception as exc:
+    raise AppInitializationError(f"Unable to initialise secret resolver: {exc}") from exc
+
+try:
+    connectors = build_connectors_cloud_first(resolver=secret_resolver)
+except MisconfigurationError as exc:
+    logging.getLogger(__name__).warning(
+        "cloud_first_connectors_unavailable",
+        extra={"error": str(exc)},
+    )
+    try:
+        connectors = make_connectors(CORE_CONFIG)
+    except BootstrapError as bootstrap_exc:
+        raise AppInitializationError(
+            f"Unable to build model connectors: {bootstrap_exc}"
+        ) from bootstrap_exc
+except Exception as exc:
     raise AppInitializationError(f"Unable to build model connectors: {exc}") from exc
 
 if not CORE_CONFIG.encrypt:
     raise AppInitializationError(
         "Encryption is mandatory for Nexus deployments; set encrypt=true in configuration"
     )
-
-try:
-    secret_resolver = _build_resolver(CORE_CONFIG)
-except Exception as exc:
-    raise AppInitializationError(f"Unable to initialise secret resolver: {exc}") from exc
 
 try:
     crypter = Crypter.from_resolver(secret_resolver)

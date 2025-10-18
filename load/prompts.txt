@@ -1,0 +1,7 @@
+What is Nexus?
+Compare AES-GCM vs AES-CBC for data at rest.
+Summarize the role of a web retriever in multi-model orchestration.
+Give me three sources on vector databases.
+Explain circuit breakers and backoff+jitter for HTTP retries.
+How does consensus policy choose a winner in model debate?
+What does the readiness probe check in Nexus?

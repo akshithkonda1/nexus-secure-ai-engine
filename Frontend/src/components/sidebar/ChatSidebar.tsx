@@ -16,9 +16,6 @@ type Props = {
   onRestore: (id: string) => void;
   onSoftDelete: (id: string) => void;
   onDestroy: (id: string) => void;
-  onOpenSettings: () => void;
-  onToggleTheme: () => void;
-  isDark: boolean;
 };
 
 const ChatSidebar: React.FC<Props> = ({
@@ -33,9 +30,6 @@ const ChatSidebar: React.FC<Props> = ({
   onRestore,
   onSoftDelete,
   onDestroy,
-  onOpenSettings,
-  onToggleTheme,
-  isDark,
 }) => {
   const [tab, setTab] = React.useState<'active' | 'archived' | 'deleted'>('active');
   const list = React.useMemo(() => {
@@ -144,9 +138,7 @@ const ChatSidebar: React.FC<Props> = ({
       </ul>
 
       <div className="chatgpt-sidebar-footer">
-        <button onClick={onOpenSettings}>⚙ Settings</button>
-        <button onClick={onToggleTheme}>{isDark ? '☀️ Light mode' : '🌙 Dark mode'}</button>
-        <span>Secured by Nexus orchestration</span>
+        <span>Secured by Nexus</span>
       </div>
     </aside>
   );

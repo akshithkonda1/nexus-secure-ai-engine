@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { runNexus } from "./api/nexus";
+import FeedbackRelay from "./components/FeedbackRelay";
 import {
   Sun,
   Moon,
@@ -21,6 +23,22 @@ import {
   ClipboardCheck,
   ArrowDown,
 } from "lucide-react";
+
+// ----------------------------
+// Lightweight UI result types
+// ----------------------------
+// These match the existing UI shape (confidence/votes/answers/explanations) so
+// we don’t alter rendering or logic — just satisfy TypeScript.
+export type Vote = { model: string; agrees: boolean; score: number };
+export type Answer = { model: string; ms: number; text: string };
+export type ResultState =
+  | {
+      confidence: number;
+      votes: Vote[];
+      explanations: string[];
+      answers: Answer[];
+    }
+  | null;
 
 /**
  * Enhanced Chat Layout – Full Functionality + ChatGPT-like Theming
@@ -224,7 +242,7 @@ const SessionService = {
 const MAX_INPUT_HEIGHT = 220;
 export default function EnhancedChatLayout() {
   // Theme state
-  const [darkMode, setDarkMode] = useState(() =>
+  const [darkMode, setDarkMode] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("darkMode") || "false")
   );
   useEffect(() => {
@@ -233,21 +251,21 @@ export default function EnhancedChatLayout() {
   }, [darkMode]);
 
   // Panels
-  const [settingsPage, setSettingsPage] = useState(false);
-  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<boolean>(false);
+  const [sessionsOpen, setSessionsOpen] = useState<boolean>(false);
   const [sessionTab, setSessionTab] = useState<"active" | "archived" | "deleted">(
     "active"
   );
   const sessionSearchRef = useRef<HTMLInputElement | null>(null);
 
   // Settings
-  const [privateMode, setPrivateMode] = useState(false);
-  const [redactPII, setRedactPII] = useState(true);
-  const [crossCheck, setCrossCheck] = useState(true);
+  const [privateMode, setPrivateMode] = useState<boolean>(false);
+  const [redactPII, setRedactPII] = useState<boolean>(true);
+  const [crossCheck, setCrossCheck] = useState<boolean>(true);
   const [sources, setSources] = useState(3);
   const [consensus, setConsensus] = useState(0.7);
   const [selectedModels, setSelectedModels] = useState(MODELS.map((m) => m.id));
-  const [modelSpecialization, setModelSpecialization] = useState(true);
+  const [modelSpecialization, setModelSpecialization] = useState<boolean>(true);
   const [dependableThresholdPct, setDependableThresholdPct] = useState(() =>
     readConfig().dependableThresholdPct ?? 80
   );
@@ -355,7 +373,7 @@ export default function EnhancedChatLayout() {
   }, [activeSessionId]);
 
   // Result / audit
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ResultState>(null);
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
   const [uiSessionId] = useState(() => genId().slice(0, 8));
@@ -576,28 +594,10 @@ export default function EnhancedChatLayout() {
       models: selectedModels,
       modelSpecialization,
     });
-    setResult(null);
-    setTimeout(() => {
-      // Per-model answers (mock)
-      const answers = selectedModels.map((id, i) => ({
-        model: MODELS.find((m) => m.id === id)?.label || id,
-        ms: 700 + i * 120 + Math.floor(Math.random() * 300),
-        text: `Answer from ${id}: ${text}`,
-      }));
-      const confidence = Math.min(
-        0.98,
-        0.55 + selectedModels.length * 0.08 + (crossCheck ? 0.06 : 0)
-      );
-      const res = {
-        confidence: +confidence.toFixed(2),
-        votes: answers.map((a, i) => ({
-          model: a.model,
-          agrees: i % 2 === 0,
-          score: +(confidence - i * 0.05).toFixed(2),
-        })),
-        explanations: ["Cross-checked claims.", "Applied consensus threshold."],
-        answers,
-      };
+    const applyResult = (
+      answers: Answer[],
+      res: Exclude<ResultState, null>
+    ) => {
       setResult(res);
       setRunning(false);
       log("orchestrate.finish", {
@@ -605,7 +605,6 @@ export default function EnhancedChatLayout() {
         models: res.votes.length,
       });
 
-      // Overall chat answer (consensus text; tie-break by highest vote score)
       const normalized = answers.map((a) =>
         a.text.replace(/^Answer from [^:]+:\\s*/, "").trim()
       );
@@ -658,7 +657,94 @@ export default function EnhancedChatLayout() {
       setMessages(finalMsgs);
       SessionService.saveMessages(sid, finalMsgs);
       setTimeout(() => inputRef.current?.focus(), 30);
-    }, 600);
+    };
+
+    setResult(null);
+    (async () => {
+      try {
+        const apiBase = (import.meta as any).env?.VITE_NEXUS_API_BASE;
+        if (apiBase) {
+          const data = await runNexus(text, { wantPhotos: false });
+          const winnerModel = data.winner_ref?.name || data.winner || "winner";
+          const latencySec =
+            (data.meta?.latencies && data.meta.latencies[winnerModel]) || 0.7;
+          const answers = [
+            {
+              model: winnerModel,
+              ms: Math.max(400, Math.min(2000, (latencySec || 0.7) * 1000)),
+              text: data.answer,
+            },
+          ];
+          const votes = (data.participants || []).map((p, i) => ({
+            model: p,
+            agrees: p === winnerModel,
+            score: p === winnerModel ? 0.95 : Math.max(0.1, 0.6 - i * 0.03),
+          }));
+          const res = {
+            confidence: votes.length
+              ? Math.max(...votes.map((v) => v.score))
+              : 0.9,
+            votes,
+            explanations: [
+              data.meta?.policy
+                ? `Policy: ${data.meta.policy}`
+                : "Aggregated and verified.",
+              data.meta?.schema_version
+                ? `Schema ${data.meta.schema_version}`
+                : "",
+            ].filter(Boolean),
+            answers,
+          };
+          applyResult(answers, res);
+          (window as any).__nexusSources = data.sources;
+          (window as any).__nexusMeta = data.meta;
+        } else {
+          setTimeout(() => {
+            const answers = selectedModels.map((id, i) => ({
+              model: MODELS.find((m) => m.id === id)?.label || id,
+              ms: 700 + i * 120 + Math.floor(Math.random() * 300),
+              text: `Answer from ${id}: ${text}`,
+            }));
+            const confidence = Math.min(
+              0.98,
+              0.55 + selectedModels.length * 0.08 + (crossCheck ? 0.06 : 0)
+            );
+            const res = {
+              confidence: +confidence.toFixed(2),
+              votes: answers.map((a, i) => ({
+                model: a.model,
+                agrees: i % 2 === 0,
+                score: +(confidence - i * 0.05).toFixed(2),
+              })),
+              explanations: [
+                "Cross-checked claims.",
+                "Applied consensus threshold.",
+              ],
+              answers,
+            };
+            applyResult(answers, res);
+          }, 650);
+        }
+      } catch (e: any) {
+        setRunning(false);
+        const code = e?.code || e?.status;
+        const retryAfter = e?.retryAfter;
+        if (code === 429 && typeof retryAfter === "number") {
+          alert(`Rate limited. Please retry in ${retryAfter} seconds.`);
+        } else if (code === 504) {
+          alert(
+            "The request timed out (deadline_exceeded). Try again with a longer deadline."
+          );
+        } else if (code === 502 || code === "verification_failed") {
+          alert(
+            "Upstream verification/connectors are unavailable. Please try again shortly."
+          );
+        } else {
+          alert(e?.message || "Request failed.");
+        }
+        console.error("Nexus API error", e);
+      }
+    })();
   }, [
     input,
     running,
@@ -982,6 +1068,10 @@ export default function EnhancedChatLayout() {
                   </div>
                 </div>
               </section>
+              <section aria-label="Feedback">
+                <h4 className="text-sm font-semibold mb-2">Feedback</h4>
+                <FeedbackRelay />
+              </section>
               <section aria-label="Danger zone">
                 <h4 className="text-sm font-semibold mb-2">Danger zone</h4>
                 <button
@@ -1132,22 +1222,18 @@ export default function EnhancedChatLayout() {
                   ) : null
                 }
               >
-                {!result && !running ? (
-                  <Placeholder label="No result yet. Send a message to run." />
-                ) : running && !result ? (
-                  <ResultSkeleton />
-                ) : (
+                {result ? (
                   <div className="space-y-4 text-sm">
                     <div className="font-medium mb-1">Why this answer</div>
                     <ul className="list-disc ml-5 space-y-1">
-                      {result.explanations.map((e: string, i: number) => (
-                        <li key={i}>{e}</li>
+                      {result.explanations.map((explanation, i) => (
+                        <li key={i}>{explanation}</li>
                       ))}
                     </ul>
                     <div>
                       <div className="font-medium mb-1">Model votes</div>
                       <div className="grid grid-cols-2 gap-2">
-                        {result.votes.map((v: any, i: number) => (
+                        {result.votes.map((vote, i) => (
                           <div
                             key={i}
                             className="rounded-xl border p-2"
@@ -1156,14 +1242,18 @@ export default function EnhancedChatLayout() {
                               backgroundColor: "var(--surface-alt)",
                             }}
                           >
-                            <div className="font-semibold">{v.model}</div>
-                            <div className="text-xs">Agreement: {v.agrees ? "✔" : "✖"}</div>
-                            <div className="text-xs">Score: {v.score}</div>
+                            <div className="font-semibold">{vote.model}</div>
+                            <div className="text-xs">Agreement: {vote.agrees ? "✔" : "✖"}</div>
+                            <div className="text-xs">Score: {vote.score}</div>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
+                ) : running ? (
+                  <ResultSkeleton />
+                ) : (
+                  <Placeholder label="No result yet. Send a message to run." />
                 )}
               </CollapsibleCard>
 
@@ -1178,15 +1268,9 @@ export default function EnhancedChatLayout() {
                   ) : null
                 }
               >
-                {!result ? (
-                  running ? (
-                    <ResultSkeleton />
-                  ) : (
-                    <Placeholder label="Per-model answers (with latency) will appear here after you send a message." />
-                  )
-                ) : (
+                {result ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {result.answers.map((a: any, i: number) => (
+                    {result.answers.map((answer, i) => (
                       <div
                         key={i}
                         className="rounded-xl border p-3"
@@ -1196,17 +1280,21 @@ export default function EnhancedChatLayout() {
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="text-sm font-semibold">{a.model}</div>
+                          <div className="text-sm font-semibold">{answer.model}</div>
                           <div className="text-xs" style={{ color: "var(--icon)" }}>
-                            {a.ms} ms
+                            {answer.ms} ms
                           </div>
                         </div>
                         <div className="text-sm mt-2 whitespace-pre-wrap break-words">
-                          {a.text}
+                          {answer.text}
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : running ? (
+                  <ResultSkeleton />
+                ) : (
+                  <Placeholder label="Per-model answers (with latency) will appear here after you send a message." />
                 )}
               </CollapsibleCard>
 
