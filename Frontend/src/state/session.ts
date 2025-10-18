@@ -1,15 +1,27 @@
-import { create } from "zustand";
+export function getSessionId(): string {
+  const key = "nexus_session_id";
+  let value = localStorage.getItem(key);
+  if (!value) {
+    value = crypto.randomUUID();
+    localStorage.setItem(key, value);
+  }
+  return value;
+}
 
-type SessionState = {
-  theme: "light" | "dark";
-  setTheme: (theme: "light" | "dark") => void;
-  rateLimited: boolean;
-  setRateLimited: (rateLimited: boolean) => void;
-};
+export function setApiKey(key: string) {
+  localStorage.setItem("nexus_api_key", key.trim());
+}
 
-export const useSession = create<SessionState>((set) => ({
-  theme: "dark",
-  setTheme: (theme) => set({ theme }),
-  rateLimited: false,
-  setRateLimited: (rateLimited) => set({ rateLimited }),
-}));
+export function getApiKey(): string {
+  return localStorage.getItem("nexus_api_key") || "";
+}
+
+export function setTheme(theme: "light" | "dark") {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("theme", theme);
+}
+
+export function initTheme() {
+  const stored = (localStorage.getItem("theme") as "light" | "dark") || "dark";
+  setTheme(stored);
+}
