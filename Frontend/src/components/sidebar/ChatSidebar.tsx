@@ -17,7 +17,6 @@ type Props = {
   onSoftDelete: (id: string) => void;
   onDestroy: (id: string) => void;
   onOpenSettings: () => void;
-  onToggleTheme: () => void;
   isDark: boolean;
 };
 
@@ -34,7 +33,6 @@ const ChatSidebar: React.FC<Props> = ({
   onSoftDelete,
   onDestroy,
   onOpenSettings,
-  onToggleTheme,
   isDark,
 }) => {
   const [tab, setTab] = React.useState<'active' | 'archived' | 'deleted'>('active');
@@ -144,9 +142,10 @@ const ChatSidebar: React.FC<Props> = ({
       </ul>
 
       <div className="chatgpt-sidebar-footer">
-        <button onClick={onOpenSettings}>⚙ Settings</button>
-        <button onClick={onToggleTheme}>{isDark ? '☀️ Light mode' : '🌙 Dark mode'}</button>
-        <span>Secured by Nexus orchestration</span>
+        <button onClick={onOpenSettings}>
+          {isDark ? '🌙' : '☀️'} Settings
+        </button>
+        <span>Secured by Nexus</span>
       </div>
     </aside>
   );
