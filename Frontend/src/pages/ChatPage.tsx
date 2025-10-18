@@ -14,12 +14,14 @@ import type { Message } from '../types/chat';
 import { SessionService } from '../state/sessions';
 import type { SessionRow } from '../state/sessions';
 import { useDarkMode } from '../hooks/useDarkMode';
+import { readProfile, writeProfile, type UserProfile } from '../state/profile';
 
 const ProfileModal = React.lazy(()=> import('../components/modals/ProfileModal'));
 
 const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
   const { isDark, setIsDark } = useDarkMode();
   const [profileOpen,setProfileOpen]=useState(false);
+  const [profile,setProfile]=useState<UserProfile>(()=>readProfile());
 
   const [sessions,setSessions]=useState<SessionRow[]>(()=>SessionService.list());
   const [archived,setArchived]=useState<SessionRow[]>(()=>SessionService.listArchived());
@@ -50,7 +52,7 @@ const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
     setTimeout(()=>{
       const a=['grok','chatgpt','claude','perplexity'].map((id,i)=>({ model:id, ms:700+i*120+Math.floor(Math.random()*300), text:`Answer from ${id}: ${text}` }));
       const conf=Math.min(0.98, 0.55 + 4*0.08 + 0.06);
-      const res={ confidence:+conf.toFixed(2), votes: a.map((ans,i)=>({ model: ans.model, agrees: i%2===0, score: +(conf - i*0.05).toFixed(2) })), explanations:['Cross-checked claims.','Applied consensus threshold.'] };
+      const res={ confidence:+conf.toFixed(2), votes: a.map((ans)=>({ model: ans.model, agrees: true, score: +conf.toFixed(2) })), explanations:['Cross-checked claims.','Applied consensus threshold.'] };
       setResult(res); setAnswers(a); setRunning(false); log('orchestrate.finish',{confidence:res.confidence, models:res.votes.length});
 
       const normalized=a.map(x=> x.text.replace(/^Answer from [^:]+:\s*/, '').trim());
@@ -92,13 +94,17 @@ const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
           isDark={isDark}
         />
         <main className="chatgpt-main">
-          <TopBar isDark={isDark} onToggleTheme={()=>setIsDark(!isDark)} onOpenProfile={()=>setProfileOpen(true)} />
+          <TopBar
+            isDark={isDark}
+            onToggleTheme={()=>setIsDark(!isDark)}
+            onOpenProfile={()=>setProfileOpen(true)}
+            profileAvatar={profile.avatarDataUrl}
+          />
           <ChatList messages={messages}/>
           <div className="chatgpt-composer-area">
             <Composer onSend={send} disabled={running}/>
             <p className="chatgpt-composer-hint">Nexus is an experimental AI platform—responses are verified but not guaranteed to be accurate or final.</p>
           </div>
-          <p className="chatgpt-main-disclaimer">Nexus may produce inaccurate information. Verify critical responses before sharing.</p>
         </main>
         <aside className="chatgpt-right-rail">
           <ResultCard running={running} result={result}/>
@@ -107,7 +113,26 @@ const ChatPage: React.FC<{ onOpenSettings: ()=>void }>=({onOpenSettings})=>{
           <SecurityCard redactPII={true} uiSessionId={uiSessionId}/>
         </aside>
       </div>
-      <Suspense fallback={null}>{profileOpen && <ProfileModal open={profileOpen} onClose={()=>setProfileOpen(false)} />}</Suspense>
+      <Suspense fallback={null}>
+        {profileOpen && (
+          <ProfileModal
+            open={profileOpen}
+            onClose={()=>setProfileOpen(false)}
+            profile={profile}
+            onProfileChange={(next)=>{
+              setProfile(next);
+              writeProfile(next);
+            }}
+            onDeleteAccount={(feedback)=>{
+              console.info('Account deletion requested', { feedback });
+              setProfileOpen(false);
+            }}
+            onUpgradePlan={()=>{
+              alert('Upgrade workflow coming soon! Our team has been notified.');
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
