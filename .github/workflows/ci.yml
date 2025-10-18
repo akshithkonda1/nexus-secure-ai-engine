@@ -7,6 +7,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  PORT: 8080
 
 jobs:
   build-and-test:
@@ -77,14 +78,8 @@ jobs:
           severity: 'HIGH,CRITICAL'
 
       # Integration smoke with compose + k6
-      - name: Start service (compose)
-        run: docker compose -f docker-compose.ci.yml up -d
-      - name: Wait readiness
-        run: |
-          for i in {1..30}; do
-            curl -fsS localhost:8080/readyz && exit 0 || sleep 2
-          done
-          echo "not ready"; docker logs $(docker ps -q); exit 1
+      - name: Compose smoke
+        run: scripts/ci-smoke.sh
       - name: k6 smoke
         uses: grafana/k6-action@v0.3.1
         with:
