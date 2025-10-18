@@ -4,6 +4,11 @@ Flask-Cors>=4.0,<7.0
 Flask-Limiter>=3.5,<5.0
 Flask-Talisman>=1.1.0
 requests>=2.31,<3.0
+openai>=1.44.0
+google-cloud-aiplatform>=1.69.0
+google-auth>=2.29.0
+# For Azure AI Inference SDK usage (optional):
+# azure-ai-inference>=1.0.0
 beautifulsoup4>=4.12,<5.0
 bleach>=6.1,<7.0
 cryptography>=42.0,<47.0

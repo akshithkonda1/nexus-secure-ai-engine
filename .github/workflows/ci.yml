@@ -7,6 +7,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  PORT: 8080
 
 jobs:
   build-and-test:
@@ -40,36 +41,45 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build image (tag with sha and branch)
-      - name: Build image
+      # Generate image metadata and safe tags
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=ref,event=pr
+
+      # Build and push image
+      - name: Build & push
+        id: build-and-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Export compose image ref
         run: |
-          docker build -t $REGISTRY/${IMAGE_NAME}:${{ github.sha }} .
-          docker tag $REGISTRY/${IMAGE_NAME}:${{ github.sha }} $REGISTRY/${IMAGE_NAME}:ci-${{ github.ref_name }}
+          FIRST_TAG=$(printf '%s\n' "${{ steps.meta.outputs.tags }}" | head -n1)
+          echo "CI_IMAGE_REF=${FIRST_TAG}" >> "$GITHUB_ENV"
 
       # Trivy scan (container)
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@0.22.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-and-push.outputs.digest }}
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
 
-      # Push image for later jobs
-      - name: Push image
-        run: |
-          docker push $REGISTRY/${IMAGE_NAME}:${{ github.sha }}
-          docker push $REGISTRY/${IMAGE_NAME}:ci-${{ github.ref_name }}
-
       # Integration smoke with compose + k6
-      - name: Start service (compose)
-        run: docker compose -f docker-compose.ci.yml up -d
-      - name: Wait readiness
-        run: |
-          for i in {1..30}; do
-            curl -fsS localhost:8080/readyz && exit 0 || sleep 2
-          done
-          echo "not ready"; docker logs $(docker ps -q); exit 1
+      - name: Compose smoke
+        run: scripts/ci-smoke.sh
       - name: k6 smoke
         uses: grafana/k6-action@v0.3.1
         with:

@@ -9,6 +9,7 @@ import shutil
 import socket
 import time
 import uuid
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
@@ -55,6 +56,28 @@ def _ttl_seconds() -> int:
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
+
+
+def _ttl_expiry_epoch(meta: Mapping[str, Any] | None) -> Optional[int]:
+    """
+    Determine an absolute expiry epoch (seconds) for ephemeral records.
+
+    honours an optional meta["ttl_seconds"] override, otherwise falls back to
+    the global NEXUS_MEM_TTL_SECONDS value. Returns ``None`` when the message is
+    not marked as ephemeral.
+    """
+
+    payload = _meta_dict(meta)
+    if not payload.get("ephemeral"):
+        return None
+
+    override = payload.get("ttl_seconds")
+    try:
+        ttl = int(override) if override is not None else _ttl_seconds()
+    except (TypeError, ValueError):
+        ttl = _ttl_seconds()
+
+    return int(time.time()) + max(1, ttl)
 
 
 def _meta_dict(meta: Mapping[str, Any] | None) -> Dict[str, Any]:
@@ -177,8 +200,9 @@ class DynamoDBMemoryStore(MemoryStore):
         }
         if payload:
             item["meta_json"] = json.dumps(payload, ensure_ascii=False)
-            if payload.get("ephemeral"):
-                item["ttl"] = int(time.time()) + _ttl_seconds()
+        expiry = _ttl_expiry_epoch(payload)
+        if expiry is not None:
+            item["ttl"] = expiry
         self._table.put_item(Item=item)
         logger.debug(f"DynamoDB.save session={session_id} role={role} mid={mid}")
         return mid
@@ -229,8 +253,9 @@ class FirestoreMemoryStore(MemoryStore):
             "text": text,
             "meta": _copy_meta(meta),
         }
-        if payload["meta"].get("ephemeral"):
-            payload["ttl"] = int(time.time()) + _ttl_seconds()
+        expiry = _ttl_expiry_epoch(payload["meta"])
+        if expiry is not None:
+            payload["ttl"] = datetime.fromtimestamp(expiry, tz=timezone.utc)
         self._fs.collection(self._col).document(session_id).collection("messages").document(
             mid
         ).set(payload)
@@ -296,8 +321,9 @@ class AzureBlobMemoryStore(MemoryStore):
         ts = _now_ms()
         meta_payload = _copy_meta(meta)
         payload = {"id": mid, "ts": ts, "role": role, "text": text, "meta": meta_payload}
-        if meta_payload.get("ephemeral"):
-            payload["ttl"] = int(time.time()) + _ttl_seconds()
+        expiry = _ttl_expiry_epoch(meta_payload)
+        if expiry is not None:
+            payload["ttl"] = expiry
         line = (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8")
         bc = self._blob(session_id)
         try:
