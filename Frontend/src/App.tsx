@@ -1,19 +1,58 @@
-import React, { useEffect } from 'react';
-import ChatPage from './pages/ChatPage';
-import SettingsPage from './pages/SettingsPage';
-import { genId } from './lib/id';
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Link, NavLink } from "react-router-dom";
+import Chat from "./components/Chat";
+import StatusPage from "./pages/StatusPage";
+import AdminPage from "./pages/AdminPage";
+import WebhooksPage from "./pages/WebhooksPage";
+import AuditPage from "./pages/AuditPage";
+import SettingsModal from "./components/SettingsModal";
+import { initTheme } from "./state/session";
 
-export default function App(){
-  const [route,setRoute]=React.useState<'chat'|'settings'>('chat');
-  // runtime tests
-  useEffect(()=>{
-    if ((import.meta as any)?.env?.DEV) {
-      try {
-        const ids=new Set([genId(),genId(),genId(),genId()]);
-        console.assert(ids.size===4,'genId uniqueness');
-      } catch(e){ console.warn('Dev tests warning', e); }
-    }
-  },[]);
+type HeaderProps = { onSettings: () => void };
 
-  return route==='chat' ? <ChatPage onOpenSettings={()=>setRoute('settings')} /> : <SettingsPage onBack={()=>setRoute('chat')} />
+function Header({ onSettings }: HeaderProps) {
+  return (
+    <header className="topbar">
+      <Link to="/" className="brand">
+        Nexus.ai
+      </Link>
+      <nav>
+        <NavLink to="/" end>
+          Chat
+        </NavLink>
+        <NavLink to="/status">Status</NavLink>
+        <NavLink to="/admin">Admin</NavLink>
+        <NavLink to="/webhooks">Webhooks</NavLink>
+        <NavLink to="/audit">Audit</NavLink>
+      </nav>
+      <button aria-label="Settings" className="icon-btn" onClick={onSettings}>
+        ⚙️
+      </button>
+    </header>
+  );
+}
+
+export default function App() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    initTheme();
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <Header onSettings={() => setOpen(true)} />
+      <main className="container">
+        <Routes>
+          <Route path="/" element={<Chat />} />
+          <Route path="/status" element={<StatusPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/webhooks" element={<WebhooksPage />} />
+          <Route path="/audit" element={<AuditPage />} />
+        </Routes>
+      </main>
+      <footer className="footer">Secured by Nexus</footer>
+      <SettingsModal open={open} onClose={() => setOpen(false)} />
+    </BrowserRouter>
+  );
 }
