@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { runNexus } from "./api/nexus";
+import FeedbackRelay from "./components/FeedbackRelay";
 import {
   Sun,
   Moon,
@@ -30,13 +31,14 @@ import {
 // we don’t alter rendering or logic — just satisfy TypeScript.
 export type Vote = { model: string; agrees: boolean; score: number };
 export type Answer = { model: string; ms: number; text: string };
-export type ResultState = {
-  confidence: number;
-  votes: Vote[];
-  explanations: string[];
-  answers: Answer[];
-};
-export type ResultValue = ResultState | null;
+export type ResultState =
+  | {
+      confidence: number;
+      votes: Vote[];
+      explanations: string[];
+      answers: Answer[];
+    }
+  | null;
 
 /**
  * Enhanced Chat Layout – Full Functionality + ChatGPT-like Theming
@@ -371,7 +373,7 @@ export default function EnhancedChatLayout() {
   }, [activeSessionId]);
 
   // Result / audit
-  const [result, setResult] = useState<ResultValue>(null);
+  const [result, setResult] = useState<ResultState>(null);
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
   const [uiSessionId] = useState(() => genId().slice(0, 8));
@@ -1065,6 +1067,10 @@ export default function EnhancedChatLayout() {
                     </div>
                   </div>
                 </div>
+              </section>
+              <section aria-label="Feedback">
+                <h4 className="text-sm font-semibold mb-2">Feedback</h4>
+                <FeedbackRelay />
               </section>
               <section aria-label="Danger zone">
                 <h4 className="text-sm font-semibold mb-2">Danger zone</h4>
