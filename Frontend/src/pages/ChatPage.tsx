@@ -313,13 +313,12 @@ const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) 
           onRestore={handleRestore}
           onSoftDelete={handleSoftDelete}
           onDestroy={handleDestroy}
-          onOpenSettings={onOpenSettings}
-          isDark={isDark}
         />
         <main className="chatgpt-main">
           <MemoizedTopBar
             isDark={isDark}
             onToggleTheme={() => setIsDark(!isDark)}
+            onOpenSettings={onOpenSettings}
             onOpenProfile={() => setProfileOpen(true)}
             profileAvatar={profile.avatarDataUrl}
           />
