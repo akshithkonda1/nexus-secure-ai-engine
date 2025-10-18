@@ -314,7 +314,6 @@ const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) 
           onSoftDelete={handleSoftDelete}
           onDestroy={handleDestroy}
           onOpenSettings={onOpenSettings}
-          onToggleTheme={() => setIsDark(!isDark)}
           isDark={isDark}
         />
         <main className="chatgpt-main">
@@ -351,11 +350,8 @@ const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) 
               console.info('Account deletion requested', { feedback });
               setProfileOpen(false);
             }}
-            onUpgradePlan={()=>{
-              if(typeof window!=='undefined'){
-                window.open('https://nexus-secure.ai/upgrade', '_blank', 'noopener,noreferrer');
-              }
-              console.info('Upgrade plan CTA triggered');
+            onUpgradePlan={() => {
+              alert('Upgrade workflow coming soon! Our team has been notified.');
             }}
           />
         )}
