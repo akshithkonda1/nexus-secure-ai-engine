@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .env
 .env.*
+!.env.ci
 !.env.example
 .pytest_cache/
 .wheels/
