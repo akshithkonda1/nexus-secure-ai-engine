@@ -38,7 +38,10 @@ const ProfileModal: React.FC<ProfileModalProps>=({open,onClose,profile,onProfile
                 onDeleteAccount={onDeleteAccount}
               />
             ) : tab==='billing'? (
-              <BillingTab onUpgradePlan={onUpgradePlan}/>
+              <BillingTab
+                onUpgradePlan={onUpgradePlan}
+                onOpenSettings={()=>setTab('settings')}
+              />
             ) : (
               <SettingsTab/>
             )}
