@@ -1,20 +1,15 @@
 services:
   nexus:
-    image: ${CI_IMAGE_REF:-ghcr.io/local/nexus-secure-ai-engine:dev}
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports: ["8080:8080"]
+    image: ${CI_IMAGE_REF:?CI_IMAGE_REF not set}
+    env_file:
+      - .env.ci
     environment:
-      NEXUS_ENV: dev
-      NEXUS_ALLOW_ALL_MODELS: "1"
-      NEXUS_ALLOW_THIRD_PARTY_SEARCH: "0"
-      NEXUS_ENABLE_DDG: "1"
-      NEXUS_SCRAPE_ALLOW_DOMAINS: "wikipedia.org,arxiv.org,bbc.co.uk,nytimes.com"
-      NEXUS_DATA_KEY_B64: "dGhpcy1pcy1ub3QtcmVhbC1rZXktcmVwbGFjZS13aXRoLXNlY3JldA=="
+      PORT: ${PORT:-8080}
+    ports:
+      - "8080:${PORT:-8080}"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
-      interval: 10s
+      test: ["CMD-SHELL", "for p in /health /healthz /status /readyz /; do curl -fsS http://127.0.0.1:${PORT:-8080}$p && exit 0; done; exit 1"]
+      interval: 5s
       timeout: 3s
       retries: 12
-      start_period: 15s
+      start_period: 5s
