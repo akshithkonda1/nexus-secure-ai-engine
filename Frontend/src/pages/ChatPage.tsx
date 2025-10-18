@@ -351,8 +351,11 @@ const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) 
               console.info('Account deletion requested', { feedback });
               setProfileOpen(false);
             }}
-            onUpgradePlan={() => {
-              alert('Upgrade workflow coming soon! Our team has been notified.');
+            onUpgradePlan={()=>{
+              if(typeof window!=='undefined'){
+                window.open('https://nexus-secure.ai/upgrade', '_blank', 'noopener,noreferrer');
+              }
+              console.info('Upgrade plan CTA triggered');
             }}
           />
         )}
