@@ -62,6 +62,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Export compose image ref
+        run: |
+          FIRST_TAG=$(printf '%s\n' "${{ steps.meta.outputs.tags }}" | head -n1)
+          echo "CI_IMAGE_REF=${FIRST_TAG}" >> "$GITHUB_ENV"
+
       # Trivy scan (container)
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@0.22.0
