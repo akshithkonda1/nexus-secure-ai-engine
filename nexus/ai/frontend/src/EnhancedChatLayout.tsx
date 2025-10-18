@@ -23,6 +23,21 @@ import {
   ArrowDown,
 } from "lucide-react";
 
+// ----------------------------
+// Lightweight UI result types
+// ----------------------------
+// These match the existing UI shape (confidence/votes/answers/explanations) so
+// we don’t alter rendering or logic — just satisfy TypeScript.
+export type Vote = { model: string; agrees: boolean; score: number };
+export type Answer = { model: string; ms: number; text: string };
+export type ResultState = {
+  confidence: number;
+  votes: Vote[];
+  explanations: string[];
+  answers: Answer[];
+};
+export type ResultValue = ResultState | null;
+
 /**
  * Enhanced Chat Layout – Full Functionality + ChatGPT-like Theming
  * (Updated with richer UX, keyboard shortcuts, and accessibility improvements.)
@@ -225,7 +240,7 @@ const SessionService = {
 const MAX_INPUT_HEIGHT = 220;
 export default function EnhancedChatLayout() {
   // Theme state
-  const [darkMode, setDarkMode] = useState(() =>
+  const [darkMode, setDarkMode] = useState<boolean>(() =>
     JSON.parse(localStorage.getItem("darkMode") || "false")
   );
   useEffect(() => {
@@ -234,21 +249,21 @@ export default function EnhancedChatLayout() {
   }, [darkMode]);
 
   // Panels
-  const [settingsPage, setSettingsPage] = useState(false);
-  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<boolean>(false);
+  const [sessionsOpen, setSessionsOpen] = useState<boolean>(false);
   const [sessionTab, setSessionTab] = useState<"active" | "archived" | "deleted">(
     "active"
   );
   const sessionSearchRef = useRef<HTMLInputElement | null>(null);
 
   // Settings
-  const [privateMode, setPrivateMode] = useState(false);
-  const [redactPII, setRedactPII] = useState(true);
-  const [crossCheck, setCrossCheck] = useState(true);
+  const [privateMode, setPrivateMode] = useState<boolean>(false);
+  const [redactPII, setRedactPII] = useState<boolean>(true);
+  const [crossCheck, setCrossCheck] = useState<boolean>(true);
   const [sources, setSources] = useState(3);
   const [consensus, setConsensus] = useState(0.7);
   const [selectedModels, setSelectedModels] = useState(MODELS.map((m) => m.id));
-  const [modelSpecialization, setModelSpecialization] = useState(true);
+  const [modelSpecialization, setModelSpecialization] = useState<boolean>(true);
   const [dependableThresholdPct, setDependableThresholdPct] = useState(() =>
     readConfig().dependableThresholdPct ?? 80
   );
@@ -356,7 +371,7 @@ export default function EnhancedChatLayout() {
   }, [activeSessionId]);
 
   // Result / audit
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ResultValue>(null);
   const [running, setRunning] = useState(false);
   const [audit, setAudit] = useState<any[]>([]);
   const [uiSessionId] = useState(() => genId().slice(0, 8));
@@ -578,13 +593,8 @@ export default function EnhancedChatLayout() {
       modelSpecialization,
     });
     const applyResult = (
-      answers: { model: string; ms: number; text: string }[],
-      res: {
-        confidence: number;
-        votes: { model: string; agrees: boolean; score: number }[];
-        explanations: string[];
-        answers: { model: string; ms: number; text: string }[];
-      }
+      answers: Answer[],
+      res: Exclude<ResultState, null>
     ) => {
       setResult(res);
       setRunning(false);
@@ -1206,22 +1216,18 @@ export default function EnhancedChatLayout() {
                   ) : null
                 }
               >
-                {!result && !running ? (
-                  <Placeholder label="No result yet. Send a message to run." />
-                ) : running && !result ? (
-                  <ResultSkeleton />
-                ) : (
+                {result ? (
                   <div className="space-y-4 text-sm">
                     <div className="font-medium mb-1">Why this answer</div>
                     <ul className="list-disc ml-5 space-y-1">
-                      {result.explanations.map((e: string, i: number) => (
-                        <li key={i}>{e}</li>
+                      {result.explanations.map((explanation, i) => (
+                        <li key={i}>{explanation}</li>
                       ))}
                     </ul>
                     <div>
                       <div className="font-medium mb-1">Model votes</div>
                       <div className="grid grid-cols-2 gap-2">
-                        {result.votes.map((v: any, i: number) => (
+                        {result.votes.map((vote, i) => (
                           <div
                             key={i}
                             className="rounded-xl border p-2"
@@ -1230,14 +1236,18 @@ export default function EnhancedChatLayout() {
                               backgroundColor: "var(--surface-alt)",
                             }}
                           >
-                            <div className="font-semibold">{v.model}</div>
-                            <div className="text-xs">Agreement: {v.agrees ? "✔" : "✖"}</div>
-                            <div className="text-xs">Score: {v.score}</div>
+                            <div className="font-semibold">{vote.model}</div>
+                            <div className="text-xs">Agreement: {vote.agrees ? "✔" : "✖"}</div>
+                            <div className="text-xs">Score: {vote.score}</div>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
+                ) : running ? (
+                  <ResultSkeleton />
+                ) : (
+                  <Placeholder label="No result yet. Send a message to run." />
                 )}
               </CollapsibleCard>
 
@@ -1252,15 +1262,9 @@ export default function EnhancedChatLayout() {
                   ) : null
                 }
               >
-                {!result ? (
-                  running ? (
-                    <ResultSkeleton />
-                  ) : (
-                    <Placeholder label="Per-model answers (with latency) will appear here after you send a message." />
-                  )
-                ) : (
+                {result ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {result.answers.map((a: any, i: number) => (
+                    {result.answers.map((answer, i) => (
                       <div
                         key={i}
                         className="rounded-xl border p-3"
@@ -1270,17 +1274,21 @@ export default function EnhancedChatLayout() {
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="text-sm font-semibold">{a.model}</div>
+                          <div className="text-sm font-semibold">{answer.model}</div>
                           <div className="text-xs" style={{ color: "var(--icon)" }}>
-                            {a.ms} ms
+                            {answer.ms} ms
                           </div>
                         </div>
                         <div className="text-sm mt-2 whitespace-pre-wrap break-words">
-                          {a.text}
+                          {answer.text}
                         </div>
                       </div>
                     ))}
                   </div>
+                ) : running ? (
+                  <ResultSkeleton />
+                ) : (
+                  <Placeholder label="Per-model answers (with latency) will appear here after you send a message." />
                 )}
               </CollapsibleCard>
 
