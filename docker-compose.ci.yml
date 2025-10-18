@@ -1,7 +1,6 @@
-version: "3.9"
 services:
   nexus:
-    image: ghcr.io/OWNER/nexus:${GITHUB_SHA:-dev}
+    image: ${CI_IMAGE_REF:-ghcr.io/local/nexus-secure-ai-engine:dev}
     build:
       context: .
       dockerfile: Dockerfile

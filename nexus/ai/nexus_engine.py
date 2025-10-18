@@ -1090,6 +1090,175 @@ ModelConnector.register_adapter("tgi.generate", _adapt_tgi_generate)
 ModelConnector.register_adapter("generic.json", _adapt_generic_json)
 
 
+# ---- SDK connectors (cloud-native, identity-based) ----
+class BedrockSDKConnector:
+    """AWS Bedrock (Claude, etc.) via boto3. Identity-based (IAM), no vendor keys."""
+
+    adapter = "aws.bedrock"
+
+    def __init__(self, model_id: str, region: str | None = None):
+        import os as _os
+
+        self.name = f"aws:bedrock:{model_id}"
+        self.endpoint = f"bedrock-runtime:{region or _os.getenv('AWS_REGION','us-east-1')}"
+        self.model_id = model_id
+        self.region = region or _os.getenv("AWS_REGION", "us-east-1")
+        self.route = "cloud_native"
+        self._client = None
+
+    def _cli(self):
+        if self._client is None:
+            import boto3
+
+            self._client = boto3.client("bedrock-runtime", region_name=self.region)
+        return self._client
+
+    def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
+        import json as _json
+        import time as _time
+
+        t0 = _time.time()
+        # Bedrock Anthropic messages
+        system = None
+        msgs = []
+        for m in history or []:
+            if m.get("role") == "system":
+                system = ((system or "") + "\n" + (m.get("content") or "")).strip()
+            else:
+                msgs.append(
+                    {
+                        "role": m.get("role", "user"),
+                        "content": [
+                            {"type": "text", "text": m.get("content", "")}
+                        ],
+                    }
+                )
+        msgs.append({"role": "user", "content": [{"type": "text", "text": prompt}]})
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "system": system or "",
+            "messages": msgs,
+            "max_tokens": 512,
+            "temperature": 0.2,
+        }
+        resp = self._cli().invoke_model(
+            modelId=self.model_id,
+            accept="application/json",
+            contentType="application/json",
+            body=_json.dumps(body),
+        )
+        out = _json.loads(resp["body"].read())
+        text = (
+            (out.get("content") or [{}])[0].get("text", "")
+            if isinstance(out.get("content"), list)
+            else out.get("output_text", "")
+        )
+        return text or "", {"latency_ms": int((_time.time() - t0) * 1000)}
+
+
+class AzureOpenAIChatSDKConnector:
+    """Azure OpenAI with Managed Identity (Entra ID) or key if present."""
+
+    adapter = "azure.openai"
+
+    def __init__(self, endpoint: str, deployment: str, api_version: str = "2024-08-01-preview"):
+        self.name = f"azure:openai:{deployment}"
+        self.endpoint = endpoint.rstrip("/")
+        self.deployment = deployment
+        self.api_version = api_version
+        self.route = "cloud_native"
+        self._client = None
+
+    def _cli(self):
+        if self._client is None:
+            try:
+                from azure.identity import DefaultAzureCredential
+                from azure.ai.openai import AzureOpenAI
+
+                self._client = AzureOpenAI(
+                    azure_endpoint=self.endpoint,
+                    api_version=self.api_version,
+                    credential=DefaultAzureCredential(),
+                )
+            except Exception:
+                # Dev fallback: AZURE_OPENAI_API_KEY
+                from azure.ai.openai import AzureOpenAI
+                import os as _os
+
+                self._client = AzureOpenAI(
+                    azure_endpoint=self.endpoint,
+                    api_version=self.api_version,
+                    api_key=_os.getenv("AZURE_OPENAI_API_KEY"),
+                )
+        return self._client
+
+    def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
+        import time as _time
+
+        msgs = [
+            m
+            for m in (history or [])
+            if m.get("role") in {"system", "user", "assistant"}
+        ]
+        msgs.append({"role": "user", "content": prompt})
+        t0 = _time.time()
+        r = self._cli().chat.completions.create(
+            model=self.deployment,
+            messages=msgs,
+            temperature=0.2,
+            max_tokens=512,
+        )
+        txt = r.choices[0].message.content if getattr(r, "choices", None) else ""
+        return txt or "", {"latency_ms": int((_time.time() - t0) * 1000)}
+
+
+class VertexGeminiSDKConnector:
+    """GCP Vertex AI Gemini via service account (Application Default Credentials)."""
+
+    adapter = "gemini.generate"
+
+    def __init__(
+        self,
+        model: str = "gemini-1.5-pro",
+        project: str | None = None,
+        location: str | None = None,
+    ):
+        import os as _os
+
+        self.name = f"gcp:vertex:{model}"
+        self.endpoint = f"vertex:{location or _os.getenv('GOOGLE_CLOUD_REGION','us-central1')}"
+        self.model = model
+        self.project = project or _os.getenv("GOOGLE_CLOUD_PROJECT")
+        self.location = location or _os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
+        self.route = "cloud_native"
+        self._ready = False
+
+    def _ensure(self):
+        if not self._ready:
+            from vertexai import init
+            from vertexai.generative_models import GenerativeModel
+
+            init(project=self.project, location=self.location)
+            self._gen = GenerativeModel(self.model)
+            self._ready = True
+
+    def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
+        import time as _time
+
+        self._ensure()
+        t0 = _time.time()
+        r = self._gen.generate_content(
+            prompt,
+            generation_config={"temperature": 0.2, "max_output_tokens": 512},
+        )
+        text = getattr(r, "text", None) or (
+            r.candidates[0].content.parts[0].text
+            if getattr(r, "candidates", None)
+            else ""
+        )
+        return text or "", {"latency_ms": int((_time.time() - t0) * 1000)}
+
+
 # =========================================================
 # Web retrieval (+ BeautifulSoup enrichment with retries)
 # =========================================================
@@ -2347,11 +2516,16 @@ class Engine:
                 "sources": web_refs,  # verified (>= min_sources_required)
                 "photos": photos if want_photos else [],
             }
+            routes = {
+                n: getattr(c, "route", "vendor_direct")
+                for n, c in self.connectors.items()
+            }
             payload["meta"] = {
                 "schema_version": self.schema_version,
                 "policy": getattr(policy, "name", None),
                 "latencies": latencies,
                 "policy_scores": agg.get("scores"),
+                "routes": routes,  # cloud_native vs vendor_direct
             }
             return payload
         finally:
@@ -2570,6 +2744,71 @@ def _ensure_resolver(resolver: Optional["SecretResolver"]) -> "SecretResolver":
             overrides[k] = v
     ttl = int(os.getenv("NEXUS_SECRET_TTL_SECONDS", "600"))
     return SecretResolver(providers=providers, overrides=overrides, ttl_seconds=ttl)
+
+
+def build_connectors_cloud_first(
+    resolver: Optional["SecretResolver"] = None,
+) -> Dict[str, Any]:
+    """
+    Builds a multi-cloud connector set:
+      - Cloud-native first (IAM/AAD/SA): Bedrock, Azure OpenAI, Vertex Gemini
+      - Vendor-direct fallbacks (keys from secret store): OpenAI, Anthropic
+    Uses your SecretResolver; no raw keys in code.
+    """
+
+    r = _ensure_resolver(resolver)
+    cons: Dict[str, Any] = {}
+
+    # --- Cloud-native (no vendor keys)
+    if os.getenv("NEXUS_ENABLE_BEDROCK", "1").lower() not in {"0", "false", "no"}:
+        model_id = os.getenv(
+            "NEXUS_BEDROCK_MODEL", "anthropic.claude-3-5-sonnet-20241022"
+        )
+        region = os.getenv("AWS_REGION", "us-east-1")
+        cons["bedrock.claude"] = BedrockSDKConnector(model_id=model_id, region=region)
+
+    if os.getenv("AZURE_OPENAI_ENDPOINT"):
+        cons["azure.gpt4o"] = AzureOpenAIChatSDKConnector(
+            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o"),
+            api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-08-01-preview"),
+        )
+
+    if os.getenv("GOOGLE_CLOUD_PROJECT"):
+        cons["vertex.gemini"] = VertexGeminiSDKConnector(
+            model=os.getenv("NEXUS_VERTEX_MODEL", "gemini-1.5-pro"),
+            project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+            location=os.getenv("GOOGLE_CLOUD_REGION", "us-central1"),
+        )
+
+    # --- Vendor-direct fallbacks (keys from secret store)
+    ok = r.get("connectors/openai_api_key") or os.getenv("OPENAI_API_KEY")
+    if ok:
+        cons["openai.gpt4o-mini"] = ModelConnector(
+            name="gpt-4o-mini",
+            endpoint="https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {ok}"},
+            adapter="openai.chat",
+            timeout=12,
+        )
+        setattr(cons["openai.gpt4o-mini"], "route", "vendor_direct")
+
+    ak = r.get("connectors/anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY")
+    if ak:
+        cons["anthropic.claude"] = ModelConnector(
+            name="claude-3-5-sonnet-latest",
+            endpoint="https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ak, "anthropic-version": "2023-06-01"},
+            adapter="anthropic.messages",
+            timeout=12,
+        )
+        setattr(cons["anthropic.claude"], "route", "vendor_direct")
+
+    if not cons:
+        raise MisconfigurationError(
+            "No connectors could be constructed; check env & secrets."
+        )
+    return cons
 
 
 def build_web_retriever_from_env(

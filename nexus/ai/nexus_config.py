@@ -254,12 +254,39 @@ def validate_config(cfg: NexusConfig) -> List[str]:
         "has_delegate": any(k.endswith("_DELEGATE") for k in cfg.secret_overrides),
         "has_endpoint": any(k.endswith("_ENDPOINT") for k in cfg.secret_overrides),
         "has_keys": any(k.endswith("_API_KEY") for k in cfg.secret_overrides),
+        "bedrock": any(k in {"BEDROCK_MODEL_ID"} for k in cfg.secret_overrides),
+        "vertex": any(
+            k in {"GOOGLE_PROJECT", "VERTEX_LOCATION", "VERTEX_MODEL_ID"}
+            for k in cfg.secret_overrides
+        ),
+        "azure_openai": any(
+            k
+            in {"AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_KEY"}
+            for k in cfg.secret_overrides
+        ),
+        "azure_foundry": any(
+            k in {"AZURE_INFERENCE_ENDPOINT", "AZURE_INFERENCE_API_KEY"}
+            for k in cfg.secret_overrides
+        ),
     }
+    has_cloud_llm = any(
+        (
+            hints["bedrock"],
+            hints["vertex"],
+            hints["azure_openai"],
+            hints["azure_foundry"],
+        )
+    )
     if cfg.require_any_connector and not (
-        hints["has_delegate"] or (hints["has_endpoint"] and hints["has_keys"])
+        hints["has_delegate"]
+        or (hints["has_endpoint"] and hints["has_keys"])
+        or has_cloud_llm
     ):
         errs.append(
-            "no connectors configured per engine_mode; add *_DELEGATE or *_ENDPOINT + *_API_KEY"
+            "no connectors configured; add *_DELEGATE or *_ENDPOINT+*_API_KEY or one of: "
+            "BEDROCK_MODEL_ID | (GOOGLE_PROJECT+VERTEX_LOCATION+VERTEX_MODEL_ID) | "
+            "(AZURE_OPENAI_ENDPOINT+AZURE_OPENAI_DEPLOYMENT+AZURE_OPENAI_API_KEY) | "
+            "(AZURE_INFERENCE_ENDPOINT+AZURE_INFERENCE_API_KEY)"
         )
     return errs
 
