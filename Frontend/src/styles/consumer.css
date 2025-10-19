@@ -88,3 +88,30 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter, ui-sans-
 .kv-row{display:flex;gap:8px;align-items:flex-start}
 .k{min-width:140px;color:var(--muted);font-size:12px}
 .v{flex:1;font-size:13px}
+/* --- Icon buttons on header --- */
+.top-icons{display:flex;gap:8px;align-items:center}
+.icon-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:6px 10px;cursor:pointer;transition:.15s}
+.icon-btn:hover{border-color:var(--accent)}
+
+/* --- Modal --- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:60}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:540px;max-width:90vw;box-shadow:var(--shadow)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.modal-title{font-weight:700}
+.modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.modal .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal .theme-row{display:flex;gap:10px;flex-wrap:wrap}
+.modal .chip{border:1px solid var(--line);background:var(--panel-2);border-radius:999px;color:var(--text);padding:6px 10px;cursor:pointer}
+.modal .chip.on{border-color:var(--accent);color:var(--accent)}
+.small{font-size:12px}
+
+/* --- Dispatch chips (four models + web) --- */
+.src-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0 58px}
+.src-chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:999px;padding:6px 10px;font-size:12px}
+.src-chip .dot{width:8px;height:8px;border-radius:999px;background:#646b75}
+.src-chip.queued .dot{background:#646b75}
+.src-chip.running .dot{background:#eab308}
+.src-chip.done .dot{background:#22c55e}
+.src-chip.error .dot{background:#ef4444}
+.src-chip .lat{margin-left:6px;color:var(--muted)}
+.pill.danger,.mini.danger{border-color:var(--danger);color:var(--danger)}
