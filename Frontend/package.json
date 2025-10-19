@@ -15,9 +15,13 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.24.3",
+    "dompurify": "^3.3.0",
+    "highlight.js": "^11.11.1",
     "lucide-react": "^0.363.0",
+    "marked": "^16.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

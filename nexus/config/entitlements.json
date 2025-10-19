@@ -1,0 +1,50 @@
+{
+  "student": {
+    "label": "Student",
+    "priority_weight": 1.25,
+    "concurrency": 2,
+    "rpm": 20,
+    "tpm": 90000,
+    "burst_x": 3,
+    "burst_sec": 60,
+    "models_allow": ["fast/*", "efficient/*"],
+    "frontier_allowed": false,
+    "debate_max": 2,
+    "verify_passes": 0,
+    "max_context_tokens": 64000,
+    "feature_wave": "secondary",
+    "edu_mode": true
+  },
+  "premium": {
+    "label": "Premium",
+    "priority_weight": 1,
+    "concurrency": 2,
+    "rpm": 30,
+    "tpm": 90000,
+    "burst_x": 5,
+    "burst_sec": 60,
+    "models_allow": ["fast/*", "efficient/*"],
+    "frontier_allowed": false,
+    "debate_max": 2,
+    "verify_passes": 1,
+    "max_context_tokens": 64000,
+    "feature_wave": "secondary",
+    "edu_mode": false
+  },
+  "pro": {
+    "label": "Pro",
+    "priority_weight": 3,
+    "concurrency": 8,
+    "rpm": 120,
+    "tpm": 500000,
+    "burst_x": 8,
+    "burst_sec": 120,
+    "models_allow": ["frontier/*", "fast/*", "efficient/*"],
+    "frontier_allowed": true,
+    "debate_max": 4,
+    "verify_passes": 2,
+    "max_context_tokens": 200000,
+    "feature_wave": "early",
+    "edu_mode": false
+  }
+}
