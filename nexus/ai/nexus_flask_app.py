@@ -14,7 +14,7 @@ import traceback
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone
 from functools import wraps
 from typing import Any
 from urllib.parse import urlparse
@@ -57,6 +57,10 @@ from .nexus_engine import (
     build_web_retriever_from_env,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+from nexus.audit_logger import Actor, log_event
+from nexus.plan_resolver import UserTierContext, get_effective_tier
+from nexus.qos import enforce_qos
 
 
 def node_health():
@@ -138,6 +142,49 @@ def _int_env(name: str, default: int, *, minimum: int = 1) -> int:
     if value < minimum:
         raise AppInitializationError(f"Environment variable '{name}' must be >= {minimum}")
     return value
+
+
+def _parse_user_datetime(value: str | None) -> dt | None:
+    if not value:
+        return None
+    try:
+        normalized = value.strip()
+        if not normalized:
+            return None
+        if normalized.endswith("Z"):
+            normalized = normalized[:-1] + "+00:00"
+        parsed = dt.fromisoformat(normalized)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _user_from_headers() -> UserTierContext:
+    user_id = (request.headers.get("X-User-ID") or request.headers.get("X-API-Key") or "anonymous").strip() or "anonymous"
+    billing_tier = (request.headers.get("X-Billing-Tier") or request.headers.get("X-User-Tier") or "").strip() or None
+    verified_until = _parse_user_datetime(request.headers.get("X-Student-Verified-Until"))
+    grace_until = _parse_user_datetime(request.headers.get("X-Student-Grace-Until"))
+    return UserTierContext(
+        id=user_id,
+        billing_tier=billing_tier,
+        student_verified_until=verified_until,
+        student_grace_until=grace_until,
+    )
+
+
+def _current_user() -> UserTierContext:
+    user = getattr(g, "current_user", None)
+    if user is None:
+        user = _user_from_headers()
+        g.current_user = user
+    return user
+
+
+def _current_actor() -> Actor:
+    user = _current_user()
+    return Actor(user_id=user.id, tier=get_effective_tier(user))
 
 
 def _load_gateway_settings() -> GatewaySettings:
@@ -475,8 +522,20 @@ def _valid_api_key(k: str) -> bool:
 def require_api_key(f):
     @wraps(f)
     def _wrap(*args, **kwargs):
-        if not _valid_api_key(request.headers.get("X-API-Key", "")):
+        provided_key = request.headers.get("X-API-Key", "")
+        if not _valid_api_key(provided_key):
+            log_event(
+                "auth.unauthorized",
+                Actor(user_id=provided_key or "anonymous"),
+                {"path": request.path, "method": request.method},
+            )
             return jsonify({"error": "Unauthorized"}), 401
+        g.current_user = _user_from_headers()
+        log_event(
+            "auth.authorized",
+            _current_actor(),
+            {"path": request.path, "method": request.method},
+        )
         return f(*args, **kwargs)
 
     return _wrap
@@ -491,11 +550,38 @@ def _assign_request_id():
     g._request_id_token = token
 
 
+@app.before_request
+def _log_request_start():
+    user = _user_from_headers()
+    g.current_user = user
+    log_event(
+        "request.start",
+        Actor(user_id=user.id, tier=get_effective_tier(user)),
+        {
+            "path": request.path,
+            "method": request.method,
+            "request_id": getattr(g, "request_id", ""),
+        },
+    )
+
+
 @app.after_request
 def _inject_request_id(response: Response):
     rid = getattr(g, "request_id", None)
     if rid:
         response.headers.setdefault("X-Request-ID", rid)
+    user = getattr(g, "current_user", None)
+    actor = Actor(user_id=user.id, tier=get_effective_tier(user)) if user else Actor(user_id="anonymous")
+    log_event(
+        "request.end",
+        actor,
+        {
+            "path": request.path,
+            "method": request.method,
+            "status": response.status_code,
+            "request_id": rid,
+        },
+    )
     return response
 
 
@@ -720,17 +806,36 @@ def status():
 @app.route("/debate", methods=["POST"])
 @require_api_key
 @limiter.limit("20 per minute")
+@enforce_qos(lambda *_args, **_kwargs: _current_user())
 def debate():
     if not request.is_json:
         return jsonify({"error": "Request must be application/json"}), 415
     data = sanitize_input(request.get_json() or {})
     prompt = (data.get("prompt") or "").strip()
     context = (data.get("context") or "overall").strip()
+    requested_models = data.get("models")
+    if not isinstance(requested_models, list):
+        requested_models = []
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
     try:
         session_id = request.headers.get("X-API-Key", "anonymous")
-        result = engine.run(session_id=session_id, query=prompt)
+        log_event(
+            "debate.start",
+            _current_actor(),
+            {"session_id": session_id, "context": context},
+        )
+        result = engine.run(
+            session_id=session_id,
+            query=prompt,
+            requested_models=requested_models,
+            user=_current_user(),
+        )
+        log_event(
+            "debate.end",
+            _current_actor(),
+            {"session_id": session_id, "context": context},
+        )
         _audit_put(
             {
                 "user_id": session_id,
