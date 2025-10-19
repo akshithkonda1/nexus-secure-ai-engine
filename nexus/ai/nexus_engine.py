@@ -62,10 +62,15 @@ import threading
 import shutil
 from collections import Counter, deque
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Tuple, Deque
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Deque
 from urllib.parse import quote_plus, urlparse, urljoin
 from urllib.robotparser import RobotFileParser
+
+from nexus.audit_logger import Actor, log_event
+from nexus.entitlements import entitlement_for
+from nexus.plan_resolver import UserTierContext, get_effective_tier
 
 
 @lru_cache(maxsize=1)
@@ -2014,6 +2019,55 @@ def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[st
     return bm25 + 0.1 * overlap
 
 
+def _allowed_models(available: Iterable[str], tier: str) -> List[str]:
+    ent = entitlement_for(tier)
+    patterns = [str(p).strip().lower() for p in ent.get("models_allow", []) if str(p).strip()]
+    if not patterns:
+        return list(available)
+    allowed: List[str] = []
+    for name in available:
+        lowered = name.lower()
+        if any(fnmatch(lowered, pattern) for pattern in patterns):
+            allowed.append(name)
+    return allowed
+
+
+def _best_default_from(allowed: Iterable[str], available: Iterable[str]) -> Optional[str]:
+    pool = [*allowed] or [*available]
+    return pool[0] if pool else None
+
+
+def _choose_models(
+    available: Iterable[str],
+    requested: Optional[Iterable[str]],
+    tier: str,
+) -> Tuple[List[str], bool, Optional[str]]:
+    ordered_available = [name for name in available]
+    allowed = _allowed_models(ordered_available, tier)
+    if not allowed:
+        allowed = ordered_available
+
+    requested_list = [str(m).strip() for m in (requested or []) if str(m).strip()]
+    requested_exact = [m for m in requested_list if m in ordered_available]
+    chosen: List[str]
+    pro_only = False
+    suggestion: Optional[str] = None
+
+    if requested_exact:
+        chosen = [name for name in requested_exact if name in allowed]
+        if not chosen:
+            pro_only = any(name in ordered_available and name not in allowed for name in requested_exact)
+            chosen = allowed
+            suggestion = _best_default_from(allowed, ordered_available)
+    else:
+        chosen = allowed
+
+    if not chosen:
+        chosen = ordered_available
+
+    return chosen, pro_only, suggestion
+
+
 # =========================================================
 # Engine — strict schema + verified sources + isolation/encryption (MANDATORY AES)
 # =========================================================
@@ -2351,6 +2405,8 @@ class Engine:
         policy_name: Optional[str] = None,
         want_photos: bool = False,
         deadline_ms: Optional[int] = None,
+        requested_models: Optional[List[str]] = None,
+        user: Optional[UserTierContext] = None,
     ) -> Dict[str, Any]:
 
         request_id = uuid.uuid4().hex[:12]
@@ -2385,12 +2441,38 @@ class Engine:
             self._save_mem(session_id, "user", query, {"ephemeral": False})
 
             history = self._history_for(session_id)
-            participants = list(self.connectors.keys())
+            default_tier = os.getenv("NEXUS_DEFAULT_TIER", "pro")
+            tier_user = user or UserTierContext(
+                id=self.access.user_id,
+                billing_tier=default_tier,
+            )
+            tier_name = get_effective_tier(tier_user)
+            available_models = list(self.connectors.keys())
+            chosen_models, pro_only, suggestion = _choose_models(
+                available_models, requested_models, tier_name
+            )
+            connectors_to_use = {
+                name: self.connectors[name]
+                for name in chosen_models
+                if name in self.connectors
+            }
+            if not connectors_to_use:
+                connectors_to_use = self.connectors
+                chosen_models = list(connectors_to_use.keys())
+            participants = list(connectors_to_use.keys())
+            log_event(
+                "model.selection",
+                Actor(user_id=tier_user.id, tier=tier_name),
+                {
+                    "requested": list(requested_models or []),
+                    "chosen": participants,
+                },
+            )
 
             # 1) Run models in parallel
             answers: Dict[str, str] = {}
             latencies: Dict[str, float] = {}
-            max_workers = int(self.config.max_parallel or max(1, len(self.connectors)))
+            max_workers = int(self.config.max_parallel or max(1, len(connectors_to_use)))
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 futs = [
                     pool.submit(
@@ -2403,7 +2485,7 @@ class Engine:
                         request_id=request_id,
                         session_id=session_id,
                     )
-                    for n, c in self.connectors.items()
+                    for n, c in connectors_to_use.items()
                 ]
                 for f in as_completed(futs):
                     name, text, dt = f.result()
@@ -2518,7 +2600,7 @@ class Engine:
             }
             routes = {
                 n: getattr(c, "route", "vendor_direct")
-                for n, c in self.connectors.items()
+                for n, c in connectors_to_use.items()
             }
             payload["meta"] = {
                 "schema_version": self.schema_version,
@@ -2526,7 +2608,16 @@ class Engine:
                 "latencies": latencies,
                 "policy_scores": agg.get("scores"),
                 "routes": routes,  # cloud_native vs vendor_direct
+                "tier": tier_name,
             }
+            if pro_only:
+                payload["pro_only"] = True
+                payload["meta"]["pro_only"] = True
+                if suggestion:
+                    payload["suggested"] = suggestion
+                    payload["meta"]["suggested"] = suggestion
+            elif suggestion:
+                payload.setdefault("meta", {})["suggested"] = suggestion
             return payload
         finally:
             _GLOBAL_CONCURRENCY_SEMAPHORE.release()
