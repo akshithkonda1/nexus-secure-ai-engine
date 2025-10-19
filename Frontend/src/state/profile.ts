@@ -7,8 +7,8 @@ export type UserProfile = {
 };
 
 const defaults: UserProfile = {
-  displayName: 'Akshith',
-  email: 'akkikonda2000@gmail.com',
+  displayName: 'Nexus Explorer',
+  email: 'explorer@nexus.ai',
   avatarDataUrl: null,
 };
 

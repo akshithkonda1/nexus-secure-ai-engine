@@ -5,6 +5,9 @@ import { marked } from "marked";
 import hljs from "highlight.js";
 import { useConversations } from "./useConversations";
 import type { Message } from "./db";
+import ProfileMenu from "./ProfileMenu";
+import ProfileSheet, { type ProfileSheetTab } from "./ProfileSheet";
+import { readProfile, writeProfile, type UserProfile } from "../state/profile";
 
 // ---------- Config ----------
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
@@ -69,26 +72,89 @@ function normalizeName(name: string): SourceKey | null {
 }
 
 // ---------- Settings ----------
+type PreferredModel = "chatgpt" | "claude" | "grok" | "gemini";
+type NexusMode = "balanced" | "research" | "rapid" | "shielded";
+
 type Settings = {
-  theme: "dark" | "light" | "system";
+  theme: "dark" | "light";
   showModels: boolean;
   showAudit: boolean;
+  webUsagePct: number;
+  aiUsagePct: number;
+  useBoth: boolean;
+  requireConsensusBeforeWeb: boolean;
+  preferredModel: PreferredModel;
+  nexusMode: NexusMode;
 };
+
+const DEFAULT_SETTINGS: Settings = {
+  theme: "dark",
+  showModels: true,
+  showAudit: false,
+  webUsagePct: 60,
+  aiUsagePct: 40,
+  useBoth: true,
+  requireConsensusBeforeWeb: true,
+  preferredModel: "chatgpt",
+  nexusMode: "balanced",
+};
+
+const MODEL_KEYS: PreferredModel[] = ["chatgpt", "claude", "grok", "gemini"];
+const MODE_KEYS: NexusMode[] = ["balanced", "research", "rapid", "shielded"];
+
+const MODEL_CHOICES: { key: PreferredModel; label: string; blurb: string }[] = [
+  { key: "chatgpt", label: "ChatGPT", blurb: "Conversational and dependable" },
+  { key: "claude", label: "Claude", blurb: "Thoughtful, policy-forward replies" },
+  { key: "grok", label: "Grok", blurb: "Edgy with realtime context" },
+  { key: "gemini", label: "Gemini", blurb: "Great for knowledge synthesis" },
+];
+
+const MODE_OPTIONS: { key: NexusMode; label: string; blurb: string }[] = [
+  { key: "balanced", label: "Balanced", blurb: "Blend speed and accuracy for most chats" },
+  { key: "research", label: "Research", blurb: "Favor web retrieval and deeper consensus" },
+  { key: "rapid", label: "Rapid", blurb: "Prioritize fast responses with lighter checks" },
+  { key: "shielded", label: "Shielded", blurb: "Maximum guardrails and validation" },
+];
+
+function clampPct(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(100, Math.max(0, Math.round(value)))
+    : fallback;
+}
 
 function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem("nx.settings");
     if (!raw) {
-      return { theme: "dark", showModels: true, showAudit: false };
+      return DEFAULT_SETTINGS;
     }
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as Partial<Settings>;
+    const theme = parsed.theme === "light" ? "light" : "dark";
+    const preferredModel = MODEL_KEYS.includes(parsed.preferredModel as PreferredModel)
+      ? (parsed.preferredModel as PreferredModel)
+      : DEFAULT_SETTINGS.preferredModel;
+    const nexusMode = MODE_KEYS.includes(parsed.nexusMode as NexusMode)
+      ? (parsed.nexusMode as NexusMode)
+      : DEFAULT_SETTINGS.nexusMode;
+
     return {
-      theme: parsed.theme === "light" ? "light" : parsed.theme === "system" ? "system" : "dark",
-      showModels: parsed.showModels !== undefined ? Boolean(parsed.showModels) : true,
-      showAudit: parsed.showAudit !== undefined ? Boolean(parsed.showAudit) : false,
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      theme,
+      preferredModel,
+      nexusMode,
+      showModels: parsed.showModels !== undefined ? Boolean(parsed.showModels) : DEFAULT_SETTINGS.showModels,
+      showAudit: parsed.showAudit !== undefined ? Boolean(parsed.showAudit) : DEFAULT_SETTINGS.showAudit,
+      webUsagePct: clampPct(parsed.webUsagePct, DEFAULT_SETTINGS.webUsagePct),
+      aiUsagePct: clampPct(parsed.aiUsagePct, DEFAULT_SETTINGS.aiUsagePct),
+      useBoth: parsed.useBoth !== undefined ? Boolean(parsed.useBoth) : DEFAULT_SETTINGS.useBoth,
+      requireConsensusBeforeWeb:
+        parsed.requireConsensusBeforeWeb !== undefined
+          ? Boolean(parsed.requireConsensusBeforeWeb)
+          : DEFAULT_SETTINGS.requireConsensusBeforeWeb,
     } satisfies Settings;
   } catch {
-    return { theme: "dark", showModels: true, showAudit: false };
+    return DEFAULT_SETTINGS;
   }
 }
 
@@ -114,22 +180,26 @@ export default function ConsumerChat() {
   } = useConversations();
 
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const [draftSettings, setDraftSettings] = useState<Settings>(settings);
+  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const [profileSheetTab, setProfileSheetTab] = useState<ProfileSheetTab>("user");
   useEffect(() => {
     localStorage.setItem("nx.settings", JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const effective =
-      settings.theme === "dark" || (settings.theme === "system" && prefersDark)
-        ? "dark"
-        : "light";
-    document.documentElement.dataset.theme = effective;
+    document.documentElement.dataset.theme = settings.theme;
   }, [settings.theme]);
 
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  useEffect(() => {
+    if (showSettings) {
+      setDraftSettings(settings);
+    }
+  }, [showSettings, settings]);
   const [turnSources, setTurnSources] = useState<Record<string, SourceStatus[]>>({});
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -159,17 +229,39 @@ export default function ConsumerChat() {
     return () => window.removeEventListener("keydown", onKey);
   }, [archive, current, currentId, moveToTrash, purge, restore, setCurrentId, startNew]);
 
-  const themeIcon = useMemo(() => {
-    if (settings.theme === "light") return "☀️";
-    if (settings.theme === "system") return "🖥️";
-    return "🌙";
-  }, [settings.theme]);
+  const themeIcon = useMemo(() => (settings.theme === "light" ? "☀️" : "🌙"), [settings.theme]);
 
   function cycleTheme() {
-    const order: Settings["theme"][] = ["dark", "light", "system"];
-    const next = order[(order.indexOf(settings.theme) + 1) % order.length];
-    setSettings((prev) => ({ ...prev, theme: next }));
+    setSettings((prev) => ({ ...prev, theme: prev.theme === "dark" ? "light" : "dark" }));
   }
+
+  const handleProfileSave = (next: UserProfile) => {
+    setProfile(next);
+    writeProfile(next);
+  };
+
+  const handleDeleteAccount = () => {
+    alert("Account deletion workflows are in progress. We'll reach out before removing access.");
+    setProfileSheetOpen(false);
+  };
+
+  const handleUpgradePlan = () => {
+    alert("We are working on these plans. For now, enjoy using Nexus freely!");
+  };
+
+  const handleSubmitFeedback = (message: string) => {
+    console.info("System feedback submitted", { message });
+  };
+
+  const handleSaveSettings = () => {
+    setSettings({ ...draftSettings });
+    setShowSettings(false);
+  };
+
+  const handleCancelSettings = () => {
+    setDraftSettings(settings);
+    setShowSettings(false);
+  };
 
   function ensureCurrent() {
     if (current) return Promise.resolve(current);
@@ -408,45 +500,6 @@ export default function ConsumerChat() {
     });
   }
 
-  function StatusActions() {
-    if (!current) return null;
-    const id = current.id;
-    if (current.status === "active") {
-      return (
-        <>
-          <button className="pill" onClick={() => archive(id)}>
-            Archive
-          </button>
-          <button className="pill" onClick={() => moveToTrash(id)}>
-            Delete
-          </button>
-        </>
-      );
-    }
-    if (current.status === "archived") {
-      return (
-        <>
-          <button className="pill on" onClick={() => restore(id)}>
-            Restore
-          </button>
-          <button className="pill" onClick={() => moveToTrash(id)}>
-            Delete
-          </button>
-        </>
-      );
-    }
-    return (
-      <>
-        <button className="pill on" onClick={() => restore(id)}>
-          Restore
-        </button>
-        <button className="pill danger" onClick={() => purge(id)}>
-          Permanently Delete
-        </button>
-      </>
-    );
-  }
-
   return (
     <div className="cx-shell">
       <aside className="cx-sidebar">
@@ -544,13 +597,34 @@ export default function ConsumerChat() {
         <header className="cx-top">
           <div className="title">{current?.title || "Chat"}</div>
           <div className="top-icons">
-            <button className="icon-btn" onClick={cycleTheme} title={`Theme: ${settings.theme}`}>
+            <button
+              className="icon-btn"
+              onClick={cycleTheme}
+              title={`Switch to ${settings.theme === "dark" ? "light" : "dark"} mode`}
+              aria-label="Toggle theme"
+            >
               {themeIcon}
             </button>
-            <button className="icon-btn" onClick={() => setShowSettings(true)} title="Settings">
+            <button
+              className="icon-btn"
+              onClick={() => setShowSettings(true)}
+              title="System Settings"
+              aria-label="Open system settings"
+            >
               ⚙️
             </button>
-            {current && <StatusActions />}
+            <ProfileMenu
+              profile={profile}
+              status={current?.status ?? null}
+              onOpenTab={(tab) => {
+                setProfileSheetTab(tab);
+                setProfileSheetOpen(true);
+              }}
+              onArchive={current ? () => archive(current.id) : undefined}
+              onRestore={current ? () => restore(current.id) : undefined}
+              onMoveToTrash={current ? () => moveToTrash(current.id) : undefined}
+              onPurge={current ? () => purge(current.id) : undefined}
+            />
           </div>
         </header>
 
@@ -600,63 +674,192 @@ export default function ConsumerChat() {
       </section>
 
       {showSettings && (
-        <div className="modal-backdrop" onClick={() => setShowSettings(false)}>
+        <div className="modal-backdrop" onClick={handleCancelSettings}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <div className="modal-title">Settings</div>
-              <button className="icon-btn" onClick={() => setShowSettings(false)}>
+              <div className="modal-title">System Settings</div>
+              <button className="icon-btn" onClick={handleCancelSettings} aria-label="Close system settings">
                 ✖
               </button>
             </div>
-            <div className="modal-body">
-              <div className="row">
-                <label>Theme</label>
-                <div className="theme-row">
+            <div className="modal-body system-settings">
+              <section className="settings-section">
+                <h3>Appearance</h3>
+                <div className="chip-row">
                   <button
-                    className={`chip ${settings.theme === "dark" ? "on" : ""}`}
-                    onClick={() => setSettings((prev) => ({ ...prev, theme: "dark" }))}
+                    className={`chip ${draftSettings.theme === "dark" ? "on" : ""}`}
+                    onClick={() => setDraftSettings((prev) => ({ ...prev, theme: "dark" }))}
                   >
                     Dark
                   </button>
                   <button
-                    className={`chip ${settings.theme === "light" ? "on" : ""}`}
-                    onClick={() => setSettings((prev) => ({ ...prev, theme: "light" }))}
+                    className={`chip ${draftSettings.theme === "light" ? "on" : ""}`}
+                    onClick={() => setDraftSettings((prev) => ({ ...prev, theme: "light" }))}
                   >
                     Light
                   </button>
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>Orchestration mix</h3>
+                <div className="slider-row">
+                  <div>
+                    <label>Web search usage</label>
+                    <p className="muted small">Percentage of turns that should include live web context.</p>
+                  </div>
+                  <div className="slider-control">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={draftSettings.webUsagePct}
+                      onChange={(event) =>
+                        setDraftSettings((prev) => ({
+                          ...prev,
+                          webUsagePct: Number((event.target as HTMLInputElement).value),
+                        }))
+                      }
+                    />
+                    <span>{draftSettings.webUsagePct}%</span>
+                  </div>
+                </div>
+                <div className="slider-row">
+                  <div>
+                    <label>AI model usage</label>
+                    <p className="muted small">Share of orchestrations that rely on multi-model analysis.</p>
+                  </div>
+                  <div className="slider-control">
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={draftSettings.aiUsagePct}
+                      onChange={(event) =>
+                        setDraftSettings((prev) => ({
+                          ...prev,
+                          aiUsagePct: Number((event.target as HTMLInputElement).value),
+                        }))
+                      }
+                    />
+                    <span>{draftSettings.aiUsagePct}%</span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>Automation guards</h3>
+                <div className="toggle-row">
+                  <div>
+                    <span>Use both by default</span>
+                    <p className="muted small">Blend web and AI signals on every turn.</p>
+                  </div>
                   <button
-                    className={`chip ${settings.theme === "system" ? "on" : ""}`}
-                    onClick={() => setSettings((prev) => ({ ...prev, theme: "system" }))}
+                    className={`toggle-pill ${draftSettings.useBoth ? "on" : ""}`}
+                    onClick={() => setDraftSettings((prev) => ({ ...prev, useBoth: !prev.useBoth }))}
                   >
-                    System
+                    {draftSettings.useBoth ? "On" : "Off"}
                   </button>
                 </div>
-              </div>
-              <div className="row">
-                <label>Panels</label>
-                <div className="theme-row">
+                <div className="toggle-row">
+                  <div>
+                    <span>Consensus before web promotion</span>
+                    <p className="muted small">Require model agreement before treating web answers as final.</p>
+                  </div>
                   <button
-                    className={`chip ${settings.showModels ? "on" : ""}`}
-                    onClick={() => setSettings((prev) => ({ ...prev, showModels: !prev.showModels }))}
+                    className={`toggle-pill ${draftSettings.requireConsensusBeforeWeb ? "on" : ""}`}
+                    onClick={() =>
+                      setDraftSettings((prev) => ({
+                        ...prev,
+                        requireConsensusBeforeWeb: !prev.requireConsensusBeforeWeb,
+                      }))
+                    }
                   >
-                    Model Answers
-                  </button>
-                  <button
-                    className={`chip ${settings.showAudit ? "on" : ""}`}
-                    onClick={() => setSettings((prev) => ({ ...prev, showAudit: !prev.showAudit }))}
-                  >
-                    Audit Trail
+                    {draftSettings.requireConsensusBeforeWeb ? "On" : "Off"}
                   </button>
                 </div>
-              </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>Preferred model</h3>
+                <div className="model-grid">
+                  {MODEL_CHOICES.map((choice) => (
+                    <button
+                      type="button"
+                      key={choice.key}
+                      className={`model-chip ${draftSettings.preferredModel === choice.key ? "on" : ""}`}
+                      onClick={() => setDraftSettings((prev) => ({ ...prev, preferredModel: choice.key }))}
+                    >
+                      <strong>{choice.label}</strong>
+                      <span>{choice.blurb}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>Nexus Engine mode</h3>
+                <div className="mode-grid">
+                  {MODE_OPTIONS.map((option) => (
+                    <button
+                      type="button"
+                      key={option.key}
+                      className={`model-chip ${draftSettings.nexusMode === option.key ? "on" : ""}`}
+                      onClick={() => setDraftSettings((prev) => ({ ...prev, nexusMode: option.key }))}
+                    >
+                      <strong>{option.label}</strong>
+                      <span>{option.blurb}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3>Panels</h3>
+                <div className="chip-row">
+                  <button
+                    className={`chip ${draftSettings.showModels ? "on" : ""}`}
+                    onClick={() => setDraftSettings((prev) => ({ ...prev, showModels: !prev.showModels }))}
+                  >
+                    Model answers
+                  </button>
+                  <button
+                    className={`chip ${draftSettings.showAudit ? "on" : ""}`}
+                    onClick={() => setDraftSettings((prev) => ({ ...prev, showAudit: !prev.showAudit }))}
+                  >
+                    Audit trail
+                  </button>
+                </div>
+              </section>
+
               <p className="muted small">
-                Nexus automatically orchestrates multiple models and relevant web lookups. Results are synthesized into a
-                single consensus answer.
+                Nexus orchestrates multiple AI models, validates findings with web context, and promotes consensus results to the
+                conversation.
               </p>
+
+              <div className="settings-actions">
+                <button type="button" className="chip" onClick={handleCancelSettings}>
+                  Cancel
+                </button>
+                <button type="button" className="primary-btn" onClick={handleSaveSettings}>
+                  Save settings
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+      <ProfileSheet
+        open={profileSheetOpen}
+        tab={profileSheetTab}
+        onTabChange={setProfileSheetTab}
+        onClose={() => setProfileSheetOpen(false)}
+        profile={profile}
+        onSaveProfile={handleProfileSave}
+        onDeleteAccount={handleDeleteAccount}
+        onUpgradePlan={handleUpgradePlan}
+        onSubmitFeedback={handleSubmitFeedback}
+      />
     </div>
   );
 }
