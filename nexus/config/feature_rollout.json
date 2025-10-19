@@ -1,0 +1,9 @@
+{
+  "web_rag_v2": {
+    "status": "rolling_out",
+    "waves": {
+      "pro_days": 7,
+      "premium_days_after_pro": 14
+    }
+  }
+}
