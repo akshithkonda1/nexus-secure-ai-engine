@@ -178,12 +178,16 @@ These documents are the canonical source for SRE and security teams preparing a 
 ## Getting Started
 ```bash
 # 1. Clone repository
-git clone https://github.com/akshiththeindian/nexus-secure-ai-engine.git
+git clone https://github.com/akshithkonda1/nexus-secure-ai-engine.git
 cd nexus-secure-ai-engine
 
 # 2. Create a local environment file
 cp .env.example .env
 # Edit .env with production values (API keys, trusted origins, Redis, DynamoDB, etc.).
+# At minimum set:
+#   AUTHORIZED_API_KEYS=dev-key
+#   TRUSTED_ORIGINS=https://localhost:8443
+#   REDIS_URL=redis://localhost:6379/0
 
 # 3. Run the stack locally (Redis + Nexus gateway)
 docker compose up --build
@@ -199,6 +203,32 @@ NEXUS_API_KEY=replace-with-key \
 NEXUS_BASE_URL=https://localhost:8443 \
   k6 run tests/load/k6-smoke.js
 ```
+
+> **Fair-use QoS:** "Unlimited" refers to the absence of a fixed monthly request quota. The platform still enforces fair-use rat
+e/concurrency/token shaping so shared capacity stays healthy.
+
+### Pricing tiers & entitlements
+
+| Tier     | Label     | Highlights                                                                 | Frontier | QoS (rpm/concurrency) |
+|----------|-----------|------------------------------------------------------------------------------|----------|-----------------------|
+| Student  | Student   | Unlimited • Fast/Efficient • EDU UI • Annual verification                   | ❌        | 20 / 2                |
+| Premium  | Premium   | Unlimited • Fast/Efficient • Standard Priority                              | ❌        | 30 / 2                |
+| Pro      | Pro       | Unlimited • Priority Lane • Frontier Models • Early Access                  | ✅        | 120 / 8               |
+
+`entitlements.json` in [`nexus/config/`](nexus/config) drives these controls; update the file to change concurrency, token allo
+wances, and flags consumed by the gateway/frontend.
+
+### Founders Month launch controls
+
+Two environment variables control the Founders Month experience:
+
+```bash
+PRICING_MODE=founders_month
+FOUNDERS_END=2025-11-18T00:00:00Z
+```
+
+Switch `PRICING_MODE` to `ga_with_trials` (or any future launch flag) to revert to the generally available behavior without rede
+ploying the stack.
 
 > **Note:** Leave `NEXUS_ALLOW_TEST_FALLBACKS` unset in production deployments. Setting it to `1` enables lightweight HTTP/crypto stubs that exist solely for offline unit tests.
 
