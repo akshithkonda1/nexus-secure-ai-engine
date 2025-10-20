@@ -153,6 +153,35 @@ input, textarea { border: none; outline: none; background: transparent; }
   font-size: 0.95rem;
 }
 
+.chatgpt-thread-load-more {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0 0.25rem;
+}
+
+.chatgpt-thread-load-more-button {
+  border: 1px solid rgba(var(--border), 0.6);
+  background: rgba(var(--surface), 0.75);
+  color: rgb(var(--fg));
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.chatgpt-thread-load-more-button:hover {
+  background: rgba(var(--surface), 0.95);
+  border-color: rgba(var(--border), 0.85);
+}
+
+.chatgpt-thread-load-more-count {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
 .chatgpt-message-row {
   display: flex;
   align-items: flex-start;
