@@ -160,16 +160,22 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   const handleSavePassword = (event: React.FormEvent) => {
     event.preventDefault();
     if (!passwords.current || !passwords.next || !passwords.confirm) {
-      setPasswordStatus("Fill out your current, new, and confirmation password to update your credentials.");
+      setPasswordStatus({
+        tone: "error",
+        text: "Fill out your current, new, and confirmation password to update your credentials.",
+      });
       return;
     }
     if (passwords.next !== passwords.confirm) {
-      setPasswordStatus("New password and confirmation need to match.");
+      setPasswordStatus({
+        tone: "error",
+        text: "New password and confirmation need to match.",
+      });
       return;
     }
     onChangePassword({ current: passwords.current, next: passwords.next });
     setPasswords({ current: "", next: "", confirm: "" });
-    setPasswordStatus("Password updated successfully.");
+    setPasswordStatus({ tone: "success", text: "Password updated successfully." });
   };
 
   const handleDelete = () => {
