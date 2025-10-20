@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "../state/profile";
 
-export type ProfileSheetTab = "user" | "security" | "plan" | "feedback";
+export type ProfileSheetTab = "user" | "plan" | "feedback";
 
 type ProfileSheetProps = {
   open: boolean;
@@ -9,10 +9,9 @@ type ProfileSheetProps = {
   onClose: () => void;
   profile: UserProfile;
   onSaveProfile: (profile: UserProfile) => void;
-  onChangePassword: (payload: { current: string; next: string }) => void;
   onDeleteAccount: () => void;
   onUpgradePlan: () => void;
-  onSubmitFeedback: (feedback: { subject: string; category: string; message: string }) => void;
+  onSubmitFeedback: (message: string) => void;
 };
 
 const TAB_META: Record<ProfileSheetTab, { heading: string; subheading: string }> = {
@@ -40,53 +39,28 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   onClose,
   profile,
   onSaveProfile,
-  onChangePassword,
   onDeleteAccount,
   onUpgradePlan,
   onSubmitFeedback,
 }) => {
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [status, setStatus] = useState<string | null>(null);
-  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
-  const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
-  const [feedbackSubject, setFeedbackSubject] = useState("");
-  const [feedbackCategory, setFeedbackCategory] = useState("Feature Request");
   const [feedback, setFeedback] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
-  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
-  const planAlertShownRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       setDraft(profile);
       setStatus(null);
-      setPasswords({ current: "", next: "", confirm: "" });
-      setPasswordStatus(null);
-      setFeedbackSubject("");
-      setFeedbackCategory("Feature Request");
       setFeedbackStatus(null);
-      setFeedback("");
-      planAlertShownRef.current = false;
-      setShowAvatarPreview(false);
     }
   }, [open, profile]);
 
   useEffect(() => {
     if (!open) return;
     setStatus(null);
-    setPasswordStatus(null);
     setFeedbackStatus(null);
     if (tab === "plan" && !planAlertShownRef.current) {
-      alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
-      planAlertShownRef.current = true;
-    }
-    if (tab !== "plan") {
-      planAlertShownRef.current = false;
-    }
-  }, [open, tab]);
-
-  useEffect(() => {
-    if (open && tab === "plan" && !planAlertShownRef.current) {
       alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
       planAlertShownRef.current = true;
     }
@@ -154,20 +128,13 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   };
 
   const handleSendFeedback = () => {
-    const subject = feedbackSubject.trim();
     const message = feedback.trim();
-    if (!subject) {
-      setFeedbackStatus("Add a subject so we can route your feedback.");
-      return;
-    }
     if (!message) {
-      setFeedbackStatus("Describe the issue in detail before sending.");
+      setFeedbackStatus("Add a bit more detail before sending.");
       return;
     }
-    onSubmitFeedback({ subject, category: feedbackCategory, message });
+    onSubmitFeedback(message);
     setFeedback("");
-    setFeedbackSubject("");
-    setFeedbackCategory("Feature Request");
     setFeedbackStatus("Thanks! Your feedback has been recorded.");
   };
 
@@ -229,22 +196,6 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     value={draft.email}
                     onChange={(event) => setDraft((prev) => ({ ...prev, email: event.target.value }))}
                   />
-                </label>
-
-                <label className="profile-field">
-                  <span>Workspace bio</span>
-                  <textarea
-                    rows={3}
-                    placeholder="Tell teammates how you partner with Nexus."
-                    value={draft.bio}
-                    onChange={(event) =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        bio: event.target.value,
-                      }))
-                    }
-                  />
-                  <small className="muted">Share a short note that appears in collaboration spaces.</small>
                 </label>
 
                 <div className="profile-hints">
@@ -415,22 +366,6 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
           )}
         </div>
       </div>
-      {showAvatarPreview && draft.avatarDataUrl && (
-        <div
-          className="avatar-preview-backdrop"
-          role="dialog"
-          aria-modal
-          aria-label="Profile photo preview"
-          onClick={() => setShowAvatarPreview(false)}
-        >
-          <div className="avatar-preview" onClick={(event) => event.stopPropagation()}>
-            <img src={draft.avatarDataUrl} alt="Profile avatar enlarged preview" />
-            <button type="button" className="icon-btn" onClick={() => setShowAvatarPreview(false)} aria-label="Close preview">
-              ✖
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
