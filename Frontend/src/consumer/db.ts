@@ -1,6 +1,3 @@
-// Frontend/src/consumer/db.ts
-// Zero-dep IndexedDB helper for conversation storage.
-
 export type Role = "user" | "assistant" | "system";
 export type AuditItem = Record<string, string | number | boolean | null | undefined>;
 export type ModelAnswers = Record<string, string>;
@@ -20,8 +17,8 @@ export type Conversation = {
   id: string;
   title: string;
   status: ConversationStatus;
-  createdAt: number; // epoch ms
-  updatedAt: number; // epoch ms
+  createdAt: number;
+  updatedAt: number;
   messages: Message[];
 };
 
@@ -52,9 +49,9 @@ async function tx(mode: IDBTransactionMode) {
   return { db, t, s };
 }
 
-export async function getConversation(id: string): Promise<Conversation | undefined> {
+export async function getConversation(id: string) {
   const { db, t, s } = await tx("readonly");
-  return new Promise((resolve, reject) => {
+  return new Promise<Conversation | undefined>((resolve, reject) => {
     const req = s.get(id);
     req.onsuccess = () => resolve(req.result as Conversation | undefined);
     req.onerror = () => reject(req.error);
@@ -62,9 +59,9 @@ export async function getConversation(id: string): Promise<Conversation | undefi
   });
 }
 
-export async function putConversation(c: Conversation): Promise<void> {
+export async function putConversation(c: Conversation) {
   const { db, t, s } = await tx("readwrite");
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const req = s.put(c);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
@@ -72,9 +69,9 @@ export async function putConversation(c: Conversation): Promise<void> {
   });
 }
 
-export async function deleteConversation(id: string): Promise<void> {
+export async function deleteConversation(id: string) {
   const { db, t, s } = await tx("readwrite");
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const req = s.delete(id);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
@@ -82,9 +79,9 @@ export async function deleteConversation(id: string): Promise<void> {
   });
 }
 
-export async function listConversations(): Promise<Conversation[]> {
+export async function listConversations() {
   const { db, t, s } = await tx("readonly");
-  return new Promise((resolve, reject) => {
+  return new Promise<Conversation[]>((resolve, reject) => {
     const req = s.getAll();
     req.onsuccess = () => {
       const items = (req.result as Conversation[]).sort((a, b) => b.updatedAt - a.updatedAt);
@@ -95,7 +92,7 @@ export async function listConversations(): Promise<Conversation[]> {
   });
 }
 
-export async function emptyTrash(): Promise<void> {
+export async function emptyTrash() {
   const all = await listConversations();
   await Promise.all(all.filter(c => c.status === "trash").map(c => deleteConversation(c.id)));
 }
