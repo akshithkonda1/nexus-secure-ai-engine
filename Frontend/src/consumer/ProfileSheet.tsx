@@ -85,6 +85,16 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
     }
   }, [open, tab]);
 
+  useEffect(() => {
+    if (open && tab === "plan" && !planAlertShownRef.current) {
+      alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
+      planAlertShownRef.current = true;
+    }
+    if (tab !== "plan") {
+      planAlertShownRef.current = false;
+    }
+  }, [open, tab]);
+
   if (!open) {
     return null;
   }
