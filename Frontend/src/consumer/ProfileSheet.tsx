@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { UserProfile } from "../state/profile";
 
-export type ProfileSheetTab = "user" | "plan" | "feedback";
+export type ProfileSheetTab = "user" | "security" | "plan" | "feedback";
 
 type ProfileSheetProps = {
   open: boolean;
@@ -10,15 +10,17 @@ type ProfileSheetProps = {
   onClose: () => void;
   profile: UserProfile;
   onSaveProfile: (profile: UserProfile) => void;
+  onChangePassword: (payload: { current: string; next: string }) => void;
   onDeleteAccount: () => void;
   onUpgradePlan: () => void;
-  onSubmitFeedback: (message: string) => void;
+  onSubmitFeedback: (feedback: { subject: string; category: string; message: string }) => void;
 };
 
 const navConfig: { key: ProfileSheetTab; label: string; subtitle: string }[] = [
   { key: "user", label: "Menu 1 · User Settings", subtitle: "Update your identity" },
-  { key: "plan", label: "Menu 2 · Plan & Billing", subtitle: "Manage access" },
-  { key: "feedback", label: "Menu 3 · System Feedback", subtitle: "Share improvements" },
+  { key: "security", label: "Menu 2 · Account Security", subtitle: "Guard your credentials" },
+  { key: "plan", label: "Menu 3 · Plan & Billing", subtitle: "Manage access" },
+  { key: "feedback", label: "Menu 4 · System Feedback", subtitle: "Share improvements" },
 ];
 
 const PROFILE_HINTS = [
@@ -40,27 +42,52 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   onClose,
   profile,
   onSaveProfile,
+  onChangePassword,
   onDeleteAccount,
   onUpgradePlan,
   onSubmitFeedback,
 }) => {
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [status, setStatus] = useState<string | null>(null);
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
+  const [feedbackSubject, setFeedbackSubject] = useState("");
+  const [feedbackCategory, setFeedbackCategory] = useState("Feature Request");
   const [feedback, setFeedback] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const planAlertShownRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       setDraft(profile);
       setStatus(null);
+      setPasswords({ current: "", next: "", confirm: "" });
+      setPasswordStatus(null);
+      setFeedbackSubject("");
+      setFeedbackCategory("Feature Request");
       setFeedbackStatus(null);
+      setFeedback("");
+      planAlertShownRef.current = false;
+      setShowAvatarPreview(false);
     }
   }, [open, profile]);
 
   useEffect(() => {
     setStatus(null);
+    setPasswordStatus(null);
     setFeedbackStatus(null);
   }, [tab]);
+
+  useEffect(() => {
+    if (open && tab === "plan" && !planAlertShownRef.current) {
+      alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
+      planAlertShownRef.current = true;
+    }
+    if (tab !== "plan") {
+      planAlertShownRef.current = false;
+    }
+  }, [open, tab]);
 
   if (!open) {
     return null;
@@ -93,8 +120,25 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
   const handleSaveProfile = (event: React.FormEvent) => {
     event.preventDefault();
-    onSaveProfile(draft);
-    setStatus("Profile saved.");
+    if (passwords.current || passwords.next || passwords.confirm) {
+      if (!passwords.current || !passwords.next || !passwords.confirm) {
+        setPasswordStatus("Fill out your current, new, and confirmation password to update your credentials.");
+        return;
+      }
+      if (passwords.next !== passwords.confirm) {
+        setPasswordStatus("New password and confirmation need to match.");
+        return;
+      }
+      onChangePassword({ current: passwords.current, next: passwords.next });
+      setPasswords({ current: "", next: "", confirm: "" });
+      setPasswordStatus("Password updated successfully.");
+    }
+    const nextProfile: UserProfile = { ...draft, bio: draft.bio ?? "" };
+    setDraft(nextProfile);
+    onSaveProfile(nextProfile);
+    if (tab === "user") {
+      setStatus("Profile saved.");
+    }
   };
 
   const handleDelete = () => {
@@ -104,13 +148,20 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   };
 
   const handleSendFeedback = () => {
+    const subject = feedbackSubject.trim();
     const message = feedback.trim();
-    if (!message) {
-      setFeedbackStatus("Add a bit more detail before sending.");
+    if (!subject) {
+      setFeedbackStatus("Add a subject so we can route your feedback.");
       return;
     }
-    onSubmitFeedback(message);
+    if (!message) {
+      setFeedbackStatus("Describe the issue in detail before sending.");
+      return;
+    }
+    onSubmitFeedback({ subject, category: feedbackCategory, message });
     setFeedback("");
+    setFeedbackSubject("");
+    setFeedbackCategory("Feature Request");
     setFeedbackStatus("Thanks! Your feedback has been recorded.");
   };
 
@@ -144,9 +195,17 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
             {tab === "user" && (
               <form className="profile-form" onSubmit={handleSaveProfile}>
                 <div className="profile-row">
-                  <div className="profile-avatar-large" aria-hidden>
+                  <div className="profile-avatar-large">
                     {draft.avatarDataUrl ? (
-                      <img src={draft.avatarDataUrl} alt="Profile avatar preview" />
+                      <button
+                        type="button"
+                        className="avatar-preview-trigger"
+                        onClick={() => setShowAvatarPreview(true)}
+                        aria-label="View profile photo in full size"
+                        title="View profile photo"
+                      >
+                        <img src={draft.avatarDataUrl} alt="Profile avatar preview" />
+                      </button>
                     ) : (
                       <span>{initials}</span>
                     )}
@@ -180,6 +239,22 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                   />
                 </label>
 
+                <label className="profile-field">
+                  <span>Workspace bio</span>
+                  <textarea
+                    rows={3}
+                    placeholder="Tell teammates how you partner with Nexus."
+                    value={draft.bio}
+                    onChange={(event) =>
+                      setDraft((prev) => ({
+                        ...prev,
+                        bio: event.target.value,
+                      }))
+                    }
+                  />
+                  <small className="muted">Share a short note that appears in collaboration spaces.</small>
+                </label>
+
                 <div className="profile-hints">
                   {PROFILE_HINTS.map((item) => (
                     <div key={item.label}>
@@ -202,12 +277,78 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
               </form>
             )}
 
+            {tab === "security" && (
+              <form className="profile-form" onSubmit={handleSaveProfile}>
+                <div className="profile-security-intro">
+                  <h3>Change password</h3>
+                  <p className="muted small">
+                    Update your Nexus credentials. Passwords must be at least 12 characters and include a mix of symbols.
+                  </p>
+                </div>
+                <label className="profile-field">
+                  <span>Current password</span>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={passwords.current}
+                    onChange={(event) => {
+                      setPasswords((prev) => ({
+                        ...prev,
+                        current: event.target.value,
+                      }));
+                      setPasswordStatus(null);
+                    }}
+                  />
+                </label>
+                <label className="profile-field">
+                  <span>New password</span>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwords.next}
+                    onChange={(event) => {
+                      setPasswords((prev) => ({
+                        ...prev,
+                        next: event.target.value,
+                      }));
+                      setPasswordStatus(null);
+                    }}
+                  />
+                </label>
+                <label className="profile-field">
+                  <span>Confirm new password</span>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwords.confirm}
+                    onChange={(event) => {
+                      setPasswords((prev) => ({
+                        ...prev,
+                        confirm: event.target.value,
+                      }));
+                      setPasswordStatus(null);
+                    }}
+                  />
+                </label>
+
+                {passwordStatus && (
+                  <p className={`small ${passwordStatus.includes("successfully") ? "success" : "error"}`}>{passwordStatus}</p>
+                )}
+
+                <div className="profile-actions end">
+                  <button type="submit" className="primary-btn">
+                    Save changes
+                  </button>
+                </div>
+              </form>
+            )}
+
             {tab === "plan" && (
               <div className="plan-card">
                 <div>
                   <h3>Current plan: Free</h3>
                   <p className="muted">
-                    Enjoy orchestrated insights across Nexus models while we finish premium plans.
+                    For now Nexus is free to use. We will let you know when billing and our plans become available.
                   </p>
                   <ul>
                     {PLAN_FEATURES.map((feature) => (
@@ -229,14 +370,48 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
             {tab === "feedback" && (
               <div className="feedback-card">
+                <div className="feedback-grid">
+                  <label className="profile-field">
+                    <span>Subject</span>
+                    <input
+                      type="text"
+                      placeholder="Give your feedback a headline"
+                      value={feedbackSubject}
+                      onChange={(event) => {
+                        setFeedbackSubject(event.target.value);
+                        setFeedbackStatus(null);
+                      }}
+                    />
+                  </label>
+                  <label className="profile-field">
+                    <span>Feedback type</span>
+                    <select
+                      value={feedbackCategory}
+                      onChange={(event) => {
+                        setFeedbackCategory(event.target.value);
+                        setFeedbackStatus(null);
+                      }}
+                    >
+                      <option value="Feature Request">Feature Request</option>
+                      <option value="System Glitch and Bug">System Glitch and Bug</option>
+                      <option value="Incorrect Result">Incorrect Result</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                </div>
                 <label className="profile-field">
-                  <span>System feedback</span>
-                  <textarea
-                    rows={6}
-                    placeholder="Share ideas, bugs, or improvements for the Nexus Engine."
-                    value={feedback}
-                    onChange={(event) => setFeedback(event.target.value)}
-                  />
+                  <span>Details</span>
+                    <textarea
+                      rows={7}
+                      maxLength={15000}
+                      placeholder="Describe the issue in detail. Be detailed and let us know what we can improve."
+                      value={feedback}
+                      onChange={(event) => {
+                        setFeedback(event.target.value);
+                        setFeedbackStatus(null);
+                      }}
+                    />
+                  <small className="muted">{feedback.length.toLocaleString()} / 15,000 characters</small>
                 </label>
                 <div className="profile-actions end">
                   <button type="button" className="primary-btn" onClick={handleSendFeedback}>
@@ -249,6 +424,22 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
           </div>
         </div>
       </div>
+      {showAvatarPreview && draft.avatarDataUrl && (
+        <div
+          className="avatar-preview-backdrop"
+          role="dialog"
+          aria-modal
+          aria-label="Profile photo preview"
+          onClick={() => setShowAvatarPreview(false)}
+        >
+          <div className="avatar-preview" onClick={(event) => event.stopPropagation()}>
+            <img src={draft.avatarDataUrl} alt="Profile avatar enlarged preview" />
+            <button type="button" className="icon-btn" onClick={() => setShowAvatarPreview(false)} aria-label="Close preview">
+              ✖
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
