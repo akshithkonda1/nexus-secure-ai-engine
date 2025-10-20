@@ -1,27 +1,86 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { Message } from '../../types/chat';
 import MessageBubble from './MessageBubble';
 
-const ESTIMATED_ROW_HEIGHT = 72;
-const DEFAULT_BATCH = 16;
-const OVERSCAN = 6;
+type DayStamp = { id: string; label: string };
 
-type Range = { start: number; end: number };
-
-function clampRange(range: Range, total: number): Range {
-  if (total === 0) {
-    return { start: 0, end: 0 };
+const dayFormatter = (() => {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return null;
   }
+})();
 
-  const start = Math.max(0, Math.min(range.start, total - 1));
-  const end = Math.max(start + 1, Math.min(range.end, total));
-  return { start, end };
-}
+const formatDay = (ts: number): string => {
+  if (dayFormatter) {
+    try {
+      return dayFormatter.format(ts);
+    } catch {
+      // fall through to locale string
+    }
+  }
+  return new Date(ts).toLocaleDateString();
+};
+
+const isSameDay = (a: number, b: number): boolean => {
+  const first = new Date(a);
+  const second = new Date(b);
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
+};
+
+const MAX_INITIAL_BATCH = 250;
+
+const computeBaseline = (count: number): number => {
+  if (count <= 60) return count;
+  if (count <= 160) {
+    return Math.max(40, Math.round(count * 0.5));
+  }
+  if (count <= MAX_INITIAL_BATCH) {
+    return Math.max(80, Math.round(count * 0.7));
+  }
+  return MAX_INITIAL_BATCH;
+};
 
 const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
   const listRef = useRef<HTMLDivElement | null>(null);
-  const rowHeightRef = useRef<number>(ESTIMATED_ROW_HEIGHT);
-  const stickToBottomRef = useRef<boolean>(true);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const [autoStick, setAutoStick] = useState(true);
+  const hasMountedRef = useRef(false);
+  const [visibleCount, setVisibleCount] = useState<number>(() =>
+    computeBaseline(messages.length)
+  );
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      setVisibleCount(0);
+      return;
+    }
+
+    const baseline = computeBaseline(messages.length);
+    setVisibleCount((prev) => {
+      if (prev === 0) {
+        return baseline;
+      }
+      const next = Math.min(messages.length, Math.max(prev, baseline));
+      return next;
+    });
+  }, [messages.length]);
 
   const currentTime = useMemo(() => Date.now(), [messages]);
   const total = messages.length;
@@ -85,36 +144,69 @@ const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
     updateRange(node);
   }, [updateRange]);
 
-  useEffect(() => {
-    const node = listRef.current;
-    if (!node) {
+  const displayedMessages = useMemo(() => {
+    if (visibleCount <= 0) {
+      return [] as Message[];
+    }
+    if (visibleCount >= messages.length) {
+      return messages;
+    }
+    return messages.slice(-visibleCount);
+  }, [messages, visibleCount]);
+
+  const latestId = useMemo(
+    () => displayedMessages.at(-1)?.id ?? null,
+    [displayedMessages]
+  );
+
+  const hiddenCount = Math.max(0, messages.length - displayedMessages.length);
+
+  const scrollToBottom = useCallback((behavior?: ScrollBehavior) => {
+    const target = bottomRef.current;
+    const container = listRef.current;
+    if (!target || !container) {
       return;
     }
 
-    updateRange(node, { forceToBottom: stickToBottomRef.current });
+    const resolved = behavior ?? (hasMountedRef.current ? 'smooth' : 'auto');
+    if (typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: resolved, block: 'end' });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, []);
 
-    if (stickToBottomRef.current) {
-      if (typeof node.scrollTo === 'function') {
-        node.scrollTo({ top: node.scrollHeight });
-      } else {
-        node.scrollTop = node.scrollHeight;
+  const timeline = useMemo(() => {
+    const result: (Message | DayStamp)[] = [];
+    displayedMessages.forEach((message, index) => {
+      const prev = displayedMessages[index - 1];
+      if (!prev || !isSameDay(prev.ts, message.ts)) {
+        result.push({ id: `day-${message.id}`, label: formatDay(message.ts) });
       }
-    }
-  }, [messages, updateRange]);
-
-  useEffect(() => {
-    const node = listRef.current;
-    if (!node || typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    const observer = new ResizeObserver(() => {
-      updateRange(node, { forceToBottom: stickToBottomRef.current });
+      result.push(message);
     });
+    return result;
+  }, [displayedMessages]);
 
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [updateRange]);
+  useEffect(() => {
+    hasMountedRef.current = true;
+  }, []);
+
+  const previousLengthRef = useRef(messages.length);
+
+  useLayoutEffect(() => {
+    if (!autoStick) {
+      previousLengthRef.current = messages.length;
+      return;
+    }
+
+    const isFirstRender = !hasMountedRef.current;
+    if (isFirstRender || messages.length !== previousLengthRef.current) {
+      scrollToBottom(isFirstRender ? 'auto' : 'smooth');
+    }
+
+    previousLengthRef.current = messages.length;
+  }, [messages.length, autoStick, scrollToBottom]);
 
   useEffect(() => {
     const node = listRef.current;
@@ -122,47 +214,99 @@ const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
       return;
     }
 
-    const sample = node.querySelector<HTMLElement>('[data-virtual-item="true"]');
-    if (sample) {
-      const measured = sample.getBoundingClientRect().height;
-      if (measured > 0 && Math.abs(measured - rowHeightRef.current) > 2) {
-        rowHeightRef.current = measured;
-        updateRange(node, { forceToBottom: stickToBottomRef.current });
-      }
-    }
-  }, [range, updateRange]);
+    const handleScroll = () => {
+      const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
+      setAutoStick(distance <= 120);
+    };
 
-  if (total === 0) {
+    handleScroll();
+    node.addEventListener('scroll', handleScroll, { passive: true });
+    return () => node.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  if (displayedMessages.length === 0) {
     return (
-      <div ref={listRef} className="chatgpt-thread" aria-label="Conversation" onScroll={handleScroll}>
+      <div ref={listRef} className="chatgpt-thread" aria-label="Conversation history">
         <div className="chatgpt-thread-empty">
-          Ask anything to begin. The secure assistant will synthesize vetted answers here.
+          <div className="chatgpt-thread-empty-icon" aria-hidden>
+            💬
+          </div>
+          <h2>How can Nexus help today?</h2>
+          <p>
+            Ask a question, paste context, or share a document. Nexus will orchestrate trusted
+            answers here.
+          </p>
         </div>
+        <div ref={bottomRef} aria-hidden />
       </div>
     );
   }
 
-  const itemHeight = Math.max(32, rowHeightRef.current || ESTIMATED_ROW_HEIGHT);
-  const paddingTop = range.start * itemHeight;
-  const paddingBottom = Math.max(0, total - range.end) * itemHeight;
-  const visibleMessages = messages.slice(range.start, range.end);
-
   return (
     <div
-      ref={listRef}
       className="chatgpt-thread"
-      aria-label="Conversation"
-      onScroll={handleScroll}
+      ref={listRef}
+      role="log"
+      aria-live="polite"
+      aria-label="Conversation history"
     >
-      <div style={{ paddingTop, paddingBottom }}>
-        {visibleMessages.map((message) => (
-          <div key={message.id} data-virtual-item="true">
-            <MessageBubble msg={message} currentTime={currentTime} />
-          </div>
-        ))}
-      </div>
+      {hiddenCount > 0 && (
+        <div className="chatgpt-thread-load-more">
+          <button
+            type="button"
+            className="chatgpt-thread-load-more-button"
+            onClick={() => {
+              setVisibleCount((prev) =>
+                Math.min(messages.length, prev + MAX_INITIAL_BATCH)
+              );
+            }}
+          >
+            Show earlier messages
+          </button>
+          <span className="chatgpt-thread-load-more-count">
+            {hiddenCount.toLocaleString()} older messages hidden
+          </span>
+        </div>
+      )}
+
+      {timeline.map((item) => {
+        if ('label' in item) {
+          return (
+            <div key={item.id} className="chatgpt-thread-separator" aria-label={item.label}>
+              <span>{item.label}</span>
+            </div>
+          );
+        }
+
+        const isLatest = item.id === latestId;
+        return (
+          <MessageBubble
+            key={item.id}
+            msg={item}
+            currentTime={currentTime}
+            isLatest={isLatest}
+          />
+        );
+      })}
+
+      {!autoStick && (
+        <button
+          type="button"
+          className="chatgpt-scroll-to-bottom"
+          onClick={() => {
+            setAutoStick(true);
+            scrollToBottom('smooth');
+          }}
+        >
+          Jump to latest
+        </button>
+      )}
+
+      <div ref={bottomRef} aria-hidden />
     </div>
   );
 };
 
-export default ChatList;
+ChatList.displayName = 'ChatList';
+
+export default React.memo(ChatList);

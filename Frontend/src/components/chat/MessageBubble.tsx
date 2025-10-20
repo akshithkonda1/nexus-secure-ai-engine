@@ -5,14 +5,20 @@ import { formatRelative } from '../../lib/time';
 type MessageBubbleProps = {
   msg: Message;
   currentTime: number;
+  isLatest?: boolean;
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, currentTime }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ msg, currentTime, isLatest }) => {
   const isUser = msg.role === 'user';
   const label = isUser ? 'You' : 'Nexus Assistant';
 
   return (
-    <article className={`chatgpt-message-row ${isUser ? 'is-user' : ''}`}>
+    <article
+      className={`chatgpt-message-row ${isUser ? 'is-user' : ''} ${
+        isLatest ? 'is-latest' : ''
+      }`}
+      data-latest={isLatest ? 'true' : undefined}
+    >
       <div className="chatgpt-message-avatar" aria-hidden>
         {isUser ? 'You'[0] : 'NX'}
       </div>
