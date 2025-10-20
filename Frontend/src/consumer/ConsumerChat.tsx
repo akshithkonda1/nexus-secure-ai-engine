@@ -203,6 +203,16 @@ export default function ConsumerChat() {
       setDraftSettings(settings);
     }
   }, [showSettings, settings]);
+  useEffect(() => {
+    if (!showSettings) {
+      return;
+    }
+    const previousTheme = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = draftSettings.theme;
+    return () => {
+      document.documentElement.dataset.theme = settings.theme ?? previousTheme;
+    };
+  }, [draftSettings.theme, showSettings, settings.theme]);
   const [turnSources, setTurnSources] = useState<Record<string, SourceStatus[]>>({});
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -243,17 +253,22 @@ export default function ConsumerChat() {
     writeProfile(next);
   };
 
+  const handleChangePassword = ({ current, next }: { current: string; next: string }) => {
+    console.info("Password change requested", { currentLength: current.length, nextLength: next.length });
+    alert("Your password update will be synchronized with Nexus identity services shortly.");
+  };
+
   const handleDeleteAccount = () => {
     alert("Account deletion workflows are in progress. We'll reach out before removing access.");
     setProfileSheetOpen(false);
   };
 
   const handleUpgradePlan = () => {
-    alert("We are working on these plans. For now, enjoy using Nexus freely!");
+    alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
   };
 
-  const handleSubmitFeedback = (message: string) => {
-    console.info("System feedback submitted", { message });
+  const handleSubmitFeedback = (feedback: { subject: string; category: string; message: string }) => {
+    console.info("System feedback submitted", feedback);
   };
 
   const handleSaveSettings = () => {
@@ -623,6 +638,7 @@ export default function ConsumerChat() {
                 setProfileSheetTab(tab);
                 setProfileSheetOpen(true);
               }}
+              onOpenSystemSettings={() => setShowSettings(true)}
               onArchive={current ? () => archive(current.id) : undefined}
               onRestore={current ? () => restore(current.id) : undefined}
               onMoveToTrash={current ? () => moveToTrash(current.id) : undefined}
@@ -859,6 +875,7 @@ export default function ConsumerChat() {
         onClose={() => setProfileSheetOpen(false)}
         profile={profile}
         onSaveProfile={handleProfileSave}
+        onChangePassword={handleChangePassword}
         onDeleteAccount={handleDeleteAccount}
         onUpgradePlan={handleUpgradePlan}
         onSubmitFeedback={handleSubmitFeedback}
