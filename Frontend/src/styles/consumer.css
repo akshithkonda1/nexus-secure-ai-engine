@@ -129,9 +129,16 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter, ui-sans-
 .profile-divider{height:1px;background:var(--line)}
 .profile-dropdown-section{display:flex;flex-direction:column;gap:8px}
 .profile-dropdown-section.conversation{gap:6px}
-.profile-dropdown-section button{background:transparent;border:none;color:var(--text);text-align:left;padding:6px;border-radius:10px;cursor:pointer;display:flex;gap:6px;align-items:center;font-size:13px}
+.profile-dropdown-section button{background:transparent;border:none;color:var(--text);text-align:left;padding:6px;border-radius:10px;cursor:pointer;display:flex;gap:10px;align-items:center;font-size:13px;transition:background .15s,color .15s}
 .profile-dropdown-section button:hover{background:var(--panel-2)}
-.profile-dropdown-section button.danger{color:var(--danger)}
+.profile-dropdown-section button[data-tone="danger"]{color:var(--danger)}
+.profile-dropdown-section button .menu-icon{width:28px;height:28px;border-radius:10px;background:var(--panel-2);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;transition:background .15s,color .15s}
+.profile-dropdown-section button:hover .menu-icon{background:var(--panel);color:var(--accent)}
+.profile-dropdown-section button[data-tone="danger"] .menu-icon{color:var(--danger)}
+.profile-dropdown-section button[data-tone="danger"]:hover .menu-icon{color:var(--danger)}
+.profile-dropdown-section button .menu-label{font-weight:600;letter-spacing:.01em}
+.profile-dropdown-section .menu-empty{font-size:12px;color:var(--muted);padding:2px 0}
+.profile-dropdown-section button[data-tone="danger"]:hover .menu-icon{background:rgba(225,29,72,0.12)}
 .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 
 .profile-sheet-backdrop{position:fixed;inset:0;background:rgba(15,20,30,.65);display:flex;align-items:center;justify-content:center;z-index:70;padding:20px}

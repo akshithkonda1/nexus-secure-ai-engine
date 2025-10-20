@@ -1,4 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Archive,
+  CreditCard,
+  MessageSquareWarning,
+  Trash2,
+  Undo2,
+  UserCog,
+  Wrench,
+} from "lucide-react";
 import type { UserProfile } from "../state/profile";
 import type { ConversationStatus } from "./db";
 import type { ProfileSheetTab } from "./ProfileSheet";
@@ -58,46 +68,53 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     Promise.resolve(fn()).finally(() => setOpen(false)).catch(() => setOpen(false));
   };
 
+  const MenuButton: React.FC<{
+    icon: LucideIcon;
+    label: string;
+    tone?: "default" | "danger";
+    onSelect: () => void;
+  }> = ({ icon: Icon, label, tone = "default", onSelect }) => (
+    <button
+      type="button"
+      onClick={onSelect}
+      role="menuitem"
+      data-tone={tone}
+    >
+      <span className="menu-icon" aria-hidden>
+        <Icon size={16} strokeWidth={2} />
+      </span>
+      <span className="menu-label">{label}</span>
+    </button>
+  );
+
   const conversationActions = () => {
     if (!status) {
       return (
-        <p className="muted small" style={{ margin: "4px 0 0" }}>
+        <div className="menu-empty">
           Select a conversation to manage archive or deletion.
-        </p>
+        </div>
       );
     }
     if (status === "active") {
       return (
         <>
-          <button type="button" onClick={run(onArchive)} role="menuitem">
-            🗄 Archive conversation
-          </button>
-          <button type="button" onClick={run(onMoveToTrash)} role="menuitem">
-            🗑 Delete conversation
-          </button>
+          <MenuButton icon={Archive} label="Archive conversation" onSelect={run(onArchive)} />
+          <MenuButton icon={Trash2} label="Move to trash" onSelect={run(onMoveToTrash)} />
         </>
       );
     }
     if (status === "archived") {
       return (
         <>
-          <button type="button" onClick={run(onRestore)} role="menuitem">
-            ↩ Restore conversation
-          </button>
-          <button type="button" onClick={run(onMoveToTrash)} role="menuitem">
-            🗑 Move to trash
-          </button>
+          <MenuButton icon={Undo2} label="Restore conversation" onSelect={run(onRestore)} />
+          <MenuButton icon={Trash2} label="Move to trash" onSelect={run(onMoveToTrash)} />
         </>
       );
     }
     return (
       <>
-        <button type="button" onClick={run(onRestore)} role="menuitem">
-          ↩ Restore conversation
-        </button>
-        <button type="button" className="danger" onClick={run(onPurge)} role="menuitem">
-          ✖ Permanently delete
-        </button>
+        <MenuButton icon={Undo2} label="Restore conversation" onSelect={run(onRestore)} />
+        <MenuButton icon={Trash2} label="Delete permanently" tone="danger" onSelect={run(onPurge)} />
       </>
     );
   };
@@ -134,22 +151,42 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
             </div>
           </div>
           <div className="profile-dropdown-section">
-            <button type="button" onClick={() => { onOpenTab("user"); setOpen(false); }} role="menuitem">
-              ⚙️ User Settings
-            </button>
-            <button type="button" onClick={() => { onOpenTab("plan"); setOpen(false); }} role="menuitem">
-              💳 Plan & Billing
-            </button>
-            <button type="button" onClick={() => { onOpenTab("feedback"); setOpen(false); }} role="menuitem">
-              📨 System Feedback
-            </button>
-            <button type="button" onClick={() => { onOpenSystemSettings(); setOpen(false); }} role="menuitem">
-              🛠 System Settings
-            </button>
+            <MenuButton
+              icon={UserCog}
+              label="User Settings"
+              onSelect={() => {
+                onOpenTab("user");
+                setOpen(false);
+              }}
+            />
+            <MenuButton
+              icon={CreditCard}
+              label="Plan & Billing"
+              onSelect={() => {
+                onOpenTab("plan");
+                setOpen(false);
+              }}
+            />
+            <MenuButton
+              icon={MessageSquareWarning}
+              label="System Feedback"
+              onSelect={() => {
+                onOpenTab("feedback");
+                setOpen(false);
+              }}
+            />
+            <MenuButton
+              icon={Wrench}
+              label="System Settings"
+              onSelect={() => {
+                onOpenSystemSettings();
+                setOpen(false);
+              }}
+            />
           </div>
           <div className="profile-divider" />
           <div className="profile-dropdown-section conversation">
-            <div className="section-label">Conversation</div>
+            <div className="section-label">CONVERSATION</div>
             {conversationActions()}
           </div>
         </div>
