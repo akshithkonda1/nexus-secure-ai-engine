@@ -7,7 +7,6 @@ type ProfileMenuProps = {
   profile: UserProfile;
   status: ConversationStatus | null;
   onOpenTab: (tab: ProfileSheetTab) => void;
-  onOpenSystemSettings: () => void;
   onArchive?: () => void | Promise<void>;
   onRestore?: () => void | Promise<void>;
   onMoveToTrash?: () => void | Promise<void>;
@@ -18,7 +17,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   profile,
   status,
   onOpenTab,
-  onOpenSystemSettings,
   onArchive,
   onRestore,
   onMoveToTrash,
@@ -137,17 +135,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
             <button type="button" onClick={() => { onOpenTab("user"); setOpen(false); }} role="menuitem">
               ⚙️ User Settings
             </button>
-            <button type="button" onClick={() => { onOpenTab("security"); setOpen(false); }} role="menuitem">
-              🔐 Account Security
-            </button>
             <button type="button" onClick={() => { onOpenTab("plan"); setOpen(false); }} role="menuitem">
               💳 Plan & Billing
             </button>
             <button type="button" onClick={() => { onOpenTab("feedback"); setOpen(false); }} role="menuitem">
               📨 System Feedback
-            </button>
-            <button type="button" onClick={() => { onOpenSystemSettings(); setOpen(false); }} role="menuitem">
-              🛠 System Settings
             </button>
           </div>
           <div className="profile-divider" />
