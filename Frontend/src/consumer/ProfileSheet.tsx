@@ -157,6 +157,21 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
     }
   };
 
+  const handleSavePassword = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!passwords.current || !passwords.next || !passwords.confirm) {
+      setPasswordStatus("Fill out your current, new, and confirmation password to update your credentials.");
+      return;
+    }
+    if (passwords.next !== passwords.confirm) {
+      setPasswordStatus("New password and confirmation need to match.");
+      return;
+    }
+    onChangePassword({ current: passwords.current, next: passwords.next });
+    setPasswords({ current: "", next: "", confirm: "" });
+    setPasswordStatus("Password updated successfully.");
+  };
+
   const handleDelete = () => {
     if (window.confirm("Delete your Nexus account? This cannot be undone.")) {
       onDeleteAccount();

@@ -47,7 +47,8 @@ def enforce_qos(user_provider: _UserProvider, *, tier_name_fn: Callable[[UserTie
             uid = user.id
             concurrency_key = f"q:conc:{uid}"
             current = client.incr(concurrency_key)
-            if current > int(tier.get("concurrency", 1)):
+            acquired = current <= int(tier.get("concurrency", 1))
+            if not acquired:
                 client.decr(concurrency_key)
                 from nexus.audit_logger import log_event, Actor
 
@@ -98,7 +99,8 @@ def enforce_qos(user_provider: _UserProvider, *, tier_name_fn: Callable[[UserTie
 
                 return func(*args, **kwargs)
             finally:
-                client.decr(concurrency_key)
+                if acquired:
+                    client.decr(concurrency_key)
 
         return wrapper
 
