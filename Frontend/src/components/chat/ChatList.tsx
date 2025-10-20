@@ -83,6 +83,66 @@ const ChatList: React.FC<{ messages: Message[] }> = ({ messages }) => {
   }, [messages.length]);
 
   const currentTime = useMemo(() => Date.now(), [messages]);
+  const total = messages.length;
+
+  const [range, setRange] = useState<Range>(() =>
+    clampRange({ start: Math.max(0, total - DEFAULT_BATCH), end: total }, total)
+  );
+
+  const updateRange = useCallback(
+    (node: HTMLDivElement | null, opts?: { forceToBottom?: boolean }) => {
+      if (!node || total === 0) {
+        setRange(clampRange({ start: 0, end: 0 }, total));
+        return;
+      }
+
+      const { scrollTop, clientHeight, scrollHeight } = node;
+      const itemHeight = Math.max(32, rowHeightRef.current || ESTIMATED_ROW_HEIGHT);
+      const viewportHeight = clientHeight || 0;
+
+      const visibleCount = viewportHeight
+        ? Math.ceil(viewportHeight / itemHeight) + OVERSCAN
+        : DEFAULT_BATCH + OVERSCAN;
+
+      let start: number;
+      if (opts?.forceToBottom) {
+        start = Math.max(0, total - visibleCount);
+      } else {
+        start = Math.max(0, Math.floor(scrollTop / itemHeight) - OVERSCAN);
+      }
+
+      let end = Math.min(total, start + visibleCount + OVERSCAN);
+
+      if (opts?.forceToBottom) {
+        end = total;
+        start = Math.max(0, end - (visibleCount + OVERSCAN));
+      }
+
+      // If we're very close to the bottom, keep everything pinned.
+      if (!opts?.forceToBottom && scrollHeight - (scrollTop + viewportHeight) <= itemHeight * 1.5) {
+        stickToBottomRef.current = true;
+        end = total;
+        start = Math.max(0, end - (visibleCount + OVERSCAN));
+      }
+
+      const next = clampRange({ start, end }, total);
+      setRange((prev) => (prev.start === next.start && prev.end === next.end ? prev : next));
+    },
+    [total]
+  );
+
+  const handleScroll = useCallback(() => {
+    const node = listRef.current;
+    if (!node) {
+      return;
+    }
+
+    const { scrollTop, clientHeight, scrollHeight } = node;
+    const itemHeight = Math.max(32, rowHeightRef.current || ESTIMATED_ROW_HEIGHT);
+    const atBottom = scrollHeight - (scrollTop + clientHeight) <= itemHeight * 1.5;
+    stickToBottomRef.current = atBottom;
+    updateRange(node);
+  }, [updateRange]);
 
   const displayedMessages = useMemo(() => {
     if (visibleCount <= 0) {
