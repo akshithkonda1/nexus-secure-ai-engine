@@ -6,8 +6,8 @@ import { useConversations } from "./useConversations";
 import type { Message } from "./db";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
-const ASK_JSON = `${BASE}/api/ask`;
-const ASK_SSE  = `${BASE}/api/ask/stream`;
+const ASK_JSON = `${BASE}/debate`;
+const ASK_SSE = ((import.meta.env.VITE_API_STREAM_URL || "").replace(/\/+$/, "")) || null;
 
 marked.setOptions({ breaks: true });
 marked.use({
@@ -131,6 +131,7 @@ export default function ConsumerChat() {
   async function trySSE({ prompt, convId, headers }:{
     prompt:string; convId:string; headers:Record<string,string>;
   }) {
+    if (!ASK_SSE) return false;
     try {
       const res = await fetch(ASK_SSE, { method:"POST", headers, body: JSON.stringify({ prompt }) });
       if (!res.ok || !res.headers.get("content-type")?.includes("text/event-stream")) throw new Error("no-sse");
