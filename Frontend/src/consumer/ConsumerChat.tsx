@@ -855,7 +855,6 @@ export default function ConsumerChat() {
       <ProfileSheet
         open={profileSheetOpen}
         tab={profileSheetTab}
-        onTabChange={setProfileSheetTab}
         onClose={() => setProfileSheetOpen(false)}
         profile={profile}
         onSaveProfile={handleProfileSave}

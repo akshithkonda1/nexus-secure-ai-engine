@@ -95,10 +95,10 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter, ui-sans-
 
 /* --- Modal --- */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:60}
-.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:600px;max-width:90vw;box-shadow:var(--shadow)}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:600px;max-width:90vw;max-height:90vh;box-shadow:var(--shadow);display:flex;flex-direction:column}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
 .modal-title{font-weight:700}
-.modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;overflow:auto}
 .modal .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .modal .theme-row{display:flex;gap:10px;flex-wrap:wrap}
 .modal .chip{border:1px solid var(--line);background:var(--panel-2);border-radius:999px;color:var(--text);padding:6px 10px;cursor:pointer}
@@ -135,16 +135,12 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter, ui-sans-
 .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 
 .profile-sheet-backdrop{position:fixed;inset:0;background:rgba(15,20,30,.65);display:flex;align-items:center;justify-content:center;z-index:70;padding:20px}
-.profile-sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:900px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.profile-sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
 .profile-sheet-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);gap:16px}
 .profile-sheet-head h2{margin:0;font-size:1.25rem}
 .profile-sheet-head p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
-.profile-sheet-body{display:flex;gap:20px;padding:0 22px 22px;overflow:hidden}
-.profile-nav{width:240px;display:flex;flex-direction:column;gap:10px;padding:10px 0}
-.profile-nav-btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:12px;text-align:left;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:.9rem;cursor:pointer;transition:.15s}
-.profile-nav-btn.on{border-color:var(--accent);color:var(--accent);box-shadow:var(--shadow)}
-.profile-nav-btn small{color:var(--muted);font-size:.75rem}
-.profile-content{flex:1;min-width:0;max-height:60vh;overflow:auto;padding:18px 2px}
+.profile-sheet-body{display:flex;flex-direction:column;gap:18px;padding:18px 22px 22px;overflow:auto}
+.profile-sheet-body form{display:flex;flex-direction:column;gap:14px}
 .profile-form{display:flex;flex-direction:column;gap:14px}
 .profile-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .profile-avatar-large{width:88px;height:88px;border-radius:24px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;border:1px solid var(--line);font-size:1.8rem;font-weight:700;color:var(--brand);overflow:hidden}
@@ -191,11 +187,9 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Inter, ui-sans-
 .model-chip span{font-size:.8rem;color:var(--muted)}
 .model-chip.on{border-color:var(--accent);color:var(--accent)}
 .settings-actions{display:flex;justify-content:flex-end;gap:10px}
+.modal-body.system-settings{padding-right:18px}
 
 @media (max-width: 860px){
-  .profile-sheet-body{flex-direction:column}
-  .profile-nav{width:100%;flex-direction:row;overflow:auto}
-  .profile-nav-btn{flex:1;min-width:200px}
-  .profile-content{max-height:50vh}
+  .profile-sheet{max-width:90vw}
   .modal{min-width:90vw}
 }
