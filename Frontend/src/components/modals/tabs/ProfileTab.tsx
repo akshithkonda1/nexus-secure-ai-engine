@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { UserProfile } from '../../../state/profile';
+import { processAvatarFile } from '../../../lib/image';
 
 type ProfileTabProps = {
   profile: UserProfile;
@@ -10,43 +11,60 @@ type ProfileTabProps = {
 
 const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClose, onDeleteAccount }) => {
   const [form,setForm]=useState<UserProfile>(profile);
-  const [status,setStatus]=useState<string|null>(null);
+  const [status,setStatus]=useState<{ tone:'info'|'error'|'success'; message:string }|null>(null);
   const [deleteStage,setDeleteStage]=useState<'idle'|'confirm'|'feedback'>('idle');
   const [deleteFeedback,setDeleteFeedback]=useState('');
+  const fileInputRef = useRef<HTMLInputElement|null>(null);
   useEffect(()=>{ setForm(profile); },[profile]);
 
   const isDirty=useMemo(()=> form.displayName!==profile.displayName || form.email!==profile.email || form.avatarDataUrl!==profile.avatarDataUrl,[form,profile]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const setStatusMessage = (message: string, tone: 'info'|'error'|'success' = 'info') => {
+    setStatus({ message, tone });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if(!file){ return; }
-    setStatus(null);
-    const reader=new FileReader();
-    reader.onload=()=>{
-      setForm((prev)=>({ ...prev, avatarDataUrl: typeof reader.result==='string'? reader.result : prev.avatarDataUrl }));
-      setStatus('Preview updated. Remember to save your changes.');
-    };
-    reader.readAsDataURL(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setStatusMessage('Please choose an image smaller than 4 MB.', 'error');
+      return;
+    }
+
+    setStatusMessage('Processing photo…');
+
+    try {
+      const resized = await processAvatarFile(file, { maxDimension: 320, quality: 0.9 });
+      setForm((prev)=>({ ...prev, avatarDataUrl: resized }));
+      setStatusMessage('Photo ready. Save to keep your new avatar.', 'success');
+    } catch (error) {
+      console.error('Failed to prepare avatar', error);
+      setStatusMessage('We could not load that image. Try a different file type.', 'error');
+    }
   };
 
   const handleRemovePhoto = () => {
     setForm((prev)=>({ ...prev, avatarDataUrl: null }));
-    setStatus('Profile photo removed.');
+    setStatusMessage('Profile photo removed.', 'info');
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if(!isDirty){
-      setStatus('No changes to save.');
+      setStatusMessage('No changes to save.');
       return;
     }
     onProfileChange(form);
-    setStatus('Changes saved!');
+    setStatusMessage('Changes saved!', 'success');
   };
 
   const handleCancel = () => {
     setForm(profile);
-    setStatus('Changes discarded.');
+    setStatusMessage('Changes discarded.');
     setDeleteStage('idle');
     setDeleteFeedback('');
     onClose();
@@ -70,7 +88,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
     onDeleteAccount(deleteFeedback.trim() ? deleteFeedback.trim() : null);
     setDeleteStage('idle');
     setDeleteFeedback('');
-    setStatus('Account scheduled for deletion.');
+    setStatusMessage('Account scheduled for deletion.', 'success');
     onClose();
   };
 
@@ -87,7 +105,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
         )}
         <div>
           <label style={{ display:'block', fontSize:'0.8rem', marginBottom:'0.35rem', opacity:0.7 }}>Profile photo</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} />
           {form.avatarDataUrl && (
             <button type="button" className="chatgpt-button" style={{ marginTop:'0.5rem' }} onClick={handleRemovePhoto}>Remove photo</button>
           )}
@@ -101,7 +119,21 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
         <label style={{ display:'block', fontSize:'0.8rem', marginBottom:'0.35rem', opacity:0.7 }}>Email</label>
         <input className="chatgpt-input" value={form.email} onChange={e=>{ const value=e.target.value; setForm(prev=>({ ...prev, email:value })); setStatus(null); }} />
       </div>
-      {status && <div style={{ fontSize:'0.75rem', opacity:0.7 }}>{status}</div>}
+      {status && (
+        <div
+          style={{
+            fontSize:'0.8rem',
+            opacity: status.tone === 'error' ? 1 : 0.78,
+            color: status.tone === 'error'
+              ? 'var(--chatgpt-error-text, #b91c1c)'
+              : status.tone === 'success'
+              ? 'rgb(var(--accent))'
+              : 'inherit'
+          }}
+        >
+          {status.message}
+        </div>
+      )}
       <div className="chatgpt-form-actions" style={{ justifyContent:'space-between', flexWrap:'wrap', gap:'0.5rem' }}>
         <button type="button" className="chatgpt-button" onClick={handleCancel}>Cancel</button>
         <div style={{ display:'flex', gap:'0.5rem', flexWrap:'wrap' }}>
