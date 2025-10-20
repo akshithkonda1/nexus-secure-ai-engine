@@ -1,0 +1,24 @@
+name: CD Staging
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (default: last main SHA)"
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusables/k8s-deploy.yml
+    with:
+      env_name: staging
+      namespace: nexus-staging
+      image_tag: ${{ inputs.image_tag || github.sha }}
+    secrets:
+      K8S_CLUSTER: ${{ secrets.K8S_STAGING_CLUSTER }}
+
+  k6:
+    needs: deploy
+    uses: ./.github/workflows/reusables/k6-smoke.yml
+    with:
+      base_url: ${{ secrets.STAGING_BASE_URL }}

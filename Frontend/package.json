@@ -15,20 +15,25 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.24.3",
-    "lucide-react": "^0.363.0",
+    "dompurify": "^3.3.0",
+    "highlight.js": "^11.11.1",
+    "lucide-react": "^0.546.0",
+    "marked": "^16.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^20.11.30",
     "@types/react": "^19.2.2",
-    "@types/react-dom": "^18.2.0",
+    "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
     "jsdom": "^24.0.0",
-    "typescript": "^5.2.0",
+    "typescript": "^5.9.3",
     "vite": "^7.1.9",
     "vitest": "^3.2.4"
   }
