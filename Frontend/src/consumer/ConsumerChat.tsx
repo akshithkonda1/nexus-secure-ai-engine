@@ -8,8 +8,11 @@ import type { Message } from "./db";
 
 // ---------- Config ----------
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
-const ASK_JSON = `${BASE}/api/ask`;
-const ASK_SSE = `${BASE}/api/ask/stream`;
+// NOTE: The Flask backend currently exposes the chat endpoint at `/debate` only.
+// The SSE fanout handler will attempt to call the same path first to keep the
+// fallback logic intact while the server side catches up.
+const ASK_JSON = `${BASE}/debate`;
+const ASK_SSE = `${BASE}/debate`;
 
 const uid = () => Math.random().toString(36).slice(2);
 
