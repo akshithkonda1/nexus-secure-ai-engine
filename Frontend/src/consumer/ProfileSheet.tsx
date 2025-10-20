@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { UserProfile } from "../state/profile";
 
 export type ProfileSheetTab = "user" | "plan" | "feedback";
@@ -9,28 +9,30 @@ type ProfileSheetProps = {
   onClose: () => void;
   profile: UserProfile;
   onSaveProfile: (profile: UserProfile) => void;
+  onChangePassword: (payload: { current: string; next: string }) => void;
   onDeleteAccount: () => void;
   onUpgradePlan: () => void;
-  onSubmitFeedback: (message: string) => void;
+  onSubmitFeedback: (feedback: { subject: string; category: string; message: string }) => void;
+};
+
+type StatusTone = "info" | "success" | "error";
+
+type StatusMessage = {
+  tone: StatusTone;
+  text: string;
 };
 
 const TAB_META: Record<ProfileSheetTab, { heading: string; subheading: string }> = {
   user: { heading: "User Settings", subheading: "Update your Nexus identity" },
-  security: { heading: "Account Security", subheading: "Keep your credentials protected" },
   plan: { heading: "Plan & Billing", subheading: "Stay informed about upgrades" },
   feedback: { heading: "System Feedback", subheading: "Tell us how we can improve" },
 };
 
-const PROFILE_HINTS = [
-  { label: "Workspace", value: "Nexus Zero-Trust" },
-  { label: "Role", value: "Administrator" },
-  { label: "Member since", value: "April 2024" },
-];
-
-const PLAN_FEATURES = [
-  "Unlimited chat history",
-  "Multi-model orchestration",
-  "Security insights dashboard",
+const FEEDBACK_OPTIONS = [
+  "Feature Request",
+  "System Glitch and Bug",
+  "Incorrect Result",
+  "Other",
 ];
 
 const ProfileSheet: React.FC<ProfileSheetProps> = ({
@@ -39,35 +41,53 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   onClose,
   profile,
   onSaveProfile,
+  onChangePassword,
   onDeleteAccount,
   onUpgradePlan,
   onSubmitFeedback,
 }) => {
   const [draft, setDraft] = useState<UserProfile>(profile);
-  const [status, setStatus] = useState<string | null>(null);
+  const [profileStatus, setProfileStatus] = useState<StatusMessage | null>(null);
+  const [passwordStatus, setPasswordStatus] = useState<StatusMessage | null>(null);
+  const [passwords, setPasswords] = useState({ current: "", next: "", confirm: "" });
+  const [feedbackSubject, setFeedbackSubject] = useState("");
+  const [feedbackCategory, setFeedbackCategory] = useState(FEEDBACK_OPTIONS[0]);
   const [feedback, setFeedback] = useState("");
-  const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
+  const [feedbackStatus, setFeedbackStatus] = useState<StatusMessage | null>(null);
+  const [showAvatarPreview, setShowAvatarPreview] = useState(false);
+  const planAlertShownRef = useRef(false);
 
   useEffect(() => {
-    if (open) {
-      setDraft(profile);
-      setStatus(null);
-      setFeedbackStatus(null);
+    if (!open) {
+      return;
     }
+    setDraft(profile);
+    setProfileStatus(null);
+    setPasswordStatus(null);
+    setPasswords({ current: "", next: "", confirm: "" });
+    setFeedbackSubject("");
+    setFeedbackCategory(FEEDBACK_OPTIONS[0]);
+    setFeedback("");
+    setFeedbackStatus(null);
+    setShowAvatarPreview(false);
+    planAlertShownRef.current = false;
   }, [open, profile]);
 
   useEffect(() => {
-    if (!open) return;
-    setStatus(null);
-    setFeedbackStatus(null);
+    if (!open) {
+      return;
+    }
     if (tab === "plan" && !planAlertShownRef.current) {
-      alert("For now Nexus is free to use. We will let you know when billing and our plans become available.");
+      onUpgradePlan();
       planAlertShownRef.current = true;
     }
     if (tab !== "plan") {
       planAlertShownRef.current = false;
     }
-  }, [open, tab]);
+    if (tab !== "feedback") {
+      setFeedbackStatus(null);
+    }
+  }, [open, tab, onUpgradePlan]);
 
   if (!open) {
     return null;
@@ -76,7 +96,10 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   const initials = useMemo(() => {
     if (draft.avatarDataUrl) return "";
     const parts = (draft.displayName || "User").trim().split(/\s+/);
-    return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || "").join("") || "NX";
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("") || "NX";
   }, [draft.avatarDataUrl, draft.displayName]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +110,7 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
       const result = reader.result;
       if (typeof result === "string") {
         setDraft((prev) => ({ ...prev, avatarDataUrl: result }));
-        setStatus("Preview updated. Save to keep changes.");
+        setProfileStatus({ tone: "info", text: "Preview updated. Save to keep changes." });
       }
     };
     reader.readAsDataURL(file);
@@ -95,15 +118,43 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
   const handleRemoveAvatar = () => {
     setDraft((prev) => ({ ...prev, avatarDataUrl: null }));
-    setStatus("Avatar removed. Save to confirm.");
+    setProfileStatus({ tone: "info", text: "Avatar removed. Save to confirm." });
   };
 
   const handleSaveProfile = (event: React.FormEvent) => {
     event.preventDefault();
-    const nextProfile: UserProfile = { ...draft, bio: draft.bio ?? "" };
+    const displayName = draft.displayName.trim();
+    const email = draft.email.trim();
+    if (!displayName || !email) {
+      setProfileStatus({ tone: "error", text: "Enter a display name and email before saving." });
+      return;
+    }
+    const nextProfile: UserProfile = { ...draft, displayName, email };
     setDraft(nextProfile);
     onSaveProfile(nextProfile);
-    setStatus("Profile saved.");
+    setProfileStatus({ tone: "success", text: "Profile changes saved." });
+
+    if (passwords.current || passwords.next || passwords.confirm) {
+      if (!passwords.current || !passwords.next || !passwords.confirm) {
+        setPasswordStatus({
+          tone: "error",
+          text: "Complete all password fields to update your password.",
+        });
+        return;
+      }
+      if (passwords.next !== passwords.confirm) {
+        setPasswordStatus({
+          tone: "error",
+          text: "New password and confirmation must match.",
+        });
+        return;
+      }
+      onChangePassword({ current: passwords.current, next: passwords.next });
+      setPasswords({ current: "", next: "", confirm: "" });
+      setPasswordStatus({ tone: "success", text: "Password updated successfully." });
+    } else {
+      setPasswordStatus(null);
+    }
   };
 
   const handleSavePassword = (event: React.FormEvent) => {
@@ -128,14 +179,37 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
   };
 
   const handleSendFeedback = () => {
+    const subject = feedbackSubject.trim();
     const message = feedback.trim();
-    if (!message) {
-      setFeedbackStatus("Add a bit more detail before sending.");
+    if (!subject) {
+      setFeedbackStatus({
+        tone: "error",
+        text: "Add a subject so we can route your feedback.",
+      });
       return;
     }
-    onSubmitFeedback(message);
+    if (!message) {
+      setFeedbackStatus({
+        tone: "error",
+        text: "Describe the issue in detail before sending.",
+      });
+      return;
+    }
+    onSubmitFeedback({ subject, category: feedbackCategory, message });
     setFeedback("");
-    setFeedbackStatus("Thanks! Your feedback has been recorded.");
+    setFeedbackSubject("");
+    setFeedbackCategory(FEEDBACK_OPTIONS[0]);
+    setFeedbackStatus({ tone: "success", text: "Thanks! Your feedback has been recorded." });
+  };
+
+  const statusClassName = (status: StatusMessage) => {
+    if (status.tone === "error") {
+      return "small error";
+    }
+    if (status.tone === "success") {
+      return "small success";
+    }
+    return "muted small";
   };
 
   return (
@@ -182,52 +256,33 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 </div>
               </div>
 
-                <label className="profile-field">
-                  <span>Display name</span>
-                  <input
-                    value={draft.displayName}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, displayName: event.target.value }))}
-                  />
-                </label>
-                <label className="profile-field">
-                  <span>Email</span>
-                  <input
-                    type="email"
-                    value={draft.email}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, email: event.target.value }))}
-                  />
-                </label>
+              <label className="profile-field">
+                <span>Display name</span>
+                <input
+                  value={draft.displayName}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setDraft((prev) => ({ ...prev, displayName: value }));
+                    setProfileStatus(null);
+                  }}
+                />
+              </label>
+              <label className="profile-field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={draft.email}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setDraft((prev) => ({ ...prev, email: value }));
+                    setProfileStatus(null);
+                  }}
+                />
+              </label>
 
-                <div className="profile-hints">
-                  {PROFILE_HINTS.map((item) => (
-                    <div key={item.label}>
-                      <span className="hint-label">{item.label}</span>
-                      <span className="hint-value">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {status && <p className="muted small">{status}</p>}
-
-                <div className="profile-actions">
-                  <button type="button" className="danger-btn" onClick={handleDelete}>
-                    Delete account
-                  </button>
-                  <button type="submit" className="primary-btn">
-                    Save changes
-                  </button>
-                </div>
-              </form>
-            )}
-
-          {tab === "security" && (
-            <form className="profile-form" onSubmit={handleSavePassword}>
-              <div className="profile-security-intro">
-                <h3>Change password</h3>
-                <p className="muted small">
-                  Update your Nexus credentials. Passwords must be at least 12 characters and include a mix of symbols.
-                </p>
-              </div>
+              <div className="profile-password">
+                <h3>Update password</h3>
+                <p className="muted small">Leave blank to keep your current password.</p>
                 <label className="profile-field">
                   <span>Current password</span>
                   <input
@@ -235,10 +290,8 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     autoComplete="current-password"
                     value={passwords.current}
                     onChange={(event) => {
-                      setPasswords((prev) => ({
-                        ...prev,
-                        current: event.target.value,
-                      }));
+                      const value = event.target.value;
+                      setPasswords((prev) => ({ ...prev, current: value }));
                       setPasswordStatus(null);
                     }}
                   />
@@ -250,10 +303,8 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     autoComplete="new-password"
                     value={passwords.next}
                     onChange={(event) => {
-                      setPasswords((prev) => ({
-                        ...prev,
-                        next: event.target.value,
-                      }));
+                      const value = event.target.value;
+                      setPasswords((prev) => ({ ...prev, next: value }));
                       setPasswordStatus(null);
                     }}
                   />
@@ -265,20 +316,21 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     autoComplete="new-password"
                     value={passwords.confirm}
                     onChange={(event) => {
-                      setPasswords((prev) => ({
-                        ...prev,
-                        confirm: event.target.value,
-                      }));
+                      const value = event.target.value;
+                      setPasswords((prev) => ({ ...prev, confirm: value }));
                       setPasswordStatus(null);
                     }}
                   />
                 </label>
+              </div>
 
-              {passwordStatus && (
-                <p className={`small ${passwordStatus.includes("successfully") ? "success" : "error"}`}>{passwordStatus}</p>
-              )}
+              {profileStatus && <p className={statusClassName(profileStatus)}>{profileStatus.text}</p>}
+              {passwordStatus && <p className={statusClassName(passwordStatus)}>{passwordStatus.text}</p>}
 
-              <div className="profile-actions end">
+              <div className="profile-actions">
+                <button type="button" className="danger-btn" onClick={handleDelete}>
+                  Delete account
+                </button>
                 <button type="submit" className="primary-btn">
                   Save changes
                 </button>
@@ -288,26 +340,13 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
 
           {tab === "plan" && (
             <div className="plan-card">
-              <div>
-                <h3>Current plan: Free</h3>
-                <p className="muted">
-                  For now Nexus is free to use. We will let you know when billing and our plans become available.
-                </p>
-                <ul>
-                  {PLAN_FEATURES.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="plan-footer">
-                <div>
-                  <span className="hint-label">Usage this month</span>
-                  <span className="hint-value">2,800 orchestrations</span>
-                </div>
-                <button type="button" className="primary-btn" onClick={onUpgradePlan}>
-                  Upgrade plan
-                </button>
-              </div>
+              <h3>Plan & Billing</h3>
+              <p className="muted">
+                For now Nexus is free to use. We will let you know when billing and our plans become available.
+              </p>
+              <button type="button" className="primary-btn" onClick={onClose}>
+                Close
+              </button>
             </div>
           )}
 
@@ -335,19 +374,20 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                       setFeedbackStatus(null);
                     }}
                   >
-                    <option value="Feature Request">Feature Request</option>
-                    <option value="System Glitch and Bug">System Glitch and Bug</option>
-                    <option value="Incorrect Result">Incorrect Result</option>
-                    <option value="Other">Other</option>
+                    {FEEDBACK_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>
               <label className="profile-field">
-                <span>Details</span>
+                <span>Describe the issue in detail</span>
                 <textarea
                   rows={7}
                   maxLength={15000}
-                  placeholder="Describe the issue in detail. Be detailed and let us know what we can improve."
+                  placeholder="Describe the issue in detail. Be detailed and let us know what we can do."
                   value={feedback}
                   onChange={(event) => {
                     setFeedback(event.target.value);
@@ -361,11 +401,27 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                   Send feedback
                 </button>
               </div>
-              {feedbackStatus && <p className="muted small">{feedbackStatus}</p>}
+              {feedbackStatus && <p className={statusClassName(feedbackStatus)}>{feedbackStatus.text}</p>}
             </div>
           )}
         </div>
       </div>
+      {showAvatarPreview && draft.avatarDataUrl && (
+        <div
+          className="avatar-preview-backdrop"
+          role="dialog"
+          aria-modal
+          aria-label="Profile photo preview"
+          onClick={() => setShowAvatarPreview(false)}
+        >
+          <div className="avatar-preview" onClick={(event) => event.stopPropagation()}>
+            <img src={draft.avatarDataUrl} alt="Profile avatar enlarged preview" />
+            <button type="button" className="icon-btn" onClick={() => setShowAvatarPreview(false)} aria-label="Close preview">
+              ✖
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
