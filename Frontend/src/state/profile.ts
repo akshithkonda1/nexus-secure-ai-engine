@@ -4,12 +4,14 @@ export type UserProfile = {
   displayName: string;
   email: string;
   avatarDataUrl: string | null;
+  bio: string;
 };
 
 const defaults: UserProfile = {
   displayName: 'Nexus Explorer',
   email: 'explorer@nexus.ai',
   avatarDataUrl: null,
+  bio: '',
 };
 
 export const readProfile = (): UserProfile => {
