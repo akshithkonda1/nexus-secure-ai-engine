@@ -463,8 +463,6 @@ export default function ConsumerChat() {
               Send
             </button>
           </form>
-
-          <div className="cx-hint">Enter to send</div>
         </footer>
       </section>
 
