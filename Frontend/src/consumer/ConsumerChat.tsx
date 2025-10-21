@@ -162,10 +162,140 @@ export default function ConsumerChat() {
   const [deleteReason, setDeleteReason] = useState('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
+  const activeConvIdRef = useRef<string | null>(null);
   useEffect(()=>{ scrollRef.current?.scrollTo({top: scrollRef.current.scrollHeight, behavior:"smooth"}); }, [current, busy]);
+  useEffect(() => {
+    function stopSubmit(e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    function stopAnchors(e: MouseEvent) {
+      const anchor = (e.target as HTMLElement | null)?.closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") || "";
+      const isExternal = anchor.target === "_blank" || /^https?:\/\//i.test(href);
+      if (!isExternal && (href === "" || href === "#" || href === "/")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+    document.addEventListener("submit", stopSubmit, true);
+    document.addEventListener("click", stopAnchors, true);
+    return () => {
+      document.removeEventListener("submit", stopSubmit, true);
+      document.removeEventListener("click", stopAnchors, true);
+    };
+  }, []);
+  useEffect(() => { activeConvIdRef.current = currentId ?? null; }, [currentId]);
+
+  useEffect(() => {
+    const last = sessionStorage.getItem("nx.currentId");
+    if (last) select(last);
+  }, []);
+
+  useEffect(() => {
+    if (currentId) {
+      sessionStorage.setItem("nx.currentId", currentId);
+    }
+  }, [currentId]);
+
+  function lockToSession(id: string) {
+    if (!id) return;
+    if (activeConvIdRef.current !== id) {
+      select(id);
+    }
+    activeConvIdRef.current = id;
+  }
 
   function showToast(msg: string, ms=2000){ setToast(msg); setTimeout(()=>setToast(null), ms); }
   function toggleTheme(){ setSettings(s=>({...s, theme: s.theme==="dark"?"light":"dark"})); }
+
+  function exportConversation() {
+    if (!current) {
+      showToast("No conversation to export");
+      return;
+    }
+    try {
+      const safeTitle = (current.title || "chat")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-+|-+$/g, "") || "chat";
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `nexus-chat-${safeTitle}-${stamp}.json`;
+      const payload = {
+        id: current.id,
+        title: current.title,
+        status: current.status,
+        createdAt: current.createdAt,
+        updatedAt: current.updatedAt,
+        messages: current.messages.map(m => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          html: m.html,
+          models: m.models,
+          audit: m.audit,
+        })),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Exported conversation", 1800);
+    } catch (err) {
+      console.error("Failed to export conversation", err);
+      showToast("Export failed");
+    }
+  }
+
+  async function handleArchiveAction() {
+    if (!current) return;
+    const { id, status } = current;
+    try {
+      if (status === "archived" || status === "trash") {
+        await restore(id);
+        showToast(status === "trash" ? "Restored" : "Unarchived");
+      } else {
+        await archive(id);
+        showToast("Archived");
+      }
+    } catch (err) {
+      console.error("Failed to update conversation status", err);
+      showToast("Couldn't update status");
+    }
+  }
+
+  async function handleDeleteAction() {
+    if (!current) return;
+    const id = current.id;
+    try {
+      if (current.status === "trash") {
+        await purge(id);
+        showToast("Deleted forever");
+      } else {
+        await moveToTrash(id);
+        showToast("Moved to trash");
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation", err);
+      showToast("Couldn't delete conversation");
+    }
+  }
+
+  const archiveLabel = current
+    ? current.status === "archived"
+      ? "Unarchive"
+      : current.status === "trash"
+        ? "Restore"
+        : "Archive"
+    : "Archive";
+  const deleteLabel = current?.status === "trash" ? "Delete forever" : "Delete";
 
   async function ensureCurrent() {
     if (current) return current;
@@ -175,7 +305,9 @@ export default function ConsumerChat() {
   async function send() {
     const prompt = input.trim(); if (!prompt || busy) return;
     setInput("");
+    setBusy(true);
     const conv = await ensureCurrent();
+    lockToSession(conv.id);
 
     if (conv.messages.length === 0) {
       const title = prompt.length > 50 ? prompt.slice(0,50)+"…" : prompt;
@@ -186,8 +318,6 @@ export default function ConsumerChat() {
     await append(conv.id, { id: uid(), role:"user", content: prompt, html: mdToHtml(prompt) });
     // Insert assistant placeholder, then stream/fallback
     await append(conv.id, { id: uid(), role:"assistant", content:"", html:"" });
-    setBusy(true);
-
     const headers: Record<string,string> = {
       "Content-Type": "application/json",
       "X-Nexus-Web-Pct": String(settings.webPct),
@@ -200,14 +330,30 @@ export default function ConsumerChat() {
 
     const ok = await trySSE({ prompt, convId: conv.id, headers });
     if (!ok) await fallbackJSON({ prompt, convId: conv.id, headers });
+    lockToSession(conv.id);
     setBusy(false);
+  }
+
+  function stopStreaming() {
+    if (streamAbortRef.current) {
+      streamAbortRef.current.abort();
+      streamAbortRef.current = null;
+      showToast("Stopped");
+      setBusy(false);
+    }
+  }
+
+  function regenerate() {
+    showToast("Regenerate coming soon");
   }
 
   async function trySSE({ prompt, convId, headers }:{
     prompt:string; convId:string; headers:Record<string,string>;
   }) {
     try {
-      const res = await fetch(ASK_SSE, { method:"POST", headers, body: JSON.stringify({ prompt }) });
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
+      const res = await fetch(ASK_SSE, { method:"POST", headers, body: JSON.stringify({ prompt }), signal: controller.signal });
       if (!res.ok || !res.headers.get("content-type")?.includes("text/event-stream")) throw new Error("no-sse");
       const reader = res.body!.getReader(); const dec = new TextDecoder();
       let buffer=""; let full="";
@@ -230,7 +376,12 @@ export default function ConsumerChat() {
         }
       }
       return true;
-    } catch { return false; }
+    } catch (err:any) {
+      if (err?.name === "AbortError") return true;
+      return false;
+    } finally {
+      streamAbortRef.current = null;
+    }
   }
 
   async function fallbackJSON({ prompt, convId, headers }:{
@@ -251,23 +402,12 @@ export default function ConsumerChat() {
     }
   }
 
-  function StatusActions() {
-    if (!current) return null;
-    const id = current.id;
-    if (current.status === "active") {
-      return (<><button className="pill" onClick={()=>archive(id)}>Archive</button><button className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
-    } else if (current.status === "archived") {
-      return (<><button className="pill on" onClick={()=>restore(id)}>Restore</button><button className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
-    }
-    return (<><button className="pill on" onClick={()=>restore(id)}>Restore</button><button className="pill danger" onClick={()=>purge(id)}>Permanently Delete</button></>);
-  }
-
   return (
     <div className="cx-shell">
       {/* Sidebar */}
       <aside className="cx-sidebar">
         <div className="cx-brand">Nexus.ai</div>
-        <button className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
+        <button type="button" className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
         <div className="cx-divider" />
 
         <Section title={`Active (${active.length})`}>
@@ -298,7 +438,7 @@ export default function ConsumerChat() {
           ))}
         </Section>
 
-        <Section title={`Trash (${trash.length})`} extra={<button className="mini danger" onClick={purgeAllTrash}>Empty Trash</button>}>
+        <Section title={`Trash (${trash.length})`} extra={<button type="button" className="mini danger" onClick={purgeAllTrash}>Empty Trash</button>}>
           {trash.length===0 && <div className="cx-empty-small muted">Trash is empty</div>}
           {trash.map(c=>(
             <ConvRow key={c.id} title={c.title} when={new Date(c.updatedAt).toLocaleString()} active={c.id===currentId}
@@ -317,15 +457,43 @@ export default function ConsumerChat() {
 
       {/* Main */}
       <section className="cx-main">
-        <header className="cx-top">
-          <div className="title">{current?.title || "Chat"}</div>
-          <div className="top-icons">
-            <button className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
-            <button className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
-            {current && <StatusActions />}
-            <button className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
-              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
+        <header className="nx-top">
+          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
+            Nexus<span className="dot">•</span><span className="ai">ai</span>
+          </div>
+          <h2 className="title" role="heading" aria-live="polite">{current?.title || "New chat"}</h2>
+          <div className="actions">
+            <button type="button" className="btn" onClick={exportConversation} disabled={!current}>⭳ Export</button>
+            <button
+              type="button"
+              className="btn"
+              onClick={handleArchiveAction}
+              disabled={!current}
+            >
+              {archiveLabel}
             </button>
+            <button
+              type="button"
+              className="btn danger"
+              onClick={handleDeleteAction}
+              disabled={!current}
+            >
+              {deleteLabel}
+            </button>
+            <div className="top-icons">
+              <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>
+                {settings.theme==="dark"?"🌙":"☀️"}
+              </button>
+              <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
+              <button
+                type="button"
+                className="avatar-btn"
+                onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }}
+                title="Profile"
+              >
+                {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -337,32 +505,57 @@ export default function ConsumerChat() {
                 <h1>How can Nexus help today?</h1>
                 <p className="muted">Ask a question, paste a document, or say “/help”.</p>
                 <div className="quick">
-                  <button onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
-                  <button onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
-                  <button onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
+                  <button type="button" onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
+                  <button type="button" onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
+                  <button type="button" onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
                 </div>
               </div>
             ) : (
               current.messages.map(m => <MessageBubble key={m.id} m={m} />)
             )}
-            {busy && <div className="cx-thinking">Thinking…</div>}
+            {busy && (
+              <div className="cx-skeleton">
+                <div className="sk-avatar" />
+                <div className="sk-bubbles">
+                  <div className="sk-line w60" />
+                  <div className="sk-line w90" />
+                  <div className="sk-line w75" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* COMPOSER */}
-        <footer className="cx-compose">
+        {/* --- COMPOSER --- */}
+        <form
+          className="cx-compose"
+          onSubmit={(e) => { e.preventDefault(); if (!busy) send(); }}
+        >
           <div className="cx-compose-inner">
+            {!busy ? (
+              <button type="button" className="icon-btn" onClick={regenerate}>↻</button>
+            ) : (
+              <button type="button" className="icon-btn danger" onClick={stopStreaming}>■</button>
+            )}
+
             <input
-              id="composer"
               className="cx-input"
               placeholder="Ask Nexus…"
               value={input}
-              onChange={e=>setInput(e.target.value)}
-              onKeyDown={e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
+              onChange={(e)=>setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();               // belt & suspenders
+                  if (!busy) send();
+                }
+              }}
             />
-            <button className="cx-send" onClick={send} disabled={busy || !input.trim()}>Send</button>
+
+            <button type="submit" className="cx-send" disabled={busy || !input.trim()}>
+              {busy ? "Sending…" : "Send"}
+            </button>
           </div>
-        </footer>
+        </form>
       </section>
 
       {/* System Settings */}
@@ -371,7 +564,7 @@ export default function ConsumerChat() {
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-head">
               <div className="modal-title">System Settings</div>
-              <button className="icon-btn" onClick={()=>setShowSettings(false)}>✖</button>
+              <button type="button" className="icon-btn" onClick={()=>setShowSettings(false)}>✖</button>
             </div>
             <div className="modal-body">
               <Row label="Web Search %"><Range value={settings.webPct} set={v=>setSettings(s=>({...s, webPct:v}))} /></Row>
@@ -393,7 +586,7 @@ export default function ConsumerChat() {
                 />
               </Row>
               <div className="modal-actions">
-                <button className="primary" onClick={()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); showToast("Settings saved"); setShowSettings(false); }}>Save Settings</button>
+                <button type="button" className="primary" onClick={()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); showToast("Settings saved"); setShowSettings(false); }}>Save Settings</button>
               </div>
             </div>
           </div>
@@ -637,7 +830,7 @@ function MessageBubble({ m }:{ m:Message }) {
       <div className="bubble">
         <div className="meta"><span className="who">{m.role==="assistant"?"Nexus":"You"}</span></div>
         <div className="content" dangerouslySetInnerHTML={{ __html: m.html ?? mdToHtml(m.content) }} />
-        <div className="actions"><button className="mini" onClick={()=>navigator.clipboard.writeText(m.content)}>Copy</button></div>
+        <div className="actions"><button type="button" className="mini" onClick={()=>navigator.clipboard.writeText(m.content)}>Copy</button></div>
         {m.models && Object.keys(m.models).length>0 && (
           <details className="panel" open><summary>Model Answers</summary>
             <div className="kv">{Object.entries(m.models).map(([name,text])=>(
@@ -662,7 +855,7 @@ function Row({ label, children }:{ label:string; children:React.ReactNode }) { r
 function Range({ value, set }:{ value:number; set:(v:number)=>void }) { return (<div className="range"><input type="range" min={0} max={100} value={value} onChange={e=>set(Number(e.target.value))}/><span className="range-val">{value}%</span></div>); }
 function Toggle({ checked, onChange }:{ checked:boolean; onChange:(v:boolean)=>void }) { return (<label className="switch"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} /><span className="slider"/></label>); }
 function Segmented({ options, value, onChange }:{ options:{key:string;label:string}[]; value:string|null|undefined; onChange:(key:string)=>void }) {
-  return (<div className="seg">{options.map(o=>(<button key={o.key} className={`seg-item ${value===o.key?"on":""}`} onClick={()=>onChange(o.key)}>{o.label}</button>))}</div>);
+  return (<div className="seg">{options.map(o=>(<button type="button" key={o.key} className={`seg-item ${value===o.key?"on":""}`} onClick={()=>onChange(o.key)}>{o.label}</button>))}</div>);
 }
 function Field({ label, children }:{ label:string; children:React.ReactNode }) {
   return (<div className="field-row"><div className="label">{label}</div><div className="control">{children}</div></div>);
