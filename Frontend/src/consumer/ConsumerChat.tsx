@@ -89,6 +89,17 @@ export default function ConsumerChat() {
     return { name:"Nexus User", email:"user@example.com", accountId:"acc_"+uid(), plan:"Free" };
   });
   useEffect(()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); }, [profile]);
+  const profileInitial = (() => {
+    const source = `${profile.name || ""} ${profile.email || ""}`.trim();
+    const letters = source
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    return letters || "U";
+  })();
 
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -388,41 +399,147 @@ export default function ConsumerChat() {
 
             {/* Normal profile content (hidden when deleteFlow active) */}
             {!deleteFlow && (
-              <>
-                <div className="tab-head">
-                  <button type="button" className={`tab-btn ${profileTab==='user'?'on':''}`} onClick={()=>setProfileTab('user')}>User Settings</button>
-                  <button type="button" className={`tab-btn ${profileTab==='billing'?'on':''}`} onClick={()=>setProfileTab('billing')}>Plan & Billing</button>
-                  <button type="button" className={`tab-btn ${profileTab==='feedback'?'on':''}`} onClick={()=>setProfileTab('feedback')}>System Feedback</button>
-                </div>
-                <div className="tab-body">
+              <div className="profile-shell">
+                <aside className="profile-nav">
+                  <div className="profile-overview">
+                    <div className="profile-avatar">
+                      {profile.photoDataUrl
+                        ? <img src={profile.photoDataUrl} alt="Profile avatar" />
+                        : <span>{profileInitial}</span>}
+                    </div>
+                    <div className="profile-name">{profile.name || "Add your name"}</div>
+                    <div className="profile-email">{profile.email || "user@example.com"}</div>
+                    <div className="profile-id" title={profile.accountId}>ID · {profile.accountId}</div>
+                  </div>
+                  <nav className="profile-tabs">
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='user'?'active':''}`}
+                      onClick={()=>setProfileTab('user')}
+                    >
+                      <span className="icon" aria-hidden>👤</span>
+                      <div>
+                        <div className="label">User Settings</div>
+                        <div className="hint">Personal info, avatar, and sign-in details.</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='billing'?'active':''}`}
+                      onClick={()=>setProfileTab('billing')}
+                    >
+                      <span className="icon" aria-hidden>💳</span>
+                      <div>
+                        <div className="label">Plan & Billing</div>
+                        <div className="hint">Check your subscription and upgrades.</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='feedback'?'active':''}`}
+                      onClick={()=>setProfileTab('feedback')}
+                    >
+                      <span className="icon" aria-hidden>💬</span>
+                      <div>
+                        <div className="label">System Feedback</div>
+                        <div className="hint">Send product feedback or report an issue.</div>
+                      </div>
+                    </button>
+                  </nav>
+                  <div className="support">Need help? Reach out at <strong>support@nexus.ai</strong>.</div>
+                </aside>
+
+                <section className="profile-pane">
                   {profileTab==='user' && (
-                    <div className="form">
-                      <AvatarEdit value={profile.photoDataUrl} onChange={data=>setProfile(p=>({...p, photoDataUrl:data}))} />
-                      <Field label="Name"><input value={profile.name} onChange={e=>setProfile(p=>({...p, name:e.target.value}))} /></Field>
-                      <Field label="Email"><input value={profile.email} onChange={e=>setProfile(p=>({...p, email:e.target.value}))} /></Field>
-                      <Field label="Account ID (read-only)"><input value={profile.accountId} readOnly /></Field>
-                      <div className="modal-actions split">
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">User Settings</div>
+                        <div className="subtitle">Personalize how your profile appears inside Nexus.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Profile photo">
+                          <AvatarEdit
+                            value={profile.photoDataUrl}
+                            fallback={profileInitial}
+                            onChange={data=>setProfile(p=>({...p, photoDataUrl:data}))}
+                          />
+                        </Field>
+                        <Field label="Name">
+                          <input value={profile.name} onChange={e=>setProfile(p=>({...p, name:e.target.value }))} placeholder="Jane Doe" />
+                        </Field>
+                        <Field label="Email">
+                          <input value={profile.email} onChange={e=>setProfile(p=>({...p, email:e.target.value }))} placeholder="you@example.com" />
+                        </Field>
+                        <Field label="Account ID">
+                          <input value={profile.accountId} readOnly />
+                        </Field>
+                      </div>
+                      <div className="panel-actions split">
                         <button type="button" className="danger ghost" onClick={()=>setDeleteFlow('confirm')}>Delete Account</button>
-                        <button type="button" className="primary" onClick={()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); showToast("Profile saved"); }}>Save Changes</button>
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); showToast("Profile saved"); }}
+                        >
+                          Save Changes
+                        </button>
                       </div>
                     </div>
                   )}
+
                   {profileTab==='billing' && (
-                    <div className="form">
-                      <Field label="Current Plan"><input value={profile.plan || "Free"} readOnly /></Field>
-                      <div className="modal-actions right">
-                        <button type="button" className="primary" onClick={()=>showToast("We’re working on plans — enjoy Nexus freely for now!")}>Upgrade Plan</button>
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">Plan & Billing</div>
+                        <div className="subtitle">Preview upcoming plan options and manage invoices.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Current plan">
+                          <input value={profile.plan || "Free"} readOnly />
+                        </Field>
+                        <Field label="Billing status">
+                          <input value="Active" readOnly />
+                        </Field>
+                      </div>
+                      <div className="panel-actions end">
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={()=>showToast("We’re working on plans — enjoy Nexus freely for now!")}
+                        >
+                          Upgrade Plan
+                        </button>
                       </div>
                     </div>
                   )}
+
                   {profileTab==='feedback' && (
-                    <div className="form">
-                      <Field label="Tell us what to improve"><textarea rows={6} placeholder="Your feedback helps us shape Nexus…" /></Field>
-                      <div className="modal-actions right"><button type="button" className="primary" onClick={()=>showToast("Thanks for the feedback!")}>Send</button></div>
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">System Feedback</div>
+                        <div className="subtitle">Let us know what’s working well and what needs attention.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Message">
+                          <textarea
+                            rows={6}
+                            placeholder="Share feature ideas, bugs you’ve noticed, or workflows we can improve."
+                          />
+                        </Field>
+                      </div>
+                      <div className="panel-actions end">
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={()=>showToast("Thanks for the feedback!")}
+                        >
+                          Send Feedback
+                        </button>
+                      </div>
                     </div>
                   )}
-                </div>
-              </>
+                </section>
+              </div>
             )}
           </div>
         </div>
@@ -494,14 +611,14 @@ function Segmented({ options, value, onChange }:{ options:{key:string;label:stri
 function Field({ label, children }:{ label:string; children:React.ReactNode }) {
   return (<div className="field-row"><div className="label">{label}</div><div className="control">{children}</div></div>);
 }
-function AvatarEdit({ value, onChange }:{ value?:string; onChange:(dataUrl?:string)=>void }) {
+function AvatarEdit({ value, fallback, onChange }:{ value?:string; fallback:string; onChange:(dataUrl?:string)=>void }) {
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
     const reader = new FileReader(); reader.onload = ()=>onChange(String(reader.result||"")); reader.readAsDataURL(f);
   }
   return (
     <div className="avatar-edit">
-      <div className="preview">{value ? <img src={value} alt="avatar"/> : <div className="ph">U</div>}</div>
+      <div className="preview">{value ? <img src={value} alt="avatar"/> : <div className="ph">{fallback}</div>}</div>
       <label className="upload"><input type="file" accept="image/*" onChange={pick}/>Change photo</label>
     </div>
   );
