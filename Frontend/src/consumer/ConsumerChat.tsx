@@ -424,12 +424,17 @@ function ConvRow({ title, when, active, onClick, menu }:{
   title:string; when:string; active?:boolean; onClick?:()=>void; menu?:{label:string; onClick:()=>void}[];
 }) {
   return (
-    <div className={`conv ${active?"active":""}`} onClick={onClick}>
-      <div className="conv-title">{title||"Untitled"}</div>
-      <div className="conv-when">{when}</div>
+    <div className={`conv ${active?"active":""}`}>
+      <button type="button" className="conv-body" onClick={onClick}>
+        <span className="conv-title">{title||"Untitled"}</span>
+        <span className="conv-when">{when}</span>
+      </button>
       {menu && (
         <div className="conv-menu" onClick={e=>e.stopPropagation()}>
-          <details><summary>⋯</summary><div className="menu">{menu.map((m,i)=><button key={i} onClick={m.onClick}>{m.label}</button>)}</div></details>
+          <details>
+            <summary aria-label="Conversation actions">⋯</summary>
+            <div className="menu">{menu.map((m,i)=><button type="button" key={i} onClick={m.onClick}>{m.label}</button>)}</div>
+          </details>
         </div>
       )}
     </div>
