@@ -50,7 +50,7 @@ type NxProfile = StoredProfile;
 export default function ConsumerChat() {
   const {
     active, archived, trash,
-    current, currentId,
+    current, currentId, setCurrentId,
     startNew, select, rename, append, updateLastAssistant,
     archive, moveToTrash, restore, purge, purgeAllTrash
   } = useConversations();
@@ -169,7 +169,9 @@ export default function ConsumerChat() {
 
   async function ensureCurrent() {
     if (current) return current;
-    return startNew("New chat");
+    const c = await startNew("New chat");
+    setCurrentId(c.id);
+    return c;
   }
 
   async function send() {
@@ -267,7 +269,7 @@ export default function ConsumerChat() {
       {/* Sidebar */}
       <aside className="cx-sidebar">
         <div className="cx-brand">Nexus.ai</div>
-        <button className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
+        <button className="cx-new" onClick={()=>startNew("New chat").then(c=>setCurrentId(c.id))}>＋ New chat</button>
         <div className="cx-divider" />
 
         <Section title={`Active (${active.length})`}>
