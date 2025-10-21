@@ -628,6 +628,7 @@ button, input, textarea { background: transparent; border: none; }
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
 }
 
 .danger.ghost { background: transparent; }
