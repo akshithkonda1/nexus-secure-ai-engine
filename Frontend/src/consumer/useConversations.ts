@@ -7,26 +7,85 @@ import {
 const uid = () => Math.random().toString(36).slice(2);
 const now = () => Date.now();
 
+function sortConversations(items: Conversation[]) {
+  return [...items].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 export function useConversations() {
   const [convos, setConvos] = useState<Conversation[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
 
-  useEffect(() => { listConversations().then(setConvos).catch(console.error); }, []);
-  const current = useMemo(() => convos.find(c => c.id === currentId) || null, [convos, currentId]);
+  useEffect(() => {
+    let cancelled = false;
+    listConversations()
+      .then(items => {
+        if (cancelled) return;
+        setConvos(items);
+      })
+      .catch(console.error);
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    setCurrentId(prev => {
+      if (convos.length === 0) return null;
+      if (prev && convos.some(c => c.id === prev)) return prev;
+      return convos[0].id;
+    });
+  }, [convos]);
+
+  useEffect(() => {
+    const id = currentId;
+    if (!id) return;
+    let cancelled = false;
+    getConversation(id)
+      .then(conv => {
+        if (cancelled) return;
+        if (!conv) {
+          setConvos(prev => prev.filter(x => x.id !== id));
+          return;
+        }
+        setConvos(prev => {
+          const idx = prev.findIndex(x => x.id === conv.id);
+          if (idx >= 0) {
+            const next = [...prev];
+            next[idx] = conv;
+            return sortConversations(next);
+          }
+          return sortConversations([conv, ...prev]);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        setConvos(prev => prev.filter(x => x.id !== id));
+      });
+    return () => { cancelled = true; };
+  }, [currentId]);
+
+  const current = useMemo(
+    () => (currentId ? convos.find(c => c.id === currentId) ?? null : null),
+    [convos, currentId]
+  );
 
   async function save(c: Conversation) {
     const copy = { ...c, updatedAt: now() };
     await putConversation(copy);
     setConvos(prev => {
       const idx = prev.findIndex(x => x.id === copy.id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = copy; return next.sort((a,b)=>b.updatedAt-a.updatedAt); }
-      return [copy, ...prev].sort((a,b)=>b.updatedAt-a.updatedAt);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = copy;
+        return sortConversations(next);
+      }
+      return sortConversations([copy, ...prev]);
     });
     return copy;
   }
 
-  function startNew(title = "New chat") {
-    const c: Conversation = { id: uid(), title, status: "active", createdAt: now(), updatedAt: now(), messages: [] };
+  async function startNew(title = "New chat") {
+    const created = now();
+    const c: Conversation = { id: uid(), title, status: "active", createdAt: created, updatedAt: created, messages: [] };
+    setConvos(prev => sortConversations([c, ...prev.filter(x => x.id !== c.id)]));
     setCurrentId(c.id);
     return save(c);
   }
@@ -37,27 +96,29 @@ export function useConversations() {
   }
 
   async function select(id: string) {
-    const c = await getConversation(id);
-    if (c) setCurrentId(c.id);
+    setCurrentId(id);
   }
 
   async function append(id: string, m: Message) {
-    const c = convos.find(x => x.id === id); if (!c) return;
-    await save({ ...c, messages: [...c.messages, m] });
+    const base = convos.find(x => x.id === id);
+    if (!base) return;
+    await save({ ...base, messages: [...base.messages, m] });
   }
 
   async function updateLastAssistant(id: string, patch: Partial<Message>) {
-    const c = convos.find(x => x.id === id); if (!c) return;
-    const msgs = [...c.messages];
+    const base = convos.find(x => x.id === id);
+    if (!base) return;
+    const msgs = [...base.messages];
     for (let i = msgs.length - 1; i >= 0; i--) {
       if (msgs[i].role === "assistant") { msgs[i] = { ...msgs[i], ...patch }; break; }
     }
-    await save({ ...c, messages: msgs });
+    await save({ ...base, messages: msgs });
   }
 
   async function setStatus(id: string, status: ConversationStatus) {
-    const c = convos.find(x => x.id === id); if (!c) return;
-    await save({ ...c, status });
+    const base = convos.find(x => x.id === id);
+    if (!base) return;
+    await save({ ...base, status });
   }
 
   async function archive(id: string) { await setStatus(id, "archived"); }

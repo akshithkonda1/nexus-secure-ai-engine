@@ -4,6 +4,7 @@ import { marked } from "marked";
 import hljs from "highlight.js";
 import { useConversations } from "./useConversations";
 import type { Message } from "./db";
+import { loadProfile, saveProfile, type StoredProfile } from "./profileStorage";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const ASK_JSON = `${BASE}/api/ask`;
@@ -44,40 +45,116 @@ type NxSettings = {
   mode: Mode;
 };
 
-type NxProfile = {
-  name: string;
-  email: string;
-  photoDataUrl?: string;
-  accountId: string;
-  plan?: string;
-};
+type NxProfile = StoredProfile;
 
 export default function ConsumerChat() {
   const {
     active, archived, trash,
-    current, currentId, setCurrentId,
+    current, currentId,
     startNew, select, rename, append, updateLastAssistant,
     archive, moveToTrash, restore, purge, purgeAllTrash
   } = useConversations();
 
   const [settings, setSettings] = useState<NxSettings>(() => {
-    try { return JSON.parse(localStorage.getItem("nx.settings")||""); } catch {}
-    return { theme:"dark", showModels:true, showAudit:false, webPct:50, aiPct:50, useBoth:true, consensusBeforeWeb:true, preferred:null, mode:"balanced" };
+    const saved = localStorage.getItem("nx.settings");
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return {
+      theme: prefersDark ? "dark" : "light",
+      showModels: true,
+      showAudit: false,
+      webPct: 50,
+      aiPct: 50,
+      useBoth: true,
+      consensusBeforeWeb: true,
+      preferred: null,
+      mode: "balanced",
+    };
   });
   useEffect(()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); }, [settings]);
   useEffect(()=>{ document.documentElement.dataset.theme = settings.theme; }, [settings.theme]);
 
-  const [profile, setProfile] = useState<NxProfile>(() => {
-    try { return JSON.parse(localStorage.getItem("nx.profile")||""); } catch {}
-    return { name:"Nexus User", email:"user@example.com", accountId:"acc_"+uid(), plan:"Free" };
-  });
-  useEffect(()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); }, [profile]);
+  const defaultProfile: NxProfile = {
+    name: "Nexus User",
+    email: "user@example.com",
+    accountId: "acc_" + uid(),
+    plan: "Free",
+  };
+  const readLegacyProfile = (): NxProfile => {
+    if (typeof window === "undefined") return defaultProfile;
+    try {
+      const stored = localStorage.getItem("nx.profile");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<NxProfile>;
+        return { ...defaultProfile, ...parsed };
+      }
+    } catch (err) {
+      console.warn("Failed to parse legacy profile", err);
+    }
+    return defaultProfile;
+  };
+  const writeLegacyProfile = (value: NxProfile) => {
+    if (typeof window === "undefined") return;
+    try {
+      const { photoDataUrl, ...rest } = value;
+      localStorage.setItem("nx.profile", JSON.stringify(rest));
+    } catch (err) {
+      console.warn("Failed to persist legacy profile", err);
+    }
+  };
+  const [profile, setProfile] = useState<NxProfile>(readLegacyProfile);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [toast, setToast] = useState<string|null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stored = await loadProfile();
+      if (!cancelled && stored) {
+        setProfile(prev => ({ ...prev, ...stored }));
+      }
+      if (!cancelled) {
+        setProfileLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  useEffect(() => {
+    if (!profileLoaded) return;
+    let active = true;
+    (async () => {
+      try {
+        await saveProfile(profile);
+        writeLegacyProfile(profile);
+      } catch (err) {
+        console.error("Failed to persist profile", err);
+        if (active) {
+          showToast("We couldn't save your profile locally.", 4000);
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, [profile, profileLoaded]);
+  const profileInitial = (() => {
+    const source = `${profile.name || ""} ${profile.email || ""}`.trim();
+    const letters = source
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(part => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    return letters || "U";
+  })();
 
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [toast, setToast] = useState<string|null>(null);
 
   // Profile modal UI state
   const [profileTab, setProfileTab] = useState<'user'|'billing'|'feedback'>('user');
@@ -92,9 +169,7 @@ export default function ConsumerChat() {
 
   async function ensureCurrent() {
     if (current) return current;
-    const c = await startNew("New chat");
-    setCurrentId(c.id);
-    return c;
+    return startNew("New chat");
   }
 
   async function send() {
@@ -192,7 +267,7 @@ export default function ConsumerChat() {
       {/* Sidebar */}
       <aside className="cx-sidebar">
         <div className="cx-brand">Nexus.ai</div>
-        <button className="cx-new" onClick={()=>startNew("New chat").then(c=>setCurrentId(c.id))}>＋ New chat</button>
+        <button className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
         <div className="cx-divider" />
 
         <Section title={`Active (${active.length})`}>
@@ -371,41 +446,156 @@ export default function ConsumerChat() {
 
             {/* Normal profile content (hidden when deleteFlow active) */}
             {!deleteFlow && (
-              <>
-                <div className="tab-head">
-                  <button type="button" className={`tab-btn ${profileTab==='user'?'on':''}`} onClick={()=>setProfileTab('user')}>User Settings</button>
-                  <button type="button" className={`tab-btn ${profileTab==='billing'?'on':''}`} onClick={()=>setProfileTab('billing')}>Plan & Billing</button>
-                  <button type="button" className={`tab-btn ${profileTab==='feedback'?'on':''}`} onClick={()=>setProfileTab('feedback')}>System Feedback</button>
-                </div>
-                <div className="tab-body">
+              <div className="profile-shell">
+                <aside className="profile-nav">
+                  <div className="profile-overview">
+                    <div className="profile-avatar">
+                      {profile.photoDataUrl
+                        ? <img src={profile.photoDataUrl} alt="Profile avatar" />
+                        : <span>{profileInitial}</span>}
+                    </div>
+                    <div className="profile-name">{profile.name || "Add your name"}</div>
+                    <div className="profile-email">{profile.email || "user@example.com"}</div>
+                    <div className="profile-id" title={profile.accountId}>ID · {profile.accountId}</div>
+                  </div>
+                  <nav className="profile-tabs">
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='user'?'active':''}`}
+                      onClick={()=>setProfileTab('user')}
+                    >
+                      <span className="icon" aria-hidden>👤</span>
+                      <div>
+                        <div className="label">User Settings</div>
+                        <div className="hint">Personal info, avatar, and sign-in details.</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='billing'?'active':''}`}
+                      onClick={()=>setProfileTab('billing')}
+                    >
+                      <span className="icon" aria-hidden>💳</span>
+                      <div>
+                        <div className="label">Plan & Billing</div>
+                        <div className="hint">Check your subscription and upgrades.</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={`profile-tab ${profileTab==='feedback'?'active':''}`}
+                      onClick={()=>setProfileTab('feedback')}
+                    >
+                      <span className="icon" aria-hidden>💬</span>
+                      <div>
+                        <div className="label">System Feedback</div>
+                        <div className="hint">Send product feedback or report an issue.</div>
+                      </div>
+                    </button>
+                  </nav>
+                  <div className="support">Need help? Reach out at <strong>support@nexus.ai</strong>.</div>
+                </aside>
+
+                <section className="profile-pane">
                   {profileTab==='user' && (
-                    <div className="form">
-                      <AvatarEdit value={profile.photoDataUrl} onChange={data=>setProfile(p=>({...p, photoDataUrl:data}))} />
-                      <Field label="Name"><input value={profile.name} onChange={e=>setProfile(p=>({...p, name:e.target.value}))} /></Field>
-                      <Field label="Email"><input value={profile.email} onChange={e=>setProfile(p=>({...p, email:e.target.value}))} /></Field>
-                      <Field label="Account ID (read-only)"><input value={profile.accountId} readOnly /></Field>
-                      <div className="modal-actions split">
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">User Settings</div>
+                        <div className="subtitle">Personalize how your profile appears inside Nexus.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Profile photo">
+                          <AvatarEdit
+                            value={profile.photoDataUrl}
+                            fallback={profileInitial}
+                            onChange={data=>setProfile(p=>({...p, photoDataUrl:data}))}
+                          />
+                        </Field>
+                        <Field label="Name">
+                          <input value={profile.name} onChange={e=>setProfile(p=>({...p, name:e.target.value }))} placeholder="Jane Doe" />
+                        </Field>
+                        <Field label="Email">
+                          <input value={profile.email} onChange={e=>setProfile(p=>({...p, email:e.target.value }))} placeholder="you@example.com" />
+                        </Field>
+                        <Field label="Account ID">
+                          <input value={profile.accountId} readOnly />
+                        </Field>
+                      </div>
+                      <div className="panel-actions split">
                         <button type="button" className="danger ghost" onClick={()=>setDeleteFlow('confirm')}>Delete Account</button>
-                        <button type="button" className="primary" onClick={()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); showToast("Profile saved"); }}>Save Changes</button>
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={async ()=>{
+                            try {
+                              await saveProfile(profile);
+                              writeLegacyProfile(profile);
+                              showToast("Profile saved");
+                            } catch (err) {
+                              console.error("Failed to save profile", err);
+                              showToast("Profile couldn't be saved. Try again.");
+                            }
+                          }}
+                        >
+                          Save Changes
+                        </button>
                       </div>
                     </div>
                   )}
+
                   {profileTab==='billing' && (
-                    <div className="form">
-                      <Field label="Current Plan"><input value={profile.plan || "Free"} readOnly /></Field>
-                      <div className="modal-actions right">
-                        <button type="button" className="primary" onClick={()=>showToast("We’re working on plans — enjoy Nexus freely for now!")}>Upgrade Plan</button>
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">Plan & Billing</div>
+                        <div className="subtitle">Preview upcoming plan options and manage invoices.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Current plan">
+                          <input value={profile.plan || "Free"} readOnly />
+                        </Field>
+                        <Field label="Billing status">
+                          <input value="Active" readOnly />
+                        </Field>
+                      </div>
+                      <div className="panel-actions end">
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={()=>showToast("We’re working on plans — enjoy Nexus freely for now!")}
+                        >
+                          Upgrade Plan
+                        </button>
                       </div>
                     </div>
                   )}
+
                   {profileTab==='feedback' && (
-                    <div className="form">
-                      <Field label="Tell us what to improve"><textarea rows={6} placeholder="Your feedback helps us shape Nexus…" /></Field>
-                      <div className="modal-actions right"><button type="button" className="primary" onClick={()=>showToast("Thanks for the feedback!")}>Send</button></div>
+                    <div className="profile-panel">
+                      <header>
+                        <div className="title">System Feedback</div>
+                        <div className="subtitle">Let us know what’s working well and what needs attention.</div>
+                      </header>
+                      <div className="field-grid">
+                        <Field label="Message">
+                          <textarea
+                            rows={6}
+                            placeholder="Share feature ideas, bugs you’ve noticed, or workflows we can improve."
+                          />
+                        </Field>
+                      </div>
+                      <div className="panel-actions end">
+                        <button
+                          type="button"
+                          className="primary"
+                          onClick={()=>showToast("Thanks for the feedback!")}
+                        >
+                          Send Feedback
+                        </button>
+                      </div>
                     </div>
                   )}
-                </div>
-              </>
+                </section>
+              </div>
             )}
           </div>
         </div>
@@ -424,12 +614,17 @@ function ConvRow({ title, when, active, onClick, menu }:{
   title:string; when:string; active?:boolean; onClick?:()=>void; menu?:{label:string; onClick:()=>void}[];
 }) {
   return (
-    <div className={`conv ${active?"active":""}`} onClick={onClick}>
-      <div className="conv-title">{title||"Untitled"}</div>
-      <div className="conv-when">{when}</div>
+    <div className={`conv ${active?"active":""}`}>
+      <button type="button" className="conv-body" onClick={onClick}>
+        <span className="conv-title">{title||"Untitled"}</span>
+        <span className="conv-when">{when}</span>
+      </button>
       {menu && (
         <div className="conv-menu" onClick={e=>e.stopPropagation()}>
-          <details><summary>⋯</summary><div className="menu">{menu.map((m,i)=><button key={i} onClick={m.onClick}>{m.label}</button>)}</div></details>
+          <details>
+            <summary aria-label="Conversation actions">⋯</summary>
+            <div className="menu">{menu.map((m,i)=><button type="button" key={i} onClick={m.onClick}>{m.label}</button>)}</div>
+          </details>
         </div>
       )}
     </div>
@@ -472,14 +667,14 @@ function Segmented({ options, value, onChange }:{ options:{key:string;label:stri
 function Field({ label, children }:{ label:string; children:React.ReactNode }) {
   return (<div className="field-row"><div className="label">{label}</div><div className="control">{children}</div></div>);
 }
-function AvatarEdit({ value, onChange }:{ value?:string; onChange:(dataUrl?:string)=>void }) {
+function AvatarEdit({ value, fallback, onChange }:{ value?:string; fallback:string; onChange:(dataUrl?:string)=>void }) {
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
     const reader = new FileReader(); reader.onload = ()=>onChange(String(reader.result||"")); reader.readAsDataURL(f);
   }
   return (
     <div className="avatar-edit">
-      <div className="preview">{value ? <img src={value} alt="avatar"/> : <div className="ph">U</div>}</div>
+      <div className="preview">{value ? <img src={value} alt="avatar"/> : <div className="ph">{fallback}</div>}</div>
       <label className="upload"><input type="file" accept="image/*" onChange={pick}/>Change photo</label>
     </div>
   );
