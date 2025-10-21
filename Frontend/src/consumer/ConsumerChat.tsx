@@ -167,6 +167,8 @@ export default function ConsumerChat() {
   useEffect(()=>{ scrollRef.current?.scrollTo({top: scrollRef.current.scrollHeight, behavior:"smooth"}); }, [current, busy]);
   useEffect(() => {
     function stopSubmit(e: Event) {
+      const el = e.target as HTMLFormElement | null;
+      if (el?.classList.contains("cx-compose-inner")) return;
       e.preventDefault();
       e.stopPropagation();
     }
@@ -189,17 +191,6 @@ export default function ConsumerChat() {
   }, []);
   useEffect(() => { activeConvIdRef.current = currentId ?? null; }, [currentId]);
 
-  useEffect(() => {
-    const last = sessionStorage.getItem("nx.currentId");
-    if (last) select(last);
-  }, []);
-
-  useEffect(() => {
-    if (currentId) {
-      sessionStorage.setItem("nx.currentId", currentId);
-    }
-  }, [currentId]);
-
   function lockToSession(id: string) {
     if (!id) return;
     if (activeConvIdRef.current !== id) {
@@ -211,92 +202,6 @@ export default function ConsumerChat() {
   function showToast(msg: string, ms=2000){ setToast(msg); setTimeout(()=>setToast(null), ms); }
   function toggleTheme(){ setSettings(s=>({...s, theme: s.theme==="dark"?"light":"dark"})); }
 
-  function exportConversation() {
-    if (!current) {
-      showToast("No conversation to export");
-      return;
-    }
-    try {
-      const safeTitle = (current.title || "chat")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/gi, "-")
-        .replace(/^-+|-+$/g, "") || "chat";
-      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `nexus-chat-${safeTitle}-${stamp}.json`;
-      const payload = {
-        id: current.id,
-        title: current.title,
-        status: current.status,
-        createdAt: current.createdAt,
-        updatedAt: current.updatedAt,
-        messages: current.messages.map(m => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          html: m.html,
-          models: m.models,
-          audit: m.audit,
-        })),
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast("Exported conversation", 1800);
-    } catch (err) {
-      console.error("Failed to export conversation", err);
-      showToast("Export failed");
-    }
-  }
-
-  async function handleArchiveAction() {
-    if (!current) return;
-    const { id, status } = current;
-    try {
-      if (status === "archived" || status === "trash") {
-        await restore(id);
-        showToast(status === "trash" ? "Restored" : "Unarchived");
-      } else {
-        await archive(id);
-        showToast("Archived");
-      }
-    } catch (err) {
-      console.error("Failed to update conversation status", err);
-      showToast("Couldn't update status");
-    }
-  }
-
-  async function handleDeleteAction() {
-    if (!current) return;
-    const id = current.id;
-    try {
-      if (current.status === "trash") {
-        await purge(id);
-        showToast("Deleted forever");
-      } else {
-        await moveToTrash(id);
-        showToast("Moved to trash");
-      }
-    } catch (err) {
-      console.error("Failed to delete conversation", err);
-      showToast("Couldn't delete conversation");
-    }
-  }
-
-  const archiveLabel = current
-    ? current.status === "archived"
-      ? "Unarchive"
-      : current.status === "trash"
-        ? "Restore"
-        : "Archive"
-    : "Archive";
-  const deleteLabel = current?.status === "trash" ? "Delete forever" : "Delete";
-
   async function ensureCurrent() {
     if (current) return current;
     return startNew("New chat");
@@ -305,7 +210,6 @@ export default function ConsumerChat() {
   async function send() {
     const prompt = input.trim(); if (!prompt || busy) return;
     setInput("");
-    setBusy(true);
     const conv = await ensureCurrent();
     lockToSession(conv.id);
 
@@ -318,6 +222,8 @@ export default function ConsumerChat() {
     await append(conv.id, { id: uid(), role:"user", content: prompt, html: mdToHtml(prompt) });
     // Insert assistant placeholder, then stream/fallback
     await append(conv.id, { id: uid(), role:"assistant", content:"", html:"" });
+    setBusy(true);
+
     const headers: Record<string,string> = {
       "Content-Type": "application/json",
       "X-Nexus-Web-Pct": String(settings.webPct),
@@ -402,6 +308,17 @@ export default function ConsumerChat() {
     }
   }
 
+  function StatusActions() {
+    if (!current) return null;
+    const id = current.id;
+    if (current.status === "active") {
+      return (<><button type="button" className="pill" onClick={()=>archive(id)}>Archive</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+    } else if (current.status === "archived") {
+      return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+    }
+    return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill danger" onClick={()=>purge(id)}>Permanently Delete</button></>);
+  }
+
   return (
     <div className="cx-shell">
       {/* Sidebar */}
@@ -457,43 +374,15 @@ export default function ConsumerChat() {
 
       {/* Main */}
       <section className="cx-main">
-        <header className="nx-top">
-          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
-            Nexus<span className="dot">•</span><span className="ai">ai</span>
-          </div>
-          <h2 className="title" role="heading" aria-live="polite">{current?.title || "New chat"}</h2>
-          <div className="actions">
-            <button type="button" className="btn" onClick={exportConversation} disabled={!current}>⭳ Export</button>
-            <button
-              type="button"
-              className="btn"
-              onClick={handleArchiveAction}
-              disabled={!current}
-            >
-              {archiveLabel}
+        <header className="cx-top">
+          <div className="title">{current?.title || "Chat"}</div>
+          <div className="top-icons">
+            <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
+            <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
+            {current && <StatusActions />}
+            <button type="button" className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
+              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
             </button>
-            <button
-              type="button"
-              className="btn danger"
-              onClick={handleDeleteAction}
-              disabled={!current}
-            >
-              {deleteLabel}
-            </button>
-            <div className="top-icons">
-              <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>
-                {settings.theme==="dark"?"🌙":"☀️"}
-              </button>
-              <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
-              <button
-                type="button"
-                className="avatar-btn"
-                onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }}
-                title="Profile"
-              >
-                {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
-              </button>
-            </div>
           </div>
         </header>
 
@@ -526,36 +415,55 @@ export default function ConsumerChat() {
           </div>
         </div>
 
-        {/* --- COMPOSER --- */}
-        <form
-          className="cx-compose"
-          onSubmit={(e) => { e.preventDefault(); if (!busy) send(); }}
-        >
-          <div className="cx-compose-inner">
-            {!busy ? (
-              <button type="button" className="icon-btn" onClick={regenerate}>↻</button>
-            ) : (
-              <button type="button" className="icon-btn danger" onClick={stopStreaming}>■</button>
-            )}
+        {/* COMPOSER — submit without page reload */}
+        <footer className="cx-compose">
+          <form
+            className="cx-compose-inner"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!busy) send();
+            }}
+          >
+            <div className="cx-tools-left">
+              <button
+                type="button"
+                className="icon-btn"
+                title="Attach (coming soon)"
+                onClick={() => showToast("Attachments coming soon")}
+              >
+                📎
+              </button>
+              {!busy && (
+                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
+                  ↻
+                </button>
+              )}
+              {busy && (
+                <button type="button" className="icon-btn danger" title="Stop" onClick={stopStreaming}>
+                  ■
+                </button>
+              )}
+            </div>
 
             <input
+              id="composer"
               className="cx-input"
               placeholder="Ask Nexus…"
               value={input}
-              onChange={(e)=>setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();               // belt & suspenders
+                  e.preventDefault();
                   if (!busy) send();
                 }
               }}
             />
 
             <button type="submit" className="cx-send" disabled={busy || !input.trim()}>
-              {busy ? "Sending…" : "Send"}
+              Send
             </button>
-          </div>
-        </form>
+          </form>
+        </footer>
       </section>
 
       {/* System Settings */}
