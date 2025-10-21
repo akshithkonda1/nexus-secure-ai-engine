@@ -628,6 +628,28 @@ button, input, textarea { background: transparent; border: none; }
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.cx-send:hover { box-shadow: var(--shadow-lg); }
+.cx-send:disabled { opacity: 0.65; cursor: not-allowed; box-shadow: none; }
+
+.cx-msg {
+  display: flex;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.cx-msg .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--outline);
+  font-size: 1.1rem;
 }
 
 .danger.ghost { background: transparent; }
