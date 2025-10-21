@@ -99,6 +99,12 @@ export function useConversations() {
     setCurrentId(id);
   }
 
+  useEffect(() => {
+    if (!currentId && convos.length > 0) {
+      setCurrentId(convos[0].id);
+    }
+  }, [convos, currentId]);
+
   async function append(id: string, m: Message) {
     const base = convos.find(x => x.id === id);
     if (!base) return;
