@@ -4,6 +4,7 @@ import { marked } from "marked";
 import hljs from "highlight.js";
 import { useConversations } from "./useConversations";
 import type { Message } from "./db";
+import { loadProfile, saveProfile, type StoredProfile } from "./profileStorage";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const ASK_JSON = `${BASE}/api/ask`;
@@ -44,13 +45,7 @@ type NxSettings = {
   mode: Mode;
 };
 
-type NxProfile = {
-  name: string;
-  email: string;
-  photoDataUrl?: string;
-  accountId: string;
-  plan?: string;
-};
+type NxProfile = StoredProfile;
 
 export default function ConsumerChat() {
   const {
@@ -84,19 +79,66 @@ export default function ConsumerChat() {
   useEffect(()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); }, [settings]);
   useEffect(()=>{ document.documentElement.dataset.theme = settings.theme; }, [settings.theme]);
 
-  const [profile, setProfile] = useState<NxProfile>(() => {
-    try { return JSON.parse(localStorage.getItem("nx.profile")||""); } catch {}
-    return { name:"Nexus User", email:"user@example.com", accountId:"acc_"+uid(), plan:"Free" };
-  });
-  const [toast, setToast] = useState<string|null>(null);
-  useEffect(()=>{
+  const defaultProfile: NxProfile = {
+    name: "Nexus User",
+    email: "user@example.com",
+    accountId: "acc_" + uid(),
+    plan: "Free",
+  };
+  const readLegacyProfile = (): NxProfile => {
+    if (typeof window === "undefined") return defaultProfile;
     try {
-      localStorage.setItem("nx.profile", JSON.stringify(profile));
+      const stored = localStorage.getItem("nx.profile");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<NxProfile>;
+        return { ...defaultProfile, ...parsed };
+      }
     } catch (err) {
-      console.error("Failed to persist profile", err);
-      showToast("We couldn't save your profile locally. Try a smaller photo.", 4000);
+      console.warn("Failed to parse legacy profile", err);
     }
-  }, [profile]);
+    return defaultProfile;
+  };
+  const writeLegacyProfile = (value: NxProfile) => {
+    if (typeof window === "undefined") return;
+    try {
+      const { photoDataUrl, ...rest } = value;
+      localStorage.setItem("nx.profile", JSON.stringify(rest));
+    } catch (err) {
+      console.warn("Failed to persist legacy profile", err);
+    }
+  };
+  const [profile, setProfile] = useState<NxProfile>(readLegacyProfile);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [toast, setToast] = useState<string|null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stored = await loadProfile();
+      if (!cancelled && stored) {
+        setProfile(prev => ({ ...prev, ...stored }));
+      }
+      if (!cancelled) {
+        setProfileLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  useEffect(() => {
+    if (!profileLoaded) return;
+    let active = true;
+    (async () => {
+      try {
+        await saveProfile(profile);
+        writeLegacyProfile(profile);
+      } catch (err) {
+        console.error("Failed to persist profile", err);
+        if (active) {
+          showToast("We couldn't save your profile locally.", 4000);
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, [profile, profileLoaded]);
   const profileInitial = (() => {
     const source = `${profile.name || ""} ${profile.email || ""}`.trim();
     const letters = source
@@ -486,13 +528,14 @@ export default function ConsumerChat() {
                         <button
                           type="button"
                           className="primary"
-                          onClick={()=>{
+                          onClick={async ()=>{
                             try {
-                              localStorage.setItem("nx.profile", JSON.stringify(profile));
+                              await saveProfile(profile);
+                              writeLegacyProfile(profile);
                               showToast("Profile saved");
                             } catch (err) {
                               console.error("Failed to save profile", err);
-                              showToast("Profile couldn't be saved. Try reducing the photo size.");
+                              showToast("Profile couldn't be saved. Try again.");
                             }
                           }}
                         >
