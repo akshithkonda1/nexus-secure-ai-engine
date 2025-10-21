@@ -254,28 +254,39 @@ export default function ConsumerChat() {
           </div>
         </header>
 
+        {/* STREAM */}
         <div className="cx-stream" ref={scrollRef}>
-          {!current || current.messages.length===0 ? (
-            <div className="cx-empty">
-              <h1>How can Nexus help today?</h1>
-              <p className="muted">Ask a question, paste a document, or say “/help”.</p>
-              <div className="quick">
-                <button onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
-                <button onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
-                <button onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
+          <div className="cx-stream-inner">
+            {!current || current.messages.length === 0 ? (
+              <div className="cx-hero">
+                <h1>How can Nexus help today?</h1>
+                <p className="muted">Ask a question, paste a document, or say “/help”.</p>
+                <div className="quick">
+                  <button onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
+                  <button onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
+                  <button onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
+                </div>
               </div>
-            </div>
-          ) : (
-            current.messages.map(m => <MessageBubble key={m.id} m={m} />)
-          )}
-          {busy && <div className="cx-thinking">Thinking…</div>}
+            ) : (
+              current.messages.map(m => <MessageBubble key={m.id} m={m} />)
+            )}
+            {busy && <div className="cx-thinking">Thinking…</div>}
+          </div>
         </div>
 
+        {/* COMPOSER */}
         <footer className="cx-compose">
-          <input id="composer" className="cx-input" placeholder="Ask Nexus…" value={input}
-            onChange={e=>setInput(e.target.value)}
-            onKeyDown={e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }} />
-          <button className="cx-send" onClick={send} disabled={busy || !input.trim()}>Send</button>
+          <div className="cx-compose-inner">
+            <input
+              id="composer"
+              className="cx-input"
+              placeholder="Ask Nexus…"
+              value={input}
+              onChange={e=>setInput(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
+            />
+            <button className="cx-send" onClick={send} disabled={busy || !input.trim()}>Send</button>
+          </div>
         </footer>
       </section>
 
