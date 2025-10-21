@@ -88,7 +88,15 @@ export default function ConsumerChat() {
     try { return JSON.parse(localStorage.getItem("nx.profile")||""); } catch {}
     return { name:"Nexus User", email:"user@example.com", accountId:"acc_"+uid(), plan:"Free" };
   });
-  useEffect(()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); }, [profile]);
+  const [toast, setToast] = useState<string|null>(null);
+  useEffect(()=>{
+    try {
+      localStorage.setItem("nx.profile", JSON.stringify(profile));
+    } catch (err) {
+      console.error("Failed to persist profile", err);
+      showToast("We couldn't save your profile locally. Try a smaller photo.", 4000);
+    }
+  }, [profile]);
   const profileInitial = (() => {
     const source = `${profile.name || ""} ${profile.email || ""}`.trim();
     const letters = source
@@ -105,7 +113,6 @@ export default function ConsumerChat() {
   const [busy, setBusy] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [toast, setToast] = useState<string|null>(null);
 
   // Profile modal UI state
   const [profileTab, setProfileTab] = useState<'user'|'billing'|'feedback'>('user');
@@ -479,7 +486,15 @@ export default function ConsumerChat() {
                         <button
                           type="button"
                           className="primary"
-                          onClick={()=>{ localStorage.setItem("nx.profile", JSON.stringify(profile)); showToast("Profile saved"); }}
+                          onClick={()=>{
+                            try {
+                              localStorage.setItem("nx.profile", JSON.stringify(profile));
+                              showToast("Profile saved");
+                            } catch (err) {
+                              console.error("Failed to save profile", err);
+                              showToast("Profile couldn't be saved. Try reducing the photo size.");
+                            }
+                          }}
                         >
                           Save Changes
                         </button>
