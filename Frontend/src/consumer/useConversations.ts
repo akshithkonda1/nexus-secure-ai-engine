@@ -37,9 +37,33 @@ export function useConversations() {
   }
 
   async function select(id: string) {
-    const c = await getConversation(id);
-    if (c) setCurrentId(c.id);
+    setCurrentId(id);
+    try {
+      const c = await getConversation(id);
+      if (!c) {
+        setCurrentId((prev) => (prev === id ? null : prev));
+        return;
+      }
+      setConvos((prev) => {
+        const idx = prev.findIndex((x) => x.id === c.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = c;
+          return next.sort((a, b) => b.updatedAt - a.updatedAt);
+        }
+        return [c, ...prev].sort((a, b) => b.updatedAt - a.updatedAt);
+      });
+    } catch (err) {
+      console.error(err);
+      setCurrentId((prev) => (prev === id ? null : prev));
+    }
   }
+
+  useEffect(() => {
+    if (!currentId && convos.length > 0) {
+      setCurrentId(convos[0].id);
+    }
+  }, [convos, currentId]);
 
   async function append(id: string, m: Message) {
     const c = convos.find(x => x.id === id); if (!c) return;
