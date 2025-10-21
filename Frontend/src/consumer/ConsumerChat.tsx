@@ -203,6 +203,14 @@ export default function ConsumerChat() {
     setBusy(false);
   }
 
+  function regenerate() {
+    showToast("Regenerate coming soon");
+  }
+
+  function stopStreaming() {
+    showToast("Stop request coming soon");
+  }
+
   async function trySSE({ prompt, convId, headers }:{
     prompt:string; convId:string; headers:Record<string,string>;
   }) {
@@ -255,11 +263,11 @@ export default function ConsumerChat() {
     if (!current) return null;
     const id = current.id;
     if (current.status === "active") {
-      return (<><button className="pill" onClick={()=>archive(id)}>Archive</button><button className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+      return (<><button type="button" className="pill" onClick={()=>archive(id)}>Archive</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
     } else if (current.status === "archived") {
-      return (<><button className="pill on" onClick={()=>restore(id)}>Restore</button><button className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+      return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
     }
-    return (<><button className="pill on" onClick={()=>restore(id)}>Restore</button><button className="pill danger" onClick={()=>purge(id)}>Permanently Delete</button></>);
+    return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill danger" onClick={()=>purge(id)}>Permanently Delete</button></>);
   }
 
   return (
@@ -267,7 +275,7 @@ export default function ConsumerChat() {
       {/* Sidebar */}
       <aside className="cx-sidebar">
         <div className="cx-brand">Nexus.ai</div>
-        <button className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
+        <button type="button" className="cx-new" onClick={()=>startNew("New chat")}>＋ New chat</button>
         <div className="cx-divider" />
 
         <Section title={`Active (${active.length})`}>
@@ -298,7 +306,7 @@ export default function ConsumerChat() {
           ))}
         </Section>
 
-        <Section title={`Trash (${trash.length})`} extra={<button className="mini danger" onClick={purgeAllTrash}>Empty Trash</button>}>
+        <Section title={`Trash (${trash.length})`} extra={<button type="button" className="mini danger" onClick={purgeAllTrash}>Empty Trash</button>}>
           {trash.length===0 && <div className="cx-empty-small muted">Trash is empty</div>}
           {trash.map(c=>(
             <ConvRow key={c.id} title={c.title} when={new Date(c.updatedAt).toLocaleString()} active={c.id===currentId}
@@ -320,10 +328,10 @@ export default function ConsumerChat() {
         <header className="cx-top">
           <div className="title">{current?.title || "Chat"}</div>
           <div className="top-icons">
-            <button className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
-            <button className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
+            <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
+            <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
             {current && <StatusActions />}
-            <button className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
+            <button type="button" className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
               {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
             </button>
           </div>
@@ -337,9 +345,9 @@ export default function ConsumerChat() {
                 <h1>How can Nexus help today?</h1>
                 <p className="muted">Ask a question, paste a document, or say “/help”.</p>
                 <div className="quick">
-                  <button onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
-                  <button onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
-                  <button onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
+                  <button type="button" onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
+                  <button type="button" onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
+                  <button type="button" onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
                 </div>
               </div>
             ) : (
@@ -350,19 +358,41 @@ export default function ConsumerChat() {
         </div>
 
         {/* COMPOSER */}
-        <footer className="cx-compose">
+        <form
+          className="cx-compose"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy) send();
+          }}
+        >
           <div className="cx-compose-inner">
+            <div className="cx-tools-left">
+              <button type="button" className="icon-btn" title="Attach" onClick={() => showToast("Attachments coming soon")}>📎</button>
+              {!busy && <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>↻</button>}
+              {busy &&  <button type="button" className="icon-btn danger" title="Stop" onClick={stopStreaming}>■</button>}
+            </div>
+
             <input
               id="composer"
               className="cx-input"
               placeholder="Ask Nexus…"
               value={input}
-              onChange={e=>setInput(e.target.value)}
-              onKeyDown={e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
+              onChange={(e) => setInput(e.target.value)}
+              // optional: keep this for Shift+Enter newlines UX
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!busy) send();
+                }
+              }}
             />
-            <button className="cx-send" onClick={send} disabled={busy || !input.trim()}>Send</button>
+
+            <button type="submit" className="cx-send" disabled={busy || !input.trim()}>
+              Send
+            </button>
           </div>
-        </footer>
+          <div className="cx-hint">Enter to send • Shift+Enter for newline</div>
+        </form>
       </section>
 
       {/* System Settings */}
@@ -371,7 +401,7 @@ export default function ConsumerChat() {
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-head">
               <div className="modal-title">System Settings</div>
-              <button className="icon-btn" onClick={()=>setShowSettings(false)}>✖</button>
+              <button type="button" className="icon-btn" onClick={()=>setShowSettings(false)}>✖</button>
             </div>
             <div className="modal-body">
               <Row label="Web Search %"><Range value={settings.webPct} set={v=>setSettings(s=>({...s, webPct:v}))} /></Row>
@@ -393,7 +423,7 @@ export default function ConsumerChat() {
                 />
               </Row>
               <div className="modal-actions">
-                <button className="primary" onClick={()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); showToast("Settings saved"); setShowSettings(false); }}>Save Settings</button>
+                <button type="button" className="primary" onClick={()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); showToast("Settings saved"); setShowSettings(false); }}>Save Settings</button>
               </div>
             </div>
           </div>
@@ -637,7 +667,7 @@ function MessageBubble({ m }:{ m:Message }) {
       <div className="bubble">
         <div className="meta"><span className="who">{m.role==="assistant"?"Nexus":"You"}</span></div>
         <div className="content" dangerouslySetInnerHTML={{ __html: m.html ?? mdToHtml(m.content) }} />
-        <div className="actions"><button className="mini" onClick={()=>navigator.clipboard.writeText(m.content)}>Copy</button></div>
+        <div className="actions"><button type="button" className="mini" onClick={()=>navigator.clipboard.writeText(m.content)}>Copy</button></div>
         {m.models && Object.keys(m.models).length>0 && (
           <details className="panel" open><summary>Model Answers</summary>
             <div className="kv">{Object.entries(m.models).map(([name,text])=>(
@@ -662,7 +692,7 @@ function Row({ label, children }:{ label:string; children:React.ReactNode }) { r
 function Range({ value, set }:{ value:number; set:(v:number)=>void }) { return (<div className="range"><input type="range" min={0} max={100} value={value} onChange={e=>set(Number(e.target.value))}/><span className="range-val">{value}%</span></div>); }
 function Toggle({ checked, onChange }:{ checked:boolean; onChange:(v:boolean)=>void }) { return (<label className="switch"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} /><span className="slider"/></label>); }
 function Segmented({ options, value, onChange }:{ options:{key:string;label:string}[]; value:string|null|undefined; onChange:(key:string)=>void }) {
-  return (<div className="seg">{options.map(o=>(<button key={o.key} className={`seg-item ${value===o.key?"on":""}`} onClick={()=>onChange(o.key)}>{o.label}</button>))}</div>);
+  return (<div className="seg">{options.map(o=>(<button type="button" key={o.key} className={`seg-item ${value===o.key?"on":""}`} onClick={()=>onChange(o.key)}>{o.label}</button>))}</div>);
 }
 function Field({ label, children }:{ label:string; children:React.ReactNode }) {
   return (<div className="field-row"><div className="label">{label}</div><div className="control">{children}</div></div>);
