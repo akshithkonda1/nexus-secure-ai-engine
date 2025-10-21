@@ -167,8 +167,6 @@ export default function ConsumerChat() {
   useEffect(()=>{ scrollRef.current?.scrollTo({top: scrollRef.current.scrollHeight, behavior:"smooth"}); }, [current, busy]);
   useEffect(() => {
     function stopSubmit(e: Event) {
-      const el = e.target as HTMLFormElement | null;
-      if (el?.classList.contains("cx-compose-inner")) return;
       e.preventDefault();
       e.stopPropagation();
     }
@@ -191,6 +189,17 @@ export default function ConsumerChat() {
   }, []);
   useEffect(() => { activeConvIdRef.current = currentId ?? null; }, [currentId]);
 
+  useEffect(() => {
+    const last = sessionStorage.getItem("nx.currentId");
+    if (last) select(last);
+  }, []);
+
+  useEffect(() => {
+    if (currentId) {
+      sessionStorage.setItem("nx.currentId", currentId);
+    }
+  }, [currentId]);
+
   function lockToSession(id: string) {
     if (!id) return;
     if (activeConvIdRef.current !== id) {
@@ -210,6 +219,7 @@ export default function ConsumerChat() {
   async function send() {
     const prompt = input.trim(); if (!prompt || busy) return;
     setInput("");
+    setBusy(true);
     const conv = await ensureCurrent();
     lockToSession(conv.id);
 
@@ -222,8 +232,6 @@ export default function ConsumerChat() {
     await append(conv.id, { id: uid(), role:"user", content: prompt, html: mdToHtml(prompt) });
     // Insert assistant placeholder, then stream/fallback
     await append(conv.id, { id: uid(), role:"assistant", content:"", html:"" });
-    setBusy(true);
-
     const headers: Record<string,string> = {
       "Content-Type": "application/json",
       "X-Nexus-Web-Pct": String(settings.webPct),
@@ -415,55 +423,36 @@ export default function ConsumerChat() {
           </div>
         </div>
 
-        {/* COMPOSER — submit without page reload */}
-        <footer className="cx-compose">
-          <form
-            className="cx-compose-inner"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!busy) send();
-            }}
-          >
-            <div className="cx-tools-left">
-              <button
-                type="button"
-                className="icon-btn"
-                title="Attach (coming soon)"
-                onClick={() => showToast("Attachments coming soon")}
-              >
-                📎
-              </button>
-              {!busy && (
-                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
-                  ↻
-                </button>
-              )}
-              {busy && (
-                <button type="button" className="icon-btn danger" title="Stop" onClick={stopStreaming}>
-                  ■
-                </button>
-              )}
-            </div>
+        {/* --- COMPOSER --- */}
+        <form
+          className="cx-compose"
+          onSubmit={(e) => { e.preventDefault(); if (!busy) send(); }}
+        >
+          <div className="cx-compose-inner">
+            {!busy ? (
+              <button type="button" className="icon-btn" onClick={regenerate}>↻</button>
+            ) : (
+              <button type="button" className="icon-btn danger" onClick={stopStreaming}>■</button>
+            )}
 
             <input
-              id="composer"
               className="cx-input"
               placeholder="Ask Nexus…"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e)=>setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
+                  e.preventDefault();               // belt & suspenders
                   if (!busy) send();
                 }
               }}
             />
 
             <button type="submit" className="cx-send" disabled={busy || !input.trim()}>
-              Send
+              {busy ? "Sending…" : "Send"}
             </button>
-          </form>
-        </footer>
+          </div>
+        </form>
       </section>
 
       {/* System Settings */}
