@@ -158,18 +158,6 @@ html[data-theme="light"] .nx-logo { filter:none; }
 .icon-btn.ghost{ background:transparent; border:1px solid transparent; color:var(--muted); box-shadow:none; }
 .icon-btn.ghost:hover{ color:var(--accent); }
 
-/* Controls row under the top bar */
-.nx-controls{ padding:8px 0; background:var(--panel-2); border-bottom:1px solid var(--line); }
-.nx-controls-inner{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.nx-controls .chip{ border-radius:999px; border:1px solid var(--line); background:var(--panel); color:var(--text); padding:8px 12px; line-height:1.1; box-shadow:var(--shadow); cursor:pointer; display:inline-flex; align-items:center; gap:8px; font-size:13px; }
-.nx-controls .chip.on{ border-color:color-mix(in oklab, var(--accent), white 25%); background:color-mix(in oklab, var(--accent), var(--panel) 70%); }
-.nx-controls .chip-wrap{ position:relative; display:inline-block; }
-.nx-controls .chip-pop{ position:absolute; top:calc(100% + 8px); left:0; z-index:20; width:260px; background:var(--panel); border:1px solid var(--line); border-radius:var(--rsm); box-shadow:var(--shadow); padding:12px; }
-.nx-controls .pop-label{ display:block; font-size:12px; color:var(--muted); margin-bottom:8px; }
-.nx-controls .chip-pop input[type="range"]{ width:100%; }
-.nx-controls .pop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
-.nx-controls .btn.xs{ font-size:12px; padding:6px 10px; border-radius:8px; }
-
 .cx-stream{ overflow:auto; padding:calc(var(--space) * 2) var(--gutter); min-height:calc(100vh - var(--topbar-h) - var(--composer-h)); display:grid; justify-items:center; }
 .cx-stream-inner{ width:100%; max-width:var(--wrap); padding-bottom:max(24px, env(safe-area-inset-bottom)); }
 
