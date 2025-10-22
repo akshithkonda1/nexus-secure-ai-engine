@@ -28,6 +28,17 @@ const LOGO_LIGHT_URL = "/assets/nexus-logo-inverted.png";
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
+
+type SystemSettingsState = {
+  redactPII: boolean;
+  privateMode: boolean;
+  highContrast: boolean;
+  smartCompose: boolean;
+  aiConsensusPct: number;
+  webConsensusPct: number;
+};
+
+type ProfilePanelKey = "user" | "billing" | "feedback";
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -172,11 +183,6 @@ export default function ChatView() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const [activeProfilePanel, setActiveProfilePanel] = useState<ProfilePanelKey | null>(null);
   const [systemSettingsOpen, setSystemSettingsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileState>(() => ({
-    name: "Jordan Sparks",
-    email: "jordan.sparks@nexus.ai",
-    title: "Principal Analyst"
-  }));
   const [systemSettings, setSystemSettings] = useState<SystemSettingsState>(() => {
     try {
       const raw = localStorage.getItem("nx.system-settings");
