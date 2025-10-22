@@ -42,6 +42,20 @@ function readFileAsText(file: File) {
   });
 }
 
+function normaliseConsensus(aiPct: number, webPct: number) {
+  const ai = Number.isFinite(aiPct) ? Math.max(0, Math.min(100, aiPct)) : 0;
+  const web = Number.isFinite(webPct) ? Math.max(0, Math.min(100, webPct)) : 0;
+  const total = ai + web;
+  if (total <= 0) {
+    return { ai: 50, web: 50 };
+  }
+  const aiShare = Math.round((ai / total) * 100);
+  return {
+    ai: Math.max(0, Math.min(100, aiShare)),
+    web: Math.max(0, Math.min(100, 100 - aiShare))
+  };
+}
+
 export default function ChatView() {
   useNavigationGuards();
 
@@ -83,26 +97,70 @@ export default function ChatView() {
     preferred: Preferred;
     mode: NxMode;
   };
+  const preferredOptions: readonly Preferred[] = ["ChatGPT", "Claude", "Grok", "Gemini"];
+  const modeOptions: readonly NxMode[] = ["fast", "balanced", "smart"];
+  const defaultSystem: SystemSettings = {
+    webPct: 50,
+    aiPct: 50,
+    useBoth: true,
+    consensusBeforeWeb: true,
+    preferred: "ChatGPT",
+    mode: "balanced"
+  };
   const [system, setSystem] = useState<SystemSettings>(() => {
     try {
-      return JSON.parse(localStorage.getItem("nx.system") || "");
-    } catch {}
-    return {
-      webPct: 50,
-      aiPct: 50,
-      useBoth: true,
-      consensusBeforeWeb: true,
-      preferred: "ChatGPT",
-      mode: "balanced"
-    };
+      const raw = localStorage.getItem("nx.system");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          const normalised = normaliseConsensus(
+            Number((parsed as any).aiPct ?? (parsed as any).aiConsensusPct ?? defaultSystem.aiPct),
+            Number((parsed as any).webPct ?? (parsed as any).webConsensusPct ?? defaultSystem.webPct)
+          );
+          const preferred = preferredOptions.includes((parsed as any).preferred)
+            ? ((parsed as any).preferred as Preferred)
+            : defaultSystem.preferred;
+          const mode = modeOptions.includes((parsed as any).mode)
+            ? ((parsed as any).mode as NxMode)
+            : defaultSystem.mode;
+          return {
+            webPct: normalised.web,
+            aiPct: normalised.ai,
+            useBoth: typeof (parsed as any).useBoth === "boolean" ? (parsed as any).useBoth : defaultSystem.useBoth,
+            consensusBeforeWeb:
+              typeof (parsed as any).consensusBeforeWeb === "boolean"
+                ? (parsed as any).consensusBeforeWeb
+                : defaultSystem.consensusBeforeWeb,
+            preferred,
+            mode
+          };
+        }
+      }
+    } catch {
+      // ignore malformed stored settings
+    }
+    return { ...defaultSystem };
   });
   useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
 
   type Profile = { name: string; email: string; photoDataUrl?: string };
   const [profile, setProfile] = useState<Profile>(() => {
     try {
-      return JSON.parse(localStorage.getItem("nx.profile") || "");
-    } catch {}
+      const raw = localStorage.getItem("nx.profile");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          return {
+            name: typeof (parsed as any).name === "string" ? (parsed as any).name : "",
+            email: typeof (parsed as any).email === "string" ? (parsed as any).email : "",
+            photoDataUrl:
+              typeof (parsed as any).photoDataUrl === "string" ? (parsed as any).photoDataUrl : undefined
+          };
+        }
+      }
+    } catch {
+      // ignore malformed profile payloads
+    }
     return { name: "", email: "" };
   });
   useEffect(() => localStorage.setItem("nx.profile", JSON.stringify(profile)), [profile]);
@@ -605,81 +663,81 @@ export default function ChatView() {
         </form>
 
         {/* System Settings Modal */}
-        <Modal open={showSettings} title="System Settings" onClose={() => setShowSettings(false)}>
-          <div className="form-grid">
-            <label>
-              <span>Use web search (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.webPct}
-                onChange={e => setSystem(s => ({ ...s, webPct: +e.target.value }))}
-              />
-              <div className="hint">{system.webPct}%</div>
-            </label>
+          <Modal open={showSettings} title="System Settings" onClose={() => setShowSettings(false)}>
+            <div className="form-grid">
+              <label>
+                <span>Use web search (%)</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={system.webPct}
+                  onChange={e => setSystem(s => ({ ...s, webPct: +e.target.value }))}
+                />
+                <div className="hint">{system.webPct}%</div>
+              </label>
 
-            <label>
-              <span>Use AI models (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.aiPct}
-                onChange={e => setSystem(s => ({ ...s, aiPct: +e.target.value }))}
-              />
-              <div className="hint">{system.aiPct}%</div>
-            </label>
+              <label>
+                <span>Use AI models (%)</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={system.aiPct}
+                  onChange={e => setSystem(s => ({ ...s, aiPct: +e.target.value }))}
+                />
+                <div className="hint">{system.aiPct}%</div>
+              </label>
 
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.useBoth}
-                onChange={e => setSystem(s => ({ ...s, useBoth: e.target.checked }))}
-              />
-              <span>Use both by default</span>
-            </label>
+              <label className="row">
+                <input
+                  type="checkbox"
+                  checked={system.useBoth}
+                  onChange={e => setSystem(s => ({ ...s, useBoth: e.target.checked }))}
+                />
+                <span>Use both by default</span>
+              </label>
 
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.consensusBeforeWeb}
-                onChange={e => setSystem(s => ({ ...s, consensusBeforeWeb: e.target.checked }))}
-              />
-              <span>Require consensus before web is prime</span>
-            </label>
+              <label className="row">
+                <input
+                  type="checkbox"
+                  checked={system.consensusBeforeWeb}
+                  onChange={e => setSystem(s => ({ ...s, consensusBeforeWeb: e.target.checked }))}
+                />
+                <span>Require consensus before web is prime</span>
+              </label>
 
-            <div>
-              <div className="subhead">Preferred Model</div>
-              <div className="seg">
-                {(["ChatGPT", "Claude", "Grok", "Gemini"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.preferred === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, preferred: m }))}
-                  >
-                    {m}
-                  </button>
-                ))}
+              <div>
+                <div className="subhead">Preferred Model</div>
+                <div className="seg">
+                  {preferredOptions.map(m => (
+                    <button
+                      type="button"
+                      key={m}
+                      className={`seg-item ${system.preferred === m ? "on" : ""}`}
+                      onClick={() => setSystem(s => ({ ...s, preferred: m }))}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="subhead">Mode</div>
-              <div className="seg">
-                {(["fast", "balanced", "smart"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.mode === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, mode: m }))}
-                  >
-                    {m[0].toUpperCase() + m.slice(1)}
-                  </button>
-                ))}
+              <div>
+                <div className="subhead">Mode</div>
+                <div className="seg">
+                  {modeOptions.map(m => (
+                    <button
+                      type="button"
+                      key={m}
+                      className={`seg-item ${system.mode === m ? "on" : ""}`}
+                      onClick={() => setSystem(s => ({ ...s, mode: m }))}
+                    >
+                      {m[0].toUpperCase() + m.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
           </div>
 
           <div className="dialog-actions">
