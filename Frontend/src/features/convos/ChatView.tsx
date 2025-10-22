@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   Download,
-  Moon,
-  Sun,
   Trash2,
   Paperclip,
   X,
@@ -90,15 +88,11 @@ export default function ChatView() {
     if (typeof window === "undefined") {
       return "dark";
     }
-    const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
-    const initial = saved === "light" || saved === "dark"
-      ? saved
-      : window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-        ? "dark"
-        : "dark";
-    document.documentElement.dataset.theme = initial;
-    localStorage.setItem("nx.theme", initial);
-    return initial;
+    const saved = localStorage.getItem("nx.theme");
+    if (saved === "dark" || saved === "light") {
+      return saved;
+    }
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -510,66 +504,24 @@ export default function ChatView() {
               Nexus<span className="dot">•</span>
               <span className="ai">ai</span>
             </div>
-            <div className="nx-top-center">
-              <div className="nx-top-heading">
-                <h2 className="title">{current ? current.title : "New chat"}</h2>
-                <span className="subtitle">{lastUpdatedLabel}</span>
-              </div>
-              {current ? (
-                <div className="nx-top-actions">
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => {
-                      if (!current) return;
-                      const dataStr =
-                        "data:application/json;charset=utf-8," +
-                        encodeURIComponent(JSON.stringify(current, null, 2));
-                      const a = document.createElement("a");
-                      a.href = dataStr;
-                      a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                      a.click();
-                    }}
-                  >
-                    <Download size={16} /> Export
-                  </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                  >
-                    <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                  </button>
-                  <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                    <Trash2 size={16} /> Delete
-                  </button>
-                </div>
-              ) : (
-                <p className="subtitle muted">Launch a new multi-model briefing without leaving private mode.</p>
-              )}
-              <div className="nx-top-status">
-                <span className="nx-top-chip">
-                  <ShieldCheck size={14} /> Zero-trust ready
-                </span>
-                {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
-                {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
-                <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
-                <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
-              </div>
-            </div>
-            <div className="actions nx-top-controls">
+            <h2 className="title" title={lastUpdatedLabel}>
+              {current ? current.title : "New chat"}
+            </h2>
+            <div className="actions">
               <button
                 type="button"
                 className="icon-btn"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+                title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+                aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
                 onClick={toggleTheme}
               >
-                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                {theme === "dark" ? "☀" : "🌙"}
               </button>
               <button
                 type="button"
                 className="icon-btn"
-                title="Open system settings"
+                title="System settings"
+                aria-label="Open system settings"
                 onClick={() => setSystemSettingsOpen(true)}
               >
                 <Settings size={18} />
@@ -577,15 +529,15 @@ export default function ChatView() {
               <div className={`nx-profile-anchor${profileMenuOpen ? " open" : ""}`} ref={profileMenuRef}>
                 <button
                   type="button"
-                  className="nx-profile-trigger"
+                  className="avatar-btn"
                   aria-haspopup="true"
                   aria-expanded={profileMenuOpen}
                   onClick={() => setProfileMenuOpen(open => !open)}
                   title="Profile & workspace"
                 >
-                  <div className="nx-avatar" style={{ background: avatarColor }}>
+                  <span className="nx-avatar" style={{ background: avatarColor }}>
                     {avatarInitials || "N"}
-                  </div>
+                  </span>
                 </button>
                 {profileMenuOpen && (
                   <div className="nx-profile-menu" role="menu">
@@ -616,23 +568,67 @@ export default function ChatView() {
 
         <div className="cx-stream">
           <div className="cx-stream-inner">
+            {current && (
+              <>
+                <div className="nx-session-toolbar">
+                  <span className="subtitle">{lastUpdatedLabel}</span>
+                  <div className="nx-session-buttons">
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => {
+                        const dataStr =
+                          "data:application/json;charset=utf-8," +
+                          encodeURIComponent(JSON.stringify(current, null, 2));
+                        const a = document.createElement("a");
+                        a.href = dataStr;
+                        a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                        a.click();
+                      }}
+                    >
+                      <Download size={16} /> Export
+                    </button>
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                    >
+                      <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
+                    </button>
+                    <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </div>
+                </div>
+                <div className="nx-status-row" role="status" aria-live="polite">
+                  <span className="nx-status-chip">
+                    <ShieldCheck size={14} /> Zero-trust ready
+                  </span>
+                  {systemSettings.privateMode && <span className="nx-status-chip emphasis">Private mode</span>}
+                  {systemSettings.redactPII && <span className="nx-status-chip soft">PII redaction</span>}
+                  <span className="nx-status-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
+                  <span className="nx-status-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
+                </div>
+              </>
+            )}
             {!current || current.messages.length === 0 ? (
-              <div className="cx-hero">
+              <section className="cx-hero" role="region" aria-label="Welcome">
                 <h1>How can Nexus help today?</h1>
-                <p className="muted">Ask a question, paste a document, or say \"/help\".</p>
-                <div className="quick">
-                  <button type="button" onClick={() => setInput("Explain transformers like I\u2019m 12")}>
+                <p className="muted">Ask a question, paste a document, or say "/help".</p>
+                <div className="chip-row">
+                  <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
                     Explain simply
                   </button>
-                  <button type="button" onClick={() => setInput("Summarize the following article:\n")}>
+                  <button type="button" className="chip" onClick={() => setInput("Summarize the following article:\n")}>
                     Summarize
                   </button>
-                  <button type="button" onClick={() => setInput("Draft a concise email about…")}>
+                  <button type="button" className="chip" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
                   </button>
                   {systemSettings.smartCompose && (
                     <button
                       type="button"
+                      className="chip"
                       onClick={() =>
                         setInput(
                           "Generate a private executive briefing with anonymized identifiers and actionable next steps."
@@ -643,11 +639,12 @@ export default function ChatView() {
                     </button>
                   )}
                 </div>
-              </div>
+              </section>
             ) : (
               current.messages.map(m => (
                 <div key={m.id} className={`cx-msg ${m.role}`}>
                   <div className="bubble">
+                    <div className="role">{m.role === "user" ? "You" : "Nexus"}</div>
                     {m.attachments?.length ? (
                       <div className="att-list">
                         {m.attachments.map((a, i) => (
@@ -658,7 +655,7 @@ export default function ChatView() {
                         ))}
                       </div>
                     ) : null}
-                    <div dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
+                    <div className="content" dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
                   </div>
                 </div>
               ))
