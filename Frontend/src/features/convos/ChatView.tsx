@@ -405,153 +405,159 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
+          <img src="/assets/nexus-logo.svg" className="nx-logo" alt="Nexus" decoding="async" />
           <button
             type="button"
-            className="primary"
+            className="btn primary nx-newchat"
             onClick={async () => {
               const c = await startNew();
               setCurrentId(c.id);
               setFiles([]);
             }}
           >
-            ＋ New chat
+            + New chat
           </button>
         </div>
+        <div className="nx-side-body">
+          <Section title={`Active (${active.length})`}>
+            {active.length === 0 ? (
+              <Empty label="Nothing active" />
+            ) : (
+              active.map(c => {
+                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+                return (
+                  <ConvRow
+                    key={c.id}
+                    title={c.title}
+                    subtitle={preview}
+                    when={formatDate(c.updatedAt)}
+                    active={c.id === currentId}
+                    onClick={() => setCurrentId(c.id)}
+                    actions={[
+                      { label: "Archive", onClick: () => setStatus(c.id, "archived") },
+                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                    ]}
+                  />
+                );
+              })
+            )}
+          </Section>
 
-        <Section title={`Active (${active.length})`}>
-          {active.length === 0 ? (
-            <Empty label="Nothing active" />
-          ) : (
-            active.map(c => {
-              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-              return (
-                <ConvRow
-                  key={c.id}
-                  title={c.title}
-                  subtitle={preview}
-                  when={formatDate(c.updatedAt)}
-                  active={c.id === currentId}
-                  onClick={() => setCurrentId(c.id)}
-                  actions={[
-                    { label: "Archive", onClick: () => setStatus(c.id, "archived") },
-                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                  ]}
-                />
-              );
-            })
-          )}
-        </Section>
+          <Section title={`Archived (${archived.length})`}>
+            {archived.length === 0 ? (
+              <Empty label="Nothing archived" />
+            ) : (
+              archived.map(c => {
+                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+                return (
+                  <ConvRow
+                    key={c.id}
+                    title={c.title}
+                    subtitle={preview}
+                    when={formatDate(c.updatedAt)}
+                    active={c.id === currentId}
+                    onClick={() => setCurrentId(c.id)}
+                    actions={[
+                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                    ]}
+                  />
+                );
+              })
+            )}
+          </Section>
 
-        <Section title={`Archived (${archived.length})`}>
-          {archived.length === 0 ? (
-            <Empty label="Nothing archived" />
-          ) : (
-            archived.map(c => {
-              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-              return (
-                <ConvRow
-                  key={c.id}
-                  title={c.title}
-                  subtitle={preview}
-                  when={formatDate(c.updatedAt)}
-                  active={c.id === currentId}
-                  onClick={() => setCurrentId(c.id)}
-                  actions={[
-                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                  ]}
-                />
-              );
-            })
-          )}
-        </Section>
-
-        <Section
-          title={`Trash (${trash.length})`}
-          extra={
-            <button type="button" className="danger sm" onClick={purgeAllTrash}>
-              Empty Trash
-            </button>
-          }
-        >
-          {trash.length === 0 ? (
-            <Empty label="Trash is empty" />
-          ) : (
-            trash.map(c => {
-              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-              return (
-                <ConvRow
-                  key={c.id}
-                  title={c.title}
-                  subtitle={preview}
-                  when={formatDate(c.updatedAt)}
-                  active={c.id === currentId}
-                  onClick={() => setCurrentId(c.id)}
-                  actions={[
-                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                    { label: "Purge", onClick: () => purge(c.id) }
-                  ]}
-                />
-              );
-            })
-          )}
-        </Section>
+          <Section
+            title={`Trash (${trash.length})`}
+            extra={
+              <button type="button" className="btn danger sm" onClick={purgeAllTrash}>
+                Empty Trash
+              </button>
+            }
+          >
+            {trash.length === 0 ? (
+              <Empty label="Trash is empty" />
+            ) : (
+              trash.map(c => {
+                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+                return (
+                  <ConvRow
+                    key={c.id}
+                    title={c.title}
+                    subtitle={preview}
+                    when={formatDate(c.updatedAt)}
+                    active={c.id === currentId}
+                    onClick={() => setCurrentId(c.id)}
+                    actions={[
+                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                      { label: "Purge", onClick: () => purge(c.id) }
+                    ]}
+                  />
+                );
+              })
+            )}
+          </Section>
+        </div>
       </aside>
 
       <main className="nx-main">
         <header className="nx-top">
-          <div className="nx-top-left">
-            <div className="nx-top-heading">
-              <h2 className="title">{current ? current.title : "New chat"}</h2>
-              <span className="subtitle">{lastUpdatedLabel}</span>
+          <div className="nx-inner">
+            <div className="brand">
+              Nexus<span className="dot">•</span>
+              <span className="ai">ai</span>
             </div>
-            {current ? (
-              <div className="actions">
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => {
-                    if (!current) return;
-                    const dataStr =
-                      "data:application/json;charset=utf-8," +
-                      encodeURIComponent(JSON.stringify(current, null, 2));
-                    const a = document.createElement("a");
-                    a.href = dataStr;
-                    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                    a.click();
-                  }}
-                >
-                  <Download size={16} /> Export
-                </button>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                >
-                  <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                </button>
-                <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                  <Trash2 size={16} /> Delete
-                </button>
+            <div className="nx-top-center">
+              <div className="nx-top-heading">
+                <h2 className="title">{current ? current.title : "New chat"}</h2>
+                <span className="subtitle">{lastUpdatedLabel}</span>
               </div>
-            ) : (
-              <p className="subtitle muted">Launch a new multi-model briefing without leaving private mode.</p>
-            )}
-          </div>
-          <div className="nx-top-right">
-            <div className="nx-top-status">
-              <span className="nx-top-chip">
-                <ShieldCheck size={14} /> Zero-trust ready
-              </span>
-              {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
-              {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
-              <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
-              <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
+              {current ? (
+                <div className="nx-top-actions">
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      if (!current) return;
+                      const dataStr =
+                        "data:application/json;charset=utf-8," +
+                        encodeURIComponent(JSON.stringify(current, null, 2));
+                      const a = document.createElement("a");
+                      a.href = dataStr;
+                      a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                      a.click();
+                    }}
+                  >
+                    <Download size={16} /> Export
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                  >
+                    <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
+                  </button>
+                  <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
+                    <Trash2 size={16} /> Delete
+                  </button>
+                </div>
+              ) : (
+                <p className="subtitle muted">Launch a new multi-model briefing without leaving private mode.</p>
+              )}
+              <div className="nx-top-status">
+                <span className="nx-top-chip">
+                  <ShieldCheck size={14} /> Zero-trust ready
+                </span>
+                {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
+                {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
+                <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
+                <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
+              </div>
             </div>
-            <div className="nx-top-buttons">
+            <div className="actions nx-top-controls">
               <button
                 type="button"
                 className="icon-btn"
@@ -667,7 +673,7 @@ export default function ChatView() {
             if (!busy) send();
           }}
         >
-          <div className="cx-compose-inner">
+          <div className="nx-inner cx-compose-inner">
             <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
               <Paperclip size={16} />
             </button>
@@ -679,20 +685,6 @@ export default function ChatView() {
               onChange={onFilesPicked}
               accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
             />
-
-            {files.length > 0 && (
-              <div className="chips">
-                {files.map(f => (
-                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
-                    <Paperclip size={12} /> <span className="name">{f.name}</span>
-                    <span className="size">({formatBytes(f.size)})</span>
-                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
 
             <input
               className="cx-input"
@@ -708,18 +700,34 @@ export default function ChatView() {
             />
 
             {!busy ? (
-              <>
+              <div className="compose-actions">
                 <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
                   ↻
                 </button>
-                <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
+                <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
                   Send
                 </button>
-              </>
+              </div>
             ) : (
-              <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                ■
-              </button>
+              <div className="compose-actions">
+                <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                  ■
+                </button>
+              </div>
+            )}
+
+            {files.length > 0 && (
+              <div className="chips">
+                {files.map(f => (
+                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                    <Paperclip size={12} /> <span className="name">{f.name}</span>
+                    <span className="size">({formatBytes(f.size)})</span>
+                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <div className="cx-hint">
