@@ -27,6 +27,9 @@ const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 
+const LOGO_DARK_URL = "/assets/nexus-logo-dark.png";
+const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
+
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
@@ -91,18 +94,23 @@ export default function ChatView() {
       return "dark";
     }
     const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
-    const initial = saved === "light" || saved === "dark"
-      ? saved
-      : window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-        ? "dark"
-        : "dark";
-    document.documentElement.dataset.theme = initial;
-    localStorage.setItem("nx.theme", initial);
-    return initial;
+    if (saved) return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("nx.theme", theme);
+  }, [theme]);
+
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof document === "undefined") {
+      return LOGO_DARK_URL;
+    }
+    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
+  });
+  useEffect(() => {
+    const t = document.documentElement.dataset.theme;
+    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
   }, [theme]);
 
   useEffect(() => {
@@ -246,8 +254,10 @@ export default function ChatView() {
   function removeFile(name: string) {
     setFiles(prev => prev.filter(f => f.name !== name));
   }
-  function toggleTheme() {
-    setTheme(t => (t === "dark" ? "light" : "dark"));
+  async function startNewChat() {
+    const c = await startNew();
+    setCurrentId(c.id);
+    setFiles([]);
   }
   function openProfilePanel(panel: ProfilePanelKey) {
     setActiveProfilePanel(panel);
@@ -405,16 +415,15 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <img src="/assets/nexus-logo.svg" className="nx-logo" alt="Nexus" decoding="async" />
-          <button
-            type="button"
-            className="btn primary nx-newchat"
-            onClick={async () => {
-              const c = await startNew();
-              setCurrentId(c.id);
-              setFiles([]);
-            }}
-          >
+          <img
+            src={logoUrl}
+            className="nx-logo"
+            width={156}
+            height={40}
+            alt="Nexus"
+            decoding="async"
+          />
+          <button type="button" className="btn primary nx-newchat" onClick={startNewChat}>
             + New chat
           </button>
         </div>
@@ -506,63 +515,17 @@ export default function ChatView() {
       <main className="nx-main">
         <header className="nx-top">
           <div className="nx-inner">
-            <div className="brand">
-              Nexus<span className="dot">•</span>
-              <span className="ai">ai</span>
-            </div>
-            <div className="nx-top-center">
-              <div className="nx-top-heading">
-                <h2 className="title">{current ? current.title : "New chat"}</h2>
-                <span className="subtitle">{lastUpdatedLabel}</span>
-              </div>
-              {current ? (
-                <div className="nx-top-actions">
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => {
-                      if (!current) return;
-                      const dataStr =
-                        "data:application/json;charset=utf-8," +
-                        encodeURIComponent(JSON.stringify(current, null, 2));
-                      const a = document.createElement("a");
-                      a.href = dataStr;
-                      a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                      a.click();
-                    }}
-                  >
-                    <Download size={16} /> Export
-                  </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                  >
-                    <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                  </button>
-                  <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                    <Trash2 size={16} /> Delete
-                  </button>
-                </div>
-              ) : (
-                <p className="subtitle muted">Launch a new multi-model briefing without leaving private mode.</p>
-              )}
-              <div className="nx-top-status">
-                <span className="nx-top-chip">
-                  <ShieldCheck size={14} /> Zero-trust ready
-                </span>
-                {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
-                {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
-                <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
-                <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
-              </div>
-            </div>
-            <div className="actions nx-top-controls">
+            <div className="brand">Nexus<span className="dot">•</span><span className="ai">ai</span></div>
+            <h2 className="title" title={lastUpdatedLabel}>
+              {current ? current.title : "New chat"}
+            </h2>
+            <div className="actions">
               <button
                 type="button"
                 className="icon-btn"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-                onClick={toggleTheme}
+                title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+                onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+                aria-label="Toggle theme"
               >
                 {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
               </button>
@@ -619,9 +582,9 @@ export default function ChatView() {
             {!current || current.messages.length === 0 ? (
               <div className="cx-hero">
                 <h1>How can Nexus help today?</h1>
-                <p className="muted">Ask a question, paste a document, or say \"/help\".</p>
-                <div className="quick">
-                  <button type="button" onClick={() => setInput("Explain transformers like I\u2019m 12")}>
+                <p className="muted">Ask a question, paste a document, or say “/help”.</p>
+                <div className="chip-row">
+                  <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
                     Explain simply
                   </button>
                   <button type="button" onClick={() => setInput("Summarize the following article:\n")}>
