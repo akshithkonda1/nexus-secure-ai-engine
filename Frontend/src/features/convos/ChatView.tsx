@@ -36,6 +36,8 @@ type SystemSettingsState = {
   privateMode: boolean;
   highContrast: boolean;
   smartCompose: boolean;
+  aiConsensusPct: number;
+  webConsensusPct: number;
 };
 
 type ProfilePanelKey = "user" | "billing" | "feedback";
@@ -120,11 +122,18 @@ export default function ChatView() {
       const raw = localStorage.getItem("nx.system-settings");
       if (raw) {
         const parsed = JSON.parse(raw);
+        const aiPct = Number.isFinite(parsed.aiConsensusPct) ? Number(parsed.aiConsensusPct) : 50;
+        const safeAi = Math.min(100, Math.max(0, aiPct));
+        const webPct = Number.isFinite(parsed.webConsensusPct) ? Number(parsed.webConsensusPct) : 100 - safeAi;
+        const safeWeb = Math.min(100, Math.max(0, webPct));
+        const normalised = normaliseConsensus(safeAi, safeWeb);
         return {
           redactPII: Boolean(parsed.redactPII ?? true),
           privateMode: Boolean(parsed.privateMode ?? false),
           highContrast: Boolean(parsed.highContrast ?? false),
-          smartCompose: Boolean(parsed.smartCompose ?? true)
+          smartCompose: Boolean(parsed.smartCompose ?? true),
+          aiConsensusPct: normalised.ai,
+          webConsensusPct: normalised.web
         };
       }
     } catch (err) {
@@ -134,7 +143,9 @@ export default function ChatView() {
       redactPII: true,
       privateMode: false,
       highContrast: false,
-      smartCompose: true
+      smartCompose: true,
+      aiConsensusPct: 50,
+      webConsensusPct: 50
     };
   });
 
@@ -296,9 +307,9 @@ export default function ChatView() {
     const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
     const headers: Record<string, string> = {
-      "X-Nexus-Web-Pct": "50",
-      "X-Nexus-AI-Pct": "50",
-      "X-Nexus-Use-Both": "1",
+      "X-Nexus-Web-Pct": String(systemSettings.webConsensusPct),
+      "X-Nexus-AI-Pct": String(systemSettings.aiConsensusPct),
+      "X-Nexus-Use-Both": systemSettings.aiConsensusPct > 0 && systemSettings.webConsensusPct > 0 ? "1" : "0",
       "X-Nexus-Consensus-Before-Web": "1",
       "X-Nexus-Preferred": "",
       "X-Nexus-Mode": "balanced"
@@ -526,6 +537,8 @@ export default function ChatView() {
               </span>
               {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
               {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
+              <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
+              <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
             </div>
             <div className="nx-top-buttons">
               <button
@@ -755,52 +768,80 @@ function SystemSettingsModal({
           </button>
         </div>
 
-        <div className="nx-settings-group">
-          <SettingToggle
-            label="Redact PII automatically"
-            description="Scrub sensitive identifiers from prompts, attachments, and transcripts."
-            checked={settings.redactPII}
-            onToggle={value => onChange({ redactPII: value })}
-          />
-          <SettingToggle
-            label="Private mode"
-            description="Exclude this session from analytics and auto-purge history after 24 hours."
-            checked={settings.privateMode}
-            onToggle={value => onChange({ privateMode: value })}
-          />
-          <SettingToggle
-            label="High contrast interface"
-            description="Increase legibility for control room displays and reduce eye strain."
-            checked={settings.highContrast}
-            onToggle={value => onChange({ highContrast: value })}
-          />
-          <SettingToggle
-            label="Smart compose boosters"
-            description="Show contextual prompts and adaptive tone suggestions while you type."
-            checked={settings.smartCompose}
-            onToggle={value => onChange({ smartCompose: value })}
-          />
-        </div>
+        <div className="nx-dialog-body">
+          <div className="nx-settings-group">
+            <SettingToggle
+              label="Redact PII automatically"
+              description="Scrub sensitive identifiers from prompts, attachments, and transcripts."
+              checked={settings.redactPII}
+              onToggle={value => onChange({ redactPII: value })}
+            />
+            <SettingToggle
+              label="Private mode"
+              description="Exclude this session from analytics and auto-purge history after 24 hours."
+              checked={settings.privateMode}
+              onToggle={value => onChange({ privateMode: value })}
+            />
+            <SettingToggle
+              label="High contrast interface"
+              description="Increase legibility for control room displays and reduce eye strain."
+              checked={settings.highContrast}
+              onToggle={value => onChange({ highContrast: value })}
+            />
+            <SettingToggle
+              label="Smart compose boosters"
+              description="Show contextual prompts and adaptive tone suggestions while you type."
+              checked={settings.smartCompose}
+              onToggle={value => onChange({ smartCompose: value })}
+            />
+          </div>
 
-        <div className="nx-settings-meta">
-          <label className="nx-field">
-            <span>Session transcript retention</span>
-            <select value={retention} onChange={event => setRetention(event.target.value)}>
-              <option value="7">7 days</option>
-              <option value="30">30 days (recommended)</option>
-              <option value="90">90 days</option>
-              <option value="forever">Keep indefinitely</option>
-            </select>
-          </label>
-          <label className="nx-field">
-            <span>Workspace notifications</span>
-            <select defaultValue="digest">
-              <option value="realtime">Real-time alerts</option>
-              <option value="digest">Daily digest</option>
-              <option value="minimal">Security events only</option>
-              <option value="off">Do not disturb</option>
-            </select>
-          </label>
+          <div className="nx-settings-group">
+            <h4 className="nx-settings-title">Consensus allocation</h4>
+            <SettingSlider
+              label="AI consensus weighting"
+              description="Adjust how strongly Nexus leans on internal model consensus before consulting the open web."
+              value={settings.aiConsensusPct}
+              onChange={value => {
+                const next = clampPct(value);
+                onChange({ aiConsensusPct: next, webConsensusPct: clampPct(100 - next) });
+              }}
+            />
+            <SettingSlider
+              label="Web intelligence weighting"
+              description="Control how much curated web sources contribute relative to AI consensus."
+              value={settings.webConsensusPct}
+              onChange={value => {
+                const next = clampPct(value);
+                onChange({ aiConsensusPct: clampPct(100 - next), webConsensusPct: next });
+              }}
+            />
+            <p className="nx-slider-hint">
+              Nexus automatically balances these sliders so they always total 100%. Use them to fine-tune decision making without
+              backend changes.
+            </p>
+          </div>
+
+          <div className="nx-settings-meta">
+            <label className="nx-field">
+              <span>Session transcript retention</span>
+              <select value={retention} onChange={event => setRetention(event.target.value)}>
+                <option value="7">7 days</option>
+                <option value="30">30 days (recommended)</option>
+                <option value="90">90 days</option>
+                <option value="forever">Keep indefinitely</option>
+              </select>
+            </label>
+            <label className="nx-field">
+              <span>Workspace notifications</span>
+              <select defaultValue="digest">
+                <option value="realtime">Real-time alerts</option>
+                <option value="digest">Daily digest</option>
+                <option value="minimal">Security events only</option>
+                <option value="off">Do not disturb</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         <div className="nx-dialog-footer">
@@ -808,7 +849,14 @@ function SystemSettingsModal({
             type="button"
             className="btn ghost"
             onClick={() => {
-              onChange({ redactPII: true, privateMode: false, highContrast: false, smartCompose: true });
+              onChange({
+                redactPII: true,
+                privateMode: false,
+                highContrast: false,
+                smartCompose: true,
+                aiConsensusPct: 50,
+                webConsensusPct: 50
+              });
               setRetention("30");
             }}
           >
@@ -904,15 +952,15 @@ function ProfilePanel({
             <option value="Australia/Sydney">Sydney</option>
           </select>
         </label>
-        <div className="nx-panel-callout">
-          <ShieldCheck size={16} />
-          <div>
-            <strong>Privacy snapshot</strong>
-            <p>
-              Private mode is {systemSettings.privateMode ? "enabled" : "disabled"}. PII redaction is {systemSettings.redactPII ? "active" : "off"} for this workspace.
-            </p>
+          <div className="nx-panel-callout">
+            <ShieldCheck size={16} />
+            <div>
+              <strong>Privacy snapshot</strong>
+              <p>
+                Private mode is {systemSettings.privateMode ? "enabled" : "disabled"}. PII redaction is {systemSettings.redactPII ? "active" : "off"} for this workspace. Consensus split: {systemSettings.aiConsensusPct}% AI / {systemSettings.webConsensusPct}% web.
+              </p>
+            </div>
           </div>
-        </div>
         <div className="nx-dialog-footer">
           <button type="button" className="btn ghost" onClick={onOpenSystemSettings}>
             System settings
@@ -1061,6 +1109,64 @@ function SettingToggle({
       />
     </label>
   );
+}
+
+function SettingSlider({
+  label,
+  description,
+  value,
+  onChange
+}: {
+  label: string;
+  description: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const id = React.useId();
+  return (
+    <div className="nx-setting-row slider">
+      <div className="nx-setting-copy">
+        <label htmlFor={id} className="nx-setting-label">
+          {label}
+        </label>
+        <span className="nx-setting-description">{description}</span>
+      </div>
+      <div className="nx-slider-control">
+        <input
+          id={id}
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={value}
+          onChange={event => onChange(Number(event.target.value))}
+        />
+        <output className="nx-slider-value" htmlFor={id}>
+          {value}%
+        </output>
+      </div>
+    </div>
+  );
+}
+
+function clampPct(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function normaliseConsensus(aiValue: number, webValue: number) {
+  const ai = clampPct(aiValue);
+  const web = clampPct(webValue);
+  const total = ai + web;
+  if (total === 0) {
+    return { ai: 0, web: 0 };
+  }
+  if (total === 100) {
+    return { ai, web };
+  }
+  const aiShare = Math.round((ai / total) * 100);
+  const webShare = 100 - aiShare;
+  return { ai: aiShare, web: webShare };
 }
 
 function Section({ title, extra, children }: { title: string; extra?: React.ReactNode; children: React.ReactNode }) {

@@ -78,16 +78,31 @@ body{ background:var(--bg); color:var(--text); }
 .quick button{ border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:10px; padding:8px 12px; white-space:nowrap; line-height:1; box-shadow:var(--shadow); }
 
 .nx-dialog-backdrop{ position:fixed; inset:0; background:rgba(9,13,20,.68); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; backdrop-filter:blur(6px); }
-.nx-dialog{ width:min(520px, 92vw); max-height:92vh; overflow:auto; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:var(--shadow); padding:24px; display:flex; flex-direction:column; gap:24px; }
+.nx-dialog{ width:min(520px, 92vw); max-height:92vh; overflow:hidden; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:var(--shadow); padding:24px; display:flex; flex-direction:column; gap:24px; }
 .nx-dialog.wide{ width:min(640px, 94vw); }
 .nx-dialog-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
 .nx-dialog-header h3{ margin:0; font-size:1.2rem; font-weight:700; }
 .nx-dialog-subhead{ margin:4px 0 0; font-size:13px; color:var(--muted); max-width:38ch; }
+.nx-dialog-body{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:24px; overflow:auto; padding-right:6px; }
+.nx-dialog-body::-webkit-scrollbar{ width:8px; }
+.nx-dialog-body::-webkit-scrollbar-thumb{ background:color-mix(in oklab, var(--muted), transparent 40%); border-radius:999px; }
+.nx-dialog-body::-webkit-scrollbar-track{ background:color-mix(in oklab, var(--panel-2), transparent 60%); }
 .nx-settings-group{ display:flex; flex-direction:column; gap:12px; }
+.nx-settings-title{ margin:0; font-size:0.95rem; font-weight:700; color:var(--text); }
 .nx-setting-row{ display:flex; justify-content:space-between; align-items:center; gap:16px; padding:14px 18px; border:1px solid var(--line); border-radius:14px; background:var(--panel-2); }
+.nx-setting-row.slider{ flex-direction:column; align-items:flex-start; gap:14px; }
+.nx-setting-row.slider .nx-setting-copy{ max-width:none; }
 .nx-setting-copy{ max-width:360px; display:flex; flex-direction:column; gap:4px; }
 .nx-setting-label{ font-weight:600; }
 .nx-setting-description{ font-size:12px; color:var(--muted); }
+.nx-slider-control{ width:100%; display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; }
+.nx-slider-control input[type="range"]{ width:100%; accent-color:var(--accent); height:4px; border-radius:999px; appearance:none; outline:none; background:transparent; }
+.nx-slider-control input[type="range"]::-webkit-slider-runnable-track{ height:4px; border-radius:999px; background:linear-gradient(90deg, color-mix(in oklab, var(--accent), transparent 70%), color-mix(in oklab, var(--ok), transparent 70%)); }
+.nx-slider-control input[type="range"]::-moz-range-track{ height:4px; border-radius:999px; background:linear-gradient(90deg, color-mix(in oklab, var(--accent), transparent 70%), color-mix(in oklab, var(--ok), transparent 70%)); }
+.nx-slider-control input[type="range"]::-webkit-slider-thumb{ appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer; }
+.nx-slider-control input[type="range"]::-moz-range-thumb{ width:18px; height:18px; border:none; border-radius:50%; background:var(--accent); box-shadow:0 2px 6px rgba(0,0,0,.25); cursor:pointer; }
+.nx-slider-value{ font-weight:700; color:var(--text); min-width:48px; text-align:right; }
+.nx-slider-hint{ margin:0; font-size:12px; color:var(--muted); }
 .nx-switch{ width:48px; height:26px; border-radius:999px; background:color-mix(in oklab, var(--muted), transparent 60%); border:1px solid color-mix(in oklab, var(--line), white 40%); position:relative; cursor:pointer; appearance:none; transition:all .2s ease; }
 .nx-switch::after{ content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.25); transition:transform .2s ease; }
 .nx-switch:checked{ background:color-mix(in oklab, var(--ok), transparent 35%); border-color:color-mix(in oklab, var(--ok), white 40%); }
