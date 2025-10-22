@@ -31,15 +31,6 @@ function mdToHtml(md: string): string {
   return DOMPurify.sanitize(raw);
 }
 
-function redactSensitiveText(input: string): string {
-  let output = input;
-  output = output.replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[redacted email]");
-  output = output.replace(/(?<!\d)(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?){2}\d{4}(?!\d)/g, "[redacted phone]");
-  output = output.replace(/\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b/g, "[redacted id]");
-  output = output.replace(/\b(?:\d[ -.]?){13,16}\b/g, "[redacted card]");
-  return output;
-}
-
 type Preferred = "chatgpt" | "claude" | "grok" | "gemini" | null;
 type Mode = "fast" | "balanced" | "thorough";
 type NxSettings = {
@@ -52,11 +43,6 @@ type NxSettings = {
   consensusBeforeWeb: boolean;
   preferred: Preferred;
   mode: Mode;
-  redactPII: boolean;
-  privateMode: boolean;
-  autoScroll: boolean;
-  showQuickPrompts: boolean;
-  compactMode: boolean;
 };
 
 type NxProfile = StoredProfile;
@@ -70,11 +56,15 @@ export default function ConsumerChat() {
   } = useConversations();
 
   const [settings, setSettings] = useState<NxSettings>(() => {
+    const saved = localStorage.getItem("nx.settings");
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
     const prefersDark =
       typeof window !== "undefined" &&
       window.matchMedia &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const base: NxSettings = {
+    return {
       theme: prefersDark ? "dark" : "light",
       showModels: true,
       showAudit: false,
@@ -84,36 +74,10 @@ export default function ConsumerChat() {
       consensusBeforeWeb: true,
       preferred: null,
       mode: "balanced",
-      redactPII: true,
-      privateMode: false,
-      autoScroll: true,
-      showQuickPrompts: true,
-      compactMode: false,
     };
-    const saved = localStorage.getItem("nx.settings");
-    if (saved) {
-      try { return { ...base, ...JSON.parse(saved) }; } catch {}
-    }
-    return base;
   });
   useEffect(()=>{ localStorage.setItem("nx.settings", JSON.stringify(settings)); }, [settings]);
   useEffect(()=>{ document.documentElement.dataset.theme = settings.theme; }, [settings.theme]);
-  useEffect(() => {
-    const root = document.documentElement;
-    if (settings.privateMode) {
-      root.setAttribute("data-private-mode", "on");
-    } else {
-      root.removeAttribute("data-private-mode");
-    }
-  }, [settings.privateMode]);
-  useEffect(() => {
-    const root = document.documentElement;
-    if (settings.compactMode) {
-      root.setAttribute("data-chat-density", "compact");
-    } else {
-      root.removeAttribute("data-chat-density");
-    }
-  }, [settings.compactMode]);
 
   const defaultProfile: NxProfile = {
     name: "Nexus User",
@@ -200,13 +164,11 @@ export default function ConsumerChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
   const activeConvIdRef = useRef<string | null>(null);
-  const autoScroll = settings.autoScroll;
-  useEffect(()=>{
-    if (!autoScroll) return;
-    scrollRef.current?.scrollTo({top: scrollRef.current.scrollHeight, behavior:"smooth"});
-  }, [current, busy, autoScroll]);
+  useEffect(()=>{ scrollRef.current?.scrollTo({top: scrollRef.current.scrollHeight, behavior:"smooth"}); }, [current, busy]);
   useEffect(() => {
     function stopSubmit(e: Event) {
+      const el = e.target as HTMLFormElement | null;
+      if (el?.classList.contains("cx-compose-inner")) return;
       e.preventDefault();
       e.stopPropagation();
     }
@@ -229,17 +191,6 @@ export default function ConsumerChat() {
   }, []);
   useEffect(() => { activeConvIdRef.current = currentId ?? null; }, [currentId]);
 
-  useEffect(() => {
-    const last = sessionStorage.getItem("nx.currentId");
-    if (last) select(last);
-  }, []);
-
-  useEffect(() => {
-    if (currentId) {
-      sessionStorage.setItem("nx.currentId", currentId);
-    }
-  }, [currentId]);
-
   function lockToSession(id: string) {
     if (!id) return;
     if (activeConvIdRef.current !== id) {
@@ -251,92 +202,6 @@ export default function ConsumerChat() {
   function showToast(msg: string, ms=2000){ setToast(msg); setTimeout(()=>setToast(null), ms); }
   function toggleTheme(){ setSettings(s=>({...s, theme: s.theme==="dark"?"light":"dark"})); }
 
-  function exportConversation() {
-    if (!current) {
-      showToast("No conversation to export");
-      return;
-    }
-    try {
-      const safeTitle = (current.title || "chat")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/gi, "-")
-        .replace(/^-+|-+$/g, "") || "chat";
-      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `nexus-chat-${safeTitle}-${stamp}.json`;
-      const payload = {
-        id: current.id,
-        title: current.title,
-        status: current.status,
-        createdAt: current.createdAt,
-        updatedAt: current.updatedAt,
-        messages: current.messages.map(m => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          html: m.html,
-          models: m.models,
-          audit: m.audit,
-        })),
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast("Exported conversation", 1800);
-    } catch (err) {
-      console.error("Failed to export conversation", err);
-      showToast("Export failed");
-    }
-  }
-
-  async function handleArchiveAction() {
-    if (!current) return;
-    const { id, status } = current;
-    try {
-      if (status === "archived" || status === "trash") {
-        await restore(id);
-        showToast(status === "trash" ? "Restored" : "Unarchived");
-      } else {
-        await archive(id);
-        showToast("Archived");
-      }
-    } catch (err) {
-      console.error("Failed to update conversation status", err);
-      showToast("Couldn't update status");
-    }
-  }
-
-  async function handleDeleteAction() {
-    if (!current) return;
-    const id = current.id;
-    try {
-      if (current.status === "trash") {
-        await purge(id);
-        showToast("Deleted forever");
-      } else {
-        await moveToTrash(id);
-        showToast("Moved to trash");
-      }
-    } catch (err) {
-      console.error("Failed to delete conversation", err);
-      showToast("Couldn't delete conversation");
-    }
-  }
-
-  const archiveLabel = current
-    ? current.status === "archived"
-      ? "Unarchive"
-      : current.status === "trash"
-        ? "Restore"
-        : "Archive"
-    : "Archive";
-  const deleteLabel = current?.status === "trash" ? "Delete forever" : "Delete";
-
   async function ensureCurrent() {
     if (current) return current;
     return startNew("New chat");
@@ -345,7 +210,6 @@ export default function ConsumerChat() {
   async function send() {
     const prompt = input.trim(); if (!prompt || busy) return;
     setInput("");
-    setBusy(true);
     const conv = await ensureCurrent();
     lockToSession(conv.id);
 
@@ -358,6 +222,8 @@ export default function ConsumerChat() {
     await append(conv.id, { id: uid(), role:"user", content: prompt, html: mdToHtml(prompt) });
     // Insert assistant placeholder, then stream/fallback
     await append(conv.id, { id: uid(), role:"assistant", content:"", html:"" });
+    setBusy(true);
+
     const headers: Record<string,string> = {
       "Content-Type": "application/json",
       "X-Nexus-Web-Pct": String(settings.webPct),
@@ -442,6 +308,17 @@ export default function ConsumerChat() {
     }
   }
 
+  function StatusActions() {
+    if (!current) return null;
+    const id = current.id;
+    if (current.status === "active") {
+      return (<><button type="button" className="pill" onClick={()=>archive(id)}>Archive</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+    } else if (current.status === "archived") {
+      return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill" onClick={()=>moveToTrash(id)}>Delete</button></>);
+    }
+    return (<><button type="button" className="pill on" onClick={()=>restore(id)}>Restore</button><button type="button" className="pill danger" onClick={()=>purge(id)}>Permanently Delete</button></>);
+  }
+
   return (
     <div className="cx-shell">
       {/* Sidebar */}
@@ -497,60 +374,15 @@ export default function ConsumerChat() {
 
       {/* Main */}
       <section className="cx-main">
-        <header className="nx-top">
-          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
-            Nexus<span className="dot">•</span><span className="ai">ai</span>
-          </div>
-          <h2 className="title" role="heading" aria-live="polite">{current?.title || "New chat"}</h2>
-          <div className="actions">
-            <div className="btn-group">
-              <button type="button" className="btn" onClick={exportConversation} disabled={!current}>⭳ Export</button>
-              <button
-                type="button"
-                className="btn"
-                onClick={handleArchiveAction}
-                disabled={!current}
-              >
-                {archiveLabel}
-              </button>
-              <button
-                type="button"
-                className="btn danger"
-                onClick={handleDeleteAction}
-                disabled={!current}
-              >
-                {deleteLabel}
-              </button>
-            </div>
-            <div className="icon-tray">
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={toggleTheme}
-                aria-label={`Toggle theme (currently ${settings.theme})`}
-                title={`Theme: ${settings.theme}`}
-              >
-                {settings.theme === "dark" ? <MoonIcon aria-hidden="true" /> : <SunIcon aria-hidden="true" />}
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={()=>setShowSettings(true)}
-                aria-label="Open system settings"
-                title="System Settings"
-              >
-                <SettingsIcon aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="avatar-btn"
-                onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }}
-                title="Profile"
-                aria-label="Open profile"
-              >
-                {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
-              </button>
-            </div>
+        <header className="cx-top">
+          <div className="title">{current?.title || "Chat"}</div>
+          <div className="top-icons">
+            <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
+            <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
+            {current && <StatusActions />}
+            <button type="button" className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
+              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
+            </button>
           </div>
         </header>
 
@@ -561,23 +393,14 @@ export default function ConsumerChat() {
               <div className="cx-hero">
                 <h1>How can Nexus help today?</h1>
                 <p className="muted">Ask a question, paste a document, or say “/help”.</p>
-                {settings.showQuickPrompts && (
-                  <div className="quick">
-                    <button type="button" onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
-                    <button type="button" onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
-                    <button type="button" onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
-                  </div>
-                )}
+                <div className="quick">
+                  <button type="button" onClick={()=>setInput("Explain transformers like I’m 12")}>Explain simply</button>
+                  <button type="button" onClick={()=>setInput("Summarize the following article:\n")}>Summarize</button>
+                  <button type="button" onClick={()=>setInput("Write a polite email to…")}>Draft an email</button>
+                </div>
               </div>
             ) : (
-              current.messages.map(m => (
-                <MessageBubble
-                  key={m.id}
-                  m={m}
-                  content={settings.redactPII ? redactSensitiveText(m.content) : m.content}
-                  privateMode={settings.privateMode}
-                />
-              ))
+              current.messages.map(m => <MessageBubble key={m.id} m={m} />)
             )}
             {busy && (
               <div className="cx-skeleton">
@@ -592,36 +415,55 @@ export default function ConsumerChat() {
           </div>
         </div>
 
-        {/* --- COMPOSER --- */}
-        <form
-          className="cx-compose"
-          onSubmit={(e) => { e.preventDefault(); if (!busy) send(); }}
-        >
-          <div className="cx-compose-inner">
-            {!busy ? (
-              <button type="button" className="icon-btn" onClick={regenerate}>↻</button>
-            ) : (
-              <button type="button" className="icon-btn danger" onClick={stopStreaming}>■</button>
-            )}
+        {/* COMPOSER — submit without page reload */}
+        <footer className="cx-compose">
+          <form
+            className="cx-compose-inner"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!busy) send();
+            }}
+          >
+            <div className="cx-tools-left">
+              <button
+                type="button"
+                className="icon-btn"
+                title="Attach (coming soon)"
+                onClick={() => showToast("Attachments coming soon")}
+              >
+                📎
+              </button>
+              {!busy && (
+                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
+                  ↻
+                </button>
+              )}
+              {busy && (
+                <button type="button" className="icon-btn danger" title="Stop" onClick={stopStreaming}>
+                  ■
+                </button>
+              )}
+            </div>
 
             <input
+              id="composer"
               className="cx-input"
               placeholder="Ask Nexus…"
               value={input}
-              onChange={(e)=>setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();               // belt & suspenders
+                  e.preventDefault();
                   if (!busy) send();
                 }
               }}
             />
 
             <button type="submit" className="cx-send" disabled={busy || !input.trim()}>
-              {busy ? "Sending…" : "Send"}
+              Send
             </button>
-          </div>
-        </form>
+          </form>
+        </footer>
       </section>
 
       {/* System Settings */}
@@ -633,23 +475,18 @@ export default function ConsumerChat() {
               <button type="button" className="icon-btn" onClick={()=>setShowSettings(false)}>✖</button>
             </div>
             <div className="modal-body">
-              <Row label="Web Search %" hint="Balance how much Nexus leans on the live web."><Range value={settings.webPct} set={v=>setSettings(s=>({...s, webPct:v}))} /></Row>
-              <Row label="AI Models %" hint="Blend multi-model answers versus single-engine focus."><Range value={settings.aiPct} set={v=>setSettings(s=>({...s, aiPct:v}))} /></Row>
-              <Row label="Use Both by Default" hint="Run web search and AI models together for deeper answers."><Toggle checked={settings.useBoth} onChange={v=>setSettings(s=>({...s, useBoth:v}))} /></Row>
-              <Row label="Consensus before Web is prime" hint="Prefer model agreement before blending with live web snippets."><Toggle checked={settings.consensusBeforeWeb} onChange={v=>setSettings(s=>({...s, consensusBeforeWeb:v}))} /></Row>
-              <Row label="Redact PII" hint="Mask emails, phone numbers, IDs, and card numbers in the transcript."><Toggle checked={settings.redactPII} onChange={v=>setSettings(s=>({...s, redactPII:v}))} /></Row>
-              <Row label="Private mode" hint="Blur chat content until you hover or focus a message."><Toggle checked={settings.privateMode} onChange={v=>setSettings(s=>({...s, privateMode:v}))} /></Row>
-              <Row label="Auto-scroll" hint="Keep the stream anchored to the newest response as it arrives."><Toggle checked={settings.autoScroll} onChange={v=>setSettings(s=>({...s, autoScroll:v}))} /></Row>
-              <Row label="Show quick prompts" hint="Display starter suggestions when a conversation is empty."><Toggle checked={settings.showQuickPrompts} onChange={v=>setSettings(s=>({...s, showQuickPrompts:v}))} /></Row>
-              <Row label="Compact layout" hint="Tighten spacing for denser, dashboard-style transcripts."><Toggle checked={settings.compactMode} onChange={v=>setSettings(s=>({...s, compactMode:v}))} /></Row>
-              <Row label="Preferred Model" hint="Select which assistant to lead when multiple are available.">
+              <Row label="Web Search %"><Range value={settings.webPct} set={v=>setSettings(s=>({...s, webPct:v}))} /></Row>
+              <Row label="AI Models %"><Range value={settings.aiPct} set={v=>setSettings(s=>({...s, aiPct:v}))} /></Row>
+              <Row label="Use Both by Default"><Toggle checked={settings.useBoth} onChange={v=>setSettings(s=>({...s, useBoth:v}))} /></Row>
+              <Row label="Consensus before Web is prime"><Toggle checked={settings.consensusBeforeWeb} onChange={v=>setSettings(s=>({...s, consensusBeforeWeb:v}))} /></Row>
+              <Row label="Preferred Model">
                 <Segmented
                   options={[{key:"chatgpt",label:"ChatGPT"},{key:"claude",label:"Claude"},{key:"grok",label:"Grok"},{key:"gemini",label:"Gemini"}]}
                   value={settings.preferred}
                   onChange={k=>setSettings(s=>({...s, preferred:k as Preferred}))}
                 />
               </Row>
-              <Row label="Mode (Nexus Engine)" hint="Toggle between rapid, balanced, or exhaustive analysis.">
+              <Row label="Mode (Nexus Engine)">
                 <Segmented
                   options={[{key:"fast",label:"Fast"},{key:"balanced",label:"Balanced"},{key:"thorough",label:"Thorough"}]}
                   value={settings.mode}
@@ -741,8 +578,8 @@ export default function ConsumerChat() {
                     >
                       <span className="icon" aria-hidden>💳</span>
                       <div>
-                        <div className="label">Billing Options</div>
-                        <div className="hint">Check your subscription and upcoming invoices.</div>
+                        <div className="label">Plan & Billing</div>
+                        <div className="hint">Check your subscription and upgrades.</div>
                       </div>
                     </button>
                     <button
@@ -810,7 +647,7 @@ export default function ConsumerChat() {
                   {profileTab==='billing' && (
                     <div className="profile-panel">
                       <header>
-                        <div className="title">Billing Options</div>
+                        <div className="title">Plan & Billing</div>
                         <div className="subtitle">Preview upcoming plan options and manage invoices.</div>
                       </header>
                       <div className="field-grid">
@@ -894,14 +731,14 @@ function ConvRow({ title, when, active, onClick, menu }:{
     </div>
   );
 }
-function MessageBubble({ m, content, privateMode }:{ m:Message; content:string; privateMode:boolean }) {
+function MessageBubble({ m }:{ m:Message }) {
   return (
-    <div className={`cx-msg ${m.role} ${privateMode ? "obscured" : ""}`}>
+    <div className={`cx-msg ${m.role}`}>
       <div className="avatar">{m.role==="assistant"?"🤖":"👤"}</div>
       <div className="bubble">
         <div className="meta"><span className="who">{m.role==="assistant"?"Nexus":"You"}</span></div>
-        <div className="content" dangerouslySetInnerHTML={{ __html: mdToHtml(content) }} />
-        <div className="actions"><button type="button" className="mini" onClick={()=>navigator.clipboard.writeText(content)}>Copy</button></div>
+        <div className="content" dangerouslySetInnerHTML={{ __html: m.html ?? mdToHtml(m.content) }} />
+        <div className="actions"><button type="button" className="mini" onClick={()=>navigator.clipboard.writeText(m.content)}>Copy</button></div>
         {m.models && Object.keys(m.models).length>0 && (
           <details className="panel" open><summary>Model Answers</summary>
             <div className="kv">{Object.entries(m.models).map(([name,text])=>(
@@ -922,17 +759,7 @@ function MessageBubble({ m, content, privateMode }:{ m:Message; content:string; 
     </div>
   );
 }
-function Row({ label, hint, children }:{ label:string; hint?:string; children:React.ReactNode }) {
-  return (
-    <div className="row">
-      <div className="row-label">
-        <div className="row-title">{label}</div>
-        {hint && <div className="row-hint">{hint}</div>}
-      </div>
-      <div className="field">{children}</div>
-    </div>
-  );
-}
+function Row({ label, children }:{ label:string; children:React.ReactNode }) { return (<div className="row"><label>{label}</label><div className="field">{children}</div></div>); }
 function Range({ value, set }:{ value:number; set:(v:number)=>void }) { return (<div className="range"><input type="range" min={0} max={100} value={value} onChange={e=>set(Number(e.target.value))}/><span className="range-val">{value}%</span></div>); }
 function Toggle({ checked, onChange }:{ checked:boolean; onChange:(v:boolean)=>void }) { return (<label className="switch"><input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)} /><span className="slider"/></label>); }
 function Segmented({ options, value, onChange }:{ options:{key:string;label:string}[]; value:string|null|undefined; onChange:(key:string)=>void }) {
@@ -953,32 +780,3 @@ function AvatarEdit({ value, fallback, onChange }:{ value?:string; fallback:stri
     </div>
   );
 }
-
-type IconProps = React.SVGProps<SVGSVGElement>;
-
-const SunIcon = (props: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" width={18} height={18} {...props}>
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2" />
-    <path d="M12 20v2" />
-    <path d="m4.93 4.93 1.41 1.41" />
-    <path d="m17.66 17.66 1.41 1.41" />
-    <path d="M2 12h2" />
-    <path d="M20 12h2" />
-    <path d="m6.34 17.66-1.41 1.41" />
-    <path d="m19.07 4.93-1.41 1.41" />
-  </svg>
-);
-
-const MoonIcon = (props: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" width={18} height={18} {...props}>
-    <path d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-  </svg>
-);
-
-const SettingsIcon = (props: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" width={18} height={18} {...props}>
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-  </svg>
-);
