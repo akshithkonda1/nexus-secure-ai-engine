@@ -87,11 +87,22 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
+    if (typeof window === "undefined") {
+      return "dark";
+    }
+    const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
+    const initial = saved === "light" || saved === "dark"
+      ? saved
+      : window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
+        ? "dark"
+        : "dark";
+    document.documentElement.dataset.theme = initial;
+    localStorage.setItem("nx.theme", initial);
+    return initial;
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
   useEffect(() => {
