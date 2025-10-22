@@ -29,6 +29,17 @@ function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
 
+function normaliseConsensus(ai: number, web: number) {
+  const clampedAi = Math.min(100, Math.max(0, Math.round(ai)));
+  const clampedWeb = Math.min(100, Math.max(0, Math.round(web)));
+  const total = clampedAi + clampedWeb;
+  if (total === 0) return { ai: 50, web: 50 };
+
+  const aiPct = Math.min(100, Math.max(0, Math.round((clampedAi / total) * 100)));
+  const webPct = 100 - aiPct;
+  return { ai: aiPct, web: webPct };
+}
+
 type SystemSettingsState = {
   redactPII: boolean;
   privateMode: boolean;
