@@ -14,6 +14,9 @@ const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 
+const LOGO_DARK_URL = "/assets/nexus-logo-dark.png";
+const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
+
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
@@ -55,6 +58,17 @@ export default function ChatView() {
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof document === "undefined") {
+      return LOGO_DARK_URL;
+    }
+    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
+  });
+  useEffect(() => {
+    const t = document.documentElement.dataset.theme;
+    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
   }, [theme]);
 
   useEffect(() => {
@@ -417,9 +431,9 @@ export default function ChatView() {
             {!current || current.messages.length === 0 ? (
               <div className="cx-hero">
                 <h1>How can Nexus help today?</h1>
-                <p className="muted">Ask a question, paste a document, or say \"/help\".</p>
-                <div className="quick">
-                  <button type="button" onClick={() => setInput("Explain transformers like I\u2019m 12")}>
+                <p className="muted">Ask a question, paste a document, or say “/help”.</p>
+                <div className="chip-row">
+                  <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
                     Explain simply
                   </button>
                   <button type="button" onClick={() => setInput("Summarize the following article:\n")}>
