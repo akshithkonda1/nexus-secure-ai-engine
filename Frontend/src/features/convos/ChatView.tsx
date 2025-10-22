@@ -1,12 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Paperclip,
-  Sun,
+  Archive,
+  Download,
   Moon,
-  Settings as Gear,
-  UserCircle2,
-  Upload,
-  X
+  Sun,
+  Trash2,
+  Paperclip,
+  X,
+  Settings,
+  ShieldCheck,
+  UserCog,
+  CreditCard,
+  MessageSquareDiff
 } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
@@ -85,57 +90,28 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") {
+      return "dark";
+    }
     const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
     if (saved) return saved;
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light";
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
-  type Preferred = "ChatGPT" | "Claude" | "Grok" | "Gemini";
-  type NxMode = "fast" | "balanced" | "smart";
-  type SystemSettings = {
-    webPct: number;
-    aiPct: number;
-    useBoth: boolean;
-    consensusBeforeWeb: boolean;
-    preferred: Preferred;
-    mode: NxMode;
-  };
-  const [system, setSystem] = useState<SystemSettings>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.system") || "");
-    } catch {}
-    return {
-      webPct: 50,
-      aiPct: 50,
-      useBoth: true,
-      consensusBeforeWeb: true,
-      preferred: "ChatGPT",
-      mode: "balanced"
-    };
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof document === "undefined") {
+      return LOGO_DARK_URL;
+    }
+    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
   });
-  useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
-
-  type Profile = { name: string; email: string; photoDataUrl?: string };
-  const [profile, setProfile] = useState<Profile>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.profile") || "");
-    } catch {}
-    return { name: "", email: "" };
-  });
-  useEffect(() => localStorage.setItem("nx.profile", JSON.stringify(profile)), [profile]);
-
-  const [feedback, setFeedback] = useState(() => localStorage.getItem("nx.feedbackDraft") || "");
-  useEffect(() => localStorage.setItem("nx.feedbackDraft", feedback), [feedback]);
-
-  const [profileTab, setProfileTab] = useState<"profile" | "billing" | "feedback">("profile");
+  useEffect(() => {
+    const t = document.documentElement.dataset.theme;
+    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
+  }, [theme]);
 
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
@@ -313,16 +289,6 @@ export default function ChatView() {
     return { meta, textChunks };
   }
 
-  function exportConversation() {
-    if (!current) return;
-    const dataStr =
-      "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(current, null, 2));
-    const a = document.createElement("a");
-    a.href = dataStr;
-    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-    a.click();
-  }
-
   function inlineTextAttachmentsIntoPrompt(prompt: string, textChunks: { name: string; content: string }[]) {
     if (!textChunks.length) return prompt;
     const parts = [prompt, "", "### Attachments"];
@@ -362,13 +328,12 @@ export default function ChatView() {
     const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "X-Nexus-Web-Pct": String(system.webPct),
-      "X-Nexus-AI-Pct": String(system.aiPct),
-      "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
-      "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
-      "X-Nexus-Preferred": system.preferred,
-      "X-Nexus-Mode": system.mode
+      "X-Nexus-Web-Pct": String(systemSettings.webConsensusPct),
+      "X-Nexus-AI-Pct": String(systemSettings.aiConsensusPct),
+      "X-Nexus-Use-Both": systemSettings.aiConsensusPct > 0 && systemSettings.webConsensusPct > 0 ? "1" : "0",
+      "X-Nexus-Consensus-Before-Web": "1",
+      "X-Nexus-Preferred": "",
+      "X-Nexus-Mode": "balanced"
     };
 
     const patch = (content: string, metaResp?: any) => {
@@ -549,38 +514,30 @@ export default function ChatView() {
 
       <main className="nx-main">
         <header className="nx-top">
-          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
-            Nexus<span className="dot">•</span>
-            <span className="ai">ai</span>
-          </div>
-
-          <h2 className="title" role="heading" aria-live="polite">
-            {current ? current.title : "New chat"}
-          </h2>
-
-          <div className="actions">
-            <button
-              type="button"
-              className="icon-btn"
-              title={theme === "dark" ? "Switch to light" : "Switch to dark"}
-              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
-            <button type="button" className="icon-btn" title="System Settings" onClick={() => setShowSettings(true)}>
-              <Gear size={16} />
-            </button>
-
-            <button type="button" className="avatar-btn" title="Profile" onClick={() => setShowProfile(true)}>
-              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={18} />}
-            </button>
-
-            <button type="button" className="btn" onClick={exportConversation}>
-              ⭳ Export
-            </button>
-            {current && (
-              <>
+          <div className="nx-inner">
+            <div className="brand">Nexus<span className="dot">•</span><span className="ai">ai</span></div>
+            <h2 className="title" title={lastUpdatedLabel}>
+              {current ? current.title : "New chat"}
+            </h2>
+            <div className="actions">
+              <button
+                type="button"
+                className="icon-btn"
+                title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+                onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
+                title="Open system settings"
+                onClick={() => setSystemSettingsOpen(true)}
+              >
+                <Settings size={18} />
+              </button>
+              <div className={`nx-profile-anchor${profileMenuOpen ? " open" : ""}`} ref={profileMenuRef}>
                 <button
                   type="button"
                   className="nx-profile-trigger"
@@ -589,13 +546,34 @@ export default function ChatView() {
                   onClick={() => setProfileMenuOpen(open => !open)}
                   title="Profile & workspace"
                 >
-                  {current.status === "archived" ? "Unarchive" : "Archive"}
+                  <div className="nx-avatar" style={{ background: avatarColor }}>
+                    {avatarInitials || "N"}
+                  </div>
                 </button>
-                <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                  Delete
-                </button>
-              </>
-            )}
+                {profileMenuOpen && (
+                  <div className="nx-profile-menu" role="menu">
+                    <div className="nx-profile-summary">
+                      <div className="nx-avatar sm" style={{ background: avatarColor }}>
+                        {avatarInitials || "N"}
+                      </div>
+                      <div>
+                        <strong>{profile.name}</strong>
+                        <span>{profile.email}</span>
+                      </div>
+                    </div>
+                    <button type="button" role="menuitem" onClick={() => openProfilePanel("user")}>
+                      <UserCog size={16} /> User Settings
+                    </button>
+                    <button type="button" role="menuitem" onClick={() => openProfilePanel("billing")}>
+                      <CreditCard size={16} /> Billing Options
+                    </button>
+                    <button type="button" role="menuitem" onClick={() => openProfilePanel("feedback")}>
+                      <MessageSquareDiff size={16} /> System Feedback
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -719,204 +697,6 @@ export default function ChatView() {
             Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
           </div>
         </form>
-
-        {/* System Settings Modal */}
-        <Modal open={showSettings} title="System Settings" onClose={() => setShowSettings(false)}>
-          <div className="form-grid">
-            <label>
-              <span>Use web search (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.webPct}
-                onChange={e => setSystem(s => ({ ...s, webPct: +e.target.value }))}
-              />
-              <div className="hint">{system.webPct}%</div>
-            </label>
-
-            <label>
-              <span>Use AI models (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.aiPct}
-                onChange={e => setSystem(s => ({ ...s, aiPct: +e.target.value }))}
-              />
-              <div className="hint">{system.aiPct}%</div>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.useBoth}
-                onChange={e => setSystem(s => ({ ...s, useBoth: e.target.checked }))}
-              />
-              <span>Use both by default</span>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.consensusBeforeWeb}
-                onChange={e => setSystem(s => ({ ...s, consensusBeforeWeb: e.target.checked }))}
-              />
-              <span>Require consensus before web is prime</span>
-            </label>
-
-            <div>
-              <div className="subhead">Preferred Model</div>
-              <div className="seg">
-                {(["ChatGPT", "Claude", "Grok", "Gemini"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.preferred === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, preferred: m }))}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="subhead">Mode</div>
-              <div className="seg">
-                {(["fast", "balanced", "smart"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.mode === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, mode: m }))}
-                  >
-                    {m[0].toUpperCase() + m.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="dialog-actions">
-            <button type="button" className="primary" onClick={() => setShowSettings(false)}>
-              Save settings
-            </button>
-          </div>
-        </Modal>
-
-        {/* Profile Modal (Profile | Billing | Feedback) */}
-        <Modal open={showProfile} title="Profile" onClose={() => setShowProfile(false)}>
-          <div className="tabs">
-            {(["profile", "billing", "feedback"] as const).map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`tab-btn ${profileTab === t ? "on" : ""}`}
-                onClick={() => setProfileTab(t)}
-              >
-                {t[0].toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {profileTab === "profile" && (
-            <div className="form-grid">
-              <div className="avatar-uploader">
-                <div className="avatar-preview">
-                  {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={56} />}
-                </div>
-                <label className="btn-secondary" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                  <Upload size={14} /> Upload photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={async e => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      const reader = new FileReader();
-                      reader.onload = () => setProfile(p => ({ ...p, photoDataUrl: String(reader.result) }));
-                      reader.readAsDataURL(f);
-                    }}
-                  />
-                </label>
-              </div>
-
-              <label>
-                <span>Name</span>
-                <input
-                  className="input"
-                  value={profile.name}
-                  onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
-                />
-              </label>
-
-              <label>
-                <span>Email</span>
-                <input
-                  className="input"
-                  value={profile.email}
-                  onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                />
-              </label>
-
-              <div className="dialog-actions">
-                <button type="button" className="primary" onClick={() => setShowProfile(false)}>
-                  Save profile
-                </button>
-              </div>
-            </div>
-          )}
-
-          {profileTab === "billing" && (
-            <div className="billing-pane">
-              <h4>Nexus billing</h4>
-              <p className="muted">
-                Nexus is <b>free for now</b>. We’re working on plans—enjoy using Nexus freely!
-              </p>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => alert("We’re working on plans—enjoy using Nexus freely!")}
-              >
-                Upgrade plan
-              </button>
-            </div>
-          )}
-
-          {profileTab === "feedback" && (
-            <div>
-              <label>
-                <span>Send feedback (max 15,000 characters)</span>
-                <textarea
-                  className="textarea"
-                  value={feedback}
-                  maxLength={15000}
-                  onChange={e => setFeedback(e.target.value)}
-                  rows={8}
-                  placeholder="Share bugs, ideas, or UX issues…"
-                />
-              </label>
-              <div className="muted" style={{ textAlign: "right" }}>
-                {feedback.length} / 15000
-              </div>
-              <div className="dialog-actions">
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => {
-                    alert("Thanks for the feedback!");
-                    setFeedback("");
-                    setShowProfile(false);
-                  }}
-                >
-                  Submit feedback
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal>
       </main>
       {systemSettingsOpen && (
         <SystemSettingsModal
@@ -942,31 +722,433 @@ export default function ChatView() {
   );
 }
 
-function Modal({
-  open,
-  title,
-  onClose,
-  children
+function SystemSettingsModal({
+  settings,
+  onChange,
+  onClose
 }: {
-  open: boolean;
-  title: string;
+  settings: SystemSettingsState;
+  onChange: (patch: Partial<SystemSettingsState>) => void;
   onClose: () => void;
-  children: React.ReactNode;
 }) {
-  if (!open) return null;
+  const [retention, setRetention] = React.useState(() => localStorage.getItem("nx.system-retention") || "30");
+  React.useEffect(() => {
+    localStorage.setItem("nx.system-retention", retention);
+  }, [retention]);
   return (
-    <div className="nx-modal" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="nx-dialog" onClick={e => e.stopPropagation()}>
-        <div className="nx-dialog-head">
-          <h3>{title}</h3>
-          <button type="button" className="icon-btn" onClick={onClose}>
+    <div className="nx-dialog-backdrop" role="dialog" aria-modal="true" aria-label="System settings">
+      <div className="nx-dialog">
+        <div className="nx-dialog-header">
+          <div>
+            <h3>System settings</h3>
+            <p className="nx-dialog-subhead">
+              Calibrate workspace controls without leaving the conversation. Changes apply instantly for this browser.
+            </p>
+          </div>
+          <button type="button" className="icon-btn ghost" onClick={onClose} aria-label="Close system settings">
             <X size={16} />
           </button>
         </div>
-        <div className="nx-dialog-body">{children}</div>
+
+        <div className="nx-dialog-body">
+          <div className="nx-settings-group">
+            <SettingToggle
+              label="Redact PII automatically"
+              description="Scrub sensitive identifiers from prompts, attachments, and transcripts."
+              checked={settings.redactPII}
+              onToggle={value => onChange({ redactPII: value })}
+            />
+            <SettingToggle
+              label="Private mode"
+              description="Exclude this session from analytics and auto-purge history after 24 hours."
+              checked={settings.privateMode}
+              onToggle={value => onChange({ privateMode: value })}
+            />
+            <SettingToggle
+              label="High contrast interface"
+              description="Increase legibility for control room displays and reduce eye strain."
+              checked={settings.highContrast}
+              onToggle={value => onChange({ highContrast: value })}
+            />
+            <SettingToggle
+              label="Smart compose boosters"
+              description="Show contextual prompts and adaptive tone suggestions while you type."
+              checked={settings.smartCompose}
+              onToggle={value => onChange({ smartCompose: value })}
+            />
+          </div>
+
+          <div className="nx-settings-group">
+            <h4 className="nx-settings-title">Consensus allocation</h4>
+            <SettingSlider
+              label="AI consensus weighting"
+              description="Adjust how strongly Nexus leans on internal model consensus before consulting the open web."
+              value={settings.aiConsensusPct}
+              onChange={value => {
+                const next = clampPct(value);
+                onChange({ aiConsensusPct: next, webConsensusPct: clampPct(100 - next) });
+              }}
+            />
+            <SettingSlider
+              label="Web intelligence weighting"
+              description="Control how much curated web sources contribute relative to AI consensus."
+              value={settings.webConsensusPct}
+              onChange={value => {
+                const next = clampPct(value);
+                onChange({ aiConsensusPct: clampPct(100 - next), webConsensusPct: next });
+              }}
+            />
+            <p className="nx-slider-hint">
+              Nexus automatically balances these sliders so they always total 100%. Use them to fine-tune decision making without
+              backend changes.
+            </p>
+          </div>
+
+          <div className="nx-settings-meta">
+            <label className="nx-field">
+              <span>Session transcript retention</span>
+              <select value={retention} onChange={event => setRetention(event.target.value)}>
+                <option value="7">7 days</option>
+                <option value="30">30 days (recommended)</option>
+                <option value="90">90 days</option>
+                <option value="forever">Keep indefinitely</option>
+              </select>
+            </label>
+            <label className="nx-field">
+              <span>Workspace notifications</span>
+              <select defaultValue="digest">
+                <option value="realtime">Real-time alerts</option>
+                <option value="digest">Daily digest</option>
+                <option value="minimal">Security events only</option>
+                <option value="off">Do not disturb</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="nx-dialog-footer">
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              onChange({
+                redactPII: true,
+                privateMode: false,
+                highContrast: false,
+                smartCompose: true,
+                aiConsensusPct: 50,
+                webConsensusPct: 50
+              });
+              setRetention("30");
+            }}
+          >
+            Restore recommended defaults
+          </button>
+          <button type="button" className="primary" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+function ProfilePanel({
+  panel,
+  profile,
+  systemSettings,
+  onClose,
+  onSaveProfile,
+  onOpenSystemSettings
+}: {
+  panel: ProfilePanelKey;
+  profile: ProfileState;
+  systemSettings: SystemSettingsState;
+  onClose: () => void;
+  onSaveProfile: (next: ProfileState) => void;
+  onOpenSystemSettings: () => void;
+}) {
+  const [draftProfile, setDraftProfile] = useState<ProfileState>(profile);
+  const [timezone, setTimezone] = useState<string>(() => localStorage.getItem("nx.profile.timezone") || "UTC");
+  const [feedback, setFeedback] = useState("");
+  const [billingCycle, setBillingCycle] = useState("annual");
+  const feedbackLimit = 600;
+
+  useEffect(() => {
+    setDraftProfile(profile);
+  }, [profile, panel]);
+  useEffect(() => {
+    localStorage.setItem("nx.profile.timezone", timezone);
+  }, [timezone]);
+
+  const title = useMemo(() => ({
+    user: "User settings",
+    billing: "Billing options",
+    feedback: "System feedback"
+  })[panel], [panel]);
+
+  const closeAndReset = () => {
+    setFeedback("");
+    onClose();
+  };
+
+  let body: React.ReactNode = null;
+  if (panel === "user") {
+    body = (
+      <form
+        className="nx-panel-form"
+        onSubmit={event => {
+          event.preventDefault();
+          onSaveProfile({ ...draftProfile });
+          closeAndReset();
+        }}
+      >
+        <label className="nx-field">
+          <span>Display name</span>
+          <input
+            value={draftProfile.name}
+            onChange={event => setDraftProfile(prev => ({ ...prev, name: event.target.value }))}
+            placeholder="Your name"
+          />
+        </label>
+        <label className="nx-field">
+          <span>Role or title</span>
+          <input
+            value={draftProfile.title}
+            onChange={event => setDraftProfile(prev => ({ ...prev, title: event.target.value }))}
+            placeholder="Role"
+          />
+        </label>
+        <label className="nx-field">
+          <span>Notification email</span>
+          <input value={draftProfile.email} readOnly />
+          <small>This email is managed by your administrator.</small>
+        </label>
+        <label className="nx-field">
+          <span>Timezone</span>
+          <select value={timezone} onChange={event => setTimezone(event.target.value)}>
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">US Eastern</option>
+            <option value="Europe/London">London</option>
+            <option value="Asia/Singapore">Singapore</option>
+            <option value="Australia/Sydney">Sydney</option>
+          </select>
+        </label>
+          <div className="nx-panel-callout">
+            <ShieldCheck size={16} />
+            <div>
+              <strong>Privacy snapshot</strong>
+              <p>
+                Private mode is {systemSettings.privateMode ? "enabled" : "disabled"}. PII redaction is {systemSettings.redactPII ? "active" : "off"} for this workspace. Consensus split: {systemSettings.aiConsensusPct}% AI / {systemSettings.webConsensusPct}% web.
+              </p>
+            </div>
+          </div>
+        <div className="nx-dialog-footer">
+          <button type="button" className="btn ghost" onClick={onOpenSystemSettings}>
+            System settings
+          </button>
+          <button type="submit" className="primary">
+            Save profile
+          </button>
+        </div>
+      </form>
+    );
+  } else if (panel === "billing") {
+    body = (
+      <div className="nx-panel-content">
+        <section className="nx-panel-card">
+          <h4>Current plan</h4>
+          <p>Professional — 12 seats</p>
+          <ul>
+            <li>Priority orchestration queues</li>
+            <li>Granular audit logging</li>
+            <li>Unlimited compliance exports</li>
+          </ul>
+          <div className="nx-field">
+            <span>Billing cadence</span>
+            <select value={billingCycle} onChange={event => setBillingCycle(event.target.value)}>
+              <option value="monthly">Monthly</option>
+              <option value="annual">Annual (save 15%)</option>
+            </select>
+          </div>
+          <div className="nx-dialog-footer">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => console.info("Downloading latest invoice")}
+            >
+              Download last invoice
+            </button>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => alert("Our sales team will reach out to tailor an enterprise plan.")}
+            >
+              Talk to sales
+            </button>
+          </div>
+        </section>
+        <section className="nx-panel-card">
+          <h4>Usage snapshot</h4>
+          <p>89% of allocated AI minutes consumed this cycle.</p>
+          <div className="nx-usage-bar">
+            <span style={{ width: "89%" }} />
+          </div>
+          <p className="muted">Add-on packs can be provisioned instantly from billing.</p>
+        </section>
+      </div>
+    );
+  } else {
+    const remaining = Math.max(0, feedbackLimit - feedback.length);
+    body = (
+      <form
+        className="nx-panel-form"
+        onSubmit={event => {
+          event.preventDefault();
+          console.info("System feedback submitted", { feedback });
+          alert("Thanks for helping us calibrate Nexus. Your feedback was recorded locally.");
+          closeAndReset();
+        }}
+      >
+        <label className="nx-field">
+          <span>Share what went well or what we should improve</span>
+          <textarea
+            value={feedback}
+            onChange={event => setFeedback(event.target.value.slice(0, feedbackLimit))}
+            rows={6}
+            placeholder="Tell us about your experience..."
+          />
+          <small>{remaining} characters remaining</small>
+        </label>
+        <label className="nx-field">
+          <span>Attach diagnostics</span>
+          <select defaultValue="metrics">
+            <option value="metrics">Include anonymized metrics</option>
+            <option value="console">Include console logs</option>
+            <option value="none">Do not attach any data</option>
+          </select>
+        </label>
+        <div className="nx-dialog-footer">
+          <button type="button" className="btn ghost" onClick={closeAndReset}>
+            Cancel
+          </button>
+          <button type="submit" className="primary" disabled={!feedback.trim()}>
+            Submit feedback
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="nx-dialog-backdrop" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="nx-dialog wide">
+        <div className="nx-dialog-header">
+          <div>
+            <h3>{title}</h3>
+            <p className="nx-dialog-subhead">
+              {panel === "user"
+                ? "Manage how Nexus represents you across orchestrated workflows."
+                : panel === "billing"
+                ? "Stay ahead of usage and keep stakeholders informed."
+                : "Share direct feedback with the platform team."}
+            </p>
+          </div>
+          <button type="button" className="icon-btn ghost" onClick={closeAndReset} aria-label={`Close ${title}`}>
+            <X size={16} />
+          </button>
+        </div>
+        {body}
+      </div>
+    </div>
+  );
+}
+
+function SettingToggle({
+  label,
+  description,
+  checked,
+  onToggle
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onToggle: (value: boolean) => void;
+}) {
+  const id = React.useId();
+  return (
+    <label className="nx-setting-row" htmlFor={id}>
+      <div className="nx-setting-copy">
+        <span className="nx-setting-label">{label}</span>
+        <span className="nx-setting-description">{description}</span>
+      </div>
+      <input
+        id={id}
+        type="checkbox"
+        className="nx-switch"
+        checked={checked}
+        onChange={event => onToggle(event.target.checked)}
+      />
+    </label>
+  );
+}
+
+function SettingSlider({
+  label,
+  description,
+  value,
+  onChange
+}: {
+  label: string;
+  description: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const id = React.useId();
+  return (
+    <div className="nx-setting-row slider">
+      <div className="nx-setting-copy">
+        <label htmlFor={id} className="nx-setting-label">
+          {label}
+        </label>
+        <span className="nx-setting-description">{description}</span>
+      </div>
+      <div className="nx-slider-control">
+        <input
+          id={id}
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={value}
+          onChange={event => onChange(Number(event.target.value))}
+        />
+        <output className="nx-slider-value" htmlFor={id}>
+          {value}%
+        </output>
+      </div>
+    </div>
+  );
+}
+
+function clampPct(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function normaliseConsensus(aiValue: number, webValue: number) {
+  const ai = clampPct(aiValue);
+  const web = clampPct(webValue);
+  const total = ai + web;
+  if (total === 0) {
+    return { ai: 0, web: 0 };
+  }
+  if (total === 100) {
+    return { ai, web };
+  }
+  const aiShare = Math.round((ai / total) * 100);
+  const webShare = 100 - aiShare;
+  return { ai: aiShare, web: webShare };
 }
 
 function Section({ title, extra, children }: { title: string; extra?: React.ReactNode; children: React.ReactNode }) {
