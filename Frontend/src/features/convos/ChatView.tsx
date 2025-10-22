@@ -28,34 +28,10 @@ const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
-
-type SystemSettingsState = {
-  redactPII: boolean;
-  privateMode: boolean;
-  highContrast: boolean;
-  smartCompose: boolean;
-  aiConsensusPct: number;
-  webConsensusPct: number;
-};
-
-type ProfilePanelKey = "user" | "billing" | "feedback";
-type ProfileState = {
-  name: string;
-  email: string;
-  title: string;
-};
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
-}
-function stringToColor(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 45%)`;
 }
 function readFileAsText(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -92,7 +68,6 @@ export default function ChatView() {
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
   const [showSettings, setShowSettings] = useState(false);
@@ -151,93 +126,11 @@ export default function ChatView() {
 
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
-  const [activeProfilePanel, setActiveProfilePanel] = useState<ProfilePanelKey | null>(null);
-  const [systemSettingsOpen, setSystemSettingsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileState>(() => ({
-    name: "Jordan Sparks",
-    email: "jordan.sparks@nexus.ai",
-    title: "Principal Analyst"
-  }));
-  const [systemSettings, setSystemSettings] = useState<SystemSettingsState>(() => {
-    try {
-      const raw = localStorage.getItem("nx.system-settings");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        const aiPct = Number.isFinite(parsed.aiConsensusPct) ? Number(parsed.aiConsensusPct) : 50;
-        const safeAi = Math.min(100, Math.max(0, aiPct));
-        const webPct = Number.isFinite(parsed.webConsensusPct) ? Number(parsed.webConsensusPct) : 100 - safeAi;
-        const safeWeb = Math.min(100, Math.max(0, webPct));
-        const normalised = normaliseConsensus(safeAi, safeWeb);
-        return {
-          redactPII: Boolean(parsed.redactPII ?? true),
-          privateMode: Boolean(parsed.privateMode ?? false),
-          highContrast: Boolean(parsed.highContrast ?? false),
-          smartCompose: Boolean(parsed.smartCompose ?? true),
-          aiConsensusPct: normalised.ai,
-          webConsensusPct: normalised.web
-        };
-      }
-    } catch (err) {
-      console.warn("Failed to parse system settings", err);
-    }
-    return {
-      redactPII: true,
-      privateMode: false,
-      highContrast: false,
-      smartCompose: true,
-      aiConsensusPct: 50,
-      webConsensusPct: 50
-    };
-  });
-
-  const avatarInitials = useMemo(() => {
-    const parts = profile.name.trim().split(/\s+/).slice(0, 2);
-    return parts.map(part => part[0]?.toUpperCase() ?? "").join("");
-  }, [profile.name]);
-  const avatarColor = useMemo(() => stringToColor(profile.email || profile.name), [profile.email, profile.name]);
-  const lastUpdatedLabel = useMemo(() => {
-    if (!current) return "Secure collaboration workspace";
-    return `Updated ${formatDate(current.updatedAt)}`;
-  }, [current]);
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
     activeConvIdRef.current = currentId;
   }, [currentId]);
-  useEffect(() => {
-    localStorage.setItem("nx.system-settings", JSON.stringify(systemSettings));
-  }, [systemSettings]);
-  useEffect(() => {
-    const handler = (event: MouseEvent) => {
-      if (!profileMenuRef.current) return;
-      if (profileMenuRef.current.contains(event.target as Node)) return;
-      setProfileMenuOpen(false);
-    };
-    if (profileMenuOpen) {
-      document.addEventListener("mousedown", handler);
-    }
-    return () => document.removeEventListener("mousedown", handler);
-  }, [profileMenuOpen]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-private-mode", systemSettings.privateMode);
-  }, [systemSettings.privateMode]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-high-contrast", systemSettings.highContrast);
-  }, [systemSettings.highContrast]);
-  useEffect(() => {
-    if (!systemSettingsOpen && !activeProfilePanel && !profileMenuOpen) return;
-    const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSystemSettingsOpen(false);
-        setActiveProfilePanel(null);
-        setProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [systemSettingsOpen, activeProfilePanel, profileMenuOpen]);
   function lockToSession(id: string) {
     if (activeConvIdRef.current !== id) setCurrentId(id);
     activeConvIdRef.current = id;
@@ -277,15 +170,6 @@ export default function ChatView() {
   }
   function removeFile(name: string) {
     setFiles(prev => prev.filter(f => f.name !== name));
-  }
-  async function startNewChat() {
-    const c = await startNew();
-    setCurrentId(c.id);
-    setFiles([]);
-  }
-  function openProfilePanel(panel: ProfilePanelKey) {
-    setActiveProfilePanel(panel);
-    setProfileMenuOpen(false);
   }
 
   async function buildAttachmentPayload() {
@@ -450,101 +334,109 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <img
-            src={logoUrl}
-            className="nx-logo"
-            width={156}
-            height={40}
-            alt="Nexus"
-            decoding="async"
-          />
-          <button type="button" className="btn primary nx-newchat" onClick={startNewChat}>
-            + New chat
-          </button>
-        </div>
-        <div className="nx-side-body">
-          <Section title={`Active (${active.length})`}>
-            {active.length === 0 ? (
-              <Empty label="Nothing active" />
-            ) : (
-              active.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Archive", onClick: () => setStatus(c.id, "archived") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-
-          <Section title={`Archived (${archived.length})`}>
-            {archived.length === 0 ? (
-              <Empty label="Nothing archived" />
-            ) : (
-              archived.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-
-          <Section
-            title={`Trash (${trash.length})`}
-            extra={
-              <button type="button" className="btn danger sm" onClick={purgeAllTrash}>
-                Empty Trash
-              </button>
-            }
+          <button
+            type="button"
+            className="primary"
+            onClick={async () => {
+              const c = await startNew();
+              setCurrentId(c.id);
+              setFiles([]);
+            }}
           >
-            {trash.length === 0 ? (
-              <Empty label="Trash is empty" />
-            ) : (
-              trash.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Purge", onClick: () => purge(c.id) }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
+            ＋ New chat
+          </button>
+          <div className="theme">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </div>
+
+        <Section title={`Active (${active.length})`}>
+          {active.length === 0 ? (
+            <Empty label="Nothing active" />
+          ) : (
+            active.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Archive", onClick: () => setStatus(c.id, "archived") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section title={`Archived (${archived.length})`}>
+          {archived.length === 0 ? (
+            <Empty label="Nothing archived" />
+          ) : (
+            archived.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section
+          title={`Trash (${trash.length})`}
+          extra={
+            <button type="button" className="danger sm" onClick={purgeAllTrash}>
+              Empty Trash
+            </button>
+          }
+        >
+          {trash.length === 0 ? (
+            <Empty label="Trash is empty" />
+          ) : (
+            trash.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Purge", onClick: () => purge(c.id) }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
       </aside>
 
       <main className="nx-main">
@@ -583,11 +475,17 @@ export default function ChatView() {
               <>
                 <button
                   type="button"
-                  className="nx-profile-trigger"
-                  aria-haspopup="true"
-                  aria-expanded={profileMenuOpen}
-                  onClick={() => setProfileMenuOpen(open => !open)}
-                  title="Profile & workspace"
+                  className="btn"
+                  onClick={() => {
+                    if (!current) return;
+                    const dataStr =
+                      "data:application/json;charset=utf-8," +
+                      encodeURIComponent(JSON.stringify(current, null, 2));
+                    const a = document.createElement("a");
+                    a.href = dataStr;
+                    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                    a.click();
+                  }}
                 >
                   {current.status === "archived" ? "Unarchive" : "Archive"}
                 </button>
@@ -615,18 +513,6 @@ export default function ChatView() {
                   <button type="button" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
                   </button>
-                  {systemSettings.smartCompose && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setInput(
-                          "Generate a private executive briefing with anonymized identifiers and actionable next steps."
-                        )
-                      }
-                    >
-                      Executive briefing
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (
@@ -658,7 +544,7 @@ export default function ChatView() {
             if (!busy) send();
           }}
         >
-          <div className="nx-inner cx-compose-inner">
+          <div className="cx-compose-inner">
             <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
               <Paperclip size={16} />
             </button>
@@ -670,6 +556,20 @@ export default function ChatView() {
               onChange={onFilesPicked}
               accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
             />
+
+            {files.length > 0 && (
+              <div className="chips">
+                {files.map(f => (
+                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                    <Paperclip size={12} /> <span className="name">{f.name}</span>
+                    <span className="size">({formatBytes(f.size)})</span>
+                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <input
               className="cx-input"
@@ -685,34 +585,18 @@ export default function ChatView() {
             />
 
             {!busy ? (
-              <div className="compose-actions">
+              <>
                 <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
                   ↻
                 </button>
-                <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
+                <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
                   Send
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="compose-actions">
-                <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                  ■
-                </button>
-              </div>
-            )}
-
-            {files.length > 0 && (
-              <div className="chips">
-                {files.map(f => (
-                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
-                    <Paperclip size={12} /> <span className="name">{f.name}</span>
-                    <span className="size">({formatBytes(f.size)})</span>
-                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                ■
+              </button>
             )}
           </div>
           <div className="cx-hint">
@@ -918,26 +802,6 @@ export default function ChatView() {
           )}
         </Modal>
       </main>
-      {systemSettingsOpen && (
-        <SystemSettingsModal
-          settings={systemSettings}
-          onChange={patch => setSystemSettings(prev => ({ ...prev, ...patch }))}
-          onClose={() => setSystemSettingsOpen(false)}
-        />
-      )}
-      {activeProfilePanel && (
-        <ProfilePanel
-          panel={activeProfilePanel}
-          profile={profile}
-          systemSettings={systemSettings}
-          onClose={() => setActiveProfilePanel(null)}
-          onSaveProfile={setProfile}
-          onOpenSystemSettings={() => {
-            setActiveProfilePanel(null);
-            setSystemSettingsOpen(true);
-          }}
-        />
-      )}
     </div>
   );
 }
