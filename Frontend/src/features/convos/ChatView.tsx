@@ -1,13 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Paperclip,
-  Sun,
-  Moon,
-  Settings as Gear,
-  UserCircle2,
-  Upload,
-  X
-} from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Archive, Download, Moon, Sun, Trash2, Paperclip, X } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
@@ -22,8 +14,8 @@ const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 
-const LOGO_DARK_URL = "/assets/nexus-logo.png";
-const LOGO_LIGHT_URL = "/assets/nexus-logo-inverted.png";
+const LOGO_DARK_URL = "/assets/nexus-logo-dark.png";
+const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
 
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
@@ -40,25 +32,6 @@ function readFileAsText(file: File) {
     fr.onerror = reject;
     fr.readAsText(file);
   });
-}
-
-function normaliseConsensus(ai: number, web: number) {
-  const clamp = (value: number) => {
-    const next = Number.isFinite(value) ? value : 0;
-    return Math.min(100, Math.max(0, Math.round(next)));
-  };
-  const aiClamped = clamp(ai);
-  const webClamped = clamp(web);
-  if (aiClamped + webClamped === 0) {
-    return { ai: 50, web: 50 };
-  }
-  if (aiClamped + webClamped === 100) {
-    return { ai: aiClamped, web: webClamped };
-  }
-  const total = aiClamped + webClamped;
-  const aiPct = Math.min(100, Math.max(0, Math.round((aiClamped / total) * 100)));
-  const webPct = 100 - aiPct;
-  return { ai: aiPct, web: webPct };
 }
 
 export default function ChatView() {
@@ -87,67 +60,11 @@ export default function ChatView() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const [density, setDensity] = useState<"comfy" | "cozy" | "compact">(
-    () => (localStorage.getItem("nx.density") as "comfy" | "cozy" | "compact" | null) || "comfy"
-  );
-  useEffect(() => {
-    document.documentElement.dataset.density = density;
-    localStorage.setItem("nx.density", density);
-  }, [density]);
-
-  const cycleDensity = useCallback(() => {
-    setDensity(d => (d === "comfy" ? "cozy" : d === "cozy" ? "compact" : "comfy"));
-  }, []);
-
-  const logoUrl = useMemo(() => (theme === "dark" ? LOGO_DARK_URL : LOGO_LIGHT_URL), [theme]);
-
-  const [showSettings, setShowSettings] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
-  type Preferred = "ChatGPT" | "Claude" | "Grok" | "Gemini";
-  type NxMode = "fast" | "balanced" | "smart";
-  type SystemSettings = {
-    webPct: number;
-    aiPct: number;
-    useBoth: boolean;
-    consensusBeforeWeb: boolean;
-    preferred: Preferred;
-    mode: NxMode;
-  };
-  const [system, setSystem] = useState<SystemSettings>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.system") || "");
-    } catch {}
-    return {
-      webPct: 50,
-      aiPct: 50,
-      useBoth: true,
-      consensusBeforeWeb: true,
-      preferred: "ChatGPT",
-      mode: "balanced"
-    };
-  });
-  useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
-
-  const buildChatHeaders = useCallback(
-    (): Record<string, string> => ({
-      "Content-Type": "application/json",
-      "X-Nexus-Web-Pct": String(system.webPct),
-      "X-Nexus-AI-Pct": String(system.aiPct),
-      "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
-      "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
-      "X-Nexus-Preferred": system.preferred,
-      "X-Nexus-Mode": system.mode
-    }),
-    [system]
-  );
-
-  type Profile = { name: string; email: string; photoDataUrl?: string };
-  const [profile, setProfile] = useState<Profile>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.profile") || "");
-    } catch {}
-    return { name: "", email: "" };
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof document === "undefined") {
+      return LOGO_DARK_URL;
+    }
+    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
   });
   useEffect(() => {
     const t = document.documentElement.dataset.theme;
@@ -168,76 +85,6 @@ export default function ChatView() {
 
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
-  const [activeProfilePanel, setActiveProfilePanel] = useState<ProfilePanelKey | null>(null);
-  const [systemSettingsOpen, setSystemSettingsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileState>(() => ({
-    name: "Jordan Sparks",
-    email: "jordan.sparks@nexus.ai",
-    title: "Principal Analyst"
-  }));
-  const [systemSettings, setSystemSettings] = useState<SystemSettingsState>(() => {
-    try {
-      const raw = localStorage.getItem("nx.system-settings");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        const aiPct = Number.isFinite(parsed.aiConsensusPct) ? Number(parsed.aiConsensusPct) : 50;
-        const safeAi = Math.min(100, Math.max(0, aiPct));
-        const webPct = Number.isFinite(parsed.webConsensusPct) ? Number(parsed.webConsensusPct) : 100 - safeAi;
-        const safeWeb = Math.min(100, Math.max(0, webPct));
-        const normalised = normaliseConsensus(safeAi, safeWeb);
-        return {
-          redactPII: Boolean(parsed.redactPII ?? true),
-          privateMode: Boolean(parsed.privateMode ?? false),
-          highContrast: Boolean(parsed.highContrast ?? false),
-          smartCompose: Boolean(parsed.smartCompose ?? true),
-          aiConsensusPct: normalised.ai,
-          webConsensusPct: normalised.web
-        };
-      }
-    } catch (err) {
-      console.warn("Failed to parse system settings", err);
-    }
-    return {
-      redactPII: true,
-      privateMode: false,
-      highContrast: false,
-      smartCompose: true,
-      aiConsensusPct: 50,
-      webConsensusPct: 50
-    };
-  });
-  const [openControl, setOpenControl] = useState<"consensus" | "web" | null>(null);
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      const el = event.target as HTMLElement | null;
-      if (!el) return;
-      if (el.closest(".chip-pop") || el.closest(".chip-wrap")) return;
-      setOpenControl(null);
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, []);
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenControl(null);
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, []);
-
-  const avatarInitials = useMemo(() => {
-    const parts = profile.name.trim().split(/\s+/).slice(0, 2);
-    return parts.map(part => part[0]?.toUpperCase() ?? "").join("");
-  }, [profile.name]);
-  const avatarColor = useMemo(() => stringToColor(profile.email || profile.name), [profile.email, profile.name]);
-  const lastUpdatedLabel = useMemo(() => {
-    if (!current) return "Secure collaboration workspace";
-    return `Updated ${formatDate(current.updatedAt)}`;
-  }, [current]);
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -341,23 +188,20 @@ export default function ChatView() {
 
     setFiles([]);
 
-    const controls = {
-      piiRedaction: systemSettings.redactPII,
-      consensusThreshold: systemSettings.aiConsensusPct / 100,
-      webUsageRatio: systemSettings.webConsensusPct / 100
-    };
-
     const bodyPrimary = {
       prompt,
-      attachments: textChunks.map(t => ({ name: t.name, content: t.content })),
-      options: controls
+      attachments: textChunks.map(t => ({ name: t.name, content: t.content }))
     };
-    const bodyInline = {
-      prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks),
-      options: controls
-    };
+    const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
-    const headers = buildChatHeaders();
+    const headers: Record<string, string> = {
+      "X-Nexus-Web-Pct": "50",
+      "X-Nexus-AI-Pct": "50",
+      "X-Nexus-Use-Both": "1",
+      "X-Nexus-Consensus-Before-Web": "1",
+      "X-Nexus-Preferred": "",
+      "X-Nexus-Mode": "balanced"
+    };
 
     const patch = (content: string, metaResp?: any) => {
       updateMessage(conv.id, asstMsg.id, {
@@ -404,15 +248,8 @@ export default function ChatView() {
       const controller = new AbortController();
       streamAbortRef.current = controller;
       await askSSE(
-        {
-          prompt: lastUser.content,
-          options: {
-            piiRedaction: systemSettings.redactPII,
-            consensusThreshold: systemSettings.aiConsensusPct / 100,
-            webUsageRatio: systemSettings.webConsensusPct / 100
-          }
-        },
-        buildChatHeaders(),
+        { prompt: lastUser.content },
+        {},
         (c, m) =>
           updateMessage(current.id, lastAsst.id, {
             content: c,
@@ -423,23 +260,13 @@ export default function ChatView() {
         controller.signal
       );
     } catch {
-      await askJSON(
-        {
-          prompt: lastUser.content,
-          options: {
-            piiRedaction: systemSettings.redactPII,
-            consensusThreshold: systemSettings.aiConsensusPct / 100,
-            webUsageRatio: systemSettings.webConsensusPct / 100
-          }
-        },
-        buildChatHeaders(),
-        (c, m) =>
-          updateMessage(current.id, lastAsst.id, {
-            content: c,
-            html: mdToHtml(c),
-            models: m?.model_answers ?? m?.models,
-            audit: m?.audit ?? m?.audit_events
-          })
+      await askJSON({ prompt: lastUser.content }, {}, (c, m) =>
+        updateMessage(current.id, lastAsst.id, {
+          content: c,
+          html: mdToHtml(c),
+          models: m?.model_answers ?? m?.models,
+          audit: m?.audit ?? m?.audit_events
+        })
       );
     } finally {
       streamAbortRef.current = null;
@@ -471,26 +298,61 @@ export default function ChatView() {
               type="button"
               className="icon-btn"
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
-              aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
         </div>
 
-            <button
-              type="button"
-              className="icon-btn"
-              title={`Density: ${density.charAt(0).toUpperCase()}${density.slice(1)}`}
-              onClick={cycleDensity}
-              aria-label="Toggle density"
-            >
-              ↕
-            </button>
+        <Section title={`Active (${active.length})`}>
+          {active.length === 0 ? (
+            <Empty label="Nothing active" />
+          ) : (
+            active.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Archive", onClick: () => setStatus(c.id, "archived") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
 
-            <button type="button" className="icon-btn" title="System Settings" onClick={() => setShowSettings(true)}>
-              <Gear size={16} />
-            </button>
+        <Section title={`Archived (${archived.length})`}>
+          {archived.length === 0 ? (
+            <Empty label="Nothing archived" />
+          ) : (
+            archived.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
 
         <Section
           title={`Trash (${trash.length})`}
@@ -564,98 +426,6 @@ export default function ChatView() {
           )}
         </header>
 
-        <div className="nx-controls">
-          <div className="nx-inner nx-controls-inner">
-            <button
-              type="button"
-              className={`chip ${systemSettings.redactPII ? "on" : ""}`}
-              title="Mask PII in prompts and responses"
-              onClick={() =>
-                setSystemSettings(prev => ({
-                  ...prev,
-                  redactPII: !prev.redactPII
-                }))
-              }
-            >
-              PII redaction{systemSettings.redactPII ? "" : " (off)"}
-            </button>
-
-            <div className="chip-wrap">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setOpenControl(current => (current === "consensus" ? null : "consensus"))}
-                title="Fraction of model answers that must agree"
-              >
-                AI consensus – {systemSettings.aiConsensusPct}%
-              </button>
-              {openControl === "consensus" && (
-                <div className="chip-pop">
-                  <label className="pop-label">Consensus threshold: {systemSettings.aiConsensusPct}%</label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={systemSettings.aiConsensusPct}
-                    onChange={e =>
-                      setSystemSettings(prev => {
-                        const parsed = Number.parseInt(e.target.value, 10);
-                        const aiValue = Number.isFinite(parsed)
-                          ? Math.min(100, Math.max(0, parsed))
-                          : 0;
-                        return { ...prev, aiConsensusPct: aiValue, webConsensusPct: 100 - aiValue };
-                      })
-                    }
-                  />
-                  <div className="pop-actions">
-                    <button type="button" className="btn xs" onClick={() => setOpenControl(null)}>
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="chip-wrap">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setOpenControl(current => (current === "web" ? null : "web"))}
-                title="Percent of response allowed to draw from the web"
-              >
-                Web insight – {systemSettings.webConsensusPct}%
-              </button>
-              {openControl === "web" && (
-                <div className="chip-pop">
-                  <label className="pop-label">Web usage: {systemSettings.webConsensusPct}%</label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={systemSettings.webConsensusPct}
-                    onChange={e =>
-                      setSystemSettings(prev => {
-                        const parsed = Number.parseInt(e.target.value, 10);
-                        const webValue = Number.isFinite(parsed)
-                          ? Math.min(100, Math.max(0, parsed))
-                          : 0;
-                        return { ...prev, aiConsensusPct: 100 - webValue, webConsensusPct: webValue };
-                      })
-                    }
-                  />
-                  <div className="pop-actions">
-                    <button type="button" className="btn xs" onClick={() => setOpenControl(null)}>
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         <div className="cx-stream">
           <div className="cx-stream-inner">
             {!current || current.messages.length === 0 ? (
@@ -703,65 +473,61 @@ export default function ChatView() {
             if (!busy) send();
           }}
         >
-            <div className="nx-inner">
-              <div className="cx-compose-inner">
-                <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
-                  <Paperclip size={16} />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  hidden
-                  onChange={onFilesPicked}
-                  accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
-                />
+          <div className="cx-compose-inner">
+            <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
+              <Paperclip size={16} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={onFilesPicked}
+              accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
+            />
 
-                <input
-                  className="cx-input"
-                  placeholder="Ask Nexus…"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      if (!busy) send();
-                    }
-                  }}
-                />
-
-                {!busy ? (
-                  <div className="compose-actions">
-                    <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
-                      ↻
-                    </button>
-                    <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
-                      Send
+            {files.length > 0 && (
+              <div className="chips">
+                {files.map(f => (
+                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                    <Paperclip size={12} /> <span className="name">{f.name}</span>
+                    <span className="size">({formatBytes(f.size)})</span>
+                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                      <X size={12} />
                     </button>
                   </div>
-                ) : (
-                  <div className="compose-actions">
-                    <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                      ■
-                    </button>
-                  </div>
-                )}
-
-                {files.length > 0 && (
-                  <div className="chips">
-                    {files.map(f => (
-                      <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
-                        <Paperclip size={12} /> <span className="name">{f.name}</span>
-                        <span className="size">({formatBytes(f.size)})</span>
-                        <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
+
+            <input
+              className="cx-input"
+              placeholder="Ask Nexus…"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!busy) send();
+                }
+              }}
+            />
+
+            {!busy ? (
+              <>
+                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
+                  ↻
+                </button>
+                <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
+                  Send
+                </button>
+              </>
+            ) : (
+              <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                ■
+              </button>
+            )}
+          </div>
           <div className="cx-hint">
             Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
           </div>
