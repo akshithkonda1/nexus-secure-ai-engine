@@ -731,8 +731,11 @@ export default function ChatView() {
                     value={systemSettings.aiConsensusPct}
                     onChange={e =>
                       setSystemSettings(prev => {
-                        const next = normaliseConsensus(parseInt(e.target.value, 10), prev.webConsensusPct);
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const aiValue = Number.isFinite(parsed)
+                          ? Math.min(100, Math.max(0, parsed))
+                          : 0;
+                        return { ...prev, aiConsensusPct: aiValue, webConsensusPct: 100 - aiValue };
                       })
                     }
                   />
@@ -765,8 +768,11 @@ export default function ChatView() {
                     value={systemSettings.webConsensusPct}
                     onChange={e =>
                       setSystemSettings(prev => {
-                        const next = normaliseConsensus(prev.aiConsensusPct, parseInt(e.target.value, 10));
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const webValue = Number.isFinite(parsed)
+                          ? Math.min(100, Math.max(0, parsed))
+                          : 0;
+                        return { ...prev, aiConsensusPct: 100 - webValue, webConsensusPct: webValue };
                       })
                     }
                   />
