@@ -66,25 +66,6 @@ function readFileAsText(file: File) {
   });
 }
 
-function normaliseConsensus(ai: number, web: number) {
-  const clamp = (value: number) => {
-    const next = Number.isFinite(value) ? value : 0;
-    return Math.min(100, Math.max(0, Math.round(next)));
-  };
-  const aiClamped = clamp(ai);
-  const webClamped = clamp(web);
-  if (aiClamped + webClamped === 0) {
-    return { ai: 50, web: 50 };
-  }
-  if (aiClamped + webClamped === 100) {
-    return { ai: aiClamped, web: webClamped };
-  }
-  const total = aiClamped + webClamped;
-  const aiPct = Math.min(100, Math.max(0, Math.round((aiClamped / total) * 100)));
-  const webPct = 100 - aiPct;
-  return { ai: aiPct, web: webPct };
-}
-
 export default function ChatView() {
   useNavigationGuards();
 
@@ -237,26 +218,6 @@ export default function ChatView() {
       webConsensusPct: 50
     };
   });
-  const [openControl, setOpenControl] = useState<"consensus" | "web" | null>(null);
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      const el = event.target as HTMLElement | null;
-      if (!el) return;
-      if (el.closest(".chip-pop") || el.closest(".chip-wrap")) return;
-      setOpenControl(null);
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, []);
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenControl(null);
-      }
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, []);
 
   const avatarInitials = useMemo(() => {
     const parts = profile.name.trim().split(/\s+/).slice(0, 2);
@@ -421,21 +382,11 @@ export default function ChatView() {
 
     setFiles([]);
 
-    const controls = {
-      piiRedaction: systemSettings.redactPII,
-      consensusThreshold: systemSettings.aiConsensusPct / 100,
-      webUsageRatio: systemSettings.webConsensusPct / 100
-    };
-
     const bodyPrimary = {
       prompt,
-      attachments: textChunks.map(t => ({ name: t.name, content: t.content })),
-      options: controls
+      attachments: textChunks.map(t => ({ name: t.name, content: t.content }))
     };
-    const bodyInline = {
-      prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks),
-      options: controls
-    };
+    const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
     const headers = buildChatHeaders();
 
@@ -484,14 +435,7 @@ export default function ChatView() {
       const controller = new AbortController();
       streamAbortRef.current = controller;
       await askSSE(
-        {
-          prompt: lastUser.content,
-          options: {
-            piiRedaction: systemSettings.redactPII,
-            consensusThreshold: systemSettings.aiConsensusPct / 100,
-            webUsageRatio: systemSettings.webConsensusPct / 100
-          }
-        },
+        { prompt: lastUser.content },
         buildChatHeaders(),
         (c, m) =>
           updateMessage(current.id, lastAsst.id, {
@@ -503,23 +447,13 @@ export default function ChatView() {
         controller.signal
       );
     } catch {
-      await askJSON(
-        {
-          prompt: lastUser.content,
-          options: {
-            piiRedaction: systemSettings.redactPII,
-            consensusThreshold: systemSettings.aiConsensusPct / 100,
-            webUsageRatio: systemSettings.webConsensusPct / 100
-          }
-        },
-        buildChatHeaders(),
-        (c, m) =>
-          updateMessage(current.id, lastAsst.id, {
-            content: c,
-            html: mdToHtml(c),
-            models: m?.model_answers ?? m?.models,
-            audit: m?.audit ?? m?.audit_events
-          })
+      await askJSON({ prompt: lastUser.content }, buildChatHeaders(), (c, m) =>
+        updateMessage(current.id, lastAsst.id, {
+          content: c,
+          html: mdToHtml(c),
+          models: m?.model_answers ?? m?.models,
+          audit: m?.audit ?? m?.audit_events
+        })
       );
     } finally {
       streamAbortRef.current = null;
@@ -694,92 +628,6 @@ export default function ChatView() {
             )}
           </div>
         </header>
-
-        <div className="nx-controls">
-          <div className="nx-inner nx-controls-inner">
-            <button
-              type="button"
-              className={`chip ${systemSettings.redactPII ? "on" : ""}`}
-              title="Mask PII in prompts and responses"
-              onClick={() =>
-                setSystemSettings(prev => ({
-                  ...prev,
-                  redactPII: !prev.redactPII
-                }))
-              }
-            >
-              PII redaction{systemSettings.redactPII ? "" : " (off)"}
-            </button>
-
-            <div className="chip-wrap">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setOpenControl(current => (current === "consensus" ? null : "consensus"))}
-                title="Fraction of model answers that must agree"
-              >
-                AI consensus – {systemSettings.aiConsensusPct}%
-              </button>
-              {openControl === "consensus" && (
-                <div className="chip-pop">
-                  <label className="pop-label">Consensus threshold: {systemSettings.aiConsensusPct}%</label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={systemSettings.aiConsensusPct}
-                    onChange={e =>
-                      setSystemSettings(prev => {
-                        const next = normaliseConsensus(parseInt(e.target.value, 10), prev.webConsensusPct);
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
-                      })
-                    }
-                  />
-                  <div className="pop-actions">
-                    <button type="button" className="btn xs" onClick={() => setOpenControl(null)}>
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="chip-wrap">
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setOpenControl(current => (current === "web" ? null : "web"))}
-                title="Percent of response allowed to draw from the web"
-              >
-                Web insight – {systemSettings.webConsensusPct}%
-              </button>
-              {openControl === "web" && (
-                <div className="chip-pop">
-                  <label className="pop-label">Web usage: {systemSettings.webConsensusPct}%</label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={systemSettings.webConsensusPct}
-                    onChange={e =>
-                      setSystemSettings(prev => {
-                        const next = normaliseConsensus(prev.aiConsensusPct, parseInt(e.target.value, 10));
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
-                      })
-                    }
-                  />
-                  <div className="pop-actions">
-                    <button type="button" className="btn xs" onClick={() => setOpenControl(null)}>
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
         <div className="cx-stream">
           <div className="cx-stream-inner">
