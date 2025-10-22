@@ -39,11 +39,6 @@ type SystemSettingsState = {
 };
 
 type ProfilePanelKey = "user" | "billing" | "feedback";
-type ProfileState = {
-  name: string;
-  email: string;
-  title: string;
-};
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -201,11 +196,6 @@ export default function ChatView() {
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const [activeProfilePanel, setActiveProfilePanel] = useState<ProfilePanelKey | null>(null);
   const [systemSettingsOpen, setSystemSettingsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileState>(() => ({
-    name: "Jordan Sparks",
-    email: "jordan.sparks@nexus.ai",
-    title: "Principal Analyst"
-  }));
   const [systemSettings, setSystemSettings] = useState<SystemSettingsState>(() => {
     try {
       const raw = localStorage.getItem("nx.system-settings");
@@ -731,8 +721,11 @@ export default function ChatView() {
                     value={systemSettings.aiConsensusPct}
                     onChange={e =>
                       setSystemSettings(prev => {
-                        const next = normaliseConsensus(parseInt(e.target.value, 10), prev.webConsensusPct);
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const aiValue = Number.isFinite(parsed)
+                          ? Math.min(100, Math.max(0, parsed))
+                          : 0;
+                        return { ...prev, aiConsensusPct: aiValue, webConsensusPct: 100 - aiValue };
                       })
                     }
                   />
@@ -765,8 +758,11 @@ export default function ChatView() {
                     value={systemSettings.webConsensusPct}
                     onChange={e =>
                       setSystemSettings(prev => {
-                        const next = normaliseConsensus(prev.aiConsensusPct, parseInt(e.target.value, 10));
-                        return { ...prev, aiConsensusPct: next.ai, webConsensusPct: next.web };
+                        const parsed = Number.parseInt(e.target.value, 10);
+                        const webValue = Number.isFinite(parsed)
+                          ? Math.min(100, Math.max(0, parsed))
+                          : 0;
+                        return { ...prev, aiConsensusPct: 100 - webValue, webConsensusPct: webValue };
                       })
                     }
                   />
