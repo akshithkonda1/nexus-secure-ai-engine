@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Paperclip,
   Sun,
@@ -22,8 +22,8 @@ const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 
-const LOGO_DARK_URL = "/assets/nexus-logo-dark.png";
-const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
+const LOGO_DARK_URL = "/assets/nexus-logo.png";
+const LOGO_LIGHT_URL = "/assets/nexus-logo-inverted.png";
 
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
@@ -95,6 +95,8 @@ export default function ChatView() {
     localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
+  const logoUrl = useMemo(() => (theme === "dark" ? LOGO_DARK_URL : LOGO_LIGHT_URL), [theme]);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -123,15 +125,18 @@ export default function ChatView() {
   });
   useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
 
-  const buildChatHeaders = (): Record<string, string> => ({
-    "Content-Type": "application/json",
-    "X-Nexus-Web-Pct": String(system.webPct),
-    "X-Nexus-AI-Pct": String(system.aiPct),
-    "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
-    "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
-    "X-Nexus-Preferred": system.preferred,
-    "X-Nexus-Mode": system.mode
-  });
+  const buildChatHeaders = useCallback(
+    (): Record<string, string> => ({
+      "Content-Type": "application/json",
+      "X-Nexus-Web-Pct": String(system.webPct),
+      "X-Nexus-AI-Pct": String(system.aiPct),
+      "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
+      "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
+      "X-Nexus-Preferred": system.preferred,
+      "X-Nexus-Mode": system.mode
+    }),
+    [system]
+  );
 
   type Profile = { name: string; email: string; photoDataUrl?: string };
   const [profile, setProfile] = useState<Profile>(() => {
