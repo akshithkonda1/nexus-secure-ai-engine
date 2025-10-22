@@ -42,6 +42,8 @@ html[data-theme="light"]{
 
 :root {
   color-scheme: light dark;
+  --gutter:16px;
+  --side-w:320px;
 }
 
 body {

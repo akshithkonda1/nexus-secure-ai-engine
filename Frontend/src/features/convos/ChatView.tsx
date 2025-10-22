@@ -399,6 +399,7 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
+          <img src="/assets/nexus-logo.svg" className="nx-logo" alt="Nexus" decoding="async" />
           <button
             type="button"
             className="btn primary nx-newchat"
