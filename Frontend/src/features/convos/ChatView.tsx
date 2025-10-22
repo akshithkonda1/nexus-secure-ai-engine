@@ -1,18 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Archive,
-  Download,
-  Moon,
-  Sun,
-  Trash2,
-  Paperclip,
-  X,
-  Settings,
-  ShieldCheck,
-  UserCog,
-  CreditCard,
-  MessageSquareDiff
-} from "lucide-react";
+import { Archive, Download, Moon, Sun, Trash2, Paperclip, X } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
@@ -30,34 +17,10 @@ const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
-
-type SystemSettingsState = {
-  redactPII: boolean;
-  privateMode: boolean;
-  highContrast: boolean;
-  smartCompose: boolean;
-  aiConsensusPct: number;
-  webConsensusPct: number;
-};
-
-type ProfilePanelKey = "user" | "billing" | "feedback";
-type ProfileState = {
-  name: string;
-  email: string;
-  title: string;
-};
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
-}
-function stringToColor(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 45%)`;
 }
 function readFileAsText(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -87,22 +50,11 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") {
-      return "dark";
-    }
-    const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
-    const initial = saved === "light" || saved === "dark"
-      ? saved
-      : window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
-        ? "dark"
-        : "dark";
-    document.documentElement.dataset.theme = initial;
-    localStorage.setItem("nx.theme", initial);
-    return initial;
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
   useEffect(() => {
@@ -119,93 +71,11 @@ export default function ChatView() {
 
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement | null>(null);
-  const [activeProfilePanel, setActiveProfilePanel] = useState<ProfilePanelKey | null>(null);
-  const [systemSettingsOpen, setSystemSettingsOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileState>(() => ({
-    name: "Jordan Sparks",
-    email: "jordan.sparks@nexus.ai",
-    title: "Principal Analyst"
-  }));
-  const [systemSettings, setSystemSettings] = useState<SystemSettingsState>(() => {
-    try {
-      const raw = localStorage.getItem("nx.system-settings");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        const aiPct = Number.isFinite(parsed.aiConsensusPct) ? Number(parsed.aiConsensusPct) : 50;
-        const safeAi = Math.min(100, Math.max(0, aiPct));
-        const webPct = Number.isFinite(parsed.webConsensusPct) ? Number(parsed.webConsensusPct) : 100 - safeAi;
-        const safeWeb = Math.min(100, Math.max(0, webPct));
-        const normalised = normaliseConsensus(safeAi, safeWeb);
-        return {
-          redactPII: Boolean(parsed.redactPII ?? true),
-          privateMode: Boolean(parsed.privateMode ?? false),
-          highContrast: Boolean(parsed.highContrast ?? false),
-          smartCompose: Boolean(parsed.smartCompose ?? true),
-          aiConsensusPct: normalised.ai,
-          webConsensusPct: normalised.web
-        };
-      }
-    } catch (err) {
-      console.warn("Failed to parse system settings", err);
-    }
-    return {
-      redactPII: true,
-      privateMode: false,
-      highContrast: false,
-      smartCompose: true,
-      aiConsensusPct: 50,
-      webConsensusPct: 50
-    };
-  });
-
-  const avatarInitials = useMemo(() => {
-    const parts = profile.name.trim().split(/\s+/).slice(0, 2);
-    return parts.map(part => part[0]?.toUpperCase() ?? "").join("");
-  }, [profile.name]);
-  const avatarColor = useMemo(() => stringToColor(profile.email || profile.name), [profile.email, profile.name]);
-  const lastUpdatedLabel = useMemo(() => {
-    if (!current) return "Secure collaboration workspace";
-    return `Updated ${formatDate(current.updatedAt)}`;
-  }, [current]);
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
     activeConvIdRef.current = currentId;
   }, [currentId]);
-  useEffect(() => {
-    localStorage.setItem("nx.system-settings", JSON.stringify(systemSettings));
-  }, [systemSettings]);
-  useEffect(() => {
-    const handler = (event: MouseEvent) => {
-      if (!profileMenuRef.current) return;
-      if (profileMenuRef.current.contains(event.target as Node)) return;
-      setProfileMenuOpen(false);
-    };
-    if (profileMenuOpen) {
-      document.addEventListener("mousedown", handler);
-    }
-    return () => document.removeEventListener("mousedown", handler);
-  }, [profileMenuOpen]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-private-mode", systemSettings.privateMode);
-  }, [systemSettings.privateMode]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-high-contrast", systemSettings.highContrast);
-  }, [systemSettings.highContrast]);
-  useEffect(() => {
-    if (!systemSettingsOpen && !activeProfilePanel && !profileMenuOpen) return;
-    const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSystemSettingsOpen(false);
-        setActiveProfilePanel(null);
-        setProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [systemSettingsOpen, activeProfilePanel, profileMenuOpen]);
   function lockToSession(id: string) {
     if (activeConvIdRef.current !== id) setCurrentId(id);
     activeConvIdRef.current = id;
@@ -245,13 +115,6 @@ export default function ChatView() {
   }
   function removeFile(name: string) {
     setFiles(prev => prev.filter(f => f.name !== name));
-  }
-  function toggleTheme() {
-    setTheme(t => (t === "dark" ? "light" : "dark"));
-  }
-  function openProfilePanel(panel: ProfilePanelKey) {
-    setActiveProfilePanel(panel);
-    setProfileMenuOpen(false);
   }
 
   async function buildAttachmentPayload() {
@@ -318,9 +181,9 @@ export default function ChatView() {
     const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
     const headers: Record<string, string> = {
-      "X-Nexus-Web-Pct": String(systemSettings.webConsensusPct),
-      "X-Nexus-AI-Pct": String(systemSettings.aiConsensusPct),
-      "X-Nexus-Use-Both": systemSettings.aiConsensusPct > 0 && systemSettings.webConsensusPct > 0 ? "1" : "0",
+      "X-Nexus-Web-Pct": "50",
+      "X-Nexus-AI-Pct": "50",
+      "X-Nexus-Use-Both": "1",
       "X-Nexus-Consensus-Before-Web": "1",
       "X-Nexus-Preferred": "",
       "X-Nexus-Mode": "balanced"
@@ -405,213 +268,148 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <img src="/assets/nexus-logo.svg" className="nx-logo" alt="Nexus" decoding="async" />
           <button
             type="button"
-            className="btn primary nx-newchat"
+            className="primary"
             onClick={async () => {
               const c = await startNew();
               setCurrentId(c.id);
               setFiles([]);
             }}
           >
-            + New chat
+            ＋ New chat
           </button>
+          <div className="theme">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </div>
-        <div className="nx-side-body">
-          <Section title={`Active (${active.length})`}>
-            {active.length === 0 ? (
-              <Empty label="Nothing active" />
-            ) : (
-              active.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Archive", onClick: () => setStatus(c.id, "archived") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
 
-          <Section title={`Archived (${archived.length})`}>
-            {archived.length === 0 ? (
-              <Empty label="Nothing archived" />
-            ) : (
-              archived.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
+        <Section title={`Active (${active.length})`}>
+          {active.length === 0 ? (
+            <Empty label="Nothing active" />
+          ) : (
+            active.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Archive", onClick: () => setStatus(c.id, "archived") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
 
-          <Section
-            title={`Trash (${trash.length})`}
-            extra={
-              <button type="button" className="btn danger sm" onClick={purgeAllTrash}>
-                Empty Trash
-              </button>
-            }
-          >
-            {trash.length === 0 ? (
-              <Empty label="Trash is empty" />
-            ) : (
-              trash.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Purge", onClick: () => purge(c.id) }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-        </div>
+        <Section title={`Archived (${archived.length})`}>
+          {archived.length === 0 ? (
+            <Empty label="Nothing archived" />
+          ) : (
+            archived.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section
+          title={`Trash (${trash.length})`}
+          extra={
+            <button type="button" className="danger sm" onClick={purgeAllTrash}>
+              Empty Trash
+            </button>
+          }
+        >
+          {trash.length === 0 ? (
+            <Empty label="Trash is empty" />
+          ) : (
+            trash.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Purge", onClick: () => purge(c.id) }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
       </aside>
 
       <main className="nx-main">
         <header className="nx-top">
-          <div className="nx-inner">
-            <div className="brand">
-              Nexus<span className="dot">•</span>
-              <span className="ai">ai</span>
-            </div>
-            <div className="nx-top-center">
-              <div className="nx-top-heading">
-                <h2 className="title">{current ? current.title : "New chat"}</h2>
-                <span className="subtitle">{lastUpdatedLabel}</span>
-              </div>
-              {current ? (
-                <div className="nx-top-actions">
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => {
-                      if (!current) return;
-                      const dataStr =
-                        "data:application/json;charset=utf-8," +
-                        encodeURIComponent(JSON.stringify(current, null, 2));
-                      const a = document.createElement("a");
-                      a.href = dataStr;
-                      a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                      a.click();
-                    }}
-                  >
-                    <Download size={16} /> Export
-                  </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                  >
-                    <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                  </button>
-                  <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                    <Trash2 size={16} /> Delete
-                  </button>
-                </div>
-              ) : (
-                <p className="subtitle muted">Launch a new multi-model briefing without leaving private mode.</p>
-              )}
-              <div className="nx-top-status">
-                <span className="nx-top-chip">
-                  <ShieldCheck size={14} /> Zero-trust ready
-                </span>
-                {systemSettings.privateMode && <span className="nx-top-chip emphasis">Private mode</span>}
-                {systemSettings.redactPII && <span className="nx-top-chip soft">PII redaction</span>}
-                <span className="nx-top-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
-                <span className="nx-top-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
-              </div>
-            </div>
-            <div className="actions nx-top-controls">
-              <button
-                type="button"
-                className="icon-btn"
-                title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
-                title="Open system settings"
-                onClick={() => setSystemSettingsOpen(true)}
-              >
-                <Settings size={18} />
-              </button>
-              <div className={`nx-profile-anchor${profileMenuOpen ? " open" : ""}`} ref={profileMenuRef}>
+          {current ? (
+            <>
+              <h2 className="title">{current.title}</h2>
+              <div className="actions">
                 <button
                   type="button"
-                  className="nx-profile-trigger"
-                  aria-haspopup="true"
-                  aria-expanded={profileMenuOpen}
-                  onClick={() => setProfileMenuOpen(open => !open)}
-                  title="Profile & workspace"
+                  className="btn"
+                  onClick={() => {
+                    if (!current) return;
+                    const dataStr =
+                      "data:application/json;charset=utf-8," +
+                      encodeURIComponent(JSON.stringify(current, null, 2));
+                    const a = document.createElement("a");
+                    a.href = dataStr;
+                    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                    a.click();
+                  }}
                 >
-                  <div className="nx-avatar" style={{ background: avatarColor }}>
-                    {avatarInitials || "N"}
-                  </div>
+                  <Download size={16} /> Export
                 </button>
-                {profileMenuOpen && (
-                  <div className="nx-profile-menu" role="menu">
-                    <div className="nx-profile-summary">
-                      <div className="nx-avatar sm" style={{ background: avatarColor }}>
-                        {avatarInitials || "N"}
-                      </div>
-                      <div>
-                        <strong>{profile.name}</strong>
-                        <span>{profile.email}</span>
-                      </div>
-                    </div>
-                    <button type="button" role="menuitem" onClick={() => openProfilePanel("user")}>
-                      <UserCog size={16} /> User Settings
-                    </button>
-                    <button type="button" role="menuitem" onClick={() => openProfilePanel("billing")}>
-                      <CreditCard size={16} /> Billing Options
-                    </button>
-                    <button type="button" role="menuitem" onClick={() => openProfilePanel("feedback")}>
-                      <MessageSquareDiff size={16} /> System Feedback
-                    </button>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                >
+                  <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
+                </button>
+                <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
+                  <Trash2 size={16} /> Delete
+                </button>
               </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <h2 className="title">New chat</h2>
+          )}
         </header>
 
         <div className="cx-stream">
@@ -630,18 +428,6 @@ export default function ChatView() {
                   <button type="button" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
                   </button>
-                  {systemSettings.smartCompose && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setInput(
-                          "Generate a private executive briefing with anonymized identifiers and actionable next steps."
-                        )
-                      }
-                    >
-                      Executive briefing
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (
@@ -673,7 +459,7 @@ export default function ChatView() {
             if (!busy) send();
           }}
         >
-          <div className="nx-inner cx-compose-inner">
+          <div className="cx-compose-inner">
             <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
               <Paperclip size={16} />
             </button>
@@ -685,6 +471,20 @@ export default function ChatView() {
               onChange={onFilesPicked}
               accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
             />
+
+            {files.length > 0 && (
+              <div className="chips">
+                {files.map(f => (
+                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                    <Paperclip size={12} /> <span className="name">{f.name}</span>
+                    <span className="size">({formatBytes(f.size)})</span>
+                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <input
               className="cx-input"
@@ -700,34 +500,18 @@ export default function ChatView() {
             />
 
             {!busy ? (
-              <div className="compose-actions">
+              <>
                 <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
                   ↻
                 </button>
-                <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
+                <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
                   Send
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="compose-actions">
-                <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                  ■
-                </button>
-              </div>
-            )}
-
-            {files.length > 0 && (
-              <div className="chips">
-                {files.map(f => (
-                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
-                    <Paperclip size={12} /> <span className="name">{f.name}</span>
-                    <span className="size">({formatBytes(f.size)})</span>
-                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                ■
+              </button>
             )}
           </div>
           <div className="cx-hint">
@@ -735,457 +519,8 @@ export default function ChatView() {
           </div>
         </form>
       </main>
-      {systemSettingsOpen && (
-        <SystemSettingsModal
-          settings={systemSettings}
-          onChange={patch => setSystemSettings(prev => ({ ...prev, ...patch }))}
-          onClose={() => setSystemSettingsOpen(false)}
-        />
-      )}
-      {activeProfilePanel && (
-        <ProfilePanel
-          panel={activeProfilePanel}
-          profile={profile}
-          systemSettings={systemSettings}
-          onClose={() => setActiveProfilePanel(null)}
-          onSaveProfile={setProfile}
-          onOpenSystemSettings={() => {
-            setActiveProfilePanel(null);
-            setSystemSettingsOpen(true);
-          }}
-        />
-      )}
     </div>
   );
-}
-
-function SystemSettingsModal({
-  settings,
-  onChange,
-  onClose
-}: {
-  settings: SystemSettingsState;
-  onChange: (patch: Partial<SystemSettingsState>) => void;
-  onClose: () => void;
-}) {
-  const [retention, setRetention] = React.useState(() => localStorage.getItem("nx.system-retention") || "30");
-  React.useEffect(() => {
-    localStorage.setItem("nx.system-retention", retention);
-  }, [retention]);
-  return (
-    <div className="nx-dialog-backdrop" role="dialog" aria-modal="true" aria-label="System settings">
-      <div className="nx-dialog">
-        <div className="nx-dialog-header">
-          <div>
-            <h3>System settings</h3>
-            <p className="nx-dialog-subhead">
-              Calibrate workspace controls without leaving the conversation. Changes apply instantly for this browser.
-            </p>
-          </div>
-          <button type="button" className="icon-btn ghost" onClick={onClose} aria-label="Close system settings">
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="nx-dialog-body">
-          <div className="nx-settings-group">
-            <SettingToggle
-              label="Redact PII automatically"
-              description="Scrub sensitive identifiers from prompts, attachments, and transcripts."
-              checked={settings.redactPII}
-              onToggle={value => onChange({ redactPII: value })}
-            />
-            <SettingToggle
-              label="Private mode"
-              description="Exclude this session from analytics and auto-purge history after 24 hours."
-              checked={settings.privateMode}
-              onToggle={value => onChange({ privateMode: value })}
-            />
-            <SettingToggle
-              label="High contrast interface"
-              description="Increase legibility for control room displays and reduce eye strain."
-              checked={settings.highContrast}
-              onToggle={value => onChange({ highContrast: value })}
-            />
-            <SettingToggle
-              label="Smart compose boosters"
-              description="Show contextual prompts and adaptive tone suggestions while you type."
-              checked={settings.smartCompose}
-              onToggle={value => onChange({ smartCompose: value })}
-            />
-          </div>
-
-          <div className="nx-settings-group">
-            <h4 className="nx-settings-title">Consensus allocation</h4>
-            <SettingSlider
-              label="AI consensus weighting"
-              description="Adjust how strongly Nexus leans on internal model consensus before consulting the open web."
-              value={settings.aiConsensusPct}
-              onChange={value => {
-                const next = clampPct(value);
-                onChange({ aiConsensusPct: next, webConsensusPct: clampPct(100 - next) });
-              }}
-            />
-            <SettingSlider
-              label="Web intelligence weighting"
-              description="Control how much curated web sources contribute relative to AI consensus."
-              value={settings.webConsensusPct}
-              onChange={value => {
-                const next = clampPct(value);
-                onChange({ aiConsensusPct: clampPct(100 - next), webConsensusPct: next });
-              }}
-            />
-            <p className="nx-slider-hint">
-              Nexus automatically balances these sliders so they always total 100%. Use them to fine-tune decision making without
-              backend changes.
-            </p>
-          </div>
-
-          <div className="nx-settings-meta">
-            <label className="nx-field">
-              <span>Session transcript retention</span>
-              <select value={retention} onChange={event => setRetention(event.target.value)}>
-                <option value="7">7 days</option>
-                <option value="30">30 days (recommended)</option>
-                <option value="90">90 days</option>
-                <option value="forever">Keep indefinitely</option>
-              </select>
-            </label>
-            <label className="nx-field">
-              <span>Workspace notifications</span>
-              <select defaultValue="digest">
-                <option value="realtime">Real-time alerts</option>
-                <option value="digest">Daily digest</option>
-                <option value="minimal">Security events only</option>
-                <option value="off">Do not disturb</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div className="nx-dialog-footer">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => {
-              onChange({
-                redactPII: true,
-                privateMode: false,
-                highContrast: false,
-                smartCompose: true,
-                aiConsensusPct: 50,
-                webConsensusPct: 50
-              });
-              setRetention("30");
-            }}
-          >
-            Restore recommended defaults
-          </button>
-          <button type="button" className="primary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProfilePanel({
-  panel,
-  profile,
-  systemSettings,
-  onClose,
-  onSaveProfile,
-  onOpenSystemSettings
-}: {
-  panel: ProfilePanelKey;
-  profile: ProfileState;
-  systemSettings: SystemSettingsState;
-  onClose: () => void;
-  onSaveProfile: (next: ProfileState) => void;
-  onOpenSystemSettings: () => void;
-}) {
-  const [draftProfile, setDraftProfile] = useState<ProfileState>(profile);
-  const [timezone, setTimezone] = useState<string>(() => localStorage.getItem("nx.profile.timezone") || "UTC");
-  const [feedback, setFeedback] = useState("");
-  const [billingCycle, setBillingCycle] = useState("annual");
-  const feedbackLimit = 600;
-
-  useEffect(() => {
-    setDraftProfile(profile);
-  }, [profile, panel]);
-  useEffect(() => {
-    localStorage.setItem("nx.profile.timezone", timezone);
-  }, [timezone]);
-
-  const title = useMemo(() => ({
-    user: "User settings",
-    billing: "Billing options",
-    feedback: "System feedback"
-  })[panel], [panel]);
-
-  const closeAndReset = () => {
-    setFeedback("");
-    onClose();
-  };
-
-  let body: React.ReactNode = null;
-  if (panel === "user") {
-    body = (
-      <form
-        className="nx-panel-form"
-        onSubmit={event => {
-          event.preventDefault();
-          onSaveProfile({ ...draftProfile });
-          closeAndReset();
-        }}
-      >
-        <label className="nx-field">
-          <span>Display name</span>
-          <input
-            value={draftProfile.name}
-            onChange={event => setDraftProfile(prev => ({ ...prev, name: event.target.value }))}
-            placeholder="Your name"
-          />
-        </label>
-        <label className="nx-field">
-          <span>Role or title</span>
-          <input
-            value={draftProfile.title}
-            onChange={event => setDraftProfile(prev => ({ ...prev, title: event.target.value }))}
-            placeholder="Role"
-          />
-        </label>
-        <label className="nx-field">
-          <span>Notification email</span>
-          <input value={draftProfile.email} readOnly />
-          <small>This email is managed by your administrator.</small>
-        </label>
-        <label className="nx-field">
-          <span>Timezone</span>
-          <select value={timezone} onChange={event => setTimezone(event.target.value)}>
-            <option value="UTC">UTC</option>
-            <option value="America/New_York">US Eastern</option>
-            <option value="Europe/London">London</option>
-            <option value="Asia/Singapore">Singapore</option>
-            <option value="Australia/Sydney">Sydney</option>
-          </select>
-        </label>
-          <div className="nx-panel-callout">
-            <ShieldCheck size={16} />
-            <div>
-              <strong>Privacy snapshot</strong>
-              <p>
-                Private mode is {systemSettings.privateMode ? "enabled" : "disabled"}. PII redaction is {systemSettings.redactPII ? "active" : "off"} for this workspace. Consensus split: {systemSettings.aiConsensusPct}% AI / {systemSettings.webConsensusPct}% web.
-              </p>
-            </div>
-          </div>
-        <div className="nx-dialog-footer">
-          <button type="button" className="btn ghost" onClick={onOpenSystemSettings}>
-            System settings
-          </button>
-          <button type="submit" className="primary">
-            Save profile
-          </button>
-        </div>
-      </form>
-    );
-  } else if (panel === "billing") {
-    body = (
-      <div className="nx-panel-content">
-        <section className="nx-panel-card">
-          <h4>Current plan</h4>
-          <p>Professional — 12 seats</p>
-          <ul>
-            <li>Priority orchestration queues</li>
-            <li>Granular audit logging</li>
-            <li>Unlimited compliance exports</li>
-          </ul>
-          <div className="nx-field">
-            <span>Billing cadence</span>
-            <select value={billingCycle} onChange={event => setBillingCycle(event.target.value)}>
-              <option value="monthly">Monthly</option>
-              <option value="annual">Annual (save 15%)</option>
-            </select>
-          </div>
-          <div className="nx-dialog-footer">
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={() => console.info("Downloading latest invoice")}
-            >
-              Download last invoice
-            </button>
-            <button
-              type="button"
-              className="primary"
-              onClick={() => alert("Our sales team will reach out to tailor an enterprise plan.")}
-            >
-              Talk to sales
-            </button>
-          </div>
-        </section>
-        <section className="nx-panel-card">
-          <h4>Usage snapshot</h4>
-          <p>89% of allocated AI minutes consumed this cycle.</p>
-          <div className="nx-usage-bar">
-            <span style={{ width: "89%" }} />
-          </div>
-          <p className="muted">Add-on packs can be provisioned instantly from billing.</p>
-        </section>
-      </div>
-    );
-  } else {
-    const remaining = Math.max(0, feedbackLimit - feedback.length);
-    body = (
-      <form
-        className="nx-panel-form"
-        onSubmit={event => {
-          event.preventDefault();
-          console.info("System feedback submitted", { feedback });
-          alert("Thanks for helping us calibrate Nexus. Your feedback was recorded locally.");
-          closeAndReset();
-        }}
-      >
-        <label className="nx-field">
-          <span>Share what went well or what we should improve</span>
-          <textarea
-            value={feedback}
-            onChange={event => setFeedback(event.target.value.slice(0, feedbackLimit))}
-            rows={6}
-            placeholder="Tell us about your experience..."
-          />
-          <small>{remaining} characters remaining</small>
-        </label>
-        <label className="nx-field">
-          <span>Attach diagnostics</span>
-          <select defaultValue="metrics">
-            <option value="metrics">Include anonymized metrics</option>
-            <option value="console">Include console logs</option>
-            <option value="none">Do not attach any data</option>
-          </select>
-        </label>
-        <div className="nx-dialog-footer">
-          <button type="button" className="btn ghost" onClick={closeAndReset}>
-            Cancel
-          </button>
-          <button type="submit" className="primary" disabled={!feedback.trim()}>
-            Submit feedback
-          </button>
-        </div>
-      </form>
-    );
-  }
-
-  return (
-    <div className="nx-dialog-backdrop" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="nx-dialog wide">
-        <div className="nx-dialog-header">
-          <div>
-            <h3>{title}</h3>
-            <p className="nx-dialog-subhead">
-              {panel === "user"
-                ? "Manage how Nexus represents you across orchestrated workflows."
-                : panel === "billing"
-                ? "Stay ahead of usage and keep stakeholders informed."
-                : "Share direct feedback with the platform team."}
-            </p>
-          </div>
-          <button type="button" className="icon-btn ghost" onClick={closeAndReset} aria-label={`Close ${title}`}>
-            <X size={16} />
-          </button>
-        </div>
-        {body}
-      </div>
-    </div>
-  );
-}
-
-function SettingToggle({
-  label,
-  description,
-  checked,
-  onToggle
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onToggle: (value: boolean) => void;
-}) {
-  const id = React.useId();
-  return (
-    <label className="nx-setting-row" htmlFor={id}>
-      <div className="nx-setting-copy">
-        <span className="nx-setting-label">{label}</span>
-        <span className="nx-setting-description">{description}</span>
-      </div>
-      <input
-        id={id}
-        type="checkbox"
-        className="nx-switch"
-        checked={checked}
-        onChange={event => onToggle(event.target.checked)}
-      />
-    </label>
-  );
-}
-
-function SettingSlider({
-  label,
-  description,
-  value,
-  onChange
-}: {
-  label: string;
-  description: string;
-  value: number;
-  onChange: (value: number) => void;
-}) {
-  const id = React.useId();
-  return (
-    <div className="nx-setting-row slider">
-      <div className="nx-setting-copy">
-        <label htmlFor={id} className="nx-setting-label">
-          {label}
-        </label>
-        <span className="nx-setting-description">{description}</span>
-      </div>
-      <div className="nx-slider-control">
-        <input
-          id={id}
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={value}
-          onChange={event => onChange(Number(event.target.value))}
-        />
-        <output className="nx-slider-value" htmlFor={id}>
-          {value}%
-        </output>
-      </div>
-    </div>
-  );
-}
-
-function clampPct(value: number) {
-  if (!Number.isFinite(value)) return 0;
-  return Math.min(100, Math.max(0, Math.round(value)));
-}
-
-function normaliseConsensus(aiValue: number, webValue: number) {
-  const ai = clampPct(aiValue);
-  const web = clampPct(webValue);
-  const total = ai + web;
-  if (total === 0) {
-    return { ai: 0, web: 0 };
-  }
-  if (total === 100) {
-    return { ai, web };
-  }
-  const aiShare = Math.round((ai / total) * 100);
-  const webShare = 100 - aiShare;
-  return { ai: aiShare, web: webShare };
 }
 
 function Section({ title, extra, children }: { title: string; extra?: React.ReactNode; children: React.ReactNode }) {
