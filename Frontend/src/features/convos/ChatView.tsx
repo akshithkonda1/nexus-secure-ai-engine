@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   Download,
+  Moon,
+  Sun,
   Trash2,
   Paperclip,
   X,
@@ -525,13 +527,12 @@ export default function ChatView() {
                 onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? "☀" : "🌙"}
+                {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
               </button>
               <button
                 type="button"
                 className="icon-btn"
-                title="System settings"
-                aria-label="Open system settings"
+                title="Open system settings"
                 onClick={() => setSystemSettingsOpen(true)}
               >
                 <Settings size={18} />
@@ -539,15 +540,15 @@ export default function ChatView() {
               <div className={`nx-profile-anchor${profileMenuOpen ? " open" : ""}`} ref={profileMenuRef}>
                 <button
                   type="button"
-                  className="avatar-btn"
+                  className="nx-profile-trigger"
                   aria-haspopup="true"
                   aria-expanded={profileMenuOpen}
                   onClick={() => setProfileMenuOpen(open => !open)}
                   title="Profile & workspace"
                 >
-                  <span className="nx-avatar" style={{ background: avatarColor }}>
+                  <div className="nx-avatar" style={{ background: avatarColor }}>
                     {avatarInitials || "N"}
-                  </span>
+                  </div>
                 </button>
                 {profileMenuOpen && (
                   <div className="nx-profile-menu" role="menu">
@@ -578,67 +579,23 @@ export default function ChatView() {
 
         <div className="cx-stream">
           <div className="cx-stream-inner">
-            {current && (
-              <>
-                <div className="nx-session-toolbar">
-                  <span className="subtitle">{lastUpdatedLabel}</span>
-                  <div className="nx-session-buttons">
-                    <button
-                      type="button"
-                      className="btn"
-                      onClick={() => {
-                        const dataStr =
-                          "data:application/json;charset=utf-8," +
-                          encodeURIComponent(JSON.stringify(current, null, 2));
-                        const a = document.createElement("a");
-                        a.href = dataStr;
-                        a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                        a.click();
-                      }}
-                    >
-                      <Download size={16} /> Export
-                    </button>
-                    <button
-                      type="button"
-                      className="btn"
-                      onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                    >
-                      <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                    </button>
-                    <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                      <Trash2 size={16} /> Delete
-                    </button>
-                  </div>
-                </div>
-                <div className="nx-status-row" role="status" aria-live="polite">
-                  <span className="nx-status-chip">
-                    <ShieldCheck size={14} /> Zero-trust ready
-                  </span>
-                  {systemSettings.privateMode && <span className="nx-status-chip emphasis">Private mode</span>}
-                  {systemSettings.redactPII && <span className="nx-status-chip soft">PII redaction</span>}
-                  <span className="nx-status-chip soft">AI consensus · {systemSettings.aiConsensusPct}%</span>
-                  <span className="nx-status-chip soft">Web insight · {systemSettings.webConsensusPct}%</span>
-                </div>
-              </>
-            )}
             {!current || current.messages.length === 0 ? (
-              <section className="cx-hero" role="region" aria-label="Welcome">
+              <div className="cx-hero">
                 <h1>How can Nexus help today?</h1>
                 <p className="muted">Ask a question, paste a document, or say “/help”.</p>
                 <div className="chip-row">
                   <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
                     Explain simply
                   </button>
-                  <button type="button" className="chip" onClick={() => setInput("Summarize the following article:\n")}>
+                  <button type="button" onClick={() => setInput("Summarize the following article:\n")}>
                     Summarize
                   </button>
-                  <button type="button" className="chip" onClick={() => setInput("Draft a concise email about…")}>
+                  <button type="button" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
                   </button>
                   {systemSettings.smartCompose && (
                     <button
                       type="button"
-                      className="chip"
                       onClick={() =>
                         setInput(
                           "Generate a private executive briefing with anonymized identifiers and actionable next steps."
@@ -649,12 +606,11 @@ export default function ChatView() {
                     </button>
                   )}
                 </div>
-              </section>
+              </div>
             ) : (
               current.messages.map(m => (
                 <div key={m.id} className={`cx-msg ${m.role}`}>
                   <div className="bubble">
-                    <div className="role">{m.role === "user" ? "You" : "Nexus"}</div>
                     {m.attachments?.length ? (
                       <div className="att-list">
                         {m.attachments.map((a, i) => (
@@ -665,7 +621,7 @@ export default function ChatView() {
                         ))}
                       </div>
                     ) : null}
-                    <div className="content" dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
+                    <div dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
                   </div>
                 </div>
               ))
