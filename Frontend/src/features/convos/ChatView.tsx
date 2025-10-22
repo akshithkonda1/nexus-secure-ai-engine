@@ -214,6 +214,41 @@ export default function ChatView() {
       webConsensusPct: 50
     };
   });
+  const controlsRef = useRef<HTMLDivElement | null>(null);
+  const [controlsHeight, setControlsHeight] = useState(0);
+  useEffect(() => {
+    const controlsEl = controlsRef.current;
+    if (!controlsEl) return;
+
+    const updateHeight = () => {
+      const next = Math.round(controlsEl.getBoundingClientRect().height);
+      setControlsHeight(prev => (prev === next ? prev : next));
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.target === controlsEl) {
+            const next = Math.round(entry.contentRect.height);
+            setControlsHeight(prev => (prev === next ? prev : next));
+          }
+        });
+      });
+      observer.observe(controlsEl);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, []);
+  const controlsStyle = useMemo<React.CSSProperties>(
+    () => ({
+      "--controls-h": `${controlsHeight}px`
+    }),
+    [controlsHeight]
+  );
   const [openControl, setOpenControl] = useState<"consensus" | "web" | null>(null);
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -531,7 +566,7 @@ export default function ChatView() {
         </Section>
       </aside>
 
-      <main className="nx-main">
+      <main className="nx-main" style={controlsStyle}>
         <header className="nx-top">
           {current ? (
             <>
@@ -570,7 +605,7 @@ export default function ChatView() {
           )}
         </header>
 
-        <div className="nx-controls">
+        <div className="nx-controls" ref={controlsRef}>
           <div className="nx-inner nx-controls-inner">
             <button
               type="button"

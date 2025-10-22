@@ -4,6 +4,7 @@
   --side-w:320px;
   --space:12px;
   --lh:1.55;
+  --controls-h:0px;
 }
 
 body {
@@ -77,7 +78,7 @@ html[data-density="compact"]{
 .conv-when{ font-size:12px; color:var(--muted); }
 .conv-menu{ display:flex; gap:6px; }
 
-.nx-main{ display:grid; grid-template-rows:auto 1fr auto; background:var(--panel-2); }
+.nx-main{ display:grid; grid-template-rows:auto auto minmax(0, 1fr) auto; background:var(--panel-2); }
 .nx-top{ position:sticky; top:0; z-index:5; background:var(--topbar); border-bottom:1px solid var(--line); height:var(--topbar-h); display:grid; align-items:center; }
 .nx-inner{ width:100%; max-width:var(--wrap); margin-inline:auto; padding-inline:var(--gutter); display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--space) * .8); align-items:center; }
 .brand{ font-weight:800; letter-spacing:.2px; display:inline-flex; align-items:baseline; gap:.12em; }
@@ -122,7 +123,7 @@ html[data-theme="light"] .nx-logo { filter:none; }
 .nx-controls .pop-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
 .nx-controls .btn.xs{ font-size:12px; padding:6px 10px; border-radius:8px; }
 
-.cx-stream{ overflow:auto; padding:calc(var(--space) * 2) var(--gutter); min-height:calc(100vh - var(--topbar-h) - var(--composer-h)); display:grid; justify-items:center; }
+.cx-stream{ overflow:auto; padding:calc(var(--space) * 2) var(--gutter); min-height:calc(100vh - var(--topbar-h) - var(--controls-h, 0px) - var(--composer-h)); display:grid; justify-items:center; }
 .cx-stream-inner{ width:100%; max-width:var(--wrap); padding-bottom:max(24px, env(safe-area-inset-bottom)); }
 
 .cx-hero{
