@@ -95,6 +95,18 @@ export default function ChatView() {
     localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
+  const [density, setDensity] = useState<"comfy" | "cozy" | "compact">(
+    () => (localStorage.getItem("nx.density") as "comfy" | "cozy" | "compact" | null) || "comfy"
+  );
+  useEffect(() => {
+    document.documentElement.dataset.density = density;
+    localStorage.setItem("nx.density", density);
+  }, [density]);
+
+  const cycleDensity = useCallback(() => {
+    setDensity(d => (d === "comfy" ? "cozy" : d === "cozy" ? "compact" : "comfy"));
+  }, []);
+
   const logoUrl = useMemo(() => (theme === "dark" ? LOGO_DARK_URL : LOGO_LIGHT_URL), [theme]);
 
   const [showSettings, setShowSettings] = useState(false);
@@ -571,8 +583,19 @@ export default function ChatView() {
               className="icon-btn"
               title={theme === "dark" ? "Switch to light" : "Switch to dark"}
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+              aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
+            <button
+              type="button"
+              className="icon-btn"
+              title={`Density: ${density.charAt(0).toUpperCase()}${density.slice(1)}`}
+              onClick={cycleDensity}
+              aria-label="Toggle density"
+            >
+              ↕
             </button>
 
             <button type="button" className="icon-btn" title="System Settings" onClick={() => setShowSettings(true)}>
@@ -665,63 +688,65 @@ export default function ChatView() {
             if (!busy) send();
           }}
         >
-          <div className="nx-inner cx-compose-inner">
-            <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
-              <Paperclip size={16} />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              onChange={onFilesPicked}
-              accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
-            />
-
-            <input
-              className="cx-input"
-              placeholder="Ask Nexus…"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (!busy) send();
-                }
-              }}
-            />
-
-            {!busy ? (
-              <div className="compose-actions">
-                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
-                  ↻
+            <div className="nx-inner">
+              <div className="cx-compose-inner">
+                <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
+                  <Paperclip size={16} />
                 </button>
-                <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
-                  Send
-                </button>
-              </div>
-            ) : (
-              <div className="compose-actions">
-                <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                  ■
-                </button>
-              </div>
-            )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={onFilesPicked}
+                  accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
+                />
 
-            {files.length > 0 && (
-              <div className="chips">
-                {files.map(f => (
-                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
-                    <Paperclip size={12} /> <span className="name">{f.name}</span>
-                    <span className="size">({formatBytes(f.size)})</span>
-                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                      <X size={12} />
+                <input
+                  className="cx-input"
+                  placeholder="Ask Nexus…"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (!busy) send();
+                    }
+                  }}
+                />
+
+                {!busy ? (
+                  <div className="compose-actions">
+                    <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
+                      ↻
+                    </button>
+                    <button type="submit" className="btn primary" disabled={!input.trim() && files.length === 0}>
+                      Send
                     </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="compose-actions">
+                    <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                      ■
+                    </button>
+                  </div>
+                )}
+
+                {files.length > 0 && (
+                  <div className="chips">
+                    {files.map(f => (
+                      <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                        <Paperclip size={12} /> <span className="name">{f.name}</span>
+                        <span className="size">({formatBytes(f.size)})</span>
+                        <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
           <div className="cx-hint">
             Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
           </div>
