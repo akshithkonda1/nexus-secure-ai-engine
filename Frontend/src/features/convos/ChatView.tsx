@@ -123,6 +123,16 @@ export default function ChatView() {
   });
   useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
 
+  const buildChatHeaders = (): Record<string, string> => ({
+    "Content-Type": "application/json",
+    "X-Nexus-Web-Pct": String(system.webPct),
+    "X-Nexus-AI-Pct": String(system.aiPct),
+    "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
+    "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
+    "X-Nexus-Preferred": system.preferred,
+    "X-Nexus-Mode": system.mode
+  });
+
   type Profile = { name: string; email: string; photoDataUrl?: string };
   const [profile, setProfile] = useState<Profile>(() => {
     try {
@@ -361,15 +371,7 @@ export default function ChatView() {
     };
     const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "X-Nexus-Web-Pct": String(system.webPct),
-      "X-Nexus-AI-Pct": String(system.aiPct),
-      "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
-      "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
-      "X-Nexus-Preferred": system.preferred,
-      "X-Nexus-Mode": system.mode
-    };
+    const headers = buildChatHeaders();
 
     const patch = (content: string, metaResp?: any) => {
       updateMessage(conv.id, asstMsg.id, {
@@ -417,7 +419,7 @@ export default function ChatView() {
       streamAbortRef.current = controller;
       await askSSE(
         { prompt: lastUser.content },
-        {},
+        buildChatHeaders(),
         (c, m) =>
           updateMessage(current.id, lastAsst.id, {
             content: c,
@@ -428,7 +430,7 @@ export default function ChatView() {
         controller.signal
       );
     } catch {
-      await askJSON({ prompt: lastUser.content }, {}, (c, m) =>
+      await askJSON({ prompt: lastUser.content }, buildChatHeaders(), (c, m) =>
         updateMessage(current.id, lastAsst.id, {
           content: c,
           html: mdToHtml(c),
