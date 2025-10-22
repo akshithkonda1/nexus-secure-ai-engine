@@ -40,6 +40,11 @@ html[data-theme="light"]{
   --shadow:0 10px 30px rgba(10,15,25,.08);
 }
 
+/* Light-mode border contrast bump (subtle, crisper) */
+html[data-theme="light"]{
+  --line:#c7d1de;
+}
+
 :root {
   color-scheme: light dark;
   --gutter:16px;
@@ -96,6 +101,14 @@ html[data-theme] *{ transition: color .15s ease, background-color .15s ease, bor
 .brand{ font-weight:800; letter-spacing:.2px; display:inline-flex; align-items:baseline; gap:.12em; }
 .brand .dot{ color:var(--accent); margin:0 .08em; }
 .brand .ai{ color:var(--accent); }
+
+/* Brand is always readable */
+.brand { color:var(--text); }
+.brand, .brand * { color:inherit; mix-blend-mode:normal; }
+
+/* Logo sizing; we swap assets per theme (no filters) */
+.nx-logo { display:block; height:38px; width:auto; margin-bottom:10px; filter:none; }
+html[data-theme="light"] .nx-logo { filter:none; }
 .actions{ display:inline-flex; gap:8px; align-items:center; }
 .nx-profile-anchor{ position:relative; }
 .avatar-btn{ border:none; background:transparent; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
