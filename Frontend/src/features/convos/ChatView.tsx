@@ -1,13 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Paperclip,
-  Sun,
-  Moon,
-  Settings as Gear,
-  UserCircle2,
-  Upload,
-  X
-} from "lucide-react";
+import { Archive, Download, Moon, Sun, Trash2, Paperclip, X } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
@@ -61,56 +53,23 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
-    if (saved) return saved;
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
+    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
-  type Preferred = "ChatGPT" | "Claude" | "Grok" | "Gemini";
-  type NxMode = "fast" | "balanced" | "smart";
-  type SystemSettings = {
-    webPct: number;
-    aiPct: number;
-    useBoth: boolean;
-    consensusBeforeWeb: boolean;
-    preferred: Preferred;
-    mode: NxMode;
-  };
-  const [system, setSystem] = useState<SystemSettings>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.system") || "");
-    } catch {}
-    return {
-      webPct: 50,
-      aiPct: 50,
-      useBoth: true,
-      consensusBeforeWeb: true,
-      preferred: "ChatGPT",
-      mode: "balanced"
-    };
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof document === "undefined") {
+      return LOGO_DARK_URL;
+    }
+    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
   });
-  useEffect(() => localStorage.setItem("nx.system", JSON.stringify(system)), [system]);
-
-  type Profile = { name: string; email: string; photoDataUrl?: string };
-  const [profile, setProfile] = useState<Profile>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("nx.profile") || "");
-    } catch {}
-    return { name: "", email: "" };
-  });
-  useEffect(() => localStorage.setItem("nx.profile", JSON.stringify(profile)), [profile]);
-
-  const [feedback, setFeedback] = useState(() => localStorage.getItem("nx.feedbackDraft") || "");
-  useEffect(() => localStorage.setItem("nx.feedbackDraft", feedback), [feedback]);
-
-  const [profileTab, setProfileTab] = useState<"profile" | "billing" | "feedback">("profile");
+  useEffect(() => {
+    const t = document.documentElement.dataset.theme;
+    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
+  }, [theme]);
 
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
@@ -197,16 +156,6 @@ export default function ChatView() {
     return { meta, textChunks };
   }
 
-  function exportConversation() {
-    if (!current) return;
-    const dataStr =
-      "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(current, null, 2));
-    const a = document.createElement("a");
-    a.href = dataStr;
-    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-    a.click();
-  }
-
   function inlineTextAttachmentsIntoPrompt(prompt: string, textChunks: { name: string; content: string }[]) {
     if (!textChunks.length) return prompt;
     const parts = [prompt, "", "### Attachments"];
@@ -246,13 +195,12 @@ export default function ChatView() {
     const bodyInline = { prompt: inlineTextAttachmentsIntoPrompt(prompt, textChunks) };
 
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      "X-Nexus-Web-Pct": String(system.webPct),
-      "X-Nexus-AI-Pct": String(system.aiPct),
-      "X-Nexus-Use-Both": system.useBoth ? "1" : "0",
-      "X-Nexus-Consensus-Before-Web": system.consensusBeforeWeb ? "1" : "0",
-      "X-Nexus-Preferred": system.preferred,
-      "X-Nexus-Mode": system.mode
+      "X-Nexus-Web-Pct": "50",
+      "X-Nexus-AI-Pct": "50",
+      "X-Nexus-Use-Both": "1",
+      "X-Nexus-Consensus-Before-Web": "1",
+      "X-Nexus-Preferred": "",
+      "X-Nexus-Mode": "balanced"
     };
 
     const patch = (content: string, metaResp?: any) => {
@@ -441,38 +389,10 @@ export default function ChatView() {
 
       <main className="nx-main">
         <header className="nx-top">
-          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
-            Nexus<span className="dot">•</span>
-            <span className="ai">ai</span>
-          </div>
-
-          <h2 className="title" role="heading" aria-live="polite">
-            {current ? current.title : "New chat"}
-          </h2>
-
-          <div className="actions">
-            <button
-              type="button"
-              className="icon-btn"
-              title={theme === "dark" ? "Switch to light" : "Switch to dark"}
-              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-
-            <button type="button" className="icon-btn" title="System Settings" onClick={() => setShowSettings(true)}>
-              <Gear size={16} />
-            </button>
-
-            <button type="button" className="avatar-btn" title="Profile" onClick={() => setShowProfile(true)}>
-              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={18} />}
-            </button>
-
-            <button type="button" className="btn" onClick={exportConversation}>
-              ⭳ Export
-            </button>
-            {current && (
-              <>
+          {current ? (
+            <>
+              <h2 className="title">{current.title}</h2>
+              <div className="actions">
                 <button
                   type="button"
                   className="btn"
@@ -487,14 +407,23 @@ export default function ChatView() {
                     a.click();
                   }}
                 >
-                  {current.status === "archived" ? "Unarchive" : "Archive"}
+                  <Download size={16} /> Export
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                >
+                  <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
                 </button>
                 <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                  Delete
+                  <Trash2 size={16} /> Delete
                 </button>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <h2 className="title">New chat</h2>
+          )}
         </header>
 
         <div className="cx-stream">
@@ -603,232 +532,7 @@ export default function ChatView() {
             Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
           </div>
         </form>
-
-        {/* System Settings Modal */}
-        <Modal open={showSettings} title="System Settings" onClose={() => setShowSettings(false)}>
-          <div className="form-grid">
-            <label>
-              <span>Use web search (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.webPct}
-                onChange={e => setSystem(s => ({ ...s, webPct: +e.target.value }))}
-              />
-              <div className="hint">{system.webPct}%</div>
-            </label>
-
-            <label>
-              <span>Use AI models (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.aiPct}
-                onChange={e => setSystem(s => ({ ...s, aiPct: +e.target.value }))}
-              />
-              <div className="hint">{system.aiPct}%</div>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.useBoth}
-                onChange={e => setSystem(s => ({ ...s, useBoth: e.target.checked }))}
-              />
-              <span>Use both by default</span>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.consensusBeforeWeb}
-                onChange={e => setSystem(s => ({ ...s, consensusBeforeWeb: e.target.checked }))}
-              />
-              <span>Require consensus before web is prime</span>
-            </label>
-
-            <div>
-              <div className="subhead">Preferred Model</div>
-              <div className="seg">
-                {(["ChatGPT", "Claude", "Grok", "Gemini"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.preferred === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, preferred: m }))}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="subhead">Mode</div>
-              <div className="seg">
-                {(["fast", "balanced", "smart"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.mode === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, mode: m }))}
-                  >
-                    {m[0].toUpperCase() + m.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="dialog-actions">
-            <button type="button" className="primary" onClick={() => setShowSettings(false)}>
-              Save settings
-            </button>
-          </div>
-        </Modal>
-
-        {/* Profile Modal (Profile | Billing | Feedback) */}
-        <Modal open={showProfile} title="Profile" onClose={() => setShowProfile(false)}>
-          <div className="tabs">
-            {(["profile", "billing", "feedback"] as const).map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`tab-btn ${profileTab === t ? "on" : ""}`}
-                onClick={() => setProfileTab(t)}
-              >
-                {t[0].toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {profileTab === "profile" && (
-            <div className="form-grid">
-              <div className="avatar-uploader">
-                <div className="avatar-preview">
-                  {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={56} />}
-                </div>
-                <label className="btn-secondary" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                  <Upload size={14} /> Upload photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={async e => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      const reader = new FileReader();
-                      reader.onload = () => setProfile(p => ({ ...p, photoDataUrl: String(reader.result) }));
-                      reader.readAsDataURL(f);
-                    }}
-                  />
-                </label>
-              </div>
-
-              <label>
-                <span>Name</span>
-                <input
-                  className="input"
-                  value={profile.name}
-                  onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
-                />
-              </label>
-
-              <label>
-                <span>Email</span>
-                <input
-                  className="input"
-                  value={profile.email}
-                  onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                />
-              </label>
-
-              <div className="dialog-actions">
-                <button type="button" className="primary" onClick={() => setShowProfile(false)}>
-                  Save profile
-                </button>
-              </div>
-            </div>
-          )}
-
-          {profileTab === "billing" && (
-            <div className="billing-pane">
-              <h4>Nexus billing</h4>
-              <p className="muted">
-                Nexus is <b>free for now</b>. We’re working on plans—enjoy using Nexus freely!
-              </p>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => alert("We’re working on plans—enjoy using Nexus freely!")}
-              >
-                Upgrade plan
-              </button>
-            </div>
-          )}
-
-          {profileTab === "feedback" && (
-            <div>
-              <label>
-                <span>Send feedback (max 15,000 characters)</span>
-                <textarea
-                  className="textarea"
-                  value={feedback}
-                  maxLength={15000}
-                  onChange={e => setFeedback(e.target.value)}
-                  rows={8}
-                  placeholder="Share bugs, ideas, or UX issues…"
-                />
-              </label>
-              <div className="muted" style={{ textAlign: "right" }}>
-                {feedback.length} / 15000
-              </div>
-              <div className="dialog-actions">
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => {
-                    alert("Thanks for the feedback!");
-                    setFeedback("");
-                    setShowProfile(false);
-                  }}
-                >
-                  Submit feedback
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal>
       </main>
-    </div>
-  );
-}
-
-function Modal({
-  open,
-  title,
-  onClose,
-  children
-}: {
-  open: boolean;
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div className="nx-modal" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="nx-dialog" onClick={e => e.stopPropagation()}>
-        <div className="nx-dialog-head">
-          <h3>{title}</h3>
-          <button type="button" className="icon-btn" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <div className="nx-dialog-body">{children}</div>
-      </div>
     </div>
   );
 }
