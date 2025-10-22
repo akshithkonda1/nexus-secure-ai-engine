@@ -28,34 +28,10 @@ const LOGO_LIGHT_URL = "/assets/nexus-logo-inverted.png";
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
 }
-
-type SystemSettingsState = {
-  redactPII: boolean;
-  privateMode: boolean;
-  highContrast: boolean;
-  smartCompose: boolean;
-  aiConsensusPct: number;
-  webConsensusPct: number;
-};
-
-type ProfilePanelKey = "user" | "billing" | "feedback";
-type ProfileState = {
-  name: string;
-  email: string;
-  title: string;
-};
 function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
-}
-function stringToColor(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 45%)`;
 }
 function readFileAsText(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -104,14 +80,11 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("nx.theme") as "dark" | "light" | null;
-    if (saved) return saved;
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
+    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("nx.theme", theme);
   }, [theme]);
 
   const [density, setDensity] = useState<"comfy" | "cozy" | "compact">(
@@ -176,12 +149,10 @@ export default function ChatView() {
     } catch {}
     return { name: "", email: "" };
   });
-  useEffect(() => localStorage.setItem("nx.profile", JSON.stringify(profile)), [profile]);
-
-  const [feedback, setFeedback] = useState(() => localStorage.getItem("nx.feedbackDraft") || "");
-  useEffect(() => localStorage.setItem("nx.feedbackDraft", feedback), [feedback]);
-
-  const [profileTab, setProfileTab] = useState<"profile" | "billing" | "feedback">("profile");
+  useEffect(() => {
+    const t = document.documentElement.dataset.theme;
+    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
+  }, [theme]);
 
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
@@ -272,38 +243,6 @@ export default function ChatView() {
   useEffect(() => {
     activeConvIdRef.current = currentId;
   }, [currentId]);
-  useEffect(() => {
-    localStorage.setItem("nx.system-settings", JSON.stringify(systemSettings));
-  }, [systemSettings]);
-  useEffect(() => {
-    const handler = (event: MouseEvent) => {
-      if (!profileMenuRef.current) return;
-      if (profileMenuRef.current.contains(event.target as Node)) return;
-      setProfileMenuOpen(false);
-    };
-    if (profileMenuOpen) {
-      document.addEventListener("mousedown", handler);
-    }
-    return () => document.removeEventListener("mousedown", handler);
-  }, [profileMenuOpen]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-private-mode", systemSettings.privateMode);
-  }, [systemSettings.privateMode]);
-  useEffect(() => {
-    document.body.classList.toggle("nx-high-contrast", systemSettings.highContrast);
-  }, [systemSettings.highContrast]);
-  useEffect(() => {
-    if (!systemSettingsOpen && !activeProfilePanel && !profileMenuOpen) return;
-    const handler = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSystemSettingsOpen(false);
-        setActiveProfilePanel(null);
-        setProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [systemSettingsOpen, activeProfilePanel, profileMenuOpen]);
   function lockToSession(id: string) {
     if (activeConvIdRef.current !== id) setCurrentId(id);
     activeConvIdRef.current = id;
@@ -344,15 +283,6 @@ export default function ChatView() {
   function removeFile(name: string) {
     setFiles(prev => prev.filter(f => f.name !== name));
   }
-  async function startNewChat() {
-    const c = await startNew();
-    setCurrentId(c.id);
-    setFiles([]);
-  }
-  function openProfilePanel(panel: ProfilePanelKey) {
-    setActiveProfilePanel(panel);
-    setProfileMenuOpen(false);
-  }
 
   async function buildAttachmentPayload() {
     const meta: AttachmentMeta[] = [];
@@ -377,16 +307,6 @@ export default function ChatView() {
       }
     }
     return { meta, textChunks };
-  }
-
-  function exportConversation() {
-    if (!current) return;
-    const dataStr =
-      "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(current, null, 2));
-    const a = document.createElement("a");
-    a.href = dataStr;
-    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-    a.click();
   }
 
   function inlineTextAttachmentsIntoPrompt(prompt: string, textChunks: { name: string; content: string }[]) {
@@ -535,124 +455,28 @@ export default function ChatView() {
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <img
-            src={logoUrl}
-            className="nx-logo"
-            width={156}
-            height={40}
-            alt="Nexus"
-            decoding="async"
-          />
-          <button type="button" className="btn primary nx-newchat" onClick={startNewChat}>
-            + New chat
-          </button>
-        </div>
-        <div className="nx-side-body">
-          <Section title={`Active (${active.length})`}>
-            {active.length === 0 ? (
-              <Empty label="Nothing active" />
-            ) : (
-              active.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Archive", onClick: () => setStatus(c.id, "archived") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-
-          <Section title={`Archived (${archived.length})`}>
-            {archived.length === 0 ? (
-              <Empty label="Nothing archived" />
-            ) : (
-              archived.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-
-          <Section
-            title={`Trash (${trash.length})`}
-            extra={
-              <button type="button" className="btn danger sm" onClick={purgeAllTrash}>
-                Empty Trash
-              </button>
-            }
+          <button
+            type="button"
+            className="primary"
+            onClick={async () => {
+              const c = await startNew();
+              setCurrentId(c.id);
+              setFiles([]);
+            }}
           >
-            {trash.length === 0 ? (
-              <Empty label="Trash is empty" />
-            ) : (
-              trash.map(c => {
-                const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-                const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-                return (
-                  <ConvRow
-                    key={c.id}
-                    title={c.title}
-                    subtitle={preview}
-                    when={formatDate(c.updatedAt)}
-                    active={c.id === currentId}
-                    onClick={() => setCurrentId(c.id)}
-                    actions={[
-                      { label: "Restore", onClick: () => setStatus(c.id, "active") },
-                      { label: "Purge", onClick: () => purge(c.id) }
-                    ]}
-                  />
-                );
-              })
-            )}
-          </Section>
-        </div>
-      </aside>
-
-      <main className="nx-main">
-        <header className="nx-top">
-          <div className="brand" aria-label="Nexus.ai" title="Nexus.ai">
-            Nexus<span className="dot">•</span>
-            <span className="ai">ai</span>
-          </div>
-
-          <h2 className="title" role="heading" aria-live="polite">
-            {current ? current.title : "New chat"}
-          </h2>
-
-          <div className="actions">
+            ＋ New chat
+          </button>
+          <div className="theme">
             <button
               type="button"
               className="icon-btn"
-              title={theme === "dark" ? "Switch to light" : "Switch to dark"}
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+          </div>
+        </div>
 
             <button
               type="button"
@@ -668,31 +492,76 @@ export default function ChatView() {
               <Gear size={16} />
             </button>
 
-            <button type="button" className="avatar-btn" title="Profile" onClick={() => setShowProfile(true)}>
-              {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={18} />}
+        <Section
+          title={`Trash (${trash.length})`}
+          extra={
+            <button type="button" className="danger sm" onClick={purgeAllTrash}>
+              Empty Trash
             </button>
+          }
+        >
+          {trash.length === 0 ? (
+            <Empty label="Trash is empty" />
+          ) : (
+            trash.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Purge", onClick: () => purge(c.id) }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+      </aside>
 
-            <button type="button" className="btn" onClick={exportConversation}>
-              ⭳ Export
-            </button>
-            {current && (
-              <>
+      <main className="nx-main">
+        <header className="nx-top">
+          {current ? (
+            <>
+              <h2 className="title">{current.title}</h2>
+              <div className="actions">
                 <button
                   type="button"
-                  className="nx-profile-trigger"
-                  aria-haspopup="true"
-                  aria-expanded={profileMenuOpen}
-                  onClick={() => setProfileMenuOpen(open => !open)}
-                  title="Profile & workspace"
+                  className="btn"
+                  onClick={() => {
+                    if (!current) return;
+                    const dataStr =
+                      "data:application/json;charset=utf-8," +
+                      encodeURIComponent(JSON.stringify(current, null, 2));
+                    const a = document.createElement("a");
+                    a.href = dataStr;
+                    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                    a.click();
+                  }}
                 >
-                  {current.status === "archived" ? "Unarchive" : "Archive"}
+                  <Download size={16} /> Export
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                >
+                  <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
                 </button>
                 <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                  Delete
+                  <Trash2 size={16} /> Delete
                 </button>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <h2 className="title">New chat</h2>
+          )}
         </header>
 
         <div className="nx-controls">
@@ -803,18 +672,6 @@ export default function ChatView() {
                   <button type="button" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
                   </button>
-                  {systemSettings.smartCompose && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setInput(
-                          "Generate a private executive briefing with anonymized identifiers and actionable next steps."
-                        )
-                      }
-                    >
-                      Executive briefing
-                    </button>
-                  )}
                 </div>
               </div>
             ) : (
@@ -909,252 +766,7 @@ export default function ChatView() {
             Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
           </div>
         </form>
-
-        {/* System Settings Modal */}
-        <Modal open={showSettings} title="System Settings" onClose={() => setShowSettings(false)}>
-          <div className="form-grid">
-            <label>
-              <span>Use web search (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.webPct}
-                onChange={e => setSystem(s => ({ ...s, webPct: +e.target.value }))}
-              />
-              <div className="hint">{system.webPct}%</div>
-            </label>
-
-            <label>
-              <span>Use AI models (%)</span>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={system.aiPct}
-                onChange={e => setSystem(s => ({ ...s, aiPct: +e.target.value }))}
-              />
-              <div className="hint">{system.aiPct}%</div>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.useBoth}
-                onChange={e => setSystem(s => ({ ...s, useBoth: e.target.checked }))}
-              />
-              <span>Use both by default</span>
-            </label>
-
-            <label className="row">
-              <input
-                type="checkbox"
-                checked={system.consensusBeforeWeb}
-                onChange={e => setSystem(s => ({ ...s, consensusBeforeWeb: e.target.checked }))}
-              />
-              <span>Require consensus before web is prime</span>
-            </label>
-
-            <div>
-              <div className="subhead">Preferred Model</div>
-              <div className="seg">
-                {(["ChatGPT", "Claude", "Grok", "Gemini"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.preferred === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, preferred: m }))}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="subhead">Mode</div>
-              <div className="seg">
-                {(["fast", "balanced", "smart"] as const).map(m => (
-                  <button
-                    type="button"
-                    key={m}
-                    className={`seg-item ${system.mode === m ? "on" : ""}`}
-                    onClick={() => setSystem(s => ({ ...s, mode: m }))}
-                  >
-                    {m[0].toUpperCase() + m.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="dialog-actions">
-            <button type="button" className="primary" onClick={() => setShowSettings(false)}>
-              Save settings
-            </button>
-          </div>
-        </Modal>
-
-        {/* Profile Modal (Profile | Billing | Feedback) */}
-        <Modal open={showProfile} title="Profile" onClose={() => setShowProfile(false)}>
-          <div className="tabs">
-            {(["profile", "billing", "feedback"] as const).map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`tab-btn ${profileTab === t ? "on" : ""}`}
-                onClick={() => setProfileTab(t)}
-              >
-                {t[0].toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {profileTab === "profile" && (
-            <div className="form-grid">
-              <div className="avatar-uploader">
-                <div className="avatar-preview">
-                  {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="Profile" /> : <UserCircle2 size={56} />}
-                </div>
-                <label className="btn-secondary" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                  <Upload size={14} /> Upload photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={async e => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      const reader = new FileReader();
-                      reader.onload = () => setProfile(p => ({ ...p, photoDataUrl: String(reader.result) }));
-                      reader.readAsDataURL(f);
-                    }}
-                  />
-                </label>
-              </div>
-
-              <label>
-                <span>Name</span>
-                <input
-                  className="input"
-                  value={profile.name}
-                  onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
-                />
-              </label>
-
-              <label>
-                <span>Email</span>
-                <input
-                  className="input"
-                  value={profile.email}
-                  onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                />
-              </label>
-
-              <div className="dialog-actions">
-                <button type="button" className="primary" onClick={() => setShowProfile(false)}>
-                  Save profile
-                </button>
-              </div>
-            </div>
-          )}
-
-          {profileTab === "billing" && (
-            <div className="billing-pane">
-              <h4>Nexus billing</h4>
-              <p className="muted">
-                Nexus is <b>free for now</b>. We’re working on plans—enjoy using Nexus freely!
-              </p>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => alert("We’re working on plans—enjoy using Nexus freely!")}
-              >
-                Upgrade plan
-              </button>
-            </div>
-          )}
-
-          {profileTab === "feedback" && (
-            <div>
-              <label>
-                <span>Send feedback (max 15,000 characters)</span>
-                <textarea
-                  className="textarea"
-                  value={feedback}
-                  maxLength={15000}
-                  onChange={e => setFeedback(e.target.value)}
-                  rows={8}
-                  placeholder="Share bugs, ideas, or UX issues…"
-                />
-              </label>
-              <div className="muted" style={{ textAlign: "right" }}>
-                {feedback.length} / 15000
-              </div>
-              <div className="dialog-actions">
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => {
-                    alert("Thanks for the feedback!");
-                    setFeedback("");
-                    setShowProfile(false);
-                  }}
-                >
-                  Submit feedback
-                </button>
-              </div>
-            </div>
-          )}
-        </Modal>
       </main>
-      {systemSettingsOpen && (
-        <SystemSettingsModal
-          settings={systemSettings}
-          onChange={patch => setSystemSettings(prev => ({ ...prev, ...patch }))}
-          onClose={() => setSystemSettingsOpen(false)}
-        />
-      )}
-      {activeProfilePanel && (
-        <ProfilePanel
-          panel={activeProfilePanel}
-          profile={profile}
-          systemSettings={systemSettings}
-          onClose={() => setActiveProfilePanel(null)}
-          onSaveProfile={setProfile}
-          onOpenSystemSettings={() => {
-            setActiveProfilePanel(null);
-            setSystemSettingsOpen(true);
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function Modal({
-  open,
-  title,
-  onClose,
-  children
-}: {
-  open: boolean;
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div className="nx-modal" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="nx-dialog" onClick={e => e.stopPropagation()}>
-        <div className="nx-dialog-head">
-          <h3>{title}</h3>
-          <button type="button" className="icon-btn" onClick={onClose}>
-            <X size={16} />
-          </button>
-        </div>
-        <div className="nx-dialog-body">{children}</div>
-      </div>
     </div>
   );
 }
