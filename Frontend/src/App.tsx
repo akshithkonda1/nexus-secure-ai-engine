@@ -5,7 +5,8 @@ import WorkspaceSettingsModal, {
   type WorkspaceSettings,
   WORKSPACE_SETTINGS_DEFAULTS,
 } from "./components/WorkspaceSettingsModal";
-import { readConfig, writeConfig } from "./state/config";
+import { readConfig, readConfigOverrides, writeConfig } from "./state/config";
+import type { NexusConfig } from "./state/config";
 
 const SETTINGS_STORAGE_KEY = "nexus.workspace.settings";
 const LEGACY_SETTINGS_STORAGE_KEY = "nexus_workspace_settings_v2";
@@ -72,8 +73,12 @@ const mergeWithDefaults = (overrides: Partial<WorkspaceSettings>): WorkspaceSett
   ...overrides,
 });
 
+const hasOwnProperty = <T extends object>(obj: T, key: keyof any): key is keyof T =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
 const hydrateWorkspaceSettings = (): WorkspaceSettings => {
   const config = readConfig();
+  const configOverrides = readConfigOverrides();
 
   let overrides: Partial<WorkspaceSettings> = {};
   let migratedFromLegacy = false;
@@ -97,15 +102,36 @@ const hydrateWorkspaceSettings = (): WorkspaceSettings => {
     }
   }
 
+  const hasConfigDependable = isFiniteNumber(configOverrides.dependableThresholdPct);
+  const hasConfigArchive = isFiniteNumber(configOverrides.retentionDays);
+  const hasOverrideDependable = hasOwnProperty(overrides, "dependableThreshold");
+  const hasOverrideArchive = hasOwnProperty(overrides, "archiveDays");
+
   const merged = mergeWithDefaults({
     ...overrides,
-    dependableThreshold: clamp(config.dependableThresholdPct / 100, 0, 1),
-    archiveDays: Math.max(0, Math.round(config.retentionDays)),
+    ...(hasConfigDependable && !hasOverrideDependable
+      ? { dependableThreshold: clamp(config.dependableThresholdPct / 100, 0, 1) }
+      : {}),
+    ...(hasConfigArchive && !hasOverrideArchive
+      ? { archiveDays: Math.max(0, Math.round(config.retentionDays)) }
+      : {}),
   });
+
+  const configPatch: Partial<NexusConfig> = {};
+  if (!hasConfigDependable && hasOverrideDependable) {
+    configPatch.dependableThresholdPct = Math.round(clamp(merged.dependableThreshold, 0, 1) * 100);
+  }
+  if (!hasConfigArchive && hasOverrideArchive) {
+    configPatch.retentionDays = Math.max(0, Math.round(merged.archiveDays));
+  }
 
   if (migratedFromLegacy) {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(merged));
     window.localStorage.removeItem(LEGACY_SETTINGS_STORAGE_KEY);
+  }
+
+  if (Object.keys(configPatch).length > 0) {
+    writeConfig(configPatch);
   }
 
   return merged;

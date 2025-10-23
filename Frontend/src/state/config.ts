@@ -1,11 +1,27 @@
-const LS_CFG = 'nexus_cfg_v1';
-export type NexusConfig = { retentionDays: number; dependableThresholdPct: number; };
+export const CONFIG_STORAGE_KEY = "nexus_cfg_v1";
+export type NexusConfig = { retentionDays: number; dependableThresholdPct: number };
 const defaults: NexusConfig = { retentionDays: 30, dependableThresholdPct: 80 };
-export const readConfig = (): NexusConfig => {
-  try { return { ...defaults, ...(JSON.parse(localStorage.getItem(LS_CFG) || '{}')||{}) }; } catch { return defaults; }
+
+const parseStoredConfig = (): Partial<NexusConfig> => {
+  try {
+    const stored = localStorage.getItem(CONFIG_STORAGE_KEY);
+    if (!stored) return {};
+    const parsed = JSON.parse(stored);
+    return parsed && typeof parsed === "object" ? (parsed as Partial<NexusConfig>) : {};
+  } catch {
+    return {};
+  }
 };
+
+export const readConfig = (): NexusConfig => ({
+  ...defaults,
+  ...parseStoredConfig(),
+});
+
+export const readConfigOverrides = (): Partial<NexusConfig> => parseStoredConfig();
+
 export const writeConfig = (patch: Partial<NexusConfig>) => {
   const next = { ...readConfig(), ...patch };
-  localStorage.setItem(LS_CFG, JSON.stringify(next));
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(next));
   return next;
 };
