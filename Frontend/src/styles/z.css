@@ -1,0 +1,14 @@
+:root {
+  --z-topbar: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+.dark {
+  background: #0b0b0d;
+  color: #e5e7eb;
+}
