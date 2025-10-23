@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Archive, Download, Moon, Sun, Trash2, Paperclip, X } from "lucide-react";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Archive, Download, Moon, Sun, Trash2, Paperclip, X, Settings, UserCircle2 } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
+import Card from "../../components/primitives/Card";
+import WorkspaceSettingsContent from "../../components/settings/WorkspaceSettingsContent";
+import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
 import "../../styles/nexus-convos.css";
 
 const uid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -14,8 +17,7 @@ const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
 
-const LOGO_DARK_URL = "/assets/nexus-logo-dark.png";
-const LOGO_LIGHT_URL = "/assets/nexus-logo-light.png";
+const ProfileModal = React.lazy(() => import("../../components/modals/ProfileModal"));
 
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
@@ -60,17 +62,6 @@ export default function ChatView() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const [logoUrl, setLogoUrl] = useState(() => {
-    if (typeof document === "undefined") {
-      return LOGO_DARK_URL;
-    }
-    return document.documentElement.dataset.theme === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL;
-  });
-  useEffect(() => {
-    const t = document.documentElement.dataset.theme;
-    setLogoUrl(t === "light" ? LOGO_LIGHT_URL : LOGO_DARK_URL);
-  }, [theme]);
-
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
     if (last) setCurrentId(last);
@@ -85,6 +76,10 @@ export default function ChatView() {
 
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -278,6 +273,19 @@ export default function ChatView() {
   const archived = useMemo(() => convos.filter(c => c.status === "archived"), [convos]);
   const trash = useMemo(() => convos.filter(c => c.status === "trash"), [convos]);
 
+  const handleProfileChange = (next: UserProfile) => {
+    setProfile(writeProfile(next));
+  };
+
+  const handleDeleteAccount = (feedback: string | null) => {
+    console.info("Account deletion requested", { feedback });
+    setProfileOpen(false);
+  };
+
+  const handleUpgradePlan = () => {
+    alert("Upgrade workflow coming soon! Our team has been notified.");
+  };
+
   return (
     <div className="nx-wrap">
       <aside className="nx-side">
@@ -293,15 +301,6 @@ export default function ChatView() {
           >
             ＋ New chat
           </button>
-          <div className="theme">
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          </div>
         </div>
 
         <Section title={`Active (${active.length})`}>
@@ -389,41 +388,79 @@ export default function ChatView() {
 
       <main className="nx-main">
         <header className="nx-top">
-          {current ? (
-            <>
-              <h2 className="title">{current.title}</h2>
-              <div className="actions">
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => {
-                    if (!current) return;
-                    const dataStr =
-                      "data:application/json;charset=utf-8," +
-                      encodeURIComponent(JSON.stringify(current, null, 2));
-                    const a = document.createElement("a");
-                    a.href = dataStr;
-                    a.download = `${current.title.replace(/\s+/g, "_")}.json`;
-                    a.click();
-                  }}
-                >
-                  <Download size={16} /> Export
-                </button>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
-                >
-                  <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
-                </button>
-                <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
-                  <Trash2 size={16} /> Delete
-                </button>
-              </div>
-            </>
-          ) : (
-            <h2 className="title">New chat</h2>
-          )}
+          <div className="nx-top-left">
+            {current ? (
+              <>
+                <h2 className="title">{current.title}</h2>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      if (!current) return;
+                      const dataStr =
+                        "data:application/json;charset=utf-8," +
+                        encodeURIComponent(JSON.stringify(current, null, 2));
+                      const a = document.createElement("a");
+                      a.href = dataStr;
+                      a.download = `${current.title.replace(/\s+/g, "_")}.json`;
+                      a.click();
+                    }}
+                  >
+                    <Download size={16} /> Export
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => setStatus(current.id, current.status === "archived" ? "active" : "archived")}
+                  >
+                    <Archive size={16} /> {current.status === "archived" ? "Unarchive" : "Archive"}
+                  </button>
+                  <button type="button" className="btn danger" onClick={() => setStatus(current.id, "trash")}>
+                    <Trash2 size={16} /> Delete
+                  </button>
+                </div>
+              </>
+            ) : (
+              <h2 className="title">New chat</h2>
+            )}
+          </div>
+          <div className="nx-top-right">
+            <button
+              type="button"
+              className="nx-top-icon"
+              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
+              type="button"
+              className="nx-top-icon"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Open workspace settings"
+            >
+              <Settings size={17} />
+            </button>
+            <button
+              type="button"
+              className="nx-top-avatar"
+              onClick={() => setProfileOpen(true)}
+              onMouseEnter={() => {
+                void import("../../components/modals/ProfileModal");
+              }}
+              onFocus={() => {
+                void import("../../components/modals/ProfileModal");
+              }}
+              aria-label="Open profile"
+            >
+              {profile.avatarDataUrl ? (
+                <img src={profile.avatarDataUrl} alt="Profile avatar" />
+              ) : (
+                <UserCircle2 aria-hidden size={20} />
+              )}
+            </button>
+          </div>
         </header>
 
         <div className="cx-stream">
@@ -533,6 +570,42 @@ export default function ChatView() {
           </div>
         </form>
       </main>
+
+        {settingsOpen && (
+          <div
+            className="chatgpt-modal-overlay"
+            role="dialog"
+            aria-modal
+            onClick={() => setSettingsOpen(false)}
+          >
+            <div className="chatgpt-modal-panel chatgpt-settings-modal" onClick={e => e.stopPropagation()}>
+              <Card className="chatgpt-settings-card">
+                <button
+                  type="button"
+                  className="chatgpt-modal-close chatgpt-settings-close"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close settings"
+                >
+                  ✕
+                </button>
+                <WorkspaceSettingsContent compact />
+              </Card>
+            </div>
+          </div>
+        )}
+
+      <Suspense fallback={null}>
+        {profileOpen && (
+          <ProfileModal
+            open={profileOpen}
+            onClose={() => setProfileOpen(false)}
+            profile={profile}
+            onProfileChange={handleProfileChange}
+            onDeleteAccount={handleDeleteAccount}
+            onUpgradePlan={handleUpgradePlan}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
