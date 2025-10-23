@@ -286,19 +286,17 @@ export default function ChatView() {
     alert("Upgrade workflow coming soon! Our team has been notified.");
   };
 
+  const handleStartNewChat = async () => {
+    const c = await startNew();
+    setCurrentId(c.id);
+    setFiles([]);
+  };
+
   return (
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <button
-            type="button"
-            className="primary"
-            onClick={async () => {
-              const c = await startNew();
-              setCurrentId(c.id);
-              setFiles([]);
-            }}
-          >
+          <button type="button" className="primary" onClick={handleStartNewChat}>
             ＋ New chat
           </button>
         </div>
@@ -426,6 +424,9 @@ export default function ChatView() {
             )}
           </div>
           <div className="nx-top-right">
+            <button type="button" className="primary sm mobile-only" onClick={handleStartNewChat}>
+              ＋ New chat
+            </button>
             <button
               type="button"
               className="btn primary nx-top-new"
