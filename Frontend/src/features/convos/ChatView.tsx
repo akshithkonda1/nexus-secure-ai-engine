@@ -429,17 +429,6 @@ export default function ChatView() {
             </button>
             <button
               type="button"
-              className="btn primary nx-top-new"
-              onClick={async () => {
-                const c = await startNew();
-                setCurrentId(c.id);
-                setFiles([]);
-              }}
-            >
-              ＋ New chat
-            </button>
-            <button
-              type="button"
               className="nx-top-icon"
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
               aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
