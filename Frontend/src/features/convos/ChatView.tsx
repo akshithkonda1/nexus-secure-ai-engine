@@ -571,28 +571,38 @@ export default function ChatView() {
         </form>
       </main>
 
-        {settingsOpen && (
-          <div
-            className="chatgpt-modal-overlay"
-            role="dialog"
-            aria-modal
-            onClick={() => setSettingsOpen(false)}
-          >
-            <div className="chatgpt-modal-panel chatgpt-settings-modal" onClick={e => e.stopPropagation()}>
-              <Card className="chatgpt-settings-card">
+      {settingsOpen && (
+        <div
+          className="chatgpt-modal-overlay"
+          role="dialog"
+          aria-modal
+          onClick={() => setSettingsOpen(false)}
+        >
+          <div className="chatgpt-modal-panel" onClick={e => e.stopPropagation()}>
+            <Card>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem"
+                }}
+              >
+                <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>Workspace settings</div>
                 <button
                   type="button"
-                  className="chatgpt-modal-close chatgpt-settings-close"
+                  className="chatgpt-modal-close"
                   onClick={() => setSettingsOpen(false)}
                   aria-label="Close settings"
                 >
                   ✕
                 </button>
-                <WorkspaceSettingsContent compact />
-              </Card>
-            </div>
+              </div>
+              <WorkspaceSettingsContent compact />
+            </Card>
           </div>
-        )}
+        </div>
+      )}
 
       <Suspense fallback={null}>
         {profileOpen && (
