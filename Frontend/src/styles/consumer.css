@@ -24,7 +24,7 @@
   --surface-alt: var(--panel-2);
   --surface-strong: 21 28 38;
   --surface-muted: 147 161 179 / 0.16;
-  --outline: var(--line);
+  --outline: rgb(var(--line));
   --outline-strong: rgba(78, 167, 255, 0.55);
   --accent-strong: var(--ok);
   --accent-soft: rgba(78, 167, 255, 0.18);
@@ -60,7 +60,7 @@
   --surface-alt: var(--panel-2);
   --surface-strong: 233 238 245;
   --surface-muted: 13 21 35 / 0.08;
-  --outline: var(--line);
+  --outline: rgb(var(--line));
   --outline-strong: rgba(37, 99, 235, 0.45);
   --accent-strong: var(--ok);
   --accent-soft: rgba(37, 99, 235, 0.15);
