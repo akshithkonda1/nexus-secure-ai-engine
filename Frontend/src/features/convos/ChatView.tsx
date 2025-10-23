@@ -1,13 +1,11 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Archive, Download, Trash2, Paperclip } from "lucide-react";
+import { Archive, Download, Moon, Sun, Trash2, Paperclip, X, Settings, UserCircle2 } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import Header from "../../components/Header";
-import LeftNav, { type LeftNavSection } from "../../components/LeftNav";
-import SettingsSheet from "../../components/SettingsSheet";
+import Card from "../../components/primitives/Card";
 import WorkspaceSettingsContent from "../../components/settings/WorkspaceSettingsContent";
 import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
 import "../../styles/nexus-convos.css";
@@ -55,6 +53,14 @@ export default function ChatView() {
     purge,
     purgeAllTrash
   } = useConversations();
+
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
@@ -280,108 +286,118 @@ export default function ChatView() {
     alert("Upgrade workflow coming soon! Our team has been notified.");
   };
 
-  const startNewChat = async () => {
-    const c = await startNew();
-    setCurrentId(c.id);
-    setFiles([]);
-  };
-
-  const openProfile = () => {
-    void import("../../components/modals/ProfileModal");
-    setProfileOpen(true);
-  };
-
-  const sections: LeftNavSection[] = [
-    {
-      id: "active",
-      title: `Active (${active.length})`,
-      emptyLabel: "Nothing active",
-      items: active.map(c => {
-        const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-        const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-        return {
-          id: c.id,
-          title: c.title,
-          subtitle: preview,
-          when: formatDate(c.updatedAt),
-          active: c.id === currentId,
-          onSelect: () => setCurrentId(c.id),
-          actions: [
-            { label: "Archive", onClick: () => setStatus(c.id, "archived") },
-            { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-          ]
-        };
-      })
-    },
-    {
-      id: "archived",
-      title: `Archived (${archived.length})`,
-      emptyLabel: "Nothing archived",
-      items: archived.map(c => {
-        const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-        const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-        return {
-          id: c.id,
-          title: c.title,
-          subtitle: preview,
-          when: formatDate(c.updatedAt),
-          active: c.id === currentId,
-          onSelect: () => setCurrentId(c.id),
-          actions: [
-            { label: "Restore", onClick: () => setStatus(c.id, "active") },
-            { label: "Delete", onClick: () => setStatus(c.id, "trash") }
-          ]
-        };
-      })
-    },
-    {
-      id: "trash",
-      title: `Trash (${trash.length})`,
-      emptyLabel: "Trash is empty",
-      extra: (
-        <button type="button" className="danger sm" onClick={purgeAllTrash}>
-          Empty Trash
-        </button>
-      ),
-      items: trash.map(c => {
-        const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
-        const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
-        return {
-          id: c.id,
-          title: c.title,
-          subtitle: preview,
-          when: formatDate(c.updatedAt),
-          active: c.id === currentId,
-          onSelect: () => setCurrentId(c.id),
-          actions: [
-            { label: "Restore", onClick: () => setStatus(c.id, "active") },
-            { label: "Purge", onClick: () => purge(c.id) }
-          ]
-        };
-      })
-    }
-  ];
-
   return (
-    <div className="chat-layout">
-      <LeftNav
-        sections={sections}
-        onNewChat={startNewChat}
-        onProfileClick={openProfile}
-        profileImage={profile.avatarDataUrl}
-      />
-      <main className="chat-main">
-        <Header onOpenSettings={() => setSettingsOpen(true)} />
-        <div className="chat-main-inner">
-          <div className="chat-session-head">
+    <div className="nx-wrap">
+      <aside className="nx-side">
+        <div className="nx-side-header">
+          <button
+            type="button"
+            className="primary"
+            onClick={async () => {
+              const c = await startNew();
+              setCurrentId(c.id);
+              setFiles([]);
+            }}
+          >
+            ＋ New chat
+          </button>
+        </div>
+
+        <Section title={`Active (${active.length})`}>
+          {active.length === 0 ? (
+            <Empty label="Nothing active" />
+          ) : (
+            active.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Archive", onClick: () => setStatus(c.id, "archived") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section title={`Archived (${archived.length})`}>
+          {archived.length === 0 ? (
+            <Empty label="Nothing archived" />
+          ) : (
+            archived.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Delete", onClick: () => setStatus(c.id, "trash") }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+
+        <Section
+          title={`Trash (${trash.length})`}
+          extra={
+            <button type="button" className="danger sm" onClick={purgeAllTrash}>
+              Empty Trash
+            </button>
+          }
+        >
+          {trash.length === 0 ? (
+            <Empty label="Trash is empty" />
+          ) : (
+            trash.map(c => {
+              const last = c.messages.length ? c.messages[c.messages.length - 1] : undefined;
+              const preview = (last?.content ?? "").slice(0, 40) + (last?.content ? "\u2026" : "");
+              return (
+                <ConvRow
+                  key={c.id}
+                  title={c.title}
+                  subtitle={preview}
+                  when={formatDate(c.updatedAt)}
+                  active={c.id === currentId}
+                  onClick={() => setCurrentId(c.id)}
+                  actions={[
+                    { label: "Restore", onClick: () => setStatus(c.id, "active") },
+                    { label: "Purge", onClick: () => purge(c.id) }
+                  ]}
+                />
+              );
+            })
+          )}
+        </Section>
+      </aside>
+
+      <main className="nx-main">
+        <header className="nx-top">
+          <div className="nx-top-left">
             {current ? (
               <>
                 <h2 className="title">{current.title}</h2>
-                <div className="chat-session-actions">
+                <div className="actions">
                   <button
                     type="button"
                     className="btn"
                     onClick={() => {
+                      if (!current) return;
                       const dataStr =
                         "data:application/json;charset=utf-8," +
                         encodeURIComponent(JSON.stringify(current, null, 2));
@@ -409,125 +425,174 @@ export default function ChatView() {
               <h2 className="title">New chat</h2>
             )}
           </div>
+          <div className="nx-top-right">
+            <button
+              type="button"
+              className="nx-top-icon"
+              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
+              type="button"
+              className="nx-top-icon"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Open workspace settings"
+            >
+              <Settings size={17} />
+            </button>
+            <button
+              type="button"
+              className="nx-top-avatar"
+              onClick={() => setProfileOpen(true)}
+              onMouseEnter={() => {
+                void import("../../components/modals/ProfileModal");
+              }}
+              onFocus={() => {
+                void import("../../components/modals/ProfileModal");
+              }}
+              aria-label="Open profile"
+            >
+              {profile.avatarDataUrl ? (
+                <img src={profile.avatarDataUrl} alt="Profile avatar" />
+              ) : (
+                <UserCircle2 aria-hidden size={20} />
+              )}
+            </button>
+          </div>
+        </header>
 
-          <div className="cx-stream">
-            <div className="cx-stream-inner">
-              {!current || current.messages.length === 0 ? (
-                <div className="cx-hero">
-                  <h1>How can Nexus help today?</h1>
-                  <p className="muted">Ask a question, paste a document, or say “/help”.</p>
-                  <div className="chip-row">
-                    <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
-                      Explain simply
-                    </button>
-                    <button type="button" className="chip" onClick={() => setInput("Summarize the following article:\n")}>
-                      Summarize
-                    </button>
-                    <button type="button" className="chip" onClick={() => setInput("Draft a concise email about…")}>
-                      Draft an email
-                    </button>
+        <div className="cx-stream">
+          <div className="cx-stream-inner">
+            {!current || current.messages.length === 0 ? (
+              <div className="cx-hero">
+                <h1>How can Nexus help today?</h1>
+                <p className="muted">Ask a question, paste a document, or say “/help”.</p>
+                <div className="chip-row">
+                  <button type="button" className="chip" onClick={() => setInput("Explain transformers like I’m 12")}>
+                    Explain simply
+                  </button>
+                  <button type="button" onClick={() => setInput("Summarize the following article:\n")}>
+                    Summarize
+                  </button>
+                  <button type="button" onClick={() => setInput("Draft a concise email about…")}>
+                    Draft an email
+                  </button>
+                </div>
+              </div>
+            ) : (
+              current.messages.map(m => (
+                <div key={m.id} className={`cx-msg ${m.role}`}>
+                  <div className="bubble">
+                    {m.attachments?.length ? (
+                      <div className="att-list">
+                        {m.attachments.map((a, i) => (
+                          <div className="att-chip" key={i} title={`${a.name} • ${formatBytes(a.size)}`}>
+                            <Paperclip size={12} /> <span className="name">{a.name}</span>
+                            <span className="size">({formatBytes(a.size)})</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
                   </div>
                 </div>
-              ) : (
-                current.messages.map(m => (
-                  <div key={m.id} className={`cx-msg ${m.role}`}>
-                    <div className="bubble">
-                      {m.attachments?.length ? (
-                        <div className="att-list">
-                          {m.attachments.map((a, i) => (
-                            <div className="att-chip" key={i} title={`${a.name} • ${formatBytes(a.size)}`}>
-                              <Paperclip size={12} /> <span className="name">{a.name}</span>
-                              <span className="size">({formatBytes(a.size)})</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                      <div dangerouslySetInnerHTML={{ __html: m.html || mdToHtml(m.content) }} />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="chat-composer">
-          <div className="chat-tagline">
-            Secured by <span className="chat-tagline__brand">Nexus</span> • Experimental orchestration; answers are verified but not
-            guaranteed correct.
-          </div>
-          <form
-            className="cx-compose"
-            onSubmit={e => {
-              e.preventDefault();
-              if (!busy) send();
-            }}
-          >
-            <div className="cx-compose-inner">
-              <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
-                <Paperclip size={16} />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                hidden
-                onChange={onFilesPicked}
-                accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
-              />
+        <form
+          className="cx-compose"
+          onSubmit={e => {
+            e.preventDefault();
+            if (!busy) send();
+          }}
+        >
+          <div className="cx-compose-inner">
+            <button type="button" className="icon-btn" title="Attach files" onClick={openFilePicker}>
+              <Paperclip size={16} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={onFilesPicked}
+              accept=".txt,.md,.json,.csv,.js,.ts,.py,.html,.css,application/json,text/plain,text/markdown,text/csv,text/html"
+            />
 
-              {files.length > 0 && (
-                <div className="chips">
-                  {files.map(f => (
-                    <div className="chip" key={f.name}>
-                      <span className="name">{f.name}</span>
-                      <span className="size">({formatBytes(f.size)})</span>
-                      <button type="button" className="x" onClick={() => removeFile(f.name)}>
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {files.length > 0 && (
+              <div className="chips">
+                {files.map(f => (
+                  <div key={f.name} className="chip" title={`${f.name} • ${formatBytes(f.size)}`}>
+                    <Paperclip size={12} /> <span className="name">{f.name}</span>
+                    <span className="size">({formatBytes(f.size)})</span>
+                    <button type="button" className="x" onClick={() => removeFile(f.name)}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-              <input
-                className="cx-input"
-                placeholder="Ask Nexus…"
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if (!busy) send();
-                  }
-                }}
-              />
+            <input
+              className="cx-input"
+              placeholder="Ask Nexus…"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!busy) send();
+                }
+              }}
+            />
 
-              {!busy ? (
-                <>
-                  <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
-                    ↻
-                  </button>
-                  <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
-                    Send
-                  </button>
-                </>
-              ) : (
-                <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
-                  ■
+            {!busy ? (
+              <>
+                <button type="button" className="icon-btn" title="Regenerate" onClick={regenerate}>
+                  ↻
                 </button>
-              )}
-            </div>
-            <div className="cx-hint">
-              Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
-            </div>
-          </form>
-        </div>
+                <button type="submit" className="cx-send" disabled={!input.trim() && files.length === 0}>
+                  Send
+                </button>
+              </>
+            ) : (
+              <button type="button" className="icon-btn danger" title="Stop" onClick={stop}>
+                ■
+              </button>
+            )}
+          </div>
+          <div className="cx-hint">
+            Enter to send • Shift+Enter for newline • Attach text files up to {formatBytes(MAX_EACH)} each
+          </div>
+        </form>
       </main>
 
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-        <WorkspaceSettingsContent compact />
-      </SettingsSheet>
+        {settingsOpen && (
+          <div
+            className="chatgpt-modal-overlay"
+            role="dialog"
+            aria-modal
+            onClick={() => setSettingsOpen(false)}
+          >
+            <div className="chatgpt-modal-panel chatgpt-settings-modal" onClick={e => e.stopPropagation()}>
+              <Card className="chatgpt-settings-card">
+                <button
+                  type="button"
+                  className="chatgpt-modal-close chatgpt-settings-close"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close settings"
+                >
+                  ✕
+                </button>
+                <WorkspaceSettingsContent compact />
+              </Card>
+            </div>
+          </div>
+        )}
 
       <Suspense fallback={null}>
         {profileOpen && (
@@ -541,6 +606,57 @@ export default function ChatView() {
           />
         )}
       </Suspense>
+    </div>
+  );
+}
+
+function Section({ title, extra, children }: { title: string; extra?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="sect">
+      <div className="sect-head">
+        <div className="sect-title">{title}</div>
+        {extra}
+      </div>
+      <div className="sect-body">{children}</div>
+    </div>
+  );
+}
+
+function Empty({ label }: { label: string }) {
+  return <div className="empty">{label}</div>;
+}
+
+function ConvRow({
+  title,
+  subtitle,
+  when,
+  active,
+  onClick,
+  actions
+}: {
+  title: string;
+  subtitle?: string;
+  when: string;
+  active?: boolean;
+  onClick?: () => void;
+  actions?: { label: string; onClick: () => void }[];
+}) {
+  return (
+    <div className={`conv ${active ? "active" : ""}`} onClick={onClick}>
+      <div className="conv-text">
+        <div className="conv-title">{title || "Untitled"}</div>
+        {subtitle && <div className="conv-sub">{subtitle}</div>}
+      </div>
+      <div className="conv-when">{when}</div>
+      {actions?.length ? (
+        <div className="conv-menu" onClick={e => e.stopPropagation()}>
+          {actions.map((a, i) => (
+            <button type="button" key={i} onClick={a.onClick} className="pill sm">
+              {a.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
