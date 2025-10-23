@@ -5,8 +5,6 @@ import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import Card from "../../components/primitives/Card";
-import WorkspaceSettingsContent from "../../components/settings/WorkspaceSettingsContent";
 import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
 import "../../styles/nexus-convos.css";
 
@@ -36,7 +34,11 @@ function readFileAsText(file: File) {
   });
 }
 
-export default function ChatView() {
+type ChatViewProps = {
+  onOpenSettings?: () => void;
+};
+
+export default function ChatView({ onOpenSettings }: ChatViewProps) {
   useNavigationGuards();
 
   const {
@@ -77,7 +79,6 @@ export default function ChatView() {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(() => readProfile());
 
@@ -429,17 +430,6 @@ export default function ChatView() {
             </button>
             <button
               type="button"
-              className="btn primary nx-top-new"
-              onClick={async () => {
-                const c = await startNew();
-                setCurrentId(c.id);
-                setFiles([]);
-              }}
-            >
-              ＋ New chat
-            </button>
-            <button
-              type="button"
               className="nx-top-icon"
               onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
               aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
@@ -449,7 +439,7 @@ export default function ChatView() {
             <button
               type="button"
               className="nx-top-icon"
-              onClick={() => setSettingsOpen(true)}
+              onClick={onOpenSettings}
               aria-label="Open workspace settings"
             >
               <Settings size={17} />
@@ -582,29 +572,6 @@ export default function ChatView() {
           </div>
         </form>
       </main>
-
-        {settingsOpen && (
-          <div
-            className="chatgpt-modal-overlay"
-            role="dialog"
-            aria-modal
-            onClick={() => setSettingsOpen(false)}
-          >
-            <div className="chatgpt-modal-panel chatgpt-settings-modal" onClick={e => e.stopPropagation()}>
-              <Card className="chatgpt-settings-card">
-                <button
-                  type="button"
-                  className="chatgpt-modal-close chatgpt-settings-close"
-                  onClick={() => setSettingsOpen(false)}
-                  aria-label="Close settings"
-                >
-                  ✕
-                </button>
-                <WorkspaceSettingsContent compact />
-              </Card>
-            </div>
-          </div>
-        )}
 
       <Suspense fallback={null}>
         {profileOpen && (
