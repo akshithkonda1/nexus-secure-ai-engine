@@ -19,6 +19,7 @@ export const ThemeStyles: React.FC = () => (
       --user-bubble: 59 130 246;
       --user-bubble-text: 255 255 255;
       --danger: 220 38 38;
+      --danger-contrast: rgb(255 255 255);
       --overlay: rgba(15, 18, 25, 0.55);
       --shadow: 15 23 42 / 10%;
       --glow-accent: rgba(59, 130, 246, 0.28);
@@ -42,6 +43,7 @@ export const ThemeStyles: React.FC = () => (
       --user-bubble: 96 165 250;
       --user-bubble-text: 236 236 241;
       --danger: 248 113 113;
+      --danger-contrast: rgb(255 255 255);
       --overlay: rgba(6, 8, 15, 0.72);
       --shadow: 15 23 42 / 45%;
       --glow-accent: rgba(96, 165, 250, 0.35);
