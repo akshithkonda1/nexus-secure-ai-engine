@@ -55,8 +55,16 @@ export default function ChatView() {
   } = useConversations();
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return "light";
+    }
+    const root = document.documentElement;
+    const existing = root?.dataset?.theme;
+    if (existing === "dark" || existing === "light") {
+      return existing;
+    }
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return (document.documentElement.dataset.theme as "dark" | "light") || (prefersDark ? "dark" : "light");
+    return prefersDark ? "dark" : "light";
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
