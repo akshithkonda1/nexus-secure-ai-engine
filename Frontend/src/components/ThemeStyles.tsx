@@ -1,7 +1,8 @@
 import React from 'react';
 export const ThemeStyles: React.FC = () => (
   <style>{`
-    :root {
+    :root,
+    :root[data-theme="light"] {
       --bg: 247 247 248;
       --fg: 32 33 35;
       --muted: 134 142 160;
@@ -24,7 +25,7 @@ export const ThemeStyles: React.FC = () => (
       --app-gradient: radial-gradient(circle at top, rgba(255,255,255,0.85), rgba(247,247,248,0.95) 45%, rgba(239,239,244,0.9));
       color-scheme: light;
     }
-    .dark {
+    :root[data-theme="dark"] {
       --bg: 22 23 28;
       --fg: 232 233 241;
       --muted: 126 132 153;

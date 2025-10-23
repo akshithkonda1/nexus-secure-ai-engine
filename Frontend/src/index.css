@@ -103,7 +103,7 @@ input, textarea { border: none; outline: none; background: transparent; }
   backdrop-filter: blur(22px);
   position: relative;
 }
-.dark .chatgpt-main {
+html[data-theme="dark"] .chatgpt-main {
   background: linear-gradient(180deg, rgba(var(--surface),0.82), rgba(var(--surface-alt),0.78));
 }
 
@@ -294,7 +294,7 @@ input, textarea { border: none; outline: none; background: transparent; }
   border-top: 1px solid rgba(var(--border),0.6);
   background: linear-gradient(180deg, rgba(var(--surface),0.8), rgba(var(--surface),0.45));
 }
-.dark .chatgpt-composer-area { background: linear-gradient(180deg, rgba(var(--surface),0.2), rgba(var(--surface),0.05)); }
+html[data-theme="dark"] .chatgpt-composer-area { background: linear-gradient(180deg, rgba(var(--surface),0.2), rgba(var(--surface),0.05)); }
 
 .chatgpt-composer {
   display: flex;
@@ -348,7 +348,7 @@ input, textarea { border: none; outline: none; background: transparent; }
   gap: 1rem;
   overflow-y: auto;
 }
-.dark .chatgpt-right-rail {
+html[data-theme="dark"] .chatgpt-right-rail {
   background: rgba(var(--surface),0.42);
 }
 
