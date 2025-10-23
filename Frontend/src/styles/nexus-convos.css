@@ -26,6 +26,7 @@ body{ background:rgb(var(--bg)); color:rgb(var(--text)); }
 .empty{ color:rgb(var(--muted)); font-size:13px; padding:8px 4px; }
 
 .primary{ background:rgb(var(--ok)); color:#fff; border:none; border-radius:10px; padding:10px 12px; cursor:pointer; box-shadow:var(--nx-shadow-soft); }
+.primary.sm{ padding:8px 10px; font-size:13px; }
 .danger{ background:rgb(var(--danger)); color:rgb(var(--danger-contrast)); border:1px solid rgba(0,0,0,0.2); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:8px 10px; transition:transform .12s ease, box-shadow .2s ease, filter .2s ease; }
 .danger:hover{ filter:brightness(1.05); }
 .danger.sm{ font-size:12px; padding:6px 8px; }
@@ -94,7 +95,10 @@ body{ background:rgb(var(--bg)); color:rgb(var(--text)); }
 .chip .size{ opacity:.7; font-size:12px; }
 .chip .x{ border:none; background:transparent; color:rgb(var(--muted)); display:flex; align-items:center; padding:0; cursor:pointer; }
 
+.mobile-only{ display:none; }
+
 @media (max-width: 900px){
   .nx-wrap{ grid-template-columns: 1fr; }
   .nx-side{ display:none; }
+  .mobile-only{ display:inline-flex; }
 }
