@@ -127,7 +127,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
             color: status.tone === 'error'
               ? 'var(--chatgpt-error-text, #b91c1c)'
               : status.tone === 'success'
-              ? 'rgb(var(--accent))'
+              ? 'rgb(var(--accent-rgb))'
               : 'inherit'
           }}
         >
