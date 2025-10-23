@@ -14,6 +14,28 @@ a, button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: none; }
 input, textarea { border: none; outline: none; background: transparent; }
 
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #1c1c22;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: #23232a;
+}
+
+.icon-btn.is-active {
+  outline: 2px solid #6366f1;
+  outline-offset: 0;
+}
+
 .chatgpt-app { min-height: 100%; display: flex; flex-direction: column; }
 .chatgpt-shell { flex: 1; display: flex; min-height: 100vh; overflow: hidden; }
 .chatgpt-sidebar {
