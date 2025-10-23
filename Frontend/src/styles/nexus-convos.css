@@ -13,8 +13,7 @@ body{ background:var(--bg); color:var(--text); }
 
 .nx-wrap{ display:grid; grid-template-columns: 320px 1fr; height:100vh; }
 .nx-side{ background:var(--panel-2); border-right:1px solid var(--line); display:flex; flex-direction:column; }
-.nx-side-header{ display:flex; gap:8px; padding:12px; align-items:center; border-bottom:1px solid var(--line); }
-.theme .icon-btn{ border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:10px; padding:8px; }
+.nx-side-header{ display:flex; gap:8px; padding:12px; align-items:center; border-bottom:1px solid var(--line); justify-content:space-between; }
 
 .sect{ padding:12px; }
 .sect-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
@@ -42,7 +41,18 @@ body{ background:var(--bg); color:var(--text); }
 .nx-main{ display:flex; flex-direction:column; background:var(--panel-2); }
 .nx-top{ display:flex; align-items:center; justify-content:space-between; background:var(--topbar); border-bottom:1px solid var(--line); padding:12px; }
 .nx-top .title{ margin:0; font-weight:800; }
-.nx-top .actions{ display:flex; gap:8px; }
+.nx-top .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.nx-top-left{ display:flex; align-items:center; gap:12px; min-width:0; }
+.nx-top-left .title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.nx-top-right{ display:flex; align-items:center; gap:10px; }
+.nx-top-icon,
+.nx-top-avatar{ border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:12px; padding:8px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:border-color .2s ease, box-shadow .2s ease, transform .12s ease; }
+.nx-top-avatar{ width:38px; height:38px; padding:0; }
+.nx-top-avatar img{ width:100%; height:100%; border-radius:inherit; object-fit:cover; }
+.nx-top-icon:hover,
+.nx-top-avatar:hover{ border-color:var(--accent); box-shadow:var(--shadow); }
+.nx-top-icon:active,
+.nx-top-avatar:active{ transform:translateY(1px); }
 .btn{ border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:10px; padding:8px 10px; display:inline-flex; align-items:center; gap:6px; }
 .btn.danger{ background:var(--danger); color:var(--danger-contrast); border:1px solid rgba(0,0,0,0.2); box-shadow:0 8px 24px rgba(0,0,0,0.25); }
 .btn.danger:hover{ filter:brightness(1.05); }
