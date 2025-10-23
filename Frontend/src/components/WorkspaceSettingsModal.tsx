@@ -31,7 +31,7 @@ export type WorkspaceSettings = {
   crossCheck: boolean;
 };
 
-export const WORKSPACE_SETTINGS_DEFAULTS: WorkspaceSettings = {
+const DEFAULTS: WorkspaceSettings = {
   consensusThreshold: 0.7,
   maxSources: 3,
   dependableThreshold: 0.9,
@@ -70,7 +70,7 @@ export default function WorkspaceSettingsModal({
   onClose: () => void;
   onSave: (settings: WorkspaceSettings) => void;
 }) {
-  const merged = useMemo<WorkspaceSettings>(() => ({...WORKSPACE_SETTINGS_DEFAULTS, ...initial}), [initial]);
+  const merged = useMemo<WorkspaceSettings>(() => ({...DEFAULTS, ...initial}), [initial]);
   const [settings, setSettings] = useState<WorkspaceSettings>(merged);
   useEffect(() => setSettings(merged), [merged, open]);
 
