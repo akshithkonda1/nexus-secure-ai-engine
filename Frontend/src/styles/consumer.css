@@ -11,6 +11,7 @@
   --accent: #4ea7ff;
   --ok: #3b82f6;
   --danger: #ef4444;
+  --danger-contrast: #ffffff;
 
   --shadow: 0 8px 40px rgba(0, 0, 0, 0.28);
   --radius: 14px;
@@ -47,6 +48,7 @@
   --accent: #2563eb;
   --ok: #2563eb;
   --danger: #dc2626;
+  --danger-contrast: #ffffff;
 
   --shadow: 0 8px 28px rgba(10, 15, 25, 0.08);
   --radius: 14px;
@@ -112,7 +114,12 @@ button, input, textarea { background: transparent; border: none; }
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 .pill.on { border-color: var(--accent); color: var(--accent); background: rgba(96, 165, 250, 0.16); }
-.pill.danger, .mini.danger { border-color: var(--danger); color: var(--danger); }
+.pill.danger, .mini.danger {
+  border-color: transparent;
+  background: var(--danger);
+  color: var(--danger-contrast);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
 
 .cx-shell {
   flex: 1;
@@ -193,10 +200,21 @@ button, input, textarea { background: transparent; border: none; }
   border-radius: 999px;
   padding: 4px 10px;
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
 }
 
 .sec-extra .mini:hover { border-color: var(--accent); color: var(--accent); }
+
+.sec-extra .mini.danger {
+  border-color: transparent;
+  background: var(--danger);
+  color: var(--danger-contrast);
+}
+
+.sec-extra .mini.danger:hover {
+  color: var(--danger-contrast);
+  filter: brightness(1.05);
+}
 
 .cx-empty-small { font-size: 13px; color: var(--muted); }
 
@@ -622,16 +640,26 @@ button, input, textarea { background: transparent; border: none; }
 }
 
 .danger {
-  border: 1px solid var(--danger);
-  color: var(--danger);
-  background: var(--panel);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: var(--danger-contrast);
+  background: var(--danger);
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
-.danger.ghost { background: transparent; }
+.danger:hover {
+  filter: brightness(1.05);
+}
+
+.danger.ghost {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+  box-shadow: none;
+}
 
 .row {
   display: flex;
@@ -880,7 +908,7 @@ button, input, textarea { background: transparent; border: none; }
   .support { border-top: none; padding-top: 0; margin-top: 0; }
 }
 
-.danger.ghost { background: transparent; }
+.danger.ghost { background: transparent; color: var(--danger); border-color: var(--danger); box-shadow: none; }
 
 .row {
   display: flex;
