@@ -5,8 +5,6 @@ import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import Card from "../../components/primitives/Card";
-import WorkspaceSettingsContent from "../../components/settings/WorkspaceSettingsContent";
 import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
 import "../../styles/nexus-convos.css";
 
@@ -36,7 +34,11 @@ function readFileAsText(file: File) {
   });
 }
 
-export default function ChatView() {
+type ChatViewProps = {
+  onOpenSettings?: () => void;
+};
+
+export default function ChatView({ onOpenSettings }: ChatViewProps) {
   useNavigationGuards();
 
   const {
@@ -85,7 +87,6 @@ export default function ChatView() {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(() => readProfile());
 
@@ -294,19 +295,17 @@ export default function ChatView() {
     alert("Upgrade workflow coming soon! Our team has been notified.");
   };
 
+  const handleStartNewChat = async () => {
+    const c = await startNew();
+    setCurrentId(c.id);
+    setFiles([]);
+  };
+
   return (
     <div className="nx-wrap">
       <aside className="nx-side">
         <div className="nx-side-header">
-          <button
-            type="button"
-            className="primary"
-            onClick={async () => {
-              const c = await startNew();
-              setCurrentId(c.id);
-              setFiles([]);
-            }}
-          >
+          <button type="button" className="primary" onClick={handleStartNewChat}>
             ＋ New chat
           </button>
         </div>
@@ -434,6 +433,9 @@ export default function ChatView() {
             )}
           </div>
           <div className="nx-top-right">
+            <button type="button" className="primary sm mobile-only" onClick={handleStartNewChat}>
+              ＋ New chat
+            </button>
             <button
               type="button"
               className="nx-top-icon"
@@ -445,7 +447,7 @@ export default function ChatView() {
             <button
               type="button"
               className="nx-top-icon"
-              onClick={() => setSettingsOpen(true)}
+              onClick={onOpenSettings}
               aria-label="Open workspace settings"
             >
               <Settings size={17} />
@@ -578,39 +580,6 @@ export default function ChatView() {
           </div>
         </form>
       </main>
-
-      {settingsOpen && (
-        <div
-          className="chatgpt-modal-overlay"
-          role="dialog"
-          aria-modal
-          onClick={() => setSettingsOpen(false)}
-        >
-          <div className="chatgpt-modal-panel" onClick={e => e.stopPropagation()}>
-            <Card>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem"
-                }}
-              >
-                <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>Workspace settings</div>
-                <button
-                  type="button"
-                  className="chatgpt-modal-close"
-                  onClick={() => setSettingsOpen(false)}
-                  aria-label="Close settings"
-                >
-                  ✕
-                </button>
-              </div>
-              <WorkspaceSettingsContent compact />
-            </Card>
-          </div>
-        </div>
-      )}
 
       <Suspense fallback={null}>
         {profileOpen && (
