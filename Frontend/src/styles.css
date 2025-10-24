@@ -7,19 +7,7 @@ html, body, #root { height: 100%; margin: 0; }
 .topbar .brand { font-weight: 700; text-decoration: none; color: inherit; }
 .topbar nav a { margin: 0 8px; text-decoration: none; color: inherit; opacity: .8; }
 .topbar nav a.active { opacity: 1; border-bottom: 2px solid currentColor; }
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #1c1c22;
-  color: #e5e7eb;
-  border: 1px solid rgba(255, 255, 255, .08);
-}
-.icon-btn:hover { background: #23232a; }
-.icon-btn.is-active { outline: 2px solid #6366f1; outline-offset: 0; }
+.icon-btn { background: transparent; border: 1px solid #444; padding: 6px 10px; border-radius: 8px; color: inherit; }
 
 .container { max-width: 980px; margin: 0 auto; padding: 16px; }
 .footer { text-align: center; padding: 12px; border-top: 1px solid #333; opacity: .7; }
@@ -52,31 +40,8 @@ html, body, #root { height: 100%; margin: 0; }
 .workspace-modal-header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, .08); background: rgba(15, 20, 26, .95); backdrop-filter: blur(12px); z-index: 1; }
 .workspace-modal-title { margin: 0; font-size: 1rem; font-weight: 600; }
 .workspace-modal-subtitle { margin: 4px 0 0; font-size: .8rem; opacity: .7; }
-.workspace-modal-body {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-.workspace-section { display: flex; flex-direction: column; gap: 12px; min-width: 840px; }
-.workspace-modal-header-actions { display: flex; gap: 8px; align-items: center; }
-.workspace-modal-close {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, .08);
-  background: #1c1c22;
-  color: #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-}
-.workspace-modal-close:hover { background: #23232a; }
-.workspace-modal-close:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+.workspace-modal-body { padding: 24px; display: flex; flex-direction: column; gap: 32px; }
+.workspace-section { display: flex; flex-direction: column; gap: 12px; }
 .workspace-section-title { font-size: .95rem; font-weight: 600; }
 .workspace-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .workspace-card-grid { display: grid; gap: 16px; }
@@ -93,22 +58,9 @@ html, body, #root { height: 100%; margin: 0; }
 .workspace-card { border: 1px solid #2a2f35; border-radius: 18px; padding: 18px; background: rgba(20, 26, 32, .65); display: flex; flex-direction: column; gap: 12px; }
 .workspace-card-title { font-size: .95rem; font-weight: 600; }
 .workspace-card-hint { margin: 0; font-size: .78rem; opacity: .6; }
-.workspace-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  border: 1px solid #2a2f35;
-  background: rgba(255, 255, 255, .04);
-  color: inherit;
-  padding: 6px 14px;
-  font-size: .82rem;
-  cursor: pointer;
-  transition: background .2s ease, color .2s ease, border-color .2s ease;
-}
+.workspace-chip { border-radius: 999px; border: 1px solid #2a2f35; background: rgba(255, 255, 255, .04); color: inherit; padding: 6px 14px; font-size: .82rem; cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease; }
 .workspace-chip:hover { background: rgba(255, 255, 255, .08); }
 .workspace-chip.is-active { background: #f2f4f8; border-color: #f2f4f8; color: #11151c; }
-.workspace-chip-icon { display: inline-flex; }
 .workspace-number { display: flex; align-items: center; gap: 10px; }
 .workspace-number-button { width: 34px; height: 34px; border-radius: 10px; border: 1px solid #2a2f35; background: rgba(255, 255, 255, .04); color: inherit; font-size: 1.1rem; line-height: 1; display: grid; place-items: center; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
 .workspace-number-button:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .2); }

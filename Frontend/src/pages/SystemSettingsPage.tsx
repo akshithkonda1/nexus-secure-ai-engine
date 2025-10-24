@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import SystemsSettingsModal, {
+import WorkspaceSettingsModal, {
   WORKSPACE_SETTINGS_DEFAULTS,
   type WorkspaceSettings,
-} from "../components/SystemsSettingsModal";
+} from "../components/WorkspaceSettingsModal";
 import { readConfig, writeConfig } from "../state/config";
 import { useNavigate } from "react-router-dom";
 
@@ -41,7 +41,7 @@ export default function SystemSettingsPage() {
 
   return (
     <>
-      <SystemsSettingsModal
+      <WorkspaceSettingsModal
         open={open}
         initial={initial}
         onClose={handleClose}
