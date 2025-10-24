@@ -1,5 +1,4 @@
-// Temporary shim so old imports keep working while we migrate.
-// Delete this file after every import uses WorkPlaceSettingsModal.
+﻿// Legacy shim so old imports keep working.
 export {
   default,
   WORKSPACE_SETTINGS_DEFAULTS,
