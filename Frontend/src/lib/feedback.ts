@@ -1,3 +1,5 @@
+export const SYSTEM_FEEDBACK_CHAR_LIMIT = 15_000;
+
 interface FeedbackPayload {
   score: number;
   note: string;
