@@ -1,79 +1,37 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import WorkPlaceSettingsModal, {
-  type FeedbackDraft,
-  type FeedbackHistoryEntry,
-  FEEDBACK_CATEGORIES,
+  WORKSPACE_SETTINGS_DEFAULTS,
+  type WorkspaceSettings,
 } from "../components/WorkPlaceSettingsModal";
+import { readConfig, writeConfig } from "../state/config";
 import { useNavigate } from "react-router-dom";
 
-const STORAGE_KEY = "nexus.system_feedback";
-const HISTORY_LIMIT = 50;
-
-type StoredEntry = FeedbackHistoryEntry;
+const STORAGE_KEY = "nexus.system_settings";
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
 export default function SystemSettingsPage() {
+  const [initial, setInitial] = useState<WorkspaceSettings>(WORKSPACE_SETTINGS_DEFAULTS);
   const navigate = useNavigate();
-  const [history, setHistory] = useState<StoredEntry[]>([]);
 
   useEffect(() => {
+    const config = readConfig();
+    let stored: Partial<WorkspaceSettings> | null = null;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StoredEntry[];
-      if (Array.isArray(parsed)) {
-        setHistory(
-          parsed
-            .filter((entry) => typeof entry?.id === "string" && typeof entry?.message === "string")
-            .map((entry) => ({
-              ...entry,
-              category: FEEDBACK_CATEGORIES.includes(entry.category)
-                ? entry.category
-                : FEEDBACK_CATEGORIES[FEEDBACK_CATEGORIES.length - 1],
-            }))
-        );
+      if (raw) {
+        stored = JSON.parse(raw) as Partial<WorkspaceSettings>;
       }
     } catch (error) {
-      console.warn("Unable to hydrate feedback history", error);
+      console.warn("Failed to parse stored system settings", error);
     }
-  }, []);
 
-  const updateHistory = useCallback((updater: (previous: StoredEntry[]) => StoredEntry[]) => {
-    setHistory((previous) => {
-      const next = updater(previous);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch (error) {
-        console.warn("Failed to persist feedback history", error);
-      }
-      return next;
+    setInitial({
+      ...WORKSPACE_SETTINGS_DEFAULTS,
+      ...(stored ?? {}),
+      archiveDays: config.retentionDays,
+      dependableThreshold: clamp01(config.dependableThresholdPct / 100),
     });
   }, []);
-
-  const handleSubmit = useCallback(
-    async (draft: FeedbackDraft) => {
-      updateHistory((previous) => {
-        const entry: StoredEntry = {
-          id:
-            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-              ? crypto.randomUUID()
-              : Math.random().toString(36).slice(2),
-          submittedAt: new Date().toISOString(),
-          message: draft.message,
-          category: draft.category,
-          contact: draft.contact,
-        };
-        return [entry, ...previous].slice(0, HISTORY_LIMIT);
-      });
-    },
-    [updateHistory]
-  );
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      updateHistory((previous) => previous.filter((entry) => entry.id !== id));
-    },
-    [updateHistory]
-  );
 
   const handleClose = useCallback(() => {
     navigate("/", { replace: true });
@@ -82,10 +40,36 @@ export default function SystemSettingsPage() {
   return (
     <WorkPlaceSettingsModal
       open
-      history={history}
+      initial={initial}
       onClose={handleClose}
-      onSubmitFeedback={handleSubmit}
-      onDeleteEntry={handleDelete}
+      onSave={(settings) => {
+        const sanitized: WorkspaceSettings = {
+          ...settings,
+          consensusThreshold: clamp01(settings.consensusThreshold),
+          dependableThreshold: clamp01(settings.dependableThreshold),
+          maxSources: Math.max(1, Math.round(settings.maxSources)),
+          archiveDays: Math.max(0, Math.round(settings.archiveDays)),
+        };
+
+        try {
+          const updated = writeConfig({
+            dependableThresholdPct: Math.round(sanitized.dependableThreshold * 100),
+            retentionDays: sanitized.archiveDays,
+          });
+          sanitized.archiveDays = updated.retentionDays;
+          sanitized.dependableThreshold = clamp01(updated.dependableThresholdPct / 100);
+        } catch (error) {
+          console.warn("Failed to persist system settings to config store", error);
+        }
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+        } catch (error) {
+          console.warn("Failed to persist system settings", error);
+        }
+
+        setInitial(sanitized);
+      }}
     />
   );
 }

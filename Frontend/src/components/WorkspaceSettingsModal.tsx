@@ -4,10 +4,6 @@
 
 export {
   default,
-  FEEDBACK_MAX_LENGTH,
-  FEEDBACK_CATEGORIES,
-  type FeedbackDraft,
-  type FeedbackHistoryEntry,
-  type SystemFeedbackDraft,
-  type SystemFeedbackHistoryEntry,
+  WORKSPACE_SETTINGS_DEFAULTS,
+  type WorkspaceSettings,
 } from "./WorkPlaceSettingsModal";

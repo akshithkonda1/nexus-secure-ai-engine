@@ -8,39 +8,49 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
-export const FEEDBACK_MAX_LENGTH = 15000;
-export const FEEDBACK_CATEGORIES = [
-  "Product vision",
-  "Model quality",
-  "Safety & trust",
-  "UI polish",
-  "Other",
-] as const;
+/**
+ * WorkPlaceSettingsModal.tsx — premium popup
+ * - Portal popup (not full page)
+ * - Close "×" button + Esc + backdrop click
+ * - Vertical + horizontal scroll in body
+ * - Iconic chips + polished sliders
+ * - Focus trap + hotkeys + a11y
+ */
 
-export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
-
-export type FeedbackDraft = {
-  message: string;
-  category: FeedbackCategory;
-  contact?: string;
+export type WorkspaceSettings = {
+  consensusThreshold: number; // 0..1
+  maxSources: number; // 1..10
+  dependableThreshold: number; // 0..1
+  archiveDays: number; // >= 0
+  redactPII: boolean;
+  crossCheck: boolean;
 };
 
-export type FeedbackHistoryEntry = {
-  id: string;
-  submittedAt: string;
-  message: string;
-  category: FeedbackCategory;
-  contact?: string;
+export const WORKSPACE_SETTINGS_DEFAULTS: WorkspaceSettings = {
+  consensusThreshold: 0.7,
+  maxSources: 3,
+  dependableThreshold: 0.9,
+  archiveDays: 30,
+  redactPII: true,
+  crossCheck: true,
 };
 
-export type WorkPlaceSettingsModalProps = {
-  open: boolean;
-  onClose: () => void;
-  onSubmitFeedback: (draft: FeedbackDraft) => Promise<void> | void;
-  history?: FeedbackHistoryEntry[];
-  onDeleteEntry?: (id: string) => void;
-};
-
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+function fmtPct(n: number) {
+  return `${Math.round(n * 100)}%`;
+}
+function isNumber(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+function useDirty<T>(value: T, baseline: T) {
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    setDirty(JSON.stringify(value) !== JSON.stringify(baseline));
+  }, [value, baseline]);
+  return dirty;
+}
 const prefersReducedMotion =
   typeof window !== "undefined" &&
   window.matchMedia &&
@@ -66,85 +76,45 @@ function VisuallyHidden({ children }: { children: React.ReactNode }) {
   );
 }
 
-function formatDate(iso: string) {
-  try {
-    const date = new Date(iso);
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(date);
-  } catch {
-    return iso;
-  }
+function trackStyle(progress01: number) {
+  const pct = clamp(progress01, 0, 1) * 100;
+  return {
+    background: `linear-gradient(90deg, rgba(99,102,241,0.95) 0%, rgba(99,102,241,0.95) ${pct}%, rgba(63,63,70,0.55) ${pct}%, rgba(63,63,70,0.55) 100%)`,
+  } as React.CSSProperties;
 }
+
+/* --------------------------------- Modal ---------------------------------- */
 
 export default function WorkPlaceSettingsModal({
   open,
+  initial = WORKSPACE_SETTINGS_DEFAULTS,
   onClose,
-  onSubmitFeedback,
-  history = [],
-  onDeleteEntry,
-}: WorkPlaceSettingsModalProps) {
+  onSave,
+}: {
+  open: boolean;
+  initial?: Partial<WorkspaceSettings>;
+  onClose: () => void;
+  onSave: (settings: WorkspaceSettings) => void;
+}) {
+  const merged = useMemo<WorkspaceSettings>(
+    () => ({ ...WORKSPACE_SETTINGS_DEFAULTS, ...initial }),
+    [initial]
+  );
+  const [settings, setSettings] = useState<WorkspaceSettings>(merged);
+  useEffect(() => {
+    if (open) setSettings(merged);
+  }, [merged, open]);
+
+  const dirty = useDirty(settings, merged);
+
   const titleId = useId();
   const descId = useId();
-  const formId = useId();
 
+  const firstControlRef = useRef<HTMLInputElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
-  const firstControlRef = useRef<HTMLTextAreaElement | null>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
-  const successTimeout = useRef<number | null>(null);
-  const isMounted = useRef(false);
 
-  const [draft, setDraft] = useState<FeedbackDraft>(() => ({
-    message: "",
-    category: FEEDBACK_CATEGORIES[0],
-    contact: "",
-  }));
-  const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sent" | "error">("idle");
-
-  const trimmedMessage = draft.message.trim();
-  const charactersRemaining = FEEDBACK_MAX_LENGTH - draft.message.length;
-  const isOverLimit = charactersRemaining < 0;
-  const canSubmit = trimmedMessage.length > 0 && !isOverLimit && !submitting;
-
-  const sortedHistory = useMemo(
-    () =>
-      [...history].sort((a, b) =>
-        a.submittedAt < b.submittedAt ? 1 : a.submittedAt > b.submittedAt ? -1 : 0
-      ),
-    [history]
-  );
-
-  const categoryCounts = useMemo(() => {
-    const base = FEEDBACK_CATEGORIES.reduce(
-      (acc, category) => ({ ...acc, [category]: 0 }),
-      {} as Record<FeedbackCategory, number>
-    );
-    return sortedHistory.reduce((acc, entry) => {
-      acc[entry.category] = (acc[entry.category] ?? 0) + 1;
-      return acc;
-    }, base);
-  }, [sortedHistory]);
-
-  const mostActiveCategory = useMemo(() => {
-    if (!sortedHistory.length) return draft.category;
-    return FEEDBACK_CATEGORIES.reduce<FeedbackCategory | null>((current, category) => {
-      if (!current) return category;
-      return categoryCounts[category] > categoryCounts[current] ? category : current;
-    }, null) ?? draft.category;
-  }, [categoryCounts, draft.category, sortedHistory]);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-      if (successTimeout.current !== null) {
-        window.clearTimeout(successTimeout.current);
-      }
-    };
-  }, []);
-
+  // lock body scroll when open
   useEffect(() => {
     if (!open) return;
     const { overflow } = document.body.style;
@@ -154,24 +124,25 @@ export default function WorkPlaceSettingsModal({
     };
   }, [open]);
 
+  // focus trap + restore focus
   useEffect(() => {
     if (!open) return;
     previouslyFocused.current = document.activeElement as HTMLElement | null;
 
-    const focusTimer = window.setTimeout(() => {
-      firstControlRef.current?.focus();
+    const t = setTimeout(() => {
+      (firstControlRef.current ?? dialogRef.current)?.focus();
     }, 0);
 
-    const handleTabTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab") return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
       const root = dialogRef.current;
       if (!root) return;
       const focusables = root.querySelectorAll<HTMLElement>(
         [
           "button:not([disabled])",
           "input:not([disabled])",
-          "textarea:not([disabled])",
           "select:not([disabled])",
+          "textarea:not([disabled])",
           "[href]",
           "[tabindex]:not([tabindex='-1'])",
         ].join(",")
@@ -179,135 +150,61 @@ export default function WorkPlaceSettingsModal({
       if (!focusables.length) return;
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
-      if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
+      if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
         first.focus();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
         last.focus();
       }
     };
 
-    document.addEventListener("keydown", handleTabTrap);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      window.clearTimeout(focusTimer);
-      document.removeEventListener("keydown", handleTabTrap);
+      clearTimeout(t);
+      document.removeEventListener("keydown", onKeyDown);
       previouslyFocused.current?.focus?.();
     };
   }, [open]);
 
-  const clearStatusLater = useCallback(() => {
-    if (successTimeout.current !== null) {
-      window.clearTimeout(successTimeout.current);
-    }
-    successTimeout.current = window.setTimeout(() => {
-      if (isMounted.current) {
-        setStatus("idle");
-      }
-    }, 3200);
-  }, []);
-
-  const handleCategoryChange = useCallback((category: FeedbackCategory) => {
-    setDraft((previous) => ({ ...previous, category }));
-  }, []);
-
-  const handleMessageChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const next = event.target.value;
-      if (next.length > FEEDBACK_MAX_LENGTH) {
-        setDraft((previous) => ({ ...previous, message: next.slice(0, FEEDBACK_MAX_LENGTH) }));
-        return;
-      }
-      setDraft((previous) => ({ ...previous, message: next }));
-    },
-    []
-  );
-
-  const handleContactChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setDraft((previous) => ({ ...previous, contact: event.target.value }));
-  }, []);
-
-  const resetDraft = useCallback(() => {
-    setDraft({ message: "", category: FEEDBACK_CATEGORIES[0], contact: "" });
-  }, []);
-
-  const handleSubmit = useCallback(async () => {
-    if (!canSubmit) return;
-    setSubmitting(true);
-    try {
-      await onSubmitFeedback({
-        message: trimmedMessage,
-        category: draft.category,
-        contact: draft.contact?.trim() ? draft.contact.trim() : undefined,
-      });
-      if (!isMounted.current) return;
-      setStatus("sent");
-      resetDraft();
-      clearStatusLater();
-      firstControlRef.current?.focus();
-    } catch (error) {
-      console.error("Failed to submit feedback", error);
-      if (!isMounted.current) return;
-      setStatus("error");
-      clearStatusLater();
-    } finally {
-      if (isMounted.current) {
-        setSubmitting(false);
-      }
-    }
-  }, [canSubmit, clearStatusLater, draft.category, draft.contact, onSubmitFeedback, resetDraft, trimmedMessage]);
-
+  // hotkeys
   useEffect(() => {
     if (!open) return;
-    const handleHotkeys = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        if (event.shiftKey) {
-          resetDraft();
-        }
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && (e.key.toLowerCase() === "s" || e.key === "Enter")) {
+        e.preventDefault();
+        if (dirty) onSave(settings);
         onClose();
         return;
       }
-      if ((event.metaKey || event.ctrlKey) && (event.key.toLowerCase() === "s" || event.key === "Enter")) {
-        event.preventDefault();
-        handleSubmit();
+      if (e.shiftKey && e.key === "Escape") {
+        e.preventDefault();
+        if (dirty) setSettings(merged);
+        onClose();
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
       }
     };
-
-    document.addEventListener("keydown", handleHotkeys);
-    return () => document.removeEventListener("keydown", handleHotkeys);
-  }, [handleSubmit, onClose, open, resetDraft]);
-
-  const handleCopy = useCallback((message: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(message).catch(() => {
-        console.warn("Clipboard write failed");
-      });
-      return;
-    }
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = message;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    } catch (error) {
-      console.warn("Clipboard fallback failed", error);
-    }
-  }, []);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, dirty, merged, settings, onClose, onSave]);
 
   if (!open) return null;
 
+  const saveAndClose = () => {
+    if (dirty) onSave(settings);
+    onClose();
+  };
+  const discardAndStay = () => {
+    if (dirty) setSettings(merged);
+  };
+
   const body = (
-    <div
-      className="modal-backdrop workspace-modal-backdrop"
-      onClick={() => {
-        onClose();
-      }}
-    >
+    <div className="modal-backdrop workspace-modal-backdrop" onClick={onClose}>
       <section
         ref={dialogRef as any}
         role="dialog"
@@ -316,34 +213,36 @@ export default function WorkPlaceSettingsModal({
         aria-describedby={descId}
         tabIndex={-1}
         className={["workspace-modal", prefersReducedMotion ? "rm" : "animate-in"].join(" ")}
-        onClick={(event) => event.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="workspace-modal-scroll">
+          {/* Header */}
           <header className="workspace-modal-header">
             <div className="workspace-modal-leading">
-              <span className="workspace-modal-badge">Feedback studio</span>
+              <span className="workspace-modal-badge">Control center</span>
               <div>
                 <h2 id={titleId} className="workspace-modal-title">
-                  System feedback
+                  System settings
                 </h2>
                 <p id={descId} className="workspace-modal-subtitle">
-                  Share unfiltered insights with the Nexus team. We review every note to shape the roadmap.
+                  Tune guardrails, privacy, and consensus controls.
                 </p>
               </div>
             </div>
+
             <div className="workspace-modal-header-actions">
               <button
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                aria-disabled={!canSubmit}
+                onClick={saveAndClose}
+                disabled={!dirty}
+                aria-disabled={!dirty}
                 className="workspace-modal-save"
                 type="button"
               >
-                Send feedback
+                Save <VisuallyHidden>settings</VisuallyHidden>
               </button>
               <button
                 onClick={onClose}
-                aria-label="Close system feedback"
+                aria-label="Close system settings"
                 className="workspace-modal-close"
                 type="button"
                 title="Close"
@@ -353,159 +252,192 @@ export default function WorkPlaceSettingsModal({
             </div>
           </header>
 
-          <div className="workspace-modal-body">
-            <section className="feedback-hero" style={{ minWidth: 840 }}>
-              <article className="feedback-hero-card">
-                <span className="feedback-hero-label">Total submissions</span>
-                <span className="feedback-hero-value">{sortedHistory.length}</span>
-                <span className="feedback-hero-hint">Unlimited sends · we welcome all feedback</span>
-              </article>
-              <article className="feedback-hero-card">
-                <span className="feedback-hero-label">Most active channel</span>
-                <span className="feedback-hero-value">{mostActiveCategory}</span>
-                <span className="feedback-hero-hint">Choose a lens to help triage quickly</span>
-              </article>
-              <article className="feedback-hero-card">
-                <span className="feedback-hero-label">Last sent</span>
-                <span className="feedback-hero-value">
-                  {sortedHistory.length ? formatDate(sortedHistory[0].submittedAt) : "–"}
+          {/* Body: both-axis scroll */}
+          <div
+            className="workspace-modal-body"
+            style={{ overflow: "auto", overscrollBehavior: "contain" as any }}
+          >
+            <section className="workspace-overview" style={{ minWidth: 840 }}>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Consensus</span>
+                <span className="workspace-overview-value">
+                  {fmtPct(settings.consensusThreshold)}
                 </span>
-                <span className="feedback-hero-hint">We respond within one business day</span>
+                <span className="workspace-overview-hint">Model agreement required</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Sources</span>
+                <span className="workspace-overview-value">{settings.maxSources}</span>
+                <span className="workspace-overview-hint">Citations per response</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Dependable</span>
+                <span className="workspace-overview-value">
+                  {fmtPct(settings.dependableThreshold)}
+                </span>
+                <span className="workspace-overview-hint">Confidence floor</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Archive</span>
+                <span className="workspace-overview-value">{settings.archiveDays}d</span>
+                <span className="workspace-overview-hint">Retention window</span>
               </article>
             </section>
 
-            <section className="workspace-section feedback-compose" style={{ minWidth: 840 }}>
+            {/* Policies */}
+            <section className="workspace-section" style={{ minWidth: 840 }}>
               <header className="workspace-section-header">
                 <div>
-                  <p className="workspace-section-kicker">Compose</p>
-                  <h3 className="workspace-section-title">What should we know?</h3>
+                  <p className="workspace-section-kicker">Policies</p>
+                  <h3 className="workspace-section-title">Realtime safeguards</h3>
                 </div>
                 <p className="workspace-section-subtitle">
-                  Tell us what feels magical or what needs refinement. Attach context, links, or reproduction steps.
+                  Toggle the safety rails that wrap every conversation.
                 </p>
               </header>
-
-              <div className="feedback-category-row" role="radiogroup" aria-label="Feedback category">
-                {FEEDBACK_CATEGORIES.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    role="radio"
-                    aria-checked={draft.category === category}
-                    className={`workspace-chip ${draft.category === category ? "is-active" : ""}`}
-                    onClick={() => handleCategoryChange(category)}
-                  >
-                    {category}
-                  </button>
-                ))}
+              <div className="workspace-chip-row">
+                <Chip active ariaCurrent="page" icon={<SparklesIcon />}>
+                  Standard mode
+                </Chip>
+                <Chip
+                  active={settings.redactPII}
+                  onClick={() => setSettings((s) => ({ ...s, redactPII: !s.redactPII }))}
+                  icon={<ShieldIcon />}
+                >
+                  Redact PII: {settings.redactPII ? "On" : "Off"}
+                </Chip>
+                <Chip
+                  active={settings.crossCheck}
+                  onClick={() => setSettings((s) => ({ ...s, crossCheck: !s.crossCheck }))}
+                  icon={<LinkCheckIcon />}
+                >
+                  Cross-check: {settings.crossCheck ? "On" : "Off"}
+                </Chip>
               </div>
-
-              <label htmlFor={formId} className="feedback-label">
-                Feedback
-                <VisuallyHidden>
-                  Maximum {FEEDBACK_MAX_LENGTH} characters. {charactersRemaining} remaining.
-                </VisuallyHidden>
-              </label>
-              <textarea
-                id={formId}
-                ref={firstControlRef}
-                className="feedback-textarea"
-                value={draft.message}
-                onChange={handleMessageChange}
-                maxLength={FEEDBACK_MAX_LENGTH}
-                placeholder="Stream your thoughts…"
-                aria-describedby={`${descId}-counter`}
-              />
-              <div className="feedback-meta">
-                <span id={`${descId}-counter`} className={isOverLimit ? "feedback-limit feedback-limit-error" : "feedback-limit"}>
-                  {Math.max(charactersRemaining, 0)} characters left
-                </span>
-                <div className="feedback-actions">
-                  <button
-                    type="button"
-                    className="workspace-modal-reset"
-                    onClick={resetDraft}
-                    disabled={!draft.message && !draft.contact}
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    className="workspace-modal-save"
-                    onClick={handleSubmit}
-                    disabled={!canSubmit}
-                  >
-                    {submitting ? "Sending…" : "Send now"}
-                  </button>
-                </div>
-              </div>
-
-              <label htmlFor={`${formId}-contact`} className="feedback-label">
-                Optional contact
-              </label>
-              <input
-                id={`${formId}-contact`}
-                type="email"
-                inputMode="email"
-                placeholder="Leave an email or Slack handle if we can follow up"
-                className="feedback-input"
-                value={draft.contact ?? ""}
-                onChange={handleContactChange}
-              />
-              {status === "sent" && <div className="feedback-status success">Thank you — feedback sent.</div>}
-              {status === "error" && <div className="feedback-status error">Something went wrong. Try again.</div>}
             </section>
 
-            <section className="workspace-section feedback-history" style={{ minWidth: 840 }}>
+            {/* Thresholds */}
+            <section className="workspace-section" style={{ minWidth: 840 }}>
               <header className="workspace-section-header">
                 <div>
-                  <p className="workspace-section-kicker">History</p>
-                  <h3 className="workspace-section-title">Your recent notes</h3>
+                  <p className="workspace-section-kicker">Thresholds</p>
+                  <h3 className="workspace-section-title">Decision intelligence</h3>
                 </div>
                 <p className="workspace-section-subtitle">
-                  Everything stays on this device until the Nexus team reaches out. Remove any note if it no longer applies.
+                  Calibrate consensus, context density, and dependable boundaries.
                 </p>
               </header>
-              <div className="feedback-history-track">
-                {sortedHistory.length === 0 && (
-                  <div className="feedback-history-empty">Your future insights will appear here.</div>
-                )}
-                {sortedHistory.map((entry) => (
-                  <article key={entry.id} className="feedback-history-card">
-                    <div className="feedback-history-meta">
-                      <span className="feedback-history-tag">{entry.category}</span>
-                      <time dateTime={entry.submittedAt}>{formatDate(entry.submittedAt)}</time>
-                    </div>
-                    <p className="feedback-history-message">{entry.message}</p>
-                    {entry.contact && (
-                      <p className="feedback-history-contact">Follow-up: {entry.contact}</p>
-                    )}
-                    <div className="feedback-history-actions">
-                      <button type="button" onClick={() => handleCopy(entry.message)}>
-                        Copy
-                      </button>
-                      {onDeleteEntry && (
-                        <button type="button" onClick={() => onDeleteEntry(entry.id)}>
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
+              <div className="workspace-card-grid">
+                <Card
+                  title="Consensus threshold"
+                  hint="Require higher agreement between models before surfacing an answer."
+                >
+                  <Range
+                    refEl={firstControlRef}
+                    id="consensus-threshold"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={settings.consensusThreshold}
+                    onChange={(v) =>
+                      setSettings((s) => ({ ...s, consensusThreshold: clamp(v, 0, 1) }))
+                    }
+                    format={(v) => v.toFixed(2)}
+                    ariaLabel="Consensus threshold"
+                  />
+                </Card>
+                <Card
+                  title="Max sources"
+                  hint="Control how many documents Nexus references in each response."
+                >
+                  <Range
+                    id="max-sources"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={settings.maxSources}
+                    onChange={(v) =>
+                      setSettings((s) => ({ ...s, maxSources: Math.round(clamp(v, 1, 10)) }))
+                    }
+                    format={(v) => v.toFixed(0)}
+                    ariaLabel="Maximum sources"
+                  />
+                </Card>
+              </div>
+            </section>
+
+            {/* Behavior */}
+            <section className="workspace-section" style={{ minWidth: 840 }}>
+              <header className="workspace-section-header">
+                <div>
+                  <p className="workspace-section-kicker">Behavior</p>
+                  <h3 className="workspace-section-title">Response lifecycle</h3>
+                </div>
+                <p className="workspace-section-subtitle">
+                  Shape how Nexus handles trust signals and retention.
+                </p>
+              </header>
+              <div className="workspace-card-grid">
+                <Card
+                  title="Dependable threshold (%)"
+                  hint="Below this confidence Nexus augments answers with real-time web data."
+                >
+                  <Range
+                    id="dependable-threshold"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={settings.dependableThreshold}
+                    onChange={(v) =>
+                      setSettings((s) => ({ ...s, dependableThreshold: clamp(v, 0, 1) }))
+                    }
+                    format={(v) => fmtPct(v)}
+                    ariaLabel="Dependable threshold percentage"
+                  />
+                </Card>
+                <Card
+                  title="Archive retention (days)"
+                  hint="Archived/deleted chats purge automatically after the selected number of days."
+                >
+                  <NumberField
+                    id="archive-days"
+                    value={settings.archiveDays}
+                    onChange={(n) =>
+                      setSettings((s) => ({ ...s, archiveDays: clamp(Math.round(n), 0, 3650) }))
+                    }
+                    min={0}
+                    max={3650}
+                    ariaLabel="Archive retention in days"
+                  />
+                </Card>
               </div>
             </section>
           </div>
         </div>
+
+        {/* Footer */}
         <footer className="workspace-modal-footer">
           <div className="workspace-modal-status" aria-live="polite" aria-atomic="true">
-            {submitting ? "Sending feedback…" : status === "sent" ? "Feedback delivered" : "Ready for your ideas"}
+            {dirty ? "Unsaved changes" : "All changes saved"}
           </div>
           <div className="workspace-modal-actions">
-            <button className="workspace-modal-reset" type="button" onClick={resetDraft}>
-              Reset form
+            <button
+              onClick={discardAndStay}
+              disabled={!dirty}
+              aria-disabled={!dirty}
+              className="workspace-modal-reset"
+              type="button"
+            >
+              Discard
             </button>
-            <button className="workspace-modal-save" type="button" onClick={handleSubmit} disabled={!canSubmit}>
-              Share feedback
+            <button
+              onClick={saveAndClose}
+              disabled={!dirty}
+              aria-disabled={!dirty}
+              className="workspace-modal-save"
+              type="button"
+            >
+              Save changes
             </button>
           </div>
         </footer>
@@ -516,5 +448,233 @@ export default function WorkPlaceSettingsModal({
   return createPortal(body, document.body);
 }
 
-export type SystemFeedbackDraft = FeedbackDraft;
-export type SystemFeedbackHistoryEntry = FeedbackHistoryEntry;
+/* ------------------------------- UI Pieces -------------------------------- */
+
+function Card({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  const titleId = useId();
+  const descId = useId();
+  return (
+    <div
+      className="workspace-card"
+      role="group"
+      aria-labelledby={titleId}
+      aria-describedby={hint ? descId : undefined}
+    >
+      <div id={titleId} className="workspace-card-title">
+        {title}
+      </div>
+      {hint && (
+        <p id={descId} className="workspace-card-hint">
+          {hint}
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  children,
+  onClick,
+  ariaCurrent,
+  icon,
+}: {
+  active?: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+  ariaCurrent?: "page" | "step" | "location" | "date" | "time" | boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`workspace-chip ${active ? "is-active" : ""}`}
+      aria-pressed={!!active}
+      aria-current={ariaCurrent as any}
+    >
+      {icon && (
+        <span className="workspace-chip-icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
+      {children}
+    </button>
+  );
+}
+
+function NumberField({
+  id,
+  value,
+  onChange,
+  min = 0,
+  max = 9999,
+  ariaLabel,
+}: {
+  id?: string;
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+  ariaLabel?: string;
+}) {
+  const commit = useCallback(
+    (next: number) => {
+      const safe = clamp(isNumber(next) ? next : 0, min, max);
+      onChange(safe);
+    },
+    [min, max, onChange]
+  );
+
+  return (
+    <div className="workspace-number">
+      <button
+        onClick={() => commit(value - 1)}
+        className="workspace-number-button"
+        aria-label="Decrement"
+        type="button"
+      >
+        −
+      </button>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => commit(Number(e.target.value || 0))}
+        className="workspace-number-input"
+        aria-label={ariaLabel}
+      />
+      <button
+        onClick={() => commit(value + 1)}
+        className="workspace-number-button"
+        aria-label="Increment"
+        type="button"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+function Range({
+  id,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  format,
+  refEl,
+  ariaLabel,
+}: {
+  id?: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  format?: (v: number) => string;
+  refEl?: React.RefObject<HTMLInputElement | null>;
+  ariaLabel?: string;
+}) {
+  const progress01 = (value - min) / (max - min);
+  const safeVal = clamp(isNumber(value) ? value : min, min, max);
+  return (
+    <div className="workspace-range-wrap">
+      <div className="workspace-range-header">
+        <div className="workspace-range-min" aria-hidden="true">
+          {format ? format(min) : min}
+        </div>
+        <div className="workspace-range-value" aria-live="polite">
+          {format ? format(safeVal) : safeVal}
+        </div>
+        <div className="workspace-range-max" aria-hidden="true">
+          {format ? format(max) : max}
+        </div>
+      </div>
+      <input
+        id={id}
+        ref={refEl as any}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={safeVal}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="workspace-range"
+        style={trackStyle(progress01)}
+        aria-valuemin={min}
+        aria-valuemax={max}
+        aria-valuenow={safeVal}
+        aria-label={ariaLabel}
+      />
+    </div>
+  );
+}
+
+/* ------------------------------- Inline Icons ------------------------------ */
+
+function ShieldIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M9.5 12.5l2 2 4-4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+function LinkCheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M10 13a5 5 0 010-7l1.5-1.5a5 5 0 017 7L17 12"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M14 11a5 5 0 010 7L12.5 19.5a5 5 0 01-7-7L7 10"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M15 16l1.6 1.6L20 14.2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+function SparklesIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+/* --------- Aliases so callers can import either name if needed --------- */
+export { WORKSPACE_SETTINGS_DEFAULTS as SYSTEM_SETTINGS_DEFAULTS };
+export type SystemSettings = WorkspaceSettings;
