@@ -5,7 +5,6 @@ import hljs from "highlight.js";
 import { useConversations } from "./useConversations";
 import type { Message } from "./db";
 import { loadProfile, saveProfile, type StoredProfile } from "./profileStorage";
-import { sendFeedback } from "../lib/feedback";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const ASK_JSON = `${BASE}/api/ask`;
@@ -159,9 +158,6 @@ export default function ConsumerChat() {
 
   // Profile modal UI state
   const [profileTab, setProfileTab] = useState<'user'|'billing'|'feedback'>('user');
-  const [systemFeedback, setSystemFeedback] = useState("");
-  const [sendingFeedback, setSendingFeedback] = useState(false);
-  const [systemFeedbackStatus, setSystemFeedbackStatus] = useState<null | { tone: "success" | "error"; text: string }>(null);
   const [deleteFlow, setDeleteFlow] = useState<null | 'confirm' | 'feedback' | 'submitting' | 'done'>(null);
   const [deleteReason, setDeleteReason] = useState('');
 
@@ -204,31 +200,6 @@ export default function ConsumerChat() {
   }
 
   function showToast(msg: string, ms=2000){ setToast(msg); setTimeout(()=>setToast(null), ms); }
-
-  const handleSystemFeedbackSubmit = async () => {
-    const note = systemFeedback.trim();
-    if (!note) {
-      setSystemFeedbackStatus({ tone: "error", text: "Share a bit more detail so we can put your feedback to work." });
-      return;
-    }
-    setSendingFeedback(true);
-    setSystemFeedbackStatus(null);
-    try {
-      const ok = await sendFeedback({ score: 5, note, route: "consumer-system-feedback" });
-      if (ok) {
-        setSystemFeedback("");
-        setSystemFeedbackStatus({ tone: "success", text: "Thanks! Your feedback has been sent." });
-        showToast("Thanks for the feedback!");
-      } else {
-        setSystemFeedbackStatus({ tone: "error", text: "We couldn't send your feedback. Please try again." });
-      }
-    } catch (err) {
-      console.error("Failed to submit feedback", err);
-      setSystemFeedbackStatus({ tone: "error", text: "We couldn't send your feedback. Please try again." });
-    } finally {
-      setSendingFeedback(false);
-    }
-  };
   function toggleTheme(){ setSettings(s=>({...s, theme: s.theme==="dark"?"light":"dark"})); }
 
   async function ensureCurrent() {
@@ -708,39 +679,18 @@ export default function ConsumerChat() {
                       <div className="field-grid">
                         <Field label="Message">
                           <textarea
-                            rows={7}
-                            maxLength={15000}
-                            value={systemFeedback}
-                            onChange={event => {
-                              setSystemFeedback(event.target.value);
-                              setSystemFeedbackStatus(null);
-                            }}
+                            rows={6}
                             placeholder="Share feature ideas, bugs you’ve noticed, or workflows we can improve."
                           />
-                          <div className="hint" style={{ textAlign: 'right', opacity: 0.6 }}>
-                            {systemFeedback.length.toLocaleString()} / 15,000 characters
-                          </div>
-                          {systemFeedbackStatus && (
-                            <div
-                              className="hint"
-                              style={{
-                                color: systemFeedbackStatus.tone === 'success' ? '#22c55e' : '#f87171',
-                                marginTop: '0.35rem',
-                              }}
-                            >
-                              {systemFeedbackStatus.text}
-                            </div>
-                          )}
                         </Field>
                       </div>
                       <div className="panel-actions end">
                         <button
                           type="button"
                           className="primary"
-                          onClick={handleSystemFeedbackSubmit}
-                          disabled={sendingFeedback}
+                          onClick={()=>showToast("Thanks for the feedback!")}
                         >
-                          {sendingFeedback ? 'Sending…' : 'Send Feedback'}
+                          Send Feedback
                         </button>
                       </div>
                     </div>
