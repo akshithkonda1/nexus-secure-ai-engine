@@ -79,7 +79,7 @@ function VisuallyHidden({ children }: { children: React.ReactNode }) {
 function trackStyle(progress01: number) {
   const pct = clamp(progress01, 0, 1) * 100;
   return {
-    background: `linear-gradient(90deg, rgb(24,24,27) 0%, rgb(24,24,27) ${pct}%, rgb(63,63,70) ${pct}%, rgb(63,63,70) 100%)`,
+    background: `linear-gradient(90deg, rgba(99,102,241,0.95) 0%, rgba(99,102,241,0.95) ${pct}%, rgba(63,63,70,0.55) ${pct}%, rgba(63,63,70,0.55) 100%)`,
   } as React.CSSProperties;
 }
 
@@ -218,13 +218,16 @@ export default function WorkPlaceSettingsModal({
         <div className="workspace-modal-scroll">
           {/* Header */}
           <header className="workspace-modal-header">
-            <div>
-              <h2 id={titleId} className="workspace-modal-title">
-                System settings
-              </h2>
-              <p id={descId} className="workspace-modal-subtitle">
-                Tune guardrails, privacy, and consensus controls.
-              </p>
+            <div className="workspace-modal-leading">
+              <span className="workspace-modal-badge">Control center</span>
+              <div>
+                <h2 id={titleId} className="workspace-modal-title">
+                  System settings
+                </h2>
+                <p id={descId} className="workspace-modal-subtitle">
+                  Tune guardrails, privacy, and consensus controls.
+                </p>
+              </div>
             </div>
 
             <div className="workspace-modal-header-actions">
@@ -254,9 +257,44 @@ export default function WorkPlaceSettingsModal({
             className="workspace-modal-body"
             style={{ overflow: "auto", overscrollBehavior: "contain" as any }}
           >
+            <section className="workspace-overview" style={{ minWidth: 840 }}>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Consensus</span>
+                <span className="workspace-overview-value">
+                  {fmtPct(settings.consensusThreshold)}
+                </span>
+                <span className="workspace-overview-hint">Model agreement required</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Sources</span>
+                <span className="workspace-overview-value">{settings.maxSources}</span>
+                <span className="workspace-overview-hint">Citations per response</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Dependable</span>
+                <span className="workspace-overview-value">
+                  {fmtPct(settings.dependableThreshold)}
+                </span>
+                <span className="workspace-overview-hint">Confidence floor</span>
+              </article>
+              <article className="workspace-overview-card">
+                <span className="workspace-overview-label">Archive</span>
+                <span className="workspace-overview-value">{settings.archiveDays}d</span>
+                <span className="workspace-overview-hint">Retention window</span>
+              </article>
+            </section>
+
             {/* Policies */}
             <section className="workspace-section" style={{ minWidth: 840 }}>
-              <div className="workspace-section-title">Policies</div>
+              <header className="workspace-section-header">
+                <div>
+                  <p className="workspace-section-kicker">Policies</p>
+                  <h3 className="workspace-section-title">Realtime safeguards</h3>
+                </div>
+                <p className="workspace-section-subtitle">
+                  Toggle the safety rails that wrap every conversation.
+                </p>
+              </header>
               <div className="workspace-chip-row">
                 <Chip active ariaCurrent="page" icon={<SparklesIcon />}>
                   Standard mode
@@ -280,7 +318,15 @@ export default function WorkPlaceSettingsModal({
 
             {/* Thresholds */}
             <section className="workspace-section" style={{ minWidth: 840 }}>
-              <div className="workspace-section-title">Thresholds</div>
+              <header className="workspace-section-header">
+                <div>
+                  <p className="workspace-section-kicker">Thresholds</p>
+                  <h3 className="workspace-section-title">Decision intelligence</h3>
+                </div>
+                <p className="workspace-section-subtitle">
+                  Calibrate consensus, context density, and dependable boundaries.
+                </p>
+              </header>
               <div className="workspace-card-grid">
                 <Card
                   title="Consensus threshold"
@@ -322,7 +368,15 @@ export default function WorkPlaceSettingsModal({
 
             {/* Behavior */}
             <section className="workspace-section" style={{ minWidth: 840 }}>
-              <div className="workspace-section-title">Behavior</div>
+              <header className="workspace-section-header">
+                <div>
+                  <p className="workspace-section-kicker">Behavior</p>
+                  <h3 className="workspace-section-title">Response lifecycle</h3>
+                </div>
+                <p className="workspace-section-subtitle">
+                  Shape how Nexus handles trust signals and retention.
+                </p>
+              </header>
               <div className="workspace-card-grid">
                 <Card
                   title="Dependable threshold (%)"
