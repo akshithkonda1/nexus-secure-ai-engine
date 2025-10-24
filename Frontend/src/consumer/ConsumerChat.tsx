@@ -5,6 +5,7 @@ import hljs from "highlight.js";
 import { useConversations } from "./useConversations";
 import type { Message } from "./db";
 import { loadProfile, saveProfile, type StoredProfile } from "./profileStorage";
+import { sendFeedback, SYSTEM_FEEDBACK_CHAR_LIMIT } from "../lib/feedback";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 const ASK_JSON = `${BASE}/api/ask`;
@@ -157,7 +158,10 @@ export default function ConsumerChat() {
   const [showProfile, setShowProfile] = useState(false);
 
   // Profile modal UI state
-  const [profileTab, setProfileTab] = useState<'user'|'billing'|'feedback'>('user');
+  const [profileTab, setProfileTab] = useState<'profile'|'billing'|'feedback'>('profile');
+  const [systemFeedback, setSystemFeedback] = useState("");
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [systemFeedbackStatus, setSystemFeedbackStatus] = useState<null | { tone: "success" | "error"; text: string }>(null);
   const [deleteFlow, setDeleteFlow] = useState<null | 'confirm' | 'feedback' | 'submitting' | 'done'>(null);
   const [deleteReason, setDeleteReason] = useState('');
 
@@ -200,6 +204,31 @@ export default function ConsumerChat() {
   }
 
   function showToast(msg: string, ms=2000){ setToast(msg); setTimeout(()=>setToast(null), ms); }
+
+  const handleSystemFeedbackSubmit = async () => {
+    const note = systemFeedback.trim();
+    if (!note) {
+      setSystemFeedbackStatus({ tone: "error", text: "Share a bit more detail so we can put your feedback to work." });
+      return;
+    }
+    setSendingFeedback(true);
+    setSystemFeedbackStatus(null);
+    try {
+      const ok = await sendFeedback({ score: 5, note, route: "consumer-system-feedback" });
+      if (ok) {
+        setSystemFeedback("");
+        setSystemFeedbackStatus({ tone: "success", text: "Thanks! Your feedback has been sent." });
+        showToast("Thanks for the feedback!");
+      } else {
+        setSystemFeedbackStatus({ tone: "error", text: "We couldn't send your feedback. Please try again." });
+      }
+    } catch (err) {
+      console.error("Failed to submit feedback", err);
+      setSystemFeedbackStatus({ tone: "error", text: "We couldn't send your feedback. Please try again." });
+    } finally {
+      setSendingFeedback(false);
+    }
+  };
   function toggleTheme(){ setSettings(s=>({...s, theme: s.theme==="dark"?"light":"dark"})); }
 
   async function ensureCurrent() {
@@ -380,7 +409,7 @@ export default function ConsumerChat() {
             <button type="button" className="icon-btn" onClick={toggleTheme} title={`Theme: ${settings.theme}`}>{settings.theme==="dark"?"🌙":"☀️"}</button>
             <button type="button" className="icon-btn" onClick={()=>setShowSettings(true)} title="System Settings">⚙️</button>
             {current && <StatusActions />}
-            <button type="button" className="avatar-btn" onClick={()=>{ setProfileTab('user'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
+            <button type="button" className="avatar-btn" onClick={()=>{ setProfileTab('profile'); setDeleteFlow(null); setShowProfile(true); }} title="Profile">
               {profile.photoDataUrl ? <img src={profile.photoDataUrl} alt="avatar"/> : <span>{profile.name?.slice(0,1).toUpperCase()||"U"}</span>}
             </button>
           </div>
@@ -562,12 +591,12 @@ export default function ConsumerChat() {
                   <nav className="profile-tabs">
                     <button
                       type="button"
-                      className={`profile-tab ${profileTab==='user'?'active':''}`}
-                      onClick={()=>setProfileTab('user')}
+                      className={`profile-tab ${profileTab==='profile'?'active':''}`}
+                      onClick={()=>setProfileTab('profile')}
                     >
                       <span className="icon" aria-hidden>👤</span>
                       <div>
-                        <div className="label">User Settings</div>
+                        <div className="label">Profile</div>
                         <div className="hint">Personal info, avatar, and sign-in details.</div>
                       </div>
                     </button>
@@ -598,10 +627,10 @@ export default function ConsumerChat() {
                 </aside>
 
                 <section className="profile-pane">
-                  {profileTab==='user' && (
+                  {profileTab==='profile' && (
                     <div className="profile-panel">
                       <header>
-                        <div className="title">User Settings</div>
+                        <div className="title">Profile</div>
                         <div className="subtitle">Personalize how your profile appears inside Nexus.</div>
                       </header>
                       <div className="field-grid">
@@ -679,18 +708,39 @@ export default function ConsumerChat() {
                       <div className="field-grid">
                         <Field label="Message">
                           <textarea
-                            rows={6}
+                            rows={7}
+                            maxLength={SYSTEM_FEEDBACK_CHAR_LIMIT}
+                            value={systemFeedback}
+                            onChange={event => {
+                              setSystemFeedback(event.target.value);
+                              setSystemFeedbackStatus(null);
+                            }}
                             placeholder="Share feature ideas, bugs you’ve noticed, or workflows we can improve."
                           />
+                          <div className="hint" style={{ textAlign: 'right', opacity: 0.6 }}>
+                            {`${systemFeedback.length.toLocaleString()} / ${SYSTEM_FEEDBACK_CHAR_LIMIT.toLocaleString()} characters`}
+                          </div>
+                          {systemFeedbackStatus && (
+                            <div
+                              className="hint"
+                              style={{
+                                color: systemFeedbackStatus.tone === 'success' ? '#22c55e' : '#f87171',
+                                marginTop: '0.35rem',
+                              }}
+                            >
+                              {systemFeedbackStatus.text}
+                            </div>
+                          )}
                         </Field>
                       </div>
                       <div className="panel-actions end">
                         <button
                           type="button"
                           className="primary"
-                          onClick={()=>showToast("Thanks for the feedback!")}
+                          onClick={handleSystemFeedbackSubmit}
+                          disabled={sendingFeedback}
                         >
-                          Send Feedback
+                          {sendingFeedback ? 'Sending…' : 'Send Feedback'}
                         </button>
                       </div>
                     </div>

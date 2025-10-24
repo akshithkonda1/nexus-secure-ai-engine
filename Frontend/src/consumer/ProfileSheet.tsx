@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { SYSTEM_FEEDBACK_CHAR_LIMIT } from "../lib/feedback";
 import type { UserProfile } from "../state/profile";
 
-export type ProfileSheetTab = "user" | "plan" | "feedback";
+export type ProfileSheetTab = "profile" | "plan" | "feedback";
 
 type ProfileSheetProps = {
   open: boolean;
@@ -23,7 +24,7 @@ type StatusMessage = {
 };
 
 const TAB_META: Record<ProfileSheetTab, { heading: string; subheading: string }> = {
-  user: { heading: "User Settings", subheading: "Update your Nexus identity" },
+  profile: { heading: "Profile", subheading: "Update your Nexus identity" },
   plan: { heading: "Plan & Billing", subheading: "Stay informed about upgrades" },
   feedback: { heading: "System Feedback", subheading: "Tell us how we can improve" },
 };
@@ -231,7 +232,7 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
           </button>
         </div>
         <div className="profile-sheet-body">
-          {tab === "user" && (
+          {tab === "profile" && (
             <form className="profile-form" onSubmit={handleSaveProfile}>
               <div className="profile-row">
                 <div className="profile-avatar-large">
@@ -392,7 +393,7 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                 <span>Describe the issue in detail</span>
                 <textarea
                   rows={7}
-                  maxLength={15000}
+                  maxLength={SYSTEM_FEEDBACK_CHAR_LIMIT}
                   placeholder="Describe the issue in detail. Be detailed and let us know what we can do."
                   value={feedback}
                   onChange={(event) => {
@@ -400,7 +401,9 @@ const ProfileSheet: React.FC<ProfileSheetProps> = ({
                     setFeedbackStatus(null);
                   }}
                 />
-                <small className="muted">{feedback.length.toLocaleString()} / 15,000 characters</small>
+                <small className="muted">
+                  {`${feedback.length.toLocaleString()} / ${SYSTEM_FEEDBACK_CHAR_LIMIT.toLocaleString()} characters`}
+                </small>
               </label>
               <div className="profile-actions end">
                 <button type="button" className="primary-btn" onClick={handleSendFeedback}>
