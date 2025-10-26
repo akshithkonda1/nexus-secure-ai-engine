@@ -5,7 +5,8 @@ import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
+import { type UserProfile } from "../../state/profile";
+import useProfile from "../../hooks/useProfile";
 import "../../styles/nexus-convos.css";
 
 const uid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -88,7 +89,7 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
+  const { profile, saveProfile, resetProfile: resetStoredProfile } = useProfile();
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -283,11 +284,12 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
   const trash = useMemo(() => convos.filter(c => c.status === "trash"), [convos]);
 
   const handleProfileChange = (next: UserProfile) => {
-    setProfile(writeProfile(next));
+    saveProfile(next);
   };
 
   const handleDeleteAccount = (feedback: string | null) => {
     console.info("Account deletion requested", { feedback });
+    resetStoredProfile();
     setProfileOpen(false);
   };
 

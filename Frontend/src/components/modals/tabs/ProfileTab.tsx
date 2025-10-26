@@ -17,7 +17,17 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
   const fileInputRef = useRef<HTMLInputElement|null>(null);
   useEffect(()=>{ setForm(profile); },[profile]);
 
-  const isDirty=useMemo(()=> form.displayName!==profile.displayName || form.email!==profile.email || form.avatarDataUrl!==profile.avatarDataUrl,[form,profile]);
+  const isDirty = useMemo(() => {
+    const trimmedFormName = form.displayName.trim();
+    const trimmedFormEmail = form.email.trim();
+    const trimmedProfileName = profile.displayName.trim();
+    const trimmedProfileEmail = profile.email.trim();
+    return (
+      trimmedFormName !== trimmedProfileName ||
+      trimmedFormEmail !== trimmedProfileEmail ||
+      form.avatarDataUrl !== profile.avatarDataUrl
+    );
+  }, [form.avatarDataUrl, form.displayName, form.email, profile.avatarDataUrl, profile.displayName, profile.email]);
 
   const setStatusMessage = (message: string, tone: 'info'|'error'|'success' = 'info') => {
     setStatus({ message, tone });
@@ -58,7 +68,19 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
       setStatusMessage('No changes to save.');
       return;
     }
-    onProfileChange(form);
+    const displayName = form.displayName.trim();
+    const email = form.email.trim();
+    if(!displayName || !email){
+      setStatusMessage('Enter a display name and email before saving.', 'error');
+      return;
+    }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      setStatusMessage('Enter a valid email address.', 'error');
+      return;
+    }
+    const nextProfile: UserProfile = { ...form, displayName, email };
+    setForm(nextProfile);
+    onProfileChange(nextProfile);
     setStatusMessage('Changes saved!', 'success');
   };
 
