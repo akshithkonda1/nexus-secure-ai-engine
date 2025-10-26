@@ -15,9 +15,23 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
   const [deleteStage,setDeleteStage]=useState<'idle'|'confirm'|'feedback'>('idle');
   const [deleteFeedback,setDeleteFeedback]=useState('');
   const fileInputRef = useRef<HTMLInputElement|null>(null);
-  useEffect(()=>{ setForm(profile); },[profile]);
+  const removedAvatarRef = useRef(false);
+  useEffect(()=>{ setForm(profile); removedAvatarRef.current = false; },[profile]);
 
-  const isDirty=useMemo(()=> form.displayName!==profile.displayName || form.email!==profile.email || form.avatarDataUrl!==profile.avatarDataUrl,[form,profile]);
+  const isDirty = useMemo(() => {
+    const trimmedFormName = form.displayName.trim();
+    const trimmedFormEmail = form.email.trim();
+    const trimmedProfileName = profile.displayName.trim();
+    const trimmedProfileEmail = profile.email.trim();
+    const avatarChanged = (form.avatarDataUrl ?? null) !== (profile.avatarDataUrl ?? null);
+
+    return (
+      trimmedFormName !== trimmedProfileName ||
+      trimmedFormEmail !== trimmedProfileEmail ||
+      removedAvatarRef.current ||
+      avatarChanged
+    );
+  }, [form.avatarDataUrl, form.displayName, form.email, profile.avatarDataUrl, profile.displayName, profile.email]);
 
   const setStatusMessage = (message: string, tone: 'info'|'error'|'success' = 'info') => {
     setStatus({ message, tone });
@@ -40,6 +54,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
     try {
       const resized = await processAvatarFile(file, { maxDimension: 320, quality: 0.9 });
       setForm((prev)=>({ ...prev, avatarDataUrl: resized }));
+      removedAvatarRef.current = false;
       setStatusMessage('Photo ready. Save to keep your new avatar.', 'success');
     } catch (error) {
       console.error('Failed to prepare avatar', error);
@@ -49,6 +64,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
 
   const handleRemovePhoto = () => {
     setForm((prev)=>({ ...prev, avatarDataUrl: null }));
+    removedAvatarRef.current = true;
     setStatusMessage('Profile photo removed.', 'info');
   };
 
@@ -58,12 +74,26 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ profile, onProfileChange, onClo
       setStatusMessage('No changes to save.');
       return;
     }
-    onProfileChange(form);
+    const displayName = form.displayName.trim();
+    const email = form.email.trim();
+    if(!displayName || !email){
+      setStatusMessage('Enter a display name and email before saving.', 'error');
+      return;
+    }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      setStatusMessage('Enter a valid email address.', 'error');
+      return;
+    }
+    const nextProfile: UserProfile = { ...form, displayName, email };
+    setForm(nextProfile);
+    onProfileChange(nextProfile);
+    removedAvatarRef.current = false;
     setStatusMessage('Changes saved!', 'success');
   };
 
   const handleCancel = () => {
     setForm(profile);
+    removedAvatarRef.current = false;
     setStatusMessage('Changes discarded.');
     setDeleteStage('idle');
     setDeleteFeedback('');
