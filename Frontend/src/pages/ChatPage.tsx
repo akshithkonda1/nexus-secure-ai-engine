@@ -14,7 +14,8 @@ import type { Message } from '../types/chat';
 import { SessionService } from '../state/sessions';
 import type { SessionRow } from '../state/sessions';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { readProfile, writeProfile, type UserProfile } from '../state/profile';
+import { type UserProfile } from '../state/profile';
+import useProfile from '../hooks/useProfile';
 
 const ProfileModal = React.lazy(() => import('../components/modals/ProfileModal'));
 
@@ -95,7 +96,7 @@ const getConsensusText = (answers: any[]): string => {
 const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) => {
   const { isDark, setIsDark } = useDarkMode();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
+  const { profile, saveProfile } = useProfile();
   const [isPending, startTransition] = useTransition();
 
   // Session management
@@ -205,9 +206,8 @@ const ChatPage: React.FC<{ onOpenSettings: () => void }> = ({ onOpenSettings }) 
   );
 
   const handleProfileChange = useCallback((next: UserProfile) => {
-    setProfile(next);
-    writeProfile(next);
-  }, []);
+    saveProfile(next);
+  }, [saveProfile]);
 
   const handleNewChat = useCallback(() => {
     const s = SessionService.create('New chat');
