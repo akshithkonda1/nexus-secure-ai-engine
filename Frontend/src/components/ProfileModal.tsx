@@ -13,8 +13,11 @@ type Props = {
   onClose: () => void;
 };
 
+type Tab = "profile" | "billing" | "feedback";
+
 const ACCEPT = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_MB = 8;
+const FEEDBACK_KEY = "nexus.profile.feedback";
 
 export default function ProfileModal({ open, onClose }: Props) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -32,10 +35,20 @@ export default function ProfileModal({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
+  const [tab, setTab] = useState<Tab>("profile");
+  const [feedback, setFeedback] = useState("");
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     setError(null);
     setNote(null);
+    setTab("profile");
+    setFeedback("");
+    setFeedbackError(null);
+    setFeedbackStatus(null);
     (async () => {
       const p = await fetchProfile();
       setInitial(p);
@@ -65,6 +78,18 @@ export default function ProfileModal({ open, onClose }: Props) {
   }, [initial, displayName, tempFile, avatarUrl]);
 
   if (!open) return null;
+
+  function onSelectTab(next: Tab) {
+    setTab(next);
+    if (next !== "profile") {
+      setError(null);
+      setNote(null);
+    }
+    if (next !== "feedback") {
+      setFeedbackError(null);
+      setFeedbackStatus(null);
+    }
+  }
 
   function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -152,10 +177,50 @@ export default function ProfileModal({ open, onClose }: Props) {
       setTempPreview(null);
       setNote(null);
     }
+    setFeedback("");
+    setFeedbackError(null);
+    setFeedbackStatus(null);
+    setTab("profile");
     onClose();
   }
 
   const previewSrc = tempPreview ?? avatarUrl ?? undefined;
+
+  async function onSubmitFeedback() {
+    const message = feedback.trim();
+    if (!message) {
+      setFeedbackError("Add a few words so we can understand your feedback.");
+      return;
+    }
+    try {
+      setSubmittingFeedback(true);
+      setFeedbackError(null);
+      const stored = localStorage.getItem(FEEDBACK_KEY);
+      const parsed: Array<{ id: string; message: string; createdAt: string }> = stored
+        ? JSON.parse(stored)
+        : [];
+      parsed.push({
+        id: String(Date.now()),
+        message,
+        createdAt: new Date().toISOString(),
+      });
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(parsed));
+      setFeedback("");
+      setFeedbackStatus("Thanks! Your feedback has been sent.");
+    } catch (err: any) {
+      console.error("Failed to store feedback", err);
+      setFeedbackError(err?.message ?? "We couldn't send your feedback. Please try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  }
+
+  const title =
+    tab === "profile"
+      ? "Profile"
+      : tab === "billing"
+      ? "Plan & Billing"
+      : "System Feedback";
 
   return (
     <div
@@ -188,79 +253,223 @@ export default function ProfileModal({ open, onClose }: Props) {
         }}
       >
         <header style={{ display: "flex", justifyContent: "space-between" }}>
-          <h2 id="profile-title" style={{ fontSize: 22, margin: 0 }}>Profile</h2>
-          <button onClick={onCancel} aria-label="Close" style={btnGhost}>✕</button>
+          <h2 id="profile-title" style={{ fontSize: 22, margin: 0 }}>
+            {title}
+          </h2>
+          <button onClick={onCancel} aria-label="Close" style={btnGhost} type="button">
+            ✕
+          </button>
         </header>
 
-        <nav style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <span style={chipActive}>Profile</span>
-          <span style={chip}>Plan & Billing</span>
-          <span style={chip}>System Feedback</span>
+        <nav
+          role="tablist"
+          aria-label="Profile sections"
+          style={{ display: "flex", gap: 8, marginTop: 16 }}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "profile"}
+            onClick={() => onSelectTab("profile")}
+            style={tab === "profile" ? chipActiveButton : chipButton}
+          >
+            Profile
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "billing"}
+            onClick={() => onSelectTab("billing")}
+            style={tab === "billing" ? chipActiveButton : chipButton}
+          >
+            Plan &amp; Billing
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "feedback"}
+            onClick={() => onSelectTab("feedback")}
+            style={tab === "feedback" ? chipActiveButton : chipButton}
+          >
+            System Feedback
+          </button>
         </nav>
 
         <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
-          <section>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "#0f0f14",
-                  overflow: "hidden",
-                  display: "grid",
-                  placeItems: "center",
-                  border: "1px solid rgba(255,255,255,.08)",
-                }}
-                aria-label="Profile photo"
-              >
-                {previewSrc ? (
-                  <img src={previewSrc} alt="Avatar preview"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}/>
-                ) : (
-                  <span style={{ fontWeight: 700 }}>Ne</span>
-                )}
-              </div>
+          {tab === "profile" && (
+            <>
+              <section>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: "#0f0f14",
+                      overflow: "hidden",
+                      display: "grid",
+                      placeItems: "center",
+                      border: "1px solid rgba(255,255,255,.08)",
+                    }}
+                    aria-label="Profile photo"
+                  >
+                    {previewSrc ? (
+                      <img
+                        src={previewSrc}
+                        alt="Avatar preview"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <span style={{ fontWeight: 700 }}>
+                        {(displayName || initial?.displayName || "N").slice(0, 2)}
+                      </span>
+                    )}
+                  </div>
 
-              <label style={{ ...btn }}>
-                Choose File
-                <input type="file" accept={ACCEPT.join(",")}
-                  style={{ display: "none" }} onChange={onPickFile}/>
-              </label>
+                  <label style={{ ...btn }}>
+                    Choose File
+                    <input
+                      type="file"
+                      accept={ACCEPT.join(",")}
+                      style={{ display: "none" }}
+                      onChange={onPickFile}
+                    />
+                  </label>
 
-              {(tempFile || avatarUrl) && (
-                <button onClick={onRemovePhoto} style={btnGhost}>Remove photo</button>
+                  {(tempFile || avatarUrl) && (
+                    <button onClick={onRemovePhoto} style={btnGhost} type="button">
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+                <div aria-live="polite" style={{ marginTop: 8, fontSize: 13, color: "#a3a3a3" }}>
+                  {note}
+                </div>
+              </section>
+
+              <section>
+                <label style={label} htmlFor="profile-display-name">
+                  Display name
+                </label>
+                <input
+                  id="profile-display-name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={80}
+                  placeholder="Your name"
+                  style={input}
+                />
+              </section>
+
+              <section>
+                <label style={label} htmlFor="profile-email">
+                  Email
+                </label>
+                <input id="profile-email" value={email} readOnly style={{ ...input, opacity: 0.8 }} />
+              </section>
+
+              {error && (
+                <div
+                  role="alert"
+                  style={{
+                    background: "#3b0d0d",
+                    border: "1px solid #7f1d1d",
+                    color: "#fecaca",
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}
+                >
+                  {error}
+                </div>
               )}
-            </div>
-            <div aria-live="polite" style={{ marginTop: 8, fontSize: 13, color: "#a3a3a3" }}>
-              {note}
-            </div>
-          </section>
+            </>
+          )}
 
-          <section>
-            <label style={label}>Display name</label>
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={80} placeholder="Your name" style={input}/>
-          </section>
-
-          <section>
-            <label style={label}>Email</label>
-            <input value={email} readOnly style={{ ...input, opacity: 0.8 }}/>
-          </section>
-
-          {error && (
-            <div role="alert"
+          {tab === "billing" && (
+            <section
               style={{
-                background: "#3b0d0d",
-                border: "1px solid #7f1d1d",
-                color: "#fecaca",
-                padding: "8px 12px",
-                borderRadius: 8,
-                fontSize: 13,
+                background: "#0f0f14",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,.08)",
+                padding: 16,
+                display: "grid",
+                gap: 12,
               }}
             >
-              {error}
-            </div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>Plan &amp; Billing</div>
+              <p style={{ margin: 0, fontSize: 14, color: "#cbd5e1", lineHeight: 1.5 }}>
+                You&apos;re exploring Nexus on a preview workspace. Billing integrations are disabled in
+                this environment.
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>
+                Want to share what you&apos;d like to see in paid plans?
+              </p>
+              <button
+                type="button"
+                style={{ ...btnPrimary, width: "fit-content" }}
+                onClick={() => onSelectTab("feedback")}
+              >
+                Send us upgrade ideas
+              </button>
+            </section>
+          )}
+
+          {tab === "feedback" && (
+            <section style={{ display: "grid", gap: 12 }}>
+              <div>
+                <label style={label} htmlFor="system-feedback">
+                  Share your feedback
+                </label>
+                <textarea
+                  id="system-feedback"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={5}
+                  maxLength={1000}
+                  style={{
+                    ...input,
+                    resize: "vertical",
+                    minHeight: 120,
+                    fontFamily: "inherit",
+                  }}
+                  placeholder="Tell us how we can make Nexus better"
+                />
+                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>
+                  {feedback.length}/1000 characters
+                </div>
+              </div>
+              {feedbackError && (
+                <div
+                  role="alert"
+                  style={{
+                    background: "#3b0d0d",
+                    border: "1px solid #7f1d1d",
+                    color: "#fecaca",
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}
+                >
+                  {feedbackError}
+                </div>
+              )}
+              {feedbackStatus && (
+                <div
+                  role="status"
+                  style={{
+                    background: "rgba(34,197,94,.08)",
+                    border: "1px solid rgba(34,197,94,.4)",
+                    color: "#bbf7d0",
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}
+                >
+                  {feedbackStatus}
+                </div>
+              )}
+            </section>
           )}
         </div>
 
@@ -273,19 +482,55 @@ export default function ProfileModal({ open, onClose }: Props) {
             gap: 12,
           }}
         >
-          <button onClick={onConfirmDelete} disabled={deleting}
-            style={{ ...btnDanger, opacity: deleting ? 0.7 : 1,
-              cursor: deleting ? "not-allowed" : "pointer" }}>
-            {deleting ? "Deleting…" : "Delete account"}
-          </button>
+          {tab === "profile" ? (
+            <button
+              onClick={onConfirmDelete}
+              disabled={deleting}
+              style={{
+                ...btnDanger,
+                opacity: deleting ? 0.7 : 1,
+                cursor: deleting ? "not-allowed" : "pointer",
+              }}
+              type="button"
+            >
+              {deleting ? "Deleting…" : "Delete account"}
+            </button>
+          ) : (
+            <span aria-hidden style={{ width: 1 }} />
+          )}
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onCancel} style={btnGhost}>Cancel</button>
-            <button onClick={onSave} disabled={!dirty || saving}
-              style={{ ...btnPrimary, opacity: !dirty || saving ? 0.7 : 1,
-                cursor: !dirty || saving ? "not-allowed" : "pointer" }}>
-              {saving ? "Saving…" : "Save changes"}
+            <button onClick={onCancel} style={btnGhost} type="button">
+              Close
             </button>
+            {tab === "profile" && (
+              <button
+                onClick={onSave}
+                disabled={!dirty || saving}
+                style={{
+                  ...btnPrimary,
+                  opacity: !dirty || saving ? 0.7 : 1,
+                  cursor: !dirty || saving ? "not-allowed" : "pointer",
+                }}
+                type="button"
+              >
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+            )}
+            {tab === "feedback" && (
+              <button
+                onClick={onSubmitFeedback}
+                disabled={submittingFeedback}
+                style={{
+                  ...btnPrimary,
+                  opacity: submittingFeedback ? 0.7 : 1,
+                  cursor: submittingFeedback ? "not-allowed" : "pointer",
+                }}
+                type="button"
+              >
+                {submittingFeedback ? "Sending…" : "Submit feedback"}
+              </button>
+            )}
           </div>
         </footer>
       </div>
@@ -310,19 +555,25 @@ const input: React.CSSProperties = {
   outline: "none",
 };
 
-const chip: React.CSSProperties = {
+const chipBase: React.CSSProperties = {
   fontSize: 13,
   padding: "6px 10px",
   borderRadius: 8,
-  background: "#121219",
   border: "1px solid rgba(255,255,255,.08)",
   color: "#a3a3a3",
+  background: "#121219",
+  cursor: "pointer",
 };
 
-const chipActive: React.CSSProperties = {
-  ...chip,
+const chipButton: React.CSSProperties = {
+  ...chipBase,
+};
+
+const chipActiveButton: React.CSSProperties = {
+  ...chipBase,
   color: "#fff",
   background: "#1c1c22",
+  border: "1px solid rgba(59,130,246,.5)",
 };
 
 const btn: React.CSSProperties = {
