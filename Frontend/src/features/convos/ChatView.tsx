@@ -5,7 +5,8 @@ import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
+import { type UserProfile } from "../../state/profile";
+import useProfile from "../../hooks/useProfile";
 import "../../styles/nexus-convos.css";
 
 const uid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -88,7 +89,14 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
+  const [profileToast, setProfileToast] = useState<string | null>(null);
+  const { profile, saveProfile, resetProfile: resetStoredProfile } = useProfile();
+
+  useEffect(() => {
+    if (!profileToast) return;
+    const timeout = setTimeout(() => setProfileToast(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [profileToast]);
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -283,12 +291,16 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
   const trash = useMemo(() => convos.filter(c => c.status === "trash"), [convos]);
 
   const handleProfileChange = (next: UserProfile) => {
-    setProfile(writeProfile(next));
+    saveProfile(next);
+    setProfileToast("Profile saved.");
+    setProfileOpen(false);
   };
 
   const handleDeleteAccount = (feedback: string | null) => {
     console.info("Account deletion requested", { feedback });
+    resetStoredProfile();
     setProfileOpen(false);
+    setProfileToast("Account deletion scheduled.");
   };
 
   const handleUpgradePlan = () => {
@@ -394,6 +406,38 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
       </aside>
 
       <main className="nx-main">
+        {profileToast ? (
+          <div
+            role="status"
+            style={{
+              margin: "0 0 1rem",
+              padding: "0.75rem 1rem",
+              borderRadius: "0.75rem",
+              background: "rgba(34,197,94,0.12)",
+              color: "rgba(34,197,94)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+            }}
+          >
+            <span style={{ fontSize: "0.9rem", fontWeight: 500 }}>{profileToast}</span>
+            <button
+              type="button"
+              onClick={() => setProfileToast(null)}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: "rgba(34,197,94)",
+                fontSize: "0.75rem",
+                cursor: "pointer",
+                textDecoration: "underline",
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
         <header className="nx-top">
           <div className="nx-top-left">
             {current ? (
