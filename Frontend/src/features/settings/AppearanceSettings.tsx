@@ -31,19 +31,13 @@ export function AppearanceSettings(): JSX.Element {
         <p className="text-sm text-muted">Control how Nexus greets teammates across different cultures and monitors.</p>
       </header>
 
-      <Card className="round-card shadow-ambient">
+      <Card>
         <CardHeader>
           <CardTitle>Brand color</CardTitle>
           <CardDescription>Align the interface accent with your organization&apos;s palette.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
-          <Input
-            type="color"
-            value={brandColor}
-            onChange={(event) => setBrandColor(event.target.value)}
-            aria-label="Brand accent color"
-            className="h-12 w-20 round-input"
-          />
+          <Input type="color" value={brandColor} onChange={(event) => setBrandColor(event.target.value)} aria-label="Brand accent color" className="h-12 w-20" />
           <div>
             <p className="text-sm font-semibold">{brandColor.toUpperCase()}</p>
             <p className="text-xs text-muted">Preview updates instantly across the shell.</p>
@@ -51,7 +45,7 @@ export function AppearanceSettings(): JSX.Element {
         </CardContent>
       </Card>
 
-      <Card className="round-card shadow-ambient">
+      <Card>
         <CardHeader>
           <CardTitle>Dashboard charts</CardTitle>
           <CardDescription>Select the density and visual treatment for analytics views.</CardDescription>
@@ -63,7 +57,7 @@ export function AppearanceSettings(): JSX.Element {
               <Button
                 key={style.id}
                 variant={active ? "default" : "outline"}
-                className="flex h-full flex-col items-start gap-1 text-left round-card shadow-press"
+                className="flex h-full flex-col items-start gap-1 text-left"
                 onClick={() => setChartStyle(style.id)}
               >
                 <span className="text-sm font-semibold">{style.name}</span>
@@ -74,7 +68,7 @@ export function AppearanceSettings(): JSX.Element {
         </CardContent>
       </Card>
 
-      <Card className="round-card shadow-ambient">
+      <Card>
         <CardHeader>
           <CardTitle>Language</CardTitle>
           <CardDescription>Switch the UI copy used for shared links and collaborative sessions.</CardDescription>
@@ -82,7 +76,7 @@ export function AppearanceSettings(): JSX.Element {
         <CardContent className="max-w-xs space-y-2">
           <Label htmlFor="language-select">Primary language</Label>
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger id="language-select" className="round-input">
+            <SelectTrigger id="language-select">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
@@ -97,7 +91,7 @@ export function AppearanceSettings(): JSX.Element {
         </CardContent>
       </Card>
 
-      <Card className="round-card shadow-ambient">
+      <Card>
         <CardHeader>
           <CardTitle>Cookie banner</CardTitle>
           <CardDescription>Match your compliance posture with the appropriate consent UX.</CardDescription>
@@ -109,7 +103,7 @@ export function AppearanceSettings(): JSX.Element {
               <Button
                 key={option.id}
                 variant={active ? "default" : "outline"}
-                className="flex h-full flex-col items-start gap-1 text-left round-card shadow-press"
+                className="flex h-full flex-col items-start gap-1 text-left"
                 onClick={() => setCookiePreference(option.id)}
               >
                 <span className="text-sm font-semibold">{option.name}</span>

@@ -111,7 +111,6 @@ export function PricingPage(): JSX.Element {
           <Button
             key={option}
             variant={cycle === option ? "default" : "outline"}
-            className="round-btn shadow-press"
             onClick={() => setCycle(option)}
           >
             {option === "monthly" && "Monthly"}
@@ -123,7 +122,7 @@ export function PricingPage(): JSX.Element {
 
       <div className="mx-auto mt-10 grid w-full max-w-6xl gap-6 md:grid-cols-3">
         {(Object.keys(PRICES) as PlanKey[]).map((planKey) => (
-          <Card key={planKey} className="flex flex-col round-card shadow-ambient">
+          <Card key={planKey} className="flex flex-col">
             <CardHeader>
               <CardTitle className="text-2xl capitalize">{planKey}</CardTitle>
               <CardDescription>{planBadges[planKey]}</CardDescription>
@@ -154,7 +153,7 @@ export function PricingPage(): JSX.Element {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full round-btn shadow-press" variant={planKey === "pro" ? "default" : "secondary"}>
+              <Button className="w-full" variant={planKey === "pro" ? "default" : "secondary"}>
                 {planKey === "pro" ? "Start deployment" : "Begin trial"}
               </Button>
             </CardFooter>

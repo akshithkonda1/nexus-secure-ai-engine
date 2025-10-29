@@ -21,9 +21,9 @@ interface ChatListProps {
 }
 
 export function ChatList({ chats, activeChatId, onSelectChat, onArchive, onTrash, onRestore, onDelete }: ChatListProps): JSX.Element {
-  const active = chats.filter((chat) => chat.state === "active");
-  const archived = chats.filter((chat) => chat.state === "archived");
-  const trash = chats.filter((chat) => chat.state === "trashed");
+  const active = chats.filter((chat) => chat.status === "active");
+  const archived = chats.filter((chat) => chat.status === "archived");
+  const trash = chats.filter((chat) => chat.status === "trash");
 
   return (
     <div className="space-y-6">
@@ -35,7 +35,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onArchive, onTrash
         actions={({ id }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Chat actions" className="round-btn">
+              <Button variant="ghost" size="icon" aria-label="Chat actions">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -54,7 +54,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onArchive, onTrash
         actions={({ id }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Archived chat actions" className="round-btn">
+              <Button variant="ghost" size="icon" aria-label="Archived chat actions">
                 <Archive className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -73,7 +73,7 @@ export function ChatList({ chats, activeChatId, onSelectChat, onArchive, onTrash
         actions={({ id }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Trash chat actions" className="round-btn">
+              <Button variant="ghost" size="icon" aria-label="Trash chat actions">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -98,7 +98,7 @@ interface ChatSectionProps {
 
 function ChatSection({ title, chats, activeChatId, onSelect, actions }: ChatSectionProps) {
   return (
-    <section>
+    <div>
       <h3 className="px-2 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
       <div className="mt-2 space-y-1">
         {chats.length === 0 ? (
@@ -108,15 +108,11 @@ function ChatSection({ title, chats, activeChatId, onSelect, actions }: ChatSect
             <div
               key={chat.id}
               className={cn(
-                "flex items-center justify-between round-card px-3 py-2 text-sm transition hover:bg-[var(--app-muted)]",
-                chat.id === activeChatId ? "bg-[var(--app-muted)]" : "bg-[var(--app-surface)] shadow-ambient border border-subtle/60"
+                "flex items-center justify-between rounded-lg px-2 py-1 text-sm transition hover:bg-[var(--app-muted)]",
+                chat.id === activeChatId ? "bg-[var(--app-muted)]" : undefined
               )}
             >
-              <button
-                type="button"
-                className="flex-1 truncate text-left"
-                onClick={() => onSelect(chat.id)}
-              >
+              <button type="button" className="flex-1 truncate text-left" onClick={() => onSelect(chat.id)}>
                 <p className="truncate font-medium">{chat.title}</p>
                 <p className="text-xs text-muted">{new Date(chat.updatedAt).toLocaleString()}</p>
               </button>
@@ -125,6 +121,6 @@ function ChatSection({ title, chats, activeChatId, onSelect, actions }: ChatSect
           ))
         )}
       </div>
-    </section>
+    </div>
   );
 }

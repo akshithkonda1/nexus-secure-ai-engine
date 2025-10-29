@@ -4,14 +4,7 @@ import { Menu, MessageSquarePlus, Search, Settings, Sparkles } from "lucide-reac
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -22,15 +15,7 @@ import { ChatList } from "@/features/chat/ChatList";
 import { SystemDrawer } from "@/features/system/SystemDrawer";
 import { useUIStore } from "@/shared/state/ui";
 import { useSessionStore } from "@/shared/state/session";
-import {
-  archiveChat,
-  createChat,
-  deletePermanent,
-  listChats,
-  moveToTrash,
-  restoreFromTrash,
-  type ChatThread,
-} from "@/services/storage/chats";
+import { createChat, deleteChatPermanently, listChats, setChatStatus, type ChatThread } from "@/services/storage/chats";
 import { getStoredProfile, type StoredProfile } from "@/services/storage/profile";
 import { cn } from "@/shared/lib/cn";
 
@@ -103,7 +88,7 @@ export function AppShell(): JSX.Element {
 
   const handleArchive = useCallback(
     (chatId: string) => {
-      archiveChat(chatId);
+      setChatStatus(chatId, "archived");
       closeOpenChatId(chatId);
       refreshChats();
     },
@@ -112,7 +97,7 @@ export function AppShell(): JSX.Element {
 
   const handleMoveToTrash = useCallback(
     (chatId: string) => {
-      moveToTrash(chatId);
+      setChatStatus(chatId, "trash");
       closeOpenChatId(chatId);
       refreshChats();
     },
@@ -121,7 +106,7 @@ export function AppShell(): JSX.Element {
 
   const handleRestore = useCallback(
     (chatId: string) => {
-      restoreFromTrash(chatId);
+      setChatStatus(chatId, "active");
       refreshChats();
     },
     [refreshChats]
@@ -129,7 +114,7 @@ export function AppShell(): JSX.Element {
 
   const handleDelete = useCallback(
     (chatId: string) => {
-      deletePermanent(chatId);
+      deleteChatPermanently(chatId);
       closeOpenChatId(chatId);
       refreshChats();
     },
@@ -141,18 +126,15 @@ export function AppShell(): JSX.Element {
       { label: "Chats", to: "/", icon: <MessageSquarePlus className="mr-2 h-4 w-4" /> },
       {
         label: "Projects",
-        to: "/system?tab=projects",
+        to: "/",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
+        onSelect: () => openSystemDrawer("projects"),
       },
       {
         label: "Library",
-        to: "/system?tab=library",
+        to: "/",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
-      },
-      {
-        label: "System",
-        to: "/system",
-        icon: <Sparkles className="mr-2 h-4 w-4" />,
+        onSelect: () => openSystemDrawer("library"),
       },
       {
         label: "Models",
@@ -183,25 +165,25 @@ export function AppShell(): JSX.Element {
         onTrash={handleMoveToTrash}
         onRestore={handleRestore}
         onDelete={handleDelete}
-        currentPath={location.pathname + location.search}
+        currentPath={location.pathname}
       />
 
       <main className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-subtle bg-[var(--app-surface)]/90 px-4 shadow-ambient">
-          <div className="flex items-center gap-3">
-            <Button className="round-btn lg:hidden" size="icon" variant="ghost" onClick={() => setNavSheetOpen(true)} aria-label="Open navigation">
+        <header className="flex h-14 items-center justify-between border-b border-subtle bg-[var(--app-surface)] px-4">
+          <div className="flex items-center gap-2">
+            <Button className="lg:hidden" size="icon" variant="ghost" onClick={() => setNavSheetOpen(true)} aria-label="Open navigation">
               <Menu className="h-5 w-5" />
             </Button>
             <span className="hidden text-sm font-semibold text-muted sm:inline-flex">Nexus — Adaptive AI Workspace</span>
-            <div className="relative hidden items-center md:flex">
+            <div className="relative hidden items-center gap-2 md:flex">
               <Search className="absolute left-3 h-4 w-4 text-muted" />
-              <Input className="h-10 w-64 pl-10 round-input" placeholder="Search (⌘K)" aria-label="Search workspace" />
+              <Input className="h-9 w-64 pl-9" placeholder="Search (⌘K)" aria-label="Search workspace" />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />
             <ThemeToggle />
-            <Button variant="ghost" className="hidden round-btn shadow-press xl:inline-flex" onClick={() => openSystemDrawer()}>
+            <Button variant="ghost" className="hidden xl:inline-flex" onClick={() => openSystemDrawer()}>
               System Drawer
             </Button>
             <ProfileMenu profile={profile} onOpenProfile={openProfileModal} />
@@ -222,7 +204,7 @@ export function AppShell(): JSX.Element {
           profile={profile}
           navItems={navItems}
           chats={chats}
-          currentPath={location.pathname + location.search}
+          currentPath={location.pathname}
           onCreateChat={createAndOpenChat}
           onSelectChat={(id) => {
             selectChat(id);
@@ -277,14 +259,14 @@ function DesktopSidebar({
 
   return (
     <aside className="hidden w-[260px] flex-col border-r border-subtle bg-[var(--app-surface)]/80 backdrop-blur lg:flex">
-      <div className="flex h-20 items-center justify-between px-5">
+      <div className="flex h-16 items-center justify-between px-4">
         <div>
-          <Link to="/" className="flex items-baseline gap-2 text-lg font-semibold">
+          <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
             Nexus
           </Link>
           <p className="text-xs text-muted">Adaptive AI Workspace</p>
         </div>
-        <Button size="icon" variant="outline" className="round-btn shadow-press" onClick={onCreateChat} aria-label="New chat">
+        <Button size="icon" variant="outline" onClick={onCreateChat} aria-label="New chat">
           <MessageSquarePlus className="h-4 w-4" />
         </Button>
       </div>
@@ -296,10 +278,7 @@ function DesktopSidebar({
               key={item.label}
               asChild
               variant="ghost"
-              className={cn(
-                "justify-start round-btn text-sm",
-                isRouteMatch ? "bg-[var(--app-muted)]" : undefined
-              )}
+              className={cn("justify-start text-sm", isRouteMatch ? "bg-[var(--app-muted)]" : undefined)}
             >
               <Link
                 to={item.to}
@@ -314,8 +293,8 @@ function DesktopSidebar({
           );
         })}
       </nav>
-      <Separator className="my-4" />
-      <div className="flex-1 overflow-y-auto px-3 pb-4">
+      <Separator className="my-3" />
+      <div className="flex-1 overflow-y-auto px-2">
         <ChatList
           chats={chats}
           activeChatId={activeChatId}
@@ -326,9 +305,9 @@ function DesktopSidebar({
           onDelete={onDelete}
         />
       </div>
-      <Separator className="my-4" />
-      <div className="flex items-center gap-3 px-4 pb-5">
-        <Avatar className="h-12 w-12 shadow-ambient">
+      <Separator className="my-3" />
+      <div className="flex items-center gap-3 px-4 pb-4">
+        <Avatar className="h-12 w-12">
           {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
           <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
@@ -364,12 +343,12 @@ function MobileSidebarSheet({
       <SheetContent side="left" className="w-[260px] border-r border-subtle bg-[var(--app-surface)] p-4">
         <div className="flex items-center justify-between">
           <span className="text-base font-semibold">Navigate Nexus</span>
-          <Button size="icon" variant="ghost" className="round-btn" onClick={() => onOpenChange(false)} aria-label="Close navigation">
+          <Button size="icon" variant="ghost" onClick={() => onOpenChange(false)} aria-label="Close navigation">
             ✕
           </Button>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          <Button variant="default" className="round-btn shadow-press" onClick={() => onCreateChat()}>
+          <Button variant="default" onClick={() => onCreateChat()}>
             <MessageSquarePlus className="mr-2 h-4 w-4" /> New Chat
           </Button>
           {navItems.map((item) => {
@@ -379,7 +358,7 @@ function MobileSidebarSheet({
                 key={item.label}
                 asChild
                 variant="ghost"
-                className={cn("justify-start round-btn", isRouteMatch ? "bg-[var(--app-muted)]" : undefined)}
+                className={cn("justify-start", isRouteMatch ? "bg-[var(--app-muted)]" : undefined)}
               >
                 <Link
                   to={item.to}
@@ -394,7 +373,7 @@ function MobileSidebarSheet({
             );
           })}
         </div>
-        <Separator className="my-4" />
+        <Separator className="my-3" />
         <ChatList
           chats={chats}
           activeChatId={activeChatId}
@@ -407,7 +386,7 @@ function MobileSidebarSheet({
           onRestore={onRestore}
           onDelete={onDelete}
         />
-        <Separator className="my-4" />
+        <Separator className="my-3" />
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
             {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
@@ -424,29 +403,37 @@ function MobileSidebarSheet({
 }
 
 function ProfileMenu({ profile, onOpenProfile }: { profile: StoredProfile; onOpenProfile: () => void }) {
-  const [isOpen, setOpen] = useState(false);
-
+  const navigate = useNavigate();
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="round-btn shadow-press" aria-expanded={isOpen}>
-          <Avatar className="h-8 w-8">
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2"
+          aria-label={profile.displayName}
+          title={profile.displayName}
+        >
+          <Avatar className="h-9 w-9">
             {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
             <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className="ml-2 hidden text-sm font-medium md:inline-flex">{profile.displayName}</span>
+          <span className="hidden text-sm font-semibold sm:inline">{profile.displayName}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="round-card shadow-ambient">
-        <DropdownMenuLabel className="text-xs uppercase text-muted">Workspace</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={onOpenProfile}>Profile</DropdownMenuItem>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
+        <p className="px-2 text-sm text-muted">{profile.displayName}</p>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => setOpen(false)}>Sign out (stub)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onOpenProfile}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings/appearance")}>Appearance</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings/billing")}>Billing</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate("/pricing")}>Pricing</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function sortChats(chats: ChatThread[]): ChatThread[] {
-  return [...chats].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+function sortChats(entries: ChatThread[]): ChatThread[] {
+  return [...entries].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }

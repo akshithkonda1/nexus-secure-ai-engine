@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type SystemPane = "library" | "projects" | "models" | "audit" | "encryption";
+export type SystemPane = "library" | "projects" | "models";
 
 export interface LibraryItem {
   id: string;
