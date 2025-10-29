@@ -1,0 +1,77 @@
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 20% 35%;
+  --border: 214 32% 91%;
+  --accent: 222 89% 60%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --shadow-ring: 0 0 transparent;
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --shadow-popover: 0 20px 45px rgba(15, 23, 42, 0.16);
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+.dark {
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  --muted: 215 27% 16%;
+  --muted-foreground: 215 20% 65%;
+  --border: 215 27% 30%;
+  --accent: 222 89% 66%;
+  --accent-foreground: 225 21% 11%;
+  --destructive: 0 63% 47%;
+  --destructive-foreground: 210 20% 96%;
+  --shadow-ring: 0 0 transparent;
+  --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.45);
+  --shadow-popover: 0 20px 50px rgba(15, 23, 42, 0.55);
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.bg-background {
+  background-color: hsl(var(--background));
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.border-border {
+  border-color: hsl(var(--border));
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 3px;
+}
+
+* {
+  outline-color: hsl(var(--accent));
+}
+
+:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--accent)) 45%, transparent);
+  outline: none;
+}
+
+.toaster {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1000;
+}
