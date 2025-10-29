@@ -1,13 +1,51 @@
 import { create } from "zustand";
 
-type UIState = {
-  profileOpen: boolean;
+export type SystemPane = "library" | "projects" | "models";
+
+export interface LibraryItem {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+}
+
+interface UIState {
+  sidebarCollapsed: boolean;
+  profileModalOpen: boolean;
+  systemDrawerOpen: boolean;
+  activeSystemPane: SystemPane;
+  libraryItems: LibraryItem[];
+  setSidebarCollapsed: (value: boolean) => void;
+  setProfileModalOpen: (value: boolean) => void;
+  setSystemDrawerOpen: (value: boolean) => void;
+  setActiveSystemPane: (pane: SystemPane) => void;
+  setLibraryItems: (items: LibraryItem[]) => void;
+  addLibraryItem: (item: LibraryItem) => void;
+  clearLibrary: () => void;
   openProfile: () => void;
   closeProfile: () => void;
-};
+}
 
-export const useUIState = create<UIState>(set => ({
-  profileOpen: false,
-  openProfile: () => set({ profileOpen: true }),
-  closeProfile: () => set({ profileOpen: false })
+export const useUIStore = create<UIState>((set) => ({
+  sidebarCollapsed: false,
+  profileModalOpen: false,
+  systemDrawerOpen: true,
+  activeSystemPane: "library",
+  libraryItems: [],
+  setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
+  setProfileModalOpen: (value) => set({ profileModalOpen: value }),
+  setSystemDrawerOpen: (value) => set({ systemDrawerOpen: value }),
+  setActiveSystemPane: (pane) => set({ activeSystemPane: pane }),
+  setLibraryItems: (items) => set({ libraryItems: items }),
+  addLibraryItem: (item) => set((state) => ({ libraryItems: [item, ...state.libraryItems] })),
+  clearLibrary: () => set({ libraryItems: [] }),
+  openProfile: () => set({ profileModalOpen: true }),
+  closeProfile: () => set({ profileModalOpen: false }),
 }));
+
+export function useUI() {
+  return useUIStore((state) => ({
+    openProfile: state.openProfile,
+    closeProfile: state.closeProfile,
+  }));
+}

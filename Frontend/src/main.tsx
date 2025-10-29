@@ -2,33 +2,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import App from "./App";
-import ProfileModal from "@/features/profile/ProfileModal";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
-import { AppShell } from "@/app/AppShell";
+import { AppRoutes } from "@/app/routes";
+import { ToastProvider } from "@/shared/ui/use-toast";
 import { queryClient } from "@/services/api/client";
-import "@/shared/ui/tokens.css";
 import "./index.css";
 
-const container = document.getElementById("root");
-
-if (!container) {
-  throw new Error("Nexus requires a #root element in index.html");
-}
-
-const root = ReactDOM.createRoot(container);
-
-root.render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider>
+    <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AppShell>
-            <App />
-            <ProfileModal />
-          </AppShell>
-        </BrowserRouter>
+        <ThemeProvider>
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
+        </ThemeProvider>
       </QueryClientProvider>
-    </ThemeProvider>
-  </React.StrictMode>
+    </BrowserRouter>
+  </React.StrictMode>,
 );
