@@ -1,22 +1,23 @@
 import { test, expect } from "@playwright/test";
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { Buffer } from "node:buffer";
 
 const tinyPng = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pq7ZlwAAAABJRU5ErkJggg==",
-  "base64",
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFgwJ/lBEhlwAAAABJRU5ErkJggg==",
+  "base64"
 );
 
-test("avatar can be removed to restore default", async ({ page }, testInfo) => {
+test("avatar removal restores default state", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open profile" }).click();
 
-  const filePath = path.join(testInfo.outputDir, "tiny.png");
-  await fs.mkdir(testInfo.outputDir, { recursive: true });
-  await fs.writeFile(filePath, tinyPng);
-  await page.setInputFiles("#avatar-upload", filePath);
+  await page.getByRole("button", { name: /Guest of Nexus/ }).click();
+  await page.getByRole("menuitem", { name: "Profile" }).click();
+
+  await page.getByLabel("Workspace photo").setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: tinyPng });
   await expect(page.getByText("Photo ready. Save to keep your new avatar.")).toBeVisible();
 
   await page.getByRole("button", { name: "Remove photo" }).click();
-  await expect(page.getByText("Avatar will be removed on save.")).toBeVisible();
+  await expect(page.getByText("Default avatar will be restored when you save.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator("[role='dialog']")).toHaveCount(0);
 });

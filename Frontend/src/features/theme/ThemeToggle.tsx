@@ -1,20 +1,25 @@
-import { useContext } from "react";
-import { Moon, Sun } from "lucide-react";
-import { Switch } from "@/shared/ui/switch";
-import { ThemeContext } from "@/shared/ui/theme/ThemeProvider";
+import { MoonStar, SunMedium } from "lucide-react";
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useContext(ThemeContext);
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
+
+export function ThemeToggle(): JSX.Element {
+  const { theme, setTheme } = useThemeContext();
   const isDark = theme === "dark";
+
   return (
-    <div className="inline-flex items-center gap-2 text-xs text-muted" role="group" aria-label="Toggle theme">
-      <Sun className="h-3.5 w-3.5" aria-hidden />
-      <Switch
-        checked={isDark}
-        onCheckedChange={(value) => setTheme(value ? "dark" : "light")}
-        aria-label="Toggle dark mode"
-      />
-      <Moon className="h-3.5 w-3.5" aria-hidden />
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 rounded-full border border-subtle bg-[var(--app-surface)] px-3 py-1" role="group" aria-label="Toggle theme">
+            <SunMedium className={"h-4 w-4" + (isDark ? " opacity-40" : " text-amber-500")} />
+            <Switch checked={isDark} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} aria-label="Toggle theme" />
+            <MoonStar className={"h-4 w-4" + (!isDark ? " opacity-40" : " text-indigo-400")} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>{isDark ? "Dark mode engaged" : "Light mode engaged"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

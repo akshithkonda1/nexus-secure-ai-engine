@@ -1,24 +1,39 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 const projects = [
   {
-    id: "proj-1",
-    name: "Fall Ethics Syllabus",
-    summary: "Curating debate prompts with verified citations for the semester.",
+    id: "proj-risk",
+    name: "Risk committee briefing",
+    status: "In review",
+    description: "Aggregates business mode transcripts into a weekly summary for executives.",
   },
   {
-    id: "proj-2",
-    name: "Marketing intel board",
-    summary: "Competitive battlecards synced from analyst briefings.",
+    id: "proj-stem",
+    name: "STEM lab mentor",
+    status: "Building",
+    description: "Pairs student agents with lab instrumentation for contextual help.",
+  },
+  {
+    id: "proj-compliance",
+    name: "Compliance evidence pack",
+    status: "Planning",
+    description: "Generates audit-ready change logs with human approvals in loop.",
   },
 ];
 
-export function ProjectsPane() {
+export function ProjectsPane(): JSX.Element {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {projects.map((project) => (
-        <div key={project.id} className="rounded-lg border border-subtle bg-surface/70 p-4">
-          <div className="text-sm font-semibold">{project.name}</div>
-          <p className="mt-1 text-xs text-muted">{project.summary}</p>
-        </div>
+        <Card key={project.id}>
+          <CardHeader>
+            <CardTitle className="text-base">{project.name}</CardTitle>
+            <CardDescription>{project.status}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted">{project.description}</p>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

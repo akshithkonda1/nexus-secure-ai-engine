@@ -1,37 +1,37 @@
-export type NexusMode = "student" | "business" | "nexusos";
+import type { NexusMode } from "@/shared/state/session";
 
-export interface ModeTokens {
-  name: string;
-  accent: string;
-  accentSoft: string;
-  surface: string;
-  density: "relaxed" | "compact" | "compressed";
+export interface ModeTheme {
+  name: NexusMode;
   description: string;
+  accent: string;
+  gradient: string;
+  density: "airy" | "medium" | "dense";
+  surfaceTone: string;
 }
 
-export const MODE_TOKENS: Record<NexusMode, ModeTokens> = {
+export const modeThemes: Record<NexusMode, ModeTheme> = {
   student: {
-    name: "Student",
+    name: "student",
+    description: "Curious, encouraging, and simplified for rapid learning.",
     accent: "#2563eb",
-    accentSoft: "#22d3ee",
-    surface: "Softer surfaces with layered glow",
-    density: "relaxed",
-    description: "Curated for exploratory learning with calm pacing.",
+    gradient: "linear-gradient(135deg, #2563eb, #22d3ee)",
+    density: "airy",
+    surfaceTone: "Soft surfaces with calming blues and cyan accents.",
   },
   business: {
-    name: "Business",
-    accent: "#3730a3",
-    accentSoft: "#1e293b",
-    surface: "Flat, high-contrast surfaces",
-    density: "compact",
-    description: "Structured for busy operators with higher information density.",
+    name: "business",
+    description: "Executive-ready, succinct, and focused on measurable impact.",
+    accent: "#4338ca",
+    gradient: "linear-gradient(135deg, #4338ca, #0f172a)",
+    density: "medium",
+    surfaceTone: "Confident surfaces with measured spacing and contrast.",
   },
   nexusos: {
-    name: "NexusOS",
-    accent: "linear-gradient(135deg,#6d28d9,#4338ca)",
-    accentSoft: "#4c1d95",
-    surface: "Utilitarian glass panels",
-    density: "compressed",
-    description: "The command center for orchestrating verifiable AI workstreams.",
+    name: "nexusos",
+    description: "Dense, utilitarian, and tuned for power operators.",
+    accent: "#7c3aed",
+    gradient: "linear-gradient(135deg, #8b5cf6, #3730a3)",
+    density: "dense",
+    surfaceTone: "High contrast utilitarian surfaces for rapid cognition.",
   },
 };

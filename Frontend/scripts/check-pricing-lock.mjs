@@ -1,61 +1,52 @@
 import fs from "node:fs";
 import path from "node:path";
-import vm from "node:vm";
-import { fileURLToPath } from "node:url";
+import process from "node:process";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const pricingFile = path.join(root, "src/features/pricing/PricingPage.tsx");
-const lockFile = path.join(root, "config/pricing.lock.json");
+const rootDir = process.cwd();
+const pricingFile = path.join(rootDir, "src", "features", "pricing", "PricingPage.tsx");
+const lockFile = path.join(rootDir, "config", "pricing.lock.json");
 
 const pricingSource = fs.readFileSync(pricingFile, "utf8");
-const versionMatch = pricingSource.match(/PRICING_VERSION\s*=\s*"([^"]+)"/);
-const pricesMatch = pricingSource.match(/PRICES\s*=\s*object\.freeze\((\{[\s\S]*?\})\)/i);
+const lock = JSON.parse(fs.readFileSync(lockFile, "utf8"));
+
+const versionMatch = pricingSource.match(/export const PRICING_VERSION = "([^"]+)" as const;/);
+const pricesMatch = pricingSource.match(/export const PRICES = Object.freeze\((\{[\s\S]*?\})\);/);
 
 if (!versionMatch || !pricesMatch) {
-  console.error("Unable to parse pricing constants from PricingPage.tsx");
+  console.error("Unable to parse PricingPage.tsx for version or prices.");
   process.exit(1);
 }
 
-const sandbox = {};
-const script = new vm.Script(`result = ${pricesMatch[1]}`);
-script.runInNewContext(sandbox);
-const tsPrices = sandbox.result;
-const tsVersion = versionMatch[1];
+const sourceVersion = versionMatch[1];
+const sourcePrices = Function(`return (${pricesMatch[1]})`)();
 
-const lock = JSON.parse(fs.readFileSync(lockFile, "utf8"));
+const diffMessages = [];
 
-const diff = [];
-if (lock.version !== tsVersion) {
-  diff.push(`version mismatch: ts=${tsVersion} lock=${lock.version}`);
+if (sourceVersion !== lock.version) {
+  diffMessages.push(`Version mismatch: source=${sourceVersion} lock=${lock.version}`);
 }
 
-const compare = (pathKeys, tsValue, lockValue) => {
-  if (typeof tsValue !== typeof lockValue) {
-    diff.push(`type mismatch at ${pathKeys.join(".")}`);
-    return;
-  }
-  if (typeof tsValue === "object" && tsValue !== null) {
-    for (const key of Object.keys(tsValue)) {
-      if (!(key in lockValue)) {
-        diff.push(`missing key ${[...pathKeys, key].join(".")}`);
-      } else {
-        compare([...pathKeys, key], tsValue[key], lockValue[key]);
-      }
-    }
-    for (const key of Object.keys(lockValue)) {
-      if (!(key in tsValue)) {
-        diff.push(`unexpected key ${[...pathKeys, key].join(".")}`);
-      }
-    }
-  } else if (tsValue !== lockValue) {
-    diff.push(`value mismatch at ${pathKeys.join(".")}: ${tsValue} !== ${lockValue}`);
-  }
-};
+const planKeys = new Set([...Object.keys(sourcePrices), ...Object.keys(lock.prices)]);
 
-compare(["prices"], tsPrices, lock.prices);
+for (const key of planKeys) {
+  const sourcePlan = sourcePrices[key];
+  const lockPlan = lock.prices[key];
+  if (!sourcePlan || !lockPlan) {
+    diffMessages.push(`Plan ${key} missing in ${!sourcePlan ? "source" : "lock"}`);
+    continue;
+  }
+  const cycles = new Set([...Object.keys(sourcePlan), ...Object.keys(lockPlan)]);
+  for (const cycle of cycles) {
+    const sourceValue = sourcePlan[cycle];
+    const lockValue = lockPlan[cycle];
+    if (sourceValue !== lockValue) {
+      diffMessages.push(`Mismatch for ${key}.${cycle}: source=${sourceValue} lock=${lockValue}`);
+    }
+  }
+}
 
-if (diff.length > 0) {
-  console.error("Pricing lock mismatch:\n" + diff.join("\n"));
+if (diffMessages.length > 0) {
+  console.error("Pricing lock mismatch detected:\n" + diffMessages.join("\n"));
   process.exit(1);
 }
 

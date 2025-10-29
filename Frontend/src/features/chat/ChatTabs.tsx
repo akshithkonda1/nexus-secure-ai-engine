@@ -1,57 +1,63 @@
 import { X } from "lucide-react";
-import { useSessionStore } from "../../shared/state/session";
-import { cn } from "../../shared/lib/cn";
-import { Button } from "../../shared/ui/button";
-import { useMemo } from "react";
-import { ChatRecord } from "../../services/storage/chats";
+
+import { Button } from "@/components/ui/button";
+import { useSessionStore } from "@/shared/state/session";
+import { cn } from "@/shared/lib/cn";
+import type { ChatThread } from "@/services/storage/chats";
 
 interface ChatTabsProps {
-  chats: ChatRecord[];
+  chats: ChatThread[];
+  openChatIds: string[];
   activeChatId: string | null;
   onSelect: (chatId: string) => void;
+  onCreate: () => void;
+  onClose: (chatId: string) => void;
 }
 
-export function ChatTabs({ chats, activeChatId, onSelect }: ChatTabsProps) {
-  const openChatIds = useSessionStore((state) => state.openChatIds);
-  const closeChat = useSessionStore((state) => state.closeChat);
+export function ChatTabs({ chats, openChatIds, activeChatId, onSelect, onCreate, onClose }: ChatTabsProps): JSX.Element {
+  const reorderOpenChats = useSessionStore((state) => state.reorderOpenChats);
 
-  const openChats = useMemo(() => openChatIds.map((id) => chats.find((chat) => chat.id === id)).filter(Boolean), [
-    chats,
-    openChatIds,
-  ]) as ChatRecord[];
-
-  if (openChats.length === 0) {
-    return null;
-  }
+  const handleReorder = (chatId: string) => {
+    reorderOpenChats([...openChatIds.filter((id) => id !== chatId), chatId]);
+  };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-subtle bg-surface/60 px-4 py-2">
-      {openChats.map((chat) => (
-        <button
-          key={chat.id}
-          type="button"
-          className={cn(
-            "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition",
-            activeChatId === chat.id
-              ? "border-indigo-500/60 bg-accent-soft text-white"
-              : "border-transparent bg-slate-900/10 text-muted hover:bg-slate-900/20",
-          )}
-          onClick={() => onSelect(chat.id)}
-        >
-          <span className="max-w-[160px] truncate">{chat.title}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 rounded-full p-0 text-xs"
-            onClick={(event) => {
-              event.stopPropagation();
-              closeChat(chat.id);
-            }}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </button>
-      ))}
+    <div className="flex items-center justify-between border-b border-subtle bg-[var(--app-surface)] px-4 py-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+        {openChatIds.map((chatId) => {
+          const chat = chats.find((entry) => entry.id === chatId);
+          if (!chat) {
+            return null;
+          }
+          const isActive = chatId === activeChatId;
+          return (
+            <button
+              key={chatId}
+              type="button"
+              className={cn(
+                "group flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
+                isActive ? "border-[var(--mode-accent-solid)] bg-[var(--app-muted)]" : "border-subtle text-muted"
+              )}
+              onClick={() => {
+                onSelect(chatId);
+                handleReorder(chatId);
+              }}
+            >
+              <span className="max-w-[160px] truncate">{chat.title}</span>
+              <X
+                className="h-3.5 w-3.5 cursor-pointer text-muted transition group-hover:text-primary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onClose(chatId);
+                }}
+              />
+            </button>
+          );
+        })}
+      </div>
+      <Button size="icon" variant="ghost" onClick={onCreate} aria-label="Open new chat tab">
+        +
+      </Button>
     </div>
   );
 }

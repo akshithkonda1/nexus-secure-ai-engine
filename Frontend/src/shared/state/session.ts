@@ -1,9 +1,13 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type NexusMode = "student" | "business" | "nexusos";
 export type NexusTheme = "light" | "dark";
 
-export interface SessionState {
+const THEME_KEY = "nexus.theme";
+const MODE_KEY = "nexus.mode";
+
+interface SessionState {
   mode: NexusMode;
   theme: NexusTheme;
   activeChatId: string | null;
@@ -11,76 +15,87 @@ export interface SessionState {
   setMode: (mode: NexusMode) => void;
   setTheme: (theme: NexusTheme) => void;
   setActiveChatId: (chatId: string | null) => void;
-  openChat: (chatId: string) => void;
-  closeChat: (chatId: string) => void;
-  replaceOpenChats: (chatIds: string[]) => void;
+  addOpenChatId: (chatId: string) => void;
+  closeOpenChatId: (chatId: string) => void;
+  reorderOpenChats: (chatIds: string[]) => void;
 }
 
-const DEFAULT_STATE: Pick<SessionState, "mode" | "theme" | "activeChatId" | "openChatIds"> = {
-  mode: "student",
-  theme: "light",
-  activeChatId: null,
-  openChatIds: [],
+const resolveInitialTheme = (): NexusTheme => {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const persisted = window.localStorage.getItem(THEME_KEY) as NexusTheme | null;
+  if (persisted === "light" || persisted === "dark") {
+    return persisted;
+  }
+
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+  return prefersDark ? "dark" : "light";
 };
 
-export const SESSION_STORAGE_KEY = "nexus.session";
-
-export const useSessionStore = create<SessionState>((set) => ({
-  ...DEFAULT_STATE,
-  setMode: (mode) => set({ mode }),
-  setTheme: (theme) => set({ theme }),
-  setActiveChatId: (chatId) => set({ activeChatId: chatId }),
-  openChat: (chatId) =>
-    set((state) => {
-      if (state.openChatIds.includes(chatId)) {
-        return { activeChatId: chatId };
-      }
-      return { openChatIds: [...state.openChatIds, chatId], activeChatId: chatId };
-    }),
-  closeChat: (chatId) =>
-    set((state) => {
-      const filtered = state.openChatIds.filter((id) => id !== chatId);
-      const nextActive = state.activeChatId === chatId ? filtered.at(-1) ?? null : state.activeChatId;
-      return { openChatIds: filtered, activeChatId: nextActive };
-    }),
-  replaceOpenChats: (chatIds) => set({ openChatIds: [...new Set(chatIds)] }),
-}));
-
-export type SessionSnapshot = Pick<SessionState, "mode" | "theme" | "activeChatId" | "openChatIds">;
-
-export function readPersistedSession(): SessionSnapshot | null {
+const resolveInitialMode = (): NexusMode => {
   if (typeof window === "undefined") {
-    return null;
+    return "nexusos";
   }
-  const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
-  if (!raw) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(raw) as Partial<SessionSnapshot>;
-    if (!parsed) return null;
-    const snapshot: SessionSnapshot = {
-      mode: parsed.mode === "business" || parsed.mode === "nexusos" ? parsed.mode : "student",
-      theme: parsed.theme === "dark" ? "dark" : "light",
-      activeChatId: typeof parsed.activeChatId === "string" ? parsed.activeChatId : null,
-      openChatIds: Array.isArray(parsed.openChatIds)
-        ? parsed.openChatIds.filter((id): id is string => typeof id === "string")
-        : [],
-    };
-    return snapshot;
-  } catch (error) {
-    console.warn("Failed to parse stored session", error);
-    return null;
-  }
-}
 
-export function persistSession(snapshot: SessionSnapshot): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(snapshot));
-}
+  const persisted = window.localStorage.getItem(MODE_KEY) as NexusMode | null;
+  if (persisted === "student" || persisted === "business" || persisted === "nexusos") {
+    return persisted;
+  }
 
-export function createModeChangeEvent(mode: NexusMode): void {
-  if (typeof window === "undefined") return;
-  const event = new CustomEvent<NexusMode>("nexus:mode-change", { detail: mode });
-  window.dispatchEvent(event);
-}
+  return "nexusos";
+};
+
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set, get) => ({
+      mode: resolveInitialMode(),
+      theme: resolveInitialTheme(),
+      activeChatId: null,
+      openChatIds: [],
+      setMode: (mode) => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(MODE_KEY, mode);
+        }
+        set({ mode });
+      },
+      setTheme: (theme) => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(THEME_KEY, theme);
+        }
+        set({ theme });
+      },
+      setActiveChatId: (activeChatId) => set({ activeChatId }),
+      addOpenChatId: (chatId) => {
+        const existing = get().openChatIds;
+        if (existing.includes(chatId)) {
+          set({ activeChatId: chatId });
+          return;
+        }
+        set({ openChatIds: [...existing, chatId], activeChatId: chatId });
+      },
+      closeOpenChatId: (chatId) => {
+        const filtered = get().openChatIds.filter((id) => id !== chatId);
+        let nextActive = get().activeChatId;
+        if (nextActive === chatId) {
+          nextActive = filtered.length > 0 ? filtered[filtered.length - 1] : null;
+        }
+        set({ openChatIds: filtered, activeChatId: nextActive });
+      },
+      reorderOpenChats: (chatIds) => {
+        set({ openChatIds: chatIds });
+      },
+    }),
+    {
+      name: "nexus.session",
+      storage: createJSONStorage(() => window.localStorage),
+      partialize: (state) => ({
+        mode: state.mode,
+        theme: state.theme,
+        activeChatId: state.activeChatId,
+        openChatIds: state.openChatIds,
+      }),
+    }
+  )
+);
