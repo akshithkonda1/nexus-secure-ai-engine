@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-test("unknown routes render not found boundary", async ({ page }) => {
+test("unknown route shows 404 boundary", async ({ page }) => {
   await page.goto("/does-not-exist");
-  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  await expect(page.getByText("We searched every channel.")).toBeVisible();
 });

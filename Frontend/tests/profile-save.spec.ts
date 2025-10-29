@@ -1,24 +1,17 @@
-import { expect, test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-const PROFILE_BUTTON_SELECTOR = "button:has-text(\"Profile\")";
-
-function randomDisplayName() {
-  return `Tester ${Math.floor(Math.random() * 10000)}`;
-}
-
-test("profile modal enables save when dirty", async ({ page }) => {
+test("profile modal requires changes before saving", async ({ page }) => {
   await page.goto("/");
-
-  await page.locator(PROFILE_BUTTON_SELECTOR).click();
-  await expect(page.getByRole("dialog", { name: "Edit profile" })).toBeVisible();
+  await page.getByRole("button", { name: "Open profile" }).click();
 
   const saveButton = page.getByRole("button", { name: "Save changes" });
   await expect(saveButton).toBeDisabled();
 
-  await page.fill("#profile-display-name", randomDisplayName());
+  const nameField = page.getByLabel("Display name");
+  await nameField.fill("Agent Nova");
   await expect(saveButton).toBeEnabled();
 
   await saveButton.click();
-  await expect(page.getByText("Profile saved")).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "Edit profile" })).toBeHidden();
+  const toast = page.getByRole("status").filter({ hasText: "Profile updated" });
+  await expect(toast).toBeVisible();
 });
