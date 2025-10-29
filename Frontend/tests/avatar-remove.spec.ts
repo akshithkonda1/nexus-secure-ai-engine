@@ -1,29 +1,22 @@
-import { expect, test } from "@playwright/test";
-import { promises as fs } from "fs";
-import path from "path";
+import { test, expect } from "@playwright/test";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
-const SMALL_PNG =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAoMBgQf7I94AAAAASUVORK5CYII=";
+const tinyPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pq7ZlwAAAABJRU5ErkJggg==",
+  "base64",
+);
 
-async function createTempAvatar(testName: string) {
-  const filePath = path.join(process.cwd(), `.playwright-${testName}-avatar.png`);
-  await fs.writeFile(filePath, Buffer.from(SMALL_PNG, "base64"));
-  return filePath;
-}
-
-test("avatar can be uploaded and removed", async ({ page }, testInfo) => {
+test("avatar can be removed to restore default", async ({ page }, testInfo) => {
   await page.goto("/");
-  await page.locator('button:has-text("Profile")').click();
-  const dialog = page.getByRole("dialog", { name: "Edit profile" });
-  await expect(dialog).toBeVisible();
+  await page.getByRole("button", { name: "Open profile" }).click();
 
-  const avatarPath = await createTempAvatar(testInfo.title.replace(/\s+/g, "-"));
-  await page.setInputFiles("#profile-avatar-input", avatarPath);
-  await expect(page.locator("text=Photo ready. Save to keep your new avatar.")).toBeVisible();
+  const filePath = path.join(testInfo.outputDir, "tiny.png");
+  await fs.mkdir(testInfo.outputDir, { recursive: true });
+  await fs.writeFile(filePath, tinyPng);
+  await page.setInputFiles("#avatar-upload", filePath);
+  await expect(page.getByText("Photo ready. Save to keep your new avatar.")).toBeVisible();
 
-  await page.locator('button:has-text("Remove photo")').click();
-  await expect(page.locator("text=Photo ready. Save to keep your new avatar.")).toBeVisible();
-
-  await page.getByRole("button", { name: "Cancel" }).click();
-  await expect(dialog).toBeHidden();
+  await page.getByRole("button", { name: "Remove photo" }).click();
+  await expect(page.getByText("Avatar will be removed on save.")).toBeVisible();
 });

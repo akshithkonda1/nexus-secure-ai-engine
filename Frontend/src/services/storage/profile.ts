@@ -1,54 +1,42 @@
-export type StoredProfile = {
-  id: string;
+export interface ProfileRecord {
   displayName: string;
-  avatarDataUrl?: string | null;
-  email?: string;
-  bio?: string;
-  updatedAt: number;
+  avatarUrl: string | null;
+}
+
+const PROFILE_STORAGE_KEY = "nexus.profile";
+
+const DEFAULT_PROFILE: ProfileRecord = {
+  displayName: "Researcher",
+  avatarUrl: null,
 };
 
-const STORAGE_KEY = "nexus.profile";
-
-const defaultProfile: StoredProfile = {
-  id: "local-user",
-  displayName: "Anonymous Researcher",
-  avatarDataUrl: null,
-  email: "explorer@nexus.ai",
-  bio: "",
-  updatedAt: Date.now()
-};
-
-export function readProfile(): StoredProfile {
+export function readProfile(): ProfileRecord {
   if (typeof window === "undefined") {
-    return defaultProfile;
+    return DEFAULT_PROFILE;
   }
+  const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+  if (!raw) return DEFAULT_PROFILE;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProfile;
-    const parsed = JSON.parse(raw) as StoredProfile;
+    const parsed = JSON.parse(raw) as Partial<ProfileRecord>;
     return {
-      ...defaultProfile,
-      ...parsed,
-      avatarDataUrl: parsed.avatarDataUrl ?? null
+      displayName: typeof parsed.displayName === "string" && parsed.displayName.trim().length >= 2
+        ? parsed.displayName
+        : DEFAULT_PROFILE.displayName,
+      avatarUrl: typeof parsed.avatarUrl === "string" ? parsed.avatarUrl : null,
     };
   } catch (error) {
-    console.warn("Failed to parse profile from storage", error);
-    return defaultProfile;
+    console.warn("Failed to read profile", error);
+    return DEFAULT_PROFILE;
   }
 }
 
-export function writeProfile(profile: StoredProfile): StoredProfile {
-  const record: StoredProfile = {
-    ...profile,
-    updatedAt: Date.now()
-  };
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-  }
-  return record;
+export function writeProfile(profile: ProfileRecord): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
 }
 
-export function clearProfileAvatar() {
-  const current = readProfile();
-  writeProfile({ ...current, avatarDataUrl: null });
+export function clearProfileAvatar(): void {
+  if (typeof window === "undefined") return;
+  const profile = readProfile();
+  writeProfile({ ...profile, avatarUrl: null });
 }

@@ -1,50 +1,42 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { z } from "zod";
+import limitsJson from "../../config/limits.json";
 
 const limitsSchema = z.object({
   academic: z.object({
-    studyCreditsPerDay: z.number(),
-    cardsPerDeck: z.number(),
-    examBurstPerDay: z.number(),
-    examBurstDays: z.number(),
-    concurrency: z.number()
+    studyCreditsPerDay: z.number().int().positive(),
+    cardsPerDeck: z.number().int().positive(),
+    examBurstPerDay: z.number().int().positive(),
+    examBurstDays: z.number().int().positive(),
+    concurrency: z.number().int().positive(),
   }),
   premium: z.object({
     priority: z.boolean(),
     advancedPrompts: z.boolean(),
     modelCompare: z.boolean(),
-    confidenceScores: z.boolean()
+    confidenceScores: z.boolean(),
   }),
   pro: z.object({
     api: z.boolean(),
     batch: z.boolean(),
-    teamSeatsMin: z.number(),
-    teamSeatsMax: z.number(),
+    teamSeatsMin: z.number().int().positive(),
+    teamSeatsMax: z.number().int().positive(),
     webhooks: z.boolean(),
-    logExports: z.boolean()
-  })
+    logExports: z.boolean(),
+  }),
 });
 
 export type PlanLimits = z.infer<typeof limitsSchema>;
 
-const LIMITS_URL = new URL("../../config/limits.json", import.meta.url).href;
+let cachedLimits: PlanLimits | null = null;
 
-export function usePlanLimits() {
-  const query = useQuery<PlanLimits>({
-    queryKey: ["plan-limits"],
-    queryFn: async () => {
-      const response = await fetch(LIMITS_URL);
-      if (!response.ok) {
-        throw new Error("Failed to load plan limits");
-      }
-      const data = await response.json();
-      return limitsSchema.parse(data);
-    }
-  });
+function parseLimits(): PlanLimits {
+  if (!cachedLimits) {
+    cachedLimits = limitsSchema.parse(limitsJson);
+  }
+  return cachedLimits;
+}
 
-  return {
-    limits: query.data,
-    isLoading: query.isLoading,
-    error: query.error
-  };
+export function usePlanLimits(): PlanLimits {
+  return useMemo(() => parseLimits(), []);
 }

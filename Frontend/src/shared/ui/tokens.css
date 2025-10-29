@@ -1,77 +1,136 @@
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 20% 35%;
-  --border: 214 32% 91%;
-  --accent: 222 89% 60%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --shadow-ring: 0 0 transparent;
-  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.12);
-  --shadow-popover: 0 20px 45px rgba(15, 23, 42, 0.16);
-  --radius-lg: 1rem;
-  --radius-md: 0.75rem;
-  --radius-sm: 0.5rem;
+  color-scheme: light;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --transition-base: 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-.dark {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --muted: 215 27% 16%;
-  --muted-foreground: 215 20% 65%;
-  --border: 215 27% 30%;
-  --accent: 222 89% 66%;
-  --accent-foreground: 225 21% 11%;
-  --destructive: 0 63% 47%;
-  --destructive-foreground: 210 20% 96%;
-  --shadow-ring: 0 0 transparent;
-  --shadow-card: 0 18px 40px rgba(15, 23, 42, 0.45);
-  --shadow-popover: 0 20px 50px rgba(15, 23, 42, 0.55);
+html[data-theme="light"] {
+  color-scheme: light;
+  --color-app-bg: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-surface-subtle: rgba(255, 255, 255, 0.72);
+  --color-text-primary: #0f172a;
+  --color-text-muted: #475569;
+  --color-border: rgba(148, 163, 184, 0.45);
+  --color-border-strong: rgba(71, 85, 105, 0.6);
+  --color-muted: rgba(148, 163, 184, 0.22);
+  --color-elevated: rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-app-bg: #0b1220;
+  --color-surface: rgba(12, 18, 32, 0.92);
+  --color-surface-subtle: rgba(15, 23, 42, 0.65);
+  --color-text-primary: #f8fafc;
+  --color-text-muted: #cbd5f5;
+  --color-border: rgba(99, 102, 241, 0.28);
+  --color-border-strong: rgba(165, 180, 252, 0.45);
+  --color-muted: rgba(79, 70, 229, 0.18);
+  --color-elevated: rgba(99, 102, 241, 0.25);
+}
+
+html[data-mode="student"] {
+  --color-accent: #2563eb;
+  --color-accent-soft: rgba(14, 165, 233, 0.18);
+  --color-accent-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(8, 145, 178, 0.9));
+  --density-factor: 1;
+}
+
+html[data-mode="business"] {
+  --color-accent: #4338ca;
+  --color-accent-soft: rgba(79, 70, 229, 0.18);
+  --color-accent-gradient: linear-gradient(135deg, rgba(79, 70, 229, 0.96), rgba(30, 41, 59, 0.92));
+  --density-factor: 0.92;
+}
+
+html[data-mode="nexusos"] {
+  --color-accent: #6d28d9;
+  --color-accent-soft: rgba(139, 92, 246, 0.18);
+  --color-accent-gradient: linear-gradient(135deg, rgba(109, 40, 217, 0.95), rgba(59, 7, 100, 0.85));
+  --density-factor: 0.88;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  margin: 0;
+  background: var(--color-app-bg);
+  color: var(--color-text-primary);
+  min-height: 100vh;
 }
 
-.bg-background {
-  background-color: hsl(var(--background));
-}
-
-.text-foreground {
-  color: hsl(var(--foreground));
-}
-
-.text-muted-foreground {
-  color: hsl(var(--muted-foreground));
-}
-
-.border-border {
-  border-color: hsl(var(--border));
-}
-
-.focus-ring:focus-visible {
-  outline: 2px solid hsl(var(--accent));
-  outline-offset: 3px;
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 * {
-  outline-color: hsl(var(--accent));
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.surface {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-subtle {
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-md);
+}
+
+.border-subtle {
+  border: 1px solid var(--color-border);
+}
+
+.border-strong {
+  border: 1px solid var(--color-border-strong);
+}
+
+.bg-app {
+  background: var(--color-app-bg);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.bg-accent-soft {
+  background: var(--color-accent-soft);
+}
+
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0), 0 0 0 4px rgba(59, 130, 246, 0.4);
 }
 
 :focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, hsl(var(--accent)) 45%, transparent);
   outline: none;
+  box-shadow: 0 0 0 2px var(--color-app-bg), 0 0 0 4px var(--color-accent);
+  transition: box-shadow var(--transition-base);
 }
 
-.toaster {
-  position: fixed;
-  top: 1.25rem;
-  right: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  z-index: 1000;
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
