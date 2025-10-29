@@ -64,7 +64,7 @@ html, body, #root { height: 100%; margin: 0; }
   overscroll-behavior: contain;
   background: radial-gradient(circle at top left, rgba(99, 102, 241, .08), transparent 55%);
 }
-.workspace-section { display: flex; flex-direction: column; gap: 20px; min-width: 100%; }
+.workspace-section { display: flex; flex-direction: column; gap: 20px; min-width: 840px; }
 .workspace-modal-header-actions { display: flex; gap: 12px; align-items: center; }
 .workspace-modal-close {
   width: 40px;
@@ -136,61 +136,6 @@ html, body, #root { height: 100%; margin: 0; }
 .workspace-overview-label { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(148, 163, 184, .75); }
 .workspace-overview-value { font-size: 1.45rem; font-weight: 600; letter-spacing: -.01em; color: #f8fafc; }
 .workspace-overview-hint { font-size: .78rem; color: rgba(148, 163, 184, .75); }
-
-.workspace-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 18px;
-  border: 1px solid rgba(148, 163, 184, .2);
-  background: rgba(15, 23, 42, .65);
-  padding: 16px 18px;
-  gap: 16px;
-}
-
-.workspace-toggle-content { display: flex; flex-direction: column; gap: 6px; }
-.workspace-toggle-label { font-size: .9rem; font-weight: 600; }
-
-.workspace-toggle-button {
-  width: 56px;
-  height: 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, .35);
-  background: rgba(30, 41, 59, .75);
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  transition: background .25s ease, border-color .25s ease;
-  position: relative;
-  cursor: pointer;
-}
-
-.workspace-toggle-button.is-active {
-  background: linear-gradient(135deg, rgba(129, 140, 248, .9), rgba(56, 189, 248, .85));
-  border-color: transparent;
-}
-
-.workspace-toggle-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, .88);
-  transition: transform .25s ease, background .25s ease;
-}
-
-.workspace-toggle-button.is-active .workspace-toggle-thumb {
-  transform: translateX(26px);
-  background: #0f172a;
-}
-
-.workspace-toggle-button:not(.is-active) .workspace-toggle-thumb {
-  transform: translateX(0);
-}
-
-.workspace-toggle-button:focus-visible {
-  outline: 2px solid rgba(129, 140, 248, .85);
-  outline-offset: 3px;
-}
 
 @media (max-width: 600px) {
   .workspace-modal-backdrop { padding: 24px 12px; }
