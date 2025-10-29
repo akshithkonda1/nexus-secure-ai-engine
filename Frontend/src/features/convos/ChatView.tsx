@@ -1,11 +1,13 @@
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Archive, Download, Moon, Sun, Trash2, Paperclip, X, Settings, UserCircle2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Archive, Download, Trash2, Paperclip, X, Settings, UserCircle2 } from "lucide-react";
 import { useConversations } from "./useConversations";
 import { askJSON, askSSE } from "./api";
 import { mdToHtml } from "./md";
 import type { Message, AttachmentMeta } from "./types";
 import { useNavigationGuards } from "./useNavigationGuards";
-import { readProfile, writeProfile, type UserProfile } from "../../state/profile";
+import { NEW_CHAT_EVENT } from "@/app/AppShell";
+import { useProfile } from "@/shared/hooks/useProfile";
+import { useUIState } from "@/shared/state/ui";
 import "../../styles/nexus-convos.css";
 
 const uid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -14,8 +16,6 @@ const MAX_FILES = 10;
 const MAX_EACH = 1_000_000;
 const MAX_TOTAL = 5_000_000;
 const TEXT_LIKE = /\.(txt|md|json|csv|js|ts|py|html|css)$/i;
-
-const ProfileModal = React.lazy(() => import("../../components/modals/ProfileModal"));
 
 function isTextLike(file: File) {
   return TEXT_LIKE.test(file.name) || file.type.startsWith("text/");
@@ -56,22 +56,6 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
     purgeAllTrash
   } = useConversations();
 
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined" || typeof document === "undefined") {
-      return "light";
-    }
-    const root = document.documentElement;
-    const existing = root?.dataset?.theme;
-    if (existing === "dark" || existing === "light") {
-      return existing;
-    }
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
-  });
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
   useEffect(() => {
     const last = sessionStorage.getItem("nx.currentId");
     if (last) setCurrentId(last);
@@ -86,9 +70,20 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
 
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(() => readProfile());
+  const { profile: storedProfile } = useProfile();
+  const { openProfile } = useUIState();
+  const profile = useMemo(
+    () =>
+      storedProfile ?? {
+        id: "local-user",
+        displayName: "Nexus Explorer",
+        avatarDataUrl: null,
+        email: "explorer@nexus.ai",
+        bio: "",
+        updatedAt: Date.now()
+      },
+    [storedProfile]
+  );
 
   const activeConvIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -282,24 +277,21 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
   const archived = useMemo(() => convos.filter(c => c.status === "archived"), [convos]);
   const trash = useMemo(() => convos.filter(c => c.status === "trash"), [convos]);
 
-  const handleProfileChange = (next: UserProfile) => {
-    setProfile(writeProfile(next));
-  };
-
-  const handleDeleteAccount = (feedback: string | null) => {
-    console.info("Account deletion requested", { feedback });
-    setProfileOpen(false);
-  };
-
-  const handleUpgradePlan = () => {
-    alert("Upgrade workflow coming soon! Our team has been notified.");
-  };
-
-  const handleStartNewChat = async () => {
+  const handleStartNewChat = useCallback(async () => {
     const c = await startNew();
     setCurrentId(c.id);
     setFiles([]);
-  };
+  }, [setCurrentId, startNew]);
+
+  useEffect(() => {
+    const handler = () => {
+      void handleStartNewChat();
+    };
+    window.addEventListener(NEW_CHAT_EVENT, handler);
+    return () => {
+      window.removeEventListener(NEW_CHAT_EVENT, handler);
+    };
+  }, [handleStartNewChat]);
 
   return (
     <div className="nx-wrap">
@@ -439,14 +431,6 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
             <button
               type="button"
               className="nx-top-icon"
-              onClick={() => setTheme(t => (t === "dark" ? "light" : "dark"))}
-              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <button
-              type="button"
-              className="nx-top-icon"
               onClick={onOpenSettings}
               aria-label="Open workspace settings"
             >
@@ -455,13 +439,7 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
             <button
               type="button"
               className="nx-top-avatar"
-              onClick={() => setProfileOpen(true)}
-              onMouseEnter={() => {
-                void import("../../components/modals/ProfileModal");
-              }}
-              onFocus={() => {
-                void import("../../components/modals/ProfileModal");
-              }}
+              onClick={openProfile}
               aria-label="Open profile"
             >
               {profile.avatarDataUrl ? (
@@ -488,6 +466,14 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
                   </button>
                   <button type="button" onClick={() => setInput("Draft a concise email about…")}>
                     Draft an email
+                  </button>
+                  <button
+                    type="button"
+                    className="chip"
+                    data-testid="create-study-pack"
+                    onClick={() => alert("Dummy study pack ready to review.")}
+                  >
+                    Create dummy study pack
                   </button>
                 </div>
               </div>
@@ -581,18 +567,6 @@ export default function ChatView({ onOpenSettings }: ChatViewProps) {
         </form>
       </main>
 
-      <Suspense fallback={null}>
-        {profileOpen && (
-          <ProfileModal
-            open={profileOpen}
-            onClose={() => setProfileOpen(false)}
-            profile={profile}
-            onProfileChange={handleProfileChange}
-            onDeleteAccount={handleDeleteAccount}
-            onUpgradePlan={handleUpgradePlan}
-          />
-        )}
-      </Suspense>
     </div>
   );
 }
