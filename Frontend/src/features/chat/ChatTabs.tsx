@@ -35,8 +35,8 @@ export function ChatTabs({ chats, openChatIds, activeChatId, onSelect, onCreate,
               key={chatId}
               type="button"
               className={cn(
-                "group flex shrink-0 items-center gap-2 round-btn border px-3 py-1.5 text-sm shadow-ambient",
-                isActive ? "border-[var(--mode-accent-solid)] bg-[var(--app-muted)] text-primary" : "border-subtle/60 text-muted"
+                "group flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
+                isActive ? "border-[var(--mode-accent-solid)] bg-[var(--app-muted)]" : "border-subtle text-muted"
               )}
               onClick={() => {
                 onSelect(chatId);
@@ -55,7 +55,7 @@ export function ChatTabs({ chats, openChatIds, activeChatId, onSelect, onCreate,
           );
         })}
       </div>
-      <Button size="icon" variant="ghost" className="round-btn shadow-press" onClick={onCreate} aria-label="Open new chat tab">
+      <Button size="icon" variant="ghost" onClick={onCreate} aria-label="Open new chat tab">
         +
       </Button>
     </div>

@@ -2,8 +2,6 @@ import { BookOpen, Briefcase, Cpu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/components/ui/use-toast";
-import { logEvent } from "@/shared/lib/audit";
 import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
 const modes = [
@@ -29,12 +27,9 @@ const modes = [
 
 export function ModeToggle(): JSX.Element {
   const { mode, setMode } = useThemeContext();
-  const { push } = useToast();
 
   const handleSelect = (value: (typeof modes)[number]["value"]) => {
     setMode(value);
-    logEvent("mode:change", { to: value });
-    push({ title: `${labelFor(value)} mode on`, description: "Workspace tone updated across Nexus." });
     window.dispatchEvent(
       new CustomEvent("nexus-mode-change", {
         detail: { mode: value },
@@ -44,7 +39,7 @@ export function ModeToggle(): JSX.Element {
 
   return (
     <TooltipProvider>
-      <div className="flex round-card border border-subtle bg-[var(--app-surface)] p-1 shadow-ambient">
+      <div className="flex rounded-xl border border-subtle bg-[var(--app-surface)] p-1">
         {modes.map((option) => {
           const Icon = option.icon;
           const isActive = option.value === mode;
@@ -54,7 +49,7 @@ export function ModeToggle(): JSX.Element {
                 <Button
                   type="button"
                   variant={isActive ? "default" : "ghost"}
-                  className="flex h-9 flex-col items-center justify-center px-3 text-xs round-btn"
+                  className="flex h-9 flex-col items-center justify-center px-3 text-xs"
                   aria-pressed={isActive}
                   onClick={() => handleSelect(option.value)}
                 >
@@ -71,8 +66,4 @@ export function ModeToggle(): JSX.Element {
       </div>
     </TooltipProvider>
   );
-}
-
-function labelFor(value: (typeof modes)[number]["value"]) {
-  return modes.find((mode) => mode.value === value)?.label ?? "Nexus";
 }
