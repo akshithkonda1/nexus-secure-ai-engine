@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node ./scripts/ensure-deps.mjs",
     "dev": "vite",
+    "prebuild": "node ./scripts/ensure-deps.mjs",
     "build": "tsc -b && vite build",
+    "prepreview": "node ./scripts/ensure-deps.mjs",
     "preview": "vite preview --port 5173",
+    "pretest": "node ./scripts/ensure-deps.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint --config .eslintrc.cjs src --ext .ts,.tsx",
