@@ -1,20 +1,52 @@
-import { useUIStore } from "../../shared/state/ui";
+import { useMemo } from "react";
 
-export function LibraryPane() {
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUIStore, type LibraryItem } from "@/shared/state/ui";
+
+type LibraryEntry = LibraryItem;
+
+const starterPacks: LibraryEntry[] = [
+  {
+    id: "starter-astronomy",
+    title: "Astronomy debate pack",
+    createdAt: new Date().toISOString(),
+    summary: "Student mode agents explain stellar evolution with visuals and analogies.",
+  },
+  {
+    id: "starter-ethics",
+    title: "Ethics board brief",
+    createdAt: new Date().toISOString(),
+    summary: "Business mode triages ethical risk scenarios for AI deployments.",
+  },
+];
+
+export function LibraryPane(): JSX.Element {
   const items = useUIStore((state) => state.libraryItems);
+  const data = useMemo<LibraryEntry[]>(() => {
+    if (items.length === 0) {
+      return starterPacks;
+    }
+    return [...items, ...starterPacks].reduce<LibraryEntry[]>((unique, item) => {
+      if (!unique.some((existing) => existing.id === item.id)) {
+        unique.push(item);
+      }
+      return unique;
+    }, []);
+  }, [items]);
+
   return (
-    <div className="flex flex-col gap-3">
-      {items.length === 0 ? (
-        <p className="text-sm text-muted">No saved packs yet. Create one from quick actions.</p>
-      ) : (
-        items.map((item) => (
-          <div key={item.id} className="rounded-lg border border-subtle bg-surface/70 p-4">
-            <div className="text-sm font-semibold">{item.title}</div>
-            <div className="text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</div>
-            <p className="mt-2 text-xs text-muted/80">{item.description}</p>
-          </div>
-        ))
-      )}
+    <div className="space-y-4">
+      {data.map((pack) => (
+        <Card key={pack.id}>
+          <CardHeader>
+            <CardTitle className="text-base">{pack.title}</CardTitle>
+            <CardDescription>{new Date(pack.createdAt).toLocaleString()}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted">{pack.summary}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

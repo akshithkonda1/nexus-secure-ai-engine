@@ -1,143 +1,439 @@
-import { useEffect, useMemo } from "react";
-import { BookOpen, BriefcaseBusiness, Cpu, Library, MessageCircle, Settings, Sparkles, SquarePlus } from "lucide-react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { cn } from "@/shared/lib/cn";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { Menu, MessageSquarePlus, Search, Settings, Sparkles } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ModeToggle } from "@/features/mode/ModeToggle";
 import { ThemeToggle } from "@/features/theme/ThemeToggle";
 import { ProfileModal } from "@/features/profile/ProfileModal";
-import { Toaster } from "@/shared/ui/use-toast";
-import { useUI, useUIStore } from "@/shared/state/ui";
-import { createChat } from "@/services/storage/chats";
-import { useSessionStore } from "@/shared/state/session";
+import { ChatList } from "@/features/chat/ChatList";
 import { SystemDrawer } from "@/features/system/SystemDrawer";
-import { TooltipProvider } from "@/shared/ui/tooltip";
+import { useUIStore } from "@/shared/state/ui";
+import { useSessionStore } from "@/shared/state/session";
+import { createChat, deleteChatPermanently, listChats, setChatStatus, type ChatThread } from "@/services/storage/chats";
+import { getStoredProfile, type StoredProfile } from "@/services/storage/profile";
+import { cn } from "@/shared/lib/cn";
 
-interface NavItem {
-  label: string;
-  icon: React.ReactNode;
-  to: string;
-  onClick?: () => void;
+export interface AppOutletContext {
+  chats: ChatThread[];
+  refreshChats: () => void;
+  createAndOpenChat: () => ChatThread;
+  selectChat: (chatId: string) => void;
 }
 
-export function AppShell() {
-  const navigate = useNavigate();
+export function useAppContext(): AppOutletContext {
+  return useOutletContext<AppOutletContext>();
+}
+
+export function AppShell(): JSX.Element {
   const location = useLocation();
-  const { openProfile } = useUI();
-  const setActivePane = useUIStore((state) => state.setActiveSystemPane);
-  const setSystemDrawerOpen = useUIStore((state) => state.setSystemDrawerOpen);
-  const openChat = useSessionStore((state) => state.openChat);
-  const mode = useSessionStore((state) => state.mode);
+  const navigate = useNavigate();
+  const openProfileModal = useUIStore((state) => state.openProfileModal);
+  const openSystemDrawer = useUIStore((state) => state.openSystemDrawer);
+  const addOpenChatId = useSessionStore((state) => state.addOpenChatId);
+  const setActiveChatId = useSessionStore((state) => state.setActiveChatId);
+  const activeChatId = useSessionStore((state) => state.activeChatId);
+  const closeOpenChatId = useSessionStore((state) => state.closeOpenChatId);
+
+  const [profile, setProfile] = useState<StoredProfile>(() => getStoredProfile());
+  const [navSheetOpen, setNavSheetOpen] = useState(false);
+  const [chats, setChats] = useState<ChatThread[]>(() => sortChats(listChats()));
+
+  const refreshChats = useCallback(() => {
+    setChats(sortChats(listChats()));
+  }, []);
 
   useEffect(() => {
-    if (location.pathname === "/profile") {
-      openProfile();
+    if (!activeChatId && chats.length > 0) {
+      const first = chats[0];
+      setActiveChatId(first.id);
+      addOpenChatId(first.id);
     }
-  }, [location.pathname, openProfile]);
+  }, [activeChatId, addOpenChatId, chats, setActiveChatId]);
 
-  const navItems = useMemo<NavItem[]>(
+  useEffect(() => {
+    const listener = () => {
+      setProfile(getStoredProfile());
+    };
+
+    window.addEventListener("nexus-profile-updated", listener);
+    return () => {
+      window.removeEventListener("nexus-profile-updated", listener);
+    };
+  }, []);
+
+  const createAndOpenChat = useCallback(() => {
+    const chat = createChat();
+    refreshChats();
+    addOpenChatId(chat.id);
+    setActiveChatId(chat.id);
+    return chat;
+  }, [addOpenChatId, refreshChats, setActiveChatId]);
+
+  const selectChat = useCallback(
+    (chatId: string) => {
+      addOpenChatId(chatId);
+      setActiveChatId(chatId);
+      if (location.pathname !== "/") {
+        navigate("/");
+      }
+    },
+    [addOpenChatId, setActiveChatId, navigate, location.pathname]
+  );
+
+  const handleArchive = useCallback(
+    (chatId: string) => {
+      setChatStatus(chatId, "archived");
+      closeOpenChatId(chatId);
+      refreshChats();
+    },
+    [closeOpenChatId, refreshChats]
+  );
+
+  const handleMoveToTrash = useCallback(
+    (chatId: string) => {
+      setChatStatus(chatId, "trash");
+      closeOpenChatId(chatId);
+      refreshChats();
+    },
+    [closeOpenChatId, refreshChats]
+  );
+
+  const handleRestore = useCallback(
+    (chatId: string) => {
+      setChatStatus(chatId, "active");
+      refreshChats();
+    },
+    [refreshChats]
+  );
+
+  const handleDelete = useCallback(
+    (chatId: string) => {
+      deleteChatPermanently(chatId);
+      closeOpenChatId(chatId);
+      refreshChats();
+    },
+    [closeOpenChatId, refreshChats]
+  );
+
+  const navItems = useMemo(
     () => [
-      { label: "Chats", icon: <MessageCircle className="h-4 w-4" />, to: "/" },
+      { label: "Chats", to: "/", icon: <MessageSquarePlus className="mr-2 h-4 w-4" /> },
       {
         label: "Projects",
-        icon: <BriefcaseBusiness className="h-4 w-4" />,
         to: "/",
-        onClick: () => {
-          setSystemDrawerOpen(true);
-          setActivePane("projects");
-        },
+        icon: <Sparkles className="mr-2 h-4 w-4" />,
+        onSelect: () => openSystemDrawer("projects"),
       },
       {
         label: "Library",
-        icon: <Library className="h-4 w-4" />,
         to: "/",
-        onClick: () => {
-          setSystemDrawerOpen(true);
-          setActivePane("library");
-        },
+        icon: <Sparkles className="mr-2 h-4 w-4" />,
+        onSelect: () => openSystemDrawer("library"),
       },
       {
         label: "Models",
-        icon: <Cpu className="h-4 w-4" />,
         to: "/",
-        onClick: () => {
-          setSystemDrawerOpen(true);
-          setActivePane("models");
-        },
+        icon: <Sparkles className="mr-2 h-4 w-4" />,
+        onSelect: () => openSystemDrawer("models"),
       },
-      { label: "Pricing", icon: <Sparkles className="h-4 w-4" />, to: "/pricing" },
-      { label: "Settings", icon: <Settings className="h-4 w-4" />, to: "/settings" },
+      { label: "Pricing", to: "/pricing", icon: <Sparkles className="mr-2 h-4 w-4" /> },
+      { label: "Settings", to: "/settings", icon: <Settings className="mr-2 h-4 w-4" /> },
     ],
-    [setActivePane, setSystemDrawerOpen],
+    [openSystemDrawer]
   );
 
-  const handleNewChat = () => {
-    const chat = createChat(mode);
-    openChat(chat.id);
-    navigate("/");
-  };
+  const appOutletContext: AppOutletContext = useMemo(
+    () => ({ chats, refreshChats, createAndOpenChat, selectChat }),
+    [chats, refreshChats, createAndOpenChat, selectChat]
+  );
 
   return (
-    <TooltipProvider delayDuration={120}>
-      <div className="bg-app text-base text-inherit">
-        <div className="flex min-h-screen">
-          <aside className="flex w-[260px] flex-col border-r border-subtle bg-surface/80 p-6 backdrop-blur-lg max-sm:hidden">
-            <div className="mb-8 flex flex-col gap-2">
-              <span className="text-xs uppercase tracking-wide text-muted">Nexus — Adaptive AI Workspace</span>
-              <strong className="text-lg">Navigate the truth</strong>
-            </div>
-            <Button onClick={handleNewChat} variant="primary" className="mb-6 w-full">
-              <SquarePlus className="h-4 w-4" /> New chat
+    <div className="flex min-h-screen bg-app text-primary">
+      <DesktopSidebar
+        profile={profile}
+        chats={chats}
+        navItems={navItems}
+        onCreateChat={createAndOpenChat}
+        onSelectChat={selectChat}
+        onArchive={handleArchive}
+        onTrash={handleMoveToTrash}
+        onRestore={handleRestore}
+        onDelete={handleDelete}
+        currentPath={location.pathname}
+      />
+
+      <main className="flex flex-1 flex-col">
+        <header className="flex h-14 items-center justify-between border-b border-subtle bg-[var(--app-surface)] px-4">
+          <div className="flex items-center gap-2">
+            <Button className="lg:hidden" size="icon" variant="ghost" onClick={() => setNavSheetOpen(true)} aria-label="Open navigation">
+              <Menu className="h-5 w-5" />
             </Button>
-            <nav className="flex flex-col gap-1">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.label}
-                  to={item.to}
-                  onClick={item.onClick}
-                  className={({ isActive }) =>
-                    cn(
-                      "group inline-flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted transition hover:bg-accent-soft hover:text-white",
-                      (isActive && item.to !== "/") || (item.to === "/" && location.pathname === "/")
-                        ? "ring-2 ring-indigo-500/60 text-white bg-accent-soft"
-                        : undefined,
-                    )
-                  }
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          </aside>
-          <div className="flex flex-1 flex-col">
-            <header className="flex h-14 items-center justify-between border-b border-subtle bg-surface/70 px-6 backdrop-blur">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold">Nexus.ai Workspace</span>
-                <Input placeholder="Search (⌘K)" className="h-9 w-64" aria-label="Search" />
-              </div>
-              <div className="flex items-center gap-2">
-                <ModeToggle />
-                <ThemeToggle />
-                <Button variant="ghost" size="sm" onClick={openProfile} aria-label="Open profile">
-                  <BookOpen className="h-4 w-4" />
-                </Button>
-              </div>
-            </header>
-            <main className="flex flex-1">
-              <div className="flex min-h-full flex-1 flex-col overflow-hidden">
-                <Outlet />
-              </div>
-              <SystemDrawer />
-            </main>
+            <span className="hidden text-sm font-semibold text-muted sm:inline-flex">Nexus — Adaptive AI Workspace</span>
+            <div className="relative hidden items-center gap-2 md:flex">
+              <Search className="absolute left-3 h-4 w-4 text-muted" />
+              <Input className="h-9 w-64 pl-9" placeholder="Search (⌘K)" aria-label="Search workspace" />
+            </div>
           </div>
-          <ProfileModal />
-          <Toaster />
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+            <ThemeToggle />
+            <Button variant="ghost" className="hidden xl:inline-flex" onClick={() => openSystemDrawer()}>
+              System Drawer
+            </Button>
+            <ProfileMenu profile={profile} onOpenProfile={openProfileModal} />
+          </div>
+        </header>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Outlet context={appOutletContext} />
+          </div>
+          <SystemDrawer />
         </div>
-        <ProfileModal />
-        <Toaster />
-      </div>
-    </TooltipProvider>
+      </main>
+
+      {navSheetOpen ? (
+        <MobileSidebarSheet
+          open={navSheetOpen}
+          onOpenChange={setNavSheetOpen}
+          profile={profile}
+          navItems={navItems}
+          chats={chats}
+          currentPath={location.pathname}
+          onCreateChat={createAndOpenChat}
+          onSelectChat={(id) => {
+            selectChat(id);
+            setNavSheetOpen(false);
+          }}
+          onArchive={handleArchive}
+          onTrash={handleMoveToTrash}
+          onRestore={handleRestore}
+          onDelete={handleDelete}
+        />
+      ) : null}
+
+      <ProfileModal onProfileChange={setProfile} />
+    </div>
   );
+}
+
+interface NavItem {
+  label: string;
+  to: string;
+  icon: JSX.Element;
+  onSelect?: () => void;
+}
+
+interface SidebarProps {
+  profile: StoredProfile;
+  navItems: NavItem[];
+  chats: ChatThread[];
+  onSelectChat: (chatId: string) => void;
+  onCreateChat: () => void;
+  onArchive: (chatId: string) => void;
+  onTrash: (chatId: string) => void;
+  onRestore: (chatId: string) => void;
+  onDelete: (chatId: string) => void;
+  currentPath: string;
+}
+
+function DesktopSidebar({
+  profile,
+  navItems,
+  chats,
+  onSelectChat,
+  onCreateChat,
+  onArchive,
+  onTrash,
+  onRestore,
+  onDelete,
+  currentPath,
+}: SidebarProps) {
+  const openProfileModal = useUIStore((state) => state.openProfileModal);
+  const activeChatId = useSessionStore((state) => state.activeChatId);
+
+  return (
+    <aside className="hidden w-[260px] flex-col border-r border-subtle bg-[var(--app-surface)]/80 backdrop-blur lg:flex">
+      <div className="flex h-16 items-center justify-between px-4">
+        <div>
+          <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
+            Nexus
+          </Link>
+          <p className="text-xs text-muted">Adaptive AI Workspace</p>
+        </div>
+        <Button size="icon" variant="outline" onClick={onCreateChat} aria-label="New chat">
+          <MessageSquarePlus className="h-4 w-4" />
+        </Button>
+      </div>
+      <nav className="flex flex-col gap-1 px-3">
+        {navItems.map((item) => {
+          const isRouteMatch = !item.onSelect && item.to === currentPath;
+          return (
+            <Button
+              key={item.label}
+              asChild
+              variant="ghost"
+              className={cn("justify-start text-sm", isRouteMatch ? "bg-[var(--app-muted)]" : undefined)}
+            >
+              <Link
+                to={item.to}
+                onClick={() => {
+                  item.onSelect?.();
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </Link>
+            </Button>
+          );
+        })}
+      </nav>
+      <Separator className="my-3" />
+      <div className="flex-1 overflow-y-auto px-2">
+        <ChatList
+          chats={chats}
+          activeChatId={activeChatId}
+          onSelectChat={onSelectChat}
+          onArchive={onArchive}
+          onTrash={onTrash}
+          onRestore={onRestore}
+          onDelete={onDelete}
+        />
+      </div>
+      <Separator className="my-3" />
+      <div className="flex items-center gap-3 px-4 pb-4">
+        <Avatar className="h-12 w-12">
+          {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
+          <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{profile.displayName}</p>
+          <Button variant="link" className="px-0 text-xs" onClick={openProfileModal}>
+            Manage profile
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function MobileSidebarSheet({
+  open,
+  onOpenChange,
+  profile,
+  navItems,
+  chats,
+  currentPath,
+  onSelectChat,
+  onCreateChat,
+  onArchive,
+  onTrash,
+  onRestore,
+  onDelete,
+}: SidebarProps & { open: boolean; onOpenChange: (next: boolean) => void }) {
+  const activeChatId = useSessionStore((state) => state.activeChatId);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-[260px] border-r border-subtle bg-[var(--app-surface)] p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-base font-semibold">Navigate Nexus</span>
+          <Button size="icon" variant="ghost" onClick={() => onOpenChange(false)} aria-label="Close navigation">
+            ✕
+          </Button>
+        </div>
+        <div className="mt-4 flex flex-col gap-2">
+          <Button variant="default" onClick={() => onCreateChat()}>
+            <MessageSquarePlus className="mr-2 h-4 w-4" /> New Chat
+          </Button>
+          {navItems.map((item) => {
+            const isRouteMatch = !item.onSelect && item.to === currentPath;
+            return (
+              <Button
+                key={item.label}
+                asChild
+                variant="ghost"
+                className={cn("justify-start", isRouteMatch ? "bg-[var(--app-muted)]" : undefined)}
+              >
+                <Link
+                  to={item.to}
+                  onClick={() => {
+                    onOpenChange(false);
+                    item.onSelect?.();
+                  }}
+                >
+                  {item.label}
+                </Link>
+              </Button>
+            );
+          })}
+        </div>
+        <Separator className="my-3" />
+        <ChatList
+          chats={chats}
+          activeChatId={activeChatId}
+          onSelectChat={(id) => {
+            onSelectChat(id);
+            onOpenChange(false);
+          }}
+          onArchive={onArchive}
+          onTrash={onTrash}
+          onRestore={onRestore}
+          onDelete={onDelete}
+        />
+        <Separator className="my-3" />
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
+            <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm font-semibold">{profile.displayName}</p>
+            <p className="text-xs text-muted">Tap profile menu to update</p>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ProfileMenu({ profile, onOpenProfile }: { profile: StoredProfile; onOpenProfile: () => void }) {
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2"
+          aria-label={profile.displayName}
+          title={profile.displayName}
+        >
+          <Avatar className="h-9 w-9">
+            {profile.avatarDataUrl ? <AvatarImage src={profile.avatarDataUrl} alt={profile.displayName} /> : null}
+            <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <span className="hidden text-sm font-semibold sm:inline">{profile.displayName}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
+        <p className="px-2 text-sm text-muted">{profile.displayName}</p>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onOpenProfile}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings/appearance")}>Appearance</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/settings/billing")}>Billing</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate("/pricing")}>Pricing</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function sortChats(entries: ChatThread[]): ChatThread[] {
+  return [...entries].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }

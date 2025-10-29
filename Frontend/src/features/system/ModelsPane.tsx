@@ -1,17 +1,24 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 const models = [
-  { name: "Athena.v3", detail: "Deliberative reasoning agent" },
-  { name: "Mercury.r2", detail: "Rapid summarization engine" },
-  { name: "Helios.audit", detail: "Verification specialist" },
+  { id: "omniscience", name: "Omniscience 3.2", latency: "180ms", status: "Consensus anchor" },
+  { id: "dialectic", name: "Dialectic Duo", latency: "220ms", status: "Debate pair" },
+  { id: "scribe", name: "Scribe Memory", latency: "95ms", status: "Ground truth summarizer" },
 ];
 
-export function ModelsPane() {
+export function ModelsPane(): JSX.Element {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {models.map((model) => (
-        <div key={model.name} className="rounded-lg border border-subtle bg-surface/70 p-4">
-          <div className="text-sm font-semibold">{model.name}</div>
-          <p className="mt-1 text-xs text-muted">{model.detail}</p>
-        </div>
+        <Card key={model.id}>
+          <CardHeader>
+            <CardTitle className="text-base">{model.name}</CardTitle>
+            <CardDescription>{model.status}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted">Median latency {model.latency}</p>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

@@ -1,40 +1,41 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { cn } from "../../shared/lib/cn";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-const settingsNav = [
-  { label: "Appearance", to: "/settings/appearance", description: "Theme, density, and brand colors" },
-  { label: "Billing", to: "/settings/billing", description: "Plan, invoices, and payment methods" },
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+const sections = [
+  { label: "Appearance", to: "/settings/appearance" },
+  { label: "Billing", to: "/settings/billing" },
 ];
 
-export function SettingsLayout() {
+export function SettingsLayout(): JSX.Element {
+  const location = useLocation();
+
   return (
-    <div className="flex w-full flex-1 bg-app">
-      <aside className="hidden w-72 flex-col border-r border-subtle bg-surface/80 p-6 backdrop-blur-lg md:flex">
-        <div className="mb-6">
+    <div className="flex flex-1 overflow-hidden bg-app">
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-subtle bg-[var(--app-surface)] px-4 py-6 lg:flex">
+        <div>
           <h2 className="text-lg font-semibold">Workspace settings</h2>
-          <p className="text-sm text-muted">Craft a consistent, audit-ready experience.</p>
+          <p className="text-sm text-muted">Fine-tune the adaptive shell around Nexus.</p>
         </div>
-        <nav className="flex flex-col gap-2">
-          {settingsNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "rounded-xl border border-transparent px-4 py-3 transition",
-                  isActive
-                    ? "border-indigo-500/60 bg-accent-soft text-white shadow-lg"
-                    : "bg-surface/40 text-muted hover:border-subtle hover:bg-slate-900/10",
-                )
-              }
-            >
-              <div className="text-sm font-medium">{item.label}</div>
-              <div className="text-xs text-muted">{item.description}</div>
-            </NavLink>
-          ))}
+        <Separator className="my-4" />
+        <nav className="space-y-1">
+          {sections.map((section) => {
+            const isActive = location.pathname === section.to;
+            return (
+              <Button
+                key={section.to}
+                asChild
+                variant={isActive ? "default" : "ghost"}
+                className="w-full justify-start"
+              >
+                <NavLink to={section.to}>{section.label}</NavLink>
+              </Button>
+            );
+          })}
         </nav>
       </aside>
-      <section className="flex flex-1 flex-col overflow-y-auto bg-surface/60 p-8">
+      <section className="flex flex-1 flex-col overflow-y-auto p-6">
         <Outlet />
       </section>
     </div>

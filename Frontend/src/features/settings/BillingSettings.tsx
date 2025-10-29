@@ -1,102 +1,76 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
-import { Button } from "../../shared/ui/button";
-import { PRICES } from "../pricing/PricingPage";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const invoices = [
-  { id: "INV-2041", amount: "$19.00", date: "Jan 2, 2025", status: "Paid" },
-  { id: "INV-1987", amount: "$99.00", date: "Dec 2, 2024", status: "Paid" },
+  { id: "INV-2041", date: "2025-01-12", amount: "$99.00", status: "Paid" },
+  { id: "INV-1984", date: "2024-12-12", amount: "$99.00", status: "Paid" },
+  { id: "INV-1920", date: "2024-11-12", amount: "$99.00", status: "Paid" },
 ];
 
-export function BillingSettings() {
-  const defaultCycle = useMemo(() => {
-    const month = new Date().getMonth();
-    if (month === 0 || month === 7) {
-      return "Semester";
-    }
-    return "Monthly";
-  }, []);
-
-  const [plan] = useState("Premium");
-  const [cycle] = useState(defaultCycle);
-
+export function BillingSettings(): JSX.Element {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold">Billing</h1>
-        <p className="text-sm text-muted">Manage your subscription, invoices, and payment method.</p>
+        <p className="text-sm text-muted">Review your current plan, seat allocation, and billing history.</p>
       </header>
+
       <Card>
         <CardHeader>
           <CardTitle>Current plan</CardTitle>
-          <CardDescription>Your Nexus access level and usage insights.</CardDescription>
+          <CardDescription>Manage how Nexus scales across your team.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-lg font-semibold">{plan} plan</div>
-            <div className="text-sm text-muted">Billing cycle: {cycle}</div>
+            <p className="text-lg font-semibold">Pro — Annual</p>
+            <p className="text-sm text-muted">Educator-verified plan with 4 seats active, billing cycle renews Feb 12.</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline">Downgrade</Button>
-            <Button>Upgrade</Button>
+            <Button>Upgrade add-ons</Button>
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Billing cycle</CardTitle>
-          <CardDescription>Pricing values mirror the public pricing page.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 text-sm text-muted">
-            <div>Academic Monthly: ${PRICES.academic.monthly.toFixed(2)}</div>
-            <div>Academic Annual: ${PRICES.academic.annual.toFixed(0)}</div>
-            <div>Academic Semester: ${PRICES.academic.semester.toFixed(0)}</div>
-            <div>Premium Monthly: ${PRICES.premium.monthly.toFixed(0)}</div>
-            <div>Premium Annual: ${PRICES.premium.annual.toFixed(0)}</div>
-            <div>Pro Monthly: ${PRICES.pro.monthly.toFixed(0)}</div>
-            <div>Pro Annual: ${PRICES.pro.annual.toFixed(0)}</div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoices</CardTitle>
-          <CardDescription>Downloadable invoice history for your auditors.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {invoices.map((invoice) => (
-            <div key={invoice.id} className="flex items-center justify-between rounded-lg border border-subtle bg-surface/60 px-4 py-3">
-              <div>
-                <div className="text-sm font-medium">{invoice.id}</div>
-                <div className="text-xs text-muted">{invoice.date}</div>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <span>{invoice.amount}</span>
-                <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-400">{invoice.status}</span>
-                <Button size="sm" variant="outline">
-                  Download
-                </Button>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Payment method</CardTitle>
-          <CardDescription>Securely stored via encrypted vault.</CardDescription>
+          <CardDescription>All charges are routed through our encrypted billing providers.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold">Visa ending in 4242</p>
+            <p className="text-xs text-muted">Next automatic payment on Feb 12</p>
+          </div>
+          <Button variant="ghost">Update card</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Invoices</CardTitle>
+          <CardDescription>Export a ledger-friendly summary whenever finance needs it.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border border-subtle bg-surface/60 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium">Visa ending 4819</div>
-              <div className="text-xs text-muted">Expires 06/28 — managed by Nexus Vault</div>
-            </div>
-            <Button size="sm" variant="outline">
-              Update
-            </Button>
+          <div className="space-y-3">
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="rounded-lg border border-subtle p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">{invoice.id}</p>
+                    <p className="text-xs text-muted">{invoice.date}</p>
+                  </div>
+                  <div className="text-sm font-semibold">{invoice.amount}</div>
+                  <span className="rounded-full bg-[var(--app-muted)] px-3 py-1 text-xs font-semibold uppercase text-muted">
+                    {invoice.status}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
+          <Separator className="my-4" />
+          <Button variant="outline">Download statement CSV</Button>
         </CardContent>
       </Card>
     </div>

@@ -1,119 +1,116 @@
 import { useState } from "react";
-import { Input } from "../../shared/ui/input";
-import { Label } from "../../shared/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../shared/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../shared/ui/select";
-import { cn } from "../../shared/lib/cn";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const chartStyles = [
-  { id: "default", label: "Default", description: "Balanced, data-dense" },
-  { id: "simplified", label: "Simplified", description: "Minimal axes, clean labels" },
-  { id: "custom", label: "Custom CSS", description: "Bring your own styling" },
-];
+  { id: "default", name: "Default", description: "Vibrant dual-tone gradients" },
+  { id: "simplified", name: "Simplified", description: "Soft, muted lines" },
+  { id: "custom", name: "Custom CSS", description: "Inject your own design tokens" },
+] as const;
 
-const cookieModes = [
-  { id: "default", label: "Default", blurb: "Full compliance banner" },
-  { id: "lite", label: "Simplified", blurb: "Lightweight toast-style prompt" },
-  { id: "none", label: "None", blurb: "Handled externally" },
-];
+const cookieOptions = [
+  { id: "default", name: "Default", description: "Full banner with preferences" },
+  { id: "minimal", name: "Simplified", description: "Compact toast with single accept" },
+  { id: "none", name: "None", description: "No banner, manual consent tracking" },
+] as const;
 
-export function AppearanceSettings() {
-  const [brandColor, setBrandColor] = useState("#6366f1");
-  const [chartStyle, setChartStyle] = useState("default");
+export function AppearanceSettings(): JSX.Element {
+  const [brandColor, setBrandColor] = useState("#7c3aed");
+  const [chartStyle, setChartStyle] = useState<(typeof chartStyles)[number]["id"]>("default");
+  const [cookiePreference, setCookiePreference] = useState<(typeof cookieOptions)[number]["id"]>("default");
   const [language, setLanguage] = useState("en");
-  const [cookieMode, setCookieMode] = useState("default");
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold">Appearance</h1>
-        <p className="text-sm text-muted">Tune Nexus for your teams while keeping the audit trail pristine.</p>
+        <p className="text-sm text-muted">Control how Nexus greets teammates across different cultures and monitors.</p>
       </header>
+
       <Card>
         <CardHeader>
           <CardTitle>Brand color</CardTitle>
-          <CardDescription>Align Nexus accents with your institutional palette.</CardDescription>
+          <CardDescription>Align the interface accent with your organization&apos;s palette.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
-            <Input value={brandColor} onChange={(event) => setBrandColor(event.target.value)} aria-label="Brand color" />
-            <input
-              type="color"
-              value={brandColor}
-              onChange={(event) => setBrandColor(event.target.value)}
-              aria-label="Pick brand color"
-              className="h-10 w-10 cursor-pointer rounded-md border border-subtle"
-            />
+        <CardContent className="flex flex-wrap items-center gap-4">
+          <Input type="color" value={brandColor} onChange={(event) => setBrandColor(event.target.value)} aria-label="Brand accent color" className="h-12 w-20" />
+          <div>
+            <p className="text-sm font-semibold">{brandColor.toUpperCase()}</p>
+            <p className="text-xs text-muted">Preview updates instantly across the shell.</p>
           </div>
-          <p className="text-sm text-muted">Preview updates live across the workspace.</p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>Dashboard chart style</CardTitle>
-          <CardDescription>Choose how visualizations render across teams.</CardDescription>
+          <CardTitle>Dashboard charts</CardTitle>
+          <CardDescription>Select the density and visual treatment for analytics views.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          {chartStyles.map((style) => (
-            <button
-              key={style.id}
-              type="button"
-              onClick={() => setChartStyle(style.id)}
-              className={cn(
-                "rounded-xl border px-4 py-4 text-left transition",
-                chartStyle === style.id
-                  ? "border-indigo-500/60 bg-accent-soft text-white"
-                  : "border-subtle bg-surface/60 text-muted hover:border-indigo-400/40",
-              )}
-            >
-              <div className="text-sm font-medium">{style.label}</div>
-              <div className="text-xs text-muted">{style.description}</div>
-            </button>
-          ))}
+        <CardContent className="grid gap-3 sm:grid-cols-3">
+          {chartStyles.map((style) => {
+            const active = chartStyle === style.id;
+            return (
+              <Button
+                key={style.id}
+                variant={active ? "default" : "outline"}
+                className="flex h-full flex-col items-start gap-1 text-left"
+                onClick={() => setChartStyle(style.id)}
+              >
+                <span className="text-sm font-semibold">{style.name}</span>
+                <span className="text-xs text-muted">{style.description}</span>
+              </Button>
+            );
+          })}
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Language</CardTitle>
-          <CardDescription>Set the default narrative language for assistants.</CardDescription>
+          <CardDescription>Switch the UI copy used for shared links and collaborative sessions.</CardDescription>
         </CardHeader>
-        <CardContent className="max-w-sm">
-          <Label htmlFor="language">Workspace language</Label>
+        <CardContent className="max-w-xs space-y-2">
+          <Label htmlFor="language-select">Primary language</Label>
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger id="language">
-              <SelectValue placeholder="Select a language" />
+            <SelectTrigger id="language-select">
+              <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Spanish</SelectItem>
-              <SelectItem value="de">German</SelectItem>
-              <SelectItem value="fr">French</SelectItem>
+              <SelectItem value="es">Español</SelectItem>
+              <SelectItem value="fr">Français</SelectItem>
+              <SelectItem value="de">Deutsch</SelectItem>
+              <SelectItem value="ja">日本語</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted">Applies to notification emails and shared workspace views.</p>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Cookie banner</CardTitle>
-          <CardDescription>Choose how data consent is captured for end-users.</CardDescription>
+          <CardDescription>Match your compliance posture with the appropriate consent UX.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          {cookieModes.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              onClick={() => setCookieMode(mode.id)}
-              className={cn(
-                "rounded-xl border px-4 py-4 text-left transition",
-                cookieMode === mode.id
-                  ? "border-indigo-500/60 bg-accent-soft text-white"
-                  : "border-subtle bg-surface/60 text-muted hover:border-indigo-400/40",
-              )}
-            >
-              <div className="text-sm font-medium">{mode.label}</div>
-              <div className="text-xs text-muted">{mode.blurb}</div>
-            </button>
-          ))}
+        <CardContent className="grid gap-3 sm:grid-cols-3">
+          {cookieOptions.map((option) => {
+            const active = cookiePreference === option.id;
+            return (
+              <Button
+                key={option.id}
+                variant={active ? "default" : "outline"}
+                className="flex h-full flex-col items-start gap-1 text-left"
+                onClick={() => setCookiePreference(option.id)}
+              >
+                <span className="text-sm font-semibold">{option.name}</span>
+                <span className="text-xs text-muted">{option.description}</span>
+              </Button>
+            );
+          })}
         </CardContent>
       </Card>
     </div>

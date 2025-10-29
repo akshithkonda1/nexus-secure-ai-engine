@@ -1,47 +1,66 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-interface ThemeContextValue {
-  theme: "light" | "dark";
-  setTheme: (theme: "light" | "dark") => void;
-  toggle: () => void;
+import { useSessionStore, type NexusMode, type NexusTheme } from "@/shared/state/session";
+import { modeThemes } from "./themes";
+
+export interface ThemeContextValue {
+  mode: NexusMode;
+  theme: NexusTheme;
+  setMode: (mode: NexusMode) => void;
+  setTheme: (theme: NexusTheme) => void;
 }
 
-const noop = () => undefined;
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export const ThemeContext = createContext<ThemeContextValue>({
-  theme: "light",
-  setTheme: noop,
-  toggle: noop,
-});
+export function useThemeContext(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error("useThemeContext must be used within ThemeProvider");
+  }
+  return ctx;
+}
 
-const THEME_KEY = "nexus.theme";
-
-type Theme = "light" | "dark";
-
-export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem(THEME_KEY) as Theme | null;
-    if (saved === "light" || saved === "dark") return saved;
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
-    return prefersDark ? "dark" : "light";
-  });
-
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    localStorage.setItem(THEME_KEY, next);
-  }, []);
-
-  const toggle = useCallback(() => setTheme((current) => (current === "dark" ? "light" : "dark")), [setTheme]);
+export function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
+  const { mode, theme, setMode, setTheme } = useSessionStore();
+  const [isHydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
+    setHydrated(true);
+  }, []);
 
-  const value = useMemo<ThemeContextValue>(() => ({ theme, setTheme, toggle }), [theme, setTheme, toggle]);
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-};
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const html = document.documentElement;
+    html.dataset.theme = theme;
+    html.dataset.mode = mode;
+  }, [mode, theme]);
+
+  useEffect(() => {
+    const listener = (event: StorageEvent) => {
+      if (event.key === "nexus.theme" && (event.newValue === "light" || event.newValue === "dark")) {
+        setTheme(event.newValue);
+      }
+      if (
+        event.key === "nexus.mode" &&
+        (event.newValue === "student" || event.newValue === "business" || event.newValue === "nexusos")
+      ) {
+        setMode(event.newValue);
+      }
+    };
+
+    window.addEventListener("storage", listener);
+    return () => {
+      window.removeEventListener("storage", listener);
+    };
+  }, [setMode, setTheme]);
+
+  const value = useMemo(() => ({ mode, theme, setMode, setTheme }), [mode, theme, setMode, setTheme]);
+
+  return <ThemeContext.Provider value={value}>{isHydrated ? children : null}</ThemeContext.Provider>;
+}
+
+export function getModeTheme(mode: NexusMode) {
+  return modeThemes[mode];
+}
