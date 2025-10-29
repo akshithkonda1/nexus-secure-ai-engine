@@ -132,6 +132,8 @@ export function AppShell() {
               <SystemDrawer />
             </main>
           </div>
+          <ProfileModal />
+          <Toaster />
         </div>
         <ProfileModal />
         <Toaster />
