@@ -1,17 +1,18 @@
 import { test, expect } from "@playwright/test";
 
-test("profile modal requires changes before saving", async ({ page }) => {
+test("profile modal saves display name", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Open profile" }).click();
 
-  const saveButton = page.getByRole("button", { name: "Save changes" });
+  await page.getByRole("button", { name: /Guest of Nexus/ }).click();
+  await page.getByRole("menuitem", { name: "Profile" }).click();
+
+  const saveButton = page.getByRole("button", { name: "Save" });
   await expect(saveButton).toBeDisabled();
 
-  const nameField = page.getByLabel("Display name");
-  await nameField.fill("Agent Nova");
+  await page.getByLabel("Display name").fill("Commander Ada");
   await expect(saveButton).toBeEnabled();
-
   await saveButton.click();
-  const toast = page.getByRole("status").filter({ hasText: "Profile updated" });
-  await expect(toast).toBeVisible();
+
+  await expect(page.getByText("Profile saved")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Commander Ada/ })).toBeVisible();
 });

@@ -1,88 +1,130 @@
-import { Archive, RotateCcw, Trash2 } from "lucide-react";
-import { ChatRecord, ChatStatus } from "../../services/storage/chats";
-import { cn } from "../../shared/lib/cn";
-import { Button } from "../../shared/ui/button";
+import { Archive, MoreHorizontal, Trash2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/shared/lib/cn";
+import type { ChatThread } from "@/services/storage/chats";
 
 interface ChatListProps {
-  chats: ChatRecord[];
+  chats: ChatThread[];
   activeChatId: string | null;
-  onSelect: (chatId: string) => void;
-  onMove: (chatId: string, status: ChatStatus) => void;
+  onSelectChat: (chatId: string) => void;
+  onArchive: (chatId: string) => void;
+  onTrash: (chatId: string) => void;
+  onRestore: (chatId: string) => void;
+  onDelete: (chatId: string) => void;
 }
 
-const groups: { status: ChatStatus; title: string }[] = [
-  { status: "active", title: "Active" },
-  { status: "archived", title: "Archived" },
-  { status: "trashed", title: "Trash" },
-];
+export function ChatList({ chats, activeChatId, onSelectChat, onArchive, onTrash, onRestore, onDelete }: ChatListProps): JSX.Element {
+  const active = chats.filter((chat) => chat.state === "active");
+  const archived = chats.filter((chat) => chat.state === "archived");
+  const trash = chats.filter((chat) => chat.state === "trashed");
 
-export function ChatList({ chats, activeChatId, onSelect, onMove }: ChatListProps) {
   return (
-    <div className="flex h-full w-72 shrink-0 flex-col border-r border-subtle bg-surface/60">
-      {groups.map((group) => {
-        const groupChats = chats.filter((chat) => chat.status === group.status);
-        return (
-          <div key={group.status} className="flex flex-col border-b border-subtle">
-            <div className="flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              {group.title}
-              <span className="text-[10px] text-muted/70">{groupChats.length}</span>
-            </div>
-            <div className="flex flex-col">
-              {groupChats.length === 0 ? (
-                <p className="px-4 py-6 text-xs text-muted/60">No conversations yet.</p>
-              ) : (
-                groupChats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    className={cn(
-                      "flex flex-col gap-2 border-b border-transparent px-4 py-3 transition hover:bg-slate-900/10",
-                      activeChatId === chat.id ? "border-l-2 border-indigo-400 bg-slate-900/10" : undefined,
-                    )}
-                  >
-                    <button
-                      type="button"
-                      className="text-left"
-                      onClick={() => onSelect(chat.id)}
-                    >
-                      <div className="text-sm font-medium">{chat.title}</div>
-                      <div className="text-xs text-muted">{new Date(chat.updatedAt).toLocaleString()}</div>
-                    </button>
-                    <div className="flex items-center gap-2 text-xs text-muted">
-                      {group.status !== "active" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2"
-                          onClick={() => onMove(chat.id, "active")}
-                        >
-                          <RotateCcw className="mr-1 h-3 w-3" /> Restore
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2"
-                          onClick={() => onMove(chat.id, "archived")}
-                        >
-                          <Archive className="mr-1 h-3 w-3" /> Archive
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        onClick={() => onMove(chat.id, "trashed")}
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" /> Trash
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        );
-      })}
+    <div className="space-y-6">
+      <ChatSection
+        title={`Active (${active.length})`}
+        chats={active}
+        activeChatId={activeChatId}
+        onSelect={onSelectChat}
+        actions={({ id }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Chat actions" className="round-btn">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onArchive(id)}>Archive</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onTrash(id)}>Move to trash</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
+      <ChatSection
+        title={`Archived (${archived.length})`}
+        chats={archived}
+        activeChatId={activeChatId}
+        onSelect={onSelectChat}
+        actions={({ id }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Archived chat actions" className="round-btn">
+                <Archive className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onRestore(id)}>Restore</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onTrash(id)}>Move to trash</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
+      <ChatSection
+        title={`Trash (${trash.length})`}
+        chats={trash}
+        activeChatId={activeChatId}
+        onSelect={onSelectChat}
+        actions={({ id }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Trash chat actions" className="round-btn">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onRestore(id)}>Restore</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onDelete(id)}>Delete permanently</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
     </div>
+  );
+}
+
+interface ChatSectionProps {
+  title: string;
+  chats: ChatThread[];
+  activeChatId: string | null;
+  onSelect: (chatId: string) => void;
+  actions: (chat: ChatThread) => React.ReactNode;
+}
+
+function ChatSection({ title, chats, activeChatId, onSelect, actions }: ChatSectionProps) {
+  return (
+    <section>
+      <h3 className="px-2 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
+      <div className="mt-2 space-y-1">
+        {chats.length === 0 ? (
+          <p className="px-2 text-xs text-muted">Nothing here yet.</p>
+        ) : (
+          chats.map((chat) => (
+            <div
+              key={chat.id}
+              className={cn(
+                "flex items-center justify-between round-card px-3 py-2 text-sm transition hover:bg-[var(--app-muted)]",
+                chat.id === activeChatId ? "bg-[var(--app-muted)]" : "bg-[var(--app-surface)] shadow-ambient border border-subtle/60"
+              )}
+            >
+              <button
+                type="button"
+                className="flex-1 truncate text-left"
+                onClick={() => onSelect(chat.id)}
+              >
+                <p className="truncate font-medium">{chat.title}</p>
+                <p className="text-xs text-muted">{new Date(chat.updatedAt).toLocaleString()}</p>
+              </button>
+              {actions(chat)}
+            </div>
+          ))
+        )}
+      </div>
+    </section>
   );
 }

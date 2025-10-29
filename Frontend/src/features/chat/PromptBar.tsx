@@ -1,59 +1,83 @@
-import { Paperclip, Send } from "lucide-react";
-import { useState } from "react";
-import { Button } from "../../shared/ui/button";
+import { Loader2, Paperclip, SendHorizonal, Sparkles } from "lucide-react";
 
-interface PromptBarProps {
-  onSend: (prompt: string) => void;
-  onQuickAction: (action: string) => void;
-}
+import { Button } from "@/components/ui/button";
+import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
 const quickActions = [
-  { id: "explain", label: "Explain simply" },
-  { id: "summarize", label: "Summarize" },
-  { id: "dummy-pack", label: "Create dummy study pack" },
-];
+  { id: "explain", label: "Explain simply", prompt: "Explain this concept in the simplest possible terms." },
+  { id: "summarize", label: "Summarize", prompt: "Summarize the last exchange and highlight the key points." },
+  { id: "study", label: "Create dummy study pack", prompt: "" },
+] as const;
 
-export function PromptBar({ onSend, onQuickAction }: PromptBarProps) {
-  const [prompt, setPrompt] = useState("");
+interface PromptBarProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSend: (prompt: string) => void;
+  onCreateStudyPack: () => void;
+  isSending?: boolean;
+}
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!prompt.trim()) return;
-    onSend(prompt.trim());
-    setPrompt("");
-  };
+export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSending }: PromptBarProps): JSX.Element {
+  const { mode } = useThemeContext();
 
   return (
-    <div className="border-t border-subtle bg-surface/70 px-6 py-4">
-      <div className="mb-3 flex flex-wrap gap-2">
-        {quickActions.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            className="rounded-full border border-subtle bg-slate-900/10 px-3 py-1 text-xs font-medium text-muted transition hover:border-indigo-400 hover:text-white"
-            onClick={() => onQuickAction(action.id)}
+    <div className="border-t border-subtle bg-[var(--app-surface)] px-4 py-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {quickActions.map((quick) => (
+          <Button
+            key={quick.id}
+            variant="outline"
+            size="sm"
+            className="round-btn"
+            onClick={() => {
+              if (quick.id === "study") {
+                onCreateStudyPack();
+              } else {
+                onSend(quick.prompt);
+              }
+            }}
           >
-            {action.label}
-          </button>
+            <Sparkles className="mr-2 h-4 w-4" />
+            {quick.label}
+          </Button>
         ))}
       </div>
-      <form className="flex items-center gap-3" onSubmit={handleSubmit}>
-        <Button type="button" variant="ghost" size="icon" aria-label="Attach file">
+      <div className="flex items-end gap-3">
+        <Button variant="outline" size="icon" className="round-btn" aria-label="Attach reference">
           <Paperclip className="h-4 w-4" />
         </Button>
         <textarea
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          placeholder="Describe your objective for Nexus…"
-          rows={1}
-          aria-label="Chat prompt"
-          className="h-12 flex-1 resize-none rounded-lg border border-subtle bg-transparent px-3 py-2 text-sm text-inherit focus-visible:border-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          className="min-h-[60px] flex-1 resize-y round-card border border-subtle/60 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mode-accent-solid)]"
+          placeholder={getPlaceholder(mode)}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.preventDefault();
+              onSend(value);
+            }
+          }}
         />
-        <Button type="submit" disabled={!prompt.trim()}>
-          Send
-          <Send className="ml-2 h-4 w-4" />
+        <Button
+          size="icon"
+          className="round-btn shadow-press"
+          onClick={() => onSend(value)}
+          disabled={isSending || value.trim().length === 0}
+          aria-label="Send message"
+        >
+          {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizonal className="h-4 w-4" />}
         </Button>
-      </form>
+      </div>
     </div>
   );
+}
+
+function getPlaceholder(mode: string) {
+  if (mode === "student") {
+    return "Ask Nexus to walk through a topic step by step…";
+  }
+  if (mode === "business") {
+    return "Request an executive-ready insight or scenario analysis…";
+  }
+  return "Direct Nexus OS with precise instructions or data references…";
 }

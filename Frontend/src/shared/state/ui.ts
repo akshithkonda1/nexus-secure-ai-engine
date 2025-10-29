@@ -1,51 +1,67 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-export type SystemPane = "library" | "projects" | "models";
+export type SystemPane = "library" | "projects" | "models" | "audit" | "encryption";
 
 export interface LibraryItem {
   id: string;
   title: string;
-  description: string;
   createdAt: string;
+  summary: string;
 }
 
 interface UIState {
+  isProfileModalOpen: boolean;
+  openProfileModal: () => void;
+  closeProfileModal: () => void;
+  isSystemDrawerOpen: boolean;
+  systemPane: SystemPane;
+  setSystemPane: (pane: SystemPane) => void;
+  openSystemDrawer: (pane?: SystemPane) => void;
+  closeSystemDrawer: () => void;
   sidebarCollapsed: boolean;
-  profileModalOpen: boolean;
-  systemDrawerOpen: boolean;
-  activeSystemPane: SystemPane;
+  toggleSidebar: () => void;
   libraryItems: LibraryItem[];
-  setSidebarCollapsed: (value: boolean) => void;
-  setProfileModalOpen: (value: boolean) => void;
-  setSystemDrawerOpen: (value: boolean) => void;
-  setActiveSystemPane: (pane: SystemPane) => void;
-  setLibraryItems: (items: LibraryItem[]) => void;
   addLibraryItem: (item: LibraryItem) => void;
-  clearLibrary: () => void;
-  openProfile: () => void;
-  closeProfile: () => void;
+  removeLibraryItem: (id: string) => void;
+  resetLibrary: () => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  sidebarCollapsed: false,
-  profileModalOpen: false,
-  systemDrawerOpen: true,
-  activeSystemPane: "library",
-  libraryItems: [],
-  setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
-  setProfileModalOpen: (value) => set({ profileModalOpen: value }),
-  setSystemDrawerOpen: (value) => set({ systemDrawerOpen: value }),
-  setActiveSystemPane: (pane) => set({ activeSystemPane: pane }),
-  setLibraryItems: (items) => set({ libraryItems: items }),
-  addLibraryItem: (item) => set((state) => ({ libraryItems: [item, ...state.libraryItems] })),
-  clearLibrary: () => set({ libraryItems: [] }),
-  openProfile: () => set({ profileModalOpen: true }),
-  closeProfile: () => set({ profileModalOpen: false }),
-}));
-
-export function useUI() {
-  return useUIStore((state) => ({
-    openProfile: state.openProfile,
-    closeProfile: state.closeProfile,
-  }));
-}
+export const useUIStore = create<UIState>()(
+  persist(
+    (set, get) => ({
+      isProfileModalOpen: false,
+      openProfileModal: () => set({ isProfileModalOpen: true }),
+      closeProfileModal: () => set({ isProfileModalOpen: false }),
+      isSystemDrawerOpen: false,
+      systemPane: "library",
+      setSystemPane: (pane) => set({ systemPane: pane }),
+      openSystemDrawer: (pane) =>
+        set({
+          isSystemDrawerOpen: true,
+          systemPane: pane ?? get().systemPane,
+        }),
+      closeSystemDrawer: () => set({ isSystemDrawerOpen: false }),
+      sidebarCollapsed: false,
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      libraryItems: [],
+      addLibraryItem: (item) => {
+        const existing = get().libraryItems.filter((entry) => entry.id !== item.id);
+        set({ libraryItems: [...existing, item] });
+      },
+      removeLibraryItem: (id) => {
+        set({ libraryItems: get().libraryItems.filter((entry) => entry.id !== id) });
+      },
+      resetLibrary: () => set({ libraryItems: [] }),
+    }),
+    {
+      name: "nexus.ui",
+      storage: createJSONStorage(() => window.localStorage),
+      partialize: (state) => ({
+        systemPane: state.systemPane,
+        sidebarCollapsed: state.sidebarCollapsed,
+        libraryItems: state.libraryItems,
+      }),
+    }
+  )
+);
