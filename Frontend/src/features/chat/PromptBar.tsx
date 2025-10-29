@@ -1,12 +1,13 @@
-import { Paperclip, SendHorizonal, Sparkles } from "lucide-react";
+import { Loader2, Paperclip, SendHorizonal, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
-const quickPrompts = [
+const quickActions = [
   { id: "explain", label: "Explain simply", prompt: "Explain this concept in the simplest possible terms." },
   { id: "summarize", label: "Summarize", prompt: "Summarize the last exchange and highlight the key points." },
-];
+  { id: "study", label: "Create dummy study pack", prompt: "" },
+] as const;
 
 interface PromptBarProps {
   value: string;
@@ -20,10 +21,22 @@ export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSendin
   const { mode } = useThemeContext();
 
   return (
-    <div className="border-t border-subtle bg-[var(--app-surface)] p-4">
+    <div className="border-t border-subtle bg-[var(--app-surface)] px-4 py-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        {quickPrompts.map((quick) => (
-          <Button key={quick.id} variant="outline" size="sm" onClick={() => onSend(quick.prompt)}>
+        {quickActions.map((quick) => (
+          <Button
+            key={quick.id}
+            variant="outline"
+            size="sm"
+            className="round-btn"
+            onClick={() => {
+              if (quick.id === "study") {
+                onCreateStudyPack();
+              } else {
+                onSend(quick.prompt);
+              }
+            }}
+          >
             <Sparkles className="mr-2 h-4 w-4" />
             {quick.label}
           </Button>
@@ -34,11 +47,11 @@ export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSendin
         </Button>
       </div>
       <div className="flex items-end gap-3">
-        <Button variant="outline" size="icon" aria-label="Attach reference">
+        <Button variant="outline" size="icon" className="round-btn" aria-label="Attach reference">
           <Paperclip className="h-4 w-4" />
         </Button>
         <textarea
-          className="min-h-[60px] flex-1 resize-y rounded-lg border border-subtle bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mode-accent-solid)]"
+          className="min-h-[60px] flex-1 resize-y round-card border border-subtle/60 bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mode-accent-solid)]"
           placeholder={getPlaceholder(mode)}
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -49,8 +62,14 @@ export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSendin
             }
           }}
         />
-        <Button size="icon" onClick={() => onSend(value)} disabled={isSending || value.trim().length === 0} aria-label="Send message">
-          <SendHorizonal className="h-4 w-4" />
+        <Button
+          size="icon"
+          className="round-btn shadow-press"
+          onClick={() => onSend(value)}
+          disabled={isSending || value.trim().length === 0}
+          aria-label="Send message"
+        >
+          {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizonal className="h-4 w-4" />}
         </Button>
       </div>
     </div>

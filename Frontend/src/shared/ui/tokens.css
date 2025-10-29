@@ -5,7 +5,7 @@
 }
 
 :root,
-:root[data-theme="light"] {
+[data-theme="light"] {
   --app-bg: #f5f6f8;
   --app-surface: #ffffff;
   --app-elevation: rgba(15, 23, 42, 0.08);
@@ -15,9 +15,18 @@
   --app-accent: #4f46e5;
   --app-accent-foreground: #ffffff;
   --app-muted: rgba(79, 70, 229, 0.12);
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-input: 12px;
+  --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --gap-1: 0.5rem;
+  --gap-2: 0.75rem;
+  --gap-3: 1rem;
+  --gap-4: 1.25rem;
 }
 
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   --app-bg: #0b0d14;
   --app-surface: #101425;
   --app-elevation: rgba(255, 255, 255, 0.08);
@@ -27,6 +36,8 @@
   --app-accent: #818cf8;
   --app-accent-foreground: #050618;
   --app-muted: rgba(129, 140, 248, 0.18);
+  --shadow-ambient: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
 [data-mode="student"] {
@@ -75,7 +86,8 @@ body {
 .surface {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-ambient);
 }
 
 .bg-app {
@@ -97,6 +109,26 @@ body {
 .accent {
   background: var(--mode-accent);
   color: var(--app-accent-foreground);
+}
+
+.round-card {
+  border-radius: var(--radius-card) !important;
+}
+
+.round-btn {
+  border-radius: var(--radius-button) !important;
+}
+
+.round-input {
+  border-radius: var(--radius-input) !important;
+}
+
+.shadow-ambient {
+  box-shadow: var(--shadow-ambient) !important;
+}
+
+.shadow-press {
+  box-shadow: var(--shadow-press) !important;
 }
 
 :focus-visible {

@@ -13,7 +13,7 @@ export function SettingsLayout(): JSX.Element {
 
   return (
     <div className="flex flex-1 overflow-hidden bg-app">
-      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-subtle bg-[var(--app-surface)] px-4 py-6 lg:flex">
+      <aside className="hidden w-64 flex-shrink-0 flex-col border-r border-subtle bg-[var(--app-surface)] px-4 py-6 shadow-ambient lg:flex">
         <div>
           <h2 className="text-lg font-semibold">Workspace settings</h2>
           <p className="text-sm text-muted">Fine-tune the adaptive shell around Nexus.</p>
@@ -21,13 +21,14 @@ export function SettingsLayout(): JSX.Element {
         <Separator className="my-4" />
         <nav className="space-y-1">
           {sections.map((section) => {
-            const isActive = location.pathname === section.to;
+            const isActive =
+              location.pathname === section.to || (section.to === "/settings/appearance" && location.pathname === "/settings");
             return (
               <Button
                 key={section.to}
                 asChild
                 variant={isActive ? "default" : "ghost"}
-                className="w-full justify-start"
+                className="w-full justify-start round-btn"
               >
                 <NavLink to={section.to}>{section.label}</NavLink>
               </Button>

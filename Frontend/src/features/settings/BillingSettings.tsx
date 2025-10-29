@@ -16,7 +16,7 @@ export function BillingSettings(): JSX.Element {
         <p className="text-sm text-muted">Review your current plan, seat allocation, and billing history.</p>
       </header>
 
-      <Card>
+      <Card className="round-card shadow-ambient">
         <CardHeader>
           <CardTitle>Current plan</CardTitle>
           <CardDescription>Manage how Nexus scales across your team.</CardDescription>
@@ -27,13 +27,13 @@ export function BillingSettings(): JSX.Element {
             <p className="text-sm text-muted">Educator-verified plan with 4 seats active, billing cycle renews Feb 12.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">Downgrade</Button>
-            <Button>Upgrade add-ons</Button>
+            <Button variant="outline" className="round-btn">Downgrade</Button>
+            <Button className="round-btn shadow-press">Upgrade add-ons</Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="round-card shadow-ambient">
         <CardHeader>
           <CardTitle>Payment method</CardTitle>
           <CardDescription>All charges are routed through our encrypted billing providers.</CardDescription>
@@ -43,11 +43,11 @@ export function BillingSettings(): JSX.Element {
             <p className="text-sm font-semibold">Visa ending in 4242</p>
             <p className="text-xs text-muted">Next automatic payment on Feb 12</p>
           </div>
-          <Button variant="ghost">Update card</Button>
+          <Button variant="ghost" className="round-btn">Update card</Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="round-card shadow-ambient">
         <CardHeader>
           <CardTitle>Invoices</CardTitle>
           <CardDescription>Export a ledger-friendly summary whenever finance needs it.</CardDescription>
@@ -55,7 +55,7 @@ export function BillingSettings(): JSX.Element {
         <CardContent>
           <div className="space-y-3">
             {invoices.map((invoice) => (
-              <div key={invoice.id} className="rounded-lg border border-subtle p-4">
+              <div key={invoice.id} className="round-card border border-subtle/70 p-4 shadow-ambient">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold">{invoice.id}</p>
@@ -70,7 +70,7 @@ export function BillingSettings(): JSX.Element {
             ))}
           </div>
           <Separator className="my-4" />
-          <Button variant="outline">Download statement CSV</Button>
+          <Button variant="outline" className="round-btn">Download statement CSV</Button>
         </CardContent>
       </Card>
     </div>
