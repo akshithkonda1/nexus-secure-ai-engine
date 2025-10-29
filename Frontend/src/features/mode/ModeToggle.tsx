@@ -1,7 +1,8 @@
 import { BookOpen, BriefcaseBusiness, Cpu } from "lucide-react";
-import { useSessionStore } from "@/shared/state/session";
-import { cn } from "@/shared/lib/cn";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
+import { useSessionStore } from "../../shared/state/session";
+import { useThemeMode } from "../../shared/ui/theme/ThemeProvider";
+import { cn } from "../../shared/lib/cn";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../shared/ui/tooltip";
 
 const modes = [
   {
