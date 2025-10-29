@@ -1,160 +1,47 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
-import { queryClient } from "../../../services/api/client";
-import { NexusMode, NexusTheme, createModeChangeEvent, persistSession, readPersistedSession, useSessionStore } from "../../state/session";
+import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 
 interface ThemeContextValue {
-  mode: NexusMode;
-  theme: NexusTheme;
-  setMode: (mode: NexusMode) => void;
-  setTheme: (theme: NexusTheme) => void;
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+  toggle: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+const noop = () => undefined;
 
-const THEME_STORAGE_KEY = "nexus.theme";
-const MODE_STORAGE_KEY = "nexus.mode";
+export const ThemeContext = createContext<ThemeContextValue>({
+  theme: "light",
+  setTheme: noop,
+  toggle: noop,
+});
 
-function applyHtmlAttributes(theme: NexusTheme, mode: NexusMode, reducedMotion: boolean): void {
-  if (typeof document === "undefined") return;
-  const html = document.documentElement;
-  html.dataset.theme = theme;
-  html.dataset.mode = mode;
-  html.dataset.reducedMotion = reducedMotion ? "true" : "false";
-}
+const THEME_KEY = "nexus.theme";
 
-export interface ThemeProviderProps {
-  children: React.ReactNode;
-}
+type Theme = "light" | "dark";
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [ready, setReady] = useState(false);
-  const mode = useSessionStore((state) => state.mode);
-  const theme = useSessionStore((state) => state.theme);
-  const setMode = useSessionStore((state) => state.setMode);
-  const setTheme = useSessionStore((state) => state.setTheme);
+export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const saved = localStorage.getItem(THEME_KEY) as Theme | null;
+    if (saved === "light" || saved === "dark") return saved;
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+    return prefersDark ? "dark" : "light";
+  });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    const storedSnapshot = readPersistedSession();
-
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY) as NexusTheme | null;
-    const storedMode = window.localStorage.getItem(MODE_STORAGE_KEY) as NexusMode | null;
-
-    const resolvedTheme = storedTheme ?? storedSnapshot?.theme ?? (prefersDark ? "dark" : "light");
-    const resolvedMode = storedMode ?? storedSnapshot?.mode ?? "student";
-
-    if (storedSnapshot) {
-      useSessionStore.setState((state) => ({
-        ...state,
-        ...storedSnapshot,
-        mode: resolvedMode,
-        theme: resolvedTheme,
-      }));
-    } else {
-      useSessionStore.setState((state) => ({
-        ...state,
-        mode: resolvedMode,
-        theme: resolvedTheme,
-      }));
-    }
-
-    applyHtmlAttributes(resolvedTheme, resolvedMode, prefersReducedMotion);
-    setReady(true);
-
-    const mediaListener = (event: MediaQueryListEvent) => {
-      if (event.matches) {
-        applyHtmlAttributes("dark", resolvedMode, prefersReducedMotion);
-        setTheme("dark");
-      }
-    };
-
-    const reducedMotionListener = (event: MediaQueryListEvent) => {
-      applyHtmlAttributes(theme, mode, event.matches);
-    };
-
-    const darkMedia = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const reducedMedia = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    darkMedia?.addEventListener("change", mediaListener);
-    reducedMedia?.addEventListener("change", reducedMotionListener);
-
-    return () => {
-      darkMedia?.removeEventListener("change", mediaListener);
-      reducedMedia?.removeEventListener("change", reducedMotionListener);
-    };
-  }, [mode, setTheme, theme]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    applyHtmlAttributes(theme, mode, prefersReducedMotion);
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    window.localStorage.setItem(MODE_STORAGE_KEY, mode);
-    persistSession({
-      mode,
-      theme,
-      activeChatId: useSessionStore.getState().activeChatId,
-      openChatIds: useSessionStore.getState().openChatIds,
-    });
-  }, [mode, theme]);
-
-  useEffect(() => {
-    const unsubscribe = useSessionStore.subscribe((state) => {
-      persistSession({
-        mode: state.mode,
-        theme: state.theme,
-        activeChatId: state.activeChatId,
-        openChatIds: state.openChatIds,
-      });
-    });
-    return unsubscribe;
+  const setTheme = useCallback((next: Theme) => {
+    setThemeState(next);
+    localStorage.setItem(THEME_KEY, next);
   }, []);
 
+  const toggle = useCallback(() => setTheme((current) => (current === "dark" ? "light" : "dark")), [setTheme]);
+
   useEffect(() => {
-    createModeChangeEvent(mode);
-  }, [mode]);
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [theme]);
 
-  const value = useMemo<ThemeContextValue>(
-    () => ({
-      mode,
-      theme,
-      setMode,
-      setTheme,
-    }),
-    [mode, theme, setMode, setTheme],
-  );
-
-  if (!ready) {
-    return null;
-  }
-
-  return (
-    <ThemeContext.Provider value={value}>
-      <QueryClientProvider client={queryClient}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={`${mode}-${theme}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
-            style={{ minHeight: "100vh" }}
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
-      </QueryClientProvider>
-    </ThemeContext.Provider>
-  );
-}
-
-export function useThemeMode(): ThemeContextValue {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useThemeMode must be used within ThemeProvider");
-  }
-  return context;
-}
+  const value = useMemo<ThemeContextValue>(() => ({ theme, setTheme, toggle }), [theme, setTheme, toggle]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+};

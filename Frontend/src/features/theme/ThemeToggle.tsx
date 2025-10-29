@@ -1,9 +1,10 @@
+import { useContext } from "react";
 import { Moon, Sun } from "lucide-react";
-import { Switch } from "../../shared/ui/switch";
-import { useThemeMode } from "../../shared/ui/theme/ThemeProvider";
+import { Switch } from "@/shared/ui/switch";
+import { ThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useThemeMode();
+  const { theme, setTheme } = useContext(ThemeContext);
   const isDark = theme === "dark";
   return (
     <div className="inline-flex items-center gap-2 text-xs text-muted" role="group" aria-label="Toggle theme">

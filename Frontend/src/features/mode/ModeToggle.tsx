@@ -27,7 +27,7 @@ const modes = [
 
 export function ModeToggle() {
   const activeMode = useSessionStore((state) => state.mode);
-  const setMode = useThemeMode().setMode;
+  const setMode = useSessionStore((state) => state.setMode);
 
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-subtle bg-surface/80 p-1">

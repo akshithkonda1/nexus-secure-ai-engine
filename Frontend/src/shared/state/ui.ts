@@ -22,6 +22,8 @@ interface UIState {
   setLibraryItems: (items: LibraryItem[]) => void;
   addLibraryItem: (item: LibraryItem) => void;
   clearLibrary: () => void;
+  openProfile: () => void;
+  closeProfile: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -37,4 +39,13 @@ export const useUIStore = create<UIState>((set) => ({
   setLibraryItems: (items) => set({ libraryItems: items }),
   addLibraryItem: (item) => set((state) => ({ libraryItems: [item, ...state.libraryItems] })),
   clearLibrary: () => set({ libraryItems: [] }),
+  openProfile: () => set({ profileModalOpen: true }),
+  closeProfile: () => set({ profileModalOpen: false }),
 }));
+
+export function useUI() {
+  return useUIStore((state) => ({
+    openProfile: state.openProfile,
+    closeProfile: state.closeProfile,
+  }));
+}
