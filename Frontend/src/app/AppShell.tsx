@@ -155,7 +155,7 @@ export function AppShell(): JSX.Element {
         label: "System Drawer",
         to: "/",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
-        onSelect: () => openSystemDrawer("source"),
+        onSelect: () => openSystemDrawer("encryption"),
       },
       { label: "Pricing", to: "/pricing", icon: <Sparkles className="mr-2 h-4 w-4" /> },
       { label: "Settings", to: "/settings", icon: <Settings className="mr-2 h-4 w-4" /> },
