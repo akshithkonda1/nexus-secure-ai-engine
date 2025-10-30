@@ -7,6 +7,7 @@ import { SettingsLayout } from "@/features/settings/SettingsLayout";
 import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
 import { BillingSettings } from "@/features/settings/BillingSettings";
 import { NotFound } from "@/app/NotFound";
+import SystemPage from "@/features/system/SystemPage";
 
 export const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <ChatWorkspace /> },
       { path: "pricing", element: <PricingPage /> },
+      { path: "system", element: <SystemPage /> },
       {
         path: "settings",
         element: <SettingsLayout />,

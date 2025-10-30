@@ -1,11 +1,29 @@
 import { create } from "zustand";
-import {
-  persist,
-  createJSONStorage,
-  type StateStorage,
-} from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
-export type SystemPane = "library" | "projects" | "models";
+const createMemoryStorage = (): Storage => {
+  const store = new Map<string, string>();
+
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => {
+      store.set(key, value);
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (index) => Array.from(store.keys())[index] ?? null,
+    get length() {
+      return store.size;
+    },
+  } as Storage;
+};
+
+
+export type SystemPane = "library" | "projects" | "models" | "audit" | "encryption";
 
 export interface LibraryItem {
   id: string;
@@ -60,19 +78,9 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: "nexus.ui",
-      storage: createJSONStorage(() => {
-        if (typeof window === "undefined") {
-          const noopStorage: StateStorage = {
-            getItem: () => null,
-            setItem: () => {},
-            removeItem: () => {},
-          };
-
-          return noopStorage;
-        }
-
-        return window.localStorage;
-      }),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? window.localStorage : createMemoryStorage()
+      ),
       partialize: (state) => ({
         systemPane: state.systemPane,
         sidebarCollapsed: state.sidebarCollapsed,

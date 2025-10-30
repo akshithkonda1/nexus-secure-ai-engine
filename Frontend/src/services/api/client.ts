@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 
+import { logEvent } from "@/shared/lib/audit";
 import { useUIStore, type LibraryItem } from "@/shared/state/ui";
 
 export const queryClient = new QueryClient();
@@ -12,6 +13,21 @@ const latency = async (duration = 250) =>
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? "GET").toUpperCase();
+
+  if (path === "/chat/reply") {
+    const body = init?.body ? JSON.parse(init.body as string) : {};
+    const userMessage: string = body?.message ?? "";
+    await latency(550);
+    const reply = {
+      role: "assistant" as const,
+      content: `Here’s a thoughtful response to: “${userMessage}”.\n\nTop sources:\n1) https://example.com/a\n2) https://example.com/b`,
+      citations: [
+        { title: "Example A", url: "https://example.com/a" },
+        { title: "Example B", url: "https://example.com/b" },
+      ],
+    };
+    return reply as T;
+  }
 
   if (path === "/library" && method === "GET") {
     await latency(120);
@@ -28,6 +44,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       createdAt: new Date().toISOString(),
     };
     useUIStore.getState().addLibraryItem(item);
+    logEvent("library:dummy-pack", { id: item.id, title: item.title });
     return { success: true, item } as T;
   }
 

@@ -36,8 +36,12 @@ export function LibraryPane(): JSX.Element {
 
   return (
     <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold">Library</h2>
+        <p className="text-sm text-muted">Curated study packs and assets from your agents.</p>
+      </div>
       {data.map((pack) => (
-        <Card key={pack.id}>
+        <Card key={pack.id} className="round-card shadow-ambient">
           <CardHeader>
             <CardTitle className="text-base">{pack.title}</CardTitle>
             <CardDescription>{new Date(pack.createdAt).toLocaleString()}</CardDescription>

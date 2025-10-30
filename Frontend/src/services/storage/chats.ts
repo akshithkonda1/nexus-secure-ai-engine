@@ -1,92 +1,99 @@
 import { nanoid } from "nanoid";
 
-export type ChatStatus = "active" | "archived" | "trash";
+import { logEvent } from "@/shared/lib/audit";
+
+export type ChatState = "active" | "archived" | "trashed";
 export type ChatRole = "user" | "assistant" | "system";
+
+export interface ChatCitation {
+  title: string;
+  url: string;
+}
 
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   createdAt: string;
+  citations?: ChatCitation[];
 }
 
 export interface ChatThread {
   id: string;
   title: string;
-  status: ChatStatus;
+  state: ChatState;
   messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
 }
 
-const CHATS_KEY = "nexus.chats";
+const STORAGE_KEY = "nexus.chats";
 
-const defaultMessage: ChatMessage = {
+const seedMessage: ChatMessage = {
   id: nanoid(),
   role: "assistant",
   content: "Welcome to Nexus — where adaptive AIs collaborate to help you think faster.",
   createdAt: new Date().toISOString(),
 };
 
-const defaultChat: ChatThread = {
+const seedChat: ChatThread = {
   id: nanoid(),
   title: "First conversation",
-  status: "active",
-  messages: [defaultMessage],
+  state: "active",
+  messages: [seedMessage],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
 
-function loadChats(): ChatThread[] {
+function loadAll(): ChatThread[] {
   if (typeof window === "undefined") {
-    return [defaultChat];
+    return [seedChat];
   }
 
   try {
-    const raw = window.localStorage.getItem(CHATS_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const seeded = [defaultChat];
-      window.localStorage.setItem(CHATS_KEY, JSON.stringify(seeded));
-      return seeded;
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify([seedChat]));
+      return [seedChat];
     }
     const parsed = JSON.parse(raw) as ChatThread[];
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      return [defaultChat];
+      return [seedChat];
     }
     return parsed.map((chat) => ({
       ...chat,
-      messages: chat.messages ?? [],
-      status: chat.status ?? "active",
+      state: chat.state ?? (chat as unknown as { status?: ChatState }).status ?? "active",
+      messages: (chat.messages ?? []).map((message) => ({ ...message })),
     }));
   } catch (error) {
-    console.error("Failed to parse chats", error);
-    return [defaultChat];
+    console.error("Failed to read chats", error);
+    return [seedChat];
   }
 }
 
-function persist(chats: ChatThread[]): void {
+function saveAll(list: ChatThread[]) {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-function mutateChats(mutator: (chats: ChatThread[]) => ChatThread[]): ChatThread[] {
-  const updated = mutator(loadChats());
-  persist(updated);
-  return updated;
+function updateAll(mutator: (list: ChatThread[]) => ChatThread[]): ChatThread[] {
+  const next = mutator(loadAll());
+  saveAll(next);
+  return next;
 }
 
-export function listChats(status?: ChatStatus): ChatThread[] {
-  const chats = loadChats();
-  if (!status) {
+export function listChats(state?: ChatState): ChatThread[] {
+  const chats = loadAll();
+  if (!state) {
     return chats;
   }
-  return chats.filter((chat) => chat.status === status);
+  return chats.filter((chat) => chat.state === state);
 }
 
 export function getChatById(id: string): ChatThread | undefined {
-  return loadChats().find((chat) => chat.id === id);
+  return loadAll().find((chat) => chat.id === id);
 }
 
 export function createChat(initialTitle?: string): ChatThread {
@@ -94,7 +101,7 @@ export function createChat(initialTitle?: string): ChatThread {
   const chat: ChatThread = {
     id: nanoid(),
     title: initialTitle ?? "Untitled chat",
-    status: "active",
+    state: "active",
     messages: [
       {
         id: nanoid(),
@@ -107,25 +114,29 @@ export function createChat(initialTitle?: string): ChatThread {
     updatedAt: now,
   };
 
-  mutateChats((chats) => [chat, ...chats]);
+  updateAll((all) => [chat, ...all]);
+  logEvent("chat:create", { id: chat.id, title: chat.title });
   return chat;
 }
 
-export function addMessage(chatId: string, message: Omit<ChatMessage, "id" | "createdAt">): ChatThread | undefined {
+export function addMessage(
+  chatId: string,
+  message: Omit<ChatMessage, "id" | "createdAt">
+): ChatThread | undefined {
   let result: ChatThread | undefined;
-  mutateChats((chats) =>
-    chats.map((chat) => {
+  updateAll((all) =>
+    all.map((chat) => {
       if (chat.id !== chatId) {
         return chat;
       }
-      const newMessage: ChatMessage = {
+      const next: ChatMessage = {
         id: nanoid(),
         createdAt: new Date().toISOString(),
         ...message,
       };
       result = {
         ...chat,
-        messages: [...chat.messages, newMessage],
+        messages: [...chat.messages, next],
         updatedAt: new Date().toISOString(),
       };
       return result;
@@ -136,8 +147,8 @@ export function addMessage(chatId: string, message: Omit<ChatMessage, "id" | "cr
 
 export function renameChat(chatId: string, title: string): ChatThread | undefined {
   let result: ChatThread | undefined;
-  mutateChats((chats) =>
-    chats.map((chat) => {
+  updateAll((all) =>
+    all.map((chat) => {
       if (chat.id !== chatId) {
         return chat;
       }
@@ -145,25 +156,50 @@ export function renameChat(chatId: string, title: string): ChatThread | undefine
       return result;
     })
   );
+  if (result) {
+    logEvent("chat:rename", { id: result.id, title: result.title });
+  }
   return result;
 }
 
-export function setChatStatus(chatId: string, status: ChatStatus): ChatThread | undefined {
+function transitionState(id: string, state: ChatState): ChatThread | undefined {
   let result: ChatThread | undefined;
-  mutateChats((chats) =>
-    chats.map((chat) => {
-      if (chat.id !== chatId) {
+  updateAll((all) =>
+    all.map((chat) => {
+      if (chat.id !== id) {
         return chat;
       }
-      result = { ...chat, status, updatedAt: new Date().toISOString() };
+      result = { ...chat, state, updatedAt: new Date().toISOString() };
       return result;
     })
   );
   return result;
 }
 
-export function deleteChatPermanently(chatId: string): void {
-  mutateChats((chats) => chats.filter((chat) => chat.id !== chatId));
+export function archiveChat(id: string) {
+  const chat = transitionState(id, "archived");
+  if (chat) {
+    logEvent("chat:archive", { id: chat.id });
+  }
+}
+
+export function moveToTrash(id: string) {
+  const chat = transitionState(id, "trashed");
+  if (chat) {
+    logEvent("chat:trash", { id: chat.id });
+  }
+}
+
+export function restoreFromTrash(id: string) {
+  const chat = transitionState(id, "active");
+  if (chat) {
+    logEvent("chat:restore", { id: chat.id });
+  }
+}
+
+export function deletePermanent(id: string) {
+  updateAll((all) => all.filter((chat) => chat.id !== id));
+  logEvent("chat:delete", { id });
 }
 
 export function ensureChat(chatId: string): ChatThread | undefined {
@@ -176,7 +212,7 @@ export function ensureChat(chatId: string): ChatThread | undefined {
 }
 
 export function getOrCreateFirstChat(): ChatThread {
-  const chats = loadChats();
+  const chats = loadAll();
   if (chats.length === 0) {
     const created = createChat("Welcome chat");
     return created;
