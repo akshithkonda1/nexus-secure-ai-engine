@@ -12,7 +12,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { useUIStore } from "@/shared/state/ui";
 import { logEvent } from "@/shared/lib/audit";
-import { getStoredProfile, setStoredProfile, type StoredProfile } from "@/services/storage/profile";
+import {
+  PROFILE_STORAGE_QUOTA_ERROR,
+  getStoredProfile,
+  setStoredProfile,
+  type ProfilePersistenceResult,
+  type StoredProfile,
+} from "@/services/storage/profile";
 
 const schema = z.object({
   displayName: z
@@ -143,11 +149,17 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
         updatedAt: new Date().toISOString(),
       };
 
-      setStoredProfile(updated);
+      const persistence: ProfilePersistenceResult = setStoredProfile(updated);
       logEvent("profile:save", { displayName: updated.displayName });
       window.dispatchEvent(new Event("nexus-profile-updated"));
       onProfileChange?.(updated);
-      push({ title: "Profile saved", description: "Your Nexus presence has been refreshed." });
+      push({
+        title: "Profile saved",
+        description:
+          persistence === "saved-after-reclaim"
+            ? "We trimmed older workspace history to make room for your profile."
+            : "Your Nexus presence has been refreshed.",
+      });
 
       setBaseline(updated);
       setPreviewUrl(updated.avatarDataUrl);
@@ -158,10 +170,18 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
       closeProfileModal();
     } catch (error) {
       console.error("Failed to save profile", error);
-      push({
-        title: "Profile not saved",
-        description: "We couldn't store your changes. Please try again.",
-      });
+      const message = error instanceof Error ? error.message : "";
+      if (message === PROFILE_STORAGE_QUOTA_ERROR) {
+        push({
+          title: "Storage is full",
+          description: "Please delete older chats or logs, then try saving your profile again.",
+        });
+      } else {
+        push({
+          title: "Profile not saved",
+          description: "We couldn't store your changes. Please try again.",
+        });
+      }
     } finally {
       setSaving(false);
     }
