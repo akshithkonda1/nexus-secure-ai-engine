@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -7,50 +9,18 @@ import { EncryptionPane } from "@/features/system/EncryptionPane";
 import { SourcePane } from "@/features/system/SourcePane";
 import { useUIStore, type SystemPane } from "@/shared/state/ui";
 
-export function SystemDrawer(): JSX.Element {
-  const isSystemDrawerOpen = useUIStore((state) => state.isSystemDrawerOpen);
-  const closeSystemDrawer = useUIStore((state) => state.closeSystemDrawer);
-  const systemPane = useUIStore((state) => state.systemPane);
-  const setSystemPane = useUIStore((state) => state.setSystemPane);
+const systemPaneLabels: Record<SystemPane, string> = {
+  source: "Source",
+  audit: "Audit Trail",
+  encryption: "Encryption",
+};
 
-  if (!isSystemDrawerOpen) {
-    return null;
-  }
-
-  return (
-    <Sheet
-      open={isSystemDrawerOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          closeSystemDrawer();
-        }
-      }}
-    >
-      <SheetContent side="right" className="w-full max-w-lg p-0">
-        <div className="flex items-center justify-between border-b border-subtle px-4 py-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted">System drawer</p>
-            <p className="text-lg font-semibold">{systemPaneLabel(systemPane)}</p>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => closeSystemDrawer()} aria-label="Close drawer">
-            ✕
-          </Button>
-        </div>
-        <div className="h-full overflow-y-auto">
-          <DrawerTabs systemPane={systemPane} setSystemPane={setSystemPane} />
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function SidebarTabs({
-  systemPane,
-  setSystemPane,
-}: {
+interface DrawerTabsProps {
   systemPane: SystemPane;
   setSystemPane: (pane: SystemPane) => void;
-}) {
+}
+
+function DrawerTabs({ systemPane, setSystemPane }: DrawerTabsProps) {
   return (
     <Tabs
       value={systemPane}
@@ -77,15 +47,41 @@ function SidebarTabs({
   );
 }
 
-function systemPaneLabel(pane: SystemPane) {
-  switch (pane) {
-    case "source":
-      return "Source";
-    case "audit":
-      return "Audit Trail";
-    case "encryption":
-      return "Encryption";
-    default:
-      return "Workspace";
+export function SystemDrawer(): JSX.Element {
+  const isSystemDrawerOpen = useUIStore((state) => state.isSystemDrawerOpen);
+  const closeSystemDrawer = useUIStore((state) => state.closeSystemDrawer);
+  const systemPane = useUIStore((state) => state.systemPane);
+  const setSystemPane = useUIStore((state) => state.setSystemPane);
+
+  const heading = useMemo(() => systemPaneLabels[systemPane] ?? "Workspace", [systemPane]);
+
+  if (!isSystemDrawerOpen) {
+    return null;
   }
+
+  return (
+    <Sheet
+      open={isSystemDrawerOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          closeSystemDrawer();
+        }
+      }}
+    >
+      <SheetContent side="right" className="w-full max-w-lg p-0">
+        <div className="flex items-center justify-between border-b border-subtle px-4 py-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">System drawer</p>
+            <p className="text-lg font-semibold">{heading}</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => closeSystemDrawer()} aria-label="Close drawer">
+            ✕
+          </Button>
+        </div>
+        <div className="h-full overflow-y-auto">
+          <DrawerTabs systemPane={systemPane} setSystemPane={setSystemPane} />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
 }
