@@ -56,7 +56,7 @@ export const useUIStore = create<UIState>()(
       openProfileModal: () => set({ isProfileModalOpen: true }),
       closeProfileModal: () => set({ isProfileModalOpen: false }),
       isSystemDrawerOpen: false,
-      systemPane: "library",
+      systemPane: "source",
       setSystemPane: (pane) => set({ systemPane: pane }),
       openSystemDrawer: (pane) =>
         set({

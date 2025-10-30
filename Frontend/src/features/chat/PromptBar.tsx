@@ -41,6 +41,10 @@ export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSendin
             {quick.label}
           </Button>
         ))}
+        <Button variant="outline" size="sm" onClick={onCreateStudyPack}>
+          <Sparkles className="mr-2 h-4 w-4" />
+          Create dummy study pack
+        </Button>
       </div>
       <div className="flex items-end gap-3">
         <Button variant="outline" size="icon" className="round-btn" aria-label="Attach reference">
