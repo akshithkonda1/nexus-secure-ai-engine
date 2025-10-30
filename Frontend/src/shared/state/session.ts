@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  persist,
+  createJSONStorage,
+  type StateStorage,
+} from "zustand/middleware";
 
 export type NexusMode = "student" | "business" | "nexusos";
 export type NexusTheme = "light" | "dark";
@@ -89,7 +93,19 @@ export const useSessionStore = create<SessionState>()(
     }),
     {
       name: "nexus.session",
-      storage: createJSONStorage(() => window.localStorage),
+      storage: createJSONStorage(() => {
+        if (typeof window === "undefined") {
+          const noopStorage: StateStorage = {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
+
+          return noopStorage;
+        }
+
+        return window.localStorage;
+      }),
       partialize: (state) => ({
         mode: state.mode,
         theme: state.theme,
