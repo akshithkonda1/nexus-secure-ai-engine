@@ -12,7 +12,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { useUIStore } from "@/shared/state/ui";
 import { logEvent } from "@/shared/lib/audit";
-import { getStoredProfile, setStoredProfile, type StoredProfile } from "@/services/storage/profile";
+import {
+  PROFILE_STORAGE_QUOTA_ERROR,
+  getStoredProfile,
+  setStoredProfile,
+  type ProfilePersistenceResult,
+  type StoredProfile,
+} from "@/services/storage/profile";
 
 const schema = z.object({
   displayName: z
@@ -125,37 +131,74 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
 
   const onSubmit = form.handleSubmit(async (values) => {
     setSaving(true);
-    let avatarDataUrl = baseline.avatarDataUrl;
+    try {
+      let avatarDataUrl = baseline.avatarDataUrl;
 
-    if (selectedFile) {
-      avatarDataUrl = await fileToDataUrl(selectedFile);
-      await wait(400);
+      if (selectedFile) {
+        avatarDataUrl = await fileToDataUrl(selectedFile);
+        await wait(400);
+      }
+
+      if (isAvatarRemoved) {
+        avatarDataUrl = null;
+      }
+
+      const updated: StoredProfile = {
+        displayName: values.displayName,
+        avatarDataUrl,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const persistence: ProfilePersistenceResult = setStoredProfile(updated);
+      const persistedProfile = persistence.profile;
+
+      logEvent("profile:save", { displayName: persistedProfile.displayName });
+      window.dispatchEvent(new Event("nexus-profile-updated"));
+      onProfileChange?.(persistedProfile);
+
+      let description = "Your Nexus presence has been refreshed.";
+      if (persistence.avatarDropped && persistence.reclaimed) {
+        description = "We trimmed workspace history and removed your avatar to save your profile.";
+      } else if (persistence.avatarDropped) {
+        description = "We removed your avatar to make space, but your profile details are saved.";
+      } else if (persistence.reclaimed) {
+        description = "We trimmed older workspace history to make room for your profile.";
+      }
+
+      push({
+        title: "Profile saved",
+        description,
+      });
+
+      setBaseline(persistedProfile);
+      setPreviewUrl((previous) => {
+        if (previous?.startsWith("blob:")) {
+          URL.revokeObjectURL(previous);
+        }
+        return persistedProfile.avatarDataUrl;
+      });
+      setSelectedFile(null);
+      setAvatarRemoved(false);
+      form.reset({ displayName: persistedProfile.displayName, avatarFile: null });
+
+      closeProfileModal();
+    } catch (error) {
+      console.error("Failed to save profile", error);
+      const message = error instanceof Error ? error.message : "";
+      if (message === PROFILE_STORAGE_QUOTA_ERROR) {
+        push({
+          title: "Storage is full",
+          description: "Please delete older chats or logs, then try saving your profile again.",
+        });
+      } else {
+        push({
+          title: "Profile not saved",
+          description: "We couldn't store your changes. Please try again.",
+        });
+      }
+    } finally {
+      setSaving(false);
     }
-
-    if (isAvatarRemoved) {
-      avatarDataUrl = null;
-    }
-
-    const updated: StoredProfile = {
-      displayName: values.displayName,
-      avatarDataUrl,
-      updatedAt: new Date().toISOString(),
-    };
-
-    setStoredProfile(updated);
-    logEvent("profile:save", { displayName: updated.displayName });
-    window.dispatchEvent(new Event("nexus-profile-updated"));
-    onProfileChange?.(updated);
-    push({ title: "Profile saved", description: "Your Nexus presence has been refreshed." });
-
-    setBaseline(updated);
-    setPreviewUrl(updated.avatarDataUrl);
-    setSelectedFile(null);
-    setAvatarRemoved(false);
-    form.reset({ displayName: updated.displayName, avatarFile: null });
-
-    setSaving(false);
-    closeProfileModal();
   });
 
   const canSave = form.formState.isValid && form.formState.isDirty && !isSaving;
