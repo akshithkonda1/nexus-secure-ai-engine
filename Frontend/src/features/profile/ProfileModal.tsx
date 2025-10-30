@@ -1,184 +1,218 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../shared/ui/dialog";
-import { Input } from "../../shared/ui/input";
-import { Label } from "../../shared/ui/label";
-import { Button } from "../../shared/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../../shared/ui/avatar";
-import { useToast } from "../../shared/ui/use-toast";
-import { useUIStore } from "../../shared/state/ui";
-import { readProfile, writeProfile, clearProfileAvatar } from "../../services/storage/profile";
+import { Loader2 } from "lucide-react";
 
-const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
+import { useUIStore } from "@/shared/state/ui";
+import { logEvent } from "@/shared/lib/audit";
+import { getStoredProfile, setStoredProfile, type StoredProfile } from "@/services/storage/profile";
 
 const schema = z.object({
   displayName: z
     .string()
-    .min(2, "Name must contain at least 2 characters")
-    .max(60, "Keep it under 60 characters for readability"),
+    .min(2, "Display name is too short")
+    .max(60, "Display name is too long")
+    .transform((value) => value.trim()),
+  avatarFile: z.any().optional().nullable(),
 });
 
-type FormValues = z.infer<typeof schema>;
+type ProfileForm = z.infer<typeof schema>;
 
-export function ProfileModal() {
-  const profileModalOpen = useUIStore((state) => state.profileModalOpen);
-  const setProfileModalOpen = useUIStore((state) => state.setProfileModalOpen);
-  const { toast } = useToast();
-  const [initialProfile, setInitialProfile] = useState(() => readProfile());
-  const [previewUrl, setPreviewUrl] = useState<string | null>(initialProfile.avatarUrl);
+const ACCEPTED_MIME = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
+const MAX_BYTES = 8 * 1024 * 1024;
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: StoredProfile) => void }): JSX.Element {
+  const { push } = useToast();
+  const isOpen = useUIStore((state) => state.isProfileModalOpen);
+  const closeProfileModal = useUIStore((state) => state.closeProfileModal);
+
+  const [baseline, setBaseline] = useState<StoredProfile>(() => getStoredProfile());
+  const [previewUrl, setPreviewUrl] = useState<string | null>(baseline.avatarDataUrl);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [removalQueued, setRemovalQueued] = useState(false);
+  const [isAvatarRemoved, setAvatarRemoved] = useState(false);
+  const [isSaving, setSaving] = useState(false);
 
-  const form = useForm<FormValues>({
+  const form = useForm<ProfileForm>({
     resolver: zodResolver(schema),
-    defaultValues: { displayName: initialProfile.displayName },
+    defaultValues: {
+      displayName: baseline.displayName,
+      avatarFile: null,
+    },
     mode: "onChange",
   });
 
   useEffect(() => {
-    if (profileModalOpen) {
-      const latest = readProfile();
-      setInitialProfile(latest);
-      setPreviewUrl(latest.avatarUrl);
+    if (isOpen) {
+      const current = getStoredProfile();
+      setBaseline(current);
+      form.reset({ displayName: current.displayName, avatarFile: null });
+      setPreviewUrl(current.avatarDataUrl);
       setSelectedFile(null);
-      setRemovalQueued(false);
-      form.reset({ displayName: latest.displayName });
+      setAvatarRemoved(false);
     }
-  }, [form, profileModalOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     return () => {
-      if (previewUrl && previewUrl.startsWith("blob:")) {
+      if (previewUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
     };
   }, [previewUrl]);
 
-  const helperText = useMemo(() => {
-    if (selectedFile) {
-      return "Photo ready. Save to keep your new avatar.";
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      closeProfileModal();
     }
-    if (removalQueued) {
-      return "Avatar will be removed on save.";
-    }
-    return "Upload a square image for the best result.";
-  }, [removalQueued, selectedFile]);
-
-  const onClose = () => {
-    setProfileModalOpen(false);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast({
-        title: "Unsupported file",
-        description: "Choose a PNG, JPG, WEBP, or GIF file.",
-      });
+    const files = event.target.files;
+    if (!files || files.length === 0) {
       return;
     }
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: "File too large",
-        description: "Please select a file under 8MB.",
-      });
+    const file = files[0];
+    if (!ACCEPTED_MIME.includes(file.type)) {
+      form.setError("avatarFile", { type: "manual", message: "Use PNG, JPG, WEBP, or GIF" });
       return;
     }
-    if (previewUrl && previewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
+    if (file.size > MAX_BYTES) {
+      form.setError("avatarFile", { type: "manual", message: "Avatar must be 8MB or less" });
+      return;
     }
     setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setRemovalQueued(false);
+    setAvatarRemoved(false);
+    void form.trigger("avatarFile");
+    form.clearErrors("avatarFile");
+    form.setValue("avatarFile", file, { shouldDirty: true, shouldValidate: true });
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    const nextPreview = URL.createObjectURL(file);
+    setPreviewUrl(nextPreview);
   };
 
-  const handleRemove = () => {
-    if (previewUrl && previewUrl.startsWith("blob:")) {
+  const handleRemovePhoto = () => {
+    setSelectedFile(null);
+    setAvatarRemoved(true);
+    if (previewUrl?.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(null);
-    setSelectedFile(null);
-    setRemovalQueued(true);
+    form.setValue("avatarFile", null, { shouldDirty: true });
   };
 
-  const convertFileToDataUrl = async (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-
   const onSubmit = form.handleSubmit(async (values) => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    let avatarUrl = previewUrl;
+    setSaving(true);
+    let avatarDataUrl = baseline.avatarDataUrl;
+
     if (selectedFile) {
-      avatarUrl = await convertFileToDataUrl(selectedFile);
+      avatarDataUrl = await fileToDataUrl(selectedFile);
+      await wait(400);
     }
-    if (removalQueued) {
-      avatarUrl = null;
-      clearProfileAvatar();
+
+    if (isAvatarRemoved) {
+      avatarDataUrl = null;
     }
-    const payload = { displayName: values.displayName, avatarUrl: avatarUrl ?? null };
-    writeProfile(payload);
-    setInitialProfile(payload);
-    toast({ title: "Profile updated", description: "Your changes have been saved." });
-    setProfileModalOpen(false);
+
+    const updated: StoredProfile = {
+      displayName: values.displayName,
+      avatarDataUrl,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setStoredProfile(updated);
+    logEvent("profile:save", { displayName: updated.displayName });
+    window.dispatchEvent(new Event("nexus-profile-updated"));
+    onProfileChange?.(updated);
+    push({ title: "Profile saved", description: "Your Nexus presence has been refreshed." });
+
+    setBaseline(updated);
+    setPreviewUrl(updated.avatarDataUrl);
+    setSelectedFile(null);
+    setAvatarRemoved(false);
+    form.reset({ displayName: updated.displayName, avatarFile: null });
+
+    setSaving(false);
+    closeProfileModal();
   });
 
-  const isDirty = form.formState.isDirty || selectedFile !== null || removalQueued;
+  const canSave = form.formState.isValid && form.formState.isDirty && !isSaving;
+  const displayNamePreview = form.watch("displayName") ?? baseline.displayName;
 
   return (
-    <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
-      <DialogContent aria-describedby="profile-modal-description">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent aria-describedby="profile-modal-description" className="round-card shadow-ambient">
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription id="profile-modal-description">
-            Update your workspace identity and avatar.
+            Update how you appear across the Nexus workspace. Changes apply across chats and shared assets.
           </DialogDescription>
         </DialogHeader>
-        <form className="mt-4 flex flex-col gap-6" onSubmit={onSubmit}>
-          <div className="flex items-start gap-4">
-            <Avatar className="h-16 w-16">
-              {previewUrl ? <AvatarImage src={previewUrl} alt="Avatar preview" /> : null}
-              <AvatarFallback>{form.watch("displayName")?.[0]?.toUpperCase() ?? "N"}</AvatarFallback>
+        <form className="space-y-5" onSubmit={onSubmit}>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 shadow-ambient">
+              {previewUrl ? <AvatarImage src={previewUrl} alt={displayNamePreview} /> : null}
+              <AvatarFallback>{displayNamePreview.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-1 flex-col gap-2 text-sm">
-              <Label htmlFor="displayName">Display name</Label>
-              <Input id="displayName" {...form.register("displayName")} placeholder="Your display name" />
-              <p className="text-xs text-muted">{helperText}</p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById("avatar-upload")?.click()}>
-                  Upload photo
-                </Button>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept={ACCEPTED_TYPES.join(",")}
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <Button type="button" variant="ghost" size="sm" onClick={handleRemove}>
-                  Remove photo
-                </Button>
-              </div>
+            <div>
+              <Label htmlFor="avatar">Workspace photo</Label>
+              <Input id="avatar" type="file" accept={ACCEPTED_MIME.join(",")} onChange={handleFileChange} className="round-input" />
+              {selectedFile ? (
+                <p className="mt-2 text-xs text-muted">Photo ready. Save to keep your new avatar.</p>
+              ) : isAvatarRemoved ? (
+                <p className="mt-2 text-xs text-muted">Default avatar will be restored when you save.</p>
+              ) : null}
+              {form.formState.errors.avatarFile ? (
+                <p className="mt-1 text-xs text-red-500">{form.formState.errors.avatarFile.message}</p>
+              ) : null}
+              <Button variant="link" type="button" className="px-0 text-sm" onClick={handleRemovePhoto}>
+                Remove photo
+              </Button>
             </div>
           </div>
-          {form.formState.errors.displayName ? (
-            <p className="text-sm text-red-400">{form.formState.errors.displayName.message}</p>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={onClose}>
+          <div className="space-y-2">
+            <Label htmlFor="displayName">Display name</Label>
+            <Input id="displayName" className="round-input" {...form.register("displayName")} />
+            {form.formState.errors.displayName ? (
+              <p className="text-xs text-red-500">{form.formState.errors.displayName.message}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" className="round-btn" onClick={() => closeProfileModal()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!isDirty || !form.formState.isValid}>
-              Save changes
+            <Button type="submit" className="round-btn shadow-press" disabled={!canSave}>
+              {isSaving ? (
+                <span className="inline-flex items-center gap-2 text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                </span>
+              ) : (
+                "Save"
+              )}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

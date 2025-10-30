@@ -1,147 +1,221 @@
 import { nanoid } from "nanoid";
-import { NexusMode } from "../../shared/state/session";
 
-export type ChatStatus = "active" | "archived" | "trashed";
+import { logEvent } from "@/shared/lib/audit";
+
+export type ChatState = "active" | "archived" | "trashed";
+export type ChatRole = "user" | "assistant" | "system";
+
+export interface ChatCitation {
+  title: string;
+  url: string;
+}
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "assistant";
+  role: ChatRole;
   content: string;
   createdAt: string;
+  citations?: ChatCitation[];
 }
 
-export interface ChatRecord {
+export interface ChatThread {
   id: string;
   title: string;
-  status: ChatStatus;
+  state: ChatState;
+  messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
-  mode: NexusMode;
-  messages: ChatMessage[];
 }
 
-const CHAT_STORAGE_KEY = "nexus.chats";
+const STORAGE_KEY = "nexus.chats";
 
-function defaultTitle(): string {
-  return "Untitled chat";
-}
+const seedMessage: ChatMessage = {
+  id: nanoid(),
+  role: "assistant",
+  content: "Welcome to Nexus — where adaptive AIs collaborate to help you think faster.",
+  createdAt: new Date().toISOString(),
+};
 
-function parseChat(raw: unknown): ChatRecord | null {
-  if (!raw || typeof raw !== "object") return null;
-  const data = raw as Partial<ChatRecord>;
-  if (typeof data.id !== "string" || typeof data.status !== "string") return null;
-  return {
-    id: data.id,
-    title: typeof data.title === "string" ? data.title : defaultTitle(),
-    status: data.status === "archived" || data.status === "trashed" ? data.status : "active",
-    createdAt: typeof data.createdAt === "string" ? data.createdAt : new Date().toISOString(),
-    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : new Date().toISOString(),
-    mode: data.mode === "business" || data.mode === "nexusos" ? data.mode : "student",
-    messages: Array.isArray(data.messages)
-      ? data.messages.filter((message): message is ChatMessage =>
-          !!message &&
-          typeof message === "object" &&
-          typeof (message as ChatMessage).id === "string" &&
-          (message as ChatMessage).role !== undefined &&
-          (message as ChatMessage).content !== undefined,
-        )
-      : [],
-  };
-}
+const seedChat: ChatThread = {
+  id: nanoid(),
+  title: "First conversation",
+  state: "active",
+  messages: [seedMessage],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
-export function readChats(): ChatRecord[] {
-  if (typeof window === "undefined") return [];
-  const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
-  if (!raw) return [];
+function loadAll(): ChatThread[] {
+  if (typeof window === "undefined") {
+    return [seedChat];
+  }
+
   try {
-    const parsed = JSON.parse(raw) as unknown[];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map(parseChat).filter((chat): chat is ChatRecord => chat !== null);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify([seedChat]));
+      return [seedChat];
+    }
+    const parsed = JSON.parse(raw) as ChatThread[];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return [seedChat];
+    }
+    return parsed.map((chat) => ({
+      ...chat,
+      state: chat.state ?? (chat as unknown as { status?: ChatState }).status ?? "active",
+      messages: (chat.messages ?? []).map((message) => ({ ...message })),
+    }));
   } catch (error) {
-    console.warn("Failed to parse chat history", error);
-    return [];
+    console.error("Failed to read chats", error);
+    return [seedChat];
   }
 }
 
-export function writeChats(chats: ChatRecord[]): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chats));
-  window.dispatchEvent(new CustomEvent("nexus:chats-updated"));
+function saveAll(list: ChatThread[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
-export function getChat(id: string): ChatRecord | undefined {
-  return readChats().find((chat) => chat.id === id);
+function updateAll(mutator: (list: ChatThread[]) => ChatThread[]): ChatThread[] {
+  const next = mutator(loadAll());
+  saveAll(next);
+  return next;
 }
 
-export function createChat(mode: NexusMode, title?: string): ChatRecord {
-  const timestamp = new Date().toISOString();
-  const chat: ChatRecord = {
+export function listChats(state?: ChatState): ChatThread[] {
+  const chats = loadAll();
+  if (!state) {
+    return chats;
+  }
+  return chats.filter((chat) => chat.state === state);
+}
+
+export function getChatById(id: string): ChatThread | undefined {
+  return loadAll().find((chat) => chat.id === id);
+}
+
+export function createChat(initialTitle?: string): ChatThread {
+  const now = new Date().toISOString();
+  const chat: ChatThread = {
     id: nanoid(),
-    title: title?.trim() || defaultTitle(),
-    status: "active",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    mode,
-    messages: [],
+    title: initialTitle ?? "Untitled chat",
+    state: "active",
+    messages: [
+      {
+        id: nanoid(),
+        role: "assistant",
+        content: "How can Nexus assist you today?",
+        createdAt: now,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
   };
-  const chats = readChats();
-  chats.unshift(chat);
-  writeChats(chats);
+
+  updateAll((all) => [chat, ...all]);
+  logEvent("chat:create", { id: chat.id, title: chat.title });
   return chat;
 }
 
-export function saveMessage(chatId: string, role: ChatMessage["role"], content: string): ChatRecord | undefined {
-  const chats = readChats();
-  const index = chats.findIndex((chat) => chat.id === chatId);
-  if (index === -1) return undefined;
-  const message: ChatMessage = {
-    id: nanoid(),
-    role,
-    content,
-    createdAt: new Date().toISOString(),
-  };
-  const chat = chats[index];
-  const updated: ChatRecord = {
-    ...chat,
-    messages: [...chat.messages, message],
-    updatedAt: message.createdAt,
-  };
-  chats[index] = updated;
-  writeChats(chats);
-  return updated;
-}
-
-export function renameChat(chatId: string, title: string): ChatRecord | undefined {
-  const chats = readChats();
-  const index = chats.findIndex((chat) => chat.id === chatId);
-  if (index === -1) return undefined;
-  const updated = { ...chats[index], title: title.trim() || defaultTitle(), updatedAt: new Date().toISOString() };
-  chats[index] = updated;
-  writeChats(chats);
-  return updated;
-}
-
-export function moveChat(chatId: string, status: ChatStatus): ChatRecord | undefined {
-  const chats = readChats();
-  const index = chats.findIndex((chat) => chat.id === chatId);
-  if (index === -1) return undefined;
-  const updated = { ...chats[index], status, updatedAt: new Date().toISOString() };
-  chats[index] = updated;
-  writeChats(chats);
-  return updated;
-}
-
-export function deleteChat(chatId: string): void {
-  const chats = readChats();
-  const filtered = chats.filter((chat) => chat.id !== chatId);
-  writeChats(filtered);
-}
-
-export function searchChats(query: string): ChatRecord[] {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return readChats();
-  return readChats().filter((chat) =>
-    chat.title.toLowerCase().includes(normalized) ||
-    chat.messages.some((message) => message.content.toLowerCase().includes(normalized)),
+export function addMessage(
+  chatId: string,
+  message: Omit<ChatMessage, "id" | "createdAt">
+): ChatThread | undefined {
+  let result: ChatThread | undefined;
+  updateAll((all) =>
+    all.map((chat) => {
+      if (chat.id !== chatId) {
+        return chat;
+      }
+      const next: ChatMessage = {
+        id: nanoid(),
+        createdAt: new Date().toISOString(),
+        ...message,
+      };
+      result = {
+        ...chat,
+        messages: [...chat.messages, next],
+        updatedAt: new Date().toISOString(),
+      };
+      return result;
+    })
   );
+  return result;
+}
+
+export function renameChat(chatId: string, title: string): ChatThread | undefined {
+  let result: ChatThread | undefined;
+  updateAll((all) =>
+    all.map((chat) => {
+      if (chat.id !== chatId) {
+        return chat;
+      }
+      result = { ...chat, title, updatedAt: new Date().toISOString() };
+      return result;
+    })
+  );
+  if (result) {
+    logEvent("chat:rename", { id: result.id, title: result.title });
+  }
+  return result;
+}
+
+function transitionState(id: string, state: ChatState): ChatThread | undefined {
+  let result: ChatThread | undefined;
+  updateAll((all) =>
+    all.map((chat) => {
+      if (chat.id !== id) {
+        return chat;
+      }
+      result = { ...chat, state, updatedAt: new Date().toISOString() };
+      return result;
+    })
+  );
+  return result;
+}
+
+export function archiveChat(id: string) {
+  const chat = transitionState(id, "archived");
+  if (chat) {
+    logEvent("chat:archive", { id: chat.id });
+  }
+}
+
+export function moveToTrash(id: string) {
+  const chat = transitionState(id, "trashed");
+  if (chat) {
+    logEvent("chat:trash", { id: chat.id });
+  }
+}
+
+export function restoreFromTrash(id: string) {
+  const chat = transitionState(id, "active");
+  if (chat) {
+    logEvent("chat:restore", { id: chat.id });
+  }
+}
+
+export function deletePermanent(id: string) {
+  updateAll((all) => all.filter((chat) => chat.id !== id));
+  logEvent("chat:delete", { id });
+}
+
+export function ensureChat(chatId: string): ChatThread | undefined {
+  const chat = getChatById(chatId);
+  if (chat) {
+    return chat;
+  }
+  const created = createChat();
+  return created.id === chatId ? created : getChatById(chatId);
+}
+
+export function getOrCreateFirstChat(): ChatThread {
+  const chats = loadAll();
+  if (chats.length === 0) {
+    const created = createChat("Welcome chat");
+    return created;
+  }
+  return chats[0];
 }
