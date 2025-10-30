@@ -1,5 +1,9 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  persist,
+  createJSONStorage,
+  type StateStorage,
+} from "zustand/middleware";
 
 export type SystemPane = "library" | "projects" | "models";
 
@@ -56,7 +60,19 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: "nexus.ui",
-      storage: createJSONStorage(() => window.localStorage),
+      storage: createJSONStorage(() => {
+        if (typeof window === "undefined") {
+          const noopStorage: StateStorage = {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
+
+          return noopStorage;
+        }
+
+        return window.localStorage;
+      }),
       partialize: (state) => ({
         systemPane: state.systemPane,
         sidebarCollapsed: state.sidebarCollapsed,
