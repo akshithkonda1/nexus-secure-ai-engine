@@ -117,6 +117,12 @@ export function ChatWorkspace(): JSX.Element {
     } finally {
       setSending(false);
     }
+    addMessage(chat.id, { role: "user", content });
+    renameChat(chat.id, deriveTitle(content));
+    addMessage(chat.id, { role: "assistant", content: synthesizeAssistantResponse(mode, content) });
+    refreshChats();
+    setInput("");
+    setSending(false);
   };
 
   const handleArchive = () => {
