@@ -23,7 +23,7 @@ const createMemoryStorage = (): Storage => {
 };
 
 
-export type SystemPane = "library" | "projects" | "models" | "audit" | "encryption";
+export type SystemPane = "source" | "audit" | "encryption";
 
 export interface LibraryItem {
   id: string;
@@ -56,7 +56,7 @@ export const useUIStore = create<UIState>()(
       openProfileModal: () => set({ isProfileModalOpen: true }),
       closeProfileModal: () => set({ isProfileModalOpen: false }),
       isSystemDrawerOpen: false,
-      systemPane: "library",
+      systemPane: "source",
       setSystemPane: (pane) => set({ systemPane: pane }),
       openSystemDrawer: (pane) =>
         set({
@@ -81,6 +81,26 @@ export const useUIStore = create<UIState>()(
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? window.localStorage : createMemoryStorage()
       ),
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (!persistedState) {
+          return persistedState as UIState;
+        }
+
+        if (version === 0 || (persistedState as { systemPane?: string }).systemPane) {
+          const legacyState = persistedState as UIState & { systemPane?: string };
+          const pane = legacyState.systemPane;
+          if (pane === "library" || pane === "projects" || pane === "models") {
+            return { ...legacyState, systemPane: "source" } as UIState;
+          }
+          if (pane === "audit" || pane === "encryption" || pane === "source") {
+            return { ...legacyState, systemPane: pane } as UIState;
+          }
+          return { ...legacyState, systemPane: "source" } as UIState;
+        }
+
+        return persistedState as UIState;
+      },
       partialize: (state) => ({
         systemPane: state.systemPane,
         sidebarCollapsed: state.sidebarCollapsed,
