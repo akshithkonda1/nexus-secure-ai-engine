@@ -156,7 +156,7 @@ export function ChatWorkspace(): JSX.Element {
   };
 
   const handleCreateStudyPack = async () => {
-    setSystemPane("library");
+    setSystemPane("source");
     await api("/library/dummy-study-pack", { method: "POST" });
     setBannerMessage("Library refreshed");
     if (bannerTimeout.current) {
@@ -166,7 +166,7 @@ export function ChatWorkspace(): JSX.Element {
       setBannerMessage(null);
     }, 4000);
     push({ title: "Study pack generated", description: "Open the System space to review the new study pack." });
-    navigate("/system?tab=library");
+    navigate("/system?tab=source");
   };
 
   return (
