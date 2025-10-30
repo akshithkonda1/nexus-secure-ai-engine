@@ -53,15 +53,46 @@ export function setStoredProfile(profile: StoredProfile): ProfilePersistenceResu
     return { profile, reclaimed: false, avatarDropped: false };
   }
 
+  const { localStorage } = window;
   const serialized = JSON.stringify(profile);
+  const previousValue = localStorage.getItem(PROFILE_KEY);
+  let previousRemoved = false;
+  let lastError: unknown;
 
-  try {
-    window.localStorage.setItem(PROFILE_KEY, serialized);
-    return { profile, reclaimed: false, avatarDropped: false };
-  } catch (error) {
-    if (!isQuotaExceeded(error)) {
-      throw error;
+  const tryPersist = (value: string): boolean => {
+    try {
+      localStorage.setItem(PROFILE_KEY, value);
+      return true;
+    } catch (error) {
+      if (!isQuotaExceeded(error)) {
+        throw error;
+      }
+      lastError = error;
+      return false;
     }
+  };
+
+  const removePreviousOnce = () => {
+    if (previousRemoved) {
+      return;
+    }
+    try {
+      localStorage.removeItem(PROFILE_KEY);
+      previousRemoved = true;
+    } catch (error) {
+      console.warn("Failed to remove previous profile during persistence", error);
+      previousRemoved = true;
+    }
+  };
+
+  if (tryPersist(serialized)) {
+    return { profile, reclaimed: false, avatarDropped: false };
+  }
+
+  removePreviousOnce();
+
+  if (tryPersist(serialized)) {
+    return { profile, reclaimed: false, avatarDropped: false };
   }
 
   const reclaimStrategies: (() => boolean)[] = [
@@ -74,7 +105,6 @@ export function setStoredProfile(profile: StoredProfile): ProfilePersistenceResu
   ];
 
   let reclaimed = false;
-  let lastError: unknown;
 
   for (const strategy of reclaimStrategies) {
     try {
@@ -88,15 +118,10 @@ export function setStoredProfile(profile: StoredProfile): ProfilePersistenceResu
       continue;
     }
 
-    try {
-      window.localStorage.setItem(PROFILE_KEY, serialized);
+    if (tryPersist(serialized)) {
       return { profile, reclaimed, avatarDropped: false };
-    } catch (error) {
-      if (!isQuotaExceeded(error)) {
-        throw error;
-      }
-      lastError = error;
     }
+    removePreviousOnce();
   }
 
   if (profile.avatarDataUrl) {
@@ -107,34 +132,20 @@ export function setStoredProfile(profile: StoredProfile): ProfilePersistenceResu
     };
     const minimizedSerialized = JSON.stringify(minimizedProfile);
 
-    try {
-      window.localStorage.setItem(PROFILE_KEY, minimizedSerialized);
+    if (tryPersist(minimizedSerialized)) {
       return { profile: minimizedProfile, reclaimed, avatarDropped: true };
-    } catch (error) {
-      if (!isQuotaExceeded(error)) {
-        throw error;
-      }
-      lastError = error;
     }
-
-    const previousValue = window.localStorage.getItem(PROFILE_KEY);
-
-    try {
-      window.localStorage.removeItem(PROFILE_KEY);
-      window.localStorage.setItem(PROFILE_KEY, minimizedSerialized);
+    removePreviousOnce();
+    if (tryPersist(minimizedSerialized)) {
       return { profile: minimizedProfile, reclaimed, avatarDropped: true };
-    } catch (error) {
-      if (!isQuotaExceeded(error)) {
-        throw error;
-      }
-      lastError = error;
-      if (previousValue !== null) {
-        try {
-          window.localStorage.setItem(PROFILE_KEY, previousValue);
-        } catch (restoreError) {
-          console.warn("Failed to restore previous profile after quota error", restoreError);
-        }
-      }
+    }
+  }
+
+  if (previousRemoved && previousValue !== null) {
+    try {
+      localStorage.setItem(PROFILE_KEY, previousValue);
+    } catch (restoreError) {
+      console.warn("Failed to restore previous profile after quota error", restoreError);
     }
   }
 
@@ -161,207 +172,6 @@ export function updateStoredProfile(partial: Partial<StoredProfile>): StoredProf
   };
   const result = setStoredProfile(updated);
   return result.profile;
-}
-
-function isQuotaExceeded(error: unknown): boolean {
-  if (!error) {
-    return false;
-  }
-
-  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
-    return error.name === "QuotaExceededError" || error.code === 22 || error.code === 1014;
-  }
-
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return message.includes("quota") || message.includes("storage") || message.includes("exceeded");
-  }
-
-  return false;
-}
-
-function trimAuditTrail(limit = 200): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  const raw = localStorage.getItem(AUDIT_KEY);
-  if (!raw) {
-    return false;
-  }
-
-  try {
-    const events = JSON.parse(raw) as unknown[];
-    if (!Array.isArray(events)) {
-      localStorage.removeItem(AUDIT_KEY);
-      return true;
-    }
-
-    if (events.length <= limit) {
-      return false;
-    }
-
-    const trimmed = events.slice(0, limit);
-    try {
-      localStorage.setItem(AUDIT_KEY, JSON.stringify(trimmed));
-    } catch (error) {
-      console.warn("Failed to persist trimmed audit trail", error);
-      localStorage.removeItem(AUDIT_KEY);
-    }
-    return true;
-  } catch (error) {
-    console.warn("Failed to trim audit trail", error);
-    localStorage.removeItem(AUDIT_KEY);
-    return true;
-  }
-}
-
-function trimChats(maxThreads = 12, maxMessagesPerThread = 40): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  const raw = localStorage.getItem(CHATS_KEY);
-  if (!raw) {
-    return false;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>[];
-    if (!Array.isArray(parsed)) {
-      localStorage.removeItem(CHATS_KEY);
-      return true;
-    }
-
-    let mutated = false;
-
-    const trimmedMessages = parsed.map((thread) => {
-      const messages = Array.isArray(thread?.messages) ? (thread.messages as unknown[]) : [];
-      if (!Array.isArray(messages)) {
-        mutated = true;
-        return { ...thread, messages: [] };
-      }
-      if (messages.length > maxMessagesPerThread) {
-        mutated = true;
-        return { ...thread, messages: messages.slice(-maxMessagesPerThread) };
-      }
-      return thread;
-    });
-
-    const active = trimmedMessages.filter((thread) => thread?.state === "active");
-    const archived = trimmedMessages.filter((thread) => thread?.state === "archived");
-    const trashed = trimmedMessages.filter((thread) => thread?.state === "trashed");
-
-    const shouldReorderByState = active.length > 0 && (archived.length > 0 || trashed.length > 0);
-    let ordered = shouldReorderByState ? [...active, ...archived, ...trashed] : trimmedMessages;
-    if (shouldReorderByState) {
-      mutated = true;
-    }
-
-    if (ordered.length > maxThreads) {
-      mutated = true;
-      ordered = ordered.slice(0, maxThreads);
-    }
-
-    if (!mutated) {
-      return false;
-    }
-
-    try {
-      localStorage.setItem(CHATS_KEY, JSON.stringify(ordered));
-    } catch (error) {
-      console.warn("Failed to persist trimmed chats", error);
-      localStorage.removeItem(CHATS_KEY);
-    }
-
-    return true;
-  } catch (error) {
-    console.warn("Failed to trim chats", error);
-    localStorage.removeItem(CHATS_KEY);
-    return true;
-  }
-}
-
-function dropInactiveChats(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  const raw = localStorage.getItem(CHATS_KEY);
-  if (!raw) {
-    return false;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>[];
-    if (!Array.isArray(parsed)) {
-      localStorage.removeItem(CHATS_KEY);
-      return true;
-    }
-
-    const active = parsed.filter((thread) => thread?.state === "active");
-    if (active.length === parsed.length) {
-      return false;
-    }
-
-    const fallback = parsed.length > 0 ? [parsed[0]] : [];
-    const next = active.length > 0 ? active : fallback;
-
-    try {
-      localStorage.setItem(CHATS_KEY, JSON.stringify(next));
-    } catch (error) {
-      console.warn("Failed to persist active chats", error);
-      localStorage.removeItem(CHATS_KEY);
-    }
-
-    return true;
-  } catch (error) {
-    console.warn("Failed to drop inactive chats", error);
-    localStorage.removeItem(CHATS_KEY);
-    return true;
-  }
-}
-
-function clearProjects(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  if (localStorage.getItem(PROJECTS_KEY) === null) {
-    return false;
-  }
-  localStorage.removeItem(PROJECTS_KEY);
-  return true;
-}
-
-function clearAuditTrail(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  if (localStorage.getItem(AUDIT_KEY) === null) {
-    return false;
-  }
-  localStorage.removeItem(AUDIT_KEY);
-  return true;
-}
-
-function clearChats(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { localStorage } = window;
-  if (localStorage.getItem(CHATS_KEY) === null) {
-    return false;
-  }
-  localStorage.removeItem(CHATS_KEY);
-  return true;
 }
 
 function isQuotaExceeded(error: unknown): boolean {

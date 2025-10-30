@@ -34,6 +34,10 @@ type ProfileForm = z.infer<typeof schema>;
 const ACCEPTED_MIME = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
 const MAX_BYTES = 8 * 1024 * 1024;
 
+const TARGET_DATA_URL_LENGTH = 2_500_000; // ~2.5 MB
+const MAX_RENDER_DIMENSION = 512;
+const MIN_JPEG_QUALITY = 0.55;
+
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -41,6 +45,62 @@ async function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Failed to load avatar preview"));
+    image.src = dataUrl;
+  });
+}
+
+async function createOptimizedAvatarDataUrl(file: File): Promise<string> {
+  const originalDataUrl = await fileToDataUrl(file);
+
+  if (originalDataUrl.length <= TARGET_DATA_URL_LENGTH) {
+    return originalDataUrl;
+  }
+
+  if (typeof document === "undefined") {
+    return originalDataUrl;
+  }
+
+  try {
+    const image = await loadImage(originalDataUrl);
+    const scale = Math.min(1, MAX_RENDER_DIMENSION / Math.max(image.width, image.height));
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return originalDataUrl;
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+
+    let quality = 0.9;
+    let optimized = canvas.toDataURL("image/jpeg", quality);
+
+    while (optimized.length > TARGET_DATA_URL_LENGTH && quality > MIN_JPEG_QUALITY) {
+      quality -= 0.1;
+      optimized = canvas.toDataURL("image/jpeg", quality);
+    }
+
+    if (optimized.length >= originalDataUrl.length) {
+      return originalDataUrl;
+    }
+
+    return optimized;
+  } catch (error) {
+    console.warn("Falling back to original avatar after optimization failure", error);
+    return originalDataUrl;
+  }
 }
 
 function wait(ms: number): Promise<void> {
@@ -135,7 +195,7 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
       let avatarDataUrl = baseline.avatarDataUrl;
 
       if (selectedFile) {
-        avatarDataUrl = await fileToDataUrl(selectedFile);
+        avatarDataUrl = await createOptimizedAvatarDataUrl(selectedFile);
         await wait(400);
       }
 
