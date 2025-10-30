@@ -22,7 +22,11 @@ interface DrawerTabsProps {
 
 function DrawerTabs({ systemPane, setSystemPane }: DrawerTabsProps) {
   return (
-    <Tabs value={systemPane} onValueChange={(value) => setSystemPane(value as SystemPane)} className="flex h-full flex-col">
+    <Tabs
+      value={systemPane}
+      onValueChange={(value) => setSystemPane(value as SystemPane)}
+      className="flex h-full flex-col"
+    >
       <TabsList className="mx-4 mt-4 round-card border border-subtle bg-[var(--app-surface)] shadow-ambient">
         <TabsTrigger value="source">Source</TabsTrigger>
         <TabsTrigger value="audit">Audit Trail</TabsTrigger>
