@@ -142,8 +142,8 @@ export function AppShell(): JSX.Element {
     () => [
       { label: "Chats", to: "/", icon: <MessageSquarePlus className="mr-2 h-4 w-4" /> },
       {
-        label: "Library",
-        to: "/system?tab=library",
+        label: "Sources",
+        to: "/system?tab=source",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
       },
       {
@@ -152,10 +152,10 @@ export function AppShell(): JSX.Element {
         icon: <Sparkles className="mr-2 h-4 w-4" />,
       },
       {
-        label: "Models",
+        label: "System Drawer",
         to: "/",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
-        onSelect: () => openSystemDrawer("models"),
+        onSelect: () => openSystemDrawer("source"),
       },
       { label: "Pricing", to: "/pricing", icon: <Sparkles className="mr-2 h-4 w-4" /> },
       { label: "Settings", to: "/settings", icon: <Settings className="mr-2 h-4 w-4" /> },
