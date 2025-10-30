@@ -150,22 +150,36 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
       };
 
       const persistence: ProfilePersistenceResult = setStoredProfile(updated);
-      logEvent("profile:save", { displayName: updated.displayName });
+      const persistedProfile = persistence.profile;
+
+      logEvent("profile:save", { displayName: persistedProfile.displayName });
       window.dispatchEvent(new Event("nexus-profile-updated"));
-      onProfileChange?.(updated);
+      onProfileChange?.(persistedProfile);
+
+      let description = "Your Nexus presence has been refreshed.";
+      if (persistence.avatarDropped && persistence.reclaimed) {
+        description = "We trimmed workspace history and removed your avatar to save your profile.";
+      } else if (persistence.avatarDropped) {
+        description = "We removed your avatar to make space, but your profile details are saved.";
+      } else if (persistence.reclaimed) {
+        description = "We trimmed older workspace history to make room for your profile.";
+      }
+
       push({
         title: "Profile saved",
-        description:
-          persistence === "saved-after-reclaim"
-            ? "We trimmed older workspace history to make room for your profile."
-            : "Your Nexus presence has been refreshed.",
+        description,
       });
 
-      setBaseline(updated);
-      setPreviewUrl(updated.avatarDataUrl);
+      setBaseline(persistedProfile);
+      setPreviewUrl((previous) => {
+        if (previous?.startsWith("blob:")) {
+          URL.revokeObjectURL(previous);
+        }
+        return persistedProfile.avatarDataUrl;
+      });
       setSelectedFile(null);
       setAvatarRemoved(false);
-      form.reset({ displayName: updated.displayName, avatarFile: null });
+      form.reset({ displayName: persistedProfile.displayName, avatarFile: null });
 
       closeProfileModal();
     } catch (error) {
