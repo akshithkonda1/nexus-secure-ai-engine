@@ -1,6 +1,28 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+const createMemoryStorage = (): Storage => {
+  const store = new Map<string, string>();
+
+  return {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => {
+      store.set(key, value);
+    },
+    removeItem: (key) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (index) => Array.from(store.keys())[index] ?? null,
+    get length() {
+      return store.size;
+    },
+  } as Storage;
+};
+
+
 export type NexusMode = "student" | "business" | "nexusos";
 export type NexusTheme = "light" | "dark";
 
@@ -89,7 +111,9 @@ export const useSessionStore = create<SessionState>()(
     }),
     {
       name: "nexus.session",
-      storage: createJSONStorage(() => window.localStorage),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? window.localStorage : createMemoryStorage()
+      ),
       partialize: (state) => ({
         mode: state.mode,
         theme: state.theme,
