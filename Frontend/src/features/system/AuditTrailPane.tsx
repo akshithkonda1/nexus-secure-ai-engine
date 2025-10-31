@@ -50,7 +50,12 @@ export function AuditTrailPane(): JSX.Element {
           <Card key={`${event.type}-${event.ts}`} className="round-card shadow-ambient">
             <CardHeader>
               <CardTitle className="text-base">{event.type}</CardTitle>
-              <CardDescription>{new Date(event.ts).toLocaleString()}</CardDescription>
+              <CardDescription>
+                {new Intl.DateTimeFormat(navigator.language, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }).format(new Date(event.ts))}
+              </CardDescription>
             </CardHeader>
             {event.meta ? (
               <CardContent>

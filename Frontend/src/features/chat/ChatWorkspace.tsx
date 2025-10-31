@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Archive, Download, Sparkles, Trash2 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,6 +21,7 @@ import { useAppContext } from "@/app/AppShell";
 import { ChatTabs } from "@/features/chat/ChatTabs";
 import { PromptBar } from "@/features/chat/PromptBar";
 import { cn } from "@/shared/lib/cn";
+import { track } from "@/shared/lib/analytics";
 
 interface AssistantReply {
   role: "assistant";
@@ -96,6 +98,7 @@ export function ChatWorkspace(): JSX.Element {
       renameChat(chat.id, deriveTitle(content));
       setInput("");
       refreshChats();
+      track("chat:send", { chatId: chat.id, length: content.length });
 
       const reply = await api<AssistantReply>("/chat/reply", {
         method: "POST",
@@ -117,12 +120,6 @@ export function ChatWorkspace(): JSX.Element {
     } finally {
       setSending(false);
     }
-    addMessage(chat.id, { role: "user", content });
-    renameChat(chat.id, deriveTitle(content));
-    addMessage(chat.id, { role: "assistant", content: synthesizeAssistantResponse(mode, content) });
-    refreshChats();
-    setInput("");
-    setSending(false);
   };
 
   const handleArchive = () => {
@@ -156,8 +153,9 @@ export function ChatWorkspace(): JSX.Element {
   };
 
   const handleCreateStudyPack = async () => {
-    setSystemPane("library");
+    setSystemPane("source");
     await api("/library/dummy-study-pack", { method: "POST" });
+    track("library:study-pack", { source: "chat" });
     setBannerMessage("Library refreshed");
     if (bannerTimeout.current) {
       window.clearTimeout(bannerTimeout.current);
@@ -241,10 +239,14 @@ export function ChatWorkspace(): JSX.Element {
                   </div>
                 ) : null}
                 <p className="mt-3 text-[10px] uppercase tracking-wide text-muted">
-                  {new Date(message.createdAt).toLocaleTimeString()}
+                  {new Intl.DateTimeFormat(navigator.language, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(message.createdAt))}
                 </p>
               </motion.div>
             ))}
+            {isSending ? <MessageSkeleton /> : null}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
@@ -289,10 +291,22 @@ function renderContent(content: string) {
         </pre>
       );
     }
+    const sanitized = DOMPurify.sanitize(segment.trim().replace(/\n/g, "<br />"));
     return (
-      <p key={index} className="whitespace-pre-wrap text-sm leading-relaxed">
-        {segment}
-      </p>
+      <p key={index} className="whitespace-pre-wrap text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitized }} />
     );
   });
+}
+
+function MessageSkeleton(): JSX.Element {
+  return (
+    <div className="ml-auto w-full max-w-[70%] animate-pulse round-card border border-subtle/60 bg-[var(--app-surface)]/60 p-5">
+      <div className="h-3 w-16 rounded-full bg-[var(--app-muted)]" />
+      <div className="mt-4 space-y-2">
+        <div className="h-3 rounded-full bg-[var(--app-muted)]" />
+        <div className="h-3 w-10/12 rounded-full bg-[var(--app-muted)]" />
+        <div className="h-3 w-8/12 rounded-full bg-[var(--app-muted)]" />
+      </div>
+    </div>
+  );
 }
