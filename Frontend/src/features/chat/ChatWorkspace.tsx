@@ -52,9 +52,47 @@ export function ChatWorkspace() {
         content: response.content,
         citations: response.citations
       });
-    },
-    [addMessage, ensureChat, mutation]
-  );
+      refreshChats();
+    } catch (error) {
+      console.error(error);
+      push({
+        title: "Message failed",
+        description: "We hit a hiccup generating the reply. Try again in a moment.",
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleArchive = () => {
+    if (!activeChat) return;
+    archiveChat(activeChat.id);
+    closeOpenChatId(activeChat.id);
+    push({ title: "Chat archived", description: "Find it under the archived section anytime." });
+    refreshChats();
+  };
+
+  const handleTrash = () => {
+    if (!activeChat) return;
+    moveToTrash(activeChat.id);
+    closeOpenChatId(activeChat.id);
+    push({ title: "Chat moved to trash", description: "Restore within 30 days to keep the transcript." });
+    refreshChats();
+  };
+
+  const handleExport = async () => {
+    if (!activeChat) return;
+    const exportText = activeChat.messages
+      .map((message) => `${message.role.toUpperCase()}: ${message.content}`)
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(exportText);
+      push({ title: "Transcript copied", description: "Paste into docs or share with your team." });
+    } catch (error) {
+      console.warn("Clipboard copy failed", error);
+      push({ title: "Unable to copy", description: "Download the export from the toolbar instead." });
+    }
+  };
 
   const activeChat = chats.find((chat) => chat.id === activeChatId);
 
