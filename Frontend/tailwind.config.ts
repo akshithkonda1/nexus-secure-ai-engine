@@ -1,38 +1,58 @@
 import type { Config } from "tailwindcss";
-import defaultTheme from "tailwindcss/defaultTheme";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
-  darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx,mdx}"],
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  darkMode: ["class", "[data-theme='dark']"],
   theme: {
+    container: {
+      center: true,
+      padding: "1.5rem"
+    },
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        muted: "hsl(var(--muted))",
-        "muted-foreground": "hsl(var(--muted-foreground))",
-        border: "hsl(var(--border))",
-        accent: "hsl(var(--accent))",
-        "accent-foreground": "hsl(var(--accent-foreground))",
-        destructive: "hsl(var(--destructive))",
-        "destructive-foreground": "hsl(var(--destructive-foreground))"
-      },
-      fontFamily: {
-        sans: ["Inter", ...defaultTheme.fontFamily.sans]
+        "app-bg": "var(--bg)",
+        "app-surface": "var(--surface)",
+        "app-text": "var(--text)",
+        "app-text-muted": "var(--text-muted)",
+        "app-border": "var(--border)",
+        "accent-student": "var(--accent-student)",
+        "accent-business": "var(--accent-business)",
+        "accent-nexus": "var(--accent-nexus)"
       },
       borderRadius: {
-        lg: "var(--radius-lg)",
-        md: "var(--radius-md)",
-        sm: "var(--radius-sm)"
+        card: "var(--radius-card)",
+        button: "var(--radius-button)",
+        input: "var(--radius-input)"
       },
       boxShadow: {
-        ring: "var(--shadow-ring)",
-        card: "var(--shadow-card)",
-        popover: "var(--shadow-popover)"
+        ambient: "var(--shadow-ambient)",
+        press: "var(--shadow-press)"
+      },
+      fontFamily: {
+        sans: ["'Inter Variable'", "system-ui", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "sans-serif"]
       }
     }
   },
-  plugins: []
+  plugins: [
+    plugin(({ addVariant }) => {
+      addVariant("mode-student", "&[data-mode='student'] *");
+      addVariant("mode-business", "&[data-mode='business'] *");
+      addVariant("mode-nexusos", "&[data-mode='nexusos'] *");
+    }),
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        ".bg-app": { backgroundColor: "var(--bg)" },
+        ".bg-surface": { backgroundColor: "var(--surface)" },
+        ".text-app": { color: "var(--text)" },
+        ".text-muted": { color: "var(--text-muted)" },
+        ".border-app": { borderColor: "var(--border)" }
+      });
+    })
+  ],
+  future: {
+    hoverOnlyWhenSupported: true
+  }
 };
 
 export default config;

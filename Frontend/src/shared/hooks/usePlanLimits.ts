@@ -1,13 +1,11 @@
-import limitsConfig from "@/config/limits.json";
+import limits from "@/config/limits";
 
-type PlanKey = keyof typeof limitsConfig;
+export type PlanTier = keyof typeof limits;
 
-export type PlanLimits = (typeof limitsConfig)[PlanKey];
-
-export function usePlanLimits<TPlan extends PlanKey>(plan: TPlan): (typeof limitsConfig)[TPlan] {
-  return limitsConfig[plan];
+export function usePlanLimits() {
+  return limits;
 }
 
-export function listPlans(): PlanKey[] {
-  return Object.keys(limitsConfig) as PlanKey[];
+export function getLimitsFor<T extends PlanTier>(tier: T) {
+  return limits[tier];
 }
