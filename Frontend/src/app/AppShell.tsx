@@ -15,7 +15,6 @@ import { useChatStore } from "@/shared/state/chats";
 import { useSessionStore } from "@/shared/state/session";
 import { logEvent } from "@/shared/lib/audit";
 import { getProfile, type Profile } from "@/services/storage/profile";
-import Logo from "@/shared/ui/Logo";
 
 const navItems = [
   { label: "Chats", to: "/" },
@@ -55,10 +54,8 @@ export function AppShell() {
       <div className="flex min-h-screen bg-app text-app" data-testid="app-shell">
         <aside className="hidden w-64 flex-col border-r border-app bg-surface p-6 shadow-ambient lg:flex">
           <div className="mb-8">
-            <div className="flex min-h-[44px] items-center">
-              <Logo height={24} />
-            </div>
-            <p className="mt-2 text-sm text-muted">Proof-first intelligence.</p>
+            <div className="text-2xl font-semibold">Nexus.ai</div>
+            <p className="text-sm text-muted">Proof-first intelligence.</p>
           </div>
           <nav className="flex flex-1 flex-col gap-1">
             {navItems.map((item) => (
@@ -92,10 +89,7 @@ export function AppShell() {
         </aside>
 
         <main className="flex flex-1 flex-col">
-          <header className="flex items-center gap-4 border-b border-app bg-app px-6 py-4">
-            <div className="flex min-h-[44px] items-center">
-              <Logo height={24} />
-            </div>
+          <header className="flex items-center justify-between border-b border-app bg-app px-6 py-4">
             <div className="hidden flex-1 items-center gap-2 lg:flex">
               <Input placeholder="Search…" aria-label="Search" className="max-w-sm" />
               <span className="text-xs text-muted">⌘K</span>
@@ -129,7 +123,7 @@ export function AppShell() {
               </Sheet>
               <Input placeholder="Search…" aria-label="Search" />
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <ModeToggle />
               <ThemeToggle />
               <Tooltip>

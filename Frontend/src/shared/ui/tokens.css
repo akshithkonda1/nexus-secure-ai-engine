@@ -48,9 +48,3 @@
 .shadow-press {
   box-shadow: var(--shadow-press);
 }
-
-.logo-24 {
-  display: inline-block;
-  height: 24px;
-  width: auto;
-}
