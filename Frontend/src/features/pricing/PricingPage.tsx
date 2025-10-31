@@ -1,131 +1,125 @@
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { PRICING_TIERS, PRICES, type BillingCadence } from "@/config/pricing";
+import React, { useMemo, useState } from "react";
+import { PRICES, type PlanKey } from "@/config/pricing";
+import limits from "@/config/limits.json";
 import { Button } from "@/shared/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/components/card";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/components/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/components/tooltip";
-import { Badge } from "@/shared/ui/components/badge";
-import { useSessionStore } from "@/shared/state/session";
-import { isLocked } from "@/shared/lib/lock";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/ui/components/tooltip";
+import { useSession } from "@/shared/state/session";
 
-const cadences: BillingCadence[] = ["monthly", "annual", "semester"];
+type Cycle = "monthly" | "annual" | "semester";
 
-const formatCurrency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+type FeatureMap = Record<PlanKey, string[]>;
 
-const getPriceForCadence = (tierId: keyof typeof PRICES, cadence: BillingCadence) => {
-  const tier = PRICES[tierId];
-  if (cadence in tier) {
-    return tier[cadence as keyof typeof tier];
-  }
-  if (tierId === "free") return 0;
-  if (cadence === "semester" && "monthly" in tier) {
-    return tier.monthly;
-  }
-  return tier.monthly;
+const FEATURES: FeatureMap = {
+  free: ["1 trial deck per day", "≤ 25 cards per deck", "Browse/remix only", "No exports (watermarked audit)"],
+  academic: [
+    `Study credits per day: ${limits.academic.studyCreditsPerDay}`,
+    `Cards per deck: ${limits.academic.cardsPerDeck}`,
+    `ExamBurst: ${limits.academic.examBurstPerDay} over ${limits.academic.examBurstDays} days`,
+    `Concurrent sessions: ${limits.academic.concurrency}`,
+  ],
+  premium: ["Advanced prompt studio", "Model comparison view", "Confidence scoring", "NO Study Pack generation"],
+  pro: [
+    "Realtime API access",
+    "Batch pipeline",
+    "Event webhooks",
+    "Audit log exports",
+    "3–5 seats included",
+    "Educator-verified may generate class packs",
+  ],
 };
 
 export default function PricingPage() {
-  const [cadence, setCadence] = useState<BillingCadence>("monthly");
-  const plan = useSessionStore((state) => state.plan);
-  const lockedUntilISO = useSessionStore((state) => state.lockedUntilISO);
-  const setPlan = useSessionStore((state) => state.setPlan);
+  const { plan, setPlan } = useSession();
+  const [cycle, setCycle] = useState<Cycle>("monthly");
 
-  const locked = useMemo(() => isLocked(lockedUntilISO), [lockedUntilISO]);
+  const cards = useMemo(
+    () => [
+      { key: "free" as PlanKey, title: "Free" },
+      { key: "academic" as PlanKey, title: "Academic" },
+      { key: "premium" as PlanKey, title: "Premium" },
+      { key: "pro" as PlanKey, title: "Pro" },
+    ],
+    [],
+  );
 
-  const lockMessage = locked
-    ? `Upgrades unlock on ${new Date(lockedUntilISO).toLocaleDateString()}.`
-    : "Select any plan to update your workspace.";
+  const priceFor = (key: PlanKey) => {
+    if (key === "free") {
+      return "$0";
+    }
+    const value = PRICES[key] as Record<string, number>;
+    if (cycle === "semester" && "semester" in value) {
+      return `$${value.semester}`;
+    }
+    if (cycle === "annual" && "annual" in value) {
+      return `$${value.annual}`;
+    }
+    return `$${value.monthly}`;
+  };
 
   return (
-    <div className="space-y-12">
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="space-y-6 text-center"
-      >
-        <div className="space-y-2">
-          <p className="text-sm uppercase tracking-[0.3em] text-muted">Pricing</p>
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Choose the Nexus rhythm that fits.</h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted">
-            Pricing remains locked for 30 days after install or until the global lock expires, ensuring stability for regulated teams.
+    <TooltipProvider>
+      <div className="max-w-6xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-semibold">
+            Nexus.ai — Where AIs debate, verify, and agree on the truth.
+          </h1>
+          <p className="text-neutral-600 dark:text-neutral-300">
+            Encrypted. Auditable. Vendor-neutral. Because accuracy deserves proof.
           </p>
-        </div>
-        <Tabs value={cadence} onValueChange={(value) => setCadence(value as BillingCadence)} className="w-full">
-          <TabsList className="mx-auto flex w-fit gap-2 rounded-full bg-app/40 p-1">
-            {cadences.map((option) => (
-              <TabsTrigger key={option} value={option} className="rounded-full px-4 capitalize">
-                {option.charAt(0).toUpperCase() + option.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </motion.section>
-
-      <motion.div
-        className="grid gap-6 lg:grid-cols-4"
-        initial="hidden"
-        animate="visible"
-        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-      >
-        {PRICING_TIERS.map((tier) => {
-          const price = getPriceForCadence(tier.id, cadence);
-          const isActive = plan === tier.id;
-          const disableSelection = locked && !isActive;
-
-          return (
-            <motion.div key={tier.id} variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}>
-              <Card
-                data-testid={`plan-${tier.id}`}
-                className={`flex h-full flex-col justify-between rounded-3xl border border-app/40 bg-app/60 shadow-ambient transition ${
-                  tier.highlight ? "ring-2 ring-primary/40" : ""
-                } ${isActive ? "border-primary/60" : ""}`}
+          <div className="mt-4 inline-flex rounded-full bg-neutral-100 dark:bg-neutral-800 p-1">
+            {(["monthly", "annual", "semester"] as Cycle[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCycle(c)}
+                className={`px-4 py-1 rounded-full text-sm ${
+                  cycle === c ? "bg-white dark:bg-neutral-900 shadow" : ""
+                }`}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                    {tier.badge && <Badge variant="outline">{tier.badge}</Badge>}
-                    {isActive && <Badge variant="secondary">Current</Badge>}
-                  </div>
-                  <CardDescription>{tier.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1">
-                    <span className="text-3xl font-semibold">
-                      {tier.id === "free" ? "Free" : formatCurrency.format(price)}
-                    </span>
-                    <p className="text-sm text-muted capitalize">{cadence} billing</p>
-                  </div>
-                  <ul className="space-y-2 text-sm text-muted">
-                    {tier.perks.map((perk) => (
-                      <li key={perk}>{perk}</li>
-                    ))}
-                  </ul>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex w-full">
-                        <Button
-                          className="w-full rounded-full"
-                          variant={isActive ? "default" : "outline"}
-                          disabled={disableSelection}
-                          onClick={() => {
-                            if (disableSelection) return;
-                            setPlan(tier.id);
-                          }}
-                        >
-                          {isActive ? "Current plan" : `Choose ${tier.name}`}
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {disableSelection && <TooltipContent>{lockMessage}</TooltipContent>}
-                  </Tooltip>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </motion.div>
-    </div>
+                {c === "annual"
+                  ? "Annual (2 months free)"
+                  : c === "semester"
+                  ? "Semester (4 months)"
+                  : "Monthly"}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        <div className="grid md:grid-cols-4 gap-6">
+          {cards.map(({ key, title }) => (
+            <div
+              key={key}
+              className={`rounded-2xl border p-6 ${
+                plan === key ? "border-violet-400" : "border-neutral-200 dark:border-neutral-800"
+              }`}
+            >
+              <div className="text-lg font-semibold mb-2">{title}</div>
+              <div className="text-4xl font-bold mb-1">{priceFor(key)}</div>
+              <div className="text-sm text-neutral-500 mb-4">
+                {cycle === "annual" ? "per year" : cycle === "semester" ? "per semester" : "per month"}
+              </div>
+              <ul className="text-sm space-y-2 mb-6">
+                {FEATURES[key].map((feature, index) => (
+                  <li key={index}>• {feature}</li>
+                ))}
+              </ul>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button className="w-full rounded-xl" onClick={() => setPlan(key)}>
+                    {key === "free" ? "Start Free" : `Choose ${title}`}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Sets your default workspace plan.</TooltipContent>
+              </Tooltip>
+            </div>
+          ))}
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }

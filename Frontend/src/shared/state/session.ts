@@ -1,125 +1,73 @@
 import { create } from "zustand";
-import { PricingTierId } from "@/config/pricing";
-import { computeLockedUntil } from "@/shared/lib/lock";
+import type { PlanKey } from "@/config/pricing";
 
-export type ThemePreference = "light" | "dark";
-export type ModePreference = "student" | "business" | "nexusos";
+type User = { id: string; email: string; name?: string } | null;
 
-const STORAGE_KEY = "nexus.session";
-
-type PersistedSession = {
-  plan: PricingTierId;
-  firstInstallISO: string;
-  lockedUntilISO?: string;
+type State = {
+  user: User;
+  token: string | null;
+  plan: PlanKey;
+  setUser: (user: User, token?: string | null) => void;
+  setPlan: (plan: PlanKey) => void;
+  signOut: () => void;
 };
 
-const DEFAULT_PLAN: PricingTierId = "academic";
+const KEY_TOKEN = "nexus.token";
+const KEY_PLAN = "nexus.plan";
 
-const nowISO = () => new Date().toISOString();
-
-const readPersisted = (): PersistedSession => {
+const readLocal = (key: string): string | null => {
   if (typeof window === "undefined") {
-    return {
-      plan: DEFAULT_PLAN,
-      firstInstallISO: nowISO()
-    };
+    return null;
   }
-
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return {
-        plan: DEFAULT_PLAN,
-        firstInstallISO: nowISO()
-      };
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeLocal = (key: string, value: string | null) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    if (value === null) {
+      window.localStorage.removeItem(key);
+    } else {
+      window.localStorage.setItem(key, value);
     }
-    const parsed = JSON.parse(raw) as PersistedSession;
-    return {
-      plan: parsed.plan ?? DEFAULT_PLAN,
-      firstInstallISO: parsed.firstInstallISO ?? nowISO(),
-      lockedUntilISO: parsed.lockedUntilISO
-    };
-  } catch (error) {
-    console.warn("Unable to read session storage", error);
-    return {
-      plan: DEFAULT_PLAN,
-      firstInstallISO: nowISO()
-    };
+  } catch {
+    // ignore storage errors (private mode, etc.)
   }
 };
 
-const persistSession = (payload: PersistedSession) => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  } catch (error) {
-    console.warn("Unable to persist session storage", error);
-  }
-};
-
-export type SessionState = {
-  activeChatId?: string;
-  theme: ThemePreference;
-  mode: ModePreference;
-  plan: PricingTierId;
-  firstInstallISO: string;
-  lockedUntilISO: string;
-  setActiveChatId: (id?: string) => void;
-  setTheme: (theme: ThemePreference) => void;
-  setMode: (mode: ModePreference) => void;
-  setPlan: (plan: PricingTierId) => void;
-  setLockedUntilISO: (iso: string) => void;
-};
-
-export const useSessionStore = create<SessionState>((set, get) => {
-  const persisted = readPersisted();
-  const firstInstallISO = persisted.firstInstallISO || nowISO();
-  const lockedUntilISO = computeLockedUntil({
-    firstInstallISO,
-    lockedUntilISO: persisted.lockedUntilISO
-  });
-
-  const baseState = {
-    activeChatId: undefined,
-    theme: "light" as ThemePreference,
-    mode: "nexusos" as ModePreference,
-    plan: persisted.plan,
-    firstInstallISO,
-    lockedUntilISO
-  } satisfies Omit<SessionState, "setActiveChatId" | "setTheme" | "setMode" | "setPlan" | "setLockedUntilISO">;
-
-  if (typeof window !== "undefined") {
-    persistSession({ plan: baseState.plan, firstInstallISO, lockedUntilISO });
-  }
+export const useSession = create<State>((set) => {
+  const initialToken = readLocal(KEY_TOKEN);
+  const storedPlan = readLocal(KEY_PLAN) as PlanKey | null;
 
   return {
-    ...baseState,
-    setActiveChatId: (activeChatId) => set({ activeChatId }),
-    setTheme: (theme) => set({ theme }),
-    setMode: (mode) => set({ mode }),
-    setPlan: (plan) => {
-      set((state) => {
-        const nextLocked = computeLockedUntil({
-          firstInstallISO: state.firstInstallISO,
-          lockedUntilISO: state.lockedUntilISO
-        });
-        return { plan, lockedUntilISO: nextLocked };
-      });
-      const next = get();
-      persistSession({
-        plan: next.plan,
-        firstInstallISO: next.firstInstallISO,
-        lockedUntilISO: next.lockedUntilISO
-      });
+    user: null,
+    token: initialToken,
+    plan: storedPlan && ["free", "academic", "premium", "pro"].includes(storedPlan)
+      ? (storedPlan as PlanKey)
+      : "free",
+    setUser: (user, token) => {
+      if (token !== undefined) {
+        writeLocal(KEY_TOKEN, token);
+        set({ user, token: token ?? null });
+        return;
+      }
+      set({ user });
     },
-    setLockedUntilISO: (iso) => {
-      set({ lockedUntilISO: iso });
-      const next = get();
-      persistSession({
-        plan: next.plan,
-        firstInstallISO: next.firstInstallISO,
-        lockedUntilISO: iso
-      });
-    }
+    setPlan: (plan) => {
+      writeLocal(KEY_PLAN, plan);
+      set({ plan });
+    },
+    signOut: () => {
+      writeLocal(KEY_TOKEN, null);
+      set({ user: null, token: null });
+    },
   };
 });
+
+export const useSessionStore = useSession;
