@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { useUIStore } from "@/shared/state/ui";
 import { logEvent } from "@/shared/lib/audit";
-import { track } from "@/shared/lib/analytics";
 import {
   PROFILE_STORAGE_QUOTA_ERROR,
   getStoredProfile,
@@ -214,10 +213,6 @@ export function ProfileModal({ onProfileChange }: { onProfileChange?: (profile: 
       const persistedProfile = persistence.profile;
 
       logEvent("profile:save", { displayName: persistedProfile.displayName });
-      track("profile:saved", {
-        reclaimed: persistence.reclaimed,
-        avatarDropped: persistence.avatarDropped,
-      });
       window.dispatchEvent(new Event("nexus-profile-updated"));
       onProfileChange?.(persistedProfile);
 

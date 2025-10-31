@@ -1,21 +1,13 @@
-import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
 import { AppShell } from "@/app/AppShell";
 import { ChatWorkspace } from "@/features/chat/ChatWorkspace";
+import { PricingPage } from "@/features/pricing/PricingPage";
+import { SettingsLayout } from "@/features/settings/SettingsLayout";
+import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
+import { BillingSettings } from "@/features/settings/BillingSettings";
 import { NotFound } from "@/app/NotFound";
-
-const PricingPage = lazy(() => import("@/features/pricing/PricingPage").then((module) => ({ default: module.PricingPage })));
-const SettingsLayout = lazy(() =>
-  import("@/features/settings/SettingsLayout").then((module) => ({ default: module.SettingsLayout }))
-);
-const AppearanceSettings = lazy(() =>
-  import("@/features/settings/AppearanceSettings").then((module) => ({ default: module.AppearanceSettings }))
-);
-const BillingSettings = lazy(() =>
-  import("@/features/settings/BillingSettings").then((module) => ({ default: module.BillingSettings }))
-);
-const SystemPage = lazy(() => import("@/features/system/SystemPage"));
+import SystemPage from "@/features/system/SystemPage";
 
 export const router = createBrowserRouter([
   {

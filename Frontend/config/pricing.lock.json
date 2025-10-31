@@ -1,5 +1,5 @@
 {
-  "version": "2025-10-30",
+  "version": "2025-10-29",
   "prices": {
     "academic": { "monthly": 9.99, "annual": 99, "semester": 35 },
     "premium": { "monthly": 19, "annual": 190 },

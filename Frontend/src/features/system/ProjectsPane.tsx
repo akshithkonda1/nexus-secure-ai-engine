@@ -127,14 +127,7 @@ export function ProjectsPane(): JSX.Element {
             <Card key={project.id} className="round-card shadow-ambient">
               <CardHeader>
                 <CardTitle className="text-base">{project.name}</CardTitle>
-                <CardDescription>
-                  Created
-                  {" "}
-                  {new Intl.DateTimeFormat(navigator.language, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }).format(new Date(project.createdAt))}
-                </CardDescription>
+                <CardDescription>Created {new Date(project.createdAt).toLocaleString()}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted">{project.description}</p>

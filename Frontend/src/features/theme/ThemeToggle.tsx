@@ -4,7 +4,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/shared/lib/audit";
-import { track } from "@/shared/lib/analytics";
 import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
 export function ThemeToggle(): JSX.Element {
@@ -16,7 +15,6 @@ export function ThemeToggle(): JSX.Element {
     const nextTheme = checked ? "dark" : "light";
     setTheme(nextTheme);
     logEvent("theme:change", { to: nextTheme });
-    track("theme:change", { to: nextTheme });
     push({ title: `${nextTheme === "dark" ? "Dark" : "Light"} mode on`, description: "Display palette refreshed." });
   };
 

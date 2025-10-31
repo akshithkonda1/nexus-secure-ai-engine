@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
 import { logEvent } from "@/shared/lib/audit";
-import { track } from "@/shared/lib/analytics";
 import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
 const modes = [
@@ -35,7 +34,6 @@ export function ModeToggle(): JSX.Element {
   const handleSelect = (value: (typeof modes)[number]["value"]) => {
     setMode(value);
     logEvent("mode:change", { to: value });
-    track("mode:change", { to: value });
     push({ title: `${labelFor(value)} mode on`, description: "Workspace tone updated across Nexus." });
     window.dispatchEvent(
       new CustomEvent("nexus-mode-change", {
