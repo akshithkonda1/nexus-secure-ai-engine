@@ -199,7 +199,7 @@ export function restoreFromTrash(id: string) {
 
 export function deletePermanent(id: string) {
   updateAll((all) => all.filter((chat) => chat.id !== id));
-  logEvent("chat:delete", { id });
+  logEvent("chat:deletePermanent", { id });
 }
 
 export function ensureChat(chatId: string): ChatThread | undefined {

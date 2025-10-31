@@ -6,7 +6,6 @@ import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 const quickActions = [
   { id: "explain", label: "Explain simply", prompt: "Explain this concept in the simplest possible terms." },
   { id: "summarize", label: "Summarize", prompt: "Summarize the last exchange and highlight the key points." },
-  { id: "study", label: "Create dummy study pack", prompt: "" },
 ] as const;
 
 interface PromptBarProps {
@@ -30,18 +29,14 @@ export function PromptBar({ value, onChange, onSend, onCreateStudyPack, isSendin
             size="sm"
             className="round-btn"
             onClick={() => {
-              if (quick.id === "study") {
-                onCreateStudyPack();
-              } else {
-                onSend(quick.prompt);
-              }
+              onSend(quick.prompt);
             }}
           >
             <Sparkles className="mr-2 h-4 w-4" />
             {quick.label}
           </Button>
         ))}
-        <Button variant="outline" size="sm" onClick={onCreateStudyPack}>
+        <Button variant="outline" size="sm" className="round-btn" onClick={onCreateStudyPack}>
           <Sparkles className="mr-2 h-4 w-4" />
           Create dummy study pack
         </Button>

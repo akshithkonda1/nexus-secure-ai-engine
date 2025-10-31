@@ -2,13 +2,7 @@ import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
-export const PRICING_VERSION = "2025-10-29" as const;
-export const PRICES = Object.freeze({
-  academic: { monthly: 9.99, annual: 99, semester: 35 },
-  premium: { monthly: 19, annual: 190 },
-  pro: { monthly: 99, annual: 990 },
-});
+import { PRICES, PRICING_VERSION } from "@/config/pricing";
 
 type BillingCycle = "monthly" | "annual" | "semester";
 

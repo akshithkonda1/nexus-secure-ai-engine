@@ -3,14 +3,14 @@ import path from "node:path";
 import process from "node:process";
 
 const rootDir = process.cwd();
-const pricingFile = path.join(rootDir, "src", "features", "pricing", "PricingPage.tsx");
+const pricingFile = path.join(rootDir, "src", "config", "pricing.ts");
 const lockFile = path.join(rootDir, "config", "pricing.lock.json");
 
 const pricingSource = fs.readFileSync(pricingFile, "utf8");
 const lock = JSON.parse(fs.readFileSync(lockFile, "utf8"));
 
-const versionMatch = pricingSource.match(/export const PRICING_VERSION = "([^"]+)" as const;/);
-const pricesMatch = pricingSource.match(/export const PRICES = Object.freeze\((\{[\s\S]*?\})\);/);
+const versionMatch = pricingSource.match(/PRICING_VERSION = "([^"]+)" as const/);
+const pricesMatch = pricingSource.match(/PRICES = Object.freeze\((\{[\s\S]*?\})\)/);
 
 if (!versionMatch || !pricesMatch) {
   console.error("Unable to parse PricingPage.tsx for version or prices.");

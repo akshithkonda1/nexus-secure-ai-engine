@@ -68,7 +68,14 @@ export function EncryptionPane(): JSX.Element {
         <CardContent>
           <ul className="list-disc space-y-1 pl-4 text-sm text-muted">
             <li>Rotation schedule: {report.rotation}</li>
-            <li>Last attested audit: {new Date(report.lastAudit).toLocaleString()}</li>
+            <li>
+              Last attested audit:
+              {" "}
+              {new Intl.DateTimeFormat(navigator.language, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(new Date(report.lastAudit))}
+            </li>
             <li>Escrow failsafe tested quarterly.</li>
           </ul>
         </CardContent>

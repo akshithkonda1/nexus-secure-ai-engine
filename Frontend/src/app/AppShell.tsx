@@ -33,6 +33,7 @@ import {
 } from "@/services/storage/chats";
 import { getStoredProfile, type StoredProfile } from "@/services/storage/profile";
 import { cn } from "@/shared/lib/cn";
+import { track } from "@/shared/lib/analytics";
 
 export interface AppOutletContext {
   chats: ChatThread[];
@@ -81,6 +82,10 @@ export function AppShell(): JSX.Element {
       window.removeEventListener("nexus-profile-updated", listener);
     };
   }, []);
+
+  useEffect(() => {
+    track("route_change", { path: location.pathname, search: location.search });
+  }, [location.pathname, location.search]);
 
   const isSystemRoute = location.pathname.startsWith("/system");
 
@@ -142,13 +147,8 @@ export function AppShell(): JSX.Element {
     () => [
       { label: "Chats", to: "/", icon: <MessageSquarePlus className="mr-2 h-4 w-4" /> },
       {
-        label: "Sources",
-        to: "/system?tab=source",
-        icon: <Sparkles className="mr-2 h-4 w-4" />,
-      },
-      {
         label: "System",
-        to: "/system",
+        to: "/system?tab=library",
         icon: <Sparkles className="mr-2 h-4 w-4" />,
       },
       {
@@ -170,6 +170,12 @@ export function AppShell(): JSX.Element {
 
   return (
     <div className="flex min-h-screen bg-app text-primary">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-[var(--app-surface)] focus:px-4 focus:py-2 focus:shadow-ambient"
+      >
+        Skip to content
+      </a>
       <DesktopSidebar
         profile={profile}
         chats={chats}
@@ -183,7 +189,7 @@ export function AppShell(): JSX.Element {
         currentPath={location.pathname + location.search}
       />
 
-      <main className="flex flex-1 flex-col">
+      <main id="main-content" className="flex flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-subtle bg-[var(--app-surface)]/90 px-4 shadow-ambient">
           <div className="flex items-center gap-3">
             <Button className="round-btn lg:hidden" size="icon" variant="ghost" onClick={() => setNavSheetOpen(true)} aria-label="Open navigation">
@@ -203,6 +209,7 @@ export function AppShell(): JSX.Element {
                 variant="ghost"
                 className="hidden round-btn shadow-press xl:inline-flex"
                 onClick={() => openSystemDrawer()}
+                aria-label="Open system drawer"
               >
                 System Drawer
               </Button>
@@ -309,6 +316,7 @@ function DesktopSidebar({
                 onClick={() => {
                   item.onSelect?.();
                 }}
+                aria-current={isRouteMatch ? "page" : undefined}
               >
                 {item.icon}
                 {item.label}
@@ -390,6 +398,7 @@ function MobileSidebarSheet({
                     onOpenChange(false);
                     item.onSelect?.();
                   }}
+                  aria-current={isRouteMatch ? "page" : undefined}
                 >
                   {item.label}
                 </Link>
