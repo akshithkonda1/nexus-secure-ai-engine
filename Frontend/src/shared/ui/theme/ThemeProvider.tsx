@@ -1,66 +1,95 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useSessionStore } from "@/shared/state/session";
 
-import { useSessionStore, type NexusMode, type NexusTheme } from "@/shared/state/session";
-import { modeThemes } from "./themes";
+type Theme = "light" | "dark";
+type Mode = "student" | "business" | "nexusos";
 
-export interface ThemeContextValue {
-  mode: NexusMode;
-  theme: NexusTheme;
-  setMode: (mode: NexusMode) => void;
-  setTheme: (theme: NexusTheme) => void;
-}
+type ThemeContextValue = {
+  theme: Theme;
+  mode: Mode;
+  setTheme: (theme: Theme) => void;
+  setMode: (mode: Mode) => void;
+};
+
+const THEME_KEY = "nexus.theme";
+const MODE_KEY = "nexus.mode";
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export function useThemeContext(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error("useThemeContext must be used within ThemeProvider");
-  }
-  return ctx;
-}
+type ThemeProviderProps = {
+  children: React.ReactNode;
+};
 
-export function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const { mode, theme, setMode, setTheme } = useSessionStore();
-  const [isHydrated, setHydrated] = useState(false);
+const getPreferredTheme = (): Theme => {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+  const stored = window.localStorage.getItem(THEME_KEY) as Theme | null;
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return isDark ? "dark" : "light";
+};
+
+const getStoredMode = (): Mode => {
+  if (typeof window === "undefined") {
+    return "nexusos";
+  }
+  const stored = window.localStorage.getItem(MODE_KEY) as Mode | null;
+  if (stored === "student" || stored === "business" || stored === "nexusos") {
+    return stored;
+  }
+  return "nexusos";
+};
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(getPreferredTheme);
+  const [mode, setModeState] = useState<Mode>(getStoredMode);
+  const setSessionTheme = useSessionStore((state) => state.setTheme);
+  const setSessionMode = useSessionStore((state) => state.setMode);
 
   useEffect(() => {
-    setHydrated(true);
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+    window.localStorage.setItem(THEME_KEY, theme);
+    setSessionTheme(theme);
+  }, [theme, setSessionTheme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-mode", mode);
+    window.localStorage.setItem(MODE_KEY, mode);
+    setSessionMode(mode);
+  }, [mode, setSessionMode]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const setReduce = () => {
+      document.documentElement.dataset.reduceMotion = mq.matches ? "true" : "false";
+    };
+    setReduce();
+    mq.addEventListener("change", setReduce);
+    return () => mq.removeEventListener("change", setReduce);
   }, []);
 
-  useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-    const html = document.documentElement;
-    html.dataset.theme = theme;
-    html.dataset.mode = mode;
-  }, [mode, theme]);
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      theme,
+      mode,
+      setTheme: setThemeState,
+      setMode: setModeState
+    }),
+    [theme, mode]
+  );
 
-  useEffect(() => {
-    const listener = (event: StorageEvent) => {
-      if (event.key === "nexus.theme" && (event.newValue === "light" || event.newValue === "dark")) {
-        setTheme(event.newValue);
-      }
-      if (
-        event.key === "nexus.mode" &&
-        (event.newValue === "student" || event.newValue === "business" || event.newValue === "nexusos")
-      ) {
-        setMode(event.newValue);
-      }
-    };
-
-    window.addEventListener("storage", listener);
-    return () => {
-      window.removeEventListener("storage", listener);
-    };
-  }, [setMode, setTheme]);
-
-  const value = useMemo(() => ({ mode, theme, setMode, setTheme }), [mode, theme, setMode, setTheme]);
-
-  return <ThemeContext.Provider value={value}>{isHydrated ? children : null}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function getModeTheme(mode: NexusMode) {
-  return modeThemes[mode];
+export function useTheme() {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return ctx;
 }

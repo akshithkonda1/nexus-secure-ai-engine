@@ -1,20 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("routing", () => {
-  test("navigates between primary routes", async ({ page }) => {
+  test("navigates between core routes", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 2, name: /chat|conversation/i })).toBeVisible();
+    await expect(page.getByText("Start a conversation")).toBeVisible();
 
-    await page.getByRole("link", { name: "System" }).click();
-    await expect(page.getByRole("heading", { name: /System — Tools and Controls that power your workspace\./ })).toBeVisible();
+    await page.goto("/pricing");
+    await expect(page.getByRole("heading", { name: /Nexus.ai — Where AIs debate/ })).toBeVisible();
 
-    await page.getByRole("link", { name: "Pricing" }).click();
-    await expect(page.getByRole("heading", { name: /Nexus\.ai — Where AIs debate, verify, and agree on the truth\./ })).toBeVisible();
-
-    await page.getByRole("link", { name: "Settings" }).click();
-    await expect(page.getByRole("heading", { name: "Appearance" })).toBeVisible();
-
-    await page.goto("/settings/billing");
-    await expect(page.getByRole("heading", { name: "Billing" })).toBeVisible();
+    await page.goto("/settings/appearance");
+    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   });
 });

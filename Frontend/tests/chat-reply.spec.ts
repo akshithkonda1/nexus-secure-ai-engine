@@ -1,15 +1,14 @@
 import { test, expect } from "@playwright/test";
 
-test("assistant responds with citations", async ({ page }) => {
+test("chat returns assistant message with citations", async ({ page }) => {
   await page.goto("/");
+  const input = page.getByPlaceholder("Ask Nexus.ai anything…");
+  await input.fill("Explain quantum entanglement");
+  await page.getByRole("button", { name: "Send" }).click();
 
-  const textarea = page.getByPlaceholder(/Direct Nexus OS with precise instructions or data references…/);
-  await textarea.fill("Show me the latest status update");
-  await page.getByRole("button", { name: "Send message" }).click();
-
-  await expect(page.getByText(/Here’s a verified response to: “Show me the latest status update”/)).toBeVisible({
-    timeout: 5000,
-  });
-  await expect(page.getByRole("link", { name: "Example Source" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Second Ref" })).toBeVisible();
+  const assistantMessage = page.getByText("I processed your request", { exact: false });
+  await expect(assistantMessage).toBeVisible();
+  const citations = page.getByText("Citations");
+  await expect(citations).toBeVisible();
+  await expect(page.getByRole("link", { name: "Nexus Knowledge Base" })).toBeVisible();
 });
