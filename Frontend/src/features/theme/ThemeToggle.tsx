@@ -1,37 +1,28 @@
-import { MoonStar, SunMedium } from "lucide-react";
-
-import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/components/ui/use-toast";
+import { useMemo } from "react";
+import { IosSwitch } from "@/shared/ui/controls/IosSwitch";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import { logEvent } from "@/shared/lib/audit";
-import { track } from "@/shared/lib/analytics";
-import { useThemeContext } from "@/shared/ui/theme/ThemeProvider";
 
-export function ThemeToggle(): JSX.Element {
-  const { theme, setTheme } = useThemeContext();
-  const isDark = theme === "dark";
-  const { push } = useToast();
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
 
-  const handleChange = (checked: boolean) => {
-    const nextTheme = checked ? "dark" : "light";
-    setTheme(nextTheme);
-    logEvent("theme:change", { to: nextTheme });
-    track("theme:change", { to: nextTheme });
-    push({ title: `${nextTheme === "dark" ? "Dark" : "Light"} mode on`, description: "Display palette refreshed." });
-  };
+  const checked = useMemo(() => theme === "dark", [theme]);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 round-card border border-subtle bg-[var(--app-surface)] px-3 py-1 shadow-ambient" role="group" aria-label="Toggle theme">
-            <SunMedium className={"h-4 w-4" + (isDark ? " opacity-40" : " text-amber-500")} />
-            <Switch checked={isDark} onCheckedChange={handleChange} aria-label="Toggle theme" />
-            <MoonStar className={"h-4 w-4" + (!isDark ? " opacity-40" : " text-indigo-400")} />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>{isDark ? "Dark mode engaged" : "Light mode engaged"}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-muted max-sm:sr-only sm:text-sm">Dark theme</span>
+      <IosSwitch
+        checked={checked}
+        onCheckedChange={(value) => {
+          const next = value ? "dark" : "light";
+          if (next === theme) {
+            return;
+          }
+          setTheme(next);
+          logEvent("theme.change", { theme: next });
+        }}
+        label="Toggle dark theme"
+      />
+    </div>
   );
 }

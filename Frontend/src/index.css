@@ -1,39 +1,40 @@
 @import "./shared/ui/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: light dark;
-}
-
-html,
-body,
-#root {
-  height: 100%;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   margin: 0;
-  background: var(--app-bg);
-  color: var(--app-text);
+  font-family: "Inter Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 a {
   color: inherit;
-  text-decoration: none;
 }
 
-input,
-textarea,
-button {
-  font-family: inherit;
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-[data-mode="nexusos"] body {
-  letter-spacing: 0.01em;
+::selection {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-[data-mode="business"] body {
-  letter-spacing: 0.005em;
+[data-reduce-motion="true"] * {
+  transition: none !important;
+  animation-duration: 0.01ms !important;
 }

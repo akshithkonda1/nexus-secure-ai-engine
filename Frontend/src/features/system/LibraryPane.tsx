@@ -1,66 +1,31 @@
-import { useMemo } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/components/card";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useUIStore, type LibraryItem } from "@/shared/state/ui";
-
-type LibraryEntry = LibraryItem;
-
-interface LibraryPaneProps {
-  title?: string;
-  description?: string;
-}
-
-const starterPacks: LibraryEntry[] = [
+const studyPacks = [
   {
-    id: "starter-astronomy",
-    title: "Astronomy debate pack",
-    createdAt: new Date().toISOString(),
-    summary: "Student mode agents explain stellar evolution with visuals and analogies.",
+    id: "biology",
+    title: "Neural Biology 301",
+    updatedAt: "2 days ago",
+    description: "A cross-verified synthesis of synaptic transmission research."
   },
   {
-    id: "starter-ethics",
-    title: "Ethics board brief",
-    createdAt: new Date().toISOString(),
-    summary: "Business mode triages ethical risk scenarios for AI deployments.",
-  },
+    id: "ethics",
+    title: "AI Ethics and Governance",
+    updatedAt: "5 days ago",
+    description: "Ground truths on alignment frameworks, policy briefings, and citations."
+  }
 ];
 
-export function LibraryPane({
-  title = "Library",
-  description = "Curated study packs and assets from your agents.",
-}: LibraryPaneProps = {}): JSX.Element {
-  const items = useUIStore((state) => state.libraryItems);
-  const data = useMemo<LibraryEntry[]>(() => {
-    if (items.length === 0) {
-      return starterPacks;
-    }
-    return [...items, ...starterPacks].reduce<LibraryEntry[]>((unique, item) => {
-      if (!unique.some((existing) => existing.id === item.id)) {
-        unique.push(item);
-      }
-      return unique;
-    }, []);
-  }, [items]);
-
+export default function LibraryPane() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted">{description}</p>
-      </div>
-      {data.map((pack) => (
-        <Card key={pack.id} className="round-card shadow-ambient">
+    <div className="grid gap-4 md:grid-cols-2">
+      {studyPacks.map((pack) => (
+        <Card key={pack.id}>
           <CardHeader>
-            <CardTitle className="text-base">{pack.title}</CardTitle>
-            <CardDescription>
-              {new Intl.DateTimeFormat(navigator.language, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }).format(new Date(pack.createdAt))}
-            </CardDescription>
+            <CardTitle>{pack.title}</CardTitle>
+            <CardDescription>Last updated {pack.updatedAt}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted">{pack.summary}</p>
+            <p className="text-sm text-app">{pack.description}</p>
           </CardContent>
         </Card>
       ))}
