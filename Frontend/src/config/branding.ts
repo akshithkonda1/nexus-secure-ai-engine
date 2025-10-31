@@ -1,12 +1,4 @@
-export const BRANDING = {
-  dark: {
-    logo: "/brand/nexus-logo.png",
-    alt: "Nexus"
-  },
-  light: {
-    logo: "/brand/nexus-logo-inverted.png",
-    alt: "Nexus"
-  }
+export const BRAND = {
+  dark: "/brand/nexus-logo.png",
+  light: "/brand/nexus-logo-inverted.png",
 } as const;
-
-export type BrandTheme = keyof typeof BRANDING;
