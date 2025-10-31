@@ -249,11 +249,11 @@ function trimChats(maxThreads = 12, maxMessagesPerThread = 40): boolean {
     let mutated = false;
 
     const trimmedMessages = parsed.map((thread) => {
-      const messages = Array.isArray(thread?.messages) ? (thread.messages as unknown[]) : [];
-      if (!Array.isArray(messages)) {
+      if (!Array.isArray(thread?.messages)) {
         mutated = true;
         return { ...thread, messages: [] };
       }
+      const messages = thread.messages as unknown[];
       if (messages.length > maxMessagesPerThread) {
         mutated = true;
         return { ...thread, messages: messages.slice(-maxMessagesPerThread) };
