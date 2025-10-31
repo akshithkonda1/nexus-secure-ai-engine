@@ -1,33 +1,57 @@
-import { createBrowserRouter } from "react-router-dom";
-
+import { lazy, Suspense } from "react";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "@/app/AppShell";
+import NotFound from "@/app/NotFound";
 import { ChatWorkspace } from "@/features/chat/ChatWorkspace";
-import { PricingPage } from "@/features/pricing/PricingPage";
-import { SettingsLayout } from "@/features/settings/SettingsLayout";
-import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
-import { BillingSettings } from "@/features/settings/BillingSettings";
-import { NotFound } from "@/app/NotFound";
-import SystemPage from "@/features/system/SystemPage";
+
+const PricingPage = lazy(() => import("@/features/pricing/PricingPage"));
+const SettingsLayout = lazy(() => import("@/features/settings/SettingsLayout"));
+const AppearanceSettings = lazy(() => import("@/features/settings/AppearanceSettings"));
+const BillingSettings = lazy(() => import("@/features/settings/BillingSettings"));
+const SystemPage = lazy(() => import("@/features/system/SystemPage"));
+
+const suspense = (element: React.ReactNode) => <Suspense fallback={<div className="flex flex-1 items-center justify-center text-muted">Loading…</div>}>{element}</Suspense>;
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <AppShell />,
+    errorElement: <NotFound />, // fallback
     children: [
-      { index: true, element: <ChatWorkspace /> },
-      { path: "pricing", element: <PricingPage /> },
-      { path: "system", element: <SystemPage /> },
+      {
+        index: true,
+        element: <ChatWorkspace />
+      },
+      {
+        path: "pricing",
+        element: suspense(<PricingPage />)
+      },
+      {
+        path: "system",
+        element: suspense(<SystemPage />)
+      },
       {
         path: "settings",
-        element: <SettingsLayout />,
+        element: suspense(<SettingsLayout />),
         children: [
-          { index: true, element: <AppearanceSettings /> },
-          { path: "appearance", element: <AppearanceSettings /> },
-          { path: "billing", element: <BillingSettings /> },
-        ],
+          {
+            index: true,
+            element: <Navigate to="appearance" replace />
+          },
+          {
+            path: "appearance",
+            element: suspense(<AppearanceSettings />)
+          },
+          {
+            path: "billing",
+            element: suspense(<BillingSettings />)
+          }
+        ]
       },
-      { path: "*", element: <NotFound /> },
-    ],
-  },
-  { path: "*", element: <NotFound /> },
+      {
+        path: "*",
+        element: <NotFound />
+      }
+    ]
+  }
 ]);

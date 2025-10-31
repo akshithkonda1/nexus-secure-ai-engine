@@ -1,194 +1,41 @@
-export interface StoredProfile {
-  displayName: string;
-  avatarDataUrl: string | null;
-  updatedAt: string;
-}
-
-export interface ProfilePersistenceResult {
-  profile: StoredProfile;
-  reclaimed: boolean;
-  avatarDropped: boolean;
-}
-
-export const PROFILE_STORAGE_QUOTA_ERROR = "profile:storage-quota-exceeded";
-
 const PROFILE_KEY = "nexus.profile";
-const AUDIT_KEY = "nexus.audit";
-const CHATS_KEY = "nexus.chats";
-const PROJECTS_KEY = "nexus.projects";
 
-const defaultProfile: StoredProfile = {
-  displayName: "Guest of Nexus",
-  avatarDataUrl: null,
-  updatedAt: new Date(0).toISOString(),
+export type Profile = {
+  displayName: string;
+  avatarUrl?: string;
+  updatedAt: number;
 };
 
-export function getStoredProfile(): StoredProfile {
-  if (typeof window === "undefined") {
-    return defaultProfile;
-  }
+const DEFAULT_PROFILE: Profile = {
+  displayName: "Nexus Researcher",
+  avatarUrl: undefined,
+  updatedAt: Date.now()
+};
 
+export function getProfile(): Profile {
+  if (typeof window === "undefined") {
+    return DEFAULT_PROFILE;
+  }
   try {
     const raw = window.localStorage.getItem(PROFILE_KEY);
-    if (!raw) {
-      return defaultProfile;
-    }
-    const parsed = JSON.parse(raw) as StoredProfile;
-    if (!parsed.displayName) {
-      return defaultProfile;
-    }
+    if (!raw) return DEFAULT_PROFILE;
+    const parsed = JSON.parse(raw) as Profile;
     return {
-      displayName: parsed.displayName,
-      avatarDataUrl: parsed.avatarDataUrl ?? null,
-      updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+      ...DEFAULT_PROFILE,
+      ...parsed
     };
   } catch (error) {
     console.warn("Failed to parse profile", error);
-    return defaultProfile;
+    return DEFAULT_PROFILE;
   }
 }
 
-export function setStoredProfile(profile: StoredProfile): ProfilePersistenceResult {
-  if (typeof window === "undefined") {
-    return { profile, reclaimed: false, avatarDropped: false };
+export async function setProfile(profile: Omit<Profile, "updatedAt">): Promise<Profile> {
+  const next: Profile = { ...profile, updatedAt: Date.now() };
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(PROFILE_KEY, JSON.stringify(next));
   }
-
-  const { localStorage } = window;
-  const serialized = JSON.stringify(profile);
-  const previousValue = localStorage.getItem(PROFILE_KEY);
-  let previousRemoved = false;
-  let lastError: unknown;
-
-  const tryPersist = (value: string): boolean => {
-    try {
-      localStorage.setItem(PROFILE_KEY, value);
-      return true;
-    } catch (error) {
-      if (!isQuotaExceeded(error)) {
-        throw error;
-      }
-      lastError = error;
-      return false;
-    }
-  };
-
-  const removePreviousOnce = () => {
-    if (previousRemoved) {
-      return;
-    }
-    try {
-      localStorage.removeItem(PROFILE_KEY);
-      previousRemoved = true;
-    } catch (error) {
-      console.warn("Failed to remove previous profile during persistence", error);
-      previousRemoved = true;
-    }
-  };
-
-  if (tryPersist(serialized)) {
-    return { profile, reclaimed: false, avatarDropped: false };
-  }
-
-  removePreviousOnce();
-
-  if (tryPersist(serialized)) {
-    return { profile, reclaimed: false, avatarDropped: false };
-  }
-
-  const reclaimStrategies: (() => boolean)[] = [
-    () => trimAuditTrail(),
-    () => trimChats(),
-    () => dropInactiveChats(),
-    () => clearProjects(),
-    () => clearAuditTrail(),
-    () => clearChats(),
-  ];
-
-  let reclaimed = false;
-
-  for (const strategy of reclaimStrategies) {
-    try {
-      const changed = strategy();
-      if (!changed) {
-        continue;
-      }
-      reclaimed = true;
-    } catch (strategyError) {
-      console.warn("Profile storage reclaim strategy failed", strategyError);
-      continue;
-    }
-
-    if (tryPersist(serialized)) {
-      return { profile, reclaimed, avatarDropped: false };
-    }
-    removePreviousOnce();
-  }
-
-  if (profile.avatarDataUrl) {
-    const minimizedProfile: StoredProfile = {
-      ...profile,
-      avatarDataUrl: null,
-      updatedAt: new Date().toISOString(),
-    };
-    const minimizedSerialized = JSON.stringify(minimizedProfile);
-
-    if (tryPersist(minimizedSerialized)) {
-      return { profile: minimizedProfile, reclaimed, avatarDropped: true };
-    }
-    removePreviousOnce();
-    if (tryPersist(minimizedSerialized)) {
-      return { profile: minimizedProfile, reclaimed, avatarDropped: true };
-    }
-  }
-
-  if (previousRemoved && previousValue !== null) {
-    try {
-      localStorage.setItem(PROFILE_KEY, previousValue);
-    } catch (restoreError) {
-      console.warn("Failed to restore previous profile after quota error", restoreError);
-    }
-  }
-
-  throw new Error(PROFILE_STORAGE_QUOTA_ERROR, { cause: lastError });
-}
-
-export function clearStoredAvatar(): StoredProfile {
-  const profile = getStoredProfile();
-  const updated: StoredProfile = {
-    ...profile,
-    avatarDataUrl: null,
-    updatedAt: new Date().toISOString(),
-  };
-  const result = setStoredProfile(updated);
-  return result.profile;
-}
-
-export function updateStoredProfile(partial: Partial<StoredProfile>): StoredProfile {
-  const current = getStoredProfile();
-  const updated: StoredProfile = {
-    ...current,
-    ...partial,
-    updatedAt: new Date().toISOString(),
-  };
-  const result = setStoredProfile(updated);
-  return result.profile;
-}
-
-function isQuotaExceeded(error: unknown): boolean {
-  if (!error) {
-    return false;
-  }
-
-  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
-    return error.name === "QuotaExceededError" || error.code === 22 || error.code === 1014;
-  }
-
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    return message.includes("quota") || message.includes("storage") || message.includes("exceeded");
-  }
-
-  return false;
+  return next;
 }
 
 function trimAuditTrail(limit = 200): boolean {
@@ -249,11 +96,11 @@ function trimChats(maxThreads = 12, maxMessagesPerThread = 40): boolean {
     let mutated = false;
 
     const trimmedMessages = parsed.map((thread) => {
-      const messages = Array.isArray(thread?.messages) ? (thread.messages as unknown[]) : [];
-      if (!Array.isArray(messages)) {
+      if (!Array.isArray(thread?.messages)) {
         mutated = true;
         return { ...thread, messages: [] };
       }
+      const messages = thread.messages as unknown[];
       if (messages.length > maxMessagesPerThread) {
         mutated = true;
         return { ...thread, messages: messages.slice(-maxMessagesPerThread) };

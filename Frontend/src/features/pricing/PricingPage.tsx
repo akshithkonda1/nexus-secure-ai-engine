@@ -1,166 +1,195 @@
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { PRICES } from "@/config/pricing";
+import limits from "@/config/limits";
+import { Button } from "@/shared/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/components/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/components/tabs";
+import { Separator } from "@/shared/ui/components/separator";
+import { logEvent } from "@/shared/lib/audit";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+const formatInteger = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0
+});
 
-export const PRICING_VERSION = "2025-10-29" as const;
-export const PRICES = Object.freeze({
-  academic: { monthly: 9.99, annual: 99, semester: 35 },
-  premium: { monthly: 19, annual: 190 },
-  pro: { monthly: 99, annual: 990 },
+const formatDecimal = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
 });
 
 type BillingCycle = "monthly" | "annual" | "semester";
 
-type PlanKey = keyof typeof PRICES;
+const CYCLES: BillingCycle[] = ["monthly", "annual", "semester"];
 
-const planDescriptions: Record<PlanKey, string[]> = {
-  academic: [
-    "Unlimited collaborative study rooms",
-    "Multi-agent debates for complex topics",
-    "Study pack generation included",
-  ],
-  premium: [
-    "Priority inference lanes",
-    "Advanced prompt templates",
-    "Compare up to 3 models side-by-side",
-  ],
-  pro: [
-    "Educator-verified packs & lesson planning",
-    "Batch workflows with webhook callbacks",
-    "Seat management with audit logs",
-  ],
+const cycleLabel: Record<BillingCycle, string> = {
+  monthly: "Monthly",
+  annual: "Annual (2 months free)",
+  semester: "Semester (4 months)"
 };
 
-const planBadges: Record<PlanKey, string> = {
-  academic: "For learners and researchers",
-  premium: "For analysts and product teams",
-  pro: "For institutions & global programs",
+const getDefaultCycle = (): BillingCycle => {
+  const month = new Date().getMonth();
+  return month === 0 || month === 7 ? "semester" : "monthly";
 };
 
-function formatPrice(amount: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: amount % 1 === 0 ? 0 : 2 }).format(amount);
-}
+const academicBenefits = [
+  `${limits.academic.studyCreditsPerDay} study credits per day`,
+  `${limits.academic.cardsPerDeck} cards per deck`,
+  `${limits.academic.examBurstPerDay} ExamBurst credits over ${limits.academic.examBurstDays} days`
+];
 
-export function PricingPage(): JSX.Element {
-  const defaultCycle = useMemo<BillingCycle>(() => {
-    const month = new Date().getMonth();
-    if (month === 0 || month === 7) {
-      return "semester";
-    }
-    return "monthly";
-  }, []);
+const premiumBenefits = [
+  limits.premium.advancedPrompts ? "Advanced prompt studio" : "",
+  limits.premium.modelCompare ? "Model comparison view" : "",
+  limits.premium.confidenceScores ? "Confidence scoring" : "",
+  "NO Study Pack generation"
+].filter(Boolean);
 
-  const [cycle, setCycle] = useState<BillingCycle>(defaultCycle);
+const proBenefits = [
+  limits.pro.api ? "Realtime API access" : "",
+  limits.pro.batch ? "Batch pipeline" : "",
+  limits.pro.webhooks ? "Event webhooks" : "",
+  limits.pro.logExports ? "Audit log exports" : "",
+  limits.pro.teamSeatsMin && limits.pro.teamSeatsMax
+    ? `${limits.pro.teamSeatsMin}-${limits.pro.teamSeatsMax} seats included`
+    : "",
+  "Educator-verified may generate class packs"
+].filter(Boolean);
 
-  const supplementaryText = (plan: PlanKey) => {
-    const parts: string[] = [];
-    if (plan === "academic") {
-      if (cycle !== "monthly") {
-        parts.push(`Monthly ${formatPrice(PRICES.academic.monthly)} / month`);
-      }
-      if (cycle !== "annual") {
-        parts.push(`Annual ${formatPrice(PRICES.academic.annual)} / year`);
-      }
-      if (cycle !== "semester") {
-        parts.push(`Semester ${formatPrice(PRICES.academic.semester)} / semester`);
-      }
-    } else {
-      const displayedCycle: "monthly" | "annual" = cycle === "semester" ? "monthly" : cycle;
-      if (displayedCycle !== "monthly") {
-        parts.push(`Monthly ${formatPrice(PRICES[plan].monthly)} / month`);
-      }
-      if (displayedCycle !== "annual") {
-        parts.push(`Annual ${formatPrice(PRICES[plan].annual)} / year`);
-      }
-    }
-    return parts.join(" · ");
-  };
+const plans = [
+  {
+    id: "academic",
+    name: "Academic",
+    blurb: "For focused learners who demand clarity and retention.",
+    badge: "Most popular",
+    benefits: academicBenefits
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    blurb: "Accuracy-obsessed analysts and product teams.",
+    badge: undefined,
+    benefits: premiumBenefits
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    blurb: "Regulated teams that need provable, multi-seat control.",
+    badge: "For teams",
+    benefits: proBenefits
+  }
+] as const;
 
-  const renderPrice = (plan: PlanKey) => {
-    if (plan === "academic") {
-      if (cycle === "semester") {
-        return `${formatPrice(PRICES.academic.semester)} / semester`;
-      }
-      if (cycle === "annual") {
-        return `${formatPrice(PRICES.academic.annual)} / year`;
-      }
-      return `${formatPrice(PRICES.academic.monthly)} / month`;
-    }
+const formatPrice = (value: number) => (Number.isInteger(value) ? formatInteger.format(value) : formatDecimal.format(value));
 
-    const fallbackCycle: "monthly" | "annual" = cycle === "semester" ? "monthly" : cycle;
-    const amount = PRICES[plan][fallbackCycle];
-    const suffix = fallbackCycle === "annual" ? " / year" : " / month";
-    return `${formatPrice(amount)}${suffix}`;
+export default function PricingPage() {
+  const [cycle, setCycle] = useState<BillingCycle>(getDefaultCycle);
+
+  const cyclePrices = useMemo(() => {
+    return plans.map((plan) => {
+      const price = PRICES[plan.id as keyof typeof PRICES];
+      if (plan.id === "academic") {
+        return {
+          id: plan.id,
+          value: cycle === "semester" ? price.semester : price[cycle as "monthly" | "annual"]
+        };
+      }
+      return {
+        id: plan.id,
+        value: price[cycle === "semester" ? "monthly" : cycle]
+      };
+    });
+  }, [cycle]);
+
+  const renderPrice = (planId: string) => {
+    const priceEntry = cyclePrices.find((item) => item.id === planId);
+    if (!priceEntry) return null;
+    return <span className="text-4xl font-semibold">{formatPrice(priceEntry.value)}</span>;
   };
 
   return (
-    <section className="flex flex-1 flex-col overflow-y-auto bg-app px-6 py-10">
-      <header className="mx-auto max-w-4xl text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-muted">Pricing version {PRICING_VERSION}</p>
-        <h1 className="mt-3 text-4xl font-bold leading-tight">
+    <div className="space-y-12">
+      <section className="space-y-4 text-center">
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-semibold tracking-tight"
+        >
           Nexus.ai — Where AIs debate, verify, and agree on the truth.
-        </h1>
-        <p className="mt-4 text-lg text-muted">
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto max-w-2xl text-lg text-muted"
+        >
           Encrypted. Auditable. Vendor-neutral. Because accuracy deserves proof.
-        </p>
-      </header>
+        </motion.p>
+      </section>
 
-      <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-3">
-        {(["monthly", "annual", "semester"] as BillingCycle[]).map((option) => (
-          <Button
-            key={option}
-            variant={cycle === option ? "default" : "outline"}
-            className="round-btn shadow-press"
-            onClick={() => setCycle(option)}
-          >
-            {option === "monthly" && "Monthly"}
-            {option === "annual" && "Annual (2 months free)"}
-            {option === "semester" && "Semester (4 months)"}
-          </Button>
-        ))}
-      </div>
-
-      <div className="mx-auto mt-10 grid w-full max-w-6xl gap-6 md:grid-cols-3">
-        {(Object.keys(PRICES) as PlanKey[]).map((planKey) => (
-          <Card key={planKey} className="flex flex-col round-card shadow-ambient">
-            <CardHeader>
-              <CardTitle className="text-2xl capitalize">{planKey}</CardTitle>
-              <CardDescription>{planBadges[planKey]}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col justify-between gap-6">
-              <div>
-                <p className="text-3xl font-bold">{renderPrice(planKey)}</p>
-                {planKey === "academic" && cycle === "semester" ? (
-                  <p className="mt-2 text-xs text-muted">
-                    Semester pricing auto-aligns with academic calendars and includes study pack credits.
-                  </p>
-                ) : null}
-                {planKey !== "academic" && cycle === "semester" ? (
-                  <p className="mt-2 text-xs text-muted">
-                    {planKey === "premium"
-                      ? "Semester billing not available. Displaying monthly pricing."
-                      : "Semester billing not available for Pro. Displaying monthly pricing."}
-                  </p>
-                ) : null}
-                {supplementaryText(planKey) ? (
-                  <p className="mt-3 text-xs text-muted">{supplementaryText(planKey)}</p>
-                ) : null}
-              </div>
-              <ul className="space-y-2 text-sm">
-                {planDescriptions[planKey].map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full round-btn shadow-press" variant={planKey === "pro" ? "default" : "secondary"}>
-                {planKey === "pro" ? "Start deployment" : "Begin trial"}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </section>
+      <Tabs value={cycle} onValueChange={(value: string) => {
+        const next = value as BillingCycle;
+        setCycle(next);
+        logEvent("pricing.cycle", { cycle: next });
+      }}>
+        <TabsList className="mx-auto flex w-fit gap-2">
+          {CYCLES.map((value) => (
+            <TabsTrigger key={value} value={value} className="px-4">
+              {cycleLabel[value]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value={cycle} className="border-none bg-transparent p-0 shadow-none">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {plans.map((plan) => (
+              <motion.div key={plan.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <Card
+                  data-testid={`plan-${plan.id}`}
+                  className={`relative flex h-full flex-col gap-6 ${
+                    plan.id === "academic" ? "border-2 border-accent-student shadow-lg" : ""
+                  }`}
+                >
+                  {plan.badge && (
+                    <span className="absolute -top-3 left-6 inline-flex rounded-full bg-accent-nexus px-3 py-1 text-xs text-white shadow-ambient">
+                      {plan.badge}
+                    </span>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.blurb}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-1 flex-col gap-4">
+                    <div className="space-y-1">
+                      {renderPrice(plan.id)}
+                      <p className="text-sm text-muted">{cycleLabel[cycle]}</p>
+                    </div>
+                    <Separator />
+                    <ul className="space-y-2 text-sm text-app">
+                      {plan.benefits.map((benefit) => (
+                        <li key={benefit} className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent-nexus" aria-hidden="true" />
+                          <span>{benefit}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-auto">
+                      <Button className="w-full" variant={plan.id === "academic" ? "default" : "subtle"}>
+                        Choose {plan.name}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
