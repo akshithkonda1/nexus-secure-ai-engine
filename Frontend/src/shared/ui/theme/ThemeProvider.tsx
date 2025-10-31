@@ -20,16 +20,29 @@ type ThemeProviderProps = {
   children: React.ReactNode;
 };
 
+const applyTheme = (theme: Theme) => {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-theme", theme);
+};
+
+const applyMode = (mode: Mode) => {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-mode", mode);
+};
+
 const getPreferredTheme = (): Theme => {
   if (typeof window === "undefined") {
     return "light";
   }
   const stored = window.localStorage.getItem(THEME_KEY) as Theme | null;
   if (stored === "light" || stored === "dark") {
+    applyTheme(stored);
     return stored;
   }
   const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  return isDark ? "dark" : "light";
+  const value = isDark ? "dark" : "light";
+  applyTheme(value);
+  return value;
 };
 
 const getStoredMode = (): Mode => {
@@ -38,8 +51,10 @@ const getStoredMode = (): Mode => {
   }
   const stored = window.localStorage.getItem(MODE_KEY) as Mode | null;
   if (stored === "student" || stored === "business" || stored === "nexusos") {
+    applyMode(stored);
     return stored;
   }
+  applyMode("nexusos");
   return "nexusos";
 };
 
@@ -50,15 +65,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setSessionMode = useSessionStore((state) => state.setMode);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-theme", theme);
+    applyTheme(theme);
     window.localStorage.setItem(THEME_KEY, theme);
     setSessionTheme(theme);
   }, [theme, setSessionTheme]);
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute("data-mode", mode);
+    applyMode(mode);
     window.localStorage.setItem(MODE_KEY, mode);
     setSessionMode(mode);
   }, [mode, setSessionMode]);

@@ -1,4 +1,5 @@
 {
+  "free":   { "decksPerDay": 1, "cardsPerDeck": 25, "exports": false },
   "academic": { "studyCreditsPerDay": 40, "cardsPerDeck": 100, "examBurstPerDay": 90, "examBurstDays": 7, "concurrency": 2 },
   "premium":  { "priority": true, "advancedPrompts": true, "modelCompare": true, "confidenceScores": true },
   "pro":      { "api": true, "batch": true, "teamSeatsMin": 3, "teamSeatsMax": 5, "webhooks": true, "logExports": true }
