@@ -13,7 +13,7 @@ type PersistedSession = {
   lockedUntilISO?: string;
 };
 
-const DEFAULT_PLAN: PricingTierId = "academic";
+const DEFAULT_PLAN: PricingTierId = "free";
 
 const nowISO = () => new Date().toISOString();
 
