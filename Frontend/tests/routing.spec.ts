@@ -5,9 +5,6 @@ test.describe("routing", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 2, name: /chat|conversation/i })).toBeVisible();
 
-    await page.getByRole("link", { name: "System" }).click();
-    await expect(page.getByRole("heading", { name: /System — Tools and Controls that power your workspace\./ })).toBeVisible();
-
     await page.getByRole("link", { name: "Pricing" }).click();
     await expect(page.getByRole("heading", { name: /Nexus\.ai — Where AIs debate, verify, and agree on the truth\./ })).toBeVisible();
 

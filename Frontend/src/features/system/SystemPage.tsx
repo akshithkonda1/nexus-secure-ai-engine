@@ -4,8 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuditTrailPane } from "@/features/system/AuditTrailPane";
 import { EncryptionPane } from "@/features/system/EncryptionPane";
-import { LibraryPane } from "@/features/system/LibraryPane";
-import { ProjectsPane } from "@/features/system/ProjectsPane";
+import { SourcePane } from "@/features/system/SourcePane";
 import { useUIStore } from "@/shared/state/ui";
 
 const tabs = ["source", "audit", "encryption"] as const;
@@ -24,11 +23,7 @@ export default function SystemPage(): JSX.Element {
 
   useEffect(() => {
     setTab(queryTab);
-    if (queryTab === "audit" || queryTab === "encryption") {
-      setSystemPane(queryTab);
-    } else {
-      setSystemPane("source");
-    }
+    setSystemPane(queryTab);
   }, [queryTab, setSystemPane]);
 
   const handleTabChange = (value: string) => {
@@ -41,9 +36,9 @@ export default function SystemPage(): JSX.Element {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="text-2xl font-bold tracking-tight">System — Tools and Controls that power your workspace.</h1>
+      <h1 className="text-2xl font-bold tracking-tight">System</h1>
       <p className="text-sm text-muted-foreground">
-        Manage sources, track activity, and export compliance records with confidence.
+        Tools, assets, and controls that power your workspace.
       </p>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="mt-6">

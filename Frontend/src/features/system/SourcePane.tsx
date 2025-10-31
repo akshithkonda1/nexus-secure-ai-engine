@@ -75,13 +75,7 @@ export function SourcePane(): JSX.Element {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted">
-                Last synced
-                {" "}
-                {new Intl.DateTimeFormat(navigator.language, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(new Date(source.lastSyncedAt))}
-                {" · Scoped to tenant boundary"}
+                Last synced {new Date(source.lastSyncedAt).toLocaleString()} · Scoped to tenant boundary
               </p>
             </CardContent>
           </Card>
