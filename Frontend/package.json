@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint src",
     "test": "playwright test",
+    "test:e2e": "playwright test",
     "check:pricing": "node ./scripts/check-pricing-lock.mjs"
   },
   "dependencies": {

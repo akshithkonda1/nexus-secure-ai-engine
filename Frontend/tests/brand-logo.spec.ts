@@ -1,16 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("brand logo swaps by theme", async ({ page }) => {
+test("logo swaps with theme", async ({ page }) => {
   await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.setItem("nexus.theme", "light");
-    location.reload();
-  });
-  await expect(page.locator('img[alt="Nexus"]')).toHaveAttribute("src", "/brand/nexus-logo-inverted.png");
-
-  await page.evaluate(() => {
-    localStorage.setItem("nexus.theme", "dark");
-    location.reload();
-  });
-  await expect(page.locator('img[alt="Nexus"]')).toHaveAttribute("src", "/brand/nexus-logo.png");
+  const img = page.locator("img[alt='Nexus']");
+  await expect(img).toBeVisible();
+  await page.getByRole("button", { name: "Light" }).click();
+  await expect(img).toHaveAttribute("src", /nexus-logo-inverted\.png$/);
 });

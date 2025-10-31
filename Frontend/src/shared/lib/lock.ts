@@ -1,35 +1,22 @@
-import { PRICING_LOCK } from "@/config/pricing";
+import { PRICE_LOCK } from "@/config/pricing";
+const KEY_FIRST = "nexus.firstInstallISO";
+const KEY_LOCK = "nexus.lockedUntilISO";
 
-const MS_PER_DAY = 86_400_000;
+export function getLockedUntil(): string {
+  const explicit = PRICE_LOCK.lockedUntilISO?.trim();
+  if (explicit) return explicit;
+  const stored = localStorage.getItem(KEY_LOCK);
+  if (stored) return stored;
+  const first = localStorage.getItem(KEY_FIRST) ?? new Date().toISOString();
+  localStorage.setItem(KEY_FIRST, first);
+  const d = new Date(first);
+  d.setDate(d.getDate() + (PRICE_LOCK.relativeDays ?? 30));
+  const iso = d.toISOString();
+  localStorage.setItem(KEY_LOCK, iso);
+  return iso;
+}
 
-type Params = {
-  firstInstallISO: string;
-  lockedUntilISO?: string;
-};
-
-const parseISO = (value?: string) => {
-  if (!value) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-};
-
-export const computeLockedUntil = ({ firstInstallISO, lockedUntilISO }: Params) => {
-  const installDate = parseISO(firstInstallISO) ?? new Date();
-  const minimum = new Date(installDate.getTime() + PRICING_LOCK.durationDays * MS_PER_DAY);
-  const configured = parseISO(PRICING_LOCK.anchorISO);
-  const existing = parseISO(lockedUntilISO);
-
-  const candidates = [minimum, configured, existing].filter(Boolean) as Date[];
-  if (candidates.length === 0) {
-    return minimum.toISOString();
-  }
-
-  const target = candidates.reduce((acc, current) => (current.getTime() > acc.getTime() ? current : acc));
-  return target.toISOString();
-};
-
-export const isLocked = (lockedUntilISO: string, now: Date = new Date()) => {
-  const target = parseISO(lockedUntilISO);
-  if (!target) return false;
-  return now.getTime() < target.getTime();
-};
+export function isLocked(now = new Date()): { locked: boolean; untilISO: string } {
+  const untilISO = getLockedUntil();
+  return { locked: now < new Date(untilISO), untilISO };
+}
