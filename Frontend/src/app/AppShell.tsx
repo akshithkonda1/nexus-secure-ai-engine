@@ -1,91 +1,79 @@
-import React from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
+import { useEffect } from "react";
 import { useSession } from "@/shared/state/session";
-import { Badge } from "@/shared/ui/components/badge";
-import { Separator } from "@/shared/ui/components/separator";
-import { Button } from "@/shared/ui/components/button";
-import { Input } from "@/shared/ui/components/input";
+import { isLocked } from "@/shared/lib/lock";
 
-function NavItem({ to, children }: React.PropsWithChildren<{ to: string }>) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `flex items-center rounded-lg px-3 py-2 text-sm ${
-          isActive
-            ? "bg-neutral-800 text-white dark:bg-neutral-200 dark:text-black"
-            : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-        }`
-      }
-    >
-      {children}
-    </NavLink>
-  );
-}
-
-export default function AppShell() {
-  const { theme, toggle } = useTheme();
+export function AppShell() {
+  const { theme, setTheme } = useTheme();
   const { plan } = useSession();
+  const { locked, untilISO } = isLocked();
+  const loc = useLocation();
+  const nav = useNavigate();
+
+  useEffect(() => {
+    if (loc.pathname === "/app") nav("/");
+  }, [loc, nav]);
 
   return (
-    <div className="min-h-screen grid grid-cols-[260px_1fr_300px] grid-rows-[56px_1fr] bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+    <div className="min-h-screen grid grid-cols-[260px_1fr_320px] grid-rows-[56px_1fr] bg-background text-foreground">
       {/* Topbar */}
-      <header className="col-span-3 row-start-1 flex items-center gap-4 px-4 border-b border-neutral-200 dark:border-neutral-800">
-        <Link to="/" aria-label="Nexus home" className="flex items-center gap-2">
-          <BrandMark className="h-6" />
-        </Link>
-        <div className="flex-1 max-w-2xl">
-          <div className="relative">
-            <Input placeholder="Search…  ⌘K" aria-label="Global search" />
-          </div>
-        </div>
-        <Badge variant="outline" className="rounded-full">{plan.toUpperCase()}</Badge>
-        <Button variant="ghost" onClick={toggle} aria-label="Toggle theme">
+      <header className="col-span-3 row-start-1 border-b flex items-center gap-4 px-4">
+        <BrandMark className="h-5" />
+        <input
+          aria-label="Search"
+          placeholder="Search… ⌘K"
+          className="flex-1 max-w-xl px-3 py-2 rounded-md bg-muted/30 outline-none"
+        />
+        <button disabled className="text-xs rounded-full px-3 py-1 border">
+          {locked
+            ? `Plan: ${plan} · Upgrades open ${new Date(untilISO).toLocaleDateString()}`
+            : `Plan: ${plan}`}
+        </button>
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="px-3 py-1 rounded-md border"
+        >
           {theme === "dark" ? "Light" : "Dark"}
-        </Button>
+        </button>
+        <Link to="/login" className="px-3 py-1 rounded-md bg-primary text-primary-foreground">
+          Sign in
+        </Link>
       </header>
 
       {/* Sidebar */}
-      <aside className="row-start-2 col-start-1 border-r border-neutral-200 dark:border-neutral-800 p-3 space-y-2">
+      <aside className="row-start-2 col-start-1 border-r px-3 py-4 space-y-2">
         <nav className="space-y-1">
-          <NavItem to="/chat">Chats</NavItem>
-          <NavItem to="/projects">Projects</NavItem>
-          <NavItem to="/library">Library</NavItem>
-          <NavItem to="/system">System</NavItem>
-          <NavItem to="/pricing">Pricing</NavItem>
-          <NavItem to="/settings">Settings</NavItem>
-          <Separator className="my-3" />
-          <NavItem to="/auth">Sign in / Create account</NavItem>
+          {[
+            ["Chats", "/chat"],
+            ["Projects", "/projects"],
+            ["Library", "/system#library"],
+            ["System", "/system"],
+            ["Pricing", "/pricing"],
+            ["Settings", "/system#settings"],
+          ].map(([label, href]) => (
+            <Link key={label} to={href} className="block px-3 py-2 rounded-md hover:bg-muted/40">
+              {label}
+            </Link>
+          ))}
         </nav>
-        <div className="mt-8 text-xs text-neutral-500">Proof-first intelligence.</div>
+        <div className="mt-6 text-xs text-muted-foreground">Proof-first intelligence.</div>
       </aside>
 
-      {/* Main content */}
+      {/* Main */}
       <main className="row-start-2 col-start-2 p-6">
         <Outlet />
       </main>
 
-      {/* Right rail */}
-      <aside className="row-start-2 col-start-3 border-l border-neutral-200 dark:border-neutral-800 p-4">
-        <h3 className="text-sm font-semibold mb-3">Projects</h3>
-        <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
-          <li>
-            <Link to="/projects/1" className="hover:underline">
-              New Project
-            </Link>
-          </li>
-          <li>
-            <Link to="/projects/2" className="hover:underline">
-              Research: officials
-            </Link>
-          </li>
-          <li>
-            <Link to="/projects/3" className="hover:underline">
-              Senior lead brief
-            </Link>
-          </li>
+      {/* Right Rail */}
+      <aside className="row-start-2 col-start-3 border-l p-4 space-y-3">
+        <h3 className="text-sm font-semibold">Projects</h3>
+        {/* Simple recent list placeholder; real data in ProjectsPane */}
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <li>New onboarding deck</li>
+          <li>Explain RAG tradeoffs</li>
+          <li>Bias audit sample</li>
         </ul>
       </aside>
     </div>

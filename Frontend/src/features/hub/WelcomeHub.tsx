@@ -1,24 +1,49 @@
-import React from "react";
-import { Button } from "@/shared/ui/components/button";
+import { useEffect, useState } from "react";
+import { fetchCapabilities, type Capabilities } from "@/services/api/client";
+import { Link } from "react-router-dom";
+import { isLocked } from "@/shared/lib/lock";
 
-const Chip = ({ label, onClick }: { label: string; onClick: () => void }) => (
-  <Button onClick={onClick} variant="secondary" className="h-14 px-6 rounded-xl text-base shadow-sm">
-    {label}
-  </Button>
-);
+export function WelcomeHub() {
+  const [caps, setCaps] = useState<Capabilities | null>(null);
+  const { locked, untilISO } = isLocked();
 
-export default function WelcomeHub() {
+  useEffect(() => {
+    fetchCapabilities().then(setCaps);
+  }, []);
+
+  const Chip = ({ label, to, disabled }: { label: string; to: string; disabled?: boolean }) => (
+    <Link
+      to={disabled ? "#" : to}
+      aria-disabled={disabled}
+      className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border hover:bg-muted/40 ${
+        disabled ? "opacity-50 pointer-events-none" : ""
+      }`}
+    >
+      {label} {disabled && <span className="text-xs">(unavailable)</span>}
+    </Link>
+  );
+
   return (
     <div className="mx-auto max-w-3xl text-center">
-      <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-3">Welcome to Nexus</h1>
-      <p className="text-neutral-600 dark:text-neutral-300 mb-8">
-        Get started by giving Nexus a task—then let it do the rest.
+      <h1 className="text-4xl font-semibold mb-2">Welcome to Nexus</h1>
+      <p className="text-muted-foreground mb-8">
+        Get started by choosing a task. Nexus convenes multiple specialists to cross-check your answer.
       </p>
-      <div className="grid grid-cols-2 gap-4 place-content-center max-w-xl mx-auto">
-        <Chip label="Write copy" onClick={() => location.assign("/chat?preset=copy")} />
-        <Chip label="Image generation" onClick={() => location.assign("/chat?preset=image")} />
-        <Chip label="Create avatar" onClick={() => location.assign("/chat?preset=avatar")} />
-        <Chip label="Write code" onClick={() => location.assign("/chat?preset=code")} />
+      <div className="flex flex-wrap justify-center gap-3 mb-10">
+        <Chip label="Write copy" to="/chat?preset=copy" />
+        <Chip label="Create avatar" to="/chat?preset=avatar" disabled={!caps?.studyPacks} />
+        <Chip label="Image generation" to="/chat?preset=image" disabled={!caps?.imageGen} />
+        <Chip label="Write code" to="/chat?preset=code" disabled={!caps?.codeGen} />
+      </div>
+
+      <div className="mx-auto max-w-xl rounded-2xl border bg-muted/10 p-4 text-sm">
+        <div className="font-medium mb-1">Free plan</div>
+        <div className="text-muted-foreground">
+          1 trial deck/day • ≤25 cards • watermarked audit • public sources • no exports.
+        </div>
+        <button className="mt-3 px-3 py-2 rounded-md border" disabled>
+          {locked ? `Upgrade opens ${new Date(untilISO).toLocaleDateString()}` : "Upgrade (locked)"}
+        </button>
       </div>
     </div>
   );

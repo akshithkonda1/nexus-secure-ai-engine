@@ -1,6 +1,5 @@
-import React from "react";
-import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import { BRAND } from "@/config/branding";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 
 export function BrandMark({ className = "h-6 w-auto" }: { className?: string }) {
   const { theme } = useTheme();
