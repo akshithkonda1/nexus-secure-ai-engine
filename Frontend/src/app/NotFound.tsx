@@ -1,25 +1,14 @@
 import { Link } from "react-router-dom";
+import { Button } from "@/shared/ui/components/button";
 
-import { Button } from "@/components/ui/button";
-
-export function NotFound(): JSX.Element {
+export default function NotFound() {
   return (
-    <div className="flex flex-1 items-center justify-center bg-app p-10">
-      <div className="max-w-lg text-center">
-        <p className="text-sm font-semibold text-muted">404 — Signal not found</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">The Nexus corridor you entered doesn&apos;t exist.</h1>
-        <p className="mt-3 text-muted">
-          Double-check the URL or return to your workspace to continue orchestrating your AI teams.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Button asChild>
-            <Link to="/">Back to chats</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/pricing">View pricing</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+      <h1 className="text-5xl font-semibold">404</h1>
+      <p className="max-w-md text-muted">We couldn’t find that page. Try heading back to the chat workspace.</p>
+      <Button asChild>
+        <Link to="/">Return home</Link>
+      </Button>
     </div>
   );
 }
