@@ -1,14 +1,19 @@
-export type AnalyticsProps = Record<string, unknown> | undefined;
+export type AnalyticsPayload = Record<string, unknown>;
 
-export function track(event: string, props?: AnalyticsProps): void {
-  if (typeof window === "undefined") {
-    return;
+declare global {
+  interface Window {
+    analyticsQueue?: { event: string; props?: AnalyticsPayload }[];
+  }
+}
+
+export function track(event: string, props?: AnalyticsPayload) {
+  if (typeof window === "undefined") return;
+  if (navigator.doNotTrack === "1") return;
+  if (!import.meta.env.VITE_ANALYTICS) return;
+
+  if (!window.analyticsQueue) {
+    window.analyticsQueue = [];
   }
 
-  if (!import.meta.env.VITE_ANALYTICS || window.navigator.doNotTrack === "1") {
-    return;
-  }
-
-  // Stubbed analytics pipeline — replace with real provider when wiring production analytics.
-  console.log("[track]", event, props);
+  window.analyticsQueue.push({ event, props });
 }
