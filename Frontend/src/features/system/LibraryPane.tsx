@@ -52,7 +52,12 @@ export function LibraryPane({
         <Card key={pack.id} className="round-card shadow-ambient">
           <CardHeader>
             <CardTitle className="text-base">{pack.title}</CardTitle>
-            <CardDescription>{new Date(pack.createdAt).toLocaleString()}</CardDescription>
+            <CardDescription>
+              {new Intl.DateTimeFormat(navigator.language, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              }).format(new Date(pack.createdAt))}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted">{pack.summary}</p>
