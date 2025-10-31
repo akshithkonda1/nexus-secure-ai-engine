@@ -2,6 +2,10 @@ import { Button } from "@/shared/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/components/card";
 import { getAuditEvents } from "@/shared/lib/audit";
 
+type AuditTrailPaneProps = {
+  canExport?: boolean;
+};
+
 function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -12,13 +16,19 @@ function downloadJson(filename: string, data: unknown) {
   URL.revokeObjectURL(url);
 }
 
-export default function AuditTrailPane() {
+export default function AuditTrailPane({ canExport = true }: AuditTrailPaneProps) {
   const events = getAuditEvents();
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => downloadJson("audit-trail.json", events)}>Export JSON</Button>
+        {canExport ? (
+          <Button onClick={() => downloadJson("audit-trail.json", events)}>Export JSON</Button>
+        ) : (
+          <Button disabled aria-disabled className="cursor-not-allowed opacity-60">
+            Export locked by policy
+          </Button>
+        )}
       </div>
       <div className="space-y-3">
         {events.length === 0 && <p className="text-sm text-muted">Audit log will populate as you interact with Nexus.ai.</p>}
