@@ -8,7 +8,7 @@ import { LibraryPane } from "@/features/system/LibraryPane";
 import { ProjectsPane } from "@/features/system/ProjectsPane";
 import { useUIStore } from "@/shared/state/ui";
 
-const tabs = ["library", "projects", "audit", "encryption"] as const;
+const tabs = ["source", "audit", "encryption"] as const;
 type TabValue = (typeof tabs)[number];
 
 export default function SystemPage(): JSX.Element {
@@ -17,7 +17,7 @@ export default function SystemPage(): JSX.Element {
 
   const queryTab = useMemo(() => {
     const requested = searchParams.get("tab");
-    return tabs.includes(requested as TabValue) ? (requested as TabValue) : ("library" as TabValue);
+    return tabs.includes(requested as TabValue) ? (requested as TabValue) : ("source" as TabValue);
   }, [searchParams]);
 
   const [tab, setTab] = useState<TabValue>(queryTab);
@@ -32,7 +32,7 @@ export default function SystemPage(): JSX.Element {
   }, [queryTab, setSystemPane]);
 
   const handleTabChange = (value: string) => {
-    const next = (value as TabValue) ?? "library";
+    const next = (value as TabValue) ?? "source";
     setTab(next);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("tab", next);
@@ -48,17 +48,13 @@ export default function SystemPage(): JSX.Element {
 
       <Tabs value={tab} onValueChange={handleTabChange} className="mt-6">
         <TabsList className="round-card border border-subtle bg-[var(--app-surface)] shadow-ambient">
-          <TabsTrigger value="library">Library</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="source">Source</TabsTrigger>
           <TabsTrigger value="audit">Audit Trail</TabsTrigger>
           <TabsTrigger value="encryption">Encryption</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="library" className="mt-6">
-          <LibraryPane />
-        </TabsContent>
-        <TabsContent value="projects" className="mt-6">
-          <ProjectsPane />
+        <TabsContent value="source" className="mt-6">
+          <SourcePane />
         </TabsContent>
         <TabsContent value="audit" className="mt-6">
           <AuditTrailPane />
