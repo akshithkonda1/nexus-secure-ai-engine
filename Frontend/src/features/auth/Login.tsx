@@ -5,16 +5,22 @@ import { Input } from "@/shared/ui/components/input";
 import { useSession } from "@/shared/state/session";
 import { useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
+import { useAuth } from "@/shared/state/auth";
 
 export function LoginPage() {
   const { setUser } = useSession();
+  const { setUser: setAuthUser, setLoading: setAuthLoading } = useAuth();
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   function completeLogin(name: string, address?: string) {
-    setUser({ id: crypto.randomUUID(), name, email: address ?? email || `${name.replace(/\s+/g, "").toLowerCase()}@example.com` });
+    const resolvedEmail = address ?? email || `${name.replace(/\s+/g, "").toLowerCase()}@example.com`;
+    const user = { id: crypto.randomUUID(), name, email: resolvedEmail };
+    setAuthUser(user);
+    setAuthLoading(false);
+    setUser(user);
     nav("/");
   }
 
