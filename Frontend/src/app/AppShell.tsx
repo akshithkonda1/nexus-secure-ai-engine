@@ -1,81 +1,141 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/brand";
-import { useTheme } from "@/shared/ui/theme/ThemeProvider";
-import { useEffect } from "react";
-import { useSession } from "@/shared/state/session";
-import { isLocked } from "@/shared/lib/lock";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
+import { Button } from "@/shared/ui/components/button";
+import { useMemo } from "react";
+
+function cx(...c: (string | false | undefined)[]) {
+  return c.filter(Boolean).join(" ");
+}
 
 export function AppShell() {
-  const { theme, setTheme } = useTheme();
-  const { plan } = useSession();
-  const { locked, untilISO } = isLocked();
-  const loc = useLocation();
-  const nav = useNavigate();
-
-  useEffect(() => {
-    if (loc.pathname === "/app") nav("/");
-  }, [loc, nav]);
-
   return (
-    <div className="min-h-screen grid grid-cols-[260px_1fr_320px] grid-rows-[56px_1fr] bg-background text-foreground">
-      {/* Topbar */}
-      <header className="col-span-3 row-start-1 border-b flex items-center gap-4 px-4">
-        <BrandMark className="h-5" />
-        <input
-          aria-label="Search"
-          placeholder="Search… ⌘K"
-          className="flex-1 max-w-xl px-3 py-2 rounded-md bg-muted/30 outline-none"
-        />
-        <button disabled className="text-xs rounded-full px-3 py-1 border">
-          {locked
-            ? `Plan: ${plan} · Upgrades open ${new Date(untilISO).toLocaleDateString()}`
-            : `Plan: ${plan}`}
-        </button>
-        <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="px-3 py-1 rounded-md border"
-        >
-          {theme === "dark" ? "Light" : "Dark"}
-        </button>
-        <Link to="/auth" className="px-3 py-1 rounded-md bg-primary text-primary-foreground">
-          Sign in
-        </Link>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Left sidebar */}
+      <aside className="fixed inset-y-0 left-0 w-64 border-r bg-card">
+        <div className="h-14 flex items-center px-4 border-b">
+          <BrandMark className="h-5" />
+        </div>
 
-      {/* Sidebar */}
-      <aside className="row-start-2 col-start-1 border-r px-3 py-4 space-y-2">
-        <nav className="space-y-1">
-          {[
-            ["Chats", "/chat/new"],
-            ["Projects", "/projects"],
-            ["Library", "/library"],
-            ["System", "/system"],
-            ["Pricing", "/pricing"],
-            ["Settings", "/settings"],
-          ].map(([label, href]) => (
-            <Link key={label} to={href} className="block px-3 py-2 rounded-md hover:bg-muted/40">
-              {label}
-            </Link>
-          ))}
-        </nav>
-        <div className="mt-6 text-xs text-muted-foreground">Proof-first intelligence.</div>
+        <div className="p-3">
+          {/* Search */}
+          <label className="sr-only" htmlFor="global-search">
+            Search
+          </label>
+          <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+            <div className="i" aria-hidden>
+              🔎
+            </div>
+            <input id="global-search" placeholder="Search" className="flex-1 bg-transparent outline-none text-sm" />
+            <kbd className="text-xs text-muted-foreground">⌘K</kbd>
+          </div>
+
+          {/* Nav */}
+          <nav className="mt-3 space-y-1">
+            <NavItem to="/chat" label="AI Chat" activeByDefault />
+            <NavItem to="/projects" label="Projects" />
+            <NavItem to="/templates" label="Templates" />
+            <NavItem to="/documents" label="Documents" />
+            <NavItem to="/community" label="Community" badge="NEW" />
+            <NavItem to="/history" label="History" />
+          </nav>
+
+          <div className="mt-6 text-[11px] uppercase tracking-wide text-muted-foreground">Settings &amp; Help</div>
+          <nav className="mt-2 space-y-1">
+            <NavItem to="/settings" label="Settings" />
+            <NavItem to="/help" label="Help" />
+          </nav>
+        </div>
+
+        {/* Footer: theme + profile */}
+        <div className="absolute bottom-0 left-0 right-0 border-t p-3">
+          <div className="flex items-center justify-between rounded-xl border bg-background px-3 py-2">
+            <span className="text-sm">Light</span>
+            <ThemeToggle />
+          </div>
+          <div className="mt-3 flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+            <div className="size-7 rounded-full bg-muted grid place-items-center">👤</div>
+            <div className="text-sm">
+              <div className="font-medium">Emilia Caitlin</div>
+              <div className="text-muted-foreground text-xs">hey@unspace.agency</div>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      {/* Main */}
-      <main className="row-start-2 col-start-2 p-6">
-        <Outlet />
+      {/* Right rail */}
+      <aside className="fixed inset-y-0 right-0 w-[320px] border-l bg-card">
+        <div className="h-14 flex items-center justify-between px-4 border-b">
+          <div className="text-sm font-semibold">
+            Projects <span className="text-muted-foreground">(7)</span>
+          </div>
+          <button className="text-muted-foreground">⋯</button>
+        </div>
+        <ProjectsRail />
+      </aside>
+
+      {/* Topbar + main content */}
+      <main className="pl-64 pr-[320px]">
+        <div className="h-14 sticky top-0 z-20 border-b bg-background/80 backdrop-blur flex items-center justify-between px-4">
+          <div className="text-sm font-medium">AI Chat</div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="rounded-full px-3 py-1 text-sm">
+              ⚡ Upgrade
+            </Button>
+            <button aria-label="Notifications" className="rounded-full p-2 hover:bg-muted">
+              🔔
+            </button>
+            <button aria-label="Grid" className="rounded-full p-2 hover:bg-muted">
+              ⬛
+            </button>
+            <button aria-label="Assistant" className="rounded-full p-2 hover:bg-muted">
+              🤖
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Outlet />
+        </div>
       </main>
-
-      {/* Right Rail */}
-      <aside className="row-start-2 col-start-3 border-l p-4 space-y-3">
-        <h3 className="text-sm font-semibold">Projects</h3>
-        {/* Simple recent list placeholder; real data in ProjectsPane */}
-        <ul className="space-y-2 text-sm text-muted-foreground">
-          <li>New onboarding deck</li>
-          <li>Explain RAG tradeoffs</li>
-          <li>Bias audit sample</li>
-        </ul>
-      </aside>
     </div>
+  );
+}
+
+function NavItem({ to, label, badge, activeByDefault = false }: { to: string; label: string; badge?: string; activeByDefault?: boolean }) {
+  const base = "flex items-center justify-between rounded-xl px-3 py-2 text-sm";
+  return (
+    <NavLink to={to} className={({ isActive }) => cx(base, (isActive || activeByDefault) ? "bg-muted font-medium" : "hover:bg-muted")}
+    >
+      <span>{label}</span>
+      {badge ? <span className="text-[10px] rounded-full bg-purple-600/15 text-purple-600 px-2 py-0.5">{badge}</span> : null}
+    </NavLink>
+  );
+}
+
+function ProjectsRail() {
+  const items = useMemo(
+    () => [
+      "New Project",
+      "Learning From 100 Years of…",
+      "Research officiants",
+      "What does a senior lead de…",
+      "Write a sweet note to your…",
+      "Meet with cake bakers",
+      "Meet with cake bakers",
+    ],
+    [],
+  );
+  return (
+    <ul className="p-2 space-y-2">
+      {items.map((t, i) => (
+        <li key={i} className="rounded-xl border bg-background p-3 hover:bg-muted/50 transition">
+          <div className="text-sm font-medium truncate" title={t}>
+            {t}
+          </div>
+          <div className="text-xs text-muted-foreground">…</div>
+        </li>
+      ))}
+    </ul>
   );
 }
