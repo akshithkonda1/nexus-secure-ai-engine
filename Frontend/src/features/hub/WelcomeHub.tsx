@@ -1,50 +1,58 @@
-import { useEffect, useState } from "react";
-import { fetchCapabilities, type Capabilities } from "@/services/api/client";
-import { Link } from "react-router-dom";
-import { isLocked } from "@/shared/lib/lock";
+import { Button } from "@/shared/ui/components/button";
 
-export function WelcomeHub() {
-  const [caps, setCaps] = useState<Capabilities | null>(null);
-  const { locked, untilISO } = isLocked();
-
-  useEffect(() => {
-    fetchCapabilities().then(setCaps);
-  }, []);
-
-  const Chip = ({ label, to, disabled }: { label: string; to: string; disabled?: boolean }) => (
-    <Link
-      to={disabled ? "#" : to}
-      aria-disabled={disabled}
-      className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border hover:bg-muted/40 ${
-        disabled ? "opacity-50 pointer-events-none" : ""
-      }`}
-    >
-      {label} {disabled && <span className="text-xs">(unavailable)</span>}
-    </Link>
-  );
-
+export default function WelcomeHub() {
   return (
-    <div className="mx-auto max-w-3xl text-center">
-      <h1 className="text-4xl font-semibold mb-2">Welcome to Nexus</h1>
-      <p className="text-muted-foreground mb-8">
-        Get started by choosing a task. Nexus convenes multiple specialists to cross-check your answer.
-      </p>
-      <div className="flex flex-wrap justify-center gap-3 mb-10">
-        <Chip label="Write copy" to="/chat?preset=copy" />
-        <Chip label="Create avatar" to="/chat?preset=avatar" disabled={!caps?.studyPacks} />
-        <Chip label="Image generation" to="/chat?preset=image" disabled={!caps?.imageGen} />
-        <Chip label="Write code" to="/chat?preset=code" disabled={!caps?.codeGen} />
-      </div>
+    <div className="max-w-4xl mx-auto">
+      <div className="rounded-3xl bg-card/40 border p-10 text-center">
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Welcome to Nexus</h1>
+        <p className="mt-3 text-muted-foreground">Get started by asking Nexus to do something. Not sure where to start?</p>
 
-      <div className="mx-auto max-w-xl rounded-2xl border bg-muted/10 p-4 text-sm">
-        <div className="font-medium mb-1">Free plan</div>
-        <div className="text-muted-foreground">
-          1 trial deck/day • ≤25 cards • watermarked audit • public sources • no exports.
+        {/* Action chips */}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <Chip label="Write copy" />
+          <Chip label="Image generation" />
+          <Chip label="Create avatar" />
+          <Chip label="Write code" />
         </div>
-        <button className="mt-3 px-3 py-2 rounded-md border" disabled>
-          {locked ? `Upgrade opens ${new Date(untilISO).toLocaleDateString()}` : "Upgrade (locked)"}
-        </button>
+
+        {/* Prompt bar */}
+        <div className="mt-10 max-w-3xl mx-auto">
+          <div className="rounded-2xl border bg-background p-2">
+            <div className="flex items-center gap-2 px-2 pb-2">
+              <Button variant="ghost" size="sm">
+                📎 Attach
+              </Button>
+              <Button variant="ghost" size="sm">
+                🎙️ Voice Message
+              </Button>
+              <Button variant="ghost" size="sm">
+                🔍 Browse Prompts
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-3">
+              <input className="flex-1 bg-transparent outline-none text-sm" placeholder="Summarize the latest…" />
+              <button className="rounded-full p-2 hover:bg-muted" aria-label="Send">
+                ➤
+              </button>
+            </div>
+            <div className="px-3 pt-2 pb-1 text-[11px] text-muted-foreground">
+              Nexus may generate inaccurate information about people, places, or facts.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function Chip({ label }: { label: string }) {
+  return (
+    <button className="group w-full rounded-2xl border bg-background px-4 py-3 flex items-center justify-between hover:bg-muted transition">
+      <div className="flex items-center gap-3">
+        <span className="size-9 rounded-xl grid place-items-center bg-muted">🟡</span>
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <span className="rounded-full border px-2 text-xs text-muted-foreground group-hover:bg-muted">＋</span>
+    </button>
   );
 }

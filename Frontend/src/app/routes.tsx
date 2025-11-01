@@ -8,7 +8,7 @@ import ChatWorkspace from "@/features/chat/ChatWorkspace";
 import ProjectsPage from "@/features/projects/ProjectsPage";
 import LibraryPage from "@/features/library/LibraryPage";
 import PricingPage from "@/features/pricing/PricingPage";
-import SystemPage from "@/features/system/SystemPage";
+import { SystemPage } from "@/features/system/SystemPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
