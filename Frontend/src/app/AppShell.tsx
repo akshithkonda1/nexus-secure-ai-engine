@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { BrandMark } from "@/shared/ui/BrandMark";
+import { BrandMark } from "@/shared/ui/brand";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import { useEffect } from "react";
 import { useSession } from "@/shared/state/session";
@@ -37,7 +37,7 @@ export function AppShell() {
         >
           {theme === "dark" ? "Light" : "Dark"}
         </button>
-        <Link to="/login" className="px-3 py-1 rounded-md bg-primary text-primary-foreground">
+        <Link to="/auth" className="px-3 py-1 rounded-md bg-primary text-primary-foreground">
           Sign in
         </Link>
       </header>
@@ -46,12 +46,12 @@ export function AppShell() {
       <aside className="row-start-2 col-start-1 border-r px-3 py-4 space-y-2">
         <nav className="space-y-1">
           {[
-            ["Chats", "/chat"],
+            ["Chats", "/chat/new"],
             ["Projects", "/projects"],
-            ["Library", "/system#library"],
+            ["Library", "/library"],
             ["System", "/system"],
             ["Pricing", "/pricing"],
-            ["Settings", "/system#settings"],
+            ["Settings", "/settings"],
           ].map(([label, href]) => (
             <Link key={label} to={href} className="block px-3 py-2 rounded-md hover:bg-muted/40">
               {label}
