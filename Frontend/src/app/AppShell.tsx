@@ -32,12 +32,11 @@ export function AppShell() {
 
           {/* Nav */}
           <nav className="mt-3 space-y-1">
-            <NavItem to="/chat" label="AI Chat" activeByDefault />
+            <NavItem to="/" label="AI Chat" end />
             <NavItem to="/projects" label="Projects" />
-            <NavItem to="/templates" label="Templates" />
-            <NavItem to="/documents" label="Documents" />
-            <NavItem to="/community" label="Community" badge="NEW" />
-            <NavItem to="/history" label="History" />
+            <NavItem to="/library" label="Library" />
+            <NavItem to="/pricing" label="Pricing" badge="NEW" />
+            <NavItem to="/system" label="System" />
           </nav>
 
           <div className="mt-6 text-[11px] uppercase tracking-wide text-muted-foreground">Settings &amp; Help</div>
@@ -79,7 +78,7 @@ export function AppShell() {
         <div className="h-14 sticky top-0 z-20 border-b bg-background/80 backdrop-blur flex items-center justify-between px-4">
           <div className="text-sm font-medium">AI Chat</div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="rounded-full px-3 py-1 text-sm">
+            <Button className="rounded-full px-3 py-1 text-sm">
               ⚡ Upgrade
             </Button>
             <button aria-label="Notifications" className="rounded-full p-2 hover:bg-muted">
@@ -102,10 +101,10 @@ export function AppShell() {
   );
 }
 
-function NavItem({ to, label, badge, activeByDefault = false }: { to: string; label: string; badge?: string; activeByDefault?: boolean }) {
+function NavItem({ to, label, badge, end = false }: { to: string; label: string; badge?: string; end?: boolean }) {
   const base = "flex items-center justify-between rounded-xl px-3 py-2 text-sm";
   return (
-    <NavLink to={to} className={({ isActive }) => cx(base, (isActive || activeByDefault) ? "bg-muted font-medium" : "hover:bg-muted")}
+    <NavLink to={to} end={end} className={({ isActive }) => cx(base, isActive ? "bg-muted font-medium" : "hover:bg-muted")}
     >
       <span>{label}</span>
       {badge ? <span className="text-[10px] rounded-full bg-purple-600/15 text-purple-600 px-2 py-0.5">{badge}</span> : null}
