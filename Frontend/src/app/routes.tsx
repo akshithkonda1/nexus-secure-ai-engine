@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/app/AppShell";
 import { AuthGate } from "@/app/AuthGate";
-import AuthPage from "@/pages/AuthPage";
+import Login from "@/features/auth/Login";
 import AuthCallback from "@/pages/AuthCallback";
 import WelcomeHub from "@/features/hub/WelcomeHub";
 import ChatWorkspace from "@/features/chat/ChatWorkspace";
@@ -11,7 +11,7 @@ import PricingPage from "@/features/pricing/PricingPage";
 import { SystemPage } from "@/features/system/SystemPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 export const router = createBrowserRouter([
-  { path: "/auth", element: <AuthPage /> },
+  { path: "/auth", element: <Login /> },
   { path: "/auth/callback", element: <AuthCallback /> },
   {
     path: "/",

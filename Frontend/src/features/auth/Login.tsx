@@ -1,136 +1,202 @@
-import { SignInLayout } from "@/features/auth/SignInLayout";
-import { Divider, SocialButton, type SignInProvider } from "@/features/auth/SignInPrimitives";
-import { Button } from "@/shared/ui/components/button";
-import { Input } from "@/shared/ui/components/input";
-import { useSession } from "@/shared/state/session";
-import { useNavigate } from "react-router-dom";
-import { useState, type FormEvent } from "react";
-import { useAuth } from "@/shared/state/auth";
+import React, { FormEvent, useMemo, useState } from "react";
+import {
+  GoogleLoginButton,
+  AppleLoginButton,
+  XLoginButton,
+  FacebookLoginButton,
+} from "react-social-login-buttons";
+import { BrandMark } from "@/shared/ui/brand";
+import { Link } from "react-router-dom";
 
-export function LoginPage() {
-  const { setUser } = useSession();
-  const { setUser: setAuthUser, setLoading: setAuthLoading } = useAuth();
-  const nav = useNavigate();
+const providers = [
+  { key: "google", label: "Google", Button: GoogleLoginButton },
+  { key: "apple", label: "Apple", Button: AppleLoginButton },
+  { key: "x", label: "X", Button: XLoginButton },
+  { key: "facebook", label: "Facebook", Button: FacebookLoginButton },
+] as const;
+
+type ProviderKey = (typeof providers)[number]["key"];
+
+type ProviderComponents = Record<ProviderKey, React.ComponentType<any>>;
+
+const socialButtonClassName =
+  "!rounded-2xl !shadow-sm !px-4 !py-3 !text-base !font-medium !transition-all focus-visible:!ring-2 focus-visible:!ring-offset-2";
+
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  function completeLogin(name: string, address?: string) {
-    const resolvedEmail = address ?? email || `${name.replace(/\s+/g, "").toLowerCase()}@example.com`;
-    const user = { id: crypto.randomUUID(), name, email: resolvedEmail };
-    setAuthUser(user);
-    setAuthLoading(false);
-    setUser(user);
-    nav("/");
-  }
+  const providerButtons = useMemo<ProviderComponents>(() => {
+    return providers.reduce((acc, provider) => {
+      acc[provider.key] = provider.Button;
+      return acc;
+    }, {} as ProviderComponents);
+  }, []);
 
-  const providers: SignInProvider[] = [
-    {
-      key: "google",
-      label: "Continue with Google",
-      helper: "Use your Google identity",
-      accent: "bg-[#4285F4]",
-      onSelect: () => completeLogin("Google User", "google-user@example.com"),
-    },
-    {
-      key: "facebook",
-      label: "Continue with Facebook",
-      helper: "Stay synced with your team",
-      accent: "bg-[#0866FF]",
-      onSelect: () => completeLogin("Facebook User", "facebook-user@example.com"),
-    },
-    {
-      key: "x",
-      label: "Continue with X",
-      helper: "Post-ready collaboration",
-      accent: "bg-black",
-      onSelect: () => completeLogin("X User", "x-user@example.com"),
-    },
-  ];
+  const handleLogin = (provider: ProviderKey | "local") => {
+    console.info(`login:start`, { provider });
+    window.location.href = `/api/auth/${provider}`;
+  };
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email || !password || loading) {
+    if (!email || !password || submitting) {
       return;
     }
-    setLoading(true);
-    completeLogin("Local User", email);
-  }
+    setSubmitting(true);
+    console.info("login:form", { email });
+    handleLogin("local");
+  };
 
   return (
-    <SignInLayout
-      heroTitle="Welcome back, creator"
-      heroSubtitle="Jump straight into your chats, projects, and automations with a sign-in flow designed for modern product teams."
-      highlights={[
-        { title: "Persistent context", description: "All of your memory, projects, and prompt history instantly available." },
-        { title: "Seamless hand-off", description: "Switch devices without losing state or collaborative context." },
-        { title: "Account safeguards", description: "Adaptive multi-factor and anomaly detection keep sessions safe." },
-        { title: "24/7 assistance", description: "Priority access to our success engineers whenever you need support." },
-      ]}
-    >
-      <div className="rounded-[28px] border border-black/10 bg-card p-10 shadow-2xl shadow-black/20 backdrop-blur-xl dark:border-white/10">
-        <header className="space-y-2 text-left">
-          <h2 className="text-2xl font-semibold">Sign in to Nexus</h2>
-          <p className="text-sm text-muted-foreground">Authenticate with your preferred method or use your workspace credentials.</p>
-        </header>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-16 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.12),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(14,165,233,0.1),_transparent_55%)]" aria-hidden />
+      <div className="relative w-full max-w-5xl">
+        <div className="grid overflow-hidden rounded-[32px] border border-slate-200/70 bg-white/70 shadow-[0_40px_120px_-60px_rgba(15,23,42,0.65)] backdrop-blur-xl transition dark:border-slate-800/60 dark:bg-slate-900/60">
+          <section className="hidden min-h-full flex-col justify-between bg-gradient-to-br from-indigo-500 via-violet-500 to-sky-400 p-12 text-indigo-50 md:flex">
+            <div className="flex items-center gap-3 text-sm font-medium uppercase tracking-[0.35em] text-indigo-100/80">
+              <div className="h-2 w-2 rounded-full bg-white/70" />
+              Nexus Intelligence
+            </div>
+            <div className="space-y-6">
+              <BrandMark className="h-8 text-white" />
+              <h1 className="text-4xl font-semibold leading-tight">
+                Effortless access to a world-class AI workspace.
+              </h1>
+              <p className="text-base text-indigo-100/80">
+                Sign in once and pick up your projects, chats, and automation threads from any device. Nexus keeps your
+                context safe while staying beautifully simple.
+              </p>
+            </div>
+            <div className="space-y-4 text-sm text-indigo-100/70">
+              <div className="flex items-center gap-3">
+                <span className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
+                  Highlights
+                </span>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <span aria-hidden className="mt-[3px] text-lg">✨</span>
+                  <span>
+                    <strong className="font-semibold">Adaptive security</strong> with anomaly detection keeps every session
+                    safeguarded.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span aria-hidden className="mt-[3px] text-lg">💫</span>
+                  <span>
+                    <strong className="font-semibold">Unified memory</strong> syncs your chats and assets instantly across
+                    teams.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span aria-hidden className="mt-[3px] text-lg">🚀</span>
+                  <span>
+                    <strong className="font-semibold">Enterprise-ready</strong> controls help you scale with compliance and
+                    care.
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </section>
 
-        <div className="mt-6 space-y-3">
-          {providers.map((provider) => (
-            <SocialButton key={provider.key} provider={provider} />
-          ))}
+          <section className="flex flex-col justify-center bg-white/90 p-8 backdrop-blur-xl md:p-12 dark:bg-slate-950/80">
+            <div className="mb-8 flex flex-col items-center gap-3 text-center md:items-start md:text-left">
+              <BrandMark className="h-7" />
+              <div>
+                <h2 className="text-3xl font-semibold tracking-tight">Sign in to Nexus</h2>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  Continue with a trusted provider or use your workspace credentials.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {providers.map(({ key, label }) => {
+                const ButtonComponent = providerButtons[key];
+                return (
+                  <ButtonComponent
+                    key={key}
+                    className={`${socialButtonClassName} dark:!bg-slate-800 dark:!text-slate-100`}
+                    onClick={() => handleLogin(key)}
+                    aria-label={`Continue with ${label}`}
+                  />
+                );
+              })}
+            </div>
+
+            <div className="my-8 flex items-center gap-3 text-sm text-slate-400 dark:text-slate-500">
+              <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+              <span className="uppercase tracking-[0.3em]">or</span>
+              <span className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            </div>
+
+            <form className="space-y-4" onSubmit={onSubmit}>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor="login-email">
+                  Work email
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="you@nexus.ai"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(148,163,184,0.2)] transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-50 dark:focus:border-slate-500 dark:focus:ring-slate-700"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor="login-password">
+                  Password
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(148,163,184,0.2)] transition focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-50 dark:focus:border-slate-500 dark:focus:ring-slate-700"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-indigo-600 to-sky-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_-18px_rgba(79,70,229,0.6)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-950"
+                disabled={!email || !password || submitting}
+              >
+                {submitting ? "Signing in…" : "Continue"}
+              </button>
+            </form>
+
+            <div className="mt-6 flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-500">
+              <div className="flex flex-wrap justify-between gap-2">
+                <Link to="/reset" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-300">
+                  Forgot password?
+                </Link>
+                <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-300">
+                  Create an account
+                </Link>
+              </div>
+              <p className="text-center leading-relaxed text-slate-400 dark:text-slate-500">
+                By continuing you agree to the Nexus.ai
+                <a className="ml-1 underline decoration-indigo-300/70 decoration-2 underline-offset-4 hover:decoration-indigo-500" href="/terms">
+                  Terms of Use
+                </a>
+                <span className="mx-1">and</span>
+                <a className="underline decoration-indigo-300/70 decoration-2 underline-offset-4 hover:decoration-indigo-500" href="/privacy">
+                  Privacy Policy
+                </a>
+                .
+              </p>
+            </div>
+          </section>
         </div>
-
-        <Divider label="continue with credentials" />
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2 text-left">
-            <label htmlFor="login-email" className="text-sm font-medium text-muted-foreground">
-              Email address
-            </label>
-            <Input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2 text-left">
-            <label htmlFor="login-password" className="text-sm font-medium text-muted-foreground">
-              Password
-            </label>
-            <Input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Forgot password?{' '}
-              <a className="font-medium hover:underline" href="/reset">
-                Reset it
-              </a>
-            </span>
-            <a className="font-medium hover:underline" href="/signup">
-              Create account
-            </a>
-          </div>
-          <Button type="submit" size="lg" className="w-full" disabled={loading || !email || !password}>
-            {loading ? "Signing in…" : "Continue"}
-          </Button>
-        </form>
-
-        <p className="mt-6 text-xs text-muted-foreground">
-          This secure demo login creates a local session for preview purposes only.
-        </p>
       </div>
-    </SignInLayout>
+    </div>
   );
 }
