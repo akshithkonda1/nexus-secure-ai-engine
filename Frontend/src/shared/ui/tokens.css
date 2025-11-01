@@ -5,6 +5,7 @@
   --text: #111827;
   --text-muted: #6b7280;
   --border: #e5e7eb;
+  --panel: hsl(0 0% 100%);
 
   --radius-card: 16px;
   --radius-button: 12px;
@@ -24,6 +25,7 @@
   --text: #f8fafc;
   --text-muted: #9ca3af;
   --border: rgba(255, 255, 255, 0.08);
+  --panel: hsl(222 14% 12%);
 
   --shadow-ambient: 0 10px 30px rgba(0, 0, 0, 0.45);
   --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
@@ -47,4 +49,8 @@
 
 .shadow-press {
   box-shadow: var(--shadow-press);
+}
+
+.bg-card {
+  background-color: var(--panel);
 }
