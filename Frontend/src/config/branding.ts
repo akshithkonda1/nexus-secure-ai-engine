@@ -1,4 +1,4 @@
 export const BRAND = {
-  dark:  "/brand/nexus-logo.png",
-  light: "/brand/nexus-logo-inverted.png"
+  dark: "/assets/nexus-logo.png",
+  light: "/assets/nexus-logo.png",
 } as const;

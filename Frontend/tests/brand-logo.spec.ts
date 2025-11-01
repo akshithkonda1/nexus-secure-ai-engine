@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("logo swaps with theme", async ({ page }) => {
+test("logo renders from assets", async ({ page }) => {
   await page.goto("/");
   const img = page.locator("img[alt='Nexus']");
   await expect(img).toBeVisible();
-  await page.getByRole("button", { name: "Light" }).click();
-  await expect(img).toHaveAttribute("src", /nexus-logo-inverted\.png$/);
+  await expect(img).toHaveAttribute("src", /\/assets\/nexus-logo\.png$/);
 });
