@@ -87,6 +87,20 @@ def login_local():
     user = {"id": f"local:{email}", "name": email.split("@")[0].title(), "email": email}
     return issue_cookie(user)
 
+@app.post("/api/auth/register/local")
+def register_local():
+    data = request.json or {}
+    email = data.get("email","guest@nexus.ai")
+    # In lieu of a real database, acknowledge the registration attempt.
+    return jsonify({"ok": True, "email": email})
+
+@app.post("/api/auth/forgot/local")
+def forgot_local():
+    data = request.json or {}
+    email = data.get("email","guest@nexus.ai")
+    # Pretend we dispatched a password reset email.
+    return jsonify({"ok": True, "email": email})
+
 @app.get("/api/auth/me")
 def me():
     user = get_user_from_cookie()

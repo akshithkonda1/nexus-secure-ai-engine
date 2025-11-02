@@ -25,9 +25,9 @@ export function LocalAccountForm({ className }: LocalAccountFormProps) {
     }
 
     const endpointMap: Record<Mode, string> = {
-      login: "/api/auth/local/login",
-      register: "/api/auth/local/register",
-      forgot: "/api/auth/local/forgot",
+      login: "/api/auth/login/local",
+      register: "/api/auth/register/local",
+      forgot: "/api/auth/forgot/local",
     };
 
     setStatus({ type: "loading" });
