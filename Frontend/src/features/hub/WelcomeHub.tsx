@@ -1,4 +1,5 @@
 import { Button } from "@/shared/ui/components/button";
+import { Link } from "react-router-dom";
 
 export default function WelcomeHub() {
   return (
@@ -9,10 +10,10 @@ export default function WelcomeHub() {
 
         {/* Action chips */}
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          <Chip label="Write copy" />
-          <Chip label="Image generation" />
-          <Chip label="Create avatar" />
-          <Chip label="Write code" />
+          <Chip label="Write copy" to="/chat/new?preset=copy" />
+          <Chip label="Image generation" to="/chat/new?preset=image" />
+          <Chip label="Create avatar" to="/chat/new?preset=avatar" />
+          <Chip label="Write code" to="/chat/new?preset=code" />
         </div>
 
         {/* Prompt bar */}
@@ -45,14 +46,17 @@ export default function WelcomeHub() {
   );
 }
 
-function Chip({ label }: { label: string }) {
+function Chip({ label, to }: { label: string; to: string }) {
   return (
-    <button className="group w-full rounded-2xl border bg-background px-4 py-3 flex items-center justify-between hover:bg-muted transition">
+    <Link
+      to={to}
+      className="group w-full rounded-2xl border bg-background px-4 py-3 flex items-center justify-between hover:bg-muted transition"
+    >
       <div className="flex items-center gap-3">
         <span className="size-9 rounded-xl grid place-items-center bg-muted">🟡</span>
         <span className="text-sm font-medium">{label}</span>
       </div>
       <span className="rounded-full border px-2 text-xs text-muted-foreground group-hover:bg-muted">＋</span>
-    </button>
+    </Link>
   );
 }

@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { BrandMark } from "@/shared/ui/brand";
+import { BrandMark } from "@/shared/ui/BrandMark";
 import { ThemeToggle } from "@/features/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
 import { useMemo } from "react";

@@ -3,6 +3,7 @@ import { AppShell } from "@/app/AppShell";
 import { AuthGate } from "@/app/AuthGate";
 import AuthPage from "@/pages/AuthPage";
 import AuthCallback from "@/pages/AuthCallback";
+import Login from "@/features/auth/Login";
 import WelcomeHub from "@/features/hub/WelcomeHub";
 import ChatWorkspace from "@/features/chat/ChatWorkspace";
 import ProjectsPage from "@/features/projects/ProjectsPage";
@@ -13,6 +14,7 @@ import SettingsPage from "@/features/settings/SettingsPage";
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
   { path: "/auth/callback", element: <AuthCallback /> },
+  { path: "/login", element: <Login /> },
   {
     path: "/",
     element: <AuthGate><AppShell /></AuthGate>,
