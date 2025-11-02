@@ -1,3 +1,4 @@
+@import "./shared/styles/tailwind-preflight.css";
 @import "./shared/ui/tokens.css";
 @import "./shared/ui/social/social-buttons.css";
 
