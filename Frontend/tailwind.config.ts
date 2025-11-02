@@ -4,6 +4,9 @@ import plugin from "tailwindcss/plugin";
 const config: Config = {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   darkMode: ["class", "[data-theme='dark']"],
+  corePlugins: {
+    preflight: false
+  },
   theme: {
     container: {
       center: true,

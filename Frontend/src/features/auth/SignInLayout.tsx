@@ -1,4 +1,4 @@
-import { BrandMark } from "@/shared/ui/brand";
+import { BrandMark } from "@/shared/ui/BrandMark";
 import type { ReactNode } from "react";
 
 interface HighlightItem {

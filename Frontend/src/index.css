@@ -1,4 +1,6 @@
+@import "./shared/styles/tailwind-preflight.css";
 @import "./shared/ui/tokens.css";
+@import "./shared/ui/social/social-buttons.css";
 
 @tailwind base;
 @tailwind components;
@@ -37,4 +39,36 @@ textarea:focus-visible {
 [data-reduce-motion="true"] * {
   transition: none !important;
   animation-duration: 0.01ms !important;
+}
+
+.brand-mark__shape {
+  fill: #111827;
+}
+
+.brand-mark__spark {
+  fill: rgba(99, 102, 241, 0.18);
+}
+
+.brand-mark__gradient-start {
+  stop-color: #7c3aed;
+}
+
+.brand-mark__gradient-end {
+  stop-color: #4f46e5;
+}
+
+html[data-theme="dark"] .brand-mark__shape {
+  fill: #f9fafb;
+}
+
+html[data-theme="dark"] .brand-mark__spark {
+  fill: rgba(165, 180, 252, 0.24);
+}
+
+html[data-theme="dark"] .brand-mark__gradient-start {
+  stop-color: #22d3ee;
+}
+
+html[data-theme="dark"] .brand-mark__gradient-end {
+  stop-color: #818cf8;
 }
