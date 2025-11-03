@@ -4,7 +4,7 @@ type ThemeMode = "light" | "dark";
 
 type ThemeState = {
   theme: ThemeMode;
-  setTheme: (theme: ThemeMode) => void;
+  setTheme: (theme: ThemeMode, options?: { persist?: boolean }) => void;
   toggleTheme: () => void;
 };
 
@@ -14,6 +14,9 @@ const applyTheme = (theme: ThemeMode) => {
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle("dark", theme === "dark");
+  }
+  if (typeof document !== "undefined") {
+    document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue("--bg");
   }
 };
 
@@ -32,25 +35,32 @@ const readStoredTheme = (): ThemeMode => {
 const initialTheme = readStoredTheme();
 applyTheme(initialTheme);
 
-export const useThemeStore = create<ThemeState>((set) => ({
+export const useThemeStore = create<ThemeState>((set, get) => ({
   theme: initialTheme,
-  setTheme: (nextTheme) => {
+  setTheme: (nextTheme, options) => {
     applyTheme(nextTheme);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && options?.persist !== false) {
       window.localStorage.setItem(STORAGE_KEY, nextTheme);
     }
     set({ theme: nextTheme });
   },
   toggleTheme: () => {
-    set((state) => {
-      const nextTheme: ThemeMode = state.theme === "dark" ? "light" : "dark";
-      applyTheme(nextTheme);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(STORAGE_KEY, nextTheme);
-      }
-      return { theme: nextTheme };
-    });
+    const nextTheme: ThemeMode = get().theme === "dark" ? "light" : "dark";
+    get().setTheme(nextTheme);
   },
 }));
+
+if (typeof window !== "undefined") {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleSystemTheme = (event: MediaQueryListEvent) => {
+    const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    if (stored === "light" || stored === "dark") {
+      return;
+    }
+    const nextTheme: ThemeMode = event.matches ? "dark" : "light";
+    useThemeStore.getState().setTheme(nextTheme, { persist: false });
+  };
+  mediaQuery.addEventListener("change", handleSystemTheme);
+}
 
 export type { ThemeMode };

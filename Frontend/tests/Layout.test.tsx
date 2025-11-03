@@ -2,16 +2,19 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "@/components/Layout";
+import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
 
 const renderWithRouter = () =>
   render(
     <MemoryRouter initialEntries={["/"]}>
-      <Routes>
-        <Route element={<Layout />}>
+      <ThemeProvider>
+        <Routes>
+          <Route element={<Layout />}>
           <Route index element={<div>Nexus content</div>} />
           <Route path="chat" element={<div>Chat surface</div>} />
-        </Route>
-      </Routes>
+          </Route>
+        </Routes>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 

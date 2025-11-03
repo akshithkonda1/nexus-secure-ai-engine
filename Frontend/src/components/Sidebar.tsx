@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from "react";
+import { memo, type ReactNode, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import {
   MessageCircle,
@@ -23,7 +23,7 @@ type NavItem = {
   icon: ReactNode;
 };
 
-export function Sidebar({ onNavigate, variant }: SidebarProps) {
+function SidebarComponent({ onNavigate, variant }: SidebarProps) {
   const items = useMemo<NavItem[]>(
     () => [
       { label: "AI Debate", to: "/chat", icon: <MessageCircle className={navIconClasses} aria-hidden="true" /> },
@@ -40,10 +40,16 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
   return (
     <aside
       className={`flex h-full flex-col justify-between ${
-        variant === "desktop" ? "w-64 border-r border-white/10" : "w-full"
-      } bg-black/85 px-4 pb-6 pt-8 text-silver shadow-2xl backdrop-blur`}
+        variant === "desktop" ? "w-64 border-r border-app-border" : "w-full"
+      } bg-surface px-4 pb-6 pt-8 text-app-text shadow-card backdrop-blur`}
     >
-      <nav aria-label="Primary">
+      <nav aria-label="Primary" className="space-y-6">
+        <div className="rounded-2xl border border-app-border bg-[color:var(--surface-elevated)] p-4 text-sm leading-relaxed text-app-text">
+          <p className="font-semibold text-silver">Nexus.ai</p>
+          <p className="mt-1 text-app-text opacity-70">
+            The AI firewall that orchestrates trust, telemetry, and real-time guardrails.
+          </p>
+        </div>
         <ul className="space-y-2">
           {items.map((item) => (
             <li key={item.to}>
@@ -52,15 +58,15 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                 className={({ isActive }) =>
                   `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                     isActive
-                      ? "bg-white/10 text-white"
-                      : "text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white"
-                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black`
+                      ? "bg-trustBlue/10 text-white shadow-card"
+                      : "text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text"
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]`
                 }
                 onClick={onNavigate}
               >
                 {({ isActive }) => (
                   <>
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue">
                       {item.icon}
                     </span>
                     <span className="flex-1">{item.label}</span>
@@ -77,12 +83,14 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           ))}
         </ul>
       </nav>
-      <div className="mt-6 rounded-xl bg-gradient-to-br from-white/5 via-white/5 to-transparent p-4 text-xs text-silver/80">
-        <p className="font-semibold text-silver">Unlimited Beta</p>
-        <p className="mt-1 leading-relaxed">
-          Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI decisions.
+      <div className="mt-6 rounded-2xl border border-app-border bg-[color:var(--surface-elevated)] p-4 text-xs text-app-text">
+        <p className="font-semibold text-silver">Dynasty Reliability</p>
+        <p className="mt-1 leading-relaxed opacity-80">
+          Monitor telemetry, documents, and history with confidence. Every route inherits enterprise guardrails.
         </p>
       </div>
     </aside>
   );
 }
+
+export const Sidebar = memo(SidebarComponent);

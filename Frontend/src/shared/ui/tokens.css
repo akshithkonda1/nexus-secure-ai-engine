@@ -1,34 +1,58 @@
-:root,
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --surface: #111213;
+  --surface-elevated: rgba(255, 255, 255, 0.04);
+  --text: #f3f4f6;
+  --text-muted: #808080;
+  --border: rgba(255, 255, 255, 0.08);
+  --panel: #141517;
+  --ring: #1e40af;
+
+  --radius-card: 20px;
+  --radius-button: 16px;
+  --radius-input: 14px;
+
+  --shadow-ambient: 0 18px 40px rgba(0, 0, 0, 0.22);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  --accent-student: #c0c0c0;
+  --accent-business: #000000;
+  --accent-nexus: #1e40af;
+}
+
 [data-theme='light'] {
-  --bg: #ffffff;
-  --surface: #f9fafb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --panel: hsl(0 0% 100%);
+  color-scheme: light;
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-elevated: rgba(17, 24, 39, 0.04);
+  --text: #0b0b0c;
+  --text-muted: #5f5f5f;
+  --border: rgba(17, 17, 17, 0.08);
+  --panel: #ffffff;
+  --ring: #1e40af;
 
-  --radius-card: 16px;
-  --radius-button: 12px;
-  --radius-input: 12px;
+  --shadow-ambient: 0 10px 40px rgba(17, 17, 17, 0.08);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.75) inset;
 
-  --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.06);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
-
-  --accent-student: #3b82f6;
-  --accent-business: #6366f1;
-  --accent-nexus: #8b5cf6;
+  --accent-student: #c0c0c0;
+  --accent-business: #000000;
+  --accent-nexus: #1e40af;
 }
 
 [data-theme='dark'] {
-  --bg: #0b0e13;
-  --surface: #12161c;
-  --text: #f8fafc;
-  --text-muted: #9ca3af;
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --surface: #111213;
+  --surface-elevated: rgba(255, 255, 255, 0.04);
+  --text: #f3f4f6;
+  --text-muted: #808080;
   --border: rgba(255, 255, 255, 0.08);
-  --panel: hsl(222 14% 12%);
+  --panel: #141517;
+  --ring: #1e40af;
 
-  --shadow-ambient: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --shadow-ambient: 0 18px 40px rgba(0, 0, 0, 0.22);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
 .round-card {

@@ -198,6 +198,10 @@ docker compose up --build
 # 4. Run the contributor quality gates (optional)
 pip install -r requirements-dev.txt
 ruff check .
+
+### UI Guide
+
+The world-class, Script.io-inspired Nexus.ai dashboard lives in `/Frontend`. Install dependencies (`npm install`) and run `npm run dev` for an interactive demo of the Spurs dynasty theme.
 black --check .
 pytest
 

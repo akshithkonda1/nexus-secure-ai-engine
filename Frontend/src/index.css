@@ -7,7 +7,6 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -28,7 +27,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--accent-nexus);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 

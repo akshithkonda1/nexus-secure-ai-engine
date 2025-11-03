@@ -6,3 +6,18 @@ if (!globalThis.crypto?.randomUUID) {
   // @ts-expect-error - we are polyfilling for the test environment only
   globalThis.crypto = cryptoRef as Crypto;
 }
+
+if (typeof window !== "undefined" && !window.matchMedia) {
+  const matchMediaMock = (query: string): MediaQueryList => ({
+    matches: query.includes("dark"),
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+  // @ts-expect-error jsdom polyfill
+  window.matchMedia = matchMediaMock;
+}
