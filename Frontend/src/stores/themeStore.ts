@@ -50,7 +50,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 }));
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   const handleSystemTheme = (event: MediaQueryListEvent) => {
     const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
@@ -60,7 +60,12 @@ if (typeof window !== "undefined") {
     const nextTheme: ThemeMode = event.matches ? "dark" : "light";
     useThemeStore.getState().setTheme(nextTheme, { persist: false });
   };
-  mediaQuery.addEventListener("change", handleSystemTheme);
+
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", handleSystemTheme);
+  } else if (typeof mediaQuery.addListener === "function") {
+    mediaQuery.addListener(handleSystemTheme);
+  }
 }
 
 export type { ThemeMode };
