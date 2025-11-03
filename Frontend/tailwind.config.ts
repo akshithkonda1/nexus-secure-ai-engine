@@ -21,7 +21,9 @@ const config: Config = {
         "app-border": "var(--border)",
         "accent-student": "var(--accent-student)",
         "accent-business": "var(--accent-business)",
-        "accent-nexus": "var(--accent-nexus)"
+        "accent-nexus": "var(--accent-nexus)",
+        silver: "#C0C0C0",
+        trustBlue: "#1E40AF"
       },
       borderRadius: {
         card: "var(--radius-card)",
