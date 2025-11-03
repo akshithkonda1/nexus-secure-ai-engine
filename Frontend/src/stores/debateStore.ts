@@ -159,6 +159,9 @@ export const useDebateStore = create<DebateState>((set, get) => ({
     if (typeof window !== "undefined") {
       localStorage.setItem("nexus.telemetryOptIn", value ? "true" : "false");
     }
+    if (!value) {
+      return;
+    }
     await postTelemetry({
       event: "telemetry_opt_in",
       data: { value },
