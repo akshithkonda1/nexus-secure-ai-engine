@@ -78,6 +78,9 @@ Unchecked AI can:
 - **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.
 - **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.
 - **Horizontally Scalable** — Operates across AWS, Azure, and GCP without single-region bottlenecks.
+
+## Testing
+How to run tests: `pytest -v --cov=backend`
 - **Release automation included** — GitHub Actions builds, tests, and signs off artefacts on every change.
 - **Compliance-Grade Logging** — Full audit trails with configurable TTL.
 
