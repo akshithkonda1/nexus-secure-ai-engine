@@ -2,7 +2,7 @@
 
 exports[`Layout > renders the global chrome 1`] = `
 <div
-  class="relative flex min-h-screen bg-gradient-to-br from-black via-black to-zinc-900 text-silver"
+  class="relative flex min-h-screen bg-app text-app-text"
 >
   <a
     class="sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4 focus-visible:z-50 focus-visible:inline-flex focus-visible:items-center focus-visible:gap-2 focus-visible:rounded-full focus-visible:bg-trustBlue focus-visible:px-4 focus-visible:py-2 focus-visible:text-sm focus-visible:font-semibold focus-visible:text-white focus-visible:shadow-lg"
@@ -14,21 +14,36 @@ exports[`Layout > renders the global chrome 1`] = `
     class="hidden lg:flex"
   >
     <aside
-      class="flex h-full flex-col justify-between w-64 border-r border-white/10 bg-black/85 px-4 pb-6 pt-8 text-silver shadow-2xl backdrop-blur"
+      class="flex h-full flex-col justify-between w-64 border-r border-app-border bg-surface px-4 pb-6 pt-8 text-app-text shadow-card backdrop-blur"
     >
       <nav
         aria-label="Primary"
+        class="space-y-6"
       >
+        <div
+          class="rounded-2xl border border-app-border bg-[color:var(--surface-elevated)] p-4 text-sm leading-relaxed text-app-text"
+        >
+          <p
+            class="font-semibold text-silver"
+          >
+            Nexus.ai
+          </p>
+          <p
+            class="mt-1 text-app-text opacity-70"
+          >
+            The AI firewall that orchestrates trust, telemetry, and real-time guardrails.
+          </p>
+        </div>
         <ul
           class="space-y-2"
         >
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/chat"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -57,11 +72,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/projects"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -90,11 +105,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/templates"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -135,11 +150,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/documents"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -180,11 +195,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/telemetry"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -222,11 +237,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/history"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -261,11 +276,11 @@ exports[`Layout > renders the global chrome 1`] = `
           </li>
           <li>
             <a
-              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              class="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition text-app-text hover:scale-[1.02] hover:bg-[color:var(--surface-elevated)] hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
               href="/settings"
             >
               <span
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue"
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-trustBlue"
               >
                 <svg
                   aria-hidden="true"
@@ -300,17 +315,17 @@ exports[`Layout > renders the global chrome 1`] = `
         </ul>
       </nav>
       <div
-        class="mt-6 rounded-xl bg-gradient-to-br from-white/5 via-white/5 to-transparent p-4 text-xs text-silver/80"
+        class="mt-6 rounded-2xl border border-app-border bg-[color:var(--surface-elevated)] p-4 text-xs text-app-text"
       >
         <p
           class="font-semibold text-silver"
         >
-          Unlimited Beta
+          Dynasty Reliability
         </p>
         <p
-          class="mt-1 leading-relaxed"
+          class="mt-1 leading-relaxed opacity-80"
         >
-          Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI decisions.
+          Monitor telemetry, documents, and history with confidence. Every route inherits enterprise guardrails.
         </p>
       </div>
     </aside>
@@ -319,7 +334,7 @@ exports[`Layout > renders the global chrome 1`] = `
     class="flex min-h-screen flex-1 flex-col"
   >
     <header
-      class="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-white/10 bg-black/80 px-4 py-3 backdrop-blur-lg lg:px-8"
+      class="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-app-border bg-[color:var(--surface-elevated)] px-4 py-3 backdrop-blur lg:px-8"
       style="opacity: 0; transform: translateY(-12px);"
     >
       <div
@@ -327,7 +342,7 @@ exports[`Layout > renders the global chrome 1`] = `
       >
         <button
           aria-label="Open navigation"
-          class="inline-flex rounded-lg border border-white/10 p-2 text-silver hover:border-trustBlue/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:hidden"
+          class="inline-flex rounded-xl border border-app-border p-2 text-app-text transition hover:border-trustBlue/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)] lg:hidden"
           type="button"
         >
           <svg
@@ -363,20 +378,14 @@ exports[`Layout > renders the global chrome 1`] = `
             />
           </svg>
         </button>
-        <div
-          class="flex items-center gap-2 font-semibold"
-        >
-          <span
-            class="text-xl text-silver"
-          >
-            Nexus
-          </span>
-          <span
-            class="rounded-full bg-white/10 px-2 py-0.5 text-xs uppercase tracking-wide text-trustBlue"
-          >
-            Beta
-          </span>
-        </div>
+        <img
+          alt="Nexus"
+          decoding="async"
+          loading="eager"
+          src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxODAnIGhlaWdodD0nNDAnIHZpZXdCb3g9JzAgMCAxODAgNDAnPgogIDx0ZXh0IHg9JzEwJyB5PScyNicgZmlsbD0nI0MwQzBDMCcgZm9udC1mYW1pbHk9J0ludGVyLCBBcmlhbCwgc2Fucy1zZXJpZicgZm9udC1zaXplPScyMicgZm9udC13ZWlnaHQ9JzYwMCc+TmV4dXMuYWk8L3RleHQ+Cjwvc3ZnPg=="
+          style="height: auto; display: block; image-rendering: auto;"
+          width="148"
+        />
       </div>
       <form
         aria-label="Global search"
@@ -390,11 +399,11 @@ exports[`Layout > renders the global chrome 1`] = `
           Search debates or sessions
         </label>
         <div
-          class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm shadow-inner"
+          class="flex items-center gap-2 rounded-full border border-app-border bg-[color:var(--surface-elevated)] px-4 py-2 text-sm shadow-inner"
         >
           <svg
             aria-hidden="true"
-            class="lucide lucide-command h-4 w-4 text-silver/60"
+            class="lucide lucide-command h-4 w-4 text-app-text opacity-60"
             fill="none"
             height="24"
             stroke="currentColor"
@@ -412,7 +421,7 @@ exports[`Layout > renders the global chrome 1`] = `
           <input
             aria-describedby="search-status"
             autocomplete="off"
-            class="h-8 flex-1 bg-transparent text-silver outline-none placeholder:text-silver/50"
+            class="h-8 flex-1 bg-transparent text-app-text outline-none placeholder:text-app-text placeholder:opacity-60"
             id="global-search"
             name="global-search"
             placeholder="Search debates or sessions"
@@ -420,10 +429,13 @@ exports[`Layout > renders the global chrome 1`] = `
             value=""
           />
           <span
-            class="text-xs text-silver/60"
+            aria-live="polite"
+            class="flex items-center gap-1 text-xs text-app-text opacity-70"
             id="search-status"
           >
-            Search
+            <span>
+              Search
+            </span>
           </span>
         </div>
       </form>
@@ -431,14 +443,14 @@ exports[`Layout > renders the global chrome 1`] = `
         class="flex items-center gap-3"
       >
         <button
-          class="hidden rounded-full border border-trustBlue bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:inline-flex"
+          class="hidden rounded-full border border-trustBlue bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)] lg:inline-flex"
           type="button"
         >
           Upgrade Pro
         </button>
         <button
           aria-label="Open help"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-app-border text-app-text transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
           type="button"
         >
           <svg
@@ -470,7 +482,7 @@ exports[`Layout > renders the global chrome 1`] = `
       </div>
     </header>
     <main
-      class="flex-1 overflow-y-auto bg-gradient-to-br from-black/60 via-zinc-950/60 to-black/70 px-4 py-8 lg:px-10"
+      class="flex-1 overflow-y-auto bg-surface px-4 py-8 lg:px-10"
       id="main-content"
     >
       <div>
@@ -479,7 +491,7 @@ exports[`Layout > renders the global chrome 1`] = `
     </main>
     <footer
       aria-label="User controls"
-      class="border-t border-white/10 bg-black/80 px-4 py-4 text-silver backdrop-blur lg:px-8"
+      class="border-t border-app-border bg-[color:var(--surface-elevated)] px-4 py-4 text-app-text backdrop-blur lg:px-8"
       style="opacity: 0; transform: translateY(12px);"
     >
       <div
@@ -489,18 +501,18 @@ exports[`Layout > renders the global chrome 1`] = `
           class="flex items-center gap-3"
         >
           <div
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-base font-semibold text-white"
+            class="flex h-12 w-12 items-center justify-center rounded-full border border-app-border bg-[color:var(--surface-elevated)] text-base font-semibold text-silver"
           >
-            EC
+            AK
           </div>
           <div>
             <p
-              class="text-sm font-semibold text-white"
+              class="text-sm font-semibold text-silver"
             >
-              Emilia Caitlin
+              Akshith Konda
             </p>
             <p
-              class="text-xs text-silver/70"
+              class="text-xs text-app-text opacity-70"
             >
               @nexus
             </p>
@@ -511,7 +523,7 @@ exports[`Layout > renders the global chrome 1`] = `
         >
           <button
             aria-label="Activate light mode"
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs uppercase tracking-wide text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            class="inline-flex items-center gap-2 rounded-full border border-app-border px-3 py-1.5 text-xs uppercase tracking-wide text-app-text transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
             type="button"
           >
             <svg
@@ -564,7 +576,7 @@ exports[`Layout > renders the global chrome 1`] = `
           </button>
           <button
             aria-label="Attach file"
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            class="inline-flex items-center gap-2 rounded-full border border-app-border px-3 py-1.5 text-xs font-medium text-app-text transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
             type="button"
           >
             <svg
@@ -588,7 +600,7 @@ exports[`Layout > renders the global chrome 1`] = `
           </button>
           <button
             aria-label="Record voice note"
-            class="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            class="inline-flex items-center gap-2 rounded-full border border-app-border px-3 py-1.5 text-xs font-medium text-app-text transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
             type="button"
           >
             <svg
@@ -620,7 +632,7 @@ exports[`Layout > renders the global chrome 1`] = `
             Voice
           </button>
           <button
-            class="inline-flex items-center gap-2 rounded-full border border-trustBlue bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            class="inline-flex items-center gap-2 rounded-full border border-trustBlue bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]"
             type="button"
           >
             <svg

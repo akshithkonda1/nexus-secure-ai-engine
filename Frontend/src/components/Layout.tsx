@@ -40,7 +40,7 @@ export function Layout() {
   }, [sidebarOpen]);
 
   return (
-    <div className="relative flex min-h-screen bg-gradient-to-br from-black via-black to-zinc-900 text-silver">
+    <div className="relative flex min-h-screen bg-app text-app-text">
       <SkipLink />
       <div className="hidden lg:flex">
         <Sidebar variant="desktop" onNavigate={() => setSidebarOpen(false)} />
@@ -50,7 +50,7 @@ export function Layout() {
           <>
             <motion.div
               key="sidebar-overlay"
-              className="fixed inset-0 z-40 bg-black/70"
+              className="fixed inset-0 z-40 bg-black/60"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -76,12 +76,12 @@ export function Layout() {
         <Header onToggleSidebar={() => setSidebarOpen(true)} />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto bg-gradient-to-br from-black/60 via-zinc-950/60 to-black/70 px-4 py-8 lg:px-10"
+          className="flex-1 overflow-y-auto bg-surface px-4 py-8 lg:px-10"
         >
           <Suspense
             fallback={
               <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-trustBlue" />
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-app-border border-t-trustBlue" />
                 <span className="sr-only">Loading content</span>
               </div>
             }
