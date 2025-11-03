@@ -17,7 +17,7 @@ export function UserBar() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-base font-semibold text-white">
-            EC
+            JD
           </div>
           <div>
             <p className="text-sm font-semibold text-white">John Doe</p>
