@@ -245,6 +245,8 @@ The Nexus chat frontend lives in [`Frontend/`](Frontend/). To interact with it:
   npm run dev
   ```
 
+- **UI guide:** World-class Script-inspired dashboard. Run `npm run dev` for the live redesign experience.
+
 - **Unit tests:**
 
   ```bash
