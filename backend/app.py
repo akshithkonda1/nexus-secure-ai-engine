@@ -14,11 +14,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import redis
 
-from Backend.abuse_middleware import register_abuse_guard
+from .abuse_middleware import register_abuse_guard
 from pydantic import ValidationError
 
-from Backend.services.debate_service import DebateRequest, DebateService
-from Backend.telemetry import init_telemetry, telemetry_bp
+from .services.debate_service import DebateRequest, DebateService
+from .telemetry import init_telemetry, telemetry_bp
 
 load_dotenv()
 

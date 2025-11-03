@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 
-from Backend.telemetry import TELEMETRY_QUEUE_KEY
+from backend.telemetry import TELEMETRY_QUEUE_KEY
 
 
 def test_telemetry_logs_and_persists(client, redis_client, app, tmp_path):
