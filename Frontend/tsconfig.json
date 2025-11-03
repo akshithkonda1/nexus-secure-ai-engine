@@ -14,7 +14,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "baseUrl": "./src",
-    "types": ["vite/client", "@types/node"],
+    "types": ["vite/client", "@types/node", "vitest"],
     "paths": {
       "@/*": ["./*"]
     }

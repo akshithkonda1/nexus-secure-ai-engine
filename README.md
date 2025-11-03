@@ -237,7 +237,21 @@ docker push <REGISTRY>/<PROJECT>/nexus:<TAG>
 ## Frontend preview & static demo
 The Nexus chat frontend lives in [`Frontend/`](Frontend/). To interact with it:
 
-- **Full app (Vite dev server):** Follow the steps in [`Frontend/README.md`](Frontend/README.md) to install dependencies and run `npm run dev`.
+- **Frontend dev workflow:**
+
+  ```bash
+  cd Frontend
+  npm install
+  npm run dev
+  ```
+
+- **Unit tests:**
+
+  ```bash
+  cd Frontend
+  npm run test:unit
+  ```
+
 - **Static snapshot:** Serve `Frontend/preview.html` over HTTP (for example `python3 -m http.server 4173`) and open `http://localhost:4173/preview.html` in your browser to explore the lazy-loaded UI without building the project.
 
 Both options exercise the same React components, so you can verify layout, drawers, modals, and other surfaces even without network access to install dependencies.
