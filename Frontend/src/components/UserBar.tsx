@@ -20,7 +20,7 @@ export function UserBar() {
             EC
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Emilia Caitlin</p>
+            <p className="text-sm font-semibold text-white">John Doe</p>
             <p className="text-xs text-silver/70">@nexus</p>
           </div>
         </div>
