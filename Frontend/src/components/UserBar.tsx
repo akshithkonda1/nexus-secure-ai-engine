@@ -7,6 +7,7 @@ import { useSession } from "@/shared/state/session";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 // shadcn menu (or your equivalent)
+// ⬇️ was "@/components/ui/dropdown-menu"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,10 +15,11 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from "./ui/dropdown-menu";
 
-// Profile modal hook (from the provider already in canvas)
-import { useProfileModal } from "@/features/profile/NexusProfile";
+// ⬇️ was "@/features/profile/NexusProfile"
+import { useProfileModal } from "../features/profile/NexusProfile";
+
 
 // --- helper: copy + navigate + dispatch
 async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
