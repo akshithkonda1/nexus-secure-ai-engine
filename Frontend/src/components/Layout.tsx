@@ -3,7 +3,8 @@ import { Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { UserBar } from "@/components/UserBar";
+import UserBar from "@/components/UserBar";
+
 
 function SkipLink() {
   return (
