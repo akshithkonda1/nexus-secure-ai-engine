@@ -126,7 +126,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           type="button"
           className="hidden rounded-full border border-trustBlue bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)] lg:inline-flex"
         >
-          Upgrade Pro
+          Join Waitlist 
         </button>
         <button
           type="button"

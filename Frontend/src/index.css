@@ -10,13 +10,26 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  --surface: 255 255 255;
+  --text: 17 24 39;
+}
+
+.dark {
+  --surface: 15 16 18;
+  --text: 229 231 235;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
   font-family: "Inter Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: var(--bg);
-  color: var(--text);
+  background-color: rgb(var(--surface));
+  color: rgb(var(--text));
 }
 
 a {
@@ -38,36 +51,4 @@ textarea:focus-visible {
 [data-reduce-motion="true"] * {
   transition: none !important;
   animation-duration: 0.01ms !important;
-}
-
-.brand-mark__shape {
-  fill: #111827;
-}
-
-.brand-mark__spark {
-  fill: rgba(99, 102, 241, 0.18);
-}
-
-.brand-mark__gradient-start {
-  stop-color: #7c3aed;
-}
-
-.brand-mark__gradient-end {
-  stop-color: #4f46e5;
-}
-
-html[data-theme="dark"] .brand-mark__shape {
-  fill: #f9fafb;
-}
-
-html[data-theme="dark"] .brand-mark__spark {
-  fill: rgba(165, 180, 252, 0.24);
-}
-
-html[data-theme="dark"] .brand-mark__gradient-start {
-  stop-color: #22d3ee;
-}
-
-html[data-theme="dark"] .brand-mark__gradient-end {
-  stop-color: #818cf8;
 }

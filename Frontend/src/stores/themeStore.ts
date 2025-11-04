@@ -1,6 +1,8 @@
+// Frontend/src/stores/themeStore.ts
 import { create } from "zustand";
 
-type ThemeMode = "light" | "dark";
+export type Theme = "light" | "dark";
+const LS_KEY = "nexus.theme";
 
 type ThemeState = {
   theme: ThemeMode;
@@ -8,7 +10,11 @@ type ThemeState = {
   toggleTheme: () => void;
 };
 
-const STORAGE_KEY = "nexus.theme";
+function applyTheme(theme: Theme) {
+  const root = document.documentElement; // <html>
+  root.setAttribute("data-theme", theme);
+  // if you also switch logos elsewhere by data-theme, this is enough
+}
 
 const applyTheme = (theme: ThemeMode) => {
   if (typeof document !== "undefined") {
@@ -20,17 +26,8 @@ const applyTheme = (theme: ThemeMode) => {
   }
 };
 
-const readStoredTheme = (): ThemeMode => {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
-  return prefersDark ? "dark" : "light";
-};
+export const useThemeStore = create<ThemeState>((set, get) => ({
+  theme: "dark",
 
 const initialTheme = readStoredTheme();
 applyTheme(initialTheme);

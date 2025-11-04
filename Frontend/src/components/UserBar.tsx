@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Paperclip, Mic, Sparkles, Sun, Moon } from "lucide-react";
-import { useThemeStore } from "@/stores/themeStore";
+import { Paperclip, Mic, Sparkles } from "lucide-react";
+import { useSession } from "@/shared/state/session";
+import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 function UserBarComponent() {
   const theme = useThemeStore((state) => state.theme);
