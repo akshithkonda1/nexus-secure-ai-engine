@@ -114,7 +114,7 @@ export default function Home() {
         transition={{ duration: 0.45 }}
         className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-8 text-white shadow-2xl"
       >
-        <p className="text-sm uppercase tracking-[0.25em] text-silver/70">Unlimited Beta</p>
+        <p className="text-sm uppercase tracking-[0.25em] text-blue/70">Beta</p>
         <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">
           Welcome to Nexus.ai – Orchestrating Trust in AI
         </h1>
