@@ -9,7 +9,7 @@ export const SheetPortal = SheetPrimitive.Portal;
 export const SheetOverlay = React.forwardRef<HTMLDivElement, SheetPrimitive.DialogOverlayProps>(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-40 bg-black/40 backdrop-blur-sm", className)}
+    className={cn("fixed inset-0 z-40 bg-app-text/60 backdrop-blur-sm", className)}
     {...props}
   />
 ));

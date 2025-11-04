@@ -28,7 +28,7 @@ export default function AuthPage() {
       key: "X",
       label: "Continue with X",
       helper: "Use X to Log in",
-      accent: "bg-black",
+      accent: "bg-app-text",
       onSelect: () => (window.location.href = `${base}/login/x`),
     },
   ];
@@ -68,7 +68,7 @@ export default function AuthPage() {
         { title: "Onboarding concierge", description: "Dedicated specialists to help migrate prompts, knowledge, and workflows." },
       ]}
     >
-      <div className="rounded-[28px] border border-black/10 bg-card p-10 shadow-2xl shadow-black/20 backdrop-blur-xl dark:border-white/10">
+      <div className="rounded-[28px] border border-app bg-card p-10 shadow-2xl shadow-black/20 backdrop-blur-xl">
         <header className="space-y-2 text-left">
           <h2 className="text-2xl font-semibold">Sign in to Nexus</h2>
           <p className="text-sm text-muted-foreground">Choose a secure sign-in method to continue your session.</p>
@@ -103,7 +103,7 @@ export default function AuthPage() {
           </Button>
         </form>
 
-        <div className="mt-6 rounded-2xl border border-black/10 bg-background/40 p-4 text-xs text-muted-foreground backdrop-blur dark:border-white/10">
+        <div className="mt-6 rounded-2xl border border-app bg-background/40 p-4 text-xs text-muted-foreground backdrop-blur">
           By continuing you agree to our
           <a className="mx-1 font-medium hover:underline" href="/legal/terms">
             Terms

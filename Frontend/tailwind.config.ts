@@ -14,11 +14,11 @@ const config: Config = {
     },
     extend: {
       colors: {
-        "app-bg": "var(--bg)",
-        "app-surface": "var(--surface)",
-        "app-text": "var(--text)",
-        "app-text-muted": "var(--text-muted)",
-        "app-border": "var(--border)",
+        "app-bg": "rgb(var(--app-bg) / <alpha-value>)",
+        "app-surface": "rgb(var(--panel-bg) / <alpha-value>)",
+        "app-text": "rgb(var(--ink) / <alpha-value>)",
+        "app-text-muted": "rgb(var(--muted) / <alpha-value>)",
+        "app-border": "rgb(var(--border) / <alpha-value>)",
         "accent-student": "var(--accent-student)",
         "accent-business": "var(--accent-business)",
         "accent-nexus": "var(--accent-nexus)",
@@ -45,15 +45,6 @@ const config: Config = {
       addVariant("mode-business", "&[data-mode='business'] *");
       addVariant("mode-nexusos", "&[data-mode='nexusos'] *");
     }),
-    plugin(({ addUtilities }) => {
-      addUtilities({
-        ".bg-app": { backgroundColor: "var(--bg)" },
-        ".bg-surface": { backgroundColor: "var(--surface)" },
-        ".text-app": { color: "var(--text)" },
-        ".text-muted": { color: "var(--text-muted)" },
-        ".border-app": { borderColor: "var(--border)" }
-      });
-    })
   ],
   future: {
     hoverOnlyWhenSupported: true

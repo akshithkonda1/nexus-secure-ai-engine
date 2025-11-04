@@ -110,8 +110,8 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
     <>
       <aside
         className={`flex h-full flex-col justify-between ${
-          variant === "desktop" ? "w-64 border-r border-white/10" : "w-full"
-        } bg-black/85 px-4 pb-6 pt-8 text-silver shadow-2xl backdrop-blur`}
+          variant === "desktop" ? "w-64 border-r border-app" : "w-full"
+        } bg-panel px-4 pb-6 pt-8 text-ink shadow-2xl backdrop-blur`}
       >
         <nav aria-label="Primary">
           <ul className="space-y-2">
@@ -122,15 +122,19 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                       isActive
-                        ? "bg-white/10 text-white"
-                        : "text-silver/80 hover:scale-105 hover:bg-white/5 hover:text-white"
-                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black`
+                        ? "border border-trustBlue/60 bg-trustBlue/10 text-ink shadow-lg"
+                        : "text-muted hover:scale-105 hover:bg-panel hover:text-ink"
+                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg`
                   }
                   onClick={onNavigate}
                 >
                   {({ isActive }) => (
                     <>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-trustBlue">
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                          isActive ? "bg-trustBlue/20 text-trustBlue" : "bg-panel text-trustBlue"
+                        }`}
+                      >
                         {item.icon}
                       </span>
                       <span className="flex-1">{item.label}</span>
@@ -152,7 +156,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           <button
             type="button"
             onClick={openFeedback}
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-trustBlue/90 px-3 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-trustBlue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-trustBlue/90 px-3 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-trustBlue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             aria-haspopup="dialog"
             aria-controls="feedback-modal"
           >
@@ -160,8 +164,8 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
             Send Feedback
           </button>
 
-          <div className="rounded-xl bg-gradient-to-br from-white/5 via-white/5 to-transparent p-4 text-xs text-silver/80">
-            <p className="font-semibold text-silver">Production Beta</p>
+          <div className="rounded-xl bg-gradient-to-br from-app-text/10 via-app-text/5 to-transparent p-4 text-xs text-muted">
+            <p className="font-semibold text-ink">Production Beta</p>
             <p className="mt-1 leading-relaxed">
               Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and chats. This is the first 
               Nexus is experimental—errors can happen. During this period Nexus is free to use; sharing feedback helps
@@ -179,25 +183,25 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           aria-modal="true"
           aria-labelledby="feedback-title"
           aria-describedby="feedback-desc"
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-app-text/70 p-4"
           onKeyDown={(e) => {
             if (e.key === "Escape") closeFeedback();
           }}
         >
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-neutral-900/95 p-4 shadow-2xl backdrop-blur">
+          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 text-ink shadow-2xl backdrop-blur">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="feedback-title" className="text-lg font-semibold text-white">
+                <h2 id="feedback-title" className="text-lg font-semibold text-ink">
                   User Feedback
                 </h2>
-                <p id="feedback-desc" className="mt-1 text-sm text-silver/80">
+                <p id="feedback-desc" className="mt-1 text-sm text-muted">
                   Share anything that will help us improve. Max {FEEDBACK_MAX.toLocaleString()} characters.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeFeedback}
-                className="rounded-lg p-1 text-silver/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+                className="rounded-lg p-1 text-muted transition hover:bg-panel hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
                 aria-label="Close feedback form"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -217,11 +221,11 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                     setFeedbackText(next);
                   }}
                   maxLength={FEEDBACK_MAX}
-                  className="min-h-48 w-full resize-y rounded-xl border border-white/10 bg-black/60 p-3 text-sm text-white outline-none placeholder:text-silver/50 focus:ring-2 focus:ring-trustBlue/70"
+                  className="min-h-48 w-full resize-y rounded-xl border border-app bg-panel p-3 text-sm text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-trustBlue/70"
                   placeholder="Tell us what worked well, what didn’t, and what you’d love to see next. We want to know what you think of Nexus but also what could be better."
                   aria-describedby="char-remaining"
                 />
-                <div id="char-remaining" className="mt-1 text-right text-xs text-silver/70">
+                <div id="char-remaining" className="mt-1 text-right text-xs text-muted">
                   {remaining.toLocaleString()} characters remaining
                 </div>
               </div>
@@ -230,14 +234,14 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                 <button
                   type="button"
                   onClick={closeFeedback}
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-silver/90 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || !feedbackText.trim()}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
                     submitting || !feedbackText.trim()
                       ? "bg-trustBlue/40 cursor-not-allowed"
                       : "bg-trustBlue hover:bg-trustBlue/90"
