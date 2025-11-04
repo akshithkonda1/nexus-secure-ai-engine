@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/app/routes";
+import "@/index.css";
 import "@/shared/ui/tokens.css";
 
 // Apply saved theme before first paint to avoid flash
