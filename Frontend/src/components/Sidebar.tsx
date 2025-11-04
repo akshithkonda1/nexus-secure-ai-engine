@@ -168,8 +168,8 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
             <p className="font-semibold text-ink">Production Beta</p>
             <p className="mt-1 leading-relaxed">
               Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and chats. This is the first of its kind engine so we need you to help!
-              Nexus is experimental— errors can happen but we wanna make sure that we built a program that is well worth it. During this period Nexus is completely free to use; sharing feedback helps us a lot.
-              us launch a better experience for you. We've got a lot of plans for our experiences. 
+              Nexus is experimental— errors can happen but we wanna make sure that we built a program that is well worth it. During this period. Nexus is completely free to use; sharing feedback helps us launch a better experience for you. 
+              We've got a lot of plans for our experiences. 
             </p>
           </div>
         </div>
