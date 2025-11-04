@@ -26,7 +26,7 @@ type NavItem = {
 export function Sidebar({ onNavigate, variant }: SidebarProps) {
   const items = useMemo<NavItem[]>(
     () => [
-      { label: "Home", to: "/home", icon: <House className={navIconClasses} aria-hidden="true" /> },
+     
       { label: "Chat", to: "/chat", icon: <MessageCircle className={navIconClasses} aria-hidden="true" /> },
       { label: "Sessions", to: "/projects", icon: <Folder className={navIconClasses} aria-hidden="true" /> },
       { label: "Templates", to: "/templates", icon: <Sparkles className={navIconClasses} aria-hidden="true" /> },
