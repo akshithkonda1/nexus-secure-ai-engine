@@ -1,8 +1,21 @@
-import { useTheme } from "./ThemeProvider";
+import { useMemo } from "react";
+import { useTheme } from "@/stores/themeStore";
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const { theme, toggle } = useTheme();
-  const label = theme === "dark" ? "Light mode" : "Dark mode";
+  const themeChoice = useTheme((state) => state.theme);
+  const resolvedTheme = useTheme((state) => state.resolvedTheme);
+  const setTheme = useTheme((state) => state.setTheme);
+
+  const label = useMemo(() => {
+    const applied = resolvedTheme;
+    return applied === "dark" ? "Light mode" : "Dark mode";
+  }, [resolvedTheme]);
+
+  const handleToggle = () => {
+    const applied = resolvedTheme;
+    setTheme(applied === "dark" ? "light" : "dark");
+  };
+
   return (
     <button
       type="button"
@@ -11,7 +24,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
         (className ? ` ${className}` : "")
       }
       aria-label={label}
-      onClick={toggle}
+      data-theme-choice={themeChoice}
+      onClick={handleToggle}
     >
       {label}
     </button>

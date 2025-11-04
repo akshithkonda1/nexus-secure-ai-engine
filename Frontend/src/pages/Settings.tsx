@@ -1,7 +1,7 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Download, MoonStar, Shield, SunMedium } from "lucide-react";
 import { useDebateStore } from "@/stores/debateStore";
-import { useTheme } from "@/shared/ui/theme/ThemeProvider";
+import { useTheme } from "@/stores/themeStore";
 
 const AVAILABLE_MODELS = ["GPT-4o", "Claude 3 Opus", "Gemini 1.5 Pro"] as const;
 const MODELS_KEY = "nexus.modelPreferences";
@@ -25,7 +25,9 @@ function loadModelPreferences() {
 }
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
+  const themeChoice = useTheme((state) => state.theme);
+  const resolvedTheme = useTheme((state) => state.resolvedTheme);
+  const setTheme = useTheme((state) => state.setTheme);
   const telemetryOptIn = useDebateStore((state) => state.telemetryOptIn);
   const setOptIn = useDebateStore((state) => state.setOptIn);
   const history = useDebateStore((state) => state.history);
@@ -82,10 +84,11 @@ export default function Settings() {
             type="button"
             onClick={() => setTheme("light")}
             className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
-              theme === "light"
+              themeChoice === "light"
                 ? "border-slate-200 bg-slate-100 text-slate-900"
                 : "border-white/10 bg-black/40 text-silver hover:border-white/30"
             }`}
+            aria-pressed={themeChoice === "light"}
           >
             <SunMedium className="h-4 w-4" aria-hidden="true" />
             Light
@@ -94,13 +97,30 @@ export default function Settings() {
             type="button"
             onClick={() => setTheme("dark")}
             className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
-              theme === "dark"
-                ? "border-white/20 bg-white/10 text-black"
+              themeChoice === "dark"
+                ? "border-white/20 bg-white/10 text-white"
                 : "border-white/10 bg-black/40 text-silver hover:border-white/30"
             }`}
+            aria-pressed={themeChoice === "dark"}
           >
             <MoonStar className="h-4 w-4" aria-hidden="true" />
             Dark
+          </button>
+          <button
+            type="button"
+            onClick={() => setTheme("system")}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
+              themeChoice === "system"
+                ? "border-white/20 bg-white/10 text-white"
+                : "border-white/10 bg-black/40 text-silver hover:border-white/30"
+            }`}
+            aria-pressed={themeChoice === "system"}
+            aria-label={`Use system theme (currently ${resolvedTheme} mode)`}
+            title={`Use system theme (currently ${resolvedTheme} mode)`}
+            data-resolved-theme={resolvedTheme}
+          >
+            <span className="h-4 w-4 rounded-full border border-white/30" aria-hidden="true" />
+            System
           </button>
         </div>
       </section>

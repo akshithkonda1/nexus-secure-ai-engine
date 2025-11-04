@@ -1,30 +1,37 @@
-import { useEffect } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Paperclip, Mic, Sparkles } from "lucide-react";
 import { useSession } from "@/shared/state/session";
 import { useTheme } from "@/stores/themeStore";
 
 export default function UserBar() {
-  // Theme: initialize once and expose toggle/text
-  const { theme, toggle, init } = useTheme();
-  useEffect(() => { init(); }, [init]);
+  const themeChoice = useTheme((state) => state.theme);
+  const resolvedTheme = useTheme((state) => state.resolvedTheme);
+  const setTheme = useTheme((state) => state.setTheme);
 
-  // Session: use values if present, else safe fallbacks
+  const toggle = () => {
+    const applied = resolvedTheme;
+    setTheme(applied === "dark" ? "light" : "dark");
+  };
+
   const { user } = useSession();
   const displayName = (user?.name ?? "John Doe").trim();
   const handle = user?.handle ?? "@nexus";
-  const initials = displayName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = useMemo(
+    () =>
+      displayName
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase(),
+    [displayName],
+  );
 
-  // CSS variable helpers (tokens.css must be imported once in app)
   const border = "var(--border)";
-  const panel  = "var(--panel)";
-  const text   = "var(--text)";
-  const muted  = "var(--muted)";
+  const panel = "var(--panel)";
+  const text = "var(--text)";
+  const muted = "var(--muted)";
 
   const baseBtn =
     "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition " +
@@ -40,12 +47,11 @@ export default function UserBar() {
       style={{
         color: text,
         borderTop: `1px solid ${border}`,
-        // keep the translucent feel you had without forcing dark colors
         background: "transparent",
       }}
+      data-theme-choice={themeChoice}
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left: user chip */}
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-full text-base font-semibold select-none"
@@ -63,9 +69,7 @@ export default function UserBar() {
           </div>
         </div>
 
-        {/* Right: controls */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Theme toggle pill (replaces previous ThemeToggle component) */}
           <button
             type="button"
             onClick={toggle}
@@ -77,7 +81,7 @@ export default function UserBar() {
               border: `1px solid ${border}`,
             }}
           >
-            {theme === "dark" ? "LIGHT MODE" : "DARK MODE"}
+            {resolvedTheme === "dark" ? "LIGHT MODE" : "DARK MODE"}
           </button>
 
           <button
