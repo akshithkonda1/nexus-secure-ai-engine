@@ -134,17 +134,17 @@ export default function Chat() {
       <ConsentModal />
       <section aria-labelledby="chat-panel" className="space-y-6">
         <Panel className="p-6 shadow-lg">
-          <div className="flex flex-wrap items-center gap-3">
-            <Sparkles className="h-5 w-5 text-trustBlue" aria-hidden="true" />
-            <p className="text-sm font-semibold uppercase tracking-wide text-ink">
-              Beta — Your Queries Help Improve our AI process and your experience! Please give us your feedback so we can improve our user experience.
-            </p>
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-5 w-5 text-trustBlue" aria-hidden="true" />
+            <div>
+              <p className="text-xs uppercase tracking-wide text-ink">
+                <span className="font-semibold">Beta —</span> Your queries help improve our AI process and your experience.
+              </p>
+              <p className="mt-2 text-sm text-ink/80">
+                Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate, scoring every response and synthesizing a consensus you can trust.
+              </p>
+            </div>
           </div>
-          <p className="mt-3 text-sm text-muted">
-            Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate, it even scores every response and semantically synthesizes a consensus you can trust.
-            Nexus is the trust layer for GenAI. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly.
-            We believe that AI should be transparent and secure and that information and consensus should belong to the people.
-          </p>
         </Panel>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -161,7 +161,7 @@ export default function Chat() {
               onChange={(event) => setInputValue(event.target.value)}
               aria-describedby={error ? "chat-error" : undefined}
               className="w-full resize-none rounded-2xl bg-transparent p-4 text-base text-ink placeholder:text-muted outline-none"
-              placeholder="Ask anything..."
+              placeholder="Ask anything…."
             />
           </InputShell>
           <div className="flex items-center justify-between text-xs text-muted">
@@ -225,7 +225,7 @@ export default function Chat() {
           {responses.length > 0 ? (
             <div className="space-y-4">
               <Panel className="p-6 shadow-lg">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Consensus</h2>
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink">Consensus</h2>
                 <p className="mt-3 text-base text-ink dark:text-app-text">{consensus}</p>
                 {overallScore !== null ? (
                   <p className="mt-3 text-xs text-muted">
@@ -249,19 +249,19 @@ export default function Chat() {
             <History className="h-4 w-4 text-trustBlue" aria-hidden="true" />
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink">Recent queries</h2>
           </div>
-          <ul className="mt-4 space-y-3 text-sm text-muted">
+          <ul className="mt-4 space-y-3 text-sm text-ink">
             {lastQueries.length === 0 ? (
-              <li>No history yet. Your last five questions will appear here.</li>
+              <li className="text-ink/70">No history yet. Your last five questions will appear here.</li>
             ) : (
               lastQueries.map((item) => (
                 <li key={item.id} className="rounded-xl border border-app bg-panel p-3 text-ink shadow-sm">
                   <p
-                    className="text-xs leading-snug text-muted"
+                    className="text-xs leading-snug text-ink/80"
                     style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
                   >
                     {item.query}
                   </p>
-                  <p className="mt-2 text-[10px] uppercase tracking-wide text-muted">
+                  <p className="mt-2 text-[10px] uppercase tracking-wide text-ink/60">
                     Score {item.overallScore !== null ? item.overallScore.toFixed(2) : "—"}
                   </p>
                 </li>

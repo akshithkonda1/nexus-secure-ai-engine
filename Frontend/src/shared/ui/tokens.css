@@ -64,6 +64,17 @@
   body {
     @apply bg-app text-ink;
   }
+
+  textarea,
+  input,
+  select {
+    background-color: rgb(var(--panel-bg));
+    color: rgb(var(--ink));
+  }
+
+  ::placeholder {
+    color: rgb(var(--muted));
+  }
 }
 
 @layer utilities {
