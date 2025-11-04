@@ -1,5 +1,4 @@
-:root,
-[data-theme='light'] {
+:root {
   --bg: #ffffff;
   --surface: #f9fafb;
   --text: #111827;
@@ -19,7 +18,7 @@
   --accent-nexus: #8b5cf6;
 }
 
-[data-theme='dark'] {
+.dark {
   --bg: #0b0e13;
   --surface: #12161c;
   --text: #f8fafc;

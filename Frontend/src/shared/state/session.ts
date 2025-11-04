@@ -1,18 +1,16 @@
 import { create } from "zustand";
-import type { PlanKey } from "@/config/pricing";
 
-type Session = {
-  user?: { id: string; name: string; email: string } | null;
-  plan: PlanKey;
-  firstInstallISO?: string;
-  lockedUntilISO?: string;
-  setPlan: (p: PlanKey) => void;
-  setUser: (u: Session["user"]) => void;
+type User = { name: string; handle: string; avatarUrl?: string };
+
+type SessionState = {
+  user: User;
+  setUser: (user: Partial<User>) => void;
 };
 
-export const useSession = create<Session>((set) => ({
-  user: null,
-  plan: "free",
-  setPlan: (p) => set({ plan: p }),
-  setUser: (u) => set({ user: u }),
+export const useSession = create<SessionState>((set) => ({
+  user: { name: "John Doe", handle: "@nexus", avatarUrl: "/assets/avatar-placeholder.png" },
+  setUser: (user) =>
+    set((state) => ({
+      user: { ...state.user, ...user },
+    })),
 }));

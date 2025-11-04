@@ -1,14 +1,23 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/BrandMark";
-import { ThemeToggle } from "@/features/theme/ThemeToggle";
+import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
 import { useMemo } from "react";
+import { useSession } from "@/shared/state/session";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
 }
 
 export function AppShell() {
+  const { user } = useSession();
+  const initials = user.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Left sidebar */}
@@ -47,16 +56,13 @@ export function AppShell() {
         </div>
 
         {/* Footer: theme + profile */}
-        <div className="absolute bottom-0 left-0 right-0 border-t p-3">
-          <div className="flex items-center justify-between rounded-xl border bg-background px-3 py-2">
-            <span className="text-sm">Light</span>
-            <ThemeToggle />
-          </div>
-          <div className="mt-3 flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
-            <div className="size-7 rounded-full bg-muted grid place-items-center">👤</div>
+        <div className="absolute bottom-0 left-0 right-0 border-t p-3 space-y-3">
+          <ThemeToggle className="w-full justify-between rounded-xl border border-border bg-background text-xs uppercase tracking-wide" />
+          <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+            <div className="grid size-7 place-items-center rounded-full bg-muted text-xs font-medium">{initials}</div>
             <div className="text-sm">
-              <div className="font-medium">Emilia Caitlin</div>
-              <div className="text-muted-foreground text-xs">hey@unspace.agency</div>
+              <div className="font-medium">{user.name}</div>
+              <div className="text-muted-foreground text-xs">{user.handle}</div>
             </div>
           </div>
         </div>
