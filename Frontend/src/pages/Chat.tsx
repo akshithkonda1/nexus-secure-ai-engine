@@ -142,7 +142,8 @@ export default function Chat() {
           <p className="mt-3 text-sm text-slate-300">
             Ask anything. Nexus.ai orchestrates a debate between top models while looking at web results to validate, it even scores every response and semantically synthesizes a consensus
             you can trust.
-            Nexus is zero bias. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly. We believe that AI should be transparent and secure and that information and consensus should belong be democratized.
+            Nexus is zero bias. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly. 
+            We believe that AI should be transparent and secure and that information and consensus should belong be democratized.
           </p>
         </div>
 
@@ -159,7 +160,7 @@ export default function Chat() {
             onChange={(event) => setInputValue(event.target.value)}
             aria-describedby={error ? "chat-error" : undefined}
             className="w-full resize-none rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-base text-slate-100 shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
-            placeholder="Compare how GPT-4o, Claude, and Gemini would respond to…"
+            placeholder=" Ask anything....."
           />
           <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
             <span>Shift + Enter for new line</span>
