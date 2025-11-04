@@ -118,7 +118,7 @@ export default function Home() {
           Welcome to Nexus.ai – Orchestrating Trust in AI
         </h1>
         <p className="mt-4 max-w-2xl text-base text-muted">
-          Spin up model debates, audit every citation, and log telemetry automatically. Nexus.ai keeps your AI stack honest and compliant.
+          Spin up model debates, audit every citation, and log telemetry automatically. Nexus.ai keeps your AI stack Honest and Accurate, making sure you get the right data when you need it.
         </p>
       </motion.section>
 
