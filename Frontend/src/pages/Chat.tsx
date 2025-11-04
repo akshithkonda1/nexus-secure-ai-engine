@@ -136,7 +136,7 @@ export default function Chat() {
           <div className="flex flex-wrap items-center gap-3">
             <Sparkles className="h-5 w-5 text-slate-200" aria-hidden="true" />
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-200">
-              Unlimited Beta — Your Queries Help Improve our AI process and your experience!
+             Beta — Your Queries Help Improve our AI process and your experience! Please give us your feedback so we can improve our user experience.
             </p>
           </div>
           <p className="mt-3 text-sm text-slate-300">
