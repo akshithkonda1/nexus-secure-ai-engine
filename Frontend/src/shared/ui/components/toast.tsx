@@ -6,8 +6,8 @@ export const Toaster = () => (
     toastOptions={{
       style: {
         borderRadius: "16px",
-        background: "var(--surface)",
-        color: "var(--text)",
+        background: "rgb(var(--panel-bg))",
+        color: "rgb(var(--ink))",
         boxShadow: "var(--shadow-ambient)"
       }
     }}
