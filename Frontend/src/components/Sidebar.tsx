@@ -163,7 +163,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           <div className="rounded-xl bg-gradient-to-br from-white/5 via-white/5 to-transparent p-4 text-xs text-silver/80">
             <p className="font-semibold text-silver">Production Beta</p>
             <p className="mt-1 leading-relaxed">
-              Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI decisions.
+              Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and chats. This is the first 
               Nexus is experimental—errors can happen. During this period Nexus is free to use; sharing feedback helps
               us launch a better experience for you. Enjoy Nexus.
             </p>
@@ -218,7 +218,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                   }}
                   maxLength={FEEDBACK_MAX}
                   className="min-h-48 w-full resize-y rounded-xl border border-white/10 bg-black/60 p-3 text-sm text-white outline-none placeholder:text-silver/50 focus:ring-2 focus:ring-trustBlue/70"
-                  placeholder="Tell us what worked well, what didn’t, and what you’d love to see next…"
+                  placeholder="Tell us what worked well, what didn’t, and what you’d love to see next. We want to know what you think of Nexus but also what could be better."
                   aria-describedby="char-remaining"
                 />
                 <div id="char-remaining" className="mt-1 text-right text-xs text-silver/70">
