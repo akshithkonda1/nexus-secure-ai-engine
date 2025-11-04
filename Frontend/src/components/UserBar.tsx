@@ -163,12 +163,21 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [avatar, setAvatar] = React.useState<string | undefined>(profile.avatarDataUrl);
   const [dirty, setDirty] = React.useState(false);
 
+  // close on Esc
   React.useEffect(() => {
     if (!open) return;
     const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
+
+  // lock scroll while open
+  React.useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
   React.useEffect(() => {
     setDirty(
@@ -206,13 +215,25 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
 
   if (!open) return null;
 
+  // CENTERED VERSION
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100]">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+    >
+      {/* Overlay */}
       <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="absolute left-1/2 top-1/2 w-[min(92vw,640px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-app-surface/95 p-5 text-ink shadow-2xl"
+        className="relative w-[min(92vw,640px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-app-surface/95 p-5 text-ink shadow-2xl"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Profile</h2>
