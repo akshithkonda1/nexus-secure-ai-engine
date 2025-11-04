@@ -3,7 +3,8 @@ import ReactDOM from "react-dom/client";
 import App from "@/App";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
 import { registerServiceWorker } from "@/serviceWorker";
-import "@/index.css";
+import "@/shared/ui/tokens.css";
+
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
