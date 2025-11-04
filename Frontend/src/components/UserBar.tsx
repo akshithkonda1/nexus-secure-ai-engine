@@ -1,13 +1,26 @@
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Mic, Paperclip, Sparkles, Loader2, Camera, Save, X } from "lucide-react";
+import {
+  Mic,
+  Paperclip,
+  Sparkles,
+  Loader2,
+  Camera,
+  Save,
+  X,
+  User as UserIcon,
+  Settings as SettingsIcon,
+  FileText,
+  History as HistoryIcon,
+  LogOut,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useSession } from "@/shared/state/session";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 /* =========================
-   Prompt helpers (unchanged)
+   Prompt helpers
    ========================= */
 async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
   try {
@@ -30,7 +43,7 @@ const PROMPTS = [
   { id: "summ", label: "Summarize & synthesize", text: "Summarize the key points and synthesize a consensus answer." },
   { id: "critique", label: "Critique for bias", text: "Critique the reasoning for bias, missing context, and logical gaps." },
   { id: "code", label: "Generate testable code", text: "Write production-ready code with tests and a brief usage example." },
-];
+] as const;
 
 /* =========================
    TS shims for Web Speech
@@ -49,7 +62,7 @@ declare global {
 }
 
 /* =========================
-   Local dropdown (unchanged)
+   Local dropdown (Prompt Browser)
    ========================= */
 type MenuItem = { key: string; label: string; onSelect: () => void };
 function useClickOutside<T extends HTMLElement>(onAway: () => void) {
@@ -162,14 +175,25 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [about, setAbout] = React.useState(profile.about ?? "");
   const [avatar, setAvatar] = React.useState<string | undefined>(profile.avatarDataUrl);
   const [dirty, setDirty] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+
+  // refresh from storage on open so Cancel truly reverts
+  React.useEffect(() => {
+    if (!open) return;
+    const fresh = loadProfile();
+    setProfile(fresh);
+    setName(fresh.displayName);
+    setAbout(fresh.about ?? "");
+    setAvatar(fresh.avatarDataUrl);
+  }, [open]);
 
   // close on Esc
   React.useEffect(() => {
     if (!open) return;
-    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && handleCancel();
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
-  }, [open, onClose]);
+  }, [open]);
 
   // lock scroll while open
   React.useEffect(() => {
@@ -178,6 +202,19 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, [open]);
+
+  // Cmd/Ctrl+Enter = save
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === "Enter" && (e.metaKey || e.ctrlKey)) && dirty && name.trim().length >= 2) {
+        e.preventDefault();
+        onSave();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, dirty, name]);
 
   React.useEffect(() => {
     setDirty(
@@ -201,7 +238,17 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     .slice(0, 2)
     .toUpperCase();
 
+  const handleCancel = () => {
+    // revert draft to current profile snapshot
+    setName(profile.displayName);
+    setAbout(profile.about ?? "");
+    setAvatar(profile.avatarDataUrl);
+    onClose();
+  };
+
   const onSave = () => {
+    if (!dirty || name.trim().length < 2) return;
+    setSaving(true);
     const next: Profile = {
       ...profile,
       displayName: name.trim().slice(0, 48),
@@ -210,6 +257,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     };
     saveProfile(next);
     setProfile(next);
+    setSaving(false);
     onClose();
   };
 
@@ -227,7 +275,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleCancel}
       />
       {/* Panel */}
       <motion.div
@@ -238,7 +286,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Profile</h2>
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             className="rounded-full p-2 text-muted transition hover:bg-white/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             aria-label="Close profile"
           >
@@ -325,19 +373,140 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink"
+          >
             Cancel
           </button>
           <button
             type="button"
-            disabled={!dirty || name.trim().length < 2}
+            disabled={!dirty || name.trim().length < 2 || saving}
             onClick={onSave}
             className="inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
           >
-            <Save className="h-4 w-4" /> Save
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
           </button>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+/* =========================
+   User menu (avatar dropdown)
+   ========================= */
+function UserMenuButton({
+  profile,
+  displayName,
+  handle,
+  initials,
+  onOpenProfile,
+  navigate,
+}: {
+  profile: { avatarDataUrl?: string };
+  displayName: string;
+  handle: string;
+  initials: string;
+  onOpenProfile: () => void;
+  navigate: (to: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const menuRef = useClickOutside<HTMLDivElement>(() => setOpen(false));
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    if (open) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const go = (path: string) => {
+    setOpen(false);
+    navigate(path);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="group flex items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+      >
+        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-app text-base font-semibold text-ink">
+          {profile.avatarDataUrl ? (
+            <img src={profile.avatarDataUrl} alt="Profile" className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-ink group-hover:opacity-90">{displayName}</p>
+          <p className="text-xs text-muted">{handle}</p>
+        </div>
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          role="menu"
+          className="absolute right-0 z-50 mt-2 min-w-[16rem] overflow-hidden rounded-xl border border-white/10 bg-panel text-ink shadow-xl backdrop-blur"
+        >
+          <div className="px-3 py-2">
+            <p className="text-sm font-semibold">{displayName}</p>
+            <p className="text-xs text-muted">{handle}</p>
+          </div>
+          <div className="h-px w-full bg-white/10" />
+
+          <button
+            role="menuitem"
+            onClick={() => { setOpen(false); onOpenProfile(); }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition hover:bg-white/5 hover:text-ink"
+          >
+            <UserIcon className="h-4 w-4" /> Edit Profile
+          </button>
+
+          <button
+            role="menuitem"
+            onClick={() => go("/settings")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition hover:bg-white/5 hover:text-ink"
+          >
+            <SettingsIcon className="h-4 w-4" /> Settings
+          </button>
+
+          <button
+            role="menuitem"
+            onClick={() => go("/documents")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition hover:bg-white/5 hover:text-ink"
+          >
+            <FileText className="h-4 w-4" /> Documents
+          </button>
+
+          <button
+            role="menuitem"
+            onClick={() => go("/history")}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition hover:bg-white/5 hover:text-ink"
+          >
+            <HistoryIcon className="h-4 w-4" /> History
+          </button>
+
+          <div className="h-px w-full bg-white/10" />
+
+          <button
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              window.dispatchEvent(new CustomEvent("nexus:auth:signout"));
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted transition hover:bg-white/5 hover:text-ink"
+          >
+            <LogOut className="h-4 w-4" /> Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -460,25 +629,15 @@ export function UserBar() {
         aria-label="User controls"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          {/* Avatar + name -> open Profile modal */}
-          <button
-            type="button"
-            onClick={() => setProfileOpen(true)}
-            className="group flex items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
-            aria-label="Open profile"
-          >
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-app text-base font-semibold text-ink">
-              {profile.avatarDataUrl ? (
-                <img src={profile.avatarDataUrl} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-ink group-hover:opacity-90">{displayName}</p>
-              <p className="text-xs text-muted">{handle}</p>
-            </div>
-          </button>
+          {/* User menu (avatar dropdown) */}
+          <UserMenuButton
+            profile={profile}
+            displayName={displayName}
+            handle={handle}
+            initials={initials}
+            onOpenProfile={() => setProfileOpen(true)}
+            navigate={navigate}
+          />
 
           <div className="flex flex-wrap items-center gap-3">
             <ThemeToggle className="gap-2 rounded-full border border-app text-xs uppercase tracking-wide text-muted transition hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg" />
@@ -507,7 +666,7 @@ export function UserBar() {
               {recording ? "Stop" : "Voice"}
             </button>
 
-            {/* Prompt Browser (local dropdown) */}
+            {/* Prompt Browser */}
             <PromptBrowserButton
               navigate={navigate}
               items={PROMPTS.map((p) => ({
@@ -520,7 +679,7 @@ export function UserBar() {
         </div>
       </motion.footer>
 
-      {/* Profile Modal (local) */}
+      {/* Profile Modal */}
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </>
   );
