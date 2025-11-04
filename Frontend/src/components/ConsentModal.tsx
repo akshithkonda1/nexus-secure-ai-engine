@@ -90,7 +90,7 @@ export function ConsentModal() {
                 <div>
                   <Dialog.Title className="text-lg font-semibold">Help us improve Nexus.ai</Dialog.Title>
                   <Dialog.Description className="mt-2 text-sm text-slate-300">
-                    Opt in to share anonymized telemetry so we can make the debate engine smarter. We never store PII and you can
+                   Please Opt in to share anonymized telemetry so that we can make the debate engine smarter. This is entirely optional. None of your chats are used and we never store PII and you can
                     change this anytime from Settings.
                   </Dialog.Description>
                   <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm shadow-inner">
