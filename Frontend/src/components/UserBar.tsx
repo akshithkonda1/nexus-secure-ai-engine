@@ -1,32 +1,17 @@
+import * as React from "react";
 import { motion } from "framer-motion";
 import { Mic, Paperclip, Sparkles, Loader2 } from "lucide-react";
-import * as React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useSession } from "@/shared/state/session";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
-// shadcn menu (or your equivalent)
-// ⬇️ was "@/components/ui/dropdown-menu"
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "./ui/dropdown-menu";
+// ---------- local helpers ----------
 
-// ⬇️ was "@/features/profile/NexusProfile"
-import { useProfileModal } from "../features/profile/NexusProfile";
-
-
-// --- helper: copy + navigate + dispatch
 async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
   try {
     await navigator.clipboard.writeText(prompt);
   } catch {
-    // fallback: create a temp input
     const ta = document.createElement("textarea");
     ta.value = prompt;
     document.body.appendChild(ta);
@@ -34,20 +19,123 @@ async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
     document.execCommand("copy");
     document.body.removeChild(ta);
   }
-  // let chat input know
   window.dispatchEvent(new CustomEvent("nexus:prompt:insert", { detail: prompt }));
-  // navigate to chat (use your router or event)
   if (navigate) navigate("/chat");
   else window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/chat" }));
 }
 
-// sample prompts — replace with your own
 const PROMPTS = [
   { id: "verify", label: "Verify with web evidence", text: "Verify this with 3 reputable sources and cite them succinctly." },
   { id: "summ", label: "Summarize & synthesize", text: "Summarize the key points and synthesize a consensus answer." },
   { id: "critique", label: "Critique for bias", text: "Critique the reasoning for bias, missing context, and logical gaps." },
   { id: "code", label: "Generate testable code", text: "Write production-ready code with tests and a brief usage example." },
 ];
+
+// quick TS shims so this compiles without extra types
+declare global {
+  interface SpeechRecognition extends EventTarget {
+    start(): void;
+    stop(): void;
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    onresult: ((e: any) => void) | null;
+  }
+  var webkitSpeechRecognition: { new (): SpeechRecognition } | undefined;
+  var SpeechRecognition: { new (): SpeechRecognition } | undefined;
+}
+
+// ---------- local dropdown (no external UI imports) ----------
+
+type MenuItem = { key: string; label: string; onSelect: () => void };
+function useClickOutside<T extends HTMLElement>(onAway: () => void) {
+  const ref = React.useRef<T | null>(null);
+  React.useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      const el = ref.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) onAway();
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [onAway]);
+  return ref;
+}
+
+function PromptBrowserButton({
+  items,
+  navigate,
+}: {
+  items: MenuItem[];
+  navigate: (to: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const btnRef = React.useRef<HTMLButtonElement | null>(null);
+  const menuRef = useClickOutside<HTMLDivElement>(() => setOpen(false));
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+      >
+        <Sparkles className="h-4 w-4" aria-hidden="true" />
+        Prompt Browser
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          role="menu"
+          className="absolute right-0 z-50 mt-2 min-w-[18rem] overflow-hidden rounded-xl border border-white/10 bg-panel text-ink shadow-xl backdrop-blur"
+        >
+          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            Quick Prompts
+          </div>
+          <div className="h-px w-full bg-white/10" />
+          {items.map((it) => (
+            <button
+              key={it.key}
+              role="menuitem"
+              className="block w-full cursor-pointer px-3 py-2 text-left text-sm text-muted outline-none transition hover:bg-white/5 hover:text-ink"
+              onClick={() => {
+                setOpen(false);
+                it.onSelect();
+              }}
+            >
+              {it.label}
+            </button>
+          ))}
+          <div className="h-px w-full bg-white/10" />
+          <button
+            role="menuitem"
+            className="block w-full cursor-pointer px-3 py-2 text-left text-xs text-muted outline-none transition hover:bg-white/5 hover:text-ink"
+            onClick={() => {
+              setOpen(false);
+              window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/prompts" }));
+            }}
+          >
+            Manage prompts…
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- main component ----------
 
 export function UserBar() {
   const { user } = useSession();
@@ -60,32 +148,27 @@ export function UserBar() {
     .slice(0, 2)
     .toUpperCase();
 
-  const { open: openProfile } = useProfileModal();
   const navigate = useNavigate();
 
-  // ---------- Attach ----------
+  // Attach
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const onAttachClick = () => fileInputRef.current?.click();
   const onFilesChosen: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }));
-    // clear for same-file reselects
-    e.currentTarget.value = "";
+    e.currentTarget.value = ""; // allow reselecting the same files
   };
 
-  // ---------- Voice (MediaRecorder + optional Web Speech transcript) ----------
+  // Voice
   const [recording, setRecording] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
   const chunksRef = React.useRef<BlobPart[]>([]);
-
-  // optional speech recognition for quick transcript
   const recRef = React.useRef<SpeechRecognition | null>(null);
   const [hasASR, setHasASR] = React.useState(false);
 
   React.useEffect(() => {
-    // feature detect Web Speech API
     const SR: any = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (SR) {
       const rec: SpeechRecognition = new SR();
@@ -108,25 +191,15 @@ export function UserBar() {
         setRecording(true);
         window.dispatchEvent(new CustomEvent("nexus:voice:recording", { detail: { state: "start" } }));
       };
-      mr.onstop = async () => {
+      mr.onstop = () => {
         setRecording(false);
         setBusy(false);
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        let transcript: string | undefined;
-
-        // optional: quick client-side transcript (not super accurate, but handy)
-        // We only capture interim during recording; as a simple fallback,
-        // you can leave this undefined and transcribe on the server later.
-        // Here we do nothing additional on stop.
-
-        window.dispatchEvent(new CustomEvent("nexus:voice:data", { detail: { blob, transcript } }));
-        // stop tracks
+        window.dispatchEvent(new CustomEvent("nexus:voice:data", { detail: { blob, transcript: undefined } }));
         stream.getTracks().forEach((t) => t.stop());
       };
-
       mediaRecorderRef.current = mr;
 
-      // kick off optional ASR
       if (hasASR && recRef.current) {
         try {
           let tmp = "";
@@ -135,16 +208,13 @@ export function UserBar() {
               const r = e.results[i];
               if (r.isFinal) tmp += r[0].transcript + " ";
             }
-            // keep last partial transcript available live
             window.dispatchEvent(new CustomEvent("nexus:voice:partial", { detail: tmp.trim() }));
           };
           recRef.current.start();
-        } catch {
-          /* ignore */
-        }
+        } catch {/* ignore */ }
       }
 
-      mr.start(100); // gather small chunks
+      mr.start(100);
     } catch (err) {
       setBusy(false);
       console.error("Mic error", err);
@@ -158,15 +228,12 @@ export function UserBar() {
       if (recRef.current) {
         try {
           recRef.current.stop();
-        } catch {/* noop */}
+        } catch {/* noop */ }
       }
-    } catch {/* noop */}
+    } catch {/* noop */ }
   };
 
-  const toggleRecording = () => {
-    if (recording) stopRecording();
-    else startRecording();
-  };
+  const toggleRecording = () => (recording ? stopRecording() : startRecording());
 
   return (
     <motion.footer
@@ -177,10 +244,10 @@ export function UserBar() {
       aria-label="User controls"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Avatar + name -> opens Profile */}
+        {/* Avatar + name -> open Profile modal via global event */}
         <button
           type="button"
-          onClick={openProfile}
+          onClick={() => window.dispatchEvent(new Event("nexus:profile:open"))}
           className="group flex items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
           aria-label="Open profile"
         >
@@ -226,41 +293,15 @@ export function UserBar() {
             {recording ? "Stop" : "Voice"}
           </button>
 
-          {/* Prompt Browser */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
-              >
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                Prompt Browser
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="min-w-[18rem]" align="end">
-              <DropdownMenuLabel className="text-xs uppercase tracking-wide">Quick Prompts</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {PROMPTS.map((p) => (
-                <DropdownMenuItem
-                  key={p.id}
-                  onClick={() => copyAndJump(p.text, navigate)}
-                  className="text-sm"
-                >
-                  {p.label}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  // open a dedicated prompts page if you have one
-                  window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/prompts" }));
-                }}
-                className="text-xs text-muted"
-              >
-                Manage prompts…
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Prompt Browser (local dropdown) */}
+          <PromptBrowserButton
+            navigate={navigate}
+            items={PROMPTS.map((p) => ({
+              key: p.id,
+              label: p.label,
+              onSelect: () => copyAndJump(p.text, navigate),
+            }))}
+          />
         </div>
       </div>
     </motion.footer>
