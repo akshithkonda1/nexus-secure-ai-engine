@@ -2,12 +2,13 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, History, Loader2, Sparkles } from "lucide-react";
 import { ConsentModal } from "@/components/ConsentModal";
 import { SurveyTooltip } from "@/components/SurveyTooltip";
+import { Panel, InputShell } from "@/shared/ui/Panel";
 import { DebateResponse, useDebateStore } from "@/stores/debateStore";
 
 const SCORE_COLORS = {
-  high: "bg-emerald-500/20 text-emerald-200 border-emerald-500/40",
-  medium: "bg-amber-500/20 text-amber-200 border-amber-500/40",
-  low: "bg-rose-500/20 text-rose-200 border-rose-500/40",
+  high: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/30",
+  medium: "bg-amber-500/10 text-amber-700 dark:text-amber-200 border-amber-500/30",
+  low: "bg-rose-500/10 text-rose-700 dark:text-rose-200 border-rose-500/30",
 } as const;
 
 function getScoreColor(score: number) {
@@ -33,7 +34,7 @@ function renderTextWithLinks(text: string) {
         href={part}
         target="_blank"
         rel="noreferrer noopener"
-        className="text-slate-200 underline decoration-slate-400 underline-offset-2 hover:text-white"
+        className="text-trustBlue underline decoration-trustBlue/40 underline-offset-2 transition hover:text-trustBlue/80"
       >
         {part}
       </a>
@@ -43,10 +44,10 @@ function renderTextWithLinks(text: string) {
 
 function ResponseCard({ response }: { response: DebateResponse }) {
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg backdrop-blur">
+    <Panel className="p-5 shadow-lg backdrop-blur">
       <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs uppercase tracking-wide">
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-xs uppercase tracking-wide text-trustBlue">
             {response.model.slice(0, 2)}
           </span>
           <span>{response.model}</span>
@@ -59,10 +60,10 @@ function ResponseCard({ response }: { response: DebateResponse }) {
           Score {response.score.toFixed(2)}
         </span>
       </header>
-      <p className="mt-4 text-sm leading-relaxed text-slate-200">
+      <p className="mt-4 text-sm leading-relaxed text-ink dark:text-app-text">
         {renderTextWithLinks(response.text)}
       </p>
-    </article>
+    </Panel>
   );
 }
 
@@ -132,41 +133,42 @@ export default function Chat() {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-12">
       <ConsentModal />
       <section aria-labelledby="chat-panel" className="space-y-6">
-        <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 shadow-xl">
+        <Panel className="p-6 shadow-lg">
           <div className="flex flex-wrap items-center gap-3">
-            <Sparkles className="h-5 w-5 text-slate-200" aria-hidden="true" />
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-200">
-             Beta — Your Queries Help Improve our AI process and your experience! Please give us your feedback so we can improve our user experience.
+            <Sparkles className="h-5 w-5 text-trustBlue" aria-hidden="true" />
+            <p className="text-sm font-semibold uppercase tracking-wide text-ink">
+              Beta — Your Queries Help Improve our AI process and your experience! Please give us your feedback so we can improve our user experience.
             </p>
           </div>
-          <p className="mt-3 text-sm text-slate-300">
-             Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate, it even scores every response and semantically synthesizes a consensus
-            you can trust.
-            Nexus is the trust layer for GenAI. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly. 
+          <p className="mt-3 text-sm text-muted">
+            Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate, it even scores every response and semantically synthesizes a consensus you can trust.
+            Nexus is the trust layer for GenAI. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly.
             We believe that AI should be transparent and secure and that information and consensus should belong to the people.
           </p>
-        </div>
+        </Panel>
 
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <label htmlFor="chat-input" className="sr-only">
             Ask Nexus.ai a question
           </label>
-          <textarea
-            id="chat-input"
-            name="chat"
-            rows={3}
-            required
-            value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
-            aria-describedby={error ? "chat-error" : undefined}
-            className="w-full resize-none rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-base text-slate-100 shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
-            placeholder=" Ask anything....."
-          />
-          <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+          <InputShell>
+            <textarea
+              id="chat-input"
+              name="chat"
+              rows={4}
+              required
+              value={inputValue}
+              onChange={(event) => setInputValue(event.target.value)}
+              aria-describedby={error ? "chat-error" : undefined}
+              className="w-full resize-none rounded-2xl bg-transparent p-4 text-base text-ink placeholder:text-muted outline-none"
+              placeholder="Ask anything..."
+            />
+          </InputShell>
+          <div className="flex items-center justify-between text-xs text-muted">
             <span>Shift + Enter for new line</span>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-300 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-trustBlue/60 focus:ring-offset-2 focus:ring-offset-app-bg disabled:opacity-60"
               disabled={loading || inputValue.trim().length === 0}
             >
               {loading ? (
@@ -183,7 +185,7 @@ export default function Chat() {
             </button>
           </div>
           {error ? (
-            <p id="chat-error" className="mt-2 text-sm text-rose-300">
+            <p id="chat-error" className="text-sm text-rose-500">
               {error}
             </p>
           ) : null}
@@ -198,15 +200,15 @@ export default function Chat() {
           {loading ? (
             <div className="space-y-4" role="status">
               {[0, 1, 2].map((item) => (
-                <div key={item} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+                <div key={item} className="animate-pulse rounded-2xl border border-app bg-panel p-5">
                   <div className="flex items-center justify-between">
-                    <div className="h-4 w-32 rounded bg-slate-700/70" />
-                    <div className="h-3 w-20 rounded-full bg-slate-700/70" />
+                    <div className="h-4 w-32 rounded bg-app-text/10" />
+                    <div className="h-3 w-20 rounded-full bg-app-text/10" />
                   </div>
                   <div className="mt-4 space-y-2">
-                    <div className="h-3 w-full rounded bg-slate-700/60" />
-                    <div className="h-3 w-11/12 rounded bg-slate-700/60" />
-                    <div className="h-3 w-9/12 rounded bg-slate-700/60" />
+                    <div className="h-3 w-full rounded bg-app-text/10" />
+                    <div className="h-3 w-11/12 rounded bg-app-text/10" />
+                    <div className="h-3 w-9/12 rounded bg-app-text/10" />
                   </div>
                 </div>
               ))}
@@ -215,22 +217,22 @@ export default function Chat() {
           ) : null}
 
           {!loading && responses.length === 0 && !error ? (
-            <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-8 text-center text-sm text-slate-400">
+            <Panel className="border-dashed p-8 text-center text-sm text-muted">
               Ask your first question to spark a debate.
-            </div>
+            </Panel>
           ) : null}
 
           {responses.length > 0 ? (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">Consensus</h2>
-                <p className="mt-3 text-base text-slate-100">{consensus}</p>
+              <Panel className="p-6 shadow-lg">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Consensus</h2>
+                <p className="mt-3 text-base text-ink dark:text-app-text">{consensus}</p>
                 {overallScore !== null ? (
-                  <p className="mt-3 text-xs text-slate-400">
-                    Overall confidence score: <span className="font-semibold text-slate-200">{overallScore.toFixed(2)}</span>
+                  <p className="mt-3 text-xs text-muted">
+                    Overall confidence score: <span className="font-semibold text-ink dark:text-app-text">{overallScore.toFixed(2)}</span>
                   </p>
                 ) : null}
-              </div>
+              </Panel>
               <div className="space-y-4">
                 {responses.map((response) => (
                   <ResponseCard key={`${response.model}-${response.score}`} response={response} />
@@ -242,31 +244,31 @@ export default function Chat() {
       </section>
 
       <aside className="space-y-6" aria-label="Recent queries">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
+        <Panel className="p-6 shadow-lg">
           <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-slate-300" aria-hidden="true" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">Recent queries</h2>
+            <History className="h-4 w-4 text-trustBlue" aria-hidden="true" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink">Recent queries</h2>
           </div>
-          <ul className="mt-4 space-y-3 text-sm text-slate-300">
+          <ul className="mt-4 space-y-3 text-sm text-muted">
             {lastQueries.length === 0 ? (
-              <li className="text-slate-500">No history yet. Your last five questions will appear here.</li>
+              <li>No history yet. Your last five questions will appear here.</li>
             ) : (
               lastQueries.map((item) => (
-                <li key={item.id} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                <li key={item.id} className="rounded-xl border border-app bg-panel p-3 text-ink shadow-sm">
                   <p
-                    className="text-xs leading-snug text-slate-200"
+                    className="text-xs leading-snug text-muted"
                     style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
                   >
                     {item.query}
                   </p>
-                  <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-500">
+                  <p className="mt-2 text-[10px] uppercase tracking-wide text-muted">
                     Score {item.overallScore !== null ? item.overallScore.toFixed(2) : "—"}
                   </p>
                 </li>
               ))
             )}
           </ul>
-        </div>
+        </Panel>
       </aside>
 
       <SurveyTooltip
