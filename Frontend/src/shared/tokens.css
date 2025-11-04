@@ -1,0 +1,35 @@
+/* Frontend/src/shared/ui/tokens.css
+   Theme tokens bound to data-theme on <html>.
+   Keep it small and neutral; Tailwind will read these via var() usage. */
+
+:root {
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+}
+
+/* LIGHT */
+html[data-theme="light"] {
+  --bg: #ffffff;
+  --panel: #f7f7fb;
+  --text: #111217;
+  --muted: #5f6472;
+  --border: #e7e8ee;
+  --brand: #3b82f6; /* blue-500 */
+}
+
+/* DARK */
+html[data-theme="dark"] {
+  --bg: #0b0c10;
+  --panel: #11131a;
+  --text: #e8e9ee;
+  --muted: #9aa0ae;
+  --border: #272a33;
+  --brand: #7c8cff; /* calm indigo for dark */
+}
+
+/* Global bindings */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+}
