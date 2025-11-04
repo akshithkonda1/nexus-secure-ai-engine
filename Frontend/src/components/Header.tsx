@@ -74,7 +74,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             type="search"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search debates or sessions"
+            placeholder=" What are you looking for?"
             className="h-8 flex-1 bg-transparent text-ink outline-none placeholder:text-muted"
             aria-describedby="search-status"
             autoComplete="off"
