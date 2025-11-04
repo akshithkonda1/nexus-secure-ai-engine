@@ -25,7 +25,7 @@ export default function AuthPage() {
       onSelect: () => (window.location.href = `${base}/login/facebook`),
     },
     {
-      key: "x",
+      key: "X",
       label: "Continue with X",
       helper: "Use X to Log in",
       accent: "bg-black",
