@@ -85,21 +85,21 @@ export default function Home() {
         title: "Validate Output",
         description: "Verify claims and citations across competing models.",
         icon: <ShieldCheck className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-white/10 text-trustBlue",
+        accent: "bg-app-text/10 text-trustBlue",
         onClick: () => navigate("/templates"),
       },
       {
         title: "Generate Report",
         description: "Summarize consensus, dissent, and risk signals in one click.",
         icon: <FileSpreadsheet className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-white/10 text-trustBlue",
+        accent: "bg-app-text/10 text-trustBlue",
         onClick: () => navigate("/documents"),
       },
       {
         title: "View Telemetry",
         description: "Inspect response scores and guardrail coverage metrics.",
         icon: <Activity className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-white/10 text-trustBlue",
+        accent: "bg-app-text/10 text-trustBlue",
         onClick: () => navigate("/telemetry"),
       },
     ],
@@ -112,22 +112,22 @@ export default function Home() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent p-8 text-white shadow-2xl"
+        className="rounded-3xl border border-app bg-panel p-8 text-ink shadow-2xl"
       >
-        <h1 className="mt-4 text-3xl font-semibold text-white md:text-4xl">
+        <h1 className="mt-4 text-3xl font-semibold text-ink md:text-4xl">
           Welcome to Nexus.ai – Orchestrating Trust in AI
         </h1>
-        <p className="mt-4 max-w-2xl text-base text-silver/80">
+        <p className="mt-4 max-w-2xl text-base text-muted">
           Spin up model debates, audit every citation, and log telemetry automatically. Nexus.ai keeps your AI stack honest and compliant.
         </p>
       </motion.section>
 
       <section aria-labelledby="quick-actions">
         <div className="flex items-center justify-between gap-4">
-          <h2 id="quick-actions" className="text-lg font-semibold text-white">
+          <h2 id="quick-actions" className="text-lg font-semibold text-ink">
             Quick actions
           </h2>
-          <p className="text-xs text-silver/60">Optimized for <span className="text-trustBlue">sub-second</span> launch.</p>
+          <p className="text-xs text-muted">Optimized for <span className="text-trustBlue">sub-second</span> launch.</p>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {quickActions.map((action) => (
@@ -137,14 +137,14 @@ export default function Home() {
               onClick={action.onClick}
               whileHover={{ y: -4 }}
               whileFocus={{ y: -2 }}
-              className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-black/60 p-5 text-left text-silver shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="flex h-full flex-col gap-4 rounded-2xl border border-app bg-panel p-5 text-left text-muted shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             >
               <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.accent}`}>
                 {action.icon}
               </span>
               <div>
-                <p className="text-base font-semibold text-white">{action.title}</p>
-                <p className="mt-2 text-sm text-silver/70">{action.description}</p>
+                <p className="text-base font-semibold text-ink">{action.title}</p>
+                <p className="mt-2 text-sm text-muted">{action.description}</p>
               </div>
             </motion.button>
           ))}
@@ -152,11 +152,11 @@ export default function Home() {
       </section>
 
       <section aria-labelledby="draft-guardrail" className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <div className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-lg">
-          <h2 id="draft-guardrail" className="text-lg font-semibold text-white">
+        <div className="rounded-3xl border border-app bg-panel p-6 shadow-lg">
+          <h2 id="draft-guardrail" className="text-lg font-semibold text-ink">
             Offline draft
           </h2>
-          <p className="mt-2 text-sm text-silver/70">
+          <p className="mt-2 text-sm text-muted">
             Capture guardrail ideas offline. We sync locally in your browser so nothing gets lost.
           </p>
           <label htmlFor="draft" className="sr-only">
@@ -168,17 +168,17 @@ export default function Home() {
             rows={6}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            className="mt-4 w-full resize-none rounded-2xl border border-white/10 bg-black/40 p-4 text-sm text-silver placeholder:text-silver/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+            className="mt-4 w-full resize-none rounded-2xl border border-app bg-panel p-4 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
             placeholder="Outline the guardrails, evaluation data, or follow-ups you want to track."
           />
-          <p className="mt-3 text-xs text-silver/60">Autosaved locally – clear anytime via browser storage.</p>
+          <p className="mt-3 text-xs text-muted">Autosaved locally – clear anytime via browser storage.</p>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-lg">
+        <div className="rounded-3xl border border-app bg-panel p-6 shadow-lg">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-white">Recent projects</h2>
+            <h2 className="text-lg font-semibold text-ink">Recent projects</h2>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full border border-app px-3 py-1 text-xs font-medium text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg disabled:cursor-not-allowed disabled:opacity-50"
               onClick={() => setPage((prev) => prev + 1)}
               disabled={loading}
             >
@@ -191,24 +191,24 @@ export default function Home() {
               <motion.article
                 key={project.id}
                 layout
-                className="rounded-2xl border border-white/10 bg-black/60 p-4 shadow"
+                className="rounded-2xl border border-app bg-panel p-4 shadow"
               >
-                <p className="text-sm font-semibold text-white">{project.title}</p>
-                <p className="mt-2 text-xs text-silver/70">{project.description}</p>
-                <p className="mt-3 text-xs text-silver/60">Updated {project.updatedAt}</p>
+                <p className="text-sm font-semibold text-ink">{project.title}</p>
+                <p className="mt-2 text-xs text-muted">{project.description}</p>
+                <p className="mt-3 text-xs text-muted">Updated {project.updatedAt}</p>
               </motion.article>
             ))}
             {loading
               ? skeletonCards.map((_, index) => (
-                  <div key={`skeleton-${index.toString()}`} className="animate-pulse rounded-2xl border border-white/5 bg-black/30 p-4">
-                    <div className="h-4 w-1/3 rounded bg-white/10" />
-                    <div className="mt-3 h-3 w-2/3 rounded bg-white/5" />
-                    <div className="mt-3 h-3 w-1/2 rounded bg-white/5" />
+                  <div key={`skeleton-${index.toString()}`} className="animate-pulse rounded-2xl border border-app/40 bg-app px-4 py-4">
+                    <div className="h-4 w-1/3 rounded bg-app-text/20" />
+                    <div className="mt-3 h-3 w-2/3 rounded bg-app-text/10" />
+                    <div className="mt-3 h-3 w-1/2 rounded bg-app-text/10" />
                   </div>
                 ))
               : null}
             {!loading && projects.length === 0 ? (
-              <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-black/40 p-6 text-sm text-silver/60">
+              <div className="flex items-center justify-center rounded-2xl border border-app bg-panel p-6 text-sm text-muted">
                 No projects yet. Quick actions above can help you create your first timeline.
               </div>
             ) : null}
@@ -216,8 +216,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-black/80 p-6 text-silver/80 shadow-2xl">
-        <h2 className="text-lg font-semibold text-white">Telemetry snapshot</h2>
+      <section className="rounded-3xl border border-app bg-panel p-6 text-muted shadow-2xl">
+        <h2 className="text-lg font-semibold text-ink">Telemetry snapshot</h2>
         <p className="mt-3 text-sm">
           Nexus.ai tracks consensus strength, dissent ratios, and flagged content in real time. Hook your analytics pipeline into the telemetry endpoint to enrich governance dashboards.
         </p>

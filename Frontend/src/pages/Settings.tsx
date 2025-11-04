@@ -72,21 +72,21 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-8 text-silver">
-      <section className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-xl">
+    <div className="space-y-8 text-muted">
+      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
         <header className="flex items-center gap-3">
           <SunMedium className="h-5 w-5 text-trustBlue" aria-hidden="true" />
-          <h1 className="text-lg font-semibold text-white">Appearance</h1>
+          <h1 className="text-lg font-semibold text-ink">Appearance</h1>
         </header>
-        <p className="mt-2 text-sm text-silver/70">Choose the theme that works best for your focus.</p>
+        <p className="mt-2 text-sm text-muted">Choose the theme that works best for your focus.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setTheme("light")}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
               themeChoice === "light"
-                ? "border-slate-200 bg-slate-100 text-slate-900"
-                : "border-white/10 bg-black/40 text-silver hover:border-white/30"
+                ? "border-trustBlue/60 bg-trustBlue/10 text-ink"
+                : "border-app bg-panel text-muted hover:text-ink"
             }`}
             aria-pressed={themeChoice === "light"}
           >
@@ -96,10 +96,10 @@ export default function Settings() {
           <button
             type="button"
             onClick={() => setTheme("dark")}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
               themeChoice === "dark"
-                ? "border-white/20 bg-white/10 text-white"
-                : "border-white/10 bg-black/40 text-silver hover:border-white/30"
+                ? "border-trustBlue/60 bg-trustBlue/10 text-ink"
+                : "border-app bg-panel text-muted hover:text-ink"
             }`}
             aria-pressed={themeChoice === "dark"}
           >
@@ -109,37 +109,37 @@ export default function Settings() {
           <button
             type="button"
             onClick={() => setTheme("system")}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 ${
+            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
               themeChoice === "system"
-                ? "border-white/20 bg-white/10 text-white"
-                : "border-white/10 bg-black/40 text-silver hover:border-white/30"
+                ? "border-trustBlue/60 bg-trustBlue/10 text-ink"
+                : "border-app bg-panel text-muted hover:text-ink"
             }`}
             aria-pressed={themeChoice === "system"}
             aria-label={`Use system theme (currently ${resolvedTheme} mode)`}
             title={`Use system theme (currently ${resolvedTheme} mode)`}
             data-resolved-theme={resolvedTheme}
           >
-            <span className="h-4 w-4 rounded-full border border-white/30" aria-hidden="true" />
+            <span className="h-4 w-4 rounded-full border border-app" aria-hidden="true" />
             System
           </button>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
         <header className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-trustBlue" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-white">Telemetry</h2>
+          <h2 className="text-lg font-semibold text-ink">Telemetry</h2>
         </header>
-        <p className="mt-2 text-sm text-silver/70">
+        <p className="mt-2 text-sm text-muted">
           Share anonymous usage data to help us improve Nexus.ai’s debate engine. You can change this at any time.
         </p>
-        <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-black/60 p-4 text-sm">
-          <span>{telemetryOptIn ? "Opted in" : "Opted out"}</span>
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-app bg-panel p-4 text-sm text-ink">
+          <span className="text-sm font-medium text-ink">{telemetryOptIn ? "Opted in" : "Opted out"}</span>
           <label className="inline-flex items-center gap-2">
-            <span className="text-xs uppercase tracking-wide text-silver/60">Telemetry</span>
+            <span className="text-xs uppercase tracking-wide text-muted">Telemetry</span>
             <input
               type="checkbox"
-              className="h-5 w-9 appearance-none rounded-full border border-white/10 bg-white/5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70"
+              className="h-5 w-9 appearance-none rounded-full border border-app bg-panel transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg checked:border-trustBlue checked:bg-trustBlue"
               checked={telemetryOptIn}
               onChange={(event) => {
                 void setOptIn(event.target.checked);
@@ -150,52 +150,52 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
         <header className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-white">Model selection</h2>
+          <h2 className="text-lg font-semibold text-ink">Model selection</h2>
         </header>
-        <p className="mt-2 text-sm text-silver/70">Control which models participate in debates. We recommend keeping at least two enabled.</p>
+        <p className="mt-2 text-sm text-muted">Control which models participate in debates. We recommend keeping at least two enabled.</p>
         <ul className="mt-4 space-y-3">
           {AVAILABLE_MODELS.map((model) => (
-            <li key={model} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/60 p-4 text-sm">
-              <span>{model}</span>
+            <li key={model} className="flex items-center justify-between rounded-xl border border-app bg-panel p-4 text-sm text-ink">
+              <span className="font-medium text-ink">{model}</span>
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
                   name={model}
                   checked={models[model]}
                   onChange={handleModelToggle}
-                  className="h-4 w-4 rounded border-white/10 bg-black text-white focus:ring-2 focus:ring-trustBlue/70 focus:ring-offset-2 focus:ring-offset-black"
+                  className="h-4 w-4 rounded border-app bg-panel text-trustBlue focus:ring-2 focus:ring-trustBlue/70 focus:ring-offset-2 focus:ring-offset-app-bg checked:border-trustBlue checked:bg-trustBlue checked:text-white"
                   aria-describedby="model-preference-hint"
                 />
-                <span className="text-xs uppercase tracking-wide text-silver/60">Enabled</span>
+                <span className="text-xs uppercase tracking-wide text-muted">Enabled</span>
               </label>
             </li>
           ))}
         </ul>
-        <p id="model-preference-hint" className="mt-3 text-xs text-silver/60">
+        <p id="model-preference-hint" className="mt-3 text-xs text-muted">
           {selectedCount} model{selectedCount === 1 ? "" : "s"} selected.
         </p>
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-black/70 p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
         <header className="flex items-center gap-3">
           <Download className="h-5 w-5 text-trustBlue" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-white">History</h2>
+          <h2 className="text-lg font-semibold text-ink">History</h2>
         </header>
-        <p className="mt-2 text-sm text-silver/70">
+        <p className="mt-2 text-sm text-muted">
           Export your recent debates as JSON for safekeeping or to share with the team.
         </p>
         <button
           type="button"
           onClick={handleExport}
           disabled={isExporting || history.length === 0}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-silver px-4 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-trustBlue/70 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-trustBlue bg-trustBlue px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isExporting ? "Preparing download…" : "Export JSON"}
         </button>
         {history.length === 0 ? (
-          <p className="mt-2 text-xs text-silver/60">Run a query to build your history before exporting.</p>
+          <p className="mt-2 text-xs text-muted">Run a query to build your history before exporting.</p>
         ) : null}
       </section>
     </div>

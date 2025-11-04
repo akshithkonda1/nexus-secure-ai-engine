@@ -40,7 +40,7 @@ export function SignInLayout({
             {highlights.map(({ title, description }) => (
               <div
                 key={title}
-                className="rounded-2xl border border-black/10 bg-card/60 p-4 shadow-ambient backdrop-blur dark:border-white/10"
+                className="rounded-2xl border border-app bg-card/60 p-4 shadow-ambient backdrop-blur"
               >
                 <dt className="text-sm font-semibold">{title}</dt>
                 <dd className="mt-2 text-sm text-muted-foreground">{description}</dd>
@@ -54,7 +54,7 @@ export function SignInLayout({
               {footerLogos.map((label) => (
                 <span
                   key={label}
-                  className="rounded-full border border-black/10 bg-card/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide backdrop-blur dark:border-white/10"
+                  className="rounded-full border border-app bg-card/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide backdrop-blur"
                 >
                   {label}
                 </span>
@@ -74,8 +74,8 @@ function DecorativeBackdrop() {
     <div className="pointer-events-none absolute inset-0 -z-10">
       <div className="absolute -left-32 top-[-10%] h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,_var(--accent-nexus)/18,_transparent_70%)] blur-3xl" />
       <div className="absolute bottom-[-20%] right-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,_var(--accent-business)/16,_transparent_60%)] blur-3xl" />
-      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent" />
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/20 via-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-app-text/40 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-app-text/20 via-transparent" />
     </div>
   );
 }

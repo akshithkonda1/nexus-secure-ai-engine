@@ -2,22 +2,11 @@
 @import "./shared/ui/tokens.css";
 @import "./shared/ui/social/social-buttons.css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   color-scheme: light dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --surface: 255 255 255;
-  --text: 17 24 39;
-}
-
-.dark {
-  --surface: 15 16 18;
-  --text: 229 231 235;
 }
 
 html,
@@ -29,8 +18,6 @@ body,
 body {
   margin: 0;
   font-family: "Inter Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: rgb(var(--surface));
-  color: rgb(var(--text));
 }
 
 a {

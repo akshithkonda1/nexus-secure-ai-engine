@@ -1,10 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --bg: #ffffff;
-  --surface: #f9fafb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --panel: hsl(0 0% 100%);
+  --app-bg: 255 255 255;
+  --panel-bg: 248 250 252;
+  --ink: 17 24 39;
+  --muted: 107 114 128;
+  --border: 229 231 235;
 
   --radius-card: 16px;
   --radius-button: 12px;
@@ -19,12 +22,11 @@
 }
 
 .dark {
-  --bg: #0b0e13;
-  --surface: #12161c;
-  --text: #f8fafc;
-  --text-muted: #9ca3af;
-  --border: rgba(255, 255, 255, 0.08);
-  --panel: hsl(222 14% 12%);
+  --app-bg: 11 11 13;
+  --panel-bg: 19 19 22;
+  --ink: 229 231 235;
+  --muted: 160 165 175;
+  --border: 38 38 42;
 
   --shadow-ambient: 0 10px 30px rgba(0, 0, 0, 0.45);
   --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
@@ -51,5 +53,37 @@
 }
 
 .bg-card {
-  background-color: var(--panel);
+  background-color: rgb(var(--panel-bg));
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-app text-ink;
+  }
+}
+
+@layer utilities {
+  .bg-app {
+    background-color: rgb(var(--app-bg));
+  }
+
+  .bg-panel {
+    background-color: rgb(var(--panel-bg));
+  }
+
+  .text-ink {
+    color: rgb(var(--ink));
+  }
+
+  .text-muted {
+    color: rgb(var(--muted));
+  }
+
+  .border-app {
+    border-color: rgb(var(--border));
+  }
 }

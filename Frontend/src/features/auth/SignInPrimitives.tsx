@@ -13,7 +13,7 @@ export function SocialButton({ provider }: { provider: SignInProvider }) {
     <button
       type="button"
       onClick={provider.onSelect}
-      className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-black/10 bg-background/40 p-4 text-left transition hover:border-black/20 hover:bg-background/60 backdrop-blur dark:border-white/10 dark:hover:border-white/20"
+      className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-app bg-background/40 p-4 text-left transition hover:border-app/80 hover:bg-background/60 backdrop-blur"
     >
       <span className="flex items-center gap-3">
         <span className={cn("grid size-10 place-items-center rounded-full font-semibold text-white", provider.accent)}>
