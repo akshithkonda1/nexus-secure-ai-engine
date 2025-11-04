@@ -13,21 +13,21 @@ export default function AuthPage() {
     {
       key: "google",
       label: "Continue with Google",
-      helper: "Personal Gmail or Workspace",
+      helper: " Google",
       accent: "bg-[#4285F4]",
       onSelect: () => (window.location.href = `${base}/login/google`),
     },
     {
       key: "facebook",
       label: "Continue with Facebook",
-      helper: "Connect with your community",
+      helper: "Facebook",
       accent: "bg-[#0866FF]",
       onSelect: () => (window.location.href = `${base}/login/facebook`),
     },
     {
       key: "x",
       label: "Continue with X",
-      helper: "Accelerate announcements",
+      helper: "Use X to Log in",
       accent: "bg-black",
       onSelect: () => (window.location.href = `${base}/login/x`),
     },
@@ -59,12 +59,12 @@ export default function AuthPage() {
 
   return (
     <SignInLayout
-      heroTitle="Unlock your Nexus workspace"
-      heroSubtitle="Secure, unified access for teams shipping ambitious AI products. Sign in to pick up exactly where you left off."
+      heroTitle="Welcome to Nexus."
+      heroSubtitle=" Nexus is an AI Orchestration Engine that debates models against each other and uses the internet to verify the answers ensuring every response is accurate. Sign in to pick up exactly where you left off."
       highlights={[
         { title: "Enterprise-grade", description: "SOC 2 compliant single sign-on and audit trails ready for review." },
         { title: "Global by default", description: "Latency-aware regions keep your team in flow wherever they collaborate." },
-        { title: "Privacy-first", description: "Data residency controls and granular permissions keep IP secure." },
+        { title: "Privacy-first", description: "Secured with 256-bit encryption in everyway so even we don't know what you say.." },
         { title: "Onboarding concierge", description: "Dedicated specialists to help migrate prompts, knowledge, and workflows." },
       ]}
     >
