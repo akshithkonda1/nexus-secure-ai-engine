@@ -79,9 +79,9 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
         </ul>
       </nav>
       <div className="mt-6 rounded-xl bg-gradient-to-br from-white/5 via-white/5 to-transparent p-4 text-xs text-silver/80">
-        <p className="font-semibold text-silver">Unlimited Beta</p>
+        <p className="font-semibold text-silver">Production Beta</p>
         <p className="mt-1 leading-relaxed">
-          Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI decisions.
+          Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI decisions. Nexus is an experimental program, errors are still bound to happend and that's why we need your feedback. During this time, Nexus will be free to use, we would love to ask that you provide feedback so that when we are ready for launch we are able to deliver a better experience for you. Enjoy Nexus.
         </p>
       </div>
     </aside>
