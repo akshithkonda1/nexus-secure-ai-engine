@@ -1,10 +1,16 @@
 import { motion } from "framer-motion";
-import { Paperclip, Mic, Sparkles, Sun, Moon } from "lucide-react";
-import { useThemeStore } from "@/stores/themeStore";
+import { Paperclip, Mic, Sparkles } from "lucide-react";
+import { useSession } from "@/shared/state/session";
+import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 export function UserBar() {
-  const theme = useThemeStore((state) => state.theme);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
+  const { user } = useSession();
+  const initials = user.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <motion.footer
@@ -17,27 +23,15 @@ export function UserBar() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-base font-semibold text-white">
-            JD
+            {initials}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">John Doe</p>
-            <p className="text-xs text-silver/70">@nexus</p>
+            <p className="text-sm font-semibold text-white">{user.name}</p>
+            <p className="text-xs text-silver/70">{user.handle}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs uppercase tracking-wide text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Activate light mode" : "Activate dark mode"}
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Moon className="h-4 w-4" aria-hidden="true" />
-            )}
-            <span>{theme === "dark" ? "Light" : "Dark"} mode</span>
-          </button>
+          <ThemeToggle className="gap-2 rounded-full border-white/10 text-xs uppercase tracking-wide text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black" />
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-silver transition hover:border-trustBlue/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"

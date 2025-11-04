@@ -86,7 +86,7 @@
   --social-button-focus: rgba(99, 102, 241, 0.45);
 }
 
-html[data-theme="dark"] {
+.dark {
   --social-button-bg: rgba(17, 24, 39, 0.8);
   --social-button-border: rgba(255, 255, 255, 0.12);
   --social-button-text: #f9fafb;
