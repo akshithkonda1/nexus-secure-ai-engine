@@ -142,7 +142,7 @@ export default function Chat() {
           <p className="mt-3 text-sm text-slate-300">
              Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate, it even scores every response and semantically synthesizes a consensus
             you can trust.
-            Nexus is zero bias. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly. 
+            Nexus is the trust layer for GenAI. Nexus is accessible and uses the most secure methods to make sure that your requests are handled properly. 
             We believe that AI should be transparent and secure and that information and consensus should belong to the people.
           </p>
         </div>
