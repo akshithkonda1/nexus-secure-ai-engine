@@ -1,149 +1,73 @@
-import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, ShieldCheck, FileSpreadsheet, Activity, RefreshCw } from "lucide-react";
-import { useDebateStore } from "@/stores/debateStore";
+import { motion } from "framer-motion";
+import { Activity, FileText, MessageSquare, Settings as SettingsIcon, Upload } from "lucide-react";
+import { PageHeader } from "@/components/common/PageHeader";
+import { EmptyState } from "@/components/common/EmptyState";
+import { Skeleton } from "@/components/common/Skeleton";
+import { useProjects, useSessions } from "@/queries/sessions";
 
-const PROJECT_BATCH = 4;
-const DRAFT_STORAGE_KEY = "nexus.dashboard.draft";
-
-type Project = {
-  id: string;
-  title: string;
-  description: string;
-  updatedAt: string;
-};
-
-type QuickAction = {
-  title: string;
-  description: string;
-  icon: JSX.Element;
-  accent: string;
-  onClick: () => void;
-};
-
-const skeletonCards = new Array(PROJECT_BATCH).fill(null);
+const QUICK_ACTIONS = [
+  {
+    label: "New session",
+    description: "Launch a fresh multi-model debate.",
+    icon: <MessageSquare className="h-5 w-5" aria-hidden="true" />,
+    to: "/chat",
+  },
+  {
+    label: "Import transcript",
+    description: "Upload past debates for instant auditing.",
+    icon: <Upload className="h-5 w-5" aria-hidden="true" />,
+    to: "/documents",
+  },
+  {
+    label: "Templates",
+    description: "Kick off trust-first workflows in seconds.",
+    icon: <FileText className="h-5 w-5" aria-hidden="true" />,
+    to: "/templates",
+  },
+  {
+    label: "Settings",
+    description: "Tune guardrails, quotas, and providers.",
+    icon: <SettingsIcon className="h-5 w-5" aria-hidden="true" />,
+    to: "/settings",
+  },
+] as const;
 
 export default function Home() {
   const navigate = useNavigate();
-  const setQuery = useDebateStore((state) => state.setQuery);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [page, setPage] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [draft, setDraft] = useState<string>(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-    return window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? "";
-  });
+  const { data: sessionsData, isLoading: sessionsLoading } = useSessions();
+  const { data: projectsData, isLoading: projectsLoading } = useProjects();
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    window.localStorage.setItem(DRAFT_STORAGE_KEY, draft);
-  }, [draft]);
+  const sessions = sessionsData?.sessions ?? [];
+  const projects = projectsData?.projects ?? [];
 
-  useEffect(() => {
-    let active = true;
-    const loadProjects = async () => {
-      setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 450));
-      if (!active) return;
-      const startIndex = page * PROJECT_BATCH;
-      const generated = Array.from({ length: PROJECT_BATCH }, (_, index) => {
-        const id = startIndex + index + 1;
-        return {
-          id: `project-${id}`,
-          title: `Trust Review ${id.toString().padStart(2, "0")}`,
-          description: "Consensus transcripts, guardrail coverage, and anomaly detections from the latest debates.",
-          updatedAt: new Date(Date.now() - id * 3600 * 1000).toLocaleString(),
-        } satisfies Project;
-      });
-      setProjects((prev) => [...prev, ...generated]);
-      setLoading(false);
-    };
-    void loadProjects();
-    return () => {
-      active = false;
-    };
-  }, [page]);
-
-  const quickActions = useMemo<QuickAction[]>(
-    () => [
-      {
-        title: "Start Debate",
-        description: "Launch a fresh multi-model debate with a single tap.",
-        icon: <Users className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-trustBlue text-white",
-        onClick: () => {
-          setQuery("");
-          navigate("/chat");
-        },
-      },
-      {
-        title: "Validate Output",
-        description: "Verify claims and citations across competing models.",
-        icon: <ShieldCheck className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-app-text/10 text-trustBlue",
-        onClick: () => navigate("/templates"),
-      },
-      {
-        title: "Generate Report",
-        description: "Summarize consensus, dissent, and risk signals in one click.",
-        icon: <FileSpreadsheet className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-app-text/10 text-trustBlue",
-        onClick: () => navigate("/documents"),
-      },
-      {
-        title: "View Telemetry",
-        description: "Inspect response scores and guardrail coverage metrics.",
-        icon: <Activity className="h-6 w-6" aria-hidden="true" />,
-        accent: "bg-app-text/10 text-trustBlue",
-        onClick: () => navigate("/telemetry"),
-      },
-    ],
-    [navigate, setQuery],
-  );
+  const lastFive = useMemo(() => sessions.slice(0, 5), [sessions]);
+  const totalMessages = useMemo(() => sessions.reduce((acc, session) => acc + session.messages, 0), [sessions]);
 
   return (
     <div className="space-y-10">
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        className="rounded-3xl border border-app bg-panel p-8 text-ink shadow-2xl"
-      >
-        <h1 className="mt-4 text-3xl font-semibold text-ink md:text-4xl">
-          Welcome to Nexus.ai – Orchestrating Trust in AI
-        </h1>
-        <p className="mt-4 max-w-2xl text-base text-muted">
-          Spin up model debates, audit every citation, and log telemetry automatically. Nexus.ai keeps your AI stack Honest and Accurate, making sure you get the right data when you need it.
-        </p>
-      </motion.section>
+      <PageHeader
+        title="Nexus home"
+        description="Orchestrate trusted AI sessions, audit every decision, and keep tabs on telemetry in one Spurs-inspired hub."
+      />
 
-      <section aria-labelledby="quick-actions">
-        <div className="flex items-center justify-between gap-4">
-          <h2 id="quick-actions" className="text-lg font-semibold text-ink">
-            Quick actions
-          </h2>
-          <p className="text-xs text-muted">Optimized for <span className="text-trustBlue">sub-second</span> launch.</p>
-        </div>
+      <section>
+        <h2 className="text-lg font-semibold text-ink">Quick actions</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {quickActions.map((action) => (
+          {QUICK_ACTIONS.map((action) => (
             <motion.button
-              key={action.title}
+              key={action.label}
               type="button"
-              onClick={action.onClick}
+              onClick={() => navigate(action.to)}
               whileHover={{ y: -4 }}
-              whileFocus={{ y: -2 }}
-              className="flex h-full flex-col gap-4 rounded-2xl border border-app bg-panel p-5 text-left text-muted shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              className="flex h-full flex-col gap-4 rounded-3xl border border-app bg-panel p-5 text-left text-muted shadow-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             >
-              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${action.accent}`}>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-trustBlue/10 text-trustBlue">
                 {action.icon}
               </span>
               <div>
-                <p className="text-base font-semibold text-ink">{action.title}</p>
+                <p className="text-base font-semibold text-ink">{action.label}</p>
                 <p className="mt-2 text-sm text-muted">{action.description}</p>
               </div>
             </motion.button>
@@ -151,76 +75,113 @@ export default function Home() {
         </div>
       </section>
 
-      <section aria-labelledby="draft-guardrail" className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <div className="rounded-3xl border border-app bg-panel p-6 shadow-lg">
-          <h2 id="draft-guardrail" className="text-lg font-semibold text-ink">
-            Offline draft
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            Capture guardrail ideas offline. We sync locally in your browser so nothing gets lost.
-          </p>
-          <label htmlFor="draft" className="sr-only">
-            Draft guardrail notes
-          </label>
-          <textarea
-            id="draft"
-            name="draft"
-            rows={6}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            className="mt-4 w-full resize-none rounded-2xl border border-app bg-panel p-4 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
-            placeholder="Outline the guardrails, evaluation data, or follow-ups you want to track."
-          />
-          <p className="mt-3 text-xs text-muted">Autosaved locally – clear anytime via browser storage.</p>
-        </div>
-        <div className="rounded-3xl border border-app bg-panel p-6 shadow-lg">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-ink">Recent projects</h2>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="space-y-4 rounded-3xl border border-app bg-panel p-6 shadow-xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-ink">Last 5 sessions</h2>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-app px-3 py-1 text-xs font-medium text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => setPage((prev) => prev + 1)}
-              disabled={loading}
+              onClick={() => navigate("/sessions")}
+              className="text-xs font-semibold text-trustBlue underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
             >
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-              Load more
+              View all
             </button>
           </div>
-          <div className="mt-4 space-y-4" aria-live="polite">
-            {projects.map((project) => (
-              <motion.article
-                key={project.id}
-                layout
-                className="rounded-2xl border border-app bg-panel p-4 shadow"
-              >
-                <p className="text-sm font-semibold text-ink">{project.title}</p>
-                <p className="mt-2 text-xs text-muted">{project.description}</p>
-                <p className="mt-3 text-xs text-muted">Updated {project.updatedAt}</p>
-              </motion.article>
-            ))}
-            {loading
-              ? skeletonCards.map((_, index) => (
-                  <div key={`skeleton-${index.toString()}`} className="animate-pulse rounded-2xl border border-app/40 bg-app px-4 py-4">
-                    <div className="h-4 w-1/3 rounded bg-app-text/20" />
-                    <div className="mt-3 h-3 w-2/3 rounded bg-app-text/10" />
-                    <div className="mt-3 h-3 w-1/2 rounded bg-app-text/10" />
+          {sessionsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-16" />
+              ))}
+            </div>
+          ) : lastFive.length ? (
+            <ul className="space-y-3">
+              {lastFive.map((session) => (
+                <li key={session.id} className="rounded-2xl border border-app bg-app/60 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{session.title}</p>
+                      <p className="mt-1 text-xs text-muted">{session.preview ?? "Trusted debate ready to resume."}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/chat/${session.id}`)}
+                      className="inline-flex items-center gap-2 rounded-full border border-trustBlue/50 px-3 py-1.5 text-xs font-semibold text-trustBlue transition hover:bg-trustBlue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+                    >
+                      Resume
+                    </button>
                   </div>
-                ))
-              : null}
-            {!loading && projects.length === 0 ? (
-              <div className="flex items-center justify-center rounded-2xl border border-app bg-panel p-6 text-sm text-muted">
-                No projects yet. Quick actions above can help you create your first timeline.
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              title="No sessions yet"
+              description="Launch your first debate to see it here."
+              action={
+                <button
+                  type="button"
+                  onClick={() => navigate("/chat")}
+                  className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white shadow-lg"
+                >
+                  Start session
+                </button>
+              }
+            />
+          )}
+        </div>
+
+        <div className="grid gap-6">
+          <div className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-ink">Projects snapshot</h2>
+            {projectsLoading ? (
+              <Skeleton className="mt-4 h-32" />
+            ) : projects.length ? (
+              <div className="mt-4 space-y-3 text-sm text-muted">
+                {projects.map((project) => (
+                  <div key={project.id} className="flex items-center justify-between rounded-2xl border border-app bg-app/50 px-4 py-3">
+                    <div>
+                      <p className="font-semibold text-ink">{project.name}</p>
+                      <p className="text-xs text-muted">{project.sessionsCount} sessions · {project.activeCount} active</p>
+                    </div>
+                    <span className="text-xs text-muted">Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                ))}
               </div>
-            ) : null}
+            ) : (
+              <EmptyState
+                title="No projects"
+                description="Organize sessions into shared workstreams to populate this view."
+              />
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-ink">Usage today</h2>
+            {sessionsLoading ? (
+              <Skeleton className="mt-4 h-32" />
+            ) : (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-app bg-app/60 p-4 text-center">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted">Sessions</p>
+                  <p className="mt-2 text-2xl font-semibold text-ink">{sessions.length}</p>
+                </div>
+                <div className="rounded-2xl border border-app bg-app/60 p-4 text-center">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted">Messages</p>
+                  <p className="mt-2 text-2xl font-semibold text-ink">{totalMessages}</p>
+                </div>
+                <div className="rounded-2xl border border-app bg-app/60 p-4 text-center">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted">Providers</p>
+                  <p className="mt-2 text-2xl font-semibold text-ink">
+                    {Array.from(new Set(sessions.flatMap((session) => session.providers))).length}
+                  </p>
+                </div>
+              </div>
+            )}
+            <p className="mt-4 flex items-center gap-2 text-xs text-muted">
+              <Activity className="h-4 w-4" aria-hidden="true" /> Numbers refresh automatically from the Nexus telemetry mock API.
+            </p>
           </div>
         </div>
-      </section>
-
-      <section className="rounded-3xl border border-app bg-panel p-6 text-muted shadow-2xl">
-        <h2 className="text-lg font-semibold text-ink">Telemetry snapshot</h2>
-        <p className="mt-3 text-sm">
-          Nexus.ai tracks consensus strength, dissent ratios, and flagged content in real time. Hook your analytics pipeline into the telemetry endpoint to enrich governance dashboards.
-        </p>
       </section>
     </div>
   );

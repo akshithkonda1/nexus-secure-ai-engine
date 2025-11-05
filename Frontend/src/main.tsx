@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "@/App";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
+import { Toaster } from "@/shared/ui/components/toast";
 import { registerServiceWorker } from "@/serviceWorker";
 import "@/index.css";
 
@@ -14,6 +15,7 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ThemeProvider>
       <App />
+      <Toaster />
     </ThemeProvider>
   </React.StrictMode>,
 );
