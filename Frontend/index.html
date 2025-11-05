@@ -77,6 +77,29 @@
     </script>
   </head>
 
+  <script>
+  (function () {
+    try {
+      var saved = localStorage.getItem("theme") || "system";
+      var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var resolved = saved === "dark" || (saved === "system" && prefersDark) ? "dark" : "light";
+      document.documentElement.classList.toggle("dark", resolved === "dark");
+      document.documentElement.dataset.theme = resolved;
+      window.__setTheme = function (t) {
+        // lazy loaded modules can call this before React mounts
+        var wants = t || "system";
+        localStorage.setItem("theme", wants);
+        var preferDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var res = wants === "dark" || (wants === "system" && preferDark) ? "dark" : "light";
+        document.documentElement.classList.toggle("dark", res === "dark");
+        document.documentElement.dataset.theme = res;
+        window.dispatchEvent(new CustomEvent("themechange", { detail: { choice: wants, resolved: res } }));
+      };
+    } catch (_) {}
+  })();
+</script>
+
+
   <body class="bg-app text-ink min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
