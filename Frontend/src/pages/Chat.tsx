@@ -111,7 +111,7 @@ export function ChatPage() {
       id: uid(),
       role: "system",
       ts: Date.now(),
-      text: "Nexus is online. Ask anything — I verify from **3+ sources**. Attach files or speak.",
+      text: "Nexus is online. Ask anything — I verify from 3+ sources. Attach files or tell me what you need.",
     },
   ]);
   const [input, setInput] = React.useState("");
