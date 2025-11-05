@@ -1,328 +1,370 @@
-// Frontend/src/features/chat/ChatPage.tsx
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { Send, Paperclip, X, Loader2 } from "lucide-react";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useChatSession } from "./hooks/useChatSession";
-import { MessageBubble } from "./components/MessageBubble";
-import { TypingIndicator } from "./components/TypingIndicator";
-import { AttachmentChip } from "./components/AttachmentChip";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import type { Attachment, Message } from "./types";
+// src/pages/ChatPage.tsx
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, Paperclip, Send, X, Copy, Check, ChevronDown } from "lucide-react";
 
-const MAX_INPUT_LENGTH = 4000;
-const MAX_ATTACHMENTS = 5;
+/* ─────────────────────────────
+   Types & helpers
+   ───────────────────────────── */
+type Role = "user" | "assistant" | "system";
+type Msg = { id: string; role: Role; text: string; ts: number };
+type Attach = {
+  id: string;
+  file: File;
+  name: string;
+  type: string;
+  size: number;
+  previewUrl?: string;
+};
 
-export default function ChatPage() {
-  const { id } = useParams<{ id?: string }>();
-  const sessionId = id || "new";
+const uid = () => Math.random().toString(36).slice(2);
+const isImage = (t: string) => /^image\//.test(t);
+const fmtTime = (t: number) =>
+  new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(t);
 
-  // Chat state management
-  const { messages, isConnected, isTyping, error, sendMessage, reconnect } = 
-    useChatSession(sessionId);
+/* ─────────────────────────────
+   Typing dots (animated)
+   ───────────────────────────── */
+function TypingDots() {
+  const dot = {
+    initial: { y: 0, opacity: 0.5 },
+    animate: (i: number) => ({
+      y: [-2, 0, -2],
+      opacity: [0.5, 1, 0.5],
+      transition: { duration: 1, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" },
+    }),
+  };
+  return (
+    <div className="flex items-center gap-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          custom={i}
+          variants={dot}
+          initial="initial"
+          animate="animate"
+          className="block h-1.5 w-1.5 rounded-full bg-ink/70"
+        />
+      ))}
+    </div>
+  );
+}
 
-  // Input state
-  const [input, setInput] = useState("");
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  
-  // Refs
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
+/* ─────────────────────────────
+   Message bubble (iMessage vibe)
+   ───────────────────────────── */
+function MessageBubble({ m }: { m: Msg }) {
+  const mine = m.role === "user";
+  const [copied, setCopied] = React.useState(false);
 
-  // Virtualization for performance with many messages
-  const virtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 100, // Estimated message height
-    overscan: 5,
-  });
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    textarea.style.height = "0px";
-    const scrollHeight = textarea.scrollHeight;
-    textarea.style.height = Math.min(scrollHeight, 160) + "px";
-  }, [input]);
-
-  // Auto-scroll to bottom when new messages arrive (if user is near bottom)
-  useEffect(() => {
-    if (isAtBottom && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages, isAtBottom]);
-
-  // Track scroll position
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const nearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setIsAtBottom(nearBottom);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Handle file selection
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files) return;
-    
-    const newAttachments: Attachment[] = [];
-    
-    for (let i = 0; i < files.length && attachments.length + newAttachments.length < MAX_ATTACHMENTS; i++) {
-      const file = files[i];
-      
-      // Validate file
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        console.warn(`File ${file.name} exceeds 10MB limit`);
-        continue;
-      }
-      
-      newAttachments.push({
-        id: crypto.randomUUID(),
-        file,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        previewUrl: file.type.startsWith("image/") 
-          ? URL.createObjectURL(file) 
-          : undefined,
-      });
-    }
-    
-    setAttachments((prev) => [...prev, ...newAttachments]);
+  const copy = async () => {
+    await navigator.clipboard.writeText(m.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 900);
   };
 
-  // Remove attachment
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 380, damping: 30, mass: 0.6 }}
+      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+      aria-live="polite"
+    >
+      <div
+        className={[
+          "relative max-w-[78ch] whitespace-pre-wrap leading-relaxed text-[15px]",
+          "px-4 py-2.5 rounded-2xl shadow-lg",
+          mine
+            ? "bg-gradient-to-br from-trustBlue to-blue-600 text-white rounded-tr-none"
+            : "bg-app/60 text-ink rounded-tl-none border border-white/10 backdrop-blur",
+        ].join(" ")}
+      >
+        {m.text}
+
+        <div
+          className={`mt-1.5 text-[10px] tracking-wide ${mine ? "text-white/70" : "text-ink/50"}`}
+          aria-hidden="true"
+        >
+          {fmtTime(m.ts)}
+        </div>
+
+        <button
+          onClick={copy}
+          className={`absolute -bottom-3 ${mine ? "right-2" : "left-2"} grid h-7 w-7 place-items-center rounded-full
+                     bg-black/10 dark:bg-white/15 backdrop-blur border border-black/10 dark:border-white/20
+                     opacity-0 hover:opacity-100 transition`}
+          aria-label="Copy message"
+          title="Copy"
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────
+   Attachment chip
+   ───────────────────────────── */
+function AttachmentChip({ a, onRemove }: { a: Attach; onRemove: (id: string) => void }) {
+  return (
+    <motion.div
+      layout
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="flex items-center gap-2 rounded-full bg-app/50 backdrop-blur px-3 py-1.5 text-xs text-ink border border-white/10"
+    >
+      {isImage(a.type) && a.previewUrl ? (
+        <img
+          src={a.previewUrl}
+          alt=""
+          className="h-5 w-5 rounded-full object-cover ring-1 ring-white/20"
+        />
+      ) : (
+        <Paperclip className="h-3.5 w-3.5" />
+      )}
+      <span className="max-w-40 truncate font-medium">{a.name}</span>
+      <button
+        onClick={() => onRemove(a.id)}
+        className="p-1 text-ink/70 hover:text-ink"
+        aria-label="Remove attachment"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </motion.div>
+  );
+}
+
+/* ─────────────────────────────
+   Auto-grow textarea
+   ───────────────────────────── */
+function useAutogrow(ref: React.RefObject<HTMLTextAreaElement>, value: string) {
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = Math.min(160, el.scrollHeight) + "px";
+  }, [value]);
+}
+
+/* ─────────────────────────────
+   Main ChatPage (no top bar)
+   ───────────────────────────── */
+export function ChatPage() {
+  const [messages, setMessages] = React.useState<Msg[]>([
+    {
+      id: uid(),
+      role: "system",
+      ts: Date.now(),
+      text: "Welcome to **Chat**. Ask anything.\n\nEvidence. Synthesis. Less noise.",
+    },
+  ]);
+  const [input, setInput] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [attachments, setAttachments] = React.useState<Attach[]>([]);
+  const taRef = React.useRef<HTMLTextAreaElement>(null);
+  const fileRef = React.useRef<HTMLInputElement | null>(null);
+  const endRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  const [atBottom, setAtBottom] = React.useState(true);
+  useAutogrow(taRef, input);
+
+  // Keep iMessage feel but in your theme
+  React.useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const onScroll = () => {
+      const nearBottom =
+        scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 40;
+      setAtBottom(nearBottom);
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToBottom = () => endRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  React.useEffect(() => {
+    if (atBottom) scrollToBottom();
+  }, [messages, busy, atBottom]);
+
+  // accept external "nexus:attach" for continuity
+  React.useEffect(() => {
+    const onAttach = (e: Event) => {
+      const files = (e as CustomEvent<FileList>).detail;
+      if (files) addFiles(files);
+    };
+    window.addEventListener("nexus:attach", onAttach as EventListener);
+    return () => window.removeEventListener("nexus:attach", onAttach as EventListener);
+  }, []);
+
+  const addFiles = (files: FileList) => {
+    Array.from(files).forEach((f) => {
+      const attach: Attach = {
+        id: uid(),
+        file: f,
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        previewUrl: isImage(f.type) ? URL.createObjectURL(f) : undefined,
+      };
+      setAttachments((p) => [...p, attach]);
+    });
+  };
+
   const removeAttachment = (id: string) => {
     setAttachments((prev) => {
-      const attachment = prev.find((a) => a.id === id);
-      if (attachment?.previewUrl) {
-        URL.revokeObjectURL(attachment.previewUrl);
-      }
+      const rm = prev.find((a) => a.id === id);
+      if (rm?.previewUrl) URL.revokeObjectURL(rm.previewUrl);
       return prev.filter((a) => a.id !== id);
     });
   };
 
-  // Send message
-  const handleSend = async () => {
-    const trimmedInput = input.trim();
-    
-    if (!trimmedInput && attachments.length === 0) return;
-    if (!isConnected) return;
+  const send = async () => {
+    const text = input.trim();
+    if (!text && !attachments.length) return;
 
-    try {
-      await sendMessage({
-        text: trimmedInput,
-        attachments: attachments.map((a) => a.file),
-      });
+    const userMsg: Msg = { id: uid(), role: "user", text: text || "(Attachment)", ts: Date.now() };
+    setMessages((m) => [...m, userMsg]);
+    setInput("");
+    setAttachments([]);
+    setBusy(true);
 
-      // Clear input and attachments
-      setInput("");
-      setAttachments((prev) => {
-        prev.forEach((a) => {
-          if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-        });
-        return [];
-      });
-
-      // Focus textarea
-      textareaRef.current?.focus();
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
+    // demo reply
+    await new Promise((r) => setTimeout(r, 700));
+    const reply: Msg = {
+      id: uid(),
+      role: "assistant",
+      ts: Date.now(),
+      text: `**Consensus**\n\n> ${text || "Files received"}\n\nVerified by 3 sources.`,
+    };
+    setMessages((m) => [...m, reply]);
+    setBusy(false);
   };
-
-  // Handle keyboard shortcuts
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  // Disable send button logic
-  const canSend = isConnected && (input.trim().length > 0 || attachments.length > 0);
 
   return (
     <div className="flex h-screen flex-col bg-app text-ink">
-      {/* Error banner */}
-      {error && (
-        <ErrorBanner
-          message={error}
-          onDismiss={() => reconnect()}
-          action={{ label: "Reconnect", onClick: reconnect }}
-        />
-      )}
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-2xl space-y-3 sm:space-y-4">
+          <AnimatePresence initial={false}>
+            {messages.map((m) => (
+              <MessageBubble key={m.id} m={m} />
+            ))}
 
-      {/* Connection status */}
-      {!isConnected && !error && (
-        <div className="flex items-center justify-center gap-2 border-b border-app bg-yellow-500/10 px-4 py-2 text-sm text-yellow-700 dark:text-yellow-300">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Connecting to Nexus...
-        </div>
-      )}
-
-      {/* Messages area */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
-      >
-        <div className="mx-auto max-w-3xl">
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const message = messages[virtualItem.index];
-              return (
-                <div
-                  key={message.id}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    transform: `translateY(${virtualItem.start}px)`,
-                  }}
-                >
-                  <MessageBubble message={message} />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Typing indicator */}
-          <AnimatePresence>
-            {isTyping && (
+            {busy && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 className="flex justify-start"
               >
-                <TypingIndicator />
+                <div className="flex items-center gap-2 rounded-2xl bg-app/60 border border-white/10 px-4 py-2.5 backdrop-blur">
+                  <TypingDots />
+                  <span className="text-sm text-ink/70">Typing…</span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          <div ref={endRef} />
         </div>
+
+        {/* scroll-to-latest when the user is reading history */}
+        {!atBottom && (
+          <button
+            onClick={scrollToBottom}
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 rounded-full bg-panel/90 border border-white/10 backdrop-blur px-3 py-1 text-xs text-ink shadow hover:shadow-lg transition"
+          >
+            <span className="inline-flex items-center gap-1">
+              <ChevronDown className="h-4 w-4" /> New messages
+            </span>
+          </button>
+        )}
       </div>
 
-      {/* Scroll to bottom button */}
-      {!isAtBottom && (
-        <button
-          onClick={() => {
-            scrollContainerRef.current?.scrollTo({
-              top: scrollContainerRef.current.scrollHeight,
-              behavior: "smooth",
-            });
-          }}
-          className="fixed bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-app bg-panel px-4 py-2 text-sm shadow-lg transition hover:shadow-xl"
-        >
-          ↓ New messages
-        </button>
-      )}
-
       {/* Composer */}
-      <div className="border-t border-app bg-panel/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
-          {/* Attachments */}
+      <div className="border-t border-white/10 bg-app/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-2xl px-4 py-3 sm:px-6">
+          {/* attachments row */}
           <AnimatePresence>
             {attachments.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="mb-2 flex flex-wrap gap-2 overflow-hidden"
-              >
-                {attachments.map((attachment) => (
-                  <AttachmentChip
-                    key={attachment.id}
-                    attachment={attachment}
-                    onRemove={removeAttachment}
-                  />
+              <motion.div layout className="mb-2.5 flex flex-wrap gap-2">
+                {attachments.map((a) => (
+                  <AttachmentChip key={a.id} a={a} onRemove={removeAttachment} />
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Input row */}
           <div className="flex items-end gap-2">
-            {/* File input (hidden) */}
+            {/* hidden file input */}
             <input
-              ref={fileInputRef}
+              ref={fileRef}
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
               className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files)}
+              onChange={(e) => {
+                if (e.target.files) addFiles(e.target.files);
+                if (fileRef.current) fileRef.current.value = "";
+              }}
             />
 
-            {/* Attach button */}
+            {/* attach */}
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={attachments.length >= MAX_ATTACHMENTS}
-              className="grid h-10 w-10 place-items-center rounded-full bg-app text-muted transition hover:bg-app/80 hover:text-ink disabled:opacity-50"
+              onClick={() => fileRef.current?.click()}
+              className="grid h-10 w-10 place-items-center rounded-full bg-panel/80 border border-white/10 text-ink/70 hover:text-ink hover:bg-panel transition"
               aria-label="Attach files"
             >
               <Paperclip className="h-5 w-5" />
             </button>
 
-            {/* Text input */}
+            {/* text input (pill) */}
             <div className="relative flex-1">
               <textarea
-                ref={textareaRef}
+                ref={taRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
-                onKeyDown={handleKeyDown}
-                placeholder="Message Nexus..."
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                placeholder="Message…"
                 rows={1}
-                className="w-full resize-none rounded-2xl border border-app bg-app px-4 py-3 pr-16 text-sm text-ink outline-none placeholder:text-muted focus:border-trustBlue/50 focus:ring-2 focus:ring-trustBlue/20"
+                className="w-full resize-none rounded-full bg-white text-black dark:bg-white/10 dark:text-ink placeholder:text-black/40 dark:placeholder:text-ink/50 px-4 py-2.5 pr-12 border border-black/10 dark:border-white/15 outline-none focus:ring-4 focus:ring-trustBlue/25"
               />
-              <div className="pointer-events-none absolute bottom-2 right-3 text-xs text-muted">
-                {input.length > MAX_INPUT_LENGTH * 0.9 && 
-                  `${input.length}/${MAX_INPUT_LENGTH}`
-                }
+              <div className="pointer-events-none absolute right-3 bottom-2 text-[10px] uppercase tracking-widest text-black/40 dark:text-ink/40">
+                ⌘/Ctrl+Enter
               </div>
             </div>
 
-            {/* Send button */}
+            {/* voice */}
+            <button
+              className="grid h-10 w-10 place-items-center rounded-full bg-panel/80 border border-white/10 text-ink/70 hover:text-ink hover:bg-panel transition"
+              aria-label="Voice"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+
+            {/* send */}
             <motion.button
-              type="button"
-              onClick={handleSend}
-              disabled={!canSend}
-              whileHover={canSend ? { scale: 1.05 } : {}}
-              whileTap={canSend ? { scale: 0.95 } : {}}
-              className="grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Send message"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={send}
+              disabled={busy || (!input.trim() && !attachments.length)}
+              className="grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg shadow-trustBlue/20 transition disabled:opacity-50"
+              aria-label="Send"
             >
               <Send className="h-5 w-5" />
             </motion.button>
           </div>
-
-          {/* Helper text */}
-          <p className="mt-2 text-center text-xs text-muted">
-            <kbd className="rounded bg-app px-1.5 py-0.5 font-mono text-xs">⌘</kbd> +{" "}
-            <kbd className="rounded bg-app px-1.5 py-0.5 font-mono text-xs">Enter</kbd> to send
-          </p>
         </div>
       </div>
     </div>
   );
 }
+
+export default ChatPage;
