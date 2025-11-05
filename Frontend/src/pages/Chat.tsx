@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Paperclip, Mic, Send, Sparkles, Loader2, ChevronDown } from "lucide-react";
+import BetaBanner from "@/components/BetaBanner";
 
 /** ─────────────────────────────────────────────
  * Minimal in-memory chat model (stub your engine)
@@ -146,14 +147,7 @@ function Composer({
  * Chat Page (ChatGPT-like)
  * ───────────────────────────────────────────── */
 export default function ChatPage() {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      id: "sys-hello",
-      role: "system",
-      text:
-        "BETA — Your queries help improve Nexus. We orchestrate a debate between models, verify with the web, and synthesize a consensus you can trust.",
-    },
-  ]);
+  const [msgs, setMsgs] = useState<Msg[]>([]); // banner replaces old system message
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -251,8 +245,13 @@ export default function ChatPage() {
       onPaste={onPaste}
     >
       <div className="mx-auto flex h-full max-w-3xl flex-col">
+        {/* Beta banner */}
+        <div className="px-4 pt-4">
+          <BetaBanner />
+        </div>
+
         {/* Messages */}
-        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
           <div className="space-y-4">
             {msgs.map((m) => (
               <MessageBubble key={m.id} m={m} />
