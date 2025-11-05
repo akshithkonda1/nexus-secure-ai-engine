@@ -17,10 +17,25 @@ type Attach = {
   previewUrl?: string;
 };
 
-const uid = () => Math.random().toString(36).slice(2);
+const MAX_INPUT_LENGTH = 4000;
+const MAX_ATTACHMENTS = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const nid = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
+
 const isImage = (t: string) => /^image\//.test(t);
 const fmtTime = (t: number) =>
   new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(t);
+
+// typed custom event for external drop-ins
+declare global {
+  interface WindowEventMap {
+    "nexus:attach": CustomEvent<FileList>;
+  }
+}
 
 /* ─────────────────────────────
    Typing dots (animated)
@@ -58,9 +73,13 @@ function MessageBubble({ m }: { m: Msg }) {
   const [copied, setCopied] = React.useState(false);
 
   const copy = async () => {
-    await navigator.clipboard.writeText(m.text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 900);
+    try {
+      await navigator.clipboard.writeText(m.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 900);
+    } catch {
+      // no-op: clipboard denied
+    }
   };
 
   return (
@@ -129,7 +148,7 @@ function AttachmentChip({ a, onRemove }: { a: Attach; onRemove: (id: string) => 
       <button
         onClick={() => onRemove(a.id)}
         className="p-1 text-ink/70 hover:text-ink"
-        aria-label="Remove attachment"
+        aria-label={`Remove ${a.name}`}
       >
         <X className="h-3 w-3" />
       </button>
@@ -150,17 +169,20 @@ function useAutogrow(ref: React.RefObject<HTMLTextAreaElement>, value: string) {
 }
 
 /* ─────────────────────────────
-   Main ChatPage (no top bar)
+   Main ChatPage
    ───────────────────────────── */
 export function ChatPage() {
-  const [messages, setMessages] = React.useState<Msg[]>([
+  const [messages, setMessages] = React.useState<Msg[]>(() => [
     {
-      id: uid(),
+      id: nid(),
       role: "system",
       ts: Date.now(),
-      text: "Welcome to Nexus. I have indeed been loaded and am ready to answer anything.\n\n 
-         "The way I do this is I take AI Models and I take your question and I have them all debate it all while in the background I am looking for other sources on the web just in case." 
-         "Pure Synthesis. Less noise, More Information.",
+      text: [
+        "Welcome to Nexus. I’m loaded and ready to help.",
+        "",
+        "I orchestrate multiple AI models to debate your question while verifying with web sources in the background.",
+        "Pure synthesis: less noise, more information.",
+      ].join("\n"),
     },
   ]);
   const [input, setInput] = React.useState("");
@@ -173,7 +195,7 @@ export function ChatPage() {
   const [atBottom, setAtBottom] = React.useState(true);
   useAutogrow(taRef, input);
 
-  // Keep iMessage feel but in your theme
+  // scroll state
   React.useEffect(() => {
     const scroller = scrollRef.current;
     if (!scroller) return;
@@ -192,28 +214,44 @@ export function ChatPage() {
     if (atBottom) scrollToBottom();
   }, [messages, busy, atBottom]);
 
-  // accept external "nexus:attach" for continuity
+  // external attach support
   React.useEffect(() => {
-    const onAttach = (e: Event) => {
-      const files = (e as CustomEvent<FileList>).detail;
+    const onAttach = (e: WindowEventMap["nexus:attach"]) => {
+      const files = e.detail;
       if (files) addFiles(files);
     };
     window.addEventListener("nexus:attach", onAttach as EventListener);
     return () => window.removeEventListener("nexus:attach", onAttach as EventListener);
   }, []);
 
+  // revoke object URLs on unmount
+  React.useEffect(() => {
+    return () => {
+      attachments.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const addFiles = (files: FileList) => {
-    Array.from(files).forEach((f) => {
-      const attach: Attach = {
-        id: uid(),
+    const remaining = MAX_ATTACHMENTS - attachments.length;
+    const slice = Array.from(files).slice(0, Math.max(0, remaining));
+
+    const next: Attach[] = [];
+    for (const f of slice) {
+      if (f.size > MAX_FILE_SIZE) {
+        console.warn(`File ${f.name} exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`);
+        continue;
+      }
+      next.push({
+        id: nid(),
         file: f,
         name: f.name,
         type: f.type,
         size: f.size,
         previewUrl: isImage(f.type) ? URL.createObjectURL(f) : undefined,
-      };
-      setAttachments((p) => [...p, attach]);
-    });
+      });
+    }
+    if (next.length) setAttachments((p) => [...p, ...next]);
   };
 
   const removeAttachment = (id: string) => {
@@ -227,29 +265,46 @@ export function ChatPage() {
   const send = async () => {
     const text = input.trim();
     if (!text && !attachments.length) return;
+    if (busy) return;
 
-    const userMsg: Msg = { id: uid(), role: "user", text: text || "(Attachment)", ts: Date.now() };
+    const userMsg: Msg = {
+      id: nid(),
+      role: "user",
+      text: text || "(Attachment)",
+      ts: Date.now(),
+    };
     setMessages((m) => [...m, userMsg]);
+
+    // clear input+attachments safely
     setInput("");
-    setAttachments([]);
+    setAttachments((prev) => {
+      prev.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return [];
+    });
     setBusy(true);
 
-    // demo reply
+    // TODO: replace this demo reply with your real send → server → stream pipeline
     await new Promise((r) => setTimeout(r, 700));
     const reply: Msg = {
-      id: uid(),
+      id: nid(),
       role: "assistant",
       ts: Date.now(),
-      text: `**Consensus**\n\n> ${text || "Files received"}\n\nVerified by 3 sources.`,
+      text: `Consensus\n\n> ${text || "Files received"}\n\nVerified by 3 sources.`,
     };
     setMessages((m) => [...m, reply]);
     setBusy(false);
   };
 
+  const canSend = !busy && (input.trim().length > 0 || attachments.length > 0);
+
   return (
     <div className="flex h-screen flex-col bg-app text-ink">
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
+        aria-busy={busy}
+      >
         <div className="mx-auto max-w-2xl space-y-3 sm:space-y-4">
           <AnimatePresence initial={false}>
             {messages.map((m) => (
@@ -318,6 +373,7 @@ export function ChatPage() {
               onClick={() => fileRef.current?.click()}
               className="grid h-10 w-10 place-items-center rounded-full bg-panel/80 border border-white/10 text-ink/70 hover:text-ink hover:bg-panel transition"
               aria-label="Attach files"
+              disabled={attachments.length >= MAX_ATTACHMENTS}
             >
               <Paperclip className="h-5 w-5" />
             </button>
@@ -327,15 +383,16 @@ export function ChatPage() {
               <textarea
                 ref={taRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
                 onKeyDown={(e) => {
                   if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                     e.preventDefault();
-                    send();
+                    if (canSend) send();
                   }
                 }}
                 placeholder="Message…"
                 rows={1}
+                aria-label="Message input"
                 className="w-full resize-none rounded-full bg-white text-black dark:bg-white/10 dark:text-ink placeholder:text-black/40 dark:placeholder:text-ink/50 px-4 py-2.5 pr-12 border border-black/10 dark:border-white/15 outline-none focus:ring-4 focus:ring-trustBlue/25"
               />
               <div className="pointer-events-none absolute right-3 bottom-2 text-[10px] uppercase tracking-widest text-black/40 dark:text-ink/40">
@@ -343,26 +400,35 @@ export function ChatPage() {
               </div>
             </div>
 
-            {/* voice */}
+            {/* voice (stubbed) */}
             <button
               className="grid h-10 w-10 place-items-center rounded-full bg-panel/80 border border-white/10 text-ink/70 hover:text-ink hover:bg-panel transition"
-              aria-label="Voice"
+              aria-label="Voice (coming soon)"
+              disabled
+              title="Coming soon"
             >
               <Mic className="h-5 w-5" />
             </button>
 
             {/* send */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={canSend ? { scale: 1.05 } : {}}
+              whileTap={canSend ? { scale: 0.95 } : {}}
               onClick={send}
-              disabled={busy || (!input.trim() && !attachments.length)}
+              disabled={!canSend}
               className="grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg shadow-trustBlue/20 transition disabled:opacity-50"
               aria-label="Send"
             >
               <Send className="h-5 w-5" />
             </motion.button>
           </div>
+
+          {/* character counter near limit */}
+          {input.length > MAX_INPUT_LENGTH * 0.9 && (
+            <p className="mt-1 text-right text-[11px] text-ink/50">
+              {input.length}/{MAX_INPUT_LENGTH}
+            </p>
+          )}
         </div>
       </div>
     </div>
