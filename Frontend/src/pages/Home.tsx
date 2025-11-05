@@ -48,8 +48,8 @@ export default function Home() {
   return (
     <div className="space-y-10">
       <PageHeader
-        title="Nexus home"
-        description="Orchestrate trusted AI sessions, audit every decision, and keep tabs on telemetry in one Spurs-inspired hub."
+        title=" Welcome to Nexus.ai"
+        description="Orchestrate trusted AI Debate sessions, audit every decision, and keep tabs on telemetry in one place."
       />
 
       <section>
