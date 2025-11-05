@@ -1,35 +1,47 @@
-/* Frontend/src/index.css */
+/* src/index.css */
 
-/* Tailwind v3 layers */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 1. Import Tailwind v4 */
+@import "tailwindcss";
 
-/* ——— CSS variables for light + dark ——— */
-:root {
-  /* Light mode palette */
-  --app:   248 250 252; /* page bg (slate-50-ish)      */
-  --panel: 255 255 255; /* cards/panels (white)        */
-  --ink:    15  23  42; /* main text (slate-900)       */
-  --muted: 100 116 139; /* secondary text (slate-500)  */
+/* 2. Define design tokens */
+@theme {
+  /* ——— LIGHT MODE ——— */
+  --color-app:        oklch(0.97 0.01 262);   /* background */
+  --color-panel:      oklch(0.93 0.01 262);   /* surfaces */
+  --color-ink:        oklch(0.15 0.02 262);   /* text */
+  --color-muted:      oklch(0.55 0.015 262);  /* muted text */
+  --color-trustBlue:  #1E40AF;                /* brand accent */
+
+  --radius-card: 1rem;
+  --shadow-ambient: 0 4px 12px oklch(0 0 0 / 0.1);
 }
 
-html.dark {
-  /* Dark mode palette (your sleek look) */
-  --app:    11  15  20; /* #0b0f14 */
-  --panel:  17  22  28; /* #11161c */
-  --ink:   230 233 239; /* #e6e9ef */
-  --muted: 154 163 175; /* #9aa3af */
+/* 3. Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-app:        oklch(0.14 0.015 262);
+    --color-panel:      oklch(0.18 0.015 262);
+    --color-ink:        oklch(0.97 0.015 262);
+    --color-muted:      oklch(0.73 0.02 262);
+  }
 }
 
-/* Base */
+/* 4. Base layer */
 @layer base {
   html, body, #root { height: 100%; }
   body { @apply bg-app text-ink antialiased; }
 }
 
-/* Handy utilities that your components expect */
-@layer utilities {
-  .text-muted { color: rgb(var(--muted)); }
-  .bg-panel { background-color: rgb(var(--panel)); }
+/* 5. Utilities you rely on */
+@utility bg-panel {
+  background-color: var(--color-panel);
+}
+@utility text-muted {
+  color: var(--color-muted);
+}
+@utility ring-app {
+  --tw-ring-color: color-mix(in oklab, var(--color-panel), white 20%);
+}
+@utility border-app {
+  border-color: var(--color-panel);
 }
