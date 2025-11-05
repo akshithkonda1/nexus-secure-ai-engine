@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Paperclip, Mic, Send, Sparkles, Loader2, ChevronDown } from "lucide-react";
+import BetaBanner from "@/components/BetaBanner";
 
 /** ─────────────────────────────────────────────
  * Minimal in-memory chat model (stub your engine)
  * ───────────────────────────────────────────── */
 type Msg = { id: string; role: "user" | "assistant" | "system"; text: string };
 const demoReply = (q: string) =>
-  `Working on it… (fake reply)\n\nYou asked:\n> ${q}\n\nThis is where your debate/consensus response will render.`;
+  `Working on it… (fake reply)
+
+You asked:
+> ${q}
+
+This is where your debate/consensus response will render.`;
 
 /** ─────────────────────────────────────────────
  * Message bubble
@@ -146,14 +152,7 @@ function Composer({
  * Chat Page (ChatGPT-like)
  * ───────────────────────────────────────────── */
 export default function ChatPage() {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      id: "sys-hello",
-      role: "system",
-      text:
-        "BETA — Your queries help improve Nexus. We orchestrate a debate between models, verify with the web, and synthesize a consensus you can trust.",
-    },
-  ]);
+  const [msgs, setMsgs] = useState<Msg[]>([]); // banner replaces seed message
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -184,13 +183,15 @@ export default function ChatPage() {
   useEffect(() => {
     const onPrompt = (e: Event) => {
       const prompt = (e as CustomEvent<string>).detail;
-      if (typeof prompt === "string") setInput((prev) => (prev ? prev + "\n" : "") + prompt);
+      if (typeof prompt === "string") setInput((prev) => (prev ? prev + "
+" : "") + prompt);
     };
     const onAttach = (e: Event) => {
       const files = (e as CustomEvent<FileList>).detail;
       if (files?.length) {
         const names = Array.from(files).map((f) => f.name).join(", ");
-        setInput((v) => (v ? v + "\n" : "") + `Attached: ${names}`);
+        setInput((v) => (v ? v + "
+" : "") + `Attached: ${names}`);
       }
     };
     const onVoicePartial = (e: Event) => {
@@ -251,8 +252,13 @@ export default function ChatPage() {
       onPaste={onPaste}
     >
       <div className="mx-auto flex h-full max-w-3xl flex-col">
+        {/* Beta banner */}
+        <div className="px-4 pt-4">
+          <BetaBanner />
+        </div>
+
         {/* Messages */}
-        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
           <div className="space-y-4">
             {msgs.map((m) => (
               <MessageBubble key={m.id} m={m} />
