@@ -1,4 +1,4 @@
-// src/pages/ChatPage.tsx
+// Frontend/src/pages/ChatPage.tsx
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Paperclip, Send, X, Copy, Check, ChevronDown } from "lucide-react";
@@ -46,8 +46,8 @@ function TypingDots() {
     animate: (i: number) => ({
       y: [-2, 0, -2],
       opacity: [0.5, 1, 0.5],
-      transition: { duration: 1, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" },
-    }),
+      transition: { duration: 1, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }
+    })
   };
   return (
     <div className="flex items-center gap-1">
@@ -66,7 +66,7 @@ function TypingDots() {
 }
 
 /* ─────────────────────────────
-   Message bubble (iMessage vibe)
+   Message bubble
    ───────────────────────────── */
 function MessageBubble({ m }: { m: Msg }) {
   const mine = m.role === "user";
@@ -77,9 +77,7 @@ function MessageBubble({ m }: { m: Msg }) {
       await navigator.clipboard.writeText(m.text);
       setCopied(true);
       setTimeout(() => setCopied(false), 900);
-    } catch {
-      // no-op: clipboard denied
-    }
+    } catch {}
   };
 
   return (
@@ -97,18 +95,16 @@ function MessageBubble({ m }: { m: Msg }) {
           "px-4 py-2.5 rounded-2xl shadow-lg",
           mine
             ? "bg-gradient-to-br from-trustBlue to-blue-600 text-white rounded-tr-none"
-            : "bg-app/60 text-ink rounded-tl-none border border-white/10 backdrop-blur",
+            : "bg-app/60 text-ink rounded-tl-none border border-white/10 backdrop-blur"
         ].join(" ")}
       >
         {m.text}
-
         <div
           className={`mt-1.5 text-[10px] tracking-wide ${mine ? "text-white/70" : "text-ink/50"}`}
           aria-hidden="true"
         >
           {fmtTime(m.ts)}
         </div>
-
         <button
           onClick={copy}
           className={`absolute -bottom-3 ${mine ? "right-2" : "left-2"} grid h-7 w-7 place-items-center rounded-full
@@ -169,9 +165,9 @@ function useAutogrow(ref: React.RefObject<HTMLTextAreaElement>, value: string) {
 }
 
 /* ─────────────────────────────
-   Main ChatPage
+   ChatPage
    ───────────────────────────── */
-export function ChatPage() {
+export default function ChatPage() {
   const [messages, setMessages] = React.useState<Msg[]>(() => [
     {
       id: nid(),
@@ -181,9 +177,9 @@ export function ChatPage() {
         "Welcome to Nexus. I’m loaded and ready to help.",
         "",
         "I orchestrate multiple AI models to debate your question while verifying with web sources in the background.",
-        "Pure synthesis: less noise, more information.",
-      ].join("\n"),
-    },
+        "Pure synthesis: less noise, more information."
+      ].join("\n")
+    }
   ]);
   const [input, setInput] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -248,7 +244,7 @@ export function ChatPage() {
         name: f.name,
         type: f.type,
         size: f.size,
-        previewUrl: isImage(f.type) ? URL.createObjectURL(f) : undefined,
+        previewUrl: isImage(f.type) ? URL.createObjectURL(f) : undefined
       });
     }
     if (next.length) setAttachments((p) => [...p, ...next]);
@@ -271,7 +267,7 @@ export function ChatPage() {
       id: nid(),
       role: "user",
       text: text || "(Attachment)",
-      ts: Date.now(),
+      ts: Date.now()
     };
     setMessages((m) => [...m, userMsg]);
 
@@ -289,7 +285,7 @@ export function ChatPage() {
       id: nid(),
       role: "assistant",
       ts: Date.now(),
-      text: `Consensus\n\n> ${text || "Files received"}\n\nVerified by 3 sources.`,
+      text: `Consensus\n\n> ${text || "Files received"}\n\nVerified by 3 sources.`
     };
     setMessages((m) => [...m, reply]);
     setBusy(false);
@@ -393,7 +389,7 @@ export function ChatPage() {
                 placeholder="Message…"
                 rows={1}
                 aria-label="Message input"
-                className="w-full resize-none rounded-full bg-white text-black dark:bg-white/10 dark:text-ink placeholder:text-black/40 dark:placeholder:text-ink/50 px-4 py-2.5 pr-12 border border-black/10 dark:border-white/15 outline-none focus:ring-4 focus:ring-trustBlue/25"
+                className="w-full resize-none rounded-full bg-white text-black dark:bg.white/10 dark:text-ink placeholder:text-black/40 dark:placeholder:text-ink/50 px-4 py-2.5 pr-12 border border-black/10 dark:border-white/15 outline-none focus:ring-4 focus:ring-trustBlue/25"
               />
               <div className="pointer-events-none absolute right-3 bottom-2 text-[10px] uppercase tracking-widest text-black/40 dark:text-ink/40">
                 ⌘/Ctrl+Enter
@@ -434,5 +430,3 @@ export function ChatPage() {
     </div>
   );
 }
-
-export default ChatPage;
