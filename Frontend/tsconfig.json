@@ -13,11 +13,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "baseUrl": "./src",
-    "types": ["vite/client", "@types/node", "vitest"],
+
+    // 👇 Root is the repo, not /src
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["src/*"]
+    },
+
+    "types": ["vite/client", "@types/node", "vitest"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
