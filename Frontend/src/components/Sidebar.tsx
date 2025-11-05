@@ -1,5 +1,6 @@
-import { type ReactNode, useMemo, useState, useCallback, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+// src/components/Sidebar.tsx
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from "react";
+import { NavLink, Link } from "react-router-dom";
 import {
   MessageCircle,
   Folder,
@@ -14,8 +15,6 @@ import {
   X,
 } from "lucide-react";
 
-const navIconClasses = "h-5 w-5";
-
 type SidebarProps = {
   onNavigate?: () => void;
   variant: "desktop" | "mobile";
@@ -27,24 +26,33 @@ type NavItem = {
   icon: ReactNode;
 };
 
-const FEEDBACK_MAX = 20000;
+const navIconClasses = "h-5 w-5";
+const FEEDBACK_MAX = 20_000;
 
 export function Sidebar({ onNavigate, variant }: SidebarProps) {
+  // —————————————————————————————————
+  // Logo paths (work in dev/prod even with custom base)
+  // —————————————————————————————————
+  const PUBLIC_BASE = import.meta.env.BASE_URL || "/";
+  const LOGO_DARK = `${PUBLIC_BASE}assets/nexus-logo.png`;
+  const LOGO_LIGHT = `${PUBLIC_BASE}assets/nexus-logo-inverted.png`;
+
+  // —————————————————————————————————
   // Feedback modal state
+  // —————————————————————————————————
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const remaining = FEEDBACK_MAX - feedbackText.length;
 
-  // Lock page scroll when modal open (nice for mobile)
+  // Lock page scroll when modal is open (nice on mobile)
   useEffect(() => {
-    if (isFeedbackOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
+    if (!isFeedbackOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [isFeedbackOpen]);
 
   const openFeedback = useCallback(() => setIsFeedbackOpen(true), []);
@@ -56,13 +64,14 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
   const onSubmitFeedback = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
-      if (!feedbackText.trim() || feedbackText.length > FEEDBACK_MAX) return;
+      const text = feedbackText.trim();
+      if (!text || text.length > FEEDBACK_MAX) return;
 
       setSubmitting(true);
 
-      // Persist to localStorage as a stub (easy to swap for API later)
+      // Persist locally (easy to swap to API later)
       const bucketKey = "nexusUserFeedback";
-      const existing = (() => {
+      const existing: any[] = (() => {
         try {
           return JSON.parse(localStorage.getItem(bucketKey) || "[]");
         } catch {
@@ -72,7 +81,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
 
       const record = {
         id: crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
-        text: feedbackText.trim(),
+        text,
         createdAt: new Date().toISOString(),
         source: "Sidebar",
         variant,
@@ -81,10 +90,9 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
       try {
         localStorage.setItem(bucketKey, JSON.stringify([record, ...existing]));
       } catch {
-        // Swallow storage errors (quota, etc.)
+        // ignore storage quota errors
       }
 
-      // Simple UX: reset and close
       setFeedbackText("");
       setSubmitting(false);
       setIsFeedbackOpen(false);
@@ -92,6 +100,9 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
     [feedbackText, variant],
   );
 
+  // —————————————————————————————————
+  // Primary nav items
+  // —————————————————————————————————
   const items = useMemo<NavItem[]>(
     () => [
       { label: "Home", to: "/", icon: <HomeIcon className={navIconClasses} aria-hidden="true" /> },
@@ -106,53 +117,83 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
     [],
   );
 
+  // —————————————————————————————————
+  // UI
+  // —————————————————————————————————
   return (
     <>
       <aside
-        className={`flex h-full flex-col justify-between ${
-          variant === "desktop" ? "w-64 border-r border-app" : "w-full"
-        } bg-panel px-4 pb-6 pt-8 text-ink shadow-2xl backdrop-blur`}
+        className={[
+          "flex h-full flex-col justify-between bg-panel px-4 pb-6 pt-6 text-ink shadow-2xl backdrop-blur",
+          variant === "desktop" ? "w-64 border-r border-app" : "w-full",
+        ].join(" ")}
       >
-        <nav aria-label="Primary">
-          <ul className="space-y-2">
-            {items.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={({ isActive }) =>
-                    `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                      isActive
-                        ? "border border-trustBlue/60 bg-trustBlue/10 text-ink shadow-lg"
-                        : "text-muted hover:scale-105 hover:bg-panel hover:text-ink"
-                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg`
-                  }
-                  onClick={onNavigate}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                          isActive ? "bg-trustBlue/20 text-trustBlue" : "bg-panel text-trustBlue"
-                        }`}
-                      >
-                        {item.icon}
-                      </span>
-                      <span className="flex-1">{item.label}</span>
-                      {isActive ? (
-                        <span
-                          aria-hidden="true"
-                          className="absolute inset-x-3 -bottom-1 h-0.5 rounded-full bg-trustBlue"
-                        />
-                      ) : null}
-                    </>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* Top: Brand + Nav */}
+        <div>
+          {/* Brand / Logo (links Home) */}
+          <Link
+            to="/"
+            onClick={onNavigate}
+            aria-label="Go to Home"
+            className="mb-6 inline-flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+          >
+            {/* Dark mode: regular logo */}
+            <img
+              src={LOGO_DARK}
+              alt="Nexus"
+              className="hidden h-9 w-auto select-none dark:block"
+              draggable={false}
+            />
+            {/* Light mode: inverted logo */}
+            <img
+              src={LOGO_LIGHT}
+              alt="Nexus"
+              className="block h-9 w-auto select-none dark:hidden"
+              draggable={false}
+            />
+          </Link>
 
+          <nav aria-label="Primary">
+            <ul className="space-y-2">
+              {items.map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.to === "/"}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      [
+                        "group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg",
+                        isActive
+                          ? "border border-trustBlue/60 bg-trustBlue/10 text-ink shadow-lg"
+                          : "text-muted hover:scale-105 hover:bg-panel hover:text-ink",
+                      ].join(" ")
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span
+                          className={[
+                            "flex h-8 w-8 items-center justify-center rounded-full",
+                            isActive ? "bg-trustBlue/20 text-trustBlue" : "bg-panel text-trustBlue",
+                          ].join(" ")}
+                        >
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        {isActive ? (
+                          <span aria-hidden="true" className="absolute inset-x-3 -bottom-1 h-0.5 rounded-full bg-trustBlue" />
+                        ) : null}
+                      </>
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        {/* Bottom: Feedback CTA + Beta note */}
         <div className="mt-6 space-y-3">
           <button
             type="button"
@@ -168,9 +209,9 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           <div className="rounded-xl bg-gradient-to-br from-app-text/10 via-app-text/5 to-transparent p-4 text-xs text-muted">
             <p className="font-semibold text-ink">Production Beta</p>
             <p className="mt-1 leading-relaxed">
-              Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and chats. This is a first of its kind AI engine so we need your help!  
-              Nexus is experimental— errors can happen but we wanna make sure that we built a program that is well worth your time and effort. 
-              During this period. Nexus is completely free to use; sharing feedback helps us launch a better experience for you. Thank you!
+              Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and
+              chats. Nexus is experimental—errors can happen—but we’re building something worthy of your time. During
+              this period, Nexus is free; sharing feedback helps us launch a better experience. Thank you!
             </p>
           </div>
         </div>
@@ -217,13 +258,10 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                 <textarea
                   id="feedback-text"
                   value={feedbackText}
-                  onChange={(e) => {
-                    const next = e.target.value.slice(0, FEEDBACK_MAX);
-                    setFeedbackText(next);
-                  }}
+                  onChange={(e) => setFeedbackText(e.target.value.slice(0, FEEDBACK_MAX))}
                   maxLength={FEEDBACK_MAX}
                   className="min-h-48 w-full resize-y rounded-xl border border-app bg-panel p-3 text-sm text-ink outline-none placeholder:text-muted focus:ring-2 focus:ring-trustBlue/70"
-                  placeholder="Tell us what worked well, what didn’t, and what you’d love to see next. We want to know what you think of Nexus but also what could be better."
+                  placeholder="Tell us what worked well, what didn’t, and what you’d love to see next."
                   aria-describedby="char-remaining"
                 />
                 <div id="char-remaining" className="mt-1 text-right text-xs text-muted">
@@ -242,11 +280,13 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
                 <button
                   type="submit"
                   disabled={submitting || !feedbackText.trim()}
-                  className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
+                  className={[
+                    "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg",
                     submitting || !feedbackText.trim()
-                      ? "bg-trustBlue/40 cursor-not-allowed"
-                      : "bg-trustBlue hover:bg-trustBlue/90"
-                  }`}
+                      ? "cursor-not-allowed bg-trustBlue/40"
+                      : "bg-trustBlue hover:bg-trustBlue/90",
+                  ].join(" ")}
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                   Submit Feedback
@@ -258,4 +298,6 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
       ) : null}
     </>
   );
-}   
+}
+
+export default Sidebar;
