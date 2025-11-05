@@ -1,46 +1,40 @@
-@import "./shared/styles/tailwind-preflight.css";
-@import "./shared/ui/tokens.css";
-@import "./shared/ui/social/social-buttons.css";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 1) Load Tailwind v4 */
+@import "tailwindcss";
 
+/* 2) Define your design tokens FIRST (v4 uses @theme) */
+@theme {
+  /* light mode defaults */
+  --color-app:        oklch(0.14 0.015 262);  /* page bg */
+  --color-panel:      oklch(0.18 0.015 262);  /* cards/panels */
+  --color-ink:        oklch(0.98 0.01 262);   /* primary text */
+  --color-muted:      oklch(0.73 0.02 262);   /* secondary text */
+  --color-trustBlue:  #1E40AF;                /* brand accent */
 
-:root {
-  color-scheme: light dark;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+  --radius-card: 1rem;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+/* 3) Dark mode overrides (uses user’s preference) */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-app:   oklch(0.14 0.015 262);
+    --color-panel: oklch(0.18 0.015 262);
+    --color-ink:   oklch(0.98 0.01 262);
+    --color-muted: oklch(0.73 0.02 262);
+  }
 }
 
-body {
-  margin: 0;
-  font-family: "Inter Variable", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* 4) Base/preflight AFTER tokens exist */
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-app text-ink antialiased; }
+
+  /* helpful defaults that your components expect */
+  .bg-panel { background-color: var(--color-panel); }
+  .text-muted { color: var(--color-muted); }
+  .ring-app { --tw-ring-color: color-mix(in oklab, var(--color-panel), white 20%); }
+  .border-app { border-color: var(--color-panel); }
 }
 
-a {
-  color: inherit;
-}
-
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--accent-nexus);
-  outline-offset: 2px;
-}
-
-::selection {
-  background: color-mix(in srgb, var(--accent-nexus) 40%, transparent);
-}
-
-[data-reduce-motion="true"] * {
-  transition: none !important;
-  animation-duration: 0.01ms !important;
-}
+/* 5) If you had social button styles, you can paste them at the end
+   or keep them in a separate file and import it here. */
+/* @import "./shared/ui/social/social-buttons.css"; */
