@@ -1,60 +1,93 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <!-- Let the UA style form controls, scrollbars, etc. per theme -->
     <meta name="color-scheme" content="light dark" />
+    <!-- Dynamic address-bar color per OS theme -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
+
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Early theme apply (single copy) -->
+    <!-- Disable transitions during first paint to avoid flicker -->
+    <style>
+      html.theme-preload * { transition: none !important; }
+    </style>
+
+    <!-- Early, robust theme bootstrapping (runs before CSS) -->
     <script>
       (function () {
-        function applyTheme(choice) {
-          try { localStorage.setItem("theme", choice); } catch (_) {}
+        var ROOT = document.documentElement;
+        var SYS_MQ = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        var KEYS = ['nexus-theme', 'theme']; // read/write both for backward-compat
 
-          var prefersDark =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-          var isDark = choice === "dark" || (choice === "system" && prefersDark);
-          document.documentElement.classList.toggle("dark", isDark);
-          document.documentElement.dataset.theme = isDark ? "dark" : "light";
+        function readPref() {
+          var v = 'system';
+          try {
+            for (var i = 0; i < KEYS.length; i++) {
+              var s = localStorage.getItem(KEYS[i]);
+              if (s) { v = s; break; }
+            }
+          } catch (_) {}
+          return (v === 'light' || v === 'dark' || v === 'system') ? v : 'system';
         }
 
-        // Expose to UI
-        window.__setTheme = applyTheme;
-
-        // Initial apply before paint
-        var saved = "system";
-        try { saved = localStorage.getItem("theme") || "system"; } catch (_) {}
-        applyTheme(saved);
-
-        // Follow OS changes when using "system"
-        if (window.matchMedia) {
-          var mq = window.matchMedia("(prefers-color-scheme: dark)");
-          if (mq.addEventListener) {
-            mq.addEventListener("change", function () {
-              var current = "system";
-              try { current = localStorage.getItem("theme") || "system"; } catch (_) {}
-              if (current === "system") applyTheme("system");
-            });
-          } else if (mq.addListener) {
-            // Safari < 14 fallback
-            mq.addListener(function () {
-              var current = "system";
-              try { current = localStorage.getItem("theme") || "system"; } catch (_) {}
-              if (current === "system") applyTheme("system");
-            });
-          }
+        function systemTheme() {
+          return SYS_MQ && SYS_MQ.matches ? 'dark' : 'light';
         }
+
+        function applyTheme(theme) {
+          var eff = theme === 'system' ? systemTheme() : theme;
+          // Tailwind v4 dark variants
+          ROOT.classList.toggle('dark', eff === 'dark');
+          // CSS variable set switching
+          ROOT.dataset.theme = eff;
+          // Persist both keys
+          try { for (var i = 0; i < KEYS.length; i++) localStorage.setItem(KEYS[i], theme); } catch (_) {}
+          return eff;
+        }
+
+        // Expose a safe setter for the app UI: window.__setTheme('light'|'dark'|'system')
+        window.__setTheme = function (choice) {
+          if (choice !== 'light' && choice !== 'dark' && choice !== 'system') choice = 'system';
+          applyTheme(choice);
+        };
+
+        // Prevent transition flash then apply initial theme
+        ROOT.classList.add('theme-preload');
+        var pref = readPref();
+        applyTheme(pref);
+
+        // Follow OS changes live when in "system"
+        if (SYS_MQ) {
+          var onChange = function () {
+            try {
+              var cur = readPref();
+              if (cur === 'system') applyTheme('system');
+            } catch (_) {}
+          };
+          if (SYS_MQ.addEventListener) SYS_MQ.addEventListener('change', onChange);
+          else if (SYS_MQ.addListener) SYS_MQ.addListener(onChange); // Safari <14
+        }
+
+        // Re-enable transitions after first content paint
+        window.addEventListener('DOMContentLoaded', function () {
+          ROOT.classList.remove('theme-preload');
+        });
       })();
     </script>
   </head>
 
   <body class="bg-app text-ink antialiased">
+    <noscript>
+      <strong>Nexus requires JavaScript.</strong>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
