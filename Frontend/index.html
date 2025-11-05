@@ -2,26 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1"
-    />
-    <!-- Let browsers know we support both color schemes -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <!-- Theme colors for each scheme -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
-
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Early theme apply + global setter -->
+    <!-- Early theme apply (single copy) -->
     <script>
       (function () {
         function applyTheme(choice) {
           try { localStorage.setItem("theme", choice); } catch (_) {}
 
-          var prefersDark = window.matchMedia &&
+          var prefersDark =
+            window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: dark)").matches;
 
           var isDark = choice === "dark" || (choice === "system" && prefersDark);
@@ -29,22 +24,31 @@
           document.documentElement.dataset.theme = isDark ? "dark" : "light";
         }
 
-        // Expose to app UI (ThemeToggle, etc.)
+        // Expose to UI
         window.__setTheme = applyTheme;
 
-        // Initial apply
+        // Initial apply before paint
         var saved = "system";
         try { saved = localStorage.getItem("theme") || "system"; } catch (_) {}
         applyTheme(saved);
 
-        // React to OS changes when on "system"
+        // Follow OS changes when using "system"
         if (window.matchMedia) {
           var mq = window.matchMedia("(prefers-color-scheme: dark)");
-          mq.addEventListener && mq.addEventListener("change", function () {
-            var current = "system";
-            try { current = localStorage.getItem("theme") || "system"; } catch (_) {}
-            if (current === "system") applyTheme("system");
-          });
+          if (mq.addEventListener) {
+            mq.addEventListener("change", function () {
+              var current = "system";
+              try { current = localStorage.getItem("theme") || "system"; } catch (_) {}
+              if (current === "system") applyTheme("system");
+            });
+          } else if (mq.addListener) {
+            // Safari < 14 fallback
+            mq.addListener(function () {
+              var current = "system";
+              try { current = localStorage.getItem("theme") || "system"; } catch (_) {}
+              if (current === "system") applyTheme("system");
+            });
+          }
         }
       })();
     </script>
