@@ -52,3 +52,32 @@ const config: Config = {
 };
 
 
+
+export default {
+  content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        // App surface + typography system you’ve been using in classes
+        app: "#0b0f14",
+        "app-surface": "#11161c",
+        panel: "#121820",
+        ink: "#e6e9ef",
+        muted: "#9aa3af",
+        trustBlue: "#1E40AF", // Spurs “trust-blue” accent
+
+        // Optional light theme counterparts (only if you toggle them)
+        // "app-light": "#ffffff",
+      },
+      borderColor: {
+        app: "rgba(255,255,255,0.08)",
+      },
+      ringColor: {
+        trustBlue: "#1E40AF",
+      },
+    },
+  },
+  plugins: [],
+} satisfies Config;
+
