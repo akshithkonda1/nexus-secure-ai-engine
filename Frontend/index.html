@@ -2,23 +2,82 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0B0B0D" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <!-- provisional; updated precisely after paint -->
+    <meta name="theme-color" content="#0b0f14" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
+
+    <!-- Early theme bootstrap: no flash, supports 'system' -->
     <script>
       (function () {
         try {
+          var root = document.documentElement;
           var saved = localStorage.getItem("theme") || "system";
-          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
           var isDark = saved === "dark" || (saved === "system" && prefersDark);
-          document.documentElement.classList.toggle("dark", isDark);
-          document.documentElement.dataset.theme = isDark ? "dark" : "light";
+
+          root.classList.toggle("dark", isDark);
+          root.setAttribute("data-theme", isDark ? "dark" : "light");
+
+          // Set a provisional theme-color to avoid flash
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (!meta) {
+            meta = document.createElement("meta");
+            meta.name = "theme-color";
+            document.head.appendChild(meta);
+          }
+          meta.content = isDark ? "#0b0f14" : "#ffffff";
+
+          // After first paint, read CSS token and sync theme-color exactly
+          var syncThemeColor = function () {
+            try {
+              var bg = getComputedStyle(root)
+                .getPropertyValue("--color-app")
+                .trim();
+              if (bg) meta.content = bg;
+            } catch (_) {}
+          };
+          if (document.readyState === "complete") {
+            requestAnimationFrame(syncThemeColor);
+          } else {
+            window.addEventListener(
+              "DOMContentLoaded",
+              function () {
+                requestAnimationFrame(syncThemeColor);
+              },
+              { once: true }
+            );
+          }
+
+          // Expose an app-level setter your UI can call:
+          // window.__setTheme('dark' | 'light' | 'system')
+          window.__setTheme = function (next) {
+            var effective =
+              next === "system"
+                ? (window.matchMedia &&
+                    window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? "dark"
+                    : "light")
+                : next;
+            var darkNow = effective === "dark";
+            root.classList.toggle("dark", darkNow);
+            root.setAttribute("data-theme", darkNow ? "dark" : "light");
+            localStorage.setItem("theme", next);
+            syncThemeColor();
+          };
         } catch (_) {}
       })();
     </script>
   </head>
-  <body class="bg-app text-ink">
+
+  <body class="bg-app text-ink min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
