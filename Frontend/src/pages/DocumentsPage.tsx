@@ -45,7 +45,7 @@ export default function DocumentsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Documents"
-        description="Manage transcripts, attachments, and guardrail evidence with Spurs-grade clarity."
+        description="Manage transcripts, attachments, and guardrail evidence with in a way that is easy to use."
       />
 
       <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
