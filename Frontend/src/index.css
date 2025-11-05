@@ -1,40 +1,54 @@
-/* 1) Load Tailwind v4 */
+/* 1) Tailwind v4 core */
 @import "tailwindcss";
 
-/* 2) Define your design tokens FIRST (v4 uses @theme) */
+/* 2) Theme tokens (LIGHT defaults) */
 @theme {
-  /* light mode defaults */
-  --color-app:        oklch(0.14 0.015 262);  /* page bg */
-  --color-panel:      oklch(0.18 0.015 262);  /* cards/panels */
-  --color-ink:        oklch(0.98 0.01 262);   /* primary text */
-  --color-muted:      oklch(0.73 0.02 262);   /* secondary text */
-  --color-trustBlue:  #1E40AF;                /* brand accent */
+  /* Light mode */
+  --color-app:        oklch(0.98 0.005 262); /* page bg (very light) */
+  --color-panel:      oklch(0.985 0.004 262);/* cards/panels */
+  --color-ink:        oklch(0.16 0.030 262); /* primary text (dark) */
+  --color-muted:      oklch(0.45 0.020 262); /* secondary text */
+  --color-border:     oklch(0.90 0.010 262); /* subtle borders */
+  --color-trustBlue:  #1E40AF;
 
   --radius-card: 1rem;
 }
 
-/* 3) Dark mode overrides (uses user’s preference) */
+/* 3) Dark mode via OS preference */
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-app:   oklch(0.14 0.015 262);
-    --color-panel: oklch(0.18 0.015 262);
-    --color-ink:   oklch(0.98 0.01 262);
-    --color-muted: oklch(0.73 0.02 262);
+    --color-app:    oklch(0.15 0.015 262);
+    --color-panel:  oklch(0.19 0.015 262);
+    --color-ink:    oklch(0.97 0.010 262);
+    --color-muted:  oklch(0.73 0.020 262);
+    --color-border: oklch(0.32 0.010 262);
   }
 }
 
-/* 4) Base/preflight AFTER tokens exist */
+/* 4) Dark mode via class or data-attr (manual toggle support)
+      This overrides the OS preference when you set .dark or data-theme="dark" */
+@theme .dark, @theme [data-theme="dark"] {
+  --color-app:    oklch(0.15 0.015 262);
+  --color-panel:  oklch(0.19 0.015 262);
+  --color-ink:    oklch(0.97 0.010 262);
+  --color-muted:  oklch(0.73 0.020 262);
+  --color-border: oklch(0.32 0.010 262);
+}
+
+/* 5) Base (after tokens) */
 @layer base {
   html, body, #root { height: 100%; }
   body { @apply bg-app text-ink antialiased; }
 
-  /* helpful defaults that your components expect */
-  .bg-panel { background-color: var(--color-panel); }
+  /* Utility aliases that your components already use */
   .text-muted { color: var(--color-muted); }
-  .ring-app { --tw-ring-color: color-mix(in oklab, var(--color-panel), white 20%); }
-  .border-app { border-color: var(--color-panel); }
+
+  /* These two match the class names you use everywhere */
+  .ring-app   { --tw-ring-color: var(--color-border); }
+  .border-app { border-color: var(--color-border); }
 }
 
-/* 5) If you had social button styles, you can paste them at the end
-   or keep them in a separate file and import it here. */
-/* @import "./shared/ui/social/social-buttons.css"; */
+/* Optional: a gentle fade when switching */
+:root, .dark, [data-theme="dark"] {
+  transition: color 150ms linear, background-color 150ms linear;
+}
