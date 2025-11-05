@@ -1,6 +1,10 @@
 @import "./shared/styles/tailwind-preflight.css";
 @import "./shared/ui/tokens.css";
 @import "./shared/ui/social/social-buttons.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   color-scheme: light dark;
