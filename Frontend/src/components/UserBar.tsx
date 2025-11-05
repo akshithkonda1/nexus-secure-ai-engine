@@ -167,8 +167,9 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [about, setAbout] = React.useState(profile.about ?? "");
   const [avatar, setAvatar] = React.useState<string | undefined>(profile.avatarDataUrl);
 
-  // saving status
   const [saveState, setSaveState] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
+  const didInitRef = React.useRef(false);
+  const debounceRef = React.useRef<number | null>(null);
 
   // close on Esc
   React.useEffect(() => {
@@ -186,7 +187,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  // reload latest every open
+  // reload from storage on open
   React.useEffect(() => {
     if (!open) return;
     const p = loadProfile();
@@ -195,43 +196,43 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     setAbout(p.about ?? "");
     setAvatar(p.avatarDataUrl);
     setSaveState("idle");
+    didInitRef.current = true; // next edits will autosave
   }, [open]);
 
-  const draft: Profile = React.useMemo(
-    () => ({
-      ...profile,
-      displayName: name.trim().slice(0, 48),
-      about: (about ?? "").slice(0, 240),
-      avatarDataUrl: avatar,
-    }),
-    [profile, name, about, avatar]
-  );
+  const canSave = name.trim().length >= 2;
 
-  const dirty =
-    draft.displayName !== profile.displayName ||
-    (draft.about ?? "") !== (profile.about ?? "") ||
-    draft.avatarDataUrl !== profile.avatarDataUrl;
+  const materializeDraft = React.useCallback((): Profile => ({
+    ...profile,
+    displayName: name.trim().slice(0, 48),
+    about: (about ?? "").slice(0, 240),
+    avatarDataUrl: avatar,
+  }), [profile, name, about, avatar]);
 
-  const canSave = draft.displayName.length >= 2;
-
-  // Debounced auto-save after edits
+  // Debounced autosave on any edit (skip the very first paint after open)
   React.useEffect(() => {
     if (!open) return;
-    if (!dirty || !canSave) return;
+    if (!didInitRef.current) return;          // don't autosave initial load
+    if (!canSave) return;
+
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
     setSaveState("saving");
-    const t = setTimeout(() => {
+
+    debounceRef.current = window.setTimeout(() => {
       try {
-        saveProfile(draft);
-        setProfile(draft);
+        const next = materializeDraft();
+        saveProfile(next);
+        setProfile(next);
         setSaveState("saved");
-        const t2 = setTimeout(() => setSaveState("idle"), 1200);
-        return () => clearTimeout(t2);
+        window.setTimeout(() => setSaveState("idle"), 1000);
       } catch {
         setSaveState("error");
       }
-    }, 600);
-    return () => clearTimeout(t);
-  }, [open, dirty, canSave, draft]);
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [open, name, about, avatar, canSave, materializeDraft]);
 
   const fileRef = React.useRef<HTMLInputElement | null>(null);
   const handleFile = (file: File) => {
@@ -240,21 +241,18 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     reader.onload = () => setAvatar(reader.result as string);
     reader.readAsDataURL(file);
   };
-  const initials = (name || "User")
-    .split(" ")
-    .map(p => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = (name || "User").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
 
   const manualSave = () => {
     if (!canSave) return;
     try {
       setSaveState("saving");
-      saveProfile(draft);
-      setProfile(draft);
+      const next = materializeDraft();
+      saveProfile(next);
+      setProfile(next);
       setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 1200);
+      setTimeout(() => setSaveState("idle"), 800);
+      onClose(); // close on successful manual save (matches your earlier UX)
     } catch {
       setSaveState("error");
     }
@@ -277,10 +275,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
         animate={{ opacity: 1, y: 0, scale: 1 }}
         className="relative w-[min(92vw,640px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-app-surface/95 p-5 text-ink shadow-2xl"
       >
-        <form
-          onSubmit={(e) => { e.preventDefault(); manualSave(); }}
-          className="contents"
-        >
+        <form onSubmit={(e) => { e.preventDefault(); manualSave(); }} className="contents">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Profile</h2>
             <div className="flex items-center gap-3">
