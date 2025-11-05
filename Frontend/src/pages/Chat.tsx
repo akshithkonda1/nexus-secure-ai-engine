@@ -4,13 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
   Paperclip,
-  Sparkles,
   Send,
-  Image as ImageIcon,
+  Loader2,
   X,
   Copy,
   Check,
-  Zap,
 } from "lucide-react";
 
 /** —————————————————————————————————
@@ -48,13 +46,12 @@ function MessageBubble({ m }: { m: Msg }) {
       animate={{ opacity: 1, y: 0 }}
       className="flex justify-center"
     >
-      <div className="relative max-w-xl px-5 py-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-ink text-sm leading-relaxed">
-        <div className="prose prose-sm prose-invert max-w-none">
-          {m.text}
-        </div>
+      <div className="relative max-w-2xl px-6 py-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 text-ink text-base leading-relaxed shadow-lg">
+        <div className="prose prose-invert max-w-none">{m.text}</div>
         <button
           onClick={copy}
-          className="absolute -top-2 -right-2 grid h-7 w-7 place-items-center rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-white opacity-0 hover:opacity-100 transition"
+          className="absolute -top-3 -right-3 grid h-8 w-8 place-items-center rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-white opacity-0 hover:opacity-100 transition"
+          aria-label={copied ? "Copied" : "Copy"}
         >
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         </button>
@@ -72,16 +69,20 @@ function AttachmentChip({ a, onRemove }: { a: Attach; onRemove: (id: string) => 
       layout
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-3 py-1.5 text-xs text-ink border border-white/20"
+      className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-3 py-1.5 text-sm text-ink border border-white/20"
     >
       {isImage(a.type) && a.previewUrl ? (
-        <img src={a.previewUrl} alt="" className="h-5 w-5 rounded-full object-cover ring-1 ring-white/30" />
+        <img
+          src={a.previewUrl}
+          alt=""
+          className="h-6 w-6 rounded-full object-cover ring-1 ring-white/30"
+        />
       ) : (
-        <Paperclip className="h-3.5 w-3.5" />
+        <Paperclip className="h-4 w-4" />
       )}
-      <span className="max-w-32 truncate font-medium">{a.name}</span>
-      <button onClick={() => onRemove(a.id)} className="p-1 text-ink/70 hover:text-ink">
-        <X className="h-3 w-3" />
+      <span className="max-w-40 truncate font-medium">{a.name}</span>
+      <button onClick={() => onRemove(a.id)} className="p-1 text-ink/70 hover:text-ink" aria-label="Remove attachment">
+        <X className="h-3.5 w-3.5" />
       </button>
     </motion.div>
   );
@@ -95,7 +96,7 @@ function useAutogrow(ref: React.RefObject<HTMLTextAreaElement>, value: string) {
     const el = ref.current;
     if (!el) return;
     el.style.height = "0px";
-    const height = Math.min(160, el.scrollHeight);
+    const height = Math.min(200, el.scrollHeight);
     el.style.height = height + "px";
   }, [value]);
 }
@@ -123,7 +124,7 @@ export function ChatPage() {
     const onAttach = (e: Event) => {
       const files = (e as CustomEvent<FileList>).detail;
       if (!files) return;
-      Array.from(files).forEach(f => {
+      Array.from(files).forEach((f) => {
         const attach: Attach = {
           id: uid(),
           file: f,
@@ -132,7 +133,7 @@ export function ChatPage() {
           size: f.size,
           previewUrl: isImage(f.type) ? URL.createObjectURL(f) : undefined,
         };
-        setAttachments(p => [...p, attach]);
+        setAttachments((p) => [...p, attach]);
       });
     };
     window.addEventListener("nexus:attach", onAttach as EventListener);
@@ -140,10 +141,10 @@ export function ChatPage() {
   }, []);
 
   const removeAttachment = (id: string) => {
-    setAttachments(prev => {
-      const removed = prev.find(a => a.id === id);
+    setAttachments((prev) => {
+      const removed = prev.find((a) => a.id === id);
       if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
-      return prev.filter(a => a.id !== id);
+      return prev.filter((a) => a.id !== id);
     });
   };
 
@@ -151,67 +152,47 @@ export function ChatPage() {
     const text = input.trim();
     if (!text && !attachments.length) return;
 
-    const userMsg: Msg = { id: uid(), role: "user", text: text || "(Attachment)", ts: Date.now() };
-    setMessages(m => [...m, userMsg]);
+    const userMsg: Msg = {
+      id: uid(),
+      role: "user",
+      text: text || "(Attachment)",
+      ts: Date.now(),
+    };
+    setMessages((m) => [...m, userMsg]);
     setInput("");
     setAttachments([]);
     setBusy(true);
 
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 1000));
     const reply: Msg = {
       id: uid(),
       role: "assistant",
       text: `**Nexus Consensus**\n\n> ${text}\n\n**3 sources verified.**\n\n• NASA\n• UN\n• IPCC\n\n*Debate complete.*`,
       ts: Date.now(),
     };
-    setMessages(m => [...m, reply]);
+    setMessages((m) => [...m, reply]);
     setBusy(false);
   };
 
   return (
     <div className="flex h-screen flex-col bg-app text-ink">
-      {/* ——— TOP BAR ——— */}
-      <header className="relative z-50 border-b border-white/10 bg-app/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-          {/* Left: Logo + Search */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-white">Nexus</span>
-              <span className="rounded-full bg-trustBlue/20 px-2 py-0.5 text-xs text-trustBlue font-medium">BETA</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-4 py-2 text-sm text-ink/70">
-              <Sparkles className="h-4 w-4 text-trustBlue" />
-              <span>What are you looking for?</span>
-            </div>
-          </div>
-
-          {/* Center: Nexus Logo */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-trustBlue animate-pulse" />
-            <span className="text-sm font-medium text-white">Nexus</span>
-          </div>
-
-          {/* Right: Status + Waitlist */}
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-ink/70">Ready</span>
-            <button className="rounded-full bg-trustBlue px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-trustBlue/30 transition hover:shadow-xl hover:shadow-trustBlue/40">
-              Join Waitlist
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* ——— (Header removed as requested) ——— */}
 
       {/* ——— MESSAGES ——— */}
       <div className="flex-1 overflow-y-auto px-6 py-12">
         <div className="mx-auto max-w-3xl space-y-8">
           <AnimatePresence>
-            {messages.map(m => (
+            {messages.map((m) => (
               <MessageBubble key={m.id} m={m} />
             ))}
             {busy && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
-                <div className="rounded-2xl bg-white/10 backdrop-blur-md px-5 py-3.5 border border-white/10">
-                  <Loader2 className="h-5 w-5 animate-spin text-trustBlue" />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-center"
+              >
+                <div className="rounded-3xl bg-white/10 backdrop-blur-md px-6 py-4 border border-white/10">
+                  <Loader2 className="h-6 w-6 animate-spin text-trustBlue" />
                 </div>
               </motion.div>
             )}
@@ -225,39 +206,48 @@ export function ChatPage() {
           {/* Attachments */}
           <AnimatePresence>
             {attachments.length > 0 && (
-              <motion.div layout className="mb-3 flex flex-wrap gap-2">
-                {attachments.map(a => (
+              <motion.div layout className="mb-4 flex flex-wrap gap-2">
+                {attachments.map((a) => (
                   <AttachmentChip key={a.id} a={a} onRemove={removeAttachment} />
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Input */}
-          <div className="flex items-center gap-3">
+          {/* Input + Actions */}
+          <div className="flex items-end gap-4">
             <div className="relative flex-1">
               <textarea
                 ref={taRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e as any).isComposing) return;
+                  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                     e.preventDefault();
                     send();
                   }
                 }}
                 placeholder="Ask anything. Get truth."
-                className="w-full resize-none rounded-2xl bg-white/10 backdrop-blur-md px-5 py-4 text-base text-ink placeholder:text-ink/50 border border-white/20 focus:border-trustBlue/50 focus:ring-4 focus:ring-trustBlue/20 outline-none transition-all"
+                className="w-full resize-none rounded-3xl bg-white/10 backdrop-blur-md px-6 py-4 pr-14 text-base text-ink placeholder:text-ink/50 border border-white/20 focus:border-trustBlue/50 focus:ring-4 focus:ring-trustBlue/20 outline-none transition-all"
                 rows={1}
               />
+              <div className="absolute bottom-3 right-3 text-xs uppercase tracking-widest text-ink/40 pointer-events-none">
+                Ctrl+Enter
+              </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <button className="grid h-10 w-10 place-items-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-ink/70 hover:text-ink hover:bg-white/20 transition">
+              <button
+                className="grid h-12 w-12 place-items-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-ink/70 hover:text-ink hover:bg-white/20 transition"
+                aria-label="Attach files"
+              >
                 <Paperclip className="h-5 w-5" />
               </button>
-              <button className="grid h-10 w-10 place-items-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-ink/70 hover:text-ink hover:bg-white/20 transition">
+              <button
+                className="grid h-12 w-12 place-items-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-ink/70 hover:text-ink hover:bg-white/20 transition"
+                aria-label="Record voice"
+              >
                 <Mic className="h-5 w-5" />
               </button>
               <motion.button
@@ -265,17 +255,13 @@ export function ChatPage() {
                 whileTap={{ scale: 0.95 }}
                 onClick={send}
                 disabled={busy || (!input.trim() && !attachments.length)}
-                className="grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg shadow-trustBlue/30 transition disabled:opacity-50"
+                className="grid h-12 w-12 place-items-center rounded-full bg-trustBlue text-white shadow-lg shadow-trustBlue/30 transition disabled:opacity-50"
+                aria-label="Send message"
               >
                 <Send className="h-5 w-5" />
               </motion.button>
             </div>
           </div>
-
-          {/* Hint */}
-          <p className="mt-2 text-center text-xs text-ink/50">
-            CTRL + ENTER to send
-          </p>
         </div>
       </div>
     </div>
