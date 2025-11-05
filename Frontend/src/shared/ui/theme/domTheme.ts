@@ -1,31 +1,22 @@
-// src/shared/ui/theme/domTheme.ts
 export type ThemeChoice = "light" | "dark" | "system";
+export type AppliedTheme = "light" | "dark";
 
-function systemPrefersDark() {
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+export function resolveApplied(choice: ThemeChoice): AppliedTheme {
+  if (choice === "light" || choice === "dark") return choice;
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  return prefersDark ? "dark" : "light";
 }
 
-function resolve(choice: ThemeChoice): "light" | "dark" {
-  return choice === "system" ? (systemPrefersDark() ? "dark" : "light") : choice;
+export function applyTheme(choice: ThemeChoice): AppliedTheme {
+  const applied = resolveApplied(choice);
+  const root = document.documentElement;
+
+  root.classList.toggle("dark", applied === "dark");
+  root.dataset.theme = applied;
+  localStorage.setItem("theme", choice);
+
+  // expose a global setter for non-React callers (optional)
+  (window as any).__setTheme = (t: ThemeChoice) => applyTheme(t);
+
+  return applied;
 }
-
-export function applyTheme(choice: ThemeChoice) {
-  const resolved = resolve(choice);
-  const html = document.documentElement;
-
-  html.classList.toggle("dark", resolved === "dark");
-  html.dataset.theme = resolved;
-
-  try { localStorage.setItem("theme", choice); } catch {}
-  window.dispatchEvent(new CustomEvent("themechange", { detail: { choice, resolved } }));
-}
-
-// global helper (non-React callers can do window.__setTheme("dark"|"light"|"system"))
-;(window as any).__setTheme = (t: ThemeChoice) => applyTheme(t);
-
-// keep “system” live when OS theme flips
-const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-mq?.addEventListener?.("change", () => {
-  const saved = (localStorage.getItem("theme") as ThemeChoice) || "system";
-  if (saved === "system") applyTheme("system");
-});
