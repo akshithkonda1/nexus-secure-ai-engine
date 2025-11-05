@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Paperclip, Mic, Send, Sparkles, Loader2 } from "lucide-react";
+import { Paperclip, Mic, Send, Sparkles, Loader2, ChevronDown } from "lucide-react";
 
-/** —————————————————————————————————
- *  Minimal in-memory chat model
- *  (replace with your engine wiring)
- *  ————————————————————————————————— */
+/** ─────────────────────────────────────────────
+ * Minimal in-memory chat model (stub your engine)
+ * ───────────────────────────────────────────── */
 type Msg = { id: string; role: "user" | "assistant" | "system"; text: string };
 const demoReply = (q: string) =>
   `Working on it… (fake reply)\n\nYou asked:\n> ${q}\n\nThis is where your debate/consensus response will render.`;
 
-/** —————————————————————————————————
- *  Message bubble (ChatGPT-like)
- *  ————————————————————————————————— */
+/** ─────────────────────────────────────────────
+ * Message bubble
+ * ───────────────────────────────────────────── */
 function MessageBubble({ m }: { m: Msg }) {
   const mine = m.role === "user";
   const system = m.role === "system";
@@ -35,9 +34,9 @@ function MessageBubble({ m }: { m: Msg }) {
   );
 }
 
-/** —————————————————————————————————
- *  Composer (sticky bottom, ChatGPT-ish)
- *  ————————————————————————————————— */
+/** ─────────────────────────────────────────────
+ * Composer (sticky bottom)
+ * ───────────────────────────────────────────── */
 function Composer({
   value,
   setValue,
@@ -143,9 +142,9 @@ function Composer({
   );
 }
 
-/** —————————————————————————————————
- *  Chat Page (ChatGPT-like layout)
- *  ————————————————————————————————— */
+/** ─────────────────────────────────────────────
+ * Chat Page (ChatGPT-like)
+ * ───────────────────────────────────────────── */
 export default function ChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>([
     {
@@ -159,22 +158,36 @@ export default function ChatPage() {
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    scrollRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [msgs.length, busy]);
+  // scroll/viewport handling
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
 
-  // Hook into your existing global events
+  // observe bottom sentinel to decide auto-scroll
+  useEffect(() => {
+    const el = endRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => setAtBottom(entries[0]?.isIntersecting ?? true),
+      { root: listRef.current, threshold: 1 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // auto-scroll only if at bottom
+  useEffect(() => {
+    if (atBottom) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs.length, busy, atBottom]);
+
+  // Global event hooks
   useEffect(() => {
     const onPrompt = (e: Event) => {
       const prompt = (e as CustomEvent<string>).detail;
-      if (typeof prompt === "string") {
-        setInput((prev) => (prev ? prev + "\n" : "") + prompt);
-      }
+      if (typeof prompt === "string") setInput((prev) => (prev ? prev + "\n" : "") + prompt);
     };
     const onAttach = (e: Event) => {
       const files = (e as CustomEvent<FileList>).detail;
-      // Surface to your engine; for demo, just append filenames
       if (files?.length) {
         const names = Array.from(files).map((f) => f.name).join(", ");
         setInput((v) => (v ? v + "\n" : "") + `Attached: ${names}`);
@@ -194,45 +207,53 @@ export default function ChatPage() {
     };
   }, []);
 
+  // Send message (stub: replace with engine call/stream)
   const send = async () => {
     const q = input.trim();
     if (!q) return;
     setBusy(true);
     setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", text: q }]);
     setInput("");
-
-    // Hook for your engine: dispatch an event other modules can catch
     window.dispatchEvent(new CustomEvent("nexus:chat:send", { detail: { text: q } }));
 
-    // Demo assistant reply (replace with real stream)
     await new Promise((r) => setTimeout(r, 400));
-    setMsgs((m) => [
-      ...m,
-      { id: crypto.randomUUID(), role: "assistant", text: demoReply(q) },
-    ]);
+    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "assistant", text: demoReply(q) }]);
     setBusy(false);
   };
 
-  // Voice toggler simply flips state and emits your existing events; reuse your UserBar implementation if preferred
+  // Voice toggle (reuses your global pipeline)
   const toggleVoice = () => {
     setRecording((r) => !r);
-    window.dispatchEvent(new CustomEvent("nexus:voice:recording", { detail: { state: recording ? "stop" : "start" } }));
+    window.dispatchEvent(
+      new CustomEvent("nexus:voice:recording", { detail: { state: recording ? "stop" : "start" } })
+    );
   };
 
-  const openPromptBrowser = () => {
-    // If you already have the dropdown button elsewhere, you can trigger navigation or open a modal here.
-    window.dispatchEvent(new CustomEvent("nexus:prompts:open"));
-  };
+  const openPromptBrowser = () => window.dispatchEvent(new CustomEvent("nexus:prompts:open"));
+  const onAttach = (files: FileList) => window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }));
 
-  const onAttach = (files: FileList) =>
-    window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }));
+  // Drag & drop + paste to attach
+  const onDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files?.length) onAttach(e.dataTransfer.files);
+  };
+  const onDragOver: React.DragEventHandler<HTMLDivElement> = (e) => e.preventDefault();
+  const onPaste: React.ClipboardEventHandler<HTMLDivElement> = (e) => {
+    const items = e.clipboardData?.files;
+    if (items?.length) onAttach(items);
+  };
 
   return (
-    <div className="h-[calc(100vh-56px)] w-full"> {/* adjust 56px if your header is taller */}
-      {/* Messages area */}
+    <div
+      className="h-[calc(100dvh-56px)] w-full" /* adjust 56px if your header height differs */
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onPaste={onPaste}
+    >
       <div className="mx-auto flex h-full max-w-3xl flex-col">
-        <div className="flex-1 overflow-y-auto px-4 pb-24 pt-6"> {/* bottom padding for composer */}
-          <div ref={scrollRef} className="space-y-4">
+        {/* Messages */}
+        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
+          <div className="space-y-4">
             {msgs.map((m) => (
               <MessageBubble key={m.id} m={m} />
             ))}
@@ -244,10 +265,24 @@ export default function ChatPage() {
                 </div>
               </div>
             )}
+            {/* bottom sentinel */}
+            <div ref={endRef} />
           </div>
         </div>
 
-        {/* Composer (sticky bottom) */}
+        {/* Jump to latest when scrolled up */}
+        {!atBottom && (
+          <button
+            onClick={() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}
+            className="pointer fixed bottom-28 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/10 bg-panel/90 px-3 py-1 text-xs text-muted shadow backdrop-blur hover:text-ink"
+            title="Jump to latest"
+          >
+            <ChevronDown className="mr-1 inline h-3 w-3" />
+            Jump to latest
+          </button>
+        )}
+
+        {/* Composer */}
         <Composer
           value={input}
           setValue={setInput}
