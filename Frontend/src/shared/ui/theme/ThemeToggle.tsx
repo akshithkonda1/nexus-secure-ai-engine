@@ -1,33 +1,59 @@
-import { useMemo } from "react";
+// src/shared/ui/theme/ThemeToggle.tsx
+import * as React from "react";
 import { useTheme } from "@/stores/themeStore";
 
+type Mode = "light" | "dark" | "system";
+
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const themeChoice = useTheme((state) => state.theme);
-  const resolvedTheme = useTheme((state) => state.resolvedTheme);
-  const setTheme = useTheme((state) => state.setTheme);
+  const themeChoice = useTheme((s) => s.theme) as Mode;             // user's selected mode
+  const resolvedTheme = useTheme((s) => s.resolvedTheme) as "light" | "dark"; // actual applied
+  const setThemeInStore = useTheme((s) => s.setTheme) as (m: Mode) => void;
 
-  const label = useMemo(() => {
-    const applied = resolvedTheme;
-    return applied === "dark" ? "Light mode" : "Dark mode";
-  }, [resolvedTheme]);
+  const apply = (next: Mode) => {
+    // 1) update your store
+    setThemeInStore(next);
+    // 2) apply to DOM immediately (wired in index.html)
+    (window as any).__setTheme?.(next);
+  };
 
-  const handleToggle = () => {
-    const applied = resolvedTheme;
-    setTheme(applied === "dark" ? "light" : "dark");
+  // Keep DOM synced when OS theme flips while on "system"
+  React.useEffect(() => {
+    if (themeChoice !== "system" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => (window as any).__setTheme?.("system");
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, [themeChoice]);
+
+  const Btn = ({ mode, label }: { mode: Mode; label: string }) => {
+    const active = themeChoice === mode;
+    return (
+      <button
+        type="button"
+        onClick={() => apply(mode)}
+        aria-pressed={active}
+        title={label}
+        className={[
+          "rounded-full px-3 py-1.5 text-sm border transition",
+          active
+            ? "bg-white text-black border-black/10"
+            : "bg-black/5 dark:bg-white/10 text-ink/80 hover:text-ink border-black/10 dark:border-white/15",
+        ].join(" ")}
+      >
+        {label}
+      </button>
+    );
   };
 
   return (
-    <button
-      type="button"
-      className={
-        "inline-flex items-center rounded-xl px-3 py-2 text-sm border hover:bg-neutral-100 dark:hover:bg-neutral-800" +
-        (className ? ` ${className}` : "")
-      }
-      aria-label={label}
+    <div
+      className={`inline-flex items-center gap-1 ${className}`}
       data-theme-choice={themeChoice}
-      onClick={handleToggle}
+      data-theme-resolved={resolvedTheme}
     >
-      {label}
-    </button>
+      <Btn mode="light" label="Light" />
+      <Btn mode="dark" label="Dark" />
+      <Btn mode="system" label="System" />
+    </div>
   );
 }
