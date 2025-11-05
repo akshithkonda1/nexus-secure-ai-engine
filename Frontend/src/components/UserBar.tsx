@@ -126,14 +126,14 @@ function PromptBrowserButton({
 }
 
 /* =========================
-   Local Profile store + modal
+   Local Profile store + helpers
    ========================= */
 type Profile = {
   id: string;
   displayName: string;
   handle: string;
   about?: string;
-  avatarDataUrl?: string;
+  avatarDataUrl?: string; // JPEG data URL (compressed)
 };
 
 const STORAGE_KEY = "nexus.profile.v1";
@@ -153,13 +153,60 @@ function loadProfile(): Profile {
     return DEFAULT_PROFILE;
   }
 }
-function saveProfile(p: Profile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-  window.dispatchEvent(new CustomEvent("nexus:profile:update", { detail: p }));
+
+function safeSaveProfile(p: Profile): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    window.dispatchEvent(new CustomEvent("nexus:profile:update", { detail: p }));
+    return true;
+  } catch {
+    return false; // quota / serialization error
+  }
+}
+
+/** Downscale + JPEG-compress an image File or dataURL to a sane size for localStorage. */
+async function toCompressedDataUrl(
+  fileOrDataUrl: File | string,
+  maxSide = 512,
+  quality = 0.85
+): Promise<string> {
+  const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+
+  const dataUrl =
+    typeof fileOrDataUrl === "string"
+      ? fileOrDataUrl
+      : await new Promise<string>((res, rej) => {
+          const fr = new FileReader();
+          fr.onload = () => res(fr.result as string);
+          fr.onerror = rej;
+          fr.readAsDataURL(fileOrDataUrl);
+        });
+
+  const img = await loadImage(dataUrl);
+
+  const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.drawImage(img, 0, 0, w, h);
+
+  // Always store as JPEG to keep size tiny
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 /* =========================
-   Profile Modal (auto-save + manual save)
+   Profile Modal (instant autosave + robust avatar)
    ========================= */
 function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [profile, setProfile] = React.useState<Profile>(() => loadProfile());
@@ -167,11 +214,16 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
   const [about, setAbout] = React.useState(profile.about ?? "");
   const [avatar, setAvatar] = React.useState<string | undefined>(profile.avatarDataUrl);
 
-  const [saveState, setSaveState] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
-  const didInitRef = React.useRef(false);
-  const debounceRef = React.useRef<number | null>(null);
+  const [saveState, setSaveState] =
+    React.useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [errMsg, setErrMsg] = React.useState<string | null>(null);
 
-  // close on Esc
+  // avoid first-render autosave
+  const didInitRef = React.useRef(false);
+  // frame-throttle saves so typing doesn’t spam localStorage
+  const rafRef = React.useRef<number | null>(null);
+
+  // Close on Esc
   React.useEffect(() => {
     if (!open) return;
     const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -179,7 +231,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     return () => document.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
 
-  // lock scroll while open
+  // Lock scroll while open
   React.useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -187,7 +239,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  // reload from storage on open
+  // Reload from storage on open
   React.useEffect(() => {
     if (!open) return;
     const p = loadProfile();
@@ -196,66 +248,78 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     setAbout(p.about ?? "");
     setAvatar(p.avatarDataUrl);
     setSaveState("idle");
-    didInitRef.current = true; // next edits will autosave
+    setErrMsg(null);
+    didInitRef.current = true;
   }, [open]);
 
   const canSave = name.trim().length >= 2;
 
-  const materializeDraft = React.useCallback((): Profile => ({
+  const draft = React.useCallback((): Profile => ({
     ...profile,
     displayName: name.trim().slice(0, 48),
     about: (about ?? "").slice(0, 240),
     avatarDataUrl: avatar,
   }), [profile, name, about, avatar]);
 
-  // Debounced autosave on any edit (skip the very first paint after open)
-  React.useEffect(() => {
-    if (!open) return;
-    if (!didInitRef.current) return;          // don't autosave initial load
-    if (!canSave) return;
-
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+  const commitNow = React.useCallback((next?: Profile) => {
+    const payload = next ?? draft();
     setSaveState("saving");
+    setErrMsg(null);
+    const ok = safeSaveProfile(payload);
+    if (ok) {
+      setProfile(payload);
+      setSaveState("saved");
+      window.setTimeout(() => setSaveState("idle"), 700);
+    } else {
+      setSaveState("error");
+      setErrMsg("Couldn’t save locally (storage quota or browser settings). Try removing or re-uploading a smaller photo.");
+    }
+    return ok;
+  }, [draft]);
 
-    debounceRef.current = window.setTimeout(() => {
-      try {
-        const next = materializeDraft();
-        saveProfile(next);
-        setProfile(next);
-        setSaveState("saved");
-        window.setTimeout(() => setSaveState("idle"), 1000);
-      } catch {
-        setSaveState("error");
-      }
-    }, 500);
+  // Instant autosave on every change (throttled to animation frames)
+  const scheduleAutosave = React.useCallback(() => {
+    if (!open || !didInitRef.current || !canSave) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    setSaveState("saving");
+    rafRef.current = requestAnimationFrame(() => {
+      commitNow(); // synchronous localStorage write
+    });
+  }, [open, canSave, commitNow]);
 
-    return () => {
-      if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    };
-  }, [open, name, about, avatar, canSave, materializeDraft]);
+  React.useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  }, []);
 
   const fileRef = React.useRef<HTMLInputElement | null>(null);
-  const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatar(reader.result as string);
-    reader.readAsDataURL(file);
+
+  const handleFile = async (file: File) => {
+    try {
+      setSaveState("saving");
+      setErrMsg(null);
+      // compress to small JPEG for reliable localStorage fit
+      const dataUrl = await toCompressedDataUrl(file, 512, 0.85);
+      setAvatar(dataUrl);
+      // commit immediately with the new avatar
+      const ok = commitNow({ ...draft(), avatarDataUrl: dataUrl });
+      if (!ok) {
+        // as a fallback, try even smaller
+        const tiny = await toCompressedDataUrl(dataUrl, 320, 0.72);
+        setAvatar(tiny);
+        commitNow({ ...draft(), avatarDataUrl: tiny });
+      }
+    } catch (e) {
+      setSaveState("error");
+      setErrMsg("Couldn’t read that image. Try a PNG/JPG under ~5MB.");
+    }
   };
+
   const initials = (name || "User").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
 
   const manualSave = () => {
     if (!canSave) return;
-    try {
-      setSaveState("saving");
-      const next = materializeDraft();
-      saveProfile(next);
-      setProfile(next);
-      setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 800);
-      onClose(); // close on successful manual save (matches your earlier UX)
-    } catch {
-      setSaveState("error");
-    }
+    const ok = commitNow();
+    if (ok) onClose();
   };
 
   if (!open) return null;
@@ -314,7 +378,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) handleFile(f);
+                    if (f) void handleFile(f);
                     e.currentTarget.value = "";
                   }}
                 />
@@ -327,13 +391,14 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAvatar(undefined)}
+                  onClick={() => { setAvatar(undefined); scheduleAutosave(); }}
                   className="inline-flex items-center gap-2 rounded-md border border-app px-3 py-1.5 text-sm text-muted transition hover:text-ink"
                 >
                   <X className="h-4 w-4" /> Remove
                 </button>
               </div>
             </div>
+            {errMsg && <p className="mt-3 text-xs text-red-400">{errMsg}</p>}
           </div>
 
           {/* Identity */}
@@ -345,7 +410,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
                 <input
                   id="prof-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); scheduleAutosave(); }}
                   placeholder="Jane Appleseed"
                   className="w-full rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
                 />
@@ -360,7 +425,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
                 <textarea
                   id="prof-about"
                   value={about}
-                  onChange={(e) => setAbout(e.target.value)}
+                  onChange={(e) => { setAbout(e.target.value); scheduleAutosave(); }}
                   maxLength={240}
                   placeholder="A line about you (max 240)."
                   className="h-24 w-full resize-none rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
@@ -543,9 +608,7 @@ export function UserBar() {
               type="button"
               onClick={toggleRecording}
               aria-pressed={recording}
-              className={`inline-flex items-center gap-2 rounded-full border border-app px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
-                recording ? "text-ink bg-white/5" : "text-muted hover:text-ink"
-              }`}
+              className={`inline-flex items-center gap-2 rounded-full border border-app px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${recording ? "text-ink bg-white/5" : "text-muted hover:text-ink"}`}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" aria-hidden="true" />}
               {recording ? "Stop" : "Voice"}
