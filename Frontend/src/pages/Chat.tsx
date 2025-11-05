@@ -1,19 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Paperclip, Mic, Send, Sparkles, Loader2, ChevronDown } from "lucide-react";
-import BetaBanner from "@/components/BetaBanner";
 
 /** ─────────────────────────────────────────────
  * Minimal in-memory chat model (stub your engine)
  * ───────────────────────────────────────────── */
 type Msg = { id: string; role: "user" | "assistant" | "system"; text: string };
 const demoReply = (q: string) =>
-  `Working on it… (fake reply)
-
-You asked:
-> ${q}
-
-This is where your debate/consensus response will render.`;
+  `Working on it… (fake reply)\n\nYou asked:\n> ${q}\n\nThis is where your debate/consensus response will render.`;
 
 /** ─────────────────────────────────────────────
  * Message bubble
@@ -152,7 +146,14 @@ function Composer({
  * Chat Page (ChatGPT-like)
  * ───────────────────────────────────────────── */
 export default function ChatPage() {
-  const [msgs, setMsgs] = useState<Msg[]>([]); // banner replaces seed message
+  const [msgs, setMsgs] = useState<Msg[]>([
+    {
+      id: "sys-hello",
+      role: "system",
+      text:
+        "BETA — Your queries help improve Nexus. We orchestrate a debate between models, verify with the web, and synthesize a consensus you can trust.",
+    },
+  ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -179,31 +180,33 @@ export default function ChatPage() {
     if (atBottom) endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [msgs.length, busy, atBottom]);
 
-  // Global event hooks
+  // Global event hooks — FIXED newline + no shadowing with onAttach(files)
   useEffect(() => {
     const onPrompt = (e: Event) => {
       const prompt = (e as CustomEvent<string>).detail;
-      if (typeof prompt === "string") setInput((prev) => (prev ? prev + "
-" : "") + prompt);
+      if (typeof prompt === "string") setInput((prev) => (prev ? prev + "\n" : "") + prompt);
     };
-    const onAttach = (e: Event) => {
+
+    // Renamed to avoid shadowing the local onAttach(files: FileList)
+    const onAttachEvent = (e: Event) => {
       const files = (e as CustomEvent<FileList>).detail;
       if (files?.length) {
         const names = Array.from(files).map((f) => f.name).join(", ");
-        setInput((v) => (v ? v + "
-" : "") + `Attached: ${names}`);
+        setInput((v) => `${v ? `${v}\n` : ""}Attached: ${names}`);
       }
     };
+
     const onVoicePartial = (e: Event) => {
       const partial = (e as CustomEvent<string>).detail;
       if (partial) setInput(partial);
     };
+
     window.addEventListener("nexus:prompt:insert", onPrompt as EventListener);
-    window.addEventListener("nexus:attach", onAttach as EventListener);
+    window.addEventListener("nexus:attach", onAttachEvent as EventListener);
     window.addEventListener("nexus:voice:partial", onVoicePartial as EventListener);
     return () => {
       window.removeEventListener("nexus:prompt:insert", onPrompt as EventListener);
-      window.removeEventListener("nexus:attach", onAttach as EventListener);
+      window.removeEventListener("nexus:attach", onAttachEvent as EventListener);
       window.removeEventListener("nexus:voice:partial", onVoicePartial as EventListener);
     };
   }, []);
@@ -246,19 +249,14 @@ export default function ChatPage() {
 
   return (
     <div
-      className="h-[calc(100dvh-56px)] w-full" /* adjust 56px if your header height differs */
+      className="h-[calc(100dvh-56px)] w-full" // adjust if your header height differs
       onDrop={onDrop}
       onDragOver={onDragOver}
       onPaste={onPaste}
     >
       <div className="mx-auto flex h-full max-w-3xl flex-col">
-        {/* Beta banner */}
-        <div className="px-4 pt-4">
-          <BetaBanner />
-        </div>
-
         {/* Messages */}
-        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-4">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-24 pt-6">
           <div className="space-y-4">
             {msgs.map((m) => (
               <MessageBubble key={m.id} m={m} />
