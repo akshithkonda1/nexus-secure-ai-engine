@@ -6,88 +6,61 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <!-- Let the UA style form controls, scrollbars, etc. per theme -->
     <meta name="color-scheme" content="light dark" />
-    <!-- Dynamic address-bar color per OS theme -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
-
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Disable transitions during first paint to avoid flicker -->
-    <style>
-      html.theme-preload * { transition: none !important; }
-    </style>
+    <!-- prevent transition flicker on first paint -->
+    <style>html.theme-preload *{transition:none!important}</style>
 
-    <!-- Early, robust theme bootstrapping (runs before CSS) -->
+    <!-- Early theme bootstrap -->
     <script>
       (function () {
         var ROOT = document.documentElement;
-        var SYS_MQ = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-        var KEYS = ['nexus-theme', 'theme']; // read/write both for backward-compat
+        var SYS = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        var KEYS = ['nexus-theme','theme'];
 
-        function readPref() {
-          var v = 'system';
-          try {
-            for (var i = 0; i < KEYS.length; i++) {
-              var s = localStorage.getItem(KEYS[i]);
-              if (s) { v = s; break; }
-            }
-          } catch (_) {}
-          return (v === 'light' || v === 'dark' || v === 'system') ? v : 'system';
+        function readPref(){
+          var v='system';
+          try{
+            for (var i=0;i<KEYS.length;i++){ var s=localStorage.getItem(KEYS[i]); if(s){v=s;break;} }
+          }catch(e){}
+          return (v==='light'||v==='dark'||v==='system')?v:'system';
         }
-
-        function systemTheme() {
-          return SYS_MQ && SYS_MQ.matches ? 'dark' : 'light';
-        }
-
-        function applyTheme(theme) {
-          var eff = theme === 'system' ? systemTheme() : theme;
-          // Tailwind v4 dark variants
-          ROOT.classList.toggle('dark', eff === 'dark');
-          // CSS variable set switching
+        function sysTheme(){ return SYS && SYS.matches ? 'dark' : 'light'; }
+        function apply(pref){
+          var eff = pref==='system' ? sysTheme() : pref;
+          ROOT.classList.toggle('dark', eff==='dark');
           ROOT.dataset.theme = eff;
-          // Persist both keys
-          try { for (var i = 0; i < KEYS.length; i++) localStorage.setItem(KEYS[i], theme); } catch (_) {}
+          try{ for (var i=0;i<KEYS.length;i++) localStorage.setItem(KEYS[i], pref); }catch(e){}
           return eff;
         }
 
-        // Expose a safe setter for the app UI: window.__setTheme('light'|'dark'|'system')
-        window.__setTheme = function (choice) {
-          if (choice !== 'light' && choice !== 'dark' && choice !== 'system') choice = 'system';
-          applyTheme(choice);
+        window.__setTheme = function(choice){
+          if(choice!=='light'&&choice!=='dark'&&choice!=='system') choice='system';
+          apply(choice);
         };
 
-        // Prevent transition flash then apply initial theme
         ROOT.classList.add('theme-preload');
-        var pref = readPref();
-        applyTheme(pref);
+        apply(readPref());
 
-        // Follow OS changes live when in "system"
-        if (SYS_MQ) {
-          var onChange = function () {
-            try {
-              var cur = readPref();
-              if (cur === 'system') applyTheme('system');
-            } catch (_) {}
+        if (SYS){
+          var onChange = function(){
+            try{ if(readPref()==='system') apply('system'); }catch(e){}
           };
-          if (SYS_MQ.addEventListener) SYS_MQ.addEventListener('change', onChange);
-          else if (SYS_MQ.addListener) SYS_MQ.addListener(onChange); // Safari <14
+          if (SYS.addEventListener) SYS.addEventListener('change', onChange);
+          else if (SYS.addListener) SYS.addListener(onChange);
         }
 
-        // Re-enable transitions after first content paint
-        window.addEventListener('DOMContentLoaded', function () {
+        window.addEventListener('DOMContentLoaded', function(){
           ROOT.classList.remove('theme-preload');
         });
       })();
     </script>
   </head>
-
   <body class="bg-app text-ink antialiased">
-    <noscript>
-      <strong>Nexus requires JavaScript.</strong>
-    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
