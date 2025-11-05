@@ -7,7 +7,7 @@ import { useSession } from "@/shared/state/session";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 /* =========================
-   Prompt helpers (unchanged)
+   Prompt helpers
    ========================= */
 async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
   try {
@@ -49,9 +49,10 @@ declare global {
 }
 
 /* =========================
-   Local dropdown (unchanged)
+   Local dropdown
    ========================= */
 type MenuItem = { key: string; label: string; onSelect: () => void };
+
 function useClickOutside<T extends HTMLElement>(onAway: () => void) {
   const ref = React.useRef<T | null>(null);
   React.useEffect(() => {
@@ -134,6 +135,7 @@ type Profile = {
   about?: string;
   avatarDataUrl?: string;
 };
+
 const STORAGE_KEY = "nexus.profile.v1";
 const DEFAULT_PROFILE: Profile = {
   id: "local",
@@ -156,12 +158,17 @@ function saveProfile(p: Profile) {
   window.dispatchEvent(new CustomEvent("nexus:profile:update", { detail: p }));
 }
 
+/* =========================
+   Profile Modal (auto-save + manual save)
+   ========================= */
 function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [profile, setProfile] = React.useState<Profile>(() => loadProfile());
   const [name, setName] = React.useState(profile.displayName);
   const [about, setAbout] = React.useState(profile.about ?? "");
   const [avatar, setAvatar] = React.useState<string | undefined>(profile.avatarDataUrl);
-  const [dirty, setDirty] = React.useState(false);
+
+  // saving status
+  const [saveState, setSaveState] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // close on Esc
   React.useEffect(() => {
@@ -179,13 +186,52 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
+  // reload latest every open
   React.useEffect(() => {
-    setDirty(
-      name.trim() !== profile.displayName ||
-      (about ?? "") !== (profile.about ?? "") ||
-      avatar !== profile.avatarDataUrl
-    );
-  }, [name, about, avatar, profile]);
+    if (!open) return;
+    const p = loadProfile();
+    setProfile(p);
+    setName(p.displayName);
+    setAbout(p.about ?? "");
+    setAvatar(p.avatarDataUrl);
+    setSaveState("idle");
+  }, [open]);
+
+  const draft: Profile = React.useMemo(
+    () => ({
+      ...profile,
+      displayName: name.trim().slice(0, 48),
+      about: (about ?? "").slice(0, 240),
+      avatarDataUrl: avatar,
+    }),
+    [profile, name, about, avatar]
+  );
+
+  const dirty =
+    draft.displayName !== profile.displayName ||
+    (draft.about ?? "") !== (profile.about ?? "") ||
+    draft.avatarDataUrl !== profile.avatarDataUrl;
+
+  const canSave = draft.displayName.length >= 2;
+
+  // Debounced auto-save after edits
+  React.useEffect(() => {
+    if (!open) return;
+    if (!dirty || !canSave) return;
+    setSaveState("saving");
+    const t = setTimeout(() => {
+      try {
+        saveProfile(draft);
+        setProfile(draft);
+        setSaveState("saved");
+        const t2 = setTimeout(() => setSaveState("idle"), 1200);
+        return () => clearTimeout(t2);
+      } catch {
+        setSaveState("error");
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [open, dirty, canSave, draft]);
 
   const fileRef = React.useRef<HTMLInputElement | null>(null);
   const handleFile = (file: File) => {
@@ -201,27 +247,23 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
     .slice(0, 2)
     .toUpperCase();
 
-  const onSave = () => {
-    const next: Profile = {
-      ...profile,
-      displayName: name.trim().slice(0, 48),
-      about: (about ?? "").slice(0, 240),
-      avatarDataUrl: avatar,
-    };
-    saveProfile(next);
-    setProfile(next);
-    onClose();
+  const manualSave = () => {
+    if (!canSave) return;
+    try {
+      setSaveState("saving");
+      saveProfile(draft);
+      setProfile(draft);
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 1200);
+    } catch {
+      setSaveState("error");
+    }
   };
 
   if (!open) return null;
 
-  // CENTERED VERSION
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-    >
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Overlay */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -235,108 +277,120 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
         animate={{ opacity: 1, y: 0, scale: 1 }}
         className="relative w-[min(92vw,640px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-app-surface/95 p-5 text-ink shadow-2xl"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Profile</h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-muted transition hover:bg-white/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
-            aria-label="Close profile"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Photo */}
-        <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
-          <p className="mb-3 text-sm font-medium">Photo</p>
-          <div className="flex items-center gap-4">
-            <div className="relative h-16 w-16 overflow-hidden rounded-full ring-1 ring-white/15">
-              {avatar ? (
-                <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-app text-sm font-semibold text-ink">
-                  {initials}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleFile(f);
-                  e.currentTarget.value = "";
-                }}
-              />
+        <form
+          onSubmit={(e) => { e.preventDefault(); manualSave(); }}
+          className="contents"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Profile</h2>
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-muted" aria-live="polite" aria-atomic="true">
+                {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : saveState === "error" ? "Save failed" : null}
+              </p>
               <button
+                onClick={onClose}
                 type="button"
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-md border border-app px-3 py-1.5 text-sm text-muted transition hover:text-ink"
+                className="rounded-full p-2 text-muted transition hover:bg-white/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+                aria-label="Close profile"
               >
-                <Camera className="h-4 w-4" /> Upload
-              </button>
-              <button
-                type="button"
-                onClick={() => setAvatar(undefined)}
-                className="inline-flex items-center gap-2 rounded-md border border-app px-3 py-1.5 text-sm text-muted transition hover:text-ink"
-              >
-                <X className="h-4 w-4" /> Remove
+                <X className="h-5 w-5" />
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Identity */}
-        <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
-          <p className="mb-3 text-sm font-medium">Identity</p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
-            <div className="sm:col-span-4">
-              <label htmlFor="prof-name" className="mb-1 block text-xs text-muted">Display name</label>
-              <input
-                id="prof-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Appleseed"
-                className="w-full rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
-              />
-              <p className="mt-1 text-xs text-muted">{Math.min(name.trim().length, 48)}/48</p>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-muted">Handle</label>
-              <div className="rounded-md border border-app bg-white/5 px-3 py-2 text-sm text-muted">{profile.handle}</div>
-            </div>
-            <div className="sm:col-span-6">
-              <label htmlFor="prof-about" className="mb-1 block text-xs text-muted">About</label>
-              <textarea
-                id="prof-about"
-                value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                maxLength={240}
-                placeholder="A line about you (max 240)."
-                className="h-24 w-full resize-none rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
-              />
-              <p className="mt-1 text-right text-xs text-muted">{Math.min(about.length, 240)}/240</p>
+          {/* Photo */}
+          <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+            <p className="mb-3 text-sm font-medium">Photo</p>
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 overflow-hidden rounded-full ring-1 ring-white/15">
+                {avatar ? (
+                  <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-app text-sm font-semibold text-ink">
+                    {initials}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFile(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-md border border-app px-3 py-1.5 text-sm text-muted transition hover:text-ink"
+                >
+                  <Camera className="h-4 w-4" /> Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAvatar(undefined)}
+                  className="inline-flex items-center gap-2 rounded-md border border-app px-3 py-1.5 text-sm text-muted transition hover:text-ink"
+                >
+                  <X className="h-4 w-4" /> Remove
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink">
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!dirty || name.trim().length < 2}
-            onClick={onSave}
-            className="inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" /> Save
-          </button>
-        </div>
+          {/* Identity */}
+          <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+            <p className="mb-3 text-sm font-medium">Identity</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+              <div className="sm:col-span-4">
+                <label htmlFor="prof-name" className="mb-1 block text-xs text-muted">Display name</label>
+                <input
+                  id="prof-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Jane Appleseed"
+                  className="w-full rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
+                />
+                <p className="mt-1 text-xs text-muted">{Math.min(name.trim().length, 48)}/48</p>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs text-muted">Handle</label>
+                <div className="rounded-md border border-app bg-white/5 px-3 py-2 text-sm text-muted">{profile.handle}</div>
+              </div>
+              <div className="sm:col-span-6">
+                <label htmlFor="prof-about" className="mb-1 block text-xs text-muted">About</label>
+                <textarea
+                  id="prof-about"
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  maxLength={240}
+                  placeholder="A line about you (max 240)."
+                  className="h-24 w-full resize-none rounded-md border border-app bg-transparent px-3 py-2 text-sm text-ink outline-none placeholder:text-muted"
+                />
+                <p className="mt-1 text-right text-xs text-muted">{Math.min(about.length, 240)}/240</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2">
+            <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!canSave}
+              aria-disabled={!canSave}
+              className="inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
+            >
+              {saveState === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save
+            </button>
+          </div>
+        </form>
       </motion.div>
     </div>
   );
@@ -362,12 +416,7 @@ export function UserBar() {
 
   const displayName = profile.displayName || user.name?.trim() || "Guest";
   const handle = profile.handle ?? user.handle ?? "@nexus";
-  const initials = displayName
-    .split(" ")
-    .map((part: string) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = displayName.split(" ").map((part: string) => part[0]).join("").slice(0, 2).toUpperCase();
 
   const [profileOpen, setProfileOpen] = React.useState(false);
 
