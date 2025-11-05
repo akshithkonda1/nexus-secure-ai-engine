@@ -1,87 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  Activity,
+  Archive,
   Clock,
-  Search,
+  Filter,
+  Folder,
+  MessageSquare,
+  MoreHorizontal,
   Pin,
   Play,
-  FileText,
-  Folder,
-  Filter,
-  MoreHorizontal,
-  Star,
-  MessageSquare,
-  Archive,
-  Activity,
   RefreshCw,
+  Search,
+  Star,
 } from "lucide-react";
+import { PageHeader } from "@/components/common/PageHeader";
+import { EmptyState } from "@/components/common/EmptyState";
+import { Skeleton } from "@/components/common/Skeleton";
+import { useAudit, useProjects, useSessions } from "@/queries/sessions";
+import type { AuditEvent, Project, Session } from "@/types/models";
 
-// ————————————————————————————————————————————
-// shadcn/ui primitives (assumed available in the app)
-// If your project hasn’t added them yet, either add shadcn/ui
-// or replace these with your local components.
-// ————————————————————————————————————————————
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-// Optional: small sparkline for Projects activity
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
-
-// ————————————————————————————————————————————
-// Types
-// ————————————————————————————————————————————
-type SessionStatus = "active" | "archived" | "draft";
-
-export type Session = {
-  id: string;
-  title: string;
-  preview?: string;
-  updatedAt: string; // ISO
-  messages: number;
-  providers: string[]; // e.g., ["gpt-4o", "claude-3.5"]
-  status: SessionStatus;
-  projectId?: string | null;
-  pinned?: boolean;
-};
-
-export type AuditEvent = {
-  id: string;
-  type:
-    | "created"
-    | "renamed"
-    | "message"
-    | "archived"
-    | "restored"
-    | "deleted"
-    | "exported"
-    | "modelRun";
-  at: string; // ISO
-  actor: string; // "you" | "system" | name
-  sessionId?: string;
-  projectId?: string;
-  details?: string;
-};
-
-export type Project = {
-  id: string;
-  name: string;
-  description?: string;
-  updatedAt: string; // ISO
-  sessionsCount: number;
-  activeCount: number;
-  activity7d?: { day: string; value: number }[]; // for sparkline
-};
-
-// ————————————————————————————————————————————
-// Utilities
-// ————————————————————————————————————————————
 const TOP_N = 20;
 
 function fmtRelative(iso: string) {
@@ -98,503 +37,267 @@ function fmtRelative(iso: string) {
   return d.toLocaleDateString();
 }
 
-function byUpdatedDesc(a: { updatedAt: string }, b: { updatedAt: string }) {
-  return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-}
-
 function groupEventsByDate(events: AuditEvent[]) {
   const map = new Map<string, AuditEvent[]>();
-  for (const e of events) {
-    const key = new Date(e.at).toDateString();
-    const arr = map.get(key) || [];
-    arr.push(e);
+  events.forEach((event) => {
+    const key = new Date(event.at).toDateString();
+    const arr = map.get(key) ?? [];
+    arr.push(event);
     map.set(key, arr);
-  }
-  return Array.from(map.entries()).map(([label, items]) => ({ label, items: items.sort((a,b)=> new Date(b.at).getTime()-new Date(a.at).getTime()) }));
-}
-
-// ————————————————————————————————————————————
-// Mock data (replace with real data wiring)
-// ————————————————————————————————————————————
-function makeMock(): { sessions: Session[]; events: AuditEvent[]; projects: Project[] } {
-  const providers = ["gpt-4o", "gpt-4.1", "claude-3.5", "mistral-large"]; 
-  const projects: Project[] = [
-    {
-      id: "p1",
-      name: "Market Research",
-      description: "Competitive scans & pricing notes",
-      updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
-      sessionsCount: 14,
-      activeCount: 7,
-      activity7d: Array.from({ length: 7 }, (_, i) => ({ day: `${i}`, value: Math.floor(Math.random() * 6) })),
-    },
-    {
-      id: "p2",
-      name: "Nexus.ai Roadmap",
-      description: "Engine + UI/UX explorations",
-      updatedAt: new Date(Date.now() - 20 * 3600_000).toISOString(),
-      sessionsCount: 23,
-      activeCount: 12,
-      activity7d: Array.from({ length: 7 }, (_, i) => ({ day: `${i}`, value: Math.floor(Math.random() * 8) })),
-    },
-  ];
-
-  const sessions: Session[] = Array.from({ length: 26 }, (_, i) => {
-    const id = `s${i + 1}`;
-    const proj = i % 3 === 0 ? "p1" : i % 5 === 0 ? "p2" : null;
-    return {
-      id,
-      title: i % 4 === 0 ? `Research thread ${i + 1}` : `Session ${i + 1}`,
-      preview:
-        i % 2 === 0
-          ? "Consensus draft on multi-model ranking and debate heuristics."
-          : "Exploring Spurs-theme UI and session persistence strategies…",
-      updatedAt: new Date(Date.now() - Math.floor(Math.random() * 72) * 3600_000).toISOString(),
-      messages: Math.floor(Math.random() * 60) + 1,
-      providers: providers.filter(() => Math.random() > 0.5).slice(0, 3),
-      status: (['active','archived','draft'] as SessionStatus[])[Math.floor(Math.random()*3)],
-      projectId: proj,
-      pinned: Math.random() > 0.8,
-    };
   });
-
-  const events: AuditEvent[] = [];
-  for (const s of sessions.slice(0, 22)) {
-    events.push(
-      {
-        id: `${s.id}-e1`,
-        type: "message",
-        at: new Date(new Date(s.updatedAt).getTime() - 15 * 60_000).toISOString(),
-        actor: "you",
-        sessionId: s.id,
-        details: "Sent a prompt",
-      },
-      {
-        id: `${s.id}-e2`,
-        type: "modelRun",
-        at: new Date(new Date(s.updatedAt).getTime() - 13 * 60_000).toISOString(),
-        actor: "system",
-        sessionId: s.id,
-        details: s.providers.join(", ") + " run",
-      }
-    );
-  }
-  return { sessions, events, projects };
+  return Array.from(map.entries()).map(([label, items]) => ({
+    label,
+    items: items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()),
+  }));
 }
 
-// ————————————————————————————————————————————
-// Data hook (swap for real TanStack Query later)
-// ————————————————————————————————————————————
-function useSessionsData() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(makeMock());
-
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 450); // quick skeleton
-    return () => clearTimeout(t);
-  }, []);
-
-  return { ...data, loading };
-}
-
-// ————————————————————————————————————————————
-// Small UI helpers
-// ————————————————————————————————————————————
-function StatusPill({ s }: { s: SessionStatus }) {
-  const styles: Record<SessionStatus, string> = {
-    active: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
-    archived: "bg-zinc-500/10 text-zinc-400 border border-zinc-600/30",
-    draft: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
-  };
-  return <span className={`px-2.5 py-1 text-xs rounded-full ${styles[s]}`}>{s}</span>;
-}
-
-function ProviderBadge({ p }: { p: string }) {
-  return <Badge variant="secondary" className="mr-1 mt-1 lowercase">{p}</Badge>;
-}
-
-// ————————————————————————————————————————————
-// Sections
-// ————————————————————————————————————————————
-function RecentSessions({ sessions, loading }: { sessions: Session[]; loading: boolean }) {
+function SessionCard({ session }: { session: Session }) {
   const navigate = useNavigate();
-  const [q, setQ] = useState("");
-
-  const sorted = useMemo(() => [...sessions].sort(byUpdatedDesc), [sessions]);
-  const filtered = useMemo(() => {
-    const base = sorted.slice(0, TOP_N);
-    if (!q) return base;
-    return base.filter((s) =>
-      [s.title, s.preview].filter(Boolean).join(" ").toLowerCase().includes(q.toLowerCase())
-    );
-  }, [sorted, q]);
-
   return (
-    <Card className="bg-zinc-900/40 border-zinc-800">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <motion.article
+      layout
+      className="group flex flex-col justify-between rounded-3xl border border-app bg-panel p-5 text-ink shadow-lg transition hover:-translate-y-1 hover:border-trustBlue/60 hover:shadow-2xl"
+    >
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <CardTitle className="text-xl">Recent Sessions</CardTitle>
-          <p className="text-sm text-zinc-400">Most recent first · showing up to {TOP_N}</p>
+          <h3 className="text-lg font-semibold text-ink">{session.title}</h3>
+          <p className="mt-2 line-clamp-2 text-sm text-muted">{session.preview ?? "Kick off a fresh Nexus debate."}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-500" />
-            <Input
-              placeholder="Search recent…"
-              className="pl-8 w-56 bg-zinc-900 border-zinc-800"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-          <Button variant="ghost" size="icon" title="Refresh">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-32 rounded-xl bg-zinc-800/40 animate-pulse border border-zinc-800"
-              />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState message="No recent sessions match your search." />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((s) => (
-              <motion.div key={s.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="group border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/70 transition">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="truncate text-base font-medium">
-                        {s.title}
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <StatusPill s={s.status} />
-                        {s.pinned && <Star className="h-4 w-4 text-yellow-400" />}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-zinc-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>Updated {fmtRelative(s.updatedAt)}</span>
-                      <span>•</span>
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <span>{s.messages}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    {s.preview && (
-                      <p className="line-clamp-2 text-sm text-zinc-400 mb-2">{s.preview}</p>
-                    )}
-                    <div className="flex flex-wrap -mt-1">
-                      {s.providers.map((p) => (
-                        <ProviderBadge key={p} p={p} />
-                      ))}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-2 flex items-center justify-between">
-                    <div className="text-xs text-zinc-500">
-                      {s.projectId ? (
-                        <div className="flex items-center gap-1">
-                          <Folder className="h-3.5 w-3.5" />
-                          <span>Project: {s.projectId}</span>
-                        </div>
-                      ) : (
-                        <span className="text-zinc-600">No project</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        className="gap-1 bg-blue-700 hover:bg-blue-700/90 text-white"
-                        onClick={() => navigate(`/chat/${s.id}`)}
-                      >
-                        <Play className="h-4 w-4" /> Continue
-                      </Button>
-                      <Button variant="ghost" size="icon" title="More">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        {session.pinned ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-trustBlue/40 bg-trustBlue/10 px-3 py-1 text-xs font-medium text-trustBlue">
+            <Pin className="h-3 w-3" aria-hidden="true" /> Pinned
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted">
+        <span className="inline-flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {fmtRelative(session.updatedAt)}
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" /> {session.messages} messages
+        </span>
+        {session.providers.length ? (
+          <span className="inline-flex items-center gap-1">
+            <Activity className="h-3.5 w-3.5" aria-hidden="true" /> {session.providers.join(", ")}
+          </span>
+        ) : null}
+        <span className="ml-auto inline-flex items-center gap-1 text-[0.7rem] uppercase tracking-widest">
+          {session.status}
+        </span>
+      </div>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(`/chat/${session.id}`)}
+          className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+        >
+          <Play className="h-4 w-4" aria-hidden="true" /> Continue
+        </button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-full border border-app px-3 py-1.5 text-xs font-medium text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+        >
+          <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> Manage
+        </button>
+      </div>
+    </motion.article>
   );
 }
 
-function AuditTrail({ events, loading }: { events: AuditEvent[]; loading: boolean }) {
-  const [q, setQ] = useState("");
-  const [tab, setTab] = useState<string>("all");
-
-  const filtered = useMemo(() => {
-    const byType = tab === "all" ? events : events.filter((e) => e.type === tab);
-    if (!q) return byType;
-    return byType.filter((e) => (e.details || "").toLowerCase().includes(q.toLowerCase()));
-  }, [events, q, tab]);
-
-  const grouped = useMemo(() => groupEventsByDate(filtered), [filtered]);
-
+function ProjectCard({ project }: { project: Project }) {
   return (
-    <Card className="bg-zinc-900/40 border-zinc-800">
-      <CardHeader className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-xl">Audit Trail</CardTitle>
-            <p className="text-sm text-zinc-400">System & user actions across sessions</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-zinc-500" />
-              <Input
-                placeholder="Search events…"
-                className="pl-8 w-56 bg-zinc-900 border-zinc-800"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </div>
+    <div className="flex flex-col gap-4 rounded-3xl border border-app bg-panel p-5 text-ink shadow-lg">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold text-ink">{project.name}</h3>
+          <p className="mt-2 text-sm text-muted">{project.description ?? "Trusted workspace"}</p>
+        </div>
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-trustBlue/10 text-trustBlue">
+          <Folder className="h-5 w-5" aria-hidden="true" />
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
+        <span>{project.sessionsCount} sessions</span>
+        <span>{project.activeCount} active</span>
+        <span>Updated {fmtRelative(project.updatedAt)}</span>
+      </div>
+      {project.activity7d ? (
+        <div className="mt-4 h-16 rounded-2xl bg-app/60" aria-hidden="true">
+          <div className="flex h-full w-full items-end justify-between gap-1 px-2">
+            {project.activity7d.map((point) => (
+              <div key={point.day} className="flex-1">
+                <div
+                  className="mx-auto w-2 rounded-full bg-trustBlue"
+                  style={{ height: `${Math.max(point.value * 12, 4)}px` }}
+                />
+              </div>
+            ))}
           </div>
         </div>
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="bg-zinc-900 border border-zinc-800">
-            {(["all", "created", "renamed", "message", "modelRun", "archived", "restored", "deleted", "exported"]) as const}
-              .map((k) => (
-                <TabsTrigger key={k} value={k} className="capitalize">
-                  {k === "modelRun" ? "model run" : k}
-                </TabsTrigger>
-              ))}
-          </TabsList>
-          <TabsContent value={tab} />
-        </Tabs>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-12 rounded-xl bg-zinc-800/40 animate-pulse border border-zinc-800" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <EmptyState message="No events match your filters." />
-        ) : (
-          <ScrollArea className="h-[420px] pr-4">
-            <div className="space-y-8">
-              {grouped.map((g) => (
-                <div key={g.label}>
-                  <div className="text-xs uppercase tracking-wide text-zinc-500 mb-3">{g.label}</div>
-                  <div className="space-y-2">
-                    {g.items.map((e) => (
-                      <div key={e.id} className="flex items-start gap-3">
-                        <div className="mt-1">
-                          {iconForEvent(e.type)}
-                        </div>
-                        <div className="flex-1 border border-zinc-800 bg-zinc-900/40 rounded-xl p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="capitalize text-zinc-200">{labelForEvent(e.type)}</span>
-                              <span className="text-zinc-500">·</span>
-                              <span className="text-zinc-500">{fmtRelative(e.at)}</span>
-                            </div>
-                            <div className="text-xs text-zinc-500">{e.actor}</div>
-                          </div>
-                          {e.details && (
-                            <div className="text-sm text-zinc-400 mt-1">{e.details}</div>
-                          )}
-                          {e.sessionId && (
-                            <div className="mt-2 text-xs text-zinc-500">
-                              Session: <Link className="text-blue-400 hover:underline" to={`/chat/${e.sessionId}`}>{e.sessionId}</Link>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProjectsGrid({ projects, loading }: { projects: Project[]; loading: boolean }) {
-  return (
-    <Card className="bg-zinc-900/40 border-zinc-800">
-      <CardHeader>
-        <CardTitle className="text-xl">Projects</CardTitle>
-        <p className="text-sm text-zinc-400">Organize sessions by workspace</p>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-xl bg-zinc-800/40 animate-pulse border border-zinc-800" />
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <EmptyState message="No projects yet. Create one from any session." />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {projects.map((p) => (
-              <Card key={p.id} className="border-zinc-800 bg-zinc-900/50">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-medium truncate">{p.name}</CardTitle>
-                    <Badge variant="outline" className="border-zinc-700 text-zinc-300">
-                      {p.activeCount}/{p.sessionsCount} active
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-zinc-500">Updated {fmtRelative(p.updatedAt)}</div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {p.description && (
-                    <p className="text-sm text-zinc-400 mb-2 line-clamp-2">{p.description}</p>
-                  )}
-                  {p.activity7d && (
-                    <div className="h-16">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={p.activity7d} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
-                          <Area type="monotone" dataKey="value" fillOpacity={0.2} fill="#1E40AF" stroke="#1E40AF" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter className="pt-0 flex items-center justify-between">
-                  <div className="text-xs text-zinc-500 flex items-center gap-1">
-                    <Activity className="h-3.5 w-3.5" />
-                    <span>7‑day activity</span>
-                  </div>
-                  <Button asChild size="sm" className="bg-blue-700 hover:bg-blue-700/90">
-                    <Link to={`/projects/${p.id}`}>Open</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-zinc-800 rounded-2xl">
-      <Folder className="h-8 w-8 text-zinc-600" />
-      <p className="mt-3 text-sm text-zinc-400">{message}</p>
+      ) : null}
     </div>
   );
 }
 
-function labelForEvent(t: AuditEvent["type"]) {
-  switch (t) {
-    case "created":
-      return "created";
-    case "renamed":
-      return "renamed";
-    case "message":
-      return "message";
-    case "modelRun":
-      return "model run";
-    case "archived":
-      return "archived";
-    case "restored":
-      return "restored";
-    case "deleted":
-      return "deleted";
-    case "exported":
-      return "exported";
+function AuditTrail({ events }: { events: AuditEvent[] }) {
+  const grouped = useMemo(() => groupEventsByDate(events), [events]);
+  if (!events.length) {
+    return (
+      <EmptyState
+        title="No audit events"
+        description="Once teammates start debating, you’ll see every action logged here."
+        icon={<Archive className="h-10 w-10" aria-hidden="true" />}
+      />
+    );
   }
-}
-
-function iconForEvent(t: AuditEvent["type"]) {
-  const cls = "h-4 w-4 text-zinc-500";
-  switch (t) {
-    case "created":
-      return <Pin className={cls} />;
-    case "renamed":
-      return <EditIcon />;
-    case "message":
-      return <MessageSquare className={cls} />;
-    case "modelRun":
-      return <Activity className={cls} />;
-    case "archived":
-      return <Archive className={cls} />;
-    case "restored":
-      return <RefreshCw className={cls} />;
-    case "deleted":
-      return <TrashIcon />;
-    case "exported":
-      return <FileText className={cls} />;
-  }
-}
-
-function EditIcon() {
   return (
-    <svg className="h-4 w-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-    </svg>
+    <div className="space-y-6">
+      {grouped.map((group) => (
+        <div key={group.label} className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <Star className="h-4 w-4 text-trustBlue" aria-hidden="true" /> {group.label}
+          </div>
+          <div className="space-y-3 rounded-3xl border border-app bg-panel p-4 text-sm text-muted shadow-inner">
+            {group.items.map((event) => (
+              <div key={event.id} className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-1 rounded-full bg-app/60 px-2 py-1 text-[0.7rem] uppercase tracking-[0.2em] text-trustBlue">
+                  {event.type}
+                </span>
+                <span className="text-xs text-muted">{fmtRelative(event.at)}</span>
+                <span className="text-xs text-muted">{event.actor}</span>
+                {event.details ? <span className="text-xs text-ink">{event.details}</span> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
-function TrashIcon() {
-  return (
-    <svg className="h-4 w-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
-
-// ————————————————————————————————————————————
-// Page
-// ————————————————————————————————————————————
 export default function SessionsPage() {
-  const { sessions, events, projects, loading } = useSessionsData();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const { data: sessionsData, isLoading: sessionsLoading } = useSessions();
+  const { data: projectsData, isLoading: projectsLoading } = useProjects();
+  const { data: auditData, isLoading: auditLoading } = useAudit();
 
-  const sorted = useMemo(() => [...sessions].sort(byUpdatedDesc), [sessions]);
+  const sessions = sessionsData?.sessions ?? [];
+  const projects = projectsData?.projects ?? [];
+  const events = auditData?.events ?? [];
+
+  const filteredSessions = useMemo(() => {
+    const normalized = search.trim().toLowerCase();
+    return sessions
+      .filter((session) =>
+        normalized
+          ? session.title.toLowerCase().includes(normalized) ||
+            session.preview?.toLowerCase().includes(normalized) ||
+            session.providers.join(" ").toLowerCase().includes(normalized)
+          : true,
+      )
+      .slice(0, TOP_N);
+  }, [search, sessions]);
+
+  const loading = sessionsLoading || projectsLoading || auditLoading;
 
   return (
-    <TooltipProvider>
-      <div className="mx-auto max-w-7xl p-4 md:p-6 space-y-6">
-        {/* Page header */}
-        <div className="flex items-start justify-between gap-4">
+    <div className="space-y-10">
+      <PageHeader
+        title="Sessions"
+        description="Review recent debates, jump back into trusted work, and audit everything your models touched."
+        actions={
+          <button
+            type="button"
+            onClick={() => navigate("/chat")}
+            className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+          >
+            <MessageSquare className="h-4 w-4" aria-hidden="true" /> New session
+          </button>
+        }
+      />
+
+      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Sessions</h1>
-            <p className="text-zinc-400 mt-1">
-              Review and resume Nexus.ai sessions. Your latest work is up top; audit logs and
-              projects live below. Clean, simple, and fast.
-            </p>
+            <h2 className="text-lg font-semibold text-ink">Recent sessions</h2>
+            <p className="text-sm text-muted">Top {TOP_N} threads sorted by last activity.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="border-zinc-700 text-zinc-200">
-              <Folder className="h-4 w-4 mr-2" /> New Project
-            </Button>
-            <Button className="bg-blue-700 hover:bg-blue-700/90">
-              <Play className="h-4 w-4 mr-2" /> New Session
-            </Button>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search sessions"
+                className="h-10 w-full min-w-[220px] rounded-full border border-app bg-app px-9 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+              />
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-app px-3 py-2 text-xs font-medium text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+            >
+              <Filter className="h-4 w-4" aria-hidden="true" /> Filter
+            </button>
           </div>
         </div>
 
-        {/* Sections */}
-        <div className="space-y-6">
-          <RecentSessions sessions={sorted} loading={loading} />
-          <ProjectsGrid projects={projects} loading={loading} />
-          <AuditTrail events={events} loading={loading} />
+        {loading ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={index} className="h-48" />
+            ))}
+          </div>
+        ) : filteredSessions.length ? (
+          <motion.div layout className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredSessions.map((session) => (
+              <SessionCard key={session.id} session={session} />
+            ))}
+          </motion.div>
+        ) : (
+          <div className="mt-6">
+            <EmptyState
+              title="No sessions match your search"
+              description="Clear your filters or launch a fresh debate."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="inline-flex items-center gap-2 rounded-full border border-trustBlue/50 px-4 py-2 text-sm font-semibold text-trustBlue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-panel"
+                >
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" /> Reset
+                </button>
+              }
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-ink">Projects</h2>
+          {projectsLoading ? (
+            <Skeleton className="h-48" />
+          ) : projects.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {projects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No projects yet"
+              description="Create sessions to build project telemetry."
+              icon={<Folder className="h-10 w-10" aria-hidden="true" />}
+            />
+          )}
         </div>
-      </div>
-    </TooltipProvider>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-ink">Audit trail</h2>
+          {auditLoading ? <Skeleton className="h-64" /> : <AuditTrail events={events} />}
+        </div>
+      </section>
+    </div>
   );
 }
-

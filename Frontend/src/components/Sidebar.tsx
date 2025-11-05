@@ -96,7 +96,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
     () => [
       { label: "Home", to: "/", icon: <HomeIcon className={navIconClasses} aria-hidden="true" /> },
       { label: "Chat", to: "/chat", icon: <MessageCircle className={navIconClasses} aria-hidden="true" /> },
-      { label: "Sessions", to: "/projects", icon: <Folder className={navIconClasses} aria-hidden="true" /> },
+      { label: "Sessions", to: "/sessions", icon: <Folder className={navIconClasses} aria-hidden="true" /> },
       { label: "Templates", to: "/templates", icon: <Sparkles className={navIconClasses} aria-hidden="true" /> },
       { label: "Documents", to: "/documents", icon: <FileText className={navIconClasses} aria-hidden="true" /> },
       { label: "Telemetry", to: "/telemetry", icon: <BarChart3 className={navIconClasses} aria-hidden="true" /> },
@@ -119,6 +119,7 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
               <li key={item.to}>
                 <NavLink
                   to={item.to}
+                  end={item.to === "/"}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                       isActive
