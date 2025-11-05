@@ -7,6 +7,8 @@
 # Nexus also includes powerful 256-bit AES encryption for secure data handling, ensuring that sensitive information is protected throughout the process.
 # It combines the power of multiple AI models with the richness of web data, enabling users to gain deeper insights and make more informed decisions, using AI Modal Debating you will get the best possible answer to your question, by combining the strengths of multiple AI models and traditional search engines and media.
 # Nexus was developed by Akshith Konda.
+## nexus_engine.py  →  The Nexus Core Reasoning Engine
+# Version: 1.1.0 "Fortress"
 # nexus_engine.py
 # engine.py
 # Nexus Engine — strict schema + web verification (Google, Bing, Tavily, DuckDuckGo)
