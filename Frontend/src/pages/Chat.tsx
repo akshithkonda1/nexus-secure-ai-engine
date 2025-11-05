@@ -158,7 +158,7 @@ export function ChatPage() {
       id: uid(),
       role: "system",
       ts: Date.now(),
-      text: "Welcome to **Chat**. Ask anything.\n\nEvidence. Synthesis. Less noise.",
+      text: "Welcome to Nexus. I have indeed been loaded and am ready to go. Ask anything.\n\n I debate between multiple AI Models and the internet to give you the best results possible.",
     },
   ]);
   const [input, setInput] = React.useState("");
