@@ -1,140 +1,66 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Mic, Paperclip, Send, Sparkles } from "lucide-react";
-import { ConsentModal } from "@/components/ConsentModal";
-import { SurveyTooltip } from "@/components/SurveyTooltip";
-import { Panel } from "@/shared/ui/Panel";
-import { DebateResponse, useDebateStore } from "@/stores/debateStore";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Paperclip, Mic, Send, Sparkles, Loader2 } from "lucide-react";
 
-/* ---------------------------
-   Score badge color helpers
---------------------------- */
-const SCORE_COLORS = {
-  high: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/30",
-  medium: "bg-amber-500/10 text-amber-700 dark:text-amber-200 border-amber-500/30",
-  low: "bg-rose-500/10 text-rose-700 dark:text-rose-200 border-rose-500/30",
-} as const;
+/** —————————————————————————————————
+ *  Minimal in-memory chat model
+ *  (replace with your engine wiring)
+ *  ————————————————————————————————— */
+type Msg = { id: string; role: "user" | "assistant" | "system"; text: string };
+const demoReply = (q: string) =>
+  `Working on it… (fake reply)\n\nYou asked:\n> ${q}\n\nThis is where your debate/consensus response will render.`;
 
-function getScoreColor(score: number) {
-  if (score >= 0.8) return SCORE_COLORS.high;
-  if (score >= 0.5) return SCORE_COLORS.medium;
-  return SCORE_COLORS.low;
-}
-
-function renderTextWithLinks(text: string) {
-  const parts = text.split(/(https?:\/\/\S+)/g);
-  return parts.map((part, index) => {
-    const isLink = part.startsWith("http");
-    if (!isLink) return <span key={`t-${index}`}>{part}</span>;
-    return (
-      <a
-        key={`a-${index}`}
-        href={part}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="text-trustBlue underline decoration-trustBlue/40 underline-offset-2 transition hover:text-trustBlue/80"
+/** —————————————————————————————————
+ *  Message bubble (ChatGPT-like)
+ *  ————————————————————————————————— */
+function MessageBubble({ m }: { m: Msg }) {
+  const mine = m.role === "user";
+  const system = m.role === "system";
+  return (
+    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+      <div
+        className={[
+          "max-w-[75ch] whitespace-pre-wrap leading-relaxed",
+          "rounded-2xl px-4 py-3 shadow-sm",
+          system
+            ? "bg-white/5 text-muted border border-white/10"
+            : mine
+            ? "bg-trustBlue/10 border border-trustBlue/20 text-ink"
+            : "bg-panel border border-white/10 text-ink",
+        ].join(" ")}
       >
-        {part}
-      </a>
-    );
-  });
-}
-
-/* ---------------------------
-   Message bubbles
---------------------------- */
-function SystemBubble() {
-  return (
-    <div className="flex justify-center">
-      <div className="max-w-[75ch] rounded-2xl border border-white/10 bg-panel px-4 py-3 text-sm text-ink shadow-sm">
-        <div className="flex items-start gap-3">
-          <Sparkles className="mt-0.5 h-5 w-5 text-trustBlue" aria-hidden="true" />
-          <div>
-            <p className="text-xs uppercase tracking-wide">
-              <span className="font-semibold">Beta —</span> Your queries help improve our AI process and your experience.
-            </p>
-            <p className="mt-2 text-sm text-ink/80">
-              Nexus.ai orchestrates a debate between Generative AI models while looking at web results to validate,
-              scoring every response and synthesizing a consensus you can trust.
-            </p>
-          </div>
-        </div>
+        {m.text}
       </div>
     </div>
   );
 }
 
-function UserBubble({ text }: { text: string }) {
-  return (
-    <div className="flex justify-end">
-      <div className="max-w-[75ch] whitespace-pre-wrap rounded-2xl border border-trustBlue/20 bg-trustBlue/10 px-4 py-3 text-ink shadow-sm">
-        {text}
-      </div>
-    </div>
-  );
-}
-
-function AssistantConsensus({ text, overallScore }: { text: string; overallScore: number | null }) {
-  return (
-    <div className="flex justify-start">
-      <div className="max-w-[75ch] rounded-2xl border border-white/10 bg-panel px-4 py-4 text-ink shadow-sm">
-        <h2 className="text-xs font-semibold uppercase tracking-wide">Consensus</h2>
-        <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed">{text}</p>
-        {overallScore !== null ? (
-          <p className="mt-3 text-xs text-muted">
-            Overall confidence score:{" "}
-            <span className="font-semibold text-ink dark:text-app-text">{overallScore.toFixed(2)}</span>
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function ModelBubble({ response }: { response: DebateResponse }) {
-  return (
-    <div className="flex justify-start">
-      <div className="max-w-[75ch] rounded-2xl border border-white/10 bg-panel px-4 py-4 text-ink shadow-sm">
-        <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-trustBlue/10 text-xs uppercase tracking-wide text-trustBlue">
-              {response.model.slice(0, 2)}
-            </span>
-            <span>{response.model}</span>
-          </div>
-          <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${getScoreColor(
-              response.score,
-            )}`}
-          >
-            Score {response.score.toFixed(2)}
-          </span>
-        </div>
-        <div className="mt-3 text-[15px] leading-relaxed">{renderTextWithLinks(response.text)}</div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------
-   Sticky bottom composer
---------------------------- */
+/** —————————————————————————————————
+ *  Composer (sticky bottom, ChatGPT-ish)
+ *  ————————————————————————————————— */
 function Composer({
   value,
   setValue,
   onSend,
   busy,
-  onAttachFiles,
+  onAttach,
+  onToggleVoice,
+  recording,
+  onOpenPromptBrowser,
 }: {
   value: string;
   setValue: (v: string) => void;
   onSend: () => void;
   busy: boolean;
-  onAttachFiles: (files: FileList) => void;
+  onAttach: (files: FileList) => void;
+  onToggleVoice: () => void;
+  recording: boolean;
+  onOpenPromptBrowser: () => void;
 }) {
-  const taRef = useRef<HTMLTextAreaElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // autogrow textarea
+  // auto-grow textarea
   useEffect(() => {
     const ta = taRef.current;
     if (!ta) return;
@@ -150,12 +76,11 @@ function Composer({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-app px-2 text-muted transition hover:text-ink"
+              className="mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-app px-2 text-muted hover:text-ink"
               title="Attach"
             >
               <Paperclip className="h-4 w-4" />
             </button>
-
             <textarea
               ref={taRef}
               value={value}
@@ -169,33 +94,36 @@ function Composer({
               placeholder="Message Nexus…"
               className="min-h-[56px] max-h-[220px] w-full resize-none bg-transparent px-1 py-2 text-[15px] text-ink outline-none placeholder:text-muted"
             />
-
             <button
               type="button"
-              className="mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-app px-2 text-muted transition hover:text-ink"
+              onClick={onToggleVoice}
+              className={`mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-app px-2 text-muted hover:text-ink ${
+                recording ? "bg-white/5 text-ink" : ""
+              }`}
               title="Voice"
-              onClick={() => {
-                // just emit; your UserBar voice handler can listen if you keep it
-                window.dispatchEvent(new CustomEvent("nexus:voice:recording", { detail: { state: "toggle" } }));
-              }}
             >
               <Mic className="h-4 w-4" />
             </button>
-
+            <button
+              type="button"
+              onClick={onOpenPromptBrowser}
+              className="mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-app px-2 text-muted hover:text-ink"
+              title="Prompt Browser"
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-app px-3 py-2">
+            <p className="text-xs text-muted">Shift + Enter for new line</p>
             <button
               type="button"
               onClick={onSend}
               disabled={!value.trim() || busy}
-              className="mb-2 inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-trustBlue px-3 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
-              title="Send"
+              className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Send
             </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-t border-app px-3 py-2">
-            <p className="text-xs text-muted">Shift + Enter for new line</p>
-            {/* spacer */}
           </div>
         </div>
       </div>
@@ -207,7 +135,7 @@ function Composer({
         multiple
         className="hidden"
         onChange={(e) => {
-          if (e.target.files && e.target.files.length) onAttachFiles(e.target.files);
+          if (e.target.files && e.target.files.length) onAttach(e.target.files);
           e.currentTarget.value = "";
         }}
       />
@@ -215,175 +143,122 @@ function Composer({
   );
 }
 
-/* ---------------------------
-   Main Chat (ChatGPT layout)
---------------------------- */
-export default function Chat() {
-  const {
-    responses,
-    consensus,
-    overallScore,
-    loading,
-    error,
-    query,
-    queryCount,
-    telemetryOptIn,
-    history,
-    submitQuery,
-    setQuery,
-    clearError,
-    logSurveyFeedback,
-  } = useDebateStore((state) => ({
-    responses: state.responses,
-    consensus: state.consensus,
-    overallScore: state.overallScore,
-    loading: state.loading,
-    error: state.error,
-    query: state.query,
-    queryCount: state.queryCount,
-    telemetryOptIn: state.telemetryOptIn,
-    history: state.history,
-    submitQuery: state.submitQuery,
-    setQuery: state.setQuery,
-    clearError: state.clearError,
-    logSurveyFeedback: state.logSurveyFeedback,
-  }));
+/** —————————————————————————————————
+ *  Chat Page (ChatGPT-like layout)
+ *  ————————————————————————————————— */
+export default function ChatPage() {
+  const [msgs, setMsgs] = useState<Msg[]>([
+    {
+      id: "sys-hello",
+      role: "system",
+      text:
+        "BETA — Your queries help improve Nexus. We orchestrate a debate between models, verify with the web, and synthesize a consensus you can trust.",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [recording, setRecording] = useState(false);
 
-  const [inputValue, setInputValue] = useState(query);
-  const [surveyTriggered, setSurveyTriggered] = useState(false);
-  const [surveyDismissed, setSurveyDismissed] = useState(false);
-  const [lastSent, setLastSent] = useState<string | null>(null);
-
-  // keep store query in sync (debounced)
-  useEffect(() => setInputValue(query), [query]);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const handler = setTimeout(() => setQuery(inputValue), 250);
-    return () => clearTimeout(handler);
-  }, [inputValue, setQuery]);
+    scrollRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs.length, busy]);
 
-  // survey trigger
-  useEffect(() => {
-    if (!surveyTriggered && !surveyDismissed && telemetryOptIn && queryCount >= 5) {
-      setSurveyTriggered(true);
-    }
-  }, [queryCount, surveyTriggered, surveyDismissed, telemetryOptIn]);
-
-  // prompt/attach/voice events -> input
+  // Hook into your existing global events
   useEffect(() => {
     const onPrompt = (e: Event) => {
-      const p = (e as CustomEvent<string>).detail;
-      if (typeof p === "string") setInputValue((v) => (v ? v + "\n" : "") + p);
+      const prompt = (e as CustomEvent<string>).detail;
+      if (typeof prompt === "string") {
+        setInput((prev) => (prev ? prev + "\n" : "") + prompt);
+      }
     };
     const onAttach = (e: Event) => {
       const files = (e as CustomEvent<FileList>).detail;
+      // Surface to your engine; for demo, just append filenames
       if (files?.length) {
         const names = Array.from(files).map((f) => f.name).join(", ");
-        setInputValue((v) => (v ? v + "\n" : "") + `Attached: ${names}`);
+        setInput((v) => (v ? v + "\n" : "") + `Attached: ${names}`);
       }
     };
-    const onVoice = (e: Event) => {
+    const onVoicePartial = (e: Event) => {
       const partial = (e as CustomEvent<string>).detail;
-      if (partial) setInputValue(partial);
+      if (partial) setInput(partial);
     };
     window.addEventListener("nexus:prompt:insert", onPrompt as EventListener);
     window.addEventListener("nexus:attach", onAttach as EventListener);
-    window.addEventListener("nexus:voice:partial", onVoice as EventListener);
+    window.addEventListener("nexus:voice:partial", onVoicePartial as EventListener);
     return () => {
       window.removeEventListener("nexus:prompt:insert", onPrompt as EventListener);
       window.removeEventListener("nexus:attach", onAttach as EventListener);
-      window.removeEventListener("nexus:voice:partial", onVoice as EventListener);
+      window.removeEventListener("nexus:voice:partial", onVoicePartial as EventListener);
     };
   }, []);
 
-  const listRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    listRef.current?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [responses.length, consensus, loading]);
-
-  const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
-    if (event) event.preventDefault();
-    if (error) clearError();
-    const q = inputValue.trim();
+  const send = async () => {
+    const q = input.trim();
     if (!q) return;
-    setLastSent(q);
-    void submitQuery(q);
-    setInputValue("");
-    setQuery("");
+    setBusy(true);
+    setMsgs((m) => [...m, { id: crypto.randomUUID(), role: "user", text: q }]);
+    setInput("");
+
+    // Hook for your engine: dispatch an event other modules can catch
     window.dispatchEvent(new CustomEvent("nexus:chat:send", { detail: { text: q } }));
+
+    // Demo assistant reply (replace with real stream)
+    await new Promise((r) => setTimeout(r, 400));
+    setMsgs((m) => [
+      ...m,
+      { id: crypto.randomUUID(), role: "assistant", text: demoReply(q) },
+    ]);
+    setBusy(false);
   };
 
+  // Voice toggler simply flips state and emits your existing events; reuse your UserBar implementation if preferred
+  const toggleVoice = () => {
+    setRecording((r) => !r);
+    window.dispatchEvent(new CustomEvent("nexus:voice:recording", { detail: { state: recording ? "stop" : "start" } }));
+  };
+
+  const openPromptBrowser = () => {
+    // If you already have the dropdown button elsewhere, you can trigger navigation or open a modal here.
+    window.dispatchEvent(new CustomEvent("nexus:prompts:open"));
+  };
+
+  const onAttach = (files: FileList) =>
+    window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }));
+
   return (
-    <div className="min-h-screen">
-      <ConsentModal />
-
-      {/* Messages column (centered) */}
-      <div className="mx-auto flex min-h-[calc(100vh-56px)] max-w-3xl flex-col">
-        {/* Scrollable feed */}
-        <div className="flex-1 overflow-y-auto px-4 pt-6 pb-28">
-          <div ref={listRef} className="space-y-4">
-            <SystemBubble />
-
-            {/* last sent user question (basic echo so page feels conversational) */}
-            {lastSent ? <UserBubble text={lastSent} /> : null}
-
-            {/* loading indicator */}
-            {loading && (
+    <div className="h-[calc(100vh-56px)] w-full"> {/* adjust 56px if your header is taller */}
+      {/* Messages area */}
+      <div className="mx-auto flex h-full max-w-3xl flex-col">
+        <div className="flex-1 overflow-y-auto px-4 pb-24 pt-6"> {/* bottom padding for composer */}
+          <div ref={scrollRef} className="space-y-4">
+            {msgs.map((m) => (
+              <MessageBubble key={m.id} m={m} />
+            ))}
+            {busy && (
               <div className="flex justify-start">
                 <div className="rounded-2xl border border-white/10 bg-panel px-4 py-3 text-muted">
                   <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                  Querying models…
+                  Nexus is thinking…
                 </div>
               </div>
             )}
-
-            {/* error bubble */}
-            {!loading && error ? (
-              <div className="flex justify-start">
-                <div className="max-w-[75ch] rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-rose-200">
-                  {error}
-                </div>
-              </div>
-            ) : null}
-
-            {/* consensus + model replies */}
-            {!loading && !error && consensus ? (
-              <AssistantConsensus text={consensus} overallScore={overallScore} />
-            ) : null}
-
-            {!loading && !error && responses.length > 0
-              ? responses.map((r) => <ModelBubble key={`${r.model}-${r.score}`} response={r} />)
-              : null}
-
-            {/* empty state */}
-            {!loading && responses.length === 0 && !error && !lastSent ? (
-              <div className="flex justify-center">
-                <Panel className="border-dashed p-8 text-center text-sm text-muted">
-                  Ask your first question to spark a debate.
-                </Panel>
-              </div>
-            ) : null}
           </div>
         </div>
 
-        {/* Sticky composer */}
-        <form onSubmit={handleSubmit}>
-          <Composer
-            value={inputValue}
-            setValue={setInputValue}
-            onSend={() => handleSubmit()}
-            busy={loading}
-            onAttachFiles={(files) => window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }))}
-          />
-        </form>
+        {/* Composer (sticky bottom) */}
+        <Composer
+          value={input}
+          setValue={setInput}
+          onSend={send}
+          busy={busy}
+          onAttach={onAttach}
+          onToggleVoice={toggleVoice}
+          recording={recording}
+          onOpenPromptBrowser={openPromptBrowser}
+        />
       </div>
-
-      <SurveyTooltip
-        open={surveyTriggered && !surveyDismissed}
-        onSubmit={async (feedback) => {
-          await logSurveyFeedback(feedback);
-        }}
-        onDismiss={() => setSurveyDismissed(true)}
-      />
     </div>
   );
 }
