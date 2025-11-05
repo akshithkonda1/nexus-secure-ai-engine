@@ -1,39 +1,35 @@
-/* src/index.css (Tailwind v3 style) */
+/* Frontend/src/index.css */
+
+/* Tailwind v3 layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens (light) */
+/* ——— CSS variables for light + dark ——— */
 :root {
-  --app:        11 15 20;   /* rgb */
-  --panel:      17 22 28;
-  --ink:        230 233 239;
-  --muted:      154 163 175;
-  --border:     255 255 255 / 0.08;
-  --trustBlue:  30 64 175;  /* #1E40AF */
+  /* Light mode palette */
+  --app:   248 250 252; /* page bg (slate-50-ish)      */
+  --panel: 255 255 255; /* cards/panels (white)        */
+  --ink:    15  23  42; /* main text (slate-900)       */
+  --muted: 100 116 139; /* secondary text (slate-500)  */
 }
 
-/* Dark overrides (when .dark is on <html>) */
 html.dark {
-  --app:   11 15 20;
-  --panel: 17 22 28;
-  --ink:   230 233 239;
-  --muted: 154 163 175;
+  /* Dark mode palette (your sleek look) */
+  --app:    11  15  20; /* #0b0f14 */
+  --panel:  17  22  28; /* #11161c */
+  --ink:   230 233 239; /* #e6e9ef */
+  --muted: 154 163 175; /* #9aa3af */
 }
 
 /* Base */
-html, body, #root { height: 100%; }
-body {
-  background-color: rgb(var(--app));
-  color: rgb(var(--ink));
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html, body, #root { height: 100%; }
+  body { @apply bg-app text-ink antialiased; }
 }
 
-/* Utility bridges your components expect */
-.bg-app       { background-color: rgb(var(--app)) }
-.bg-panel     { background-color: rgb(var(--panel)) }
-.text-ink     { color:            rgb(var(--ink)) }
-.text-muted   { color:            rgb(var(--muted)) }
-.border-app   { border-color:     rgba(var(--border)) }
-.ring-trustBlue { --tw-ring-color: rgb(var(--trustBlue)); }
+/* Handy utilities that your components expect */
+@layer utilities {
+  .text-muted { color: rgb(var(--muted)); }
+  .bg-panel { background-color: rgb(var(--panel)); }
+}
