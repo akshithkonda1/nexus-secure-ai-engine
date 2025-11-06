@@ -13,6 +13,7 @@ async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
   try {
     await navigator.clipboard.writeText(prompt);
   } catch {
+    // TODO: surface clipboard failures to the user
     const ta = document.createElement("textarea");
     ta.value = prompt;
     document.body.appendChild(ta);
@@ -36,16 +37,37 @@ const PROMPTS = [
    TS shims for Web Speech
    ========================= */
 declare global {
+  interface SpeechRecognitionAlternative {
+    transcript: string;
+  }
+
+  interface SpeechRecognitionResult {
+    isFinal: boolean;
+    length: number;
+    [index: number]: SpeechRecognitionAlternative;
+  }
+
+  interface SpeechRecognitionEvent extends Event {
+    resultIndex: number;
+    results: {
+      length: number;
+      [index: number]: SpeechRecognitionResult;
+    };
+  }
+
   interface SpeechRecognition extends EventTarget {
     start(): void;
     stop(): void;
     continuous: boolean;
     interimResults: boolean;
     lang: string;
-    onresult: ((e: any) => void) | null;
+    onresult: ((event: SpeechRecognitionEvent) => void) | null;
   }
-  var webkitSpeechRecognition: { new (): SpeechRecognition } | undefined;
-  var SpeechRecognition: { new (): SpeechRecognition } | undefined;
+
+  interface Window {
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+    SpeechRecognition?: new () => SpeechRecognition;
+  }
 }
 
 /* =========================
@@ -67,10 +89,7 @@ function useClickOutside<T extends HTMLElement>(onAway: () => void) {
   return ref;
 }
 
-function PromptBrowserButton({
-  items,
-  navigate,
-}: { items: MenuItem[]; navigate: (to: string) => void }) {
+function PromptBrowserButton({ items }: { items: MenuItem[] }) {
   const [open, setOpen] = React.useState(false);
   const menuRef = useClickOutside<HTMLDivElement>(() => setOpen(false));
 
@@ -84,7 +103,7 @@ function PromptBrowserButton({
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
         className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
@@ -101,7 +120,7 @@ function PromptBrowserButton({
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">Quick Prompts</div>
           <div className="h-px w-full bg-white/10" />
-          {items.map(it => (
+          {items.map((it) => (
             <button
               key={it.key}
               role="menuitem"
@@ -499,7 +518,7 @@ export function UserBar() {
   const [hasASR, setHasASR] = React.useState(false);
 
   React.useEffect(() => {
-    const SR: any = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    const SR = window.webkitSpeechRecognition ?? window.SpeechRecognition;
     if (SR) {
       const rec: SpeechRecognition = new SR();
       rec.continuous = true;
@@ -533,15 +552,17 @@ export function UserBar() {
       if (hasASR && recRef.current) {
         try {
           let tmp = "";
-          recRef.current.onresult = (e) => {
-            for (let i = e.resultIndex; i < e.results.length; i++) {
-              const r = e.results[i];
-              if (r.isFinal) tmp += r[0].transcript + " ";
+          recRef.current.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const result = event.results[i];
+              if (result.isFinal) tmp += result[0].transcript + " ";
             }
             window.dispatchEvent(new CustomEvent("nexus:voice:partial", { detail: tmp.trim() }));
           };
           recRef.current.start();
-        } catch { /* ignore */ }
+        } catch {
+          // TODO: surface ASR start errors to the user
+        }
       }
 
       mr.start(100);
@@ -554,8 +575,16 @@ export function UserBar() {
   const stopRecording = () => {
     try {
       mediaRecorderRef.current?.stop();
-      if (recRef.current) { try { recRef.current.stop(); } catch {} }
-    } catch {}
+      if (recRef.current) {
+        try {
+          recRef.current.stop();
+        } catch {
+          // TODO: report ASR stop failures
+        }
+      }
+    } catch {
+      // TODO: handle unexpected recorder stop errors
+    }
   };
   const toggleRecording = () => (recording ? stopRecording() : startRecording());
 
@@ -616,7 +645,6 @@ export function UserBar() {
 
             {/* Prompt Browser (local dropdown) */}
             <PromptBrowserButton
-              navigate={navigate}
               items={PROMPTS.map((p) => ({
                 key: p.id,
                 label: p.label,

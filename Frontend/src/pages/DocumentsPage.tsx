@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useDocuments, useUploadDocument } from "@/queries/documents";
+import type { DocumentItem } from "@/types/models";
 import { toast } from "sonner";
 
 function formatSize(bytes: number) {
@@ -14,12 +15,14 @@ function formatSize(bytes: number) {
   return `${mb.toFixed(1)} MB`;
 }
 
+const EMPTY_DOCUMENTS: DocumentItem[] = [];
+
 export default function DocumentsPage() {
   const [search, setSearch] = useState("");
   const { data, isLoading } = useDocuments();
   const uploadDoc = useUploadDocument();
 
-  const items = data?.items ?? [];
+  const items = data?.items ?? EMPTY_DOCUMENTS;
   const filtered = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     return items.filter((item) =>
