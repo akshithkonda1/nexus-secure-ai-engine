@@ -15,7 +15,7 @@
   --ink: #0b1220;
   --muted: #616c7c;
   --border: rgba(11, 18, 32, 0.12);
-  --ring: rgba(30, 64, 175, 0.45); /* trustBlue w/ alpha */
+  --ring: rgba(30, 64, 175, 0.45);
 }
 
 :root.dark {
@@ -28,20 +28,14 @@
   --ring: rgba(30, 64, 175, 0.6);
 }
 
-/* Always advertise both color schemes so form controls theme correctly */
-:root {
-  color-scheme: light dark;
-}
+/* let native form controls match theme */
+:root { color-scheme: light dark; }
 
 /* ------------------------------------------------------------------ */
-/* Windows High-Contrast & UA outline neutralization (no flicker)      */
+/* Windows High-Contrast & UA outline suppression                     */
 /* ------------------------------------------------------------------ */
-/* Stop the browser from overriding our palette in forced colors */
-:root, html, body, #root {
-  forced-color-adjust: none !important;
-}
+:root, html, body, #root { forced-color-adjust: none !important; }
 
-/* If HC still activates, keep our palette and remove UA outlines */
 @media (forced-colors: active) {
   :root, html, body, #root,
   .card, input, select, textarea, button, .btn,
@@ -53,68 +47,58 @@
   }
 }
 
-/* Remove global UA outlines; add accessible focus ring on focus-visible */
+/* Accessible focus style; kill UA outline/flicker */
 * { outline-color: transparent; }
 *:focus { outline: 0; }
-*:focus-visible {
-  outline: 0;
-  box-shadow: 0 0 0 3px var(--ring);
-}
+*:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--ring); }
 
 /* ------------------------------------------------------------------ */
-/* Base                                                               */
+/* Base (NO @apply of custom color utilities)                          */
 /* ------------------------------------------------------------------ */
 @layer base {
-  html, body, #root {
-    @apply min-h-screen;
-  }
+  html, body, #root { @apply min-h-screen; }
+
   body {
-    @apply bg-app text-ink antialiased;
+    /* use vars directly instead of @apply bg-app text-ink */
+    background-color: var(--bg-app);
+    color: var(--ink);
+    @apply antialiased;
   }
 }
 
 /* ------------------------------------------------------------------ */
-/* Components                                                          */
+/* Components (set colors with vars; keep @apply for stock utilities)  */
 /* ------------------------------------------------------------------ */
 @layer components {
-  /* Reusable card shell that matches your desired (Pic-2) look */
   .card {
-    @apply rounded-3xl border bg-panel shadow-xl;
+    @apply rounded-3xl border shadow-xl;
+    background-color: var(--bg-panel);
+    color: inherit;
     border-color: var(--border);
-    outline: 0 !important;
   }
 
   .input {
-    @apply h-10 w-full rounded-full border bg-app px-4 text-sm text-ink
-           focus-visible:ring-2 focus-visible:ring-offset-0;
+    @apply h-10 w-full rounded-full border px-4 text-sm;
+    background-color: var(--bg-app);
+    color: var(--ink);
     border-color: var(--border);
-    box-shadow: none;
+    /* focus ring handled globally via :focus-visible above */
   }
 
   .switch {
-    @apply h-5 w-9 cursor-pointer appearance-none rounded-full border bg-panel transition
-           checked:bg-blue-600;
+    @apply h-5 w-9 cursor-pointer appearance-none rounded-full border transition checked:bg-blue-600;
+    background-color: var(--bg-panel);
     border-color: var(--border);
   }
 
   .radio-pill {
     @apply inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm;
     border-color: var(--border);
+    color: var(--muted);
   }
 
   .btn-primary {
     @apply inline-flex items-center gap-2 rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white
            shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed;
   }
-}
-
-/* ------------------------------------------------------------------ */
-/* Utilities (optional helpers)                                       */
-/* ------------------------------------------------------------------ */
-@layer utilities {
-  .bg-app { background-color: var(--bg-app) !important; }
-  .bg-panel { background-color: var(--bg-panel) !important; }
-  .text-ink { color: var(--ink) !important; }
-  .text-muted { color: var(--muted) !important; }
-  .border-app { border-color: var(--border) !important; }
 }
