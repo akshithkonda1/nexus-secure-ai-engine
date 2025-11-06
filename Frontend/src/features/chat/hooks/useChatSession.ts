@@ -25,6 +25,7 @@ export function useChatSession(sessionId: string): State {
   const backoffRef = useRef(500);
   const pingTimerRef = useRef<number | null>(null);
   const closedByUserRef = useRef(false);
+  const pendingMessageIdsRef = useRef<string[]>([]);
 
   const url = useMemo(() => {
     const u = new URL(WS_PATH, WS_BASE);
@@ -53,13 +54,25 @@ export function useChatSession(sessionId: string): State {
           const data = JSON.parse(ev.data);
           switch (data.type) {
             case "history":
+              pendingMessageIdsRef.current = [];
               setMessages(data.messages as Message[]); break;
             case "assistant_message":
               setIsTyping(false);
               setMessages(p => [...p, { id: data.id ?? crypto.randomUUID(), role:"assistant", text:data.text ?? "", createdAt: Date.now() }]);
               break;
             case "user_echo":
-              setMessages(p => [...p, { id: data.id ?? crypto.randomUUID(), role:"user", text:data.text ?? "", createdAt: Date.now() }]);
+              setMessages(prev => {
+                const pendingId = pendingMessageIdsRef.current.shift();
+                const nextMessage: Message = { id: data.id ?? crypto.randomUUID(), role:"user", text:data.text ?? "", createdAt: Date.now() };
+                if (!pendingId) return [...prev, nextMessage];
+
+                const next = [...prev];
+                const idx = next.findIndex(m => m.id === pendingId);
+                if (idx === -1) return [...prev, nextMessage];
+
+                next[idx] = nextMessage;
+                return next;
+              });
               break;
             case "typing":
               setIsTyping(Boolean(data.value)); break;
@@ -87,6 +100,11 @@ export function useChatSession(sessionId: string): State {
     return () => { safeClose(); if (pingTimerRef.current) window.clearInterval(pingTimerRef.current); };
   }, [connect]);
 
+  useEffect(() => {
+    setMessages([]);
+    pendingMessageIdsRef.current = [];
+  }, [sessionId]);
+
   const uploadAttachments = async (files: File[]) => {
     try {
       const form = new FormData();
@@ -104,7 +122,9 @@ export function useChatSession(sessionId: string): State {
     const uploaded = attachments?.length ? await uploadAttachments(attachments) : undefined;
     const payload: OutgoingPayload = { type:"user_message", sessionId, text, attachments: uploaded };
 
-    setMessages(p => [...p, { id: crypto.randomUUID(), role:"user", text, createdAt: Date.now() }]);
+    const localId = crypto.randomUUID();
+    pendingMessageIdsRef.current.push(localId);
+    setMessages(p => [...p, { id: localId, role:"user", text, createdAt: Date.now() }]);
     setIsTyping(true);
     wsRef.current.send(JSON.stringify(payload));
   }, [sessionId]);
