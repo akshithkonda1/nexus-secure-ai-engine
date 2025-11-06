@@ -22,6 +22,8 @@ function groupEventsByDate(events: AuditEvent[]) {
   }));
 }
 
+const EMPTY_AUDIT_EVENTS: AuditEvent[] = [];
+
 export default function HistoryPage() {
   const [params, setParams] = useSearchParams();
   const [type, setType] = useState(params.get("type") ?? "all");
@@ -55,7 +57,7 @@ export default function HistoryPage() {
     setParams(next, { replace: true });
   }, [filters, setParams]);
 
-  const events = historyQuery.data?.events ?? [];
+  const events = historyQuery.data?.events ?? EMPTY_AUDIT_EVENTS;
   const grouped = useMemo(() => groupEventsByDate(events), [events]);
 
   const resetFilters = () => {

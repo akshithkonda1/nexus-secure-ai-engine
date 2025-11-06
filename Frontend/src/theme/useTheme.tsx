@@ -5,27 +5,40 @@ type Ctx = { pref: ThemePref; setPref: (t: ThemePref) => void };
 const ThemeCtx = React.createContext<Ctx | null>(null);
 
 function applyTheme(choice: ThemePref) {
-  try { localStorage.setItem("theme", choice); } catch {}
+  try {
+    localStorage.setItem("theme", choice);
+  } catch {
+    // TODO: persist theme preference when storage is available
+  }
   const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
   const isDark = choice === "dark" || (choice === "system" && prefersDark);
   const el = document.documentElement;
   el.classList.toggle("dark", isDark);
-  (el as any).dataset.theme = isDark ? "dark" : "light";
+  el.dataset.theme = isDark ? "dark" : "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [pref, set] = React.useState<ThemePref>(() => {
-    try { return (localStorage.getItem("theme") as ThemePref) || "system"; } catch { return "system"; }
+    try {
+      return (localStorage.getItem("theme") as ThemePref) || "system";
+    } catch {
+      // TODO: persist theme preference when storage is available
+      return "system";
+    }
   });
 
   React.useEffect(() => applyTheme(pref), [pref]);
 
   React.useEffect(() => {
     const mq = matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => { try {
-      const s = (localStorage.getItem("theme") as ThemePref) || "system";
-      if (s === "system") applyTheme("system");
-    } catch {} };
+    const onChange = () => {
+      try {
+        const stored = (localStorage.getItem("theme") as ThemePref) || "system";
+        if (stored === "system") applyTheme("system");
+      } catch {
+        // TODO: persist theme preference when storage is available
+      }
+    };
     mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
     return () => { mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange); };
   }, []);

@@ -1,26 +1,26 @@
 import { z } from "zod";
 
-export const SessionStatus = z.union([
+export const SessionStatusSchema = z.union([
   z.literal("active"),
   z.literal("archived"),
   z.literal("draft"),
 ]);
-export type SessionStatus = z.infer<typeof SessionStatus>;
+export type SessionStatus = z.infer<typeof SessionStatusSchema>;
 
-export const Session = z.object({
+export const SessionSchema = z.object({
   id: z.string(),
   title: z.string(),
   preview: z.string().optional(),
   updatedAt: z.string(),
   messages: z.number(),
   providers: z.array(z.string()),
-  status: SessionStatus,
+  status: SessionStatusSchema,
   projectId: z.string().nullable().optional(),
   pinned: z.boolean().optional(),
 });
-export type Session = z.infer<typeof Session>;
+export type Session = z.infer<typeof SessionSchema>;
 
-export const AuditEvent = z.object({
+export const AuditEventSchema = z.object({
   id: z.string(),
   type: z.enum([
     "created",
@@ -38,42 +38,42 @@ export const AuditEvent = z.object({
   projectId: z.string().optional(),
   details: z.string().optional(),
 });
-export type AuditEvent = z.infer<typeof AuditEvent>;
+export type AuditEvent = z.infer<typeof AuditEventSchema>;
 
-export const ProjectActivityPoint = z.object({
+export const ProjectActivityPointSchema = z.object({
   day: z.string(),
   value: z.number(),
 });
 
-export const Project = z.object({
+export const ProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
   updatedAt: z.string(),
   sessionsCount: z.number(),
   activeCount: z.number(),
-  activity7d: z.array(ProjectActivityPoint).optional(),
+  activity7d: z.array(ProjectActivityPointSchema).optional(),
 });
-export type Project = z.infer<typeof Project>;
+export type Project = z.infer<typeof ProjectSchema>;
 
-export const Message = z.object({
+export const MessageSchema = z.object({
   id: z.string(),
   role: z.enum(["system", "user", "assistant"]),
   text: z.string(),
   at: z.string(),
 });
-export type Message = z.infer<typeof Message>;
+export type Message = z.infer<typeof MessageSchema>;
 
-export const Template = z.object({
+export const TemplateSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   category: z.string(),
   updatedAt: z.string(),
 });
-export type Template = z.infer<typeof Template>;
+export type Template = z.infer<typeof TemplateSchema>;
 
-export const DocumentItem = z.object({
+export const DocumentItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   size: z.number(),
@@ -81,9 +81,9 @@ export const DocumentItem = z.object({
   updatedAt: z.string(),
   folder: z.boolean().optional(),
 });
-export type DocumentItem = z.infer<typeof DocumentItem>;
+export type DocumentItem = z.infer<typeof DocumentItemSchema>;
 
-export const TelemetryPoint = z.object({
+export const TelemetryPointSchema = z.object({
   date: z.string(),
   requests: z.number(),
   tokens: z.number(),
@@ -91,16 +91,16 @@ export const TelemetryPoint = z.object({
   failures: z.number(),
   provider: z.string(),
 });
-export type TelemetryPoint = z.infer<typeof TelemetryPoint>;
+export type TelemetryPoint = z.infer<typeof TelemetryPointSchema>;
 
-export const ProviderToggle = z.object({
+export const ProviderToggleSchema = z.object({
   id: z.string(),
   name: z.string(),
   enabled: z.boolean(),
 });
-export type ProviderToggle = z.infer<typeof ProviderToggle>;
+export type ProviderToggle = z.infer<typeof ProviderToggleSchema>;
 
-export const SettingsData = z.object({
+export const SettingsDataSchema = z.object({
   profile: z.object({
     displayName: z.string(),
     email: z.string().email(),
@@ -109,24 +109,24 @@ export const SettingsData = z.object({
   appearance: z.object({
     theme: z.enum(["light", "dark", "system"]),
   }),
-  providers: z.array(ProviderToggle),
+  providers: z.array(ProviderToggleSchema),
   limits: z.object({
     dailyRequests: z.number(),
     maxTokens: z.number(),
   }),
 });
-export type SettingsData = z.infer<typeof SettingsData>;
+export type SettingsData = z.infer<typeof SettingsDataSchema>;
 
-export const SessionsResponse = z.object({ sessions: z.array(Session) });
-export const AuditResponse = z.object({ events: z.array(AuditEvent) });
-export const ProjectsResponse = z.object({ projects: z.array(Project) });
-export const MessagesResponse = z.object({ messages: z.array(Message) });
-export const TemplatesResponse = z.object({ templates: z.array(Template) });
-export const DocumentsResponse = z.object({ items: z.array(DocumentItem) });
+export const SessionsResponse = z.object({ sessions: z.array(SessionSchema) });
+export const AuditResponse = z.object({ events: z.array(AuditEventSchema) });
+export const ProjectsResponse = z.object({ projects: z.array(ProjectSchema) });
+export const MessagesResponse = z.object({ messages: z.array(MessageSchema) });
+export const TemplatesResponse = z.object({ templates: z.array(TemplateSchema) });
+export const DocumentsResponse = z.object({ items: z.array(DocumentItemSchema) });
 export const TelemetryUsageResponse = z.object({
   range: z.string(),
   provider: z.string().optional(),
-  points: z.array(TelemetryPoint),
+  points: z.array(TelemetryPointSchema),
 });
 export const TelemetryErrorsResponse = z.object({
   range: z.string(),
@@ -140,9 +140,9 @@ export const TelemetryErrorsResponse = z.object({
     }),
   ),
 });
-export const SettingsResponse = SettingsData;
-export const SettingsMutationResponse = z.object({ success: z.boolean(), data: SettingsData });
+export const SettingsResponse = SettingsDataSchema;
+export const SettingsMutationResponse = z.object({ success: z.boolean(), data: SettingsDataSchema });
 
-export const CreateSessionResponse = z.object({ session: Session });
-export const UpdateSessionResponse = z.object({ session: Session });
-export const CreateDocumentResponse = z.object({ item: DocumentItem });
+export const CreateSessionResponse = z.object({ session: SessionSchema });
+export const UpdateSessionResponse = z.object({ session: SessionSchema });
+export const CreateDocumentResponse = z.object({ item: DocumentItemSchema });

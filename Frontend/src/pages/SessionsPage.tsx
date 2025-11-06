@@ -23,6 +23,10 @@ import type { AuditEvent, Project, Session } from "@/types/models";
 
 const TOP_N = 20;
 
+const EMPTY_SESSIONS: Session[] = [];
+const EMPTY_PROJECTS: Project[] = [];
+const EMPTY_AUDIT_EVENTS: AuditEvent[] = [];
+
 function fmtRelative(iso: string) {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
@@ -182,9 +186,9 @@ export default function SessionsPage() {
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
   const { data: auditData, isLoading: auditLoading } = useAudit();
 
-  const sessions = sessionsData?.sessions ?? [];
-  const projects = projectsData?.projects ?? [];
-  const events = auditData?.events ?? [];
+  const sessions = sessionsData?.sessions ?? EMPTY_SESSIONS;
+  const projects = projectsData?.projects ?? EMPTY_PROJECTS;
+  const events = auditData?.events ?? EMPTY_AUDIT_EVENTS;
 
   const filteredSessions = useMemo(() => {
     const normalized = search.trim().toLowerCase();

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useProjects, useSessions } from "@/queries/sessions";
+import type { Project, Session } from "@/types/models";
 
 const QUICK_ACTIONS = [
   {
@@ -34,13 +35,16 @@ const QUICK_ACTIONS = [
   },
 ] as const;
 
+const EMPTY_SESSIONS: Session[] = [];
+const EMPTY_PROJECTS: Project[] = [];
+
 export default function Home() {
   const navigate = useNavigate();
   const { data: sessionsData, isLoading: sessionsLoading } = useSessions();
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
 
-  const sessions = sessionsData?.sessions ?? [];
-  const projects = projectsData?.projects ?? [];
+  const sessions = sessionsData?.sessions ?? EMPTY_SESSIONS;
+  const projects = projectsData?.projects ?? EMPTY_PROJECTS;
 
   const lastFive = useMemo(() => sessions.slice(0, 5), [sessions]);
   const totalMessages = useMemo(() => sessions.reduce((acc, session) => acc + session.messages, 0), [sessions]);
