@@ -43,6 +43,7 @@ export default function ChatPage() {
 
     if (!sessionId) {
       const result = await createSession.mutateAsync({ title: "Draft session" }).catch(() => undefined);
+<<<<<<< HEAD
       sessionId = result?.session.id;
 
       if (!sessionId) {
@@ -50,6 +51,12 @@ export default function ChatPage() {
       }
 
       navigate(`/chat/${sessionId}`, { replace: true });
+=======
+      if (!result?.session.id) {
+        return;
+      }
+      navigate(`/chat/${result.session.id}`, { replace: true });
+>>>>>>> 75ab970 (Fix draft session prompt submission)
     }
 
     const newMessage: Message = {
