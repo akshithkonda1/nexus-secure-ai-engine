@@ -1,139 +1,127 @@
-/* Frontend/src/styles/globals.css */
-/* Tailwind entry points */
+/* -------------------------------------------------------------------------- */
+/*  Tailwind Base Setup (V4-compatible, no @apply errors)                     */
+/* -------------------------------------------------------------------------- */
+@reference "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ------------------------------------------------------------------ */
-/* Theme tokens                                                        */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*  Theme Tokens                                                              */
+/* -------------------------------------------------------------------------- */
+
 :root {
-  /* light */
-  --bg-app: #f6f8fb;
+  /* Light mode */
+  --bg-app: #f6f7fb;
   --bg-panel: #ffffff;
   --ink: #0b1220;
-  --muted: #616c7c;
-  --border: rgba(11, 18, 32, 0.12);
+  --muted: #5f6c86;
+  --border: #e5e7eb;
   --ring: rgba(30, 64, 175, 0.45);
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.5rem;
-  --trust-blue: #1e40af;
 }
 
 :root.dark {
-  /* dark */
+  /* Dark mode */
   --bg-app: #0b0f14;
-  --bg-panel: #10151d;
-  --ink: #e6eaf2;
-  --muted: #9aa3b2;
-  --border: rgba(148, 163, 184, 0.18);
+  --bg-panel: #121a2b;
+  --ink: #e5e7eb;
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.1);
   --ring: rgba(30, 64, 175, 0.6);
 }
 
-:root { color-scheme: light dark; }
-
-/* ------------------------------------------------------------------ */
-/* High-contrast & outline/flicker control                             */
-/* ------------------------------------------------------------------ */
-:root, html, body, #root { forced-color-adjust: none !important; }
-
-@media (forced-colors: active) {
-  :root, html, body, #root,
-  .card, input, select, textarea, button, .btn,
-  .sidebar, .navbar, .panel, .chip {
-    forced-color-adjust: none !important;
-    background-color: transparent;
-    color: inherit;
-    border-color: var(--border) !important;
-  }
+html {
+  color-scheme: light dark;
 }
 
-/* Accessible focus (disable UA outlines to avoid flash) */
-* { outline-color: transparent; }
-*:focus { outline: 0; }
-*:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--ring); }
-
-/* ------------------------------------------------------------------ */
-/* Base (no @apply of color/radius utilities)                          */
-/* ------------------------------------------------------------------ */
-@layer base {
-  html, body, #root {
-    min-height: 100svh;
-    min-height: 100dvh;
-  }
-
-  body {
-    background-color: var(--bg-app);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+body {
+  background-color: var(--bg-app);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ------------------------------------------------------------------ */
-/* Components (use raw CSS for color/radius; keep utilities in markup) */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*  Fix: Disable Windows High-Contrast / Forced Colors                        */
+/* -------------------------------------------------------------------------- */
+* {
+  forced-color-adjust: none !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Components (pure CSS, no @apply for v4 safety)                            */
+/* -------------------------------------------------------------------------- */
+
 @layer components {
   .card {
     background-color: var(--bg-panel);
-    color: inherit;
     border: 1px solid var(--border);
-    border-radius: var(--radius-3xl); /* was rounded-3xl */
+    border-radius: 1rem;
     box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.35);
+    padding: 1rem;
   }
 
   .panel {
     background-color: var(--bg-panel);
     border: 1px solid var(--border);
-    border-radius: var(--radius-2xl);
+    border-radius: 1rem;
   }
 
   .input {
-    height: 2.5rem; /* 40px */
     width: 100%;
+    height: 2.5rem;
+    padding: 0 1rem;
     border: 1px solid var(--border);
-    border-radius: 9999px; /* full */
+    border-radius: 9999px;
     background-color: var(--bg-app);
     color: var(--ink);
-    padding: 0 1rem;
-    font-size: 0.875rem; /* text-sm */
-  }
-
-  .radio-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
-    color: var(--muted);
-    background-color: transparent;
   }
 
   .btn-primary {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    border-radius: 9999px;
-    background-color: var(--trust-blue);
-    color: #fff;
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
+    border-radius: 9999px;
+    background-color: #1e40af;
+    color: #fff;
     box-shadow: 0 10px 20px -10px rgb(30 64 175 / 0.35);
-    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
   }
+
   .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 18px 26px -12px rgb(30 64 175 / 0.45);
   }
+
   .btn-primary:disabled {
-    opacity: .6;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    box-shadow: 0 10px 20px -10px rgb(30 64 175 / 0.35);
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Utility: Smooth focus ring                                                */
+/* -------------------------------------------------------------------------- */
+@layer utilities {
+  .focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Fix: Remove user-agent outlines / High Contrast                           */
+/* -------------------------------------------------------------------------- */
+*:focus {
+  outline: none !important;
+}
+*:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--ring);
 }
