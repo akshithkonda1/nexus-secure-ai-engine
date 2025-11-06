@@ -1,9 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
-
-  // avoid collisions with extension/third-party CSS
-  important: '.nexus-root',
+  darkMode: 'class',                // toggle via <html class="dark">
+  important: '.nexus-root',         // scope utilities so nothing leaks
 
   content: [
     './index.html',
@@ -17,6 +15,12 @@ module.exports = {
       screens: { '2xl': '1280px' },
     },
     extend: {
+      fontFamily: {
+        sans: [
+          'Inter var','Inter','ui-sans-serif','system-ui','Segoe UI','Roboto',
+          'Helvetica Neue','Arial','Noto Sans','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol'
+        ],
+      },
       colors: {
         app: 'var(--bg-app)',
         panel: 'var(--bg-panel)',
