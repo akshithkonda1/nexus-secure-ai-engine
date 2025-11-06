@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./styles/globals.css";
-import { ThemeProvider } from "./theme/useTheme";
+import "./index.css";
+import { ThemeProvider } from "./shared/ui/theme/ThemeProvider";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
