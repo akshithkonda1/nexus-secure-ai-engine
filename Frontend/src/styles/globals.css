@@ -20,3 +20,27 @@
 
 html{ color-scheme: light dark; }
 *{ transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
+
+/* ──────────────────────────────────────────────────────────────
+   Protect Nexus branding from Windows High-Contrast (forced-colors)
+   while keeping a strong keyboard focus indicator.
+   ────────────────────────────────────────────────────────────── */
+@media (forced-colors: active) {
+  /* Stop the OS from replacing our palette inside the app shell */
+  html, body, #root, .nexus-root {
+    forced-color-adjust: none;
+    background: var(--bg-app) !important;
+    color: var(--ink) !important;
+  }
+
+  /* Preserve an accessible keyboard focus ring */
+  :where(button, a, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid CanvasText; /* system-readable */
+    outline-offset: 2px;
+  }
+
+  /* Tame aggressive HC borders on generic Tailwind border classes */
+  :where(.border, [class*="border-"]) {
+    border-color: var(--bg-panel) !important;
+  }
+}
