@@ -52,7 +52,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.8.2",
     "@playwright/test": "^1.43.1",
-    "@tailwindcss/postcss": "^4.1.16",
+    "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@types/dompurify": "^3.0.5",
@@ -61,7 +61,11 @@
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
+<<<<<<< HEAD
     "autoprefixer": "^10.4.21",
+=======
+    "autoprefixer": "^10.4.20",
+>>>>>>> dff2a84a915cfeb3189b901e28754ad1b3b5df96
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jsx-a11y": "^6.8.0",

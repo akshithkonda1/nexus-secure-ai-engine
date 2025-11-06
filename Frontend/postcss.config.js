@@ -1,7 +1,7 @@
-// PostCSS config (ESM-compatible for Tailwind v4 + Vite)
-import tailwindcss from "tailwindcss";
+// PostCSS config for Tailwind v4 + Vite (ESM)
+import tailwind from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
 
 export default {
-  plugins: [tailwindcss(), autoprefixer()],
+  plugins: [tailwind, autoprefixer()],
 };
