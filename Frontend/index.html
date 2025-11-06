@@ -2,15 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
+    <!-- prevent transition flicker on first paint -->
     <style>html.theme-preload *{transition:none!important}</style>
 
+    <!-- Early theme bootstrap -->
     <script>
       (function () {
         var ROOT = document.documentElement;
@@ -19,7 +24,9 @@
 
         function readPref(){
           var v='system';
-          try{ for (var i=0;i<KEYS.length;i++){ var s=localStorage.getItem(KEYS[i]); if(s){v=s;break;} } }catch(e){}
+          try{
+            for (var i=0;i<KEYS.length;i++){ var s=localStorage.getItem(KEYS[i]); if(s){v=s;break;} }
+          }catch(e){}
           return (v==='light'||v==='dark'||v==='system')?v:'system';
         }
         function sysTheme(){ return SYS && SYS.matches ? 'dark' : 'light'; }
@@ -40,7 +47,9 @@
         apply(readPref());
 
         if (SYS){
-          var onChange = function(){ try{ if(readPref()==='system') apply('system'); }catch(e){} };
+          var onChange = function(){
+            try{ if(readPref()==='system') apply('system'); }catch(e){}
+          };
           if (SYS.addEventListener) SYS.addEventListener('change', onChange);
           else if (SYS.addListener) SYS.addListener(onChange);
         }
