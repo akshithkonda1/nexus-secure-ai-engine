@@ -5,10 +5,10 @@ import App from "./App";
 import { ThemeProvider } from "./theme/useTheme";
 import "./styles/globals.css";
 
-const container = document.getElementById("root");
-if (!container) throw new Error("Root element #root not found");
+const root = document.getElementById("root");
+if (!root) throw new Error("#root not found");
 
-createRoot(container).render(
+createRoot(root).render(
   <React.StrictMode>
     <ThemeProvider>
       <App />
