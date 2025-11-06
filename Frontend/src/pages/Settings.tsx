@@ -1,25 +1,28 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, MoonStar, Save, Settings as SettingsIcon, SunMedium } from "lucide-react";
+import { Loader2, Save, Settings as SettingsIcon, SunMedium } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useSaveSettings, useSettings } from "@/queries/settings";
 import { SettingsResponse, type SettingsData } from "@/types/models";
-import { useTheme } from "@/stores/themeStore";
 import { toast } from "sonner";
+import { AppearanceControls } from "../components/settings/AppearanceControls";
+import { useTheme, type ThemePref } from "../theme/useTheme";
 
 export default function SettingsPage() {
   const { data, isLoading } = useSettings();
   const saveSettings = useSaveSettings();
-  const setTheme = useTheme((state) => state.setTheme);
+  const { pref, setPref } = useTheme();
+  const savedTheme = data?.appearance?.theme as ThemePref | undefined;
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { isDirty, isSubmitting, errors },
   } = useForm<SettingsData>({
     resolver: zodResolver(SettingsResponse),
@@ -29,17 +32,32 @@ export default function SettingsPage() {
   useEffect(() => {
     if (data) {
       reset(data);
-      setTheme(data.appearance.theme);
     }
-  }, [data, reset, setTheme]);
+  }, [data, reset]);
+
+  useEffect(() => {
+    register("appearance.theme");
+  }, [register]);
+
+  useEffect(() => {
+    if (savedTheme) {
+      setPref(savedTheme);
+    }
+  }, [savedTheme, setPref]);
 
   const themeChoice = watch("appearance.theme");
 
   useEffect(() => {
-    if (themeChoice) {
-      setTheme(themeChoice);
+    if (themeChoice && themeChoice !== pref) {
+      setPref(themeChoice as ThemePref);
     }
-  }, [themeChoice, setTheme]);
+  }, [themeChoice, pref, setPref]);
+
+  useEffect(() => {
+    if (pref && pref !== themeChoice) {
+      setValue("appearance.theme", pref, { shouldDirty: pref !== savedTheme });
+    }
+  }, [pref, themeChoice, setValue, savedTheme]);
 
   const onSubmit = async (values: SettingsData) => {
     const result = await saveSettings.mutateAsync(values).catch(() => undefined);
@@ -123,30 +141,8 @@ export default function SettingsPage() {
               <h2 className="text-lg font-semibold text-ink">Appearance</h2>
             </div>
             <p className="mt-2 text-sm text-muted">Choose how Nexus renders across light and dark contexts.</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {(
-                [
-                  { key: "light", label: "Light", icon: <SunMedium className="h-4 w-4" aria-hidden="true" /> },
-                  { key: "dark", label: "Dark", icon: <MoonStar className="h-4 w-4" aria-hidden="true" /> },
-                  { key: "system", label: "System", icon: <span className="h-4 w-4 rounded-full border border-app" aria-hidden="true" /> },
-                ] as const
-              ).map((option) => (
-                <label
-                  key={option.key}
-                  className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus-within:outline-none focus-within:ring-2 focus-within:ring-trustBlue/70 focus-within:ring-offset-2 focus-within:ring-offset-app-bg ${
-                    themeChoice === option.key ? "border-trustBlue/60 bg-trustBlue/10 text-ink" : "border-app bg-panel text-muted hover:text-ink"
-                  }`}
-                >
-                  <input
-                    {...register("appearance.theme")}
-                    type="radio"
-                    value={option.key}
-                    className="sr-only"
-                  />
-                  {option.icon}
-                  {option.label}
-                </label>
-              ))}
+            <div className="mt-4">
+              <AppearanceControls />
             </div>
           </section>
 
