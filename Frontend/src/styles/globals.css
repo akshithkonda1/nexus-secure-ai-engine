@@ -1,53 +1,48 @@
-/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens (light) */
+/* Root Theme Variables */
 :root {
-  --bg-app: #0b0f14;
-  --bg-panel: #0f141b;
-  --ink: #e7ebf0;
-  --muted: #9aa4b2;
-  --border: #1d2633;
-  --ring: #1e40af;
-}
-
-/* Dark theme via class */
-:root.dark {
-  --bg-app: #0b0f14;
-  --bg-panel: #0f141b;
-  --ink: #e7ebf0;
-  --muted: #9aa4b2;
-  --border: #1d2633;
-  --ring: #1e40af;
-}
-
-/* Light theme */
-:root.light {
-  --bg-app: #f8fafc;
+  --bg-app: #f9fafb;
   --bg-panel: #ffffff;
-  --ink: #0b1220;
+  --ink: #111827;
   --muted: #4b5563;
   --border: #e5e7eb;
+  --ring: #2563eb;
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --bg-app: #0d1117;
+  --bg-panel: #161b22;
+  --ink: #e6edf3;
+  --muted: #8b949e;
+  --border: #30363d;
   --ring: #1e40af;
 }
 
-/* High-contrast override (prevents forced Windows HC rendering) */
-@media (forced-colors: active) {
-  :root {
-    --bg-app: Canvas !important;
-    --bg-panel: Canvas !important;
-    --ink: CanvasText !important;
-    --border: GrayText !important;
-  }
+/* Light mode */
+[data-theme="light"] {
+  --bg-app: #f9fafb;
+  --bg-panel: #ffffff;
+  --ink: #111827;
+  --muted: #4b5563;
+  --border: #e5e7eb;
+  --ring: #2563eb;
 }
 
-/* Base app styling */
-html, body, #root {
-  height: 100%;
-}
+/* Body styling */
 body {
-  background: var(--bg-app);
-  color: var(--ink);
+  @apply bg-app text-ink transition-colors duration-300 ease-in-out;
+}
+
+/* Panels and cards */
+.panel {
+  @apply bg-panel border border-border rounded-2xl shadow-card;
+}
+
+/* Button fix */
+button {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70;
 }
