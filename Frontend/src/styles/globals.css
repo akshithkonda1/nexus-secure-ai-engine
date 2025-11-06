@@ -2,45 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light */
+/* ── Light tokens */
 :root{
-  --bg-app:#f7f8fb;
+  --bg-app:#f6f7fb;
   --bg-panel:#ffffff;
   --ink:#0f172a;
   --muted:#64748b;
+  --border:#e5e7eb;
+  --ring:#93c5fd;
 }
 
-/* Dark */
+/* ── Dark tokens (sleek Nexus palette) */
 :root[data-theme="dark"]{
-  --bg-app:#0b1220;
-  --bg-panel:#121a2b;
-  --ink:#e5e7eb;
-  --muted:#94a3b8;
+  --bg-app:#0b1220;   /* deep slate */
+  --bg-panel:#121a2b; /* card/panel */
+  --ink:#e5e7eb;      /* text */
+  --muted:#94a3b8;    /* secondary */
+  --border:#1f2a44;   /* hairlines */
+  --ring:#2563eb;     /* focus ring */
 }
 
 html{ color-scheme: light dark; }
-*{ transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
+body{ background:var(--bg-app); color:var(--ink); }
 
-/* ──────────────────────────────────────────────────────────────
-   Protect Nexus branding from Windows High-Contrast (forced-colors)
-   while keeping a strong keyboard focus indicator.
-   ────────────────────────────────────────────────────────────── */
+*{
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+/* Focus style */
+:focus-visible{
+  outline: 0;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+}
+
+/* Panel helper (optional) */
+.panel{
+  @apply rounded-2xl border;
+  background: var(--bg-panel);
+  border-color: var(--border);
+  box-shadow: var(--tw-shadow, 0 8px 30px -12px rgb(0 0 0 / .25));
+}
+
+/* ── Block Windows High-Contrast (forced-colors) from nuking branding */
 @media (forced-colors: active) {
-  /* Stop the OS from replacing our palette inside the app shell */
   html, body, #root, .nexus-root {
     forced-color-adjust: none;
     background: var(--bg-app) !important;
     color: var(--ink) !important;
   }
 
-  /* Preserve an accessible keyboard focus ring */
-  :where(button, a, input, textarea, [tabindex]):focus-visible {
-    outline: 2px solid CanvasText; /* system-readable */
+  /* Keep an accessible keyboard focus ring */
+  :where(button, a, input, textarea, [tabindex]):focus-visible{
+    outline: 2px solid CanvasText;
     outline-offset: 2px;
   }
 
-  /* Tame aggressive HC borders on generic Tailwind border classes */
-  :where(.border, [class*="border-"]) {
-    border-color: var(--bg-panel) !important;
+  /* Tame aggressive HC borders */
+  :where(.border, [class*="border-"]){
+    border-color: var(--border) !important;
   }
 }

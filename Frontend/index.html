@@ -9,8 +9,6 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <style>html.theme-preload *{transition:none!important}</style>
-
     <script>
       (function () {
         var ROOT = document.documentElement;
@@ -28,26 +26,17 @@
           ROOT.classList.toggle('dark', eff==='dark');
           ROOT.dataset.theme = eff;
           try{ for (var i=0;i<KEYS.length;i++) localStorage.setItem(KEYS[i], pref); }catch(e){}
-          return eff;
         }
-
         window.__setTheme = function(choice){
           if(choice!=='light'&&choice!=='dark'&&choice!=='system') choice='system';
           apply(choice);
         };
-
-        ROOT.classList.add('theme-preload');
         apply(readPref());
-
         if (SYS){
           var onChange = function(){ try{ if(readPref()==='system') apply('system'); }catch(e){} };
           if (SYS.addEventListener) SYS.addEventListener('change', onChange);
-          else if (SYS.addListener) SYS.addListener(onChange);
+          else SYS.addListener(onChange);
         }
-
-        window.addEventListener('DOMContentLoaded', function(){
-          ROOT.classList.remove('theme-preload');
-        });
       })();
     </script>
   </head>

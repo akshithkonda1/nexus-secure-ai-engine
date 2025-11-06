@@ -9,10 +9,16 @@ module.exports = {
         panel: 'var(--bg-panel)',
         ink: 'var(--ink)',
         muted: 'var(--muted)',
+        border: 'var(--border)',
+        ring: 'var(--ring)',
         trustBlue: '#1E40AF'
       },
       boxShadow: {
-        card: '0 8px 30px -12px rgb(0 0 0 / 0.25)'
+        card: '0 12px 32px -16px rgb(0 0 0 / 0.35)'
+      },
+      borderRadius: {
+        xl: '0.75rem',
+        '2xl': '1rem'
       }
     }
   },
