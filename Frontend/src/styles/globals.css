@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Let @apply see Tailwind utilities in this file (Tailwind v4) */
+/* Make @apply recognize Tailwind utilities in this file (v4) */
 @reference "tailwindcss";
 
 /* ── Light tokens */
@@ -15,10 +15,10 @@
   --ring:#93c5fd;
 }
 
-/* ── Dark tokens */
+/* ── Dark tokens (sleek Nexus palette) */
 :root[data-theme="dark"]{
   --bg-app:#0b1220;   /* deep slate */
-  --bg-panel:#121a2b; /* card/panel */
+  --bg-panel:#121a2b; /* cards/panels */
   --ink:#e5e7eb;      /* text */
   --muted:#94a3b8;    /* secondary */
   --border:#1f2a44;   /* hairlines */
@@ -32,7 +32,12 @@ body{ background:var(--bg-app); color:var(--ink); }
   transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
-/* Keep custom components in a Tailwind layer */
+/* Real utility for card shadow so @apply works everywhere */
+@layer utilities {
+  .shadow-card { box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.35); }
+}
+
+/* Components */
 @layer components {
   .panel{
     @apply rounded-2xl border shadow-card;
