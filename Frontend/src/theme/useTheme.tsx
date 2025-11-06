@@ -1,23 +1,23 @@
 import React from "react";
 
 type ThemePref = "light" | "dark" | "system";
-type Ctx = {
+type ThemeCtx = {
   pref: ThemePref;
   effective: "light" | "dark";
   setPref: (p: ThemePref) => void;
 };
 
-const ThemeCtx = React.createContext<Ctx | undefined>(undefined);
-const STORAGE_KEYS = ["nexus-theme", "theme"] as const;
+const Ctx = React.createContext<ThemeCtx | undefined>(undefined);
+const KEYS = ["theme", "nexus-theme"] as const;
 
 function readPref(): ThemePref {
   try {
-    for (const k of STORAGE_KEYS) {
+    for (const k of KEYS) {
       const v = localStorage.getItem(k);
       if (v === "light" || v === "dark" || v === "system") return v;
     }
   } catch {}
-  return "system";
+  return "dark"; // default to DARK
 }
 
 function systemDark(): boolean {
@@ -29,9 +29,7 @@ function applyTheme(pref: ThemePref) {
   const root = document.documentElement;
   root.classList.toggle("dark", eff === "dark");
   root.dataset.theme = eff;
-  try {
-    for (const k of STORAGE_KEYS) localStorage.setItem(k, pref);
-  } catch {}
+  try { localStorage.setItem("theme", pref); } catch {}
   return eff;
 }
 
@@ -39,32 +37,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [pref, setPrefState] = React.useState<ThemePref>(() => readPref());
   const [effective, setEffective] = React.useState<"light" | "dark">(() => applyTheme(readPref()));
 
-  // change handler
   const setPref = React.useCallback((p: ThemePref) => {
     setPrefState(p);
     setEffective(applyTheme(p));
-    (window as any).__setTheme?.(p);
+    (window as any).__setTheme?.(p); // keep index.html script in sync
   }, []);
 
-  // follow OS when on "system"
   React.useEffect(() => {
     const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (!mq) return;
-    const listener = () => {
-      if (pref === "system") setEffective(applyTheme("system"));
-    };
-    mq.addEventListener ? mq.addEventListener("change", listener) : mq.addListener(listener);
+    const onChange = () => { if (pref === "system") setEffective(applyTheme("system")); };
+    mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
     return () => {
-      mq.removeEventListener ? mq.removeEventListener("change", listener) : mq.removeListener(listener);
+      mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange);
     };
   }, [pref]);
 
-  const value = React.useMemo<Ctx>(() => ({ pref, effective, setPref }), [pref, effective, setPref]);
-  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
+  const value = React.useMemo(() => ({ pref, effective, setPref }), [pref, effective, setPref]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useTheme() {
-  const ctx = React.useContext(ThemeCtx);
+  const ctx = React.useContext(Ctx);
   if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }
