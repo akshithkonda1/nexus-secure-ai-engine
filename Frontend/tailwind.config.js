@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: "class",
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
@@ -16,7 +16,6 @@ export default {
       borderRadius: {
         xl: "0.75rem",
         "2xl": "1rem",
-        "3xl": "1.5rem",
       },
       boxShadow: {
         card: "0 12px 32px -16px rgb(0 0 0 / 0.35)",
