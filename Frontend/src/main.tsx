@@ -5,9 +5,6 @@ import App from "./App";
 import "./styles/globals.css";
 import { ThemeProvider } from "./theme/useTheme";
 
-import { ThemeProvider } from "./theme/useTheme";
-import "./styles/globals.css";
-
 const container = document.getElementById("root");
 if (!container) throw new Error("Root element #root not found");
 
