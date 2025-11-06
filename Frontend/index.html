@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,37 +9,42 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Early theme: default DARK; apply before paint; never flips on nav -->
+    <!-- HARD opt-out from Windows/Edge High-Contrast -->
+    <style>
+      /* global opt-out, you asked to get rid of it */
+      * { forced-color-adjust: none !important; }
+      html, body, #root { height: 100%; }
+    </style>
+
+    <!-- Early theme application to avoid any flash -->
     <script>
       (function () {
-        var ROOT = document.documentElement;
-        var MQ = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-
-        function sysDark(){ return MQ && MQ.matches; }
-        function read(){
-          try { return localStorage.getItem('theme') || localStorage.getItem('nexus-theme') || 'dark'; }
-          catch(_) { return 'dark'; }
+        function apply(choice) {
+          try { localStorage.setItem("theme", choice); } catch (e) {}
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = choice === "dark" || (choice === "system" && prefersDark);
+          var el = document.documentElement;
+          if (isDark) el.classList.add("dark"); else el.classList.remove("dark");
+          el.dataset.theme = isDark ? "dark" : "light";
         }
-        function apply(choice){
-          var eff = choice === 'system' ? (sysDark() ? 'dark' : 'light') : choice;
-          ROOT.classList.toggle('dark', eff === 'dark');
-          ROOT.dataset.theme = eff;
-          try { localStorage.setItem('theme', choice); } catch(_){}
-        }
-
-        window.__setTheme = apply;  // for runtime switches
-        apply(read());
-
-        if (MQ && MQ.addEventListener) {
-          MQ.addEventListener('change', function(){
-            try { if ((localStorage.getItem('theme') || 'dark') === 'system') apply('system'); } catch(_){}
-          });
+        window.__setTheme = apply;
+        var saved = "system";
+        try { saved = localStorage.getItem("theme") || "system"; } catch (e) {}
+        apply(saved);
+        if (window.matchMedia) {
+          var mq = window.matchMedia("(prefers-color-scheme: dark)");
+          var onChange = function () {
+            var current = "system";
+            try { current = localStorage.getItem("theme") || "system"; } catch (e) {}
+            if (current === "system") apply("system");
+          };
+          mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
         }
       })();
     </script>
   </head>
-  <body class="bg-app text-ink antialiased font-sans">
-    <div id="root" class="nexus-root"></div>
+  <body class="bg-app text-ink antialiased">
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
