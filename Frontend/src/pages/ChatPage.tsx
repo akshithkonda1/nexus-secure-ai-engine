@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, Paperclip, Loader2, ChevronDown } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -14,7 +15,8 @@ const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function ChatPage() {
-  const sessionId = "new";
+  const { id } = useParams<{ id?: string }>();
+  const sessionId = id?.trim() ? id : "new";
   const { messages, isConnected, isTyping, error, sendMessage, reconnect } = useChatSession(sessionId);
 
   const [input, setInput] = useState("");
