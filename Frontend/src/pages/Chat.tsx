@@ -34,23 +34,23 @@ export default function ChatPage() {
 
   const handleSend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!draftMessage.trim()) {
+    const messageText = draftMessage.trim();
+    if (!messageText) {
       return;
     }
 
     if (!id) {
       const result = await createSession.mutateAsync({ title: "Draft session" }).catch(() => undefined);
-      if (result?.session.id) {
-        navigate(`/chat/${result.session.id}`, { replace: true });
+      if (!result?.session.id) {
+        return;
       }
-      setDraftMessage("");
-      return;
+      navigate(`/chat/${result.session.id}`, { replace: true });
     }
 
     const newMessage: Message = {
       id: `local-${Date.now()}`,
       role: "user",
-      text: draftMessage.trim(),
+      text: messageText,
       at: new Date().toISOString(),
     };
     setLocalMessages((prev) => [...prev, newMessage]);
