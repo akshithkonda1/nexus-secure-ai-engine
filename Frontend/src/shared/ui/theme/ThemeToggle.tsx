@@ -21,3 +21,4 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     </button>
   );
 }
+export { ThemeProvider, useTheme } from "../../../theme/useTheme";
