@@ -1,4 +1,4 @@
-// Tailwind v4 single plugin (includes Tailwind + Autoprefixer)
+// Tailwind v4 single plugin (includes autoprefixer internally)
 export default {
   plugins: {
     '@tailwindcss/postcss': {},
