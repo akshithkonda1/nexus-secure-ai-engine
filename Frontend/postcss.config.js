@@ -1,6 +1,6 @@
-// Tailwind v4 single plugin (includes autoprefixer internally)
-export default {
+module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},
-  },
+    "@tailwindcss/postcss": {},
+    autoprefixer: {}
+  }
 };
