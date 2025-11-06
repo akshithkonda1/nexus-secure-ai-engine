@@ -9,39 +9,46 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Early theme apply (prevents FOUC) -->
+    <!-- Early theme: default to DARK, respect user pref, and avoid FOUC -->
     <script>
       (function () {
         var ROOT = document.documentElement;
-        var SYS  = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-        var KEYS = ['nexus-theme','theme'];
+        var MQ = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 
-        function readPref(){
-          var v='system';
-          try{ for (var i=0;i<KEYS.length;i++){ var s=localStorage.getItem(KEYS[i]); if(s){v=s;break;} } }catch(_){}
-          return (v==='light'||v==='dark'||v==='system')?v:'system';
+        function sysDark() { return MQ && MQ.matches; }
+
+        function read() {
+          try {
+            return (localStorage.getItem('theme')
+               || localStorage.getItem('nexus-theme')  // legacy key
+               || 'dark');                              // default to DARK
+          } catch (_) { return 'dark'; }
         }
-        function sysTheme(){ return SYS && SYS.matches ? 'dark' : 'light'; }
-        function apply(pref){
-          var eff = pref==='system' ? sysTheme() : pref;
-          ROOT.classList.toggle('dark', eff==='dark');
+
+        function apply(choice) {
+          var eff = choice === 'system' ? (sysDark() ? 'dark' : 'light') : choice;
+          ROOT.classList.toggle('dark', eff === 'dark');
           ROOT.dataset.theme = eff;
-          try{ for (var i=0;i<KEYS.length;i++) localStorage.setItem(KEYS[i], pref); }catch(_){}
+          try { localStorage.setItem('theme', choice); } catch (_) {}
         }
-        window.__setTheme = function(choice){
-          if(choice!=='light'&&choice!=='dark'&&choice!=='system') choice='system';
-          apply(choice);
-        };
-        apply(readPref());
-        if (SYS){
-          var onChange = function(){ try{ if(readPref()==='system') apply('system'); }catch(_){} };
-          SYS.addEventListener ? SYS.addEventListener('change', onChange) : SYS.addListener(onChange);
+
+        // expose for UI
+        window.__setTheme = apply;
+
+        // initial paint
+        apply(read());
+
+        // follow OS if user selected “system”
+        if (MQ && MQ.addEventListener) {
+          MQ.addEventListener('change', function () {
+            try { if ((localStorage.getItem('theme') || 'dark') === 'system') apply('system'); } catch (_) {}
+          });
         }
       })();
     </script>
   </head>
 
-  <body class="bg-app text-ink antialiased">
+  <body class="bg-app text-ink antialiased font-sans">
     <div id="root" class="nexus-root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
