@@ -1,54 +1,70 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React from "react";
 
-export type ThemePref = "light" | "dark" | "system";
-type ThemeContextShape = { pref: ThemePref; effective: "light" | "dark"; setPref: (t: ThemePref) => void; };
+type ThemePref = "light" | "dark" | "system";
+type Ctx = {
+  pref: ThemePref;
+  effective: "light" | "dark";
+  setPref: (p: ThemePref) => void;
+};
 
-const STORAGE_KEYS = ["nexus-theme","theme"];
-const Ctx = createContext<ThemeContextShape | null>(null);
+const ThemeCtx = React.createContext<Ctx | undefined>(undefined);
+const STORAGE_KEYS = ["nexus-theme", "theme"] as const;
 
 function readPref(): ThemePref {
-  let v: string | null = null;
-  try { for (const k of STORAGE_KEYS){ v = localStorage.getItem(k); if (v) break; } } catch {}
-  return (v === "light" || v === "dark" || v === "system") ? (v as ThemePref) : "system";
+  try {
+    for (const k of STORAGE_KEYS) {
+      const v = localStorage.getItem(k);
+      if (v === "light" || v === "dark" || v === "system") return v;
+    }
+  } catch {}
+  return "system";
 }
-function systemTheme(): "light" | "dark" {
-  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+function systemDark(): boolean {
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 }
-function apply(theme: "light" | "dark") {
+
+function applyTheme(pref: ThemePref) {
+  const eff = pref === "system" ? (systemDark() ? "dark" : "light") : pref;
   const root = document.documentElement;
-  root.dataset.theme = theme;
-  if (theme === "dark") root.classList.add("dark"); else root.classList.remove("dark");
+  root.classList.toggle("dark", eff === "dark");
+  root.dataset.theme = eff;
+  try {
+    for (const k of STORAGE_KEYS) localStorage.setItem(k, pref);
+  } catch {}
+  return eff;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [pref, setPrefState] = useState<ThemePref>(() => readPref());
-  const [effective, setEffective] = useState<"light" | "dark">(pref === "system" ? systemTheme() : pref);
+  const [pref, setPrefState] = React.useState<ThemePref>(() => readPref());
+  const [effective, setEffective] = React.useState<"light" | "dark">(() => applyTheme(readPref()));
 
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const sync = () => { const eff = pref === "system" ? (mql.matches ? "dark" : "light") : pref; setEffective(eff); apply(eff); };
-    sync();
-    const onChange = () => { if (pref === "system") sync(); };
-    if (mql.addEventListener) mql.addEventListener("change", onChange);
-    else (mql as any).addListener?.(onChange);
+  // change handler
+  const setPref = React.useCallback((p: ThemePref) => {
+    setPrefState(p);
+    setEffective(applyTheme(p));
+    (window as any).__setTheme?.(p);
+  }, []);
+
+  // follow OS when on "system"
+  React.useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!mq) return;
+    const listener = () => {
+      if (pref === "system") setEffective(applyTheme("system"));
+    };
+    mq.addEventListener ? mq.addEventListener("change", listener) : mq.addListener(listener);
     return () => {
-      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
-      else (mql as any).removeListener?.(onChange);
+      mq.removeEventListener ? mq.removeEventListener("change", listener) : mq.removeListener(listener);
     };
   }, [pref]);
 
-  const setPref = (t: ThemePref) => {
-    const normalized: ThemePref = (t === "light" || t === "dark" || t === "system") ? t : "system";
-    try { for (const k of STORAGE_KEYS) localStorage.setItem(k, normalized); } catch {}
-    setPrefState(normalized);
-    try { (window as any).__setTheme?.(normalized); } catch {}
-  };
-
-  const value = useMemo(() => ({ pref, effective, setPref }), [pref, effective]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  const value = React.useMemo<Ctx>(() => ({ pref, effective, setPref }), [pref, effective, setPref]);
+  return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
-export function useTheme(): ThemeContextShape {
-  const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useTheme must be used inside <ThemeProvider>");
+
+export function useTheme() {
+  const ctx = React.useContext(ThemeCtx);
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }
