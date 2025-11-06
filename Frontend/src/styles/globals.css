@@ -1,66 +1,120 @@
+/* Frontend/src/styles/globals.css */
+
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Let @apply resolve Tailwind utilities (v4) */
-@reference "tailwindcss";
-
-/* ── LIGHT TOKENS (used when theme is light) */
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
 :root {
-  --bg-app:#f6f7fb;
-  --bg-panel:#ffffff;
-  --ink:#0f172a;
-  --muted:#64748b;
-  --border:#e5e7eb;
-  --ring:#93c5fd;
+  /* light */
+  --bg-app: #f6f8fb;
+  --bg-panel: #ffffff;
+  --ink: #0b1220;
+  --muted: #616c7c;
+  --border: rgba(11, 18, 32, 0.12);
+  --ring: rgba(30, 64, 175, 0.45); /* trustBlue w/ alpha */
 }
 
-/* ── DARK TOKENS (default via .dark / data-theme="dark") */
-:root[data-theme="dark"], .dark {
-  --bg-app:#0b1220;
-  --bg-panel:#121a2b;
-  --ink:#e5e7eb;
-  --muted:#94a3b8;
-  --border:#1f2a44;
-  --ring:#2563eb;
+:root.dark {
+  /* dark */
+  --bg-app: #0b0f14;
+  --bg-panel: #10151d;
+  --ink: #e6eaf2;
+  --muted: #9aa3b2;
+  --border: rgba(148, 163, 184, 0.18);
+  --ring: rgba(30, 64, 175, 0.6);
 }
 
-/* Respect both palettes but DO NOT let Windows force recoloring */
-html, body, #root, .nexus-root {
+/* Always advertise both color schemes so form controls theme correctly */
+:root {
   color-scheme: light dark;
-  background: var(--bg-app);
-  color: var(--ink);
-  forced-color-adjust: none;   /* <- disables Windows High-Contrast remapping */
 }
 
-* {
-  transition: background-color .16s ease, color .16s ease,
-              border-color .16s ease, box-shadow .16s ease;
+/* ------------------------------------------------------------------ */
+/* Windows High-Contrast & UA outline neutralization (no flicker)      */
+/* ------------------------------------------------------------------ */
+/* Stop the browser from overriding our palette in forced colors */
+:root, html, body, #root {
+  forced-color-adjust: none !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-}
-
-/* Common components (no custom shadow utilities) */
-@layer components {
-  .panel {
-    @apply rounded-2xl border;
-    background: var(--bg-panel);
-    border-color: var(--border);
-    box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.35);
-  }
-  .input {
-    @apply w-full rounded-xl border bg-transparent px-3 py-2 text-sm;
-    border-color: var(--border);
-  }
-  .btn-primary {
-    @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium;
-    background: #1E40AF; color: #fff;
+/* If HC still activates, keep our palette and remove UA outlines */
+@media (forced-colors: active) {
+  :root, html, body, #root,
+  .card, input, select, textarea, button, .btn,
+  .sidebar, .navbar, .panel, .chip {
+    forced-color-adjust: none !important;
+    background-color: transparent;
+    color: inherit;
+    border-color: var(--border) !important;
   }
 }
 
-:focus-visible {
+/* Remove global UA outlines; add accessible focus ring on focus-visible */
+* { outline-color: transparent; }
+*:focus { outline: 0; }
+*:focus-visible {
   outline: 0;
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                               */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html, body, #root {
+    @apply min-h-screen;
+  }
+  body {
+    @apply bg-app text-ink antialiased;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* Reusable card shell that matches your desired (Pic-2) look */
+  .card {
+    @apply rounded-3xl border bg-panel shadow-xl;
+    border-color: var(--border);
+    outline: 0 !important;
+  }
+
+  .input {
+    @apply h-10 w-full rounded-full border bg-app px-4 text-sm text-ink
+           focus-visible:ring-2 focus-visible:ring-offset-0;
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  .switch {
+    @apply h-5 w-9 cursor-pointer appearance-none rounded-full border bg-panel transition
+           checked:bg-blue-600;
+    border-color: var(--border);
+  }
+
+  .radio-pill {
+    @apply inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm;
+    border-color: var(--border);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white
+           shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilities (optional helpers)                                       */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  .bg-app { background-color: var(--bg-app) !important; }
+  .bg-panel { background-color: var(--bg-panel) !important; }
+  .text-ink { color: var(--ink) !important; }
+  .text-muted { color: var(--muted) !important; }
+  .border-app { border-color: var(--border) !important; }
 }
