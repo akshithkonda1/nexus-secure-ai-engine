@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light */
+:root{
+  --bg-app:#f7f8fb;
+  --bg-panel:#ffffff;
+  --ink:#0f172a;
+  --muted:#64748b;
+}
+
+/* Dark */
+:root[data-theme="dark"]{
+  --bg-app:#0b1220;
+  --bg-panel:#121a2b;
+  --ink:#e5e7eb;
+  --muted:#94a3b8;
+}
+
+html{ color-scheme: light dark; }
+*{ transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
