@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Allow @apply to resolve Tailwind utilities (v4) */
+/* Let @apply resolve Tailwind utilities (v4) */
 @reference "tailwindcss";
 
-/* ── Light tokens (used when theme is light) */
+/* ── LIGHT TOKENS (used when theme is light) */
 :root {
   --bg-app:#f6f7fb;
   --bg-panel:#ffffff;
@@ -15,7 +15,7 @@
   --ring:#93c5fd;
 }
 
-/* ── Dark tokens (default via .dark class / data-theme="dark") */
+/* ── DARK TOKENS (default via .dark / data-theme="dark") */
 :root[data-theme="dark"], .dark {
   --bg-app:#0b1220;
   --bg-panel:#121a2b;
@@ -25,19 +25,24 @@
   --ring:#2563eb;
 }
 
-html { color-scheme: light dark; }
-body { background: var(--bg-app); color: var(--ink); }
+/* Respect both palettes but DO NOT let Windows force recoloring */
+html, body, #root, .nexus-root {
+  color-scheme: light dark;
+  background: var(--bg-app);
+  color: var(--ink);
+  forced-color-adjust: none;   /* <- disables Windows High-Contrast remapping */
+}
 
-/* Smooth transitions */
 * {
-  transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+  transition: background-color .16s ease, color .16s ease,
+              border-color .16s ease, box-shadow .16s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
 
-/* Components (no shadow-card usage) */
+/* Common components (no custom shadow utilities) */
 @layer components {
   .panel {
     @apply rounded-2xl border;
@@ -55,18 +60,7 @@ body { background: var(--bg-app); color: var(--ink); }
   }
 }
 
-/* Focus ring */
 :focus-visible {
   outline: 0;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
-}
-
-/* High-contrast guard */
-@media (forced-colors: active) {
-  html, body, #root, .nexus-root {
-    forced-color-adjust: none;
-    background: var(--bg-app) !important;
-    color: var(--ink) !important;
-  }
-  :where(.border, [class*="border-"]) { border-color: var(--border) !important; }
 }
