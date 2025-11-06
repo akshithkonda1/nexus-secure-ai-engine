@@ -61,11 +61,7 @@
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
-<<<<<<< HEAD
     "autoprefixer": "^10.4.21",
-=======
-    "autoprefixer": "^10.4.20",
->>>>>>> dff2a84a915cfeb3189b901e28754ad1b3b5df96
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jsx-a11y": "^6.8.0",
