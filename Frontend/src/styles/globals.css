@@ -31,8 +31,15 @@ body{ background:var(--bg-app); color:var(--ink); }
 
 /* Focus style */
 :focus-visible{
-  outline: 0;
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@supports (color: color-mix(in oklab, black 50%, white)) {
+  :focus-visible{
+    outline: 0;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+  }
 }
 
 /* Panel helper (optional) */
