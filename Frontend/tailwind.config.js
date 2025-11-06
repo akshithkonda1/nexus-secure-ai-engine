@@ -1,8 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,mdx}'],
+
+  // avoid collisions with extension/third-party CSS
+  important: '.nexus-root',
+
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+
   theme: {
+    container: {
+      center: true,
+      padding: { DEFAULT: '1rem', sm: '1.25rem', lg: '1.5rem', xl: '2rem' },
+      screens: { '2xl': '1280px' },
+    },
     extend: {
       colors: {
         app: 'var(--bg-app)',
@@ -11,16 +24,12 @@ module.exports = {
         muted: 'var(--muted)',
         border: 'var(--border)',
         ring: 'var(--ring)',
-        trustBlue: '#1E40AF'
+        trustBlue: '#1E40AF',
       },
-      boxShadow: {
-        card: '0 12px 32px -16px rgb(0 0 0 / 0.35)'
-      },
-      borderRadius: {
-        xl: '0.75rem',
-        '2xl': '1rem'
-      }
-    }
+      borderRadius: { xl: '0.75rem', '2xl': '1rem' },
+      transitionDuration: { 160: '160ms' },
+    },
   },
-  plugins: []
+
+  plugins: [],
 };

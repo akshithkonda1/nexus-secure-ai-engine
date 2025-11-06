@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Make @apply recognize Tailwind utilities in this file (v4) */
+@reference "tailwindcss";
+
 /* ── Light tokens */
 :root{
   --bg-app:#f6f7fb;
@@ -15,7 +18,7 @@
 /* ── Dark tokens (sleek Nexus palette) */
 :root[data-theme="dark"]{
   --bg-app:#0b1220;   /* deep slate */
-  --bg-panel:#121a2b; /* card/panel */
+  --bg-panel:#121a2b; /* cards/panels */
   --ink:#e5e7eb;      /* text */
   --muted:#94a3b8;    /* secondary */
   --border:#1f2a44;   /* hairlines */
@@ -29,37 +32,36 @@ body{ background:var(--bg-app); color:var(--ink); }
   transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
-/* Focus style */
+/* Real utility for card shadow so @apply works everywhere */
+@layer utilities {
+  .shadow-card { box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.35); }
+}
+
+/* Components */
+@layer components {
+  .panel{
+    @apply rounded-2xl border shadow-card;
+    background: var(--bg-panel);
+    border-color: var(--border);
+  }
+}
+
+/* Accessible focus ring */
 :focus-visible{
   outline: 0;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
 }
 
-/* Panel helper (optional) */
-.panel{
-  border-radius: 1rem; /* matches rounded-2xl */
-  border-width: 1px;
-  border-style: solid;
-  background: var(--bg-panel);
-  border-color: var(--border);
-  box-shadow: var(--tw-shadow, 0 8px 30px -12px rgb(0 0 0 / .25));
-}
-
-/* ── Block Windows High-Contrast (forced-colors) from nuking branding */
+/* ── Protect branding from Windows High-Contrast (forced-colors) */
 @media (forced-colors: active) {
   html, body, #root, .nexus-root {
     forced-color-adjust: none;
     background: var(--bg-app) !important;
     color: var(--ink) !important;
   }
-
-  /* Keep an accessible keyboard focus ring */
   :where(button, a, input, textarea, [tabindex]):focus-visible{
-    outline: 2px solid CanvasText;
-    outline-offset: 2px;
+    outline: 2px solid CanvasText; outline-offset: 2px;
   }
-
-  /* Tame aggressive HC borders */
   :where(.border, [class*="border-"]){
     border-color: var(--border) !important;
   }
