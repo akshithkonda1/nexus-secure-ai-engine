@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 
 const HomePage = lazy(() => import("@/pages/Home"));
-const ChatPage = lazy(() => import("@/pages/ChatPage"));
+const ChatPage = lazy(() => import("@/pages/Chat"));
 const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
 const TemplatesPage = lazy(() => import("@/pages/TemplatesPage"));
 const DocumentsPage = lazy(() => import("@/pages/DocumentsPage"));
