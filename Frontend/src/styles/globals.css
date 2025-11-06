@@ -1,111 +1,72 @@
-/* Frontend/src/styles/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Let @apply see Tailwind utilities in this file (Tailwind v4) */
+/* Allow @apply to resolve Tailwind utilities (v4) */
 @reference "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────
-   Design tokens
-   ───────────────────────────────────────────────────────────── */
-
-/* Light */
+/* ── Light tokens (used when theme is light) */
 :root {
-  --bg-app:   #f6f7fb;
-  --bg-panel: #ffffff;
-  --ink:      #0f172a;
-  --muted:    #64748b;
-  --border:   #e5e7eb;
-  --ring:     #93c5fd;
+  --bg-app:#f6f7fb;
+  --bg-panel:#ffffff;
+  --ink:#0f172a;
+  --muted:#64748b;
+  --border:#e5e7eb;
+  --ring:#93c5fd;
 }
 
-/* Dark (sleek Nexus palette) */
-:root[data-theme="dark"] {
-  --bg-app:   #0b1220;   /* deep slate */
-  --bg-panel: #121a2b;   /* cards/panels */
-  --ink:      #e5e7eb;   /* text */
-  --muted:    #94a3b8;   /* secondary */
-  --border:   #1f2a44;   /* hairlines */
-  --ring:     #2563eb;   /* focus ring */
+/* ── Dark tokens (default via .dark class / data-theme="dark") */
+:root[data-theme="dark"], .dark {
+  --bg-app:#0b1220;
+  --bg-panel:#121a2b;
+  --ink:#e5e7eb;
+  --muted:#94a3b8;
+  --border:#1f2a44;
+  --ring:#2563eb;
 }
 
 html { color-scheme: light dark; }
 body { background: var(--bg-app); color: var(--ink); }
 
-/* Gentle UI transitions */
+/* Smooth transitions */
 * {
-  transition:
-    background-color .16s ease,
-    color            .16s ease,
-    border-color     .16s ease,
-    box-shadow       .16s ease;
+  transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
-/* Focus style */
-:focus-visible{
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 3px var(--ring);
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
 }
 
-@supports (color: color-mix(in oklab, #000 35%, transparent)) {
-  :focus-visible{
-    outline: 0;
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
-  }
-}
-
-/* Text selection */
-::selection {
-  background: color-mix(in oklab, var(--ring) 30%, transparent);
-  color: var(--ink);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Components (no shadow-card utility)
-   ───────────────────────────────────────────────────────────── */
+/* Components (no shadow-card usage) */
 @layer components {
   .panel {
     @apply rounded-2xl border;
     background: var(--bg-panel);
     border-color: var(--border);
-    /* explicit shadow instead of @apply shadow-card */
     box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.35);
   }
-
   .input {
     @apply w-full rounded-xl border bg-transparent px-3 py-2 text-sm;
     border-color: var(--border);
   }
-
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium;
-    background: #1E40AF;
-    color: #fff;
+    background: #1E40AF; color: #fff;
   }
 }
 
-/* Accessible focus ring */
+/* Focus ring */
 :focus-visible {
   outline: 0;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Protect branding from Windows High-Contrast (forced-colors)
-   ───────────────────────────────────────────────────────────── */
+/* High-contrast guard */
 @media (forced-colors: active) {
   html, body, #root, .nexus-root {
     forced-color-adjust: none;
     background: var(--bg-app) !important;
     color: var(--ink) !important;
   }
-  :where(button, a, input, textarea, [tabindex]):focus-visible {
-    outline: 2px solid CanvasText;
-    outline-offset: 2px;
-  }
-  :where(.border, [class*="border-"]) {
-    border-color: var(--border) !important;
-  }
+  :where(.border, [class*="border-"]) { border-color: var(--border) !important; }
 }
