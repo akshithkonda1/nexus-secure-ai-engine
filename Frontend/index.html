@@ -9,45 +9,35 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
-    <!-- Early theme: default to DARK, respect user pref, and avoid FOUC -->
+    <!-- Early theme: default DARK; apply before paint; never flips on nav -->
     <script>
       (function () {
         var ROOT = document.documentElement;
         var MQ = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
 
-        function sysDark() { return MQ && MQ.matches; }
-
-        function read() {
-          try {
-            return (localStorage.getItem('theme')
-               || localStorage.getItem('nexus-theme')  // legacy key
-               || 'dark');                              // default to DARK
-          } catch (_) { return 'dark'; }
+        function sysDark(){ return MQ && MQ.matches; }
+        function read(){
+          try { return localStorage.getItem('theme') || localStorage.getItem('nexus-theme') || 'dark'; }
+          catch(_) { return 'dark'; }
         }
-
-        function apply(choice) {
+        function apply(choice){
           var eff = choice === 'system' ? (sysDark() ? 'dark' : 'light') : choice;
           ROOT.classList.toggle('dark', eff === 'dark');
           ROOT.dataset.theme = eff;
-          try { localStorage.setItem('theme', choice); } catch (_) {}
+          try { localStorage.setItem('theme', choice); } catch(_){}
         }
 
-        // expose for UI
-        window.__setTheme = apply;
-
-        // initial paint
+        window.__setTheme = apply;  // for runtime switches
         apply(read());
 
-        // follow OS if user selected “system”
         if (MQ && MQ.addEventListener) {
-          MQ.addEventListener('change', function () {
-            try { if ((localStorage.getItem('theme') || 'dark') === 'system') apply('system'); } catch (_) {}
+          MQ.addEventListener('change', function(){
+            try { if ((localStorage.getItem('theme') || 'dark') === 'system') apply('system'); } catch(_){}
           });
         }
       })();
     </script>
   </head>
-
   <body class="bg-app text-ink antialiased font-sans">
     <div id="root" class="nexus-root"></div>
     <script type="module" src="/src/main.tsx"></script>
