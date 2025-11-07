@@ -1,19 +1,38 @@
 {
   "compilerOptions": {
+    /* === Core Compilation Targets === */
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
-    "baseUrl": "src",
+
+    /* === Module & Path Resolution === */
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["./*"],
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
+      "@features/*": ["features/*"],
+      "@theme/*": ["theme/*"],
+      "@types/*": ["types/*"],
+      "@hooks/*": ["hooks/*"],
+      "@styles/*": ["styles/*"]
     },
+
+    /* === Build Behavior === */
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    /* === UX Enhancements === */
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
-  "include": ["src"]
+
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", ".vite"]
 }
