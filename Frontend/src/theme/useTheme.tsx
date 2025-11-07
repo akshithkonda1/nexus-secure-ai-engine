@@ -1,39 +1,16 @@
-import {
-  useEffect,
-  useState,
-  useContext,
-  createContext,
-  type ReactNode,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 
-type Theme = "light" | "dark";
+const ThemeContext = createContext(null);
 
-type ThemeContextValue = {
-  theme: Theme;
-  setTheme: Dispatch<SetStateAction<Theme>>;
-};
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  return (localStorage.getItem("nexus-theme") as Theme | null) || "dark";
-}
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState(
+    localStorage.getItem("nexus-theme") || "dark"
+  );
 
   useEffect(() => {
     const root = document.documentElement;
-    const body = document.body;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    body.classList.remove("light", "dark");
-    body.classList.add(theme);
     localStorage.setItem("nexus-theme", theme);
 
     // Disable forced-color issues
