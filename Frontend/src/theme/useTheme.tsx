@@ -1,29 +1,25 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 
-type Theme = "light" | "dark";
+type ThemeContextValue = {
+  theme: string;
+  setTheme: (theme: string) => void;
+};
 
-interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-  }, [theme]);
+  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+
+    // Prevent Windows forced colors from overriding the UI
     if (window.matchMedia("(forced-colors: active)").matches) {
       root.style.setProperty("forced-color-adjust", "none");
     }
-  }, []);
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -33,9 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider");
-  }
-  return context;
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
+  return ctx;
 }
