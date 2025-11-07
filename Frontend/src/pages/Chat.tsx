@@ -43,20 +43,15 @@ export default function ChatPage() {
 
     if (!sessionId) {
       const result = await createSession.mutateAsync({ title: "Draft session" }).catch(() => undefined);
-
       sessionId = result?.session.id;
-
       if (!sessionId) {
         return;
       }
-
       navigate(`/chat/${sessionId}`, { replace: true });
-
       if (!result?.session.id) {
         return;
       }
       navigate(`/chat/${result.session.id}`, { replace: true });
-
     }
 
     const newMessage: Message = {
@@ -84,7 +79,7 @@ export default function ChatPage() {
     : "Start a new Nexus.ai session to orchestrate trustworthy AI chats.";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-white">
       <PageHeader
         title={headerTitle}
         description={headerDescription}
@@ -93,7 +88,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => setEditingTitle((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-full border border-app px-4 py-2 text-xs font-semibold text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-muted transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <Edit2 className="h-4 w-4" aria-hidden="true" /> Rename
             </button>
@@ -101,7 +96,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => navigate("/sessions")}
-              className="inline-flex items-center gap-2 rounded-full border border-app px-4 py-2 text-xs font-semibold text-muted transition hover:border-trustBlue/60 hover:text-ink"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-muted transition hover:bg-white/10 hover:text-white"
             >
               Back to sessions
             </button>
@@ -115,16 +110,16 @@ export default function ChatPage() {
             event.preventDefault();
             void handleRename();
           }}
-          className="flex flex-wrap items-center gap-3 rounded-3xl border border-app bg-panel p-4 shadow-inner"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-elevated/80 p-4 shadow-card"
         >
           <input
             value={renameValue}
             onChange={(event) => setRenameValue(event.target.value)}
-            className="h-10 flex-1 rounded-full border border-app bg-app px-4 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+            className="h-10 flex-1 rounded-lg border border-white/10 bg-surface/70 px-4 text-sm text-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/60"
           />
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-500"
           >
             Save
           </button>
@@ -132,13 +127,13 @@ export default function ChatPage() {
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="flex flex-col gap-4 rounded-3xl border border-app bg-panel p-6 shadow-xl">
-          <h2 className="text-lg font-semibold text-ink">Conversation</h2>
+        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-elevated/80 p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-white">Conversation</h2>
           {id ? (
             isLoading ? (
               <div className="space-y-3" aria-busy="true">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <Skeleton key={index} className="h-20" />
+                  <Skeleton key={index} className="h-20 bg-white/5" />
                 ))}
               </div>
             ) : messages.length ? (
@@ -148,17 +143,17 @@ export default function ChatPage() {
                     key={message.id}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${
+                    className={`rounded-lg border px-4 py-3 text-sm shadow-sm ${
                       message.role === "user"
-                        ? "border-trustBlue/40 bg-trustBlue/10 text-ink"
-                        : "border-app bg-app/70 text-muted"
+                        ? "border-primary/40 bg-primary/10 text-white"
+                        : "border-white/10 bg-surface/70 text-muted"
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted">
                       <span>{message.role}</span>
                       <span>{new Date(message.at).toLocaleTimeString()}</span>
                     </div>
-                    <p className="mt-2 text-sm leading-relaxed text-ink">{message.text}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-white">{message.text}</p>
                   </motion.div>
                 ))}
               </div>
@@ -183,13 +178,13 @@ export default function ChatPage() {
               onChange={(event) => setDraftMessage(event.target.value)}
               rows={3}
               placeholder="Ask Nexus to orchestrate a debate…"
-              className="w-full resize-none rounded-3xl border border-app bg-app px-4 py-3 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+              className="w-full resize-none rounded-xl border border-white/10 bg-surface/80 px-4 py-3 text-sm text-white placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/60"
             />
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-muted">Shift + Enter to add a new line.</span>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={!draftMessage.trim() || createSession.isPending}
               >
                 {createSession.isPending ? (
@@ -203,46 +198,12 @@ export default function ChatPage() {
           </form>
         </div>
 
-        <aside className="flex flex-col gap-4 rounded-3xl border border-app bg-panel p-6 shadow-xl">
-          <h2 className="text-lg font-semibold text-ink">Session metadata</h2>
-          {id ? (
-            session ? (
-              <dl className="space-y-3 text-sm text-muted">
-                <div className="flex items-center justify-between">
-                  <dt>Status</dt>
-                  <dd className="rounded-full bg-trustBlue/10 px-3 py-1 text-xs font-semibold text-trustBlue uppercase tracking-[0.2em]">
-                    {session.status}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt>Messages</dt>
-                  <dd>{session.messages + localMessages.length}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-[0.2em] text-muted">Providers</dt>
-                  <dd className="mt-1 flex flex-wrap gap-2">
-                    {session.providers.map((provider) => (
-                      <span
-                        key={provider}
-                        className="rounded-full border border-app px-3 py-1 text-xs font-medium text-muted"
-                      >
-                        {provider}
-                      </span>
-                    ))}
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <Skeleton className="h-24" />
-            )
-          ) : (
-            <p className="text-sm text-muted">Create the session to see provider telemetry and guardrail stats.</p>
-          )}
-          <div className="rounded-2xl border border-dashed border-trustBlue/50 bg-trustBlue/5 p-4 text-xs text-muted">
-            <p className="font-semibold text-ink">Telemetry insight</p>
-            <p className="mt-1">Mock data updates when you send prompts. Replace with your Nexus backend later.</p>
-          </div>
-        </aside>
+        <div className="rounded-xl border border-white/10 bg-elevated/80 p-6 shadow-card">
+          <h2 className="text-lg font-semibold text-white">Session details</h2>
+          <p className="mt-2 text-sm text-muted">
+            High-level context and metadata will live here in a future release. For now, keep the debate flowing.
+          </p>
+        </div>
       </section>
     </div>
   );

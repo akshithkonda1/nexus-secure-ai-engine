@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/cn";
 export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-2xl bg-app-text/10", className)}
+      className={cn("animate-pulse rounded-lg bg-white/10", className)}
       {...props}
     />
   );
