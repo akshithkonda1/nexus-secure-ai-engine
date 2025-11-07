@@ -23,14 +23,17 @@ html, body {
   --ring: #2563eb;
 }
 
-/* Dark mode */
-[data-theme="dark"] {
-  --bg-app: #0d1117;
-  --bg-panel: #161b22;
-  --ink: #e6edf3;
-  --muted: #8b949e;
-  --border: #30363d;
-  --ring: #1e40af;
+/* Focus style */
+:focus-visible{
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@supports (color: color-mix(in oklab, black 50%, white)) {
+  :focus-visible{
+    outline: 0;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent);
+  }
 }
 
 /* Light mode */
