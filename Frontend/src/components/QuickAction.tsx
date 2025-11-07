@@ -1,26 +1,23 @@
-import type { ComponentType } from "react";
+import { ReactNode } from 'react';
 
 interface QuickActionProps {
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactNode;
   title: string;
   desc: string;
-  onClick?: () => void;
 }
 
-export function QuickAction({ icon: Icon, title, desc, onClick }: QuickActionProps) {
+function QuickAction({ icon, title, desc }: QuickActionProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex h-full items-center space-x-4 rounded-xl bg-elevated/80 p-6 text-left text-white shadow-card transition hover:bg-elevated hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-    >
-      <span className="rounded-lg bg-primary/10 p-3 text-primary">
-        <Icon className="h-6 w-6" />
-      </span>
-      <span className="flex flex-1 flex-col">
-        <span className="text-base font-semibold">{title}</span>
-        <span className="mt-1 text-sm text-muted">{desc}</span>
-      </span>
-    </button>
+    <div className="bg-elevated rounded-xl p-6 flex items-center space-x-4 hover:bg-gray-700 transition">
+      <div className="bg-primary/10 p-3 rounded-lg">
+        {icon}
+      </div>
+      <div>
+        <h3 className="font-medium">{title}</h3>
+        <p className="text-sm text-muted">{desc}</p>
+      </div>
+    </div>
   );
 }
+
+export default QuickAction;
