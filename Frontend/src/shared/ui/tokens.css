@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --app-bg: 255 255 255;
-  --panel-bg: 248 250 252;
+  --app-bg: 248 250 252;
+  --app-surface: 236 239 244;
+  --surface-bg: 243 244 246;
+  --panel-bg: 255 255 255;
+  --app-text: 17 24 39;
   --ink: 17 24 39;
   --muted: 107 114 128;
   --border: 229 231 235;
@@ -13,23 +16,30 @@
   --radius-button: 12px;
   --radius-input: 12px;
 
-  --shadow-ambient: 0 2px 10px rgba(0, 0, 0, 0.06);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --shadow-ambient: 0 18px 30px rgba(15, 23, 42, 0.1);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
 
-  --accent-student: #3b82f6;
-  --accent-business: #6366f1;
-  --accent-nexus: #8b5cf6;
+  --accent-student: 59 130 246;
+  --accent-business: 99 102 241;
+  --accent-nexus: 139 92 246;
 }
 
 .dark {
-  --app-bg: 11 11 13;
-  --panel-bg: 19 19 22;
-  --ink: 229 231 235;
-  --muted: 160 165 175;
-  --border: 38 38 42;
+  --app-bg: 15 17 22;          /* #0f1116 */
+  --app-surface: 24 27 34;     /* #181b22 */
+  --surface-bg: 27 31 39;      /* #1b1f27 */
+  --panel-bg: 29 33 42;        /* #1d212a */
+  --app-text: 222 226 236;     /* #dee2ec */
+  --ink: 229 231 235;          /* #e5e7eb */
+  --muted: 148 163 184;        /* #94a3b8 */
+  --border: 44 48 60;          /* #2c303c */
 
-  --shadow-ambient: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --shadow-ambient: 0 30px 60px rgba(5, 7, 11, 0.6);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+  --accent-student: 59 130 246;
+  --accent-business: 99 102 241;
+  --accent-nexus: 139 92 246;
 }
 
 .round-card {
@@ -59,10 +69,17 @@
 @layer base {
   html {
     @apply antialiased;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
-    @apply bg-app text-ink;
+    background-color: rgb(var(--app-bg));
+    color: rgb(var(--ink));
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   textarea,
@@ -82,12 +99,24 @@
     background-color: rgb(var(--app-bg));
   }
 
+  .bg-app-surface {
+    background-color: rgb(var(--app-surface));
+  }
+
   .bg-panel {
     background-color: rgb(var(--panel-bg));
   }
 
+  .bg-surface {
+    background-color: rgb(var(--surface-bg));
+  }
+
   .text-ink {
     color: rgb(var(--ink));
+  }
+
+  .text-app {
+    color: rgb(var(--app-text));
   }
 
   .text-muted {
