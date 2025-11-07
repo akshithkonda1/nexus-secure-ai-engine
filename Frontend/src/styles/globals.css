@@ -1,10 +1,22 @@
-/* Prevent system high contrast overrides */
+/* Prevent Windows High Contrast or forced-color overrides */
 @media (forced-colors: active) {
   :root {
-    forced-color-adjust: none;
+    forced-color-adjust: none !important;
   }
 }
 
+/* Tailwind base styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Enforce proper dark background + text */
+html.dark, body.dark {
+  background-color: #0f1116; /* rich dark blue-gray */
+  color: #e5e7eb;
+}
+
+/* Smooth color transitions */
+* {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
