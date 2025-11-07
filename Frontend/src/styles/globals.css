@@ -1,22 +1,125 @@
-/* Prevent Windows High Contrast or forced-color overrides */
-@media (forced-colors: active) {
-  :root {
-    forced-color-adjust: none !important;
+/* ——————————— GLOBAL RESET ——————————— */
+@layer base {
+  html, body {
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', system-ui, sans-serif;
+    color-scheme: dark light;
+  }
+
+  * {
+    border-color: #1f2937;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+
+  /* Prevent Windows High Contrast / forced-color overrides */
+  @media (forced-colors: active) {
+    :root {
+      forced-color-adjust: none !important;
+    }
   }
 }
 
-/* Tailwind base styles */
+/* ——————————— TAILWIND ——————————— */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Enforce proper dark background + text */
+/* ——————————— COLOR SYSTEM ——————————— */
+:root {
+  /* Dark theme colors */
+  --nexus-bg: #0f1116;
+  --nexus-surface: #181b22;
+  --nexus-accent: #2563eb;
+  --nexus-border: #1f2937;
+  --nexus-card: #13161c;
+
+  /* Light theme colors */
+  --nexus-light-bg: #f9fafb;
+  --nexus-light-surface: #ffffff;
+  --nexus-light-text: #111827;
+  --nexus-light-border: #e5e7eb;
+}
+
+/* ——————————— DARK MODE (Default) ——————————— */
 html.dark, body.dark {
-  background-color: #0f1116; /* rich dark blue-gray */
+  background-color: var(--nexus-bg);
   color: #e5e7eb;
 }
 
-/* Smooth color transitions */
+.card, .panel {
+  background-color: var(--nexus-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-radius: 1rem;
+}
+
+aside {
+  background-color: var(--nexus-surface);
+}
+
+/* Buttons */
+button {
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+button:hover {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+/* Inputs */
+input, textarea {
+  background-color: #181b22;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+input:focus, textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  outline: none;
+}
+
+/* ——————————— LIGHT MODE ——————————— */
+html.light, body.light {
+  background-color: var(--nexus-light-bg);
+  color: var(--nexus-light-text);
+}
+
+.light .card, .light .panel {
+  background-color: var(--nexus-light-surface);
+  color: var(--nexus-light-text);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--nexus-light-border);
+}
+
+.light aside {
+  background-color: #f3f4f6;
+}
+
+.light button {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+.light button:hover {
+  background-color: #1d4ed8;
+}
+
+.light input, .light textarea {
+  background-color: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+.light input:focus, .light textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  outline: none;
+}
+
+/* Smooth transitions for theme swap */
 * {
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
