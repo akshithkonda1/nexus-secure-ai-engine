@@ -56,7 +56,7 @@ export function Sidebar({ variant = "desktop", onNavigate }: SidebarProps) {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-white/10 bg-elevated px-4 pb-8 pt-20 text-white shadow-[0_10px_40px_rgba(0,0,0,0.45)] lg:flex">
+    <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-white/10 bg-elevated px-4 pb-8 pt-20 text-white shadow-[0_10px_40px_rgba(0,0,0,0.45)] md:flex">
       {content}
     </aside>
   );
