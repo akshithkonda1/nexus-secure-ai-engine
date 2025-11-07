@@ -9,11 +9,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@components": path.resolve(__dirname, "./src/components"),
       "@pages": path.resolve(__dirname, "./src/pages"),
-      "@features": path.resolve(__dirname, "./src/features"),
-      "@theme": path.resolve(__dirname, "./src/theme"),
-      "@types": path.resolve(__dirname, "./src/types"),
-      "@hooks": path.resolve(__dirname, "./src/hooks"),
       "@styles": path.resolve(__dirname, "./src/styles"),
+      "@theme": path.resolve(__dirname, "./src/theme"),
     },
   },
   server: {
