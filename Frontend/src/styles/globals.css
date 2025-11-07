@@ -28,11 +28,9 @@
 }
 
 /* Shadows + cards */
-@layer components {
-  .card,
-  .panel {
-    border-radius: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    transition: background 0.25s, color 0.25s, box-shadow 0.25s;
-  }
+.card,.panel {
+  border-radius: 1rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  transition:background .25s,color .25s,box-shadow .25s;
 }
+

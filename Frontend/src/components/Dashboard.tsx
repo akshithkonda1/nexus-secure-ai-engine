@@ -1,29 +1,84 @@
-import QuickAction from './QuickAction';
-import SessionItem from './SessionItem';
-import SettingsPanel from './SettingsPanel';
-import { ChatBubbleLeftRightIcon, ArrowUpTrayIcon, SwatchIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { Cog, FileText, MessageSquare, Upload } from "lucide-react";
 
-function Dashboard() {
+import { QuickAction } from "@/components/QuickAction";
+import { SessionItem } from "@/components/SessionItem";
+import { SettingsPanel } from "@/components/SettingsPanel";
+
+const ACTIONS = [
+  {
+    icon: MessageSquare,
+    title: "New session",
+    desc: "Launch a fresh multi-model debate.",
+  },
+  {
+    icon: Upload,
+    title: "Import transcript",
+    desc: "Upload past debates for instant auditing.",
+  },
+  {
+    icon: FileText,
+    title: "Kick off trust-first",
+    desc: "Spin up workflows in seconds.",
+  },
+  {
+    icon: Cog,
+    title: "Settings",
+    desc: "Tune guardrails, quotas, and providers.",
+  },
+] as const;
+
+const RECENT_SESSIONS = [
+  {
+    title: "Market intelligence thread 6",
+    desc: "Exploring Spurs-inspired UI refinements for Nexus debates.",
+  },
+  {
+    title: "Partner enablement thread 12",
+    desc: "Mapping telemetry for stakeholder review workflows.",
+  },
+];
+
+export function Dashboard() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Welcome to Nexus.ai</h2>
-      <p className="text-muted mb-8">Orchestrate trusted AI Debate sessions, audit every decision, and keep tabs on telemetry in one place.</p>
-      
-      <h3 className="text-lg font-medium mb-4">Quick actions</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <QuickAction icon={<ChatBubbleLeftRightIcon className="w-6 h-6 text-primary" />} title="New session" desc="Launch a fresh multi-model debate." />
-        <QuickAction icon={<ArrowUpTrayIcon className="w-6 h-6 text-primary" />} title="Import transcript" desc="Upload past debates for instant auditing." />
-        <QuickAction icon={<SwatchIcon className="w-6 h-6 text-primary" />} title="Kick off trust-first" desc="Workflows in seconds." />
-        <QuickAction icon={<Cog6ToothIcon className="w-6 h-6 text-primary" />} title="Settings" desc="Tune guardrails, quotas, and providers." />
-      </div>
-      
-      <h3 className="text-lg font-medium mb-4">Last 5 sessions</h3>
-      <div className="space-y-3 mb-8">
-        <SessionItem title="Market Intelligence thread 6" desc="Exploring Spurs-inspired UI refinements for Nexus debates." onResume={() => console.log('Resume')} />
-        <SessionItem title="Partner Enablement thread 12" desc="Exploring Spurs-inspired UI refinements for Nexus debates." onResume={() => console.log('Resume')} />
-      </div>
-      
-      <SettingsPanel />
+    <div className="space-y-10 text-white">
+      <header className="space-y-2">
+        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome to Nexus.ai</h2>
+        <p className="max-w-2xl text-sm text-muted sm:text-base">
+          Orchestrate trusted AI debate sessions, audit every decision, and keep tabs on telemetry in one place.
+        </p>
+      </header>
+
+      <section>
+        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">Quick actions</h3>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {ACTIONS.map((action) => (
+            <QuickAction key={action.title} icon={action.icon} title={action.title} desc={action.desc} />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="space-y-4 rounded-2xl border border-white/10 bg-elevated/70 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold">Last 5 sessions</h3>
+            <button
+              type="button"
+              className="text-xs font-semibold text-muted transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              View all
+            </button>
+          </div>
+          <div className="space-y-3">
+            {RECENT_SESSIONS.map((session) => (
+              <SessionItem key={session.title} title={session.title} desc={session.desc} onResume={() => undefined} />
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-elevated/70 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
+          <SettingsPanel />
+        </div>
+      </section>
     </div>
   );
 }
