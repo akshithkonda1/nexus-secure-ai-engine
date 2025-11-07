@@ -11,9 +11,6 @@ export default {
         card: "#13161c",
         accent: "#2563eb",
       },
-      borderColor: {
-        border: "#1f2937",
-      },
     },
   },
   plugins: [],
