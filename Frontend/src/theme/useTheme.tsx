@@ -5,7 +5,7 @@ type ThemePreference = Theme | "system";
 
 export type ThemePref = ThemePreference;
 
-type ThemeContextValue = {
+export type ThemeContextValue = {
   theme: Theme;
   pref: ThemePreference;
   effective: Theme;
@@ -146,7 +146,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
     throw new Error("useTheme must be used within ThemeProvider");
