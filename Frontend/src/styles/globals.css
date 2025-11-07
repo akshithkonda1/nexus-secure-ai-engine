@@ -1,32 +1,26 @@
+/* ✅ Final Tailwind global CSS for v4 */
+@import "@tailwindcss/postcss";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light tokens */
-:root{
-  --bg-app:#f6f7fb;
-  --bg-panel:#ffffff;
-  --ink:#0f172a;
-  --muted:#64748b;
-  --border:#e5e7eb;
-  --ring:#93c5fd;
+/* custom styles follow below */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-bg, #0f1117);
 }
 
-/* ── Dark tokens (sleek Nexus palette) */
-:root[data-theme="dark"]{
-  --bg-app:#0b1220;   /* deep slate */
-  --bg-panel:#121a2b; /* card/panel */
-  --ink:#e5e7eb;      /* text */
-  --muted:#94a3b8;    /* secondary */
-  --border:#1f2a44;   /* hairlines */
-  --ring:#2563eb;     /* focus ring */
-}
 
-html{ color-scheme: light dark; }
-body{ background:var(--bg-app); color:var(--ink); }
-
-*{
-  transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease;
+/* Root Theme Variables */
+:root {
+  --bg-app: #f9fafb;
+  --bg-panel: #ffffff;
+  --ink: #111827;
+  --muted: #4b5563;
+  --border: #e5e7eb;
+  --ring: #2563eb;
 }
 
 /* Focus style */
@@ -42,30 +36,27 @@ body{ background:var(--bg-app); color:var(--ink); }
   }
 }
 
-/* Panel helper (optional) */
-.panel{
-  @apply rounded-2xl border;
-  background: var(--bg-panel);
-  border-color: var(--border);
-  box-shadow: var(--tw-shadow, 0 8px 30px -12px rgb(0 0 0 / .25));
+/* Light mode */
+[data-theme="light"] {
+  --bg-app: #f9fafb;
+  --bg-panel: #ffffff;
+  --ink: #111827;
+  --muted: #4b5563;
+  --border: #e5e7eb;
+  --ring: #2563eb;
 }
 
-/* ── Block Windows High-Contrast (forced-colors) from nuking branding */
-@media (forced-colors: active) {
-  html, body, #root, .nexus-root {
-    forced-color-adjust: none;
-    background: var(--bg-app) !important;
-    color: var(--ink) !important;
-  }
+/* Body styling */
+body {
+  @apply bg-app text-ink transition-colors duration-300 ease-in-out;
+}
 
-  /* Keep an accessible keyboard focus ring */
-  :where(button, a, input, textarea, [tabindex]):focus-visible{
-    outline: 2px solid CanvasText;
-    outline-offset: 2px;
-  }
+/* Panels and cards */
+.panel {
+  @apply bg-panel border border-border rounded-2xl shadow-card;
+}
 
-  /* Tame aggressive HC borders */
-  :where(.border, [class*="border-"]){
-    border-color: var(--border) !important;
-  }
+/* Button fix */
+button {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70;
 }

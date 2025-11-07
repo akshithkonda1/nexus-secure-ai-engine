@@ -26,6 +26,26 @@ type NavItem = {
   icon: ReactNode;
 };
 
+type FeedbackRecord = {
+  id: string;
+  text: string;
+  createdAt: string;
+  source: string;
+  variant: SidebarProps["variant"];
+};
+
+const isFeedbackRecord = (value: unknown): value is FeedbackRecord => {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.id === "string" &&
+    typeof record.text === "string" &&
+    typeof record.createdAt === "string" &&
+    typeof record.source === "string" &&
+    typeof record.variant === "string"
+  );
+};
+
 const navIconClasses = "h-5 w-5";
 const FEEDBACK_MAX = 20_000;
 
@@ -71,15 +91,19 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
 
       // Persist locally (easy to swap to API later)
       const bucketKey = "nexusUserFeedback";
-      const existing: any[] = (() => {
+      const existing = (() => {
         try {
-          return JSON.parse(localStorage.getItem(bucketKey) || "[]");
+          const parsed = JSON.parse(localStorage.getItem(bucketKey) || "[]");
+          return Array.isArray(parsed)
+            ? parsed.filter(isFeedbackRecord)
+            : [];
         } catch {
+          // TODO: recover from malformed stored feedback
           return [];
         }
       })();
 
-      const record = {
+      const record: FeedbackRecord = {
         id: crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
         text,
         createdAt: new Date().toISOString(),

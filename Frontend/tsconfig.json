@@ -7,13 +7,20 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
-    "baseUrl": "src",
-    "paths": {
-      "@/*": ["*"]
-    },
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
+      "@features/*": ["features/*"],
+      "@theme/*": ["theme/*"],
+      "@types/*": ["types/*"],
+      "@hooks/*": ["hooks/*"],
+      "@styles/*": ["styles/*"]
+    }
   },
   "include": ["src"]
 }

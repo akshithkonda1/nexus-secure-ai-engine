@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useTelemetryErrors, useTelemetryUsage } from "@/queries/telemetry";
+import type { TelemetryErrorsResponse, TelemetryPoint } from "@/types/models";
 
 const RANGES = [
   { label: "7 days", value: "7d" },
@@ -20,23 +21,32 @@ const RANGES = [
   { label: "90 days", value: "90d" },
 ] as const;
 
+type ErrorsPoint = TelemetryErrorsResponse["points"][number];
+type ChartPoint = TelemetryPoint | ErrorsPoint;
+type MetricKey = "requests" | "tokens" | "latency" | "failures";
+
+const EMPTY_USAGE_POINTS: TelemetryPoint[] = [];
+const EMPTY_ERROR_POINTS: ErrorsPoint[] = [];
+
 export default function TelemetryPage() {
-  const [range, setRange] = useState<string>("7d");
+  const [range, setRange] = useState<(typeof RANGES)[number]["value"]>("7d");
   const [provider, setProvider] = useState<string>("all");
 
   const usageQuery = useTelemetryUsage({ range, provider: provider === "all" ? undefined : provider });
   const errorsQuery = useTelemetryErrors({ range, provider: provider === "all" ? undefined : provider });
 
+  const usagePoints = usageQuery.data?.points ?? EMPTY_USAGE_POINTS;
+  const errorPoints = errorsQuery.data?.points ?? EMPTY_ERROR_POINTS;
+
   const providerOptions = useMemo(() => {
-    const points = usageQuery.data?.points ?? [];
-    const unique = Array.from(new Set(points.map((point) => point.provider)));
+    const unique = Array.from(new Set(usagePoints.map((point) => point.provider)));
     return ["all", ...unique];
-  }, [usageQuery.data?.points]);
+  }, [usagePoints]);
 
   const loading = usageQuery.isLoading || errorsQuery.isLoading;
 
-  const requests = usageQuery.data?.points ?? [];
-  const failures = errorsQuery.data?.points ?? [];
+  const requests = usagePoints;
+  const failures = errorPoints;
 
   const sumRequests = useMemo(() => requests.reduce((acc, point) => acc + point.requests, 0), [requests]);
   const sumTokens = useMemo(() => requests.reduce((acc, point) => acc + point.tokens, 0), [requests]);
@@ -75,7 +85,9 @@ export default function TelemetryPage() {
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               <select
                 value={range}
-                onChange={(event) => setRange(event.target.value)}
+                onChange={(event) =>
+                  setRange(event.target.value as (typeof RANGES)[number]["value"])
+                }
                 className="bg-transparent text-sm text-ink focus:outline-none"
               >
                 {RANGES.map((option) => (
@@ -114,8 +126,8 @@ export default function TelemetryPage() {
 type MetricCardProps = {
   title: string;
   value: string;
-  points: Array<any>;
-  dataKey: string;
+  points: ChartPoint[];
+  dataKey: MetricKey;
   accent: string;
 };
 

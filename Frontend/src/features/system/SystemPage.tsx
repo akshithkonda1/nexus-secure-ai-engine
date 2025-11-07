@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { fetchCapabilities } from "@/services/api/client";
+import { fetchCapabilities, type Capabilities } from "@/services/api/client";
 
 export function SystemPage() {
-  const [caps, setCaps] = useState<any>(null);
+  const [caps, setCaps] = useState<Capabilities | null>(null);
   useEffect(() => {
     fetchCapabilities().then(setCaps);
   }, []);

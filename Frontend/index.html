@@ -1,47 +1,50 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>Nexus Secure Workspace</title>
 
+    <!-- HARD opt-out from Windows/Edge High-Contrast -->
+    <style>
+      /* global opt-out, you asked to get rid of it */
+      * { forced-color-adjust: none !important; }
+      html, body, #root { height: 100%; }
+    </style>
+
+    <!-- Early theme application to avoid any flash -->
     <script>
       (function () {
-        var ROOT = document.documentElement;
-        var SYS = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
-        var KEYS = ['nexus-theme','theme'];
-
-        function readPref(){
-          var v='system';
-          try{ for (var i=0;i<KEYS.length;i++){ var s=localStorage.getItem(KEYS[i]); if(s){v=s;break;} } }catch(e){}
-          return (v==='light'||v==='dark'||v==='system')?v:'system';
+        function apply(choice) {
+          try { localStorage.setItem("theme", choice); } catch (e) {}
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = choice === "dark" || (choice === "system" && prefersDark);
+          var el = document.documentElement;
+          if (isDark) el.classList.add("dark"); else el.classList.remove("dark");
+          el.dataset.theme = isDark ? "dark" : "light";
         }
-        function sysTheme(){ return SYS && SYS.matches ? 'dark' : 'light'; }
-        function apply(pref){
-          var eff = pref==='system' ? sysTheme() : pref;
-          ROOT.classList.toggle('dark', eff==='dark');
-          ROOT.dataset.theme = eff;
-          try{ for (var i=0;i<KEYS.length;i++) localStorage.setItem(KEYS[i], pref); }catch(e){}
-        }
-        window.__setTheme = function(choice){
-          if(choice!=='light'&&choice!=='dark'&&choice!=='system') choice='system';
-          apply(choice);
-        };
-        apply(readPref());
-        if (SYS){
-          var onChange = function(){ try{ if(readPref()==='system') apply('system'); }catch(e){} };
-          if (SYS.addEventListener) SYS.addEventListener('change', onChange);
-          else SYS.addListener(onChange);
+        window.__setTheme = apply;
+        var saved = "system";
+        try { saved = localStorage.getItem("theme") || "system"; } catch (e) {}
+        apply(saved);
+        if (window.matchMedia) {
+          var mq = window.matchMedia("(prefers-color-scheme: dark)");
+          var onChange = function () {
+            var current = "system";
+            try { current = localStorage.getItem("theme") || "system"; } catch (e) {}
+            if (current === "system") apply("system");
+          };
+          mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
         }
       })();
     </script>
   </head>
   <body class="bg-app text-ink antialiased">
-    <div id="root" class="nexus-root"></div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -6,6 +6,9 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useTemplateLaunch, useTemplates } from "@/queries/templates";
+import type { Template } from "@/types/models";
+
+const EMPTY_TEMPLATES: Template[] = [];
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
@@ -14,7 +17,7 @@ export default function TemplatesPage() {
   const { data, isLoading } = useTemplates();
   const launchTemplate = useTemplateLaunch();
 
-  const templates = data?.templates ?? [];
+  const templates = data?.templates ?? EMPTY_TEMPLATES;
   const categories = useMemo(() => ["all", ...new Set(templates.map((t) => t.category))], [templates]);
 
   const filtered = useMemo(() => {

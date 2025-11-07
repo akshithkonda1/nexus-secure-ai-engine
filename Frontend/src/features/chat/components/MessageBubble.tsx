@@ -6,7 +6,15 @@ export function MessageBubble({ message }: { message: Message }) {
   const mine = message.role === "user";
   const [copied, setCopied] = useState(false);
 
-  const copy = async () => { try { await navigator.clipboard.writeText(message.text); setCopied(true); setTimeout(()=>setCopied(false),900); } catch {} };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 900);
+    } catch {
+      // TODO: surface clipboard failures to the user
+    }
+  };
 
   return (
     <div className={`mb-3 flex ${mine ? "justify-end" : "justify-start"}`} aria-live="polite">
