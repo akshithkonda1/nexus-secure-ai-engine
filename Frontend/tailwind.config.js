@@ -7,19 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "#e5e7eb",
-        accent: "#2563eb",
-        panel: "#f4f6f8",
+        border: "#1f2937",
+        primary: "#3B82F6",
+        surface: "#111827",
+        elevated: "#1F2937",
+        muted: "#9CA3AF",
+        accent: "#10B981",
       },
       borderColor: {
-        DEFAULT: "#e5e7eb",
-        border: "#e5e7eb",
+        DEFAULT: "#1f2937",
+        border: "#1f2937",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        lg: "0.75rem",
+        xl: "1rem",
       },
       boxShadow: {
-        soft: "0 6px 18px rgba(0,0,0,0.06)",
-        glow: "0 0 20px rgba(37,99,235,0.3)",
+        card: "0 8px 24px rgba(0,0,0,0.35)",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/forms")],
 };
