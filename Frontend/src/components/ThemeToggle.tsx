@@ -1,27 +1,26 @@
-import { Sun, Moon } from "lucide-react";
-
 import { useTheme } from "@/theme/useTheme";
+import { Sun, Moon } from "lucide-react";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
+  const next = theme === "dark" ? "light" : theme === "light" ? "system" : "dark";
+  const label = theme === "dark" ? "Light Mode" : theme === "light" ? "System" : "Dark Mode";
+  const icon = theme === "dark" ? <Sun className="h-4 w-4 text-yellow-400" /> :
+               theme === "light" ? <Moon className="h-4 w-4 text-blue-500" /> :
+               <Moon className="h-4 w-4 text-blue-500" />;
 
   return (
     <button
-      type="button"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-pressed={isDark}
-      className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-elevated/60 px-3 py-2 text-sm font-medium text-white transition hover:border-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      onClick={() => setTheme(next)}
+      className="flex items-center justify-between gap-3 w-full px-3 py-2 mt-3 text-sm rounded-lg border border-border/50 hover:border-accent hover:bg-accent/10"
+      aria-label="Toggle theme"
+      title={`Switch to ${label}`}
     >
-      <span className="flex items-center gap-2">
-        {isDark ? <Sun className="h-4 w-4 text-yellow-400" aria-hidden="true" /> : <Moon className="h-4 w-4 text-blue-500" aria-hidden="true" />}
-        <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
-      </span>
-      <span className={`relative flex h-5 w-10 items-center rounded-full ${isDark ? "bg-blue-600" : "bg-white/20"}`}>
-        <span
-          className={`absolute left-[2px] top-[2px] h-4 w-4 rounded-full bg-white transition-transform ${isDark ? "translate-x-5" : "translate-x-0"}`}
-        />
-      </span>
+      <div className="flex items-center gap-2">{icon}<span>{label}</span></div>
+      <div className={`relative flex h-5 w-10 rounded-full ${theme !== "dark" ? "bg-gray-300" : "bg-blue-600"}`}>
+        <span className={`absolute top-[2px] h-4 w-4 bg-white rounded-full transition-transform duration-300
+          ${theme === "dark" ? "left-[22px]" : theme === "light" ? "left-[2px]" : "left-[12px]"}`}/>
+      </div>
     </button>
   );
 }
