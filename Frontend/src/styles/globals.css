@@ -5,17 +5,14 @@
 /* ——————————— GLOBAL RESET ——————————— */
 @layer base {
   html, body {
-    height: 100%;
-    width: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply h-full w-full antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     color-scheme: dark light;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   * {
-    border-color: var(--nexus-border);
+    @apply border-border;
     transition: all 0.25s ease;
   }
 
@@ -71,10 +68,7 @@ header, footer {
 }
 
 button {
-  border-radius: 0.75rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  transition: all 0.2s ease;
+  @apply rounded-lg font-medium px-4 py-2 transition-all;
   background-color: rgba(37, 99, 235, 0.1);
   color: var(--nexus-accent);
   border: 1px solid rgba(37, 99, 235, 0.2);
@@ -86,17 +80,13 @@ button:hover {
 }
 
 input, textarea {
-  width: 100%;
-  border-radius: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.08);
+  @apply w-full rounded-lg px-3 py-2 text-sm border;
   background-color: var(--nexus-panel);
   color: var(--nexus-text);
+  border-color: rgba(255,255,255,0.08);
 }
 input:focus, textarea:focus {
-  outline: none;
+  @apply outline-none;
   border-color: var(--nexus-accent);
   box-shadow: 0 0 0 3px rgba(37,99,235,0.3);
 }
@@ -112,10 +102,6 @@ html.light, body.light {
   border-right: 1px solid var(--nexus-light-border);
 }
 
-.light * {
-  border-color: var(--nexus-light-border);
-}
-
 .light header, .light footer {
   background-color: var(--nexus-light-surface);
   border-color: var(--nexus-light-border);
@@ -129,21 +115,14 @@ html.light, body.light {
 }
 
 .light button {
-  background-color: #2563eb;
-  color: #ffffff;
-}
-.light button:hover {
-  background-color: #1d4ed8;
+  @apply bg-blue-600 text-white hover:bg-blue-700;
 }
 
 .light input, .light textarea {
-  background-color: #ffffff;
-  color: #111827;
-  border: 1px solid #d1d5db;
+  @apply bg-white text-gray-900 border border-gray-300;
 }
 .light input:focus, .light textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  @apply border-blue-500 ring-2 ring-blue-500/30;
 }
 
 /* ——————————— EXTRAS ——————————— */
@@ -151,10 +130,7 @@ html.light, body.light {
   text-shadow: 0 0 6px rgba(37, 99, 235, 0.25);
 }
 .section-title {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
+  @apply text-lg font-semibold mb-3;
 }
 .smooth {
   transition: all 0.3s ease;
