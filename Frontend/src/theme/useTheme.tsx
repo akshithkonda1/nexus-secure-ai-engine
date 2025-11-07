@@ -1,40 +1,31 @@
 import { useEffect, useState, useContext, createContext } from "react";
 
-type Ctx = { theme: "light" | "dark" | "system"; setTheme: (t: "light" | "dark" | "system") => void };
+type Ctx = { theme: "light" | "dark"; setTheme: (t: "light" | "dark") => void };
 const ThemeContext = createContext<Ctx | null>(null);
 
-function applyTheme(theme: Ctx["theme"]) {
-  const root = document.documentElement;
-  root.classList.remove("light", "dark");
-  const choice =
-    theme === "system"
-      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-      : theme;
-  root.classList.add(choice);
-  if (window.matchMedia("(forced-colors: active)").matches) {
-    root.style.setProperty("forced-color-adjust", "none");
-  }
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Ctx["theme"]>(
-    (localStorage.getItem("nexus-theme") as Ctx["theme"]) || "dark"
-  );
+  const initial =
+    (typeof window !== "undefined" &&
+      (localStorage.getItem("nexus-theme") as "light" | "dark")) || "dark";
+  const [theme, setTheme] = useState<"light" | "dark">(initial);
 
   useEffect(() => {
-    applyTheme(theme);
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
     localStorage.setItem("nexus-theme", theme);
+
+    // Guard against Windows forced-colors
+    if (window.matchMedia("(forced-colors: active)").matches) {
+      root.style.setProperty("forced-color-adjust", "none");
+    }
   }, [theme]);
 
-  // keep in sync with OS when 'system'
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = () => theme === "system" && applyTheme("system");
-    mq.addEventListener?.("change", listener);
-    return () => mq.removeEventListener?.("change", listener);
-  }, [theme]);
-
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
