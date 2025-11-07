@@ -1,4 +1,4 @@
-// ✅ Correct PostCSS config for Tailwind v4 + Vite
+// ✅ Final PostCSS config for Tailwind v4 + Vite (ESM)
 import tailwind from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
 
