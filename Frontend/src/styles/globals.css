@@ -5,6 +5,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* custom styles follow below */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-bg, #0f1117);
+}
+
+
 /* Root Theme Variables */
 :root {
   --bg-app: #f9fafb;
