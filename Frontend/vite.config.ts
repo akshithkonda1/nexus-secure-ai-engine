@@ -13,7 +13,11 @@ export default defineConfig({
       "@theme": path.resolve(__dirname, "./src/theme"),
     },
   },
+  css: {
+    postcss: "./postcss.config.js", // ensure Vite uses this config
+  },
   server: {
+    hmr: { overlay: false },
     port: 5173,
     open: true,
   },
