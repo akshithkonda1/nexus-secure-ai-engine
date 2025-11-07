@@ -1,47 +1,139 @@
-@import url('https://rsms.me/inter/inter.css');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Disable Windows high-contrast and forced color overrides globally */
-@media (forced-colors: active) {
-  :root, html, body, * {
-    forced-color-adjust: none !important;
-    color-scheme: dark light !important;
-    background-color: transparent !important;
-  }
-}
-
-
-/* Root theme (dark + light) */
+/* ——————————— GLOBAL RESET ——————————— */
 @layer base {
-  html,body {
-    @apply h-full antialiased;
+  html, body {
+    height: 100%;
+    width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: 'Inter', system-ui, sans-serif;
     color-scheme: dark light;
-    transition: background-color .3s ease,color .3s ease;
+    background-color: var(--nexus-bg);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+
   * {
-    border-color: rgba(255, 255, 255, 0.08);
-    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
   }
-  @media (forced-colors:active){:root{forced-color-adjust:none!important;}}
+
+  @media (forced-colors: active) {
+    :root {
+      forced-color-adjust: none !important;
+    }
+  }
 }
 
-/* Palette + surfaces */
+/* ——————————— THEME COLORS ——————————— */
 :root {
-  --bg-dark:#0e1117;
-  --bg-light:#f9fafb;
-  --surface-dark:#161b22;
-  --surface-light:#ffffff;
-  --accent:#2563eb;
+  /* Dark Theme */
+  --nexus-bg: #0e1117;
+  --nexus-surface: #161b22;
+  --nexus-card: #1f2733;
+  --nexus-border: #2b3441;
+  --nexus-accent: #2563eb;
+  --nexus-accent-glow: rgba(37,99,235,0.3);
+  --nexus-text: #e6edf3;
+
+  /* Light Theme */
+  --nexus-bg-light: #f9fafb;
+  --nexus-surface-light: #ffffff;
+  --nexus-card-light: #f3f4f6;
+  --nexus-border-light: #e5e7eb;
+  --nexus-text-light: #111827;
 }
 
-/* Shadows + cards */
-.card,.panel {
+/* ——————————— DARK MODE ——————————— */
+html.dark, body.dark {
+  background: var(--nexus-bg);
+  color: var(--nexus-text);
+}
+
+aside {
+  background: linear-gradient(180deg, var(--nexus-surface), var(--nexus-bg));
+  border-right: 1px solid var(--nexus-border);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.02);
+}
+
+.card, .panel {
+  background: linear-gradient(180deg, var(--nexus-card), #15191f);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   border-radius: 1rem;
-  box-shadow:0 8px 24px rgba(0,0,0,.35);
-  transition:background .25s,color .25s,box-shadow .25s;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
+header {
+  background-color: rgba(22,27,34,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--nexus-border);
+}
+
+/* Buttons */
+button {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background-color: rgba(37,99,235,0.1);
+  color: var(--nexus-accent);
+  border: 1px solid rgba(37,99,235,0.25);
+}
+button:hover {
+  background-color: var(--nexus-accent);
+  color: white;
+  box-shadow: 0 0 18px var(--nexus-accent-glow);
+}
+
+/* Inputs */
+input, textarea {
+  width: 100%;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  background-color: var(--nexus-surface);
+  color: var(--nexus-text);
+}
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--nexus-accent);
+  box-shadow: 0 0 0 3px var(--nexus-accent-glow);
+}
+
+/* ——————————— LIGHT MODE ——————————— */
+html.light, body.light {
+  background: var(--nexus-bg-light);
+  color: var(--nexus-text-light);
+}
+
+.light aside {
+  background: linear-gradient(180deg, var(--nexus-surface-light), var(--nexus-card-light));
+  border-right: 1px solid var(--nexus-border-light);
+}
+
+.light .card, .light .panel {
+  background: var(--nexus-surface-light);
+  border: 1px solid var(--nexus-border-light);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ——————————— SHADOW GLOW ——————————— */
+.glow {
+  box-shadow: 0 0 18px var(--nexus-accent-glow);
+}
+
+/* Titles */
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Section */
+.section-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
