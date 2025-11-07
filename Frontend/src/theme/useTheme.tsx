@@ -16,8 +16,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
+  const setTheme = useCallback((next: Theme) => {
+    setPrefState(next);
+    applyTheme(next);
+  }, [applyTheme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, pref, effective: theme, setPref, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

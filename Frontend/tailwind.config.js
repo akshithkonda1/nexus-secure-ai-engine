@@ -1,3 +1,5 @@
+import plugin from "tailwindcss/plugin";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: "class", // ← important
@@ -16,5 +18,11 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addVariant }) => {
+      addVariant("mode-student", '[data-mode="student"] &');
+      addVariant("mode-business", '[data-mode="business"] &');
+      addVariant("mode-nexus", '[data-mode="nexusos"] &');
+    }),
+  ],
 };
