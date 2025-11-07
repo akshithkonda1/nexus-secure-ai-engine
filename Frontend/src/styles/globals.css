@@ -1,3 +1,4 @@
+/* ——————————— TAILWIND ——————————— */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,21 +7,17 @@
 @layer base {
   html, body {
     height: 100%;
-    width: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     color-scheme: dark light;
-    background-color: #0f1116;
-    color: #e5e7eb;
   }
 
   * {
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
     border-color: var(--nexus-border);
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
   }
 
-  /* Kill Windows high-contrast overrides */
+  /* Prevent Windows High Contrast / forced-color overrides */
   @media (forced-colors: active) {
     :root {
       forced-color-adjust: none !important;
@@ -61,25 +58,33 @@
     border-color: #3b82f6;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
   }
+
+  .light button {
+    background-color: #2563eb;
+    color: #ffffff;
+  }
+  .light button:hover {
+    background-color: #1d4ed8;
+  }
 }
 
 /* ——————————— COLOR SYSTEM ——————————— */
 :root {
-  /* DARK */
+  /* Dark theme colors */
   --nexus-bg: #0f1116;
   --nexus-surface: #181b22;
-  --nexus-card: #13161c;
-  --nexus-border: #1f2937;
   --nexus-accent: #2563eb;
+  --nexus-border: #1f2937;
+  --nexus-card: #13161c;
 
-  /* LIGHT */
+  /* Light theme colors */
   --nexus-light-bg: #f9fafb;
   --nexus-light-surface: #ffffff;
-  --nexus-light-border: #e5e7eb;
   --nexus-light-text: #111827;
+  --nexus-light-border: #e5e7eb;
 }
 
-/* ——————————— DARK MODE ——————————— */
+/* ——————————— DARK MODE (Default) ——————————— */
 html.dark, body.dark {
   background-color: var(--nexus-bg);
   color: #e5e7eb;
@@ -87,33 +92,18 @@ html.dark, body.dark {
 
 .card, .panel {
   background-color: var(--nexus-card);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   border-radius: 1rem;
 }
 
 aside {
   background-color: var(--nexus-surface);
-  border-right: 1px solid var(--nexus-border);
-}
-
-header {
-  background-color: var(--nexus-surface);
-  border-bottom: 1px solid var(--nexus-border);
-}
-
-footer {
-  background-color: var(--nexus-surface);
-  border-top: 1px solid var(--nexus-border);
 }
 
 /* ——————————— LIGHT MODE ——————————— */
 html.light, body.light {
   background-color: var(--nexus-light-bg);
   color: var(--nexus-light-text);
-}
-
-.light * {
-  border-color: var(--nexus-light-border);
 }
 
 .light .card, .light .panel {
@@ -127,18 +117,7 @@ html.light, body.light {
   background-color: #f3f4f6;
 }
 
-.light header, .light footer {
-  background-color: #ffffff;
-  border-color: #e5e7eb;
-}
-
-/* Smooth fade on page mount */
-body {
-  opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Smooth transitions for theme swap */
+* {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
