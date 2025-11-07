@@ -1,5 +1,3 @@
-@import "../shared/ui/tokens.css";
-
 /* Prevent Windows High Contrast or forced-color overrides */
 @media (forced-colors: active) {
   :root {
