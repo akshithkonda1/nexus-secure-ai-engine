@@ -1,3 +1,10 @@
+/* Prevent system high contrast overrides */
+@media (forced-colors: active) {
+  :root {
+    forced-color-adjust: none;
+  }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

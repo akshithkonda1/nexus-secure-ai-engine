@@ -1,23 +1,32 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-type ThemePref = "light" | "dark" | "system";
+type Theme = "light" | "dark";
 
 interface ThemeContextValue {
-  pref: ThemePref;
-  setPref: (pref: ThemePref) => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [pref, setPref] = useState<ThemePref>("system");
+  const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    document.documentElement.dataset.theme = pref;
-  }, [pref]);
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (window.matchMedia("(forced-colors: active)").matches) {
+      root.style.setProperty("forced-color-adjust", "none");
+    }
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ pref, setPref }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
