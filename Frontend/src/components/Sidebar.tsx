@@ -233,9 +233,9 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
           <div className="rounded-xl bg-gradient-to-br from-app-text/10 via-app-text/5 to-transparent p-4 text-xs text-muted">
             <p className="font-semibold text-ink">Production Beta</p>
             <p className="mt-1 leading-relaxed">
-              Explore Nexus.ai with unrestricted debates. Your feedback helps orchestrate trustworthy AI debates and
+              Explore Nexus.ai with unrestricted debates. Your chats are not monitored but your feedback is highly apreciated. Your feedback helps orchestrate more trustworthy AI debates and
               chats. Nexus is experimental—errors can happen—but we’re building something worthy of your time. During
-              this period, Nexus is free; sharing feedback helps us launch a better experience. Thank you!
+              this period, Nexus is free; sharing feedback helps us launch a better experience for everyone. Thank you!
             </p>
           </div>
         </div>
