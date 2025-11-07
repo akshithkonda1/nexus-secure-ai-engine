@@ -5,9 +5,12 @@
 /* ——————————— GLOBAL RESET ——————————— */
 @layer base {
   html, body {
-    @apply h-full w-full antialiased;
+    height: 100%;
+    width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: 'Inter', system-ui, sans-serif;
-    color-scheme: dark light;
+    color-scheme: light dark;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
@@ -17,117 +20,59 @@
   }
 
   @media (forced-colors: active) {
-    :root {
-      forced-color-adjust: none !important;
-    }
+    :root { forced-color-adjust: none !important; }
   }
 }
 
 /* ——————————— COLOR SYSTEM ——————————— */
 :root {
-  /* DARK THEME */
-  --nexus-bg: #0e1117;
-  --nexus-surface: #161b22;
-  --nexus-panel: #1c222b;
-  --nexus-card: #1f2733;
-  --nexus-border: #2b3441;
+  /* LIGHT */
+  --nexus-bg: #f9fafb;
+  --nexus-surface: #ffffff;
+  --nexus-panel: #f4f6f8;
+  --nexus-border: #e5e7eb;
+  --nexus-text: #111827;
   --nexus-accent: #2563eb;
-  --nexus-text: #e6edf3;
 
-  /* LIGHT THEME */
-  --nexus-light-bg: #f9fafb;
-  --nexus-light-surface: #ffffff;
-  --nexus-light-panel: #f4f6f8;
-  --nexus-light-border: #e5e7eb;
-  --nexus-light-text: #111827;
-  --nexus-accent-light: #2563eb;
-}
-
-/* ——————————— DARK MODE ——————————— */
-html.dark, body.dark {
-  background-color: var(--nexus-bg);
-  color: var(--nexus-text);
-}
-
-aside {
-  background: linear-gradient(180deg, var(--nexus-surface), var(--nexus-bg));
-  border-right: 1px solid var(--nexus-border);
-}
-
-header, footer {
-  background-color: var(--nexus-surface);
-  border-color: var(--nexus-border);
-  backdrop-filter: blur(12px);
-}
-
-.card, .panel {
-  background: linear-gradient(180deg, var(--nexus-panel), var(--nexus-card));
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  border-radius: 1rem;
-  border: 1px solid rgba(255,255,255,0.05);
-}
-
-button {
-  border-radius: 0.5rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  transition: all 0.25s ease;
-  background-color: rgba(37, 99, 235, 0.1);
-  color: var(--nexus-accent);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-button:hover {
-  background-color: var(--nexus-accent);
-  color: #fff;
-  box-shadow: 0 0 18px rgba(37,99,235,0.4);
-}
-
-input, textarea {
-  width: 100%;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  background-color: var(--nexus-panel);
-  color: var(--nexus-text);
-}
-input:focus, textarea:focus {
-  outline: none;
-  border-color: var(--nexus-accent);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.3);
+  /* DARK */
+  --nexus-bg-dark: #0e1117;
+  --nexus-surface-dark: #161b22;
+  --nexus-panel-dark: #1c222b;
+  --nexus-border-dark: #2b3441;
+  --nexus-text-dark: #e6edf3;
 }
 
 /* ——————————— LIGHT MODE ——————————— */
 html.light, body.light {
-  background-color: var(--nexus-light-bg);
-  color: var(--nexus-light-text);
+  background-color: var(--nexus-bg);
+  color: var(--nexus-text);
 }
 
 .light aside {
-  background: linear-gradient(180deg, var(--nexus-light-surface), var(--nexus-light-panel));
-  border-right: 1px solid var(--nexus-light-border);
-}
-
-.light * {
-  border-color: var(--nexus-light-border);
+  background: linear-gradient(180deg, var(--nexus-surface), var(--nexus-panel));
+  border-right: 1px solid var(--nexus-border);
 }
 
 .light header, .light footer {
-  background-color: var(--nexus-light-surface);
-  border-color: var(--nexus-light-border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  background-color: var(--nexus-surface);
+  border-color: var(--nexus-border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 }
 
 .light .card, .light .panel {
-  background-color: var(--nexus-light-surface);
-  border: 1px solid var(--nexus-light-border);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  background-color: var(--nexus-surface);
+  border: 1px solid var(--nexus-border);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+  border-radius: 1rem;
 }
 
 .light button {
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   background-color: #2563eb;
   color: #ffffff;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 .light button:hover {
   background-color: #1d4ed8;
@@ -137,22 +82,51 @@ html.light, body.light {
   background-color: #ffffff;
   color: #111827;
   border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
 }
 .light input:focus, .light textarea:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
+}
+
+/* ——————————— DARK MODE ——————————— */
+html.dark, body.dark {
+  background-color: var(--nexus-bg-dark);
+  color: var(--nexus-text-dark);
+  --nexus-border: var(--nexus-border-dark);
+}
+
+.dark aside {
+  background: linear-gradient(180deg, var(--nexus-surface-dark), var(--nexus-bg-dark));
+  border-right: 1px solid var(--nexus-border-dark);
+}
+
+.dark header, .dark footer {
+  background-color: var(--nexus-surface-dark);
+  border-color: var(--nexus-border-dark);
+  backdrop-filter: blur(10px);
+}
+
+.dark .card, .dark .panel {
+  background: linear-gradient(180deg, var(--nexus-panel-dark), var(--nexus-surface-dark));
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  border-radius: 1rem;
+}
+
+.dark button {
+  background-color: rgba(37,99,235,0.15);
+  color: var(--nexus-accent);
+  border: 1px solid rgba(37,99,235,0.25);
+}
+.dark button:hover {
+  background-color: var(--nexus-accent);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(37,99,235,0.4);
 }
 
 /* ——————————— EXTRAS ——————————— */
-.glow-text {
-  text-shadow: 0 0 6px rgba(37, 99, 235, 0.25);
-}
-.section-title {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-.smooth {
-  transition: all 0.3s ease;
-}
+.shadow-glass { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.blur-bg { backdrop-filter: blur(16px) saturate(180%); }
