@@ -46,15 +46,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(pref === "dark" ? "dark" : "light");
     return undefined;
   }, [pref]);
+  
+useEffect(() => {
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(theme || 'dark');
+  localStorage.setItem('nexus-theme', theme || 'dark');
+  root.style.backgroundColor = theme === 'light' ? '#f9fafb' : '#0e1117';
+  root.style.colorScheme = 'dark light';
+  root.style.setProperty('forced-color-adjust', 'none');
+}, [theme]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem(THEME_KEY, theme);
-    localStorage.setItem(PREF_KEY, pref);
-  }, [theme, pref]);
-
+ 
   const setTheme = (next: "light" | "dark") => {
     setPref(next);
   };
