@@ -20,7 +20,9 @@
   }
 
   @media (forced-colors: active) {
-    :root { forced-color-adjust: none !important; }
+    :root {
+      forced-color-adjust: none !important;
+    }
   }
 }
 
@@ -118,10 +120,20 @@ html.light, body.light {
 }
 
 /* ——————————— SHADOW GLOW ——————————— */
-.glow { box-shadow: 0 0 18px var(--nexus-accent-glow); }
+.glow {
+  box-shadow: 0 0 18px var(--nexus-accent-glow);
+}
 
 /* Titles */
-h1, h2, h3 { font-weight: 600; letter-spacing: -0.02em; }
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
 
 /* Section */
-.section-title { font-size: 1.125rem; line-height: 1.75rem; font-weight: 600; margin-bottom: 0.75rem; }
+.section-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
