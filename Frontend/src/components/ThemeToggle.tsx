@@ -1,31 +1,25 @@
 import { Sun, Moon } from "lucide-react";
+
 import { useTheme } from "@/theme/useTheme";
 
 export function ThemeToggle() {
-  const { effective, setPref, pref } = useTheme();
-  const nextMode = effective === "dark" ? "light" : "dark";
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <button
-      onClick={() => setPref(nextMode)}
-      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-surface/70 px-3 py-2 text-sm font-medium text-white transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-pressed={isDark}
+      className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-elevated/60 px-3 py-2 text-sm font-medium text-white transition hover:border-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span className="flex items-center gap-2">
-        {effective === "dark" ? (
-          <Sun className="h-4 w-4 text-yellow-400" />
-        ) : (
-          <Moon className="h-4 w-4 text-blue-500" />
-        )}
-        <span>{effective === "dark" ? "Light Mode" : "Dark Mode"}</span>
+        {isDark ? <Sun className="h-4 w-4 text-yellow-400" aria-hidden="true" /> : <Moon className="h-4 w-4 text-blue-500" aria-hidden="true" />}
+        <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
       </span>
-      <span
-        className={`relative flex h-5 w-10 rounded-full ${effective === "dark" ? "bg-blue-600" : "bg-gray-300"}`}
-        data-pref={pref}
-      >
+      <span className={`relative flex h-5 w-10 items-center rounded-full ${isDark ? "bg-blue-600" : "bg-white/20"}`}>
         <span
-          className={`absolute top-[2px] left-[2px] h-4 w-4 rounded-full bg-white transition-transform ${
-            effective === "dark" ? "translate-x-5" : "translate-x-0"
-          }`}
+          className={`absolute left-[2px] top-[2px] h-4 w-4 rounded-full bg-white transition-transform ${isDark ? "translate-x-5" : "translate-x-0"}`}
         />
       </span>
     </button>
