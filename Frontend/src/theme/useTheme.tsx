@@ -1,6 +1,18 @@
-import { useEffect, useState, useContext, createContext } from "react";
+import {
+  useEffect,
+  useState,
+  useContext,
+  createContext,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
-const ThemeContext = createContext(null);
+type ThemeContextValue = {
+  theme: string;
+  setTheme: Dispatch<SetStateAction<string>>;
+};
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState(
