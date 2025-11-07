@@ -8,10 +8,10 @@ import {
   type SetStateAction,
 } from "react";
 
-interface ThemeContextValue {
+type ThemeContextValue = {
   theme: string;
   setTheme: Dispatch<SetStateAction<string>>;
-}
+};
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -26,8 +26,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.add(theme);
     localStorage.setItem("nexus-theme", theme);
 
-    // Enforce background color
-    root.style.backgroundColor = theme === "dark" ? "#0f1116" : "#f9fafb";
+    // Enforce dark background on load
+    root.style.backgroundColor =
+      theme === "dark" ? "#0f1116" : "#f9fafb";
 
     // Prevent Windows forced colors
     if (window.matchMedia("(forced-colors: active)").matches) {
