@@ -1,79 +1,30 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 
-export type ThemePref = "light" | "dark" | "system";
-type Theme = "light" | "dark";
-
-interface ThemeContextValue {
-  pref: ThemePref;
-  setPref: (pref: ThemePref) => void;
-  effective: Theme;
-}
-
-const STORAGE_KEY = "theme-pref";
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-const isTheme = (value: string | null): value is ThemePref =>
-  value === "light" || value === "dark" || value === "system";
-
-const getSystemTheme = (): Theme =>
-  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-
-const getInitialPref = (): ThemePref => {
-  if (typeof window === "undefined") return "dark";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return isTheme(stored) ? stored : "dark";
-};
+const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [pref, setPrefState] = useState<ThemePref>(getInitialPref);
-  const [systemTheme, setSystemTheme] = useState<Theme>(() =>
-    typeof window === "undefined" ? "dark" : getSystemTheme(),
+  const [theme, setTheme] = useState(
+    localStorage.getItem("nexus-theme") || "dark"
   );
-
-  const effective = useMemo<Theme>(
-    () => (pref === "system" ? systemTheme : pref),
-    [pref, systemTheme],
-  );
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = (event: MediaQueryListEvent) => {
-      setSystemTheme(event.matches ? "dark" : "light");
-    };
-
-    // sync immediately in case the initial state was stale
-    setSystemTheme(media.matches ? "dark" : "light");
-
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(effective);
-    root.dataset.theme = pref;
+    root.classList.add(theme);
+    localStorage.setItem("nexus-theme", theme);
 
-    const forcedColors = window.matchMedia("(forced-colors: active)");
-    if (forcedColors.matches) {
+    // Enforce dark background on load
+    root.style.backgroundColor =
+      theme === "dark" ? "#0f1116" : "#f9fafb";
+
+    // Prevent Windows forced colors
+    if (window.matchMedia("(forced-colors: active)").matches) {
       root.style.setProperty("forced-color-adjust", "none");
-    } else {
-      root.style.removeProperty("forced-color-adjust");
     }
-  }, [effective, pref]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, pref);
-  }, [pref]);
-
-  const setPref = (next: ThemePref) => {
-    setPrefState(next);
-  };
+  }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ pref, setPref, effective }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
