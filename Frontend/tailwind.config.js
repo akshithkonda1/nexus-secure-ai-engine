@@ -7,9 +7,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: "#1f2937",
-        card: "#13161c",
+        border: "#2b3441",
+        card: "#1f2733",
         accent: "#2563eb",
+      },
+      boxShadow: {
+        soft: "0 6px 18px rgba(0,0,0,0.25)",
+        glow: "0 0 20px rgba(37,99,235,0.4)",
       },
     },
   },

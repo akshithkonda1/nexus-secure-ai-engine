@@ -10,17 +10,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #0d1117;
     color-scheme: dark light;
-    color: #f3f4f6;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   * {
     border-color: var(--nexus-border);
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: all 0.25s ease;
   }
 
-  /* Disable Windows high-contrast filters */
   @media (forced-colors: active) {
     :root {
       forced-color-adjust: none !important;
@@ -28,101 +26,79 @@
   }
 }
 
-/* ——————————— TAILWIND ——————————— */
-@layer components {
-  .glass-card {
-    background: linear-gradient(145deg, rgba(18,21,27,1) 0%, rgba(14,16,22,1) 100%);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
-    border: 1px solid rgba(36,41,51,0.7);
-    border-radius: 1rem;
-  }
-
-  .surface {
-    background-color: #181b22;
-    border: 1px solid rgba(38,42,50,0.7);
-  }
-
-  .hover-card:hover {
-    box-shadow: 0 12px 40px rgba(37,99,235,0.12);
-    transform: translateY(-1px);
-  }
-
-  .glow-text {
-    text-shadow: 0 0 6px rgba(37,99,235,0.3);
-  }
-}
-
 /* ——————————— COLOR SYSTEM ——————————— */
 :root {
-  /* DARK */
-  --nexus-bg: #0d1117;
-  --nexus-surface: #181b22;
-  --nexus-card: #13161c;
-  --nexus-border: #1f2937;
+  /* DARK THEME */
+  --nexus-bg: #0e1117;
+  --nexus-surface: #161b22;
+  --nexus-panel: #1c222b;
+  --nexus-card: #1f2733;
+  --nexus-border: #2b3441;
   --nexus-accent: #2563eb;
+  --nexus-text: #e6edf3;
 
-  /* LIGHT */
+  /* LIGHT THEME */
   --nexus-light-bg: #f9fafb;
   --nexus-light-surface: #ffffff;
+  --nexus-light-panel: #f4f6f8;
   --nexus-light-border: #e5e7eb;
   --nexus-light-text: #111827;
+  --nexus-accent-light: #2563eb;
 }
 
 /* ——————————— DARK MODE ——————————— */
 html.dark, body.dark {
-  background: radial-gradient(ellipse at top, #10141a 0%, #0a0d11 100%);
-  color: #e5e7eb;
+  background-color: var(--nexus-bg);
+  color: var(--nexus-text);
 }
 
 aside {
-  background: linear-gradient(180deg, #151821 0%, #0e1015 100%);
-  border-right: 1px solid rgba(36,41,51,0.7);
+  background: linear-gradient(180deg, var(--nexus-surface), var(--nexus-bg));
+  border-right: 1px solid var(--nexus-border);
 }
 
-header {
-  background: linear-gradient(180deg, #161a23 0%, #0d1015 100%);
-  border-bottom: 1px solid rgba(36,41,51,0.6);
-  backdrop-filter: blur(8px);
+header, footer {
+  background-color: var(--nexus-surface);
+  border-color: var(--nexus-border);
+  backdrop-filter: blur(12px);
 }
 
 .card, .panel {
-  background: linear-gradient(160deg, #14171f 0%, #0f1116 100%);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  background: linear-gradient(180deg, var(--nexus-panel), var(--nexus-card));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-footer {
-  background-color: #11151b;
-  border-top: 1px solid rgba(36,41,51,0.6);
-}
-
-/* Buttons */
 button {
   border-radius: 0.75rem;
   font-weight: 500;
-  transition: all 0.25s ease;
-  background-color: #1f2937;
-  color: #d1d5db;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--nexus-accent);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 button:hover {
-  background-color: #2563eb;
-  color: white;
+  background-color: var(--nexus-accent);
+  color: #fff;
   box-shadow: 0 0 18px rgba(37,99,235,0.4);
 }
 
-/* Inputs */
 input, textarea {
-  border: 1px solid #374151;
-  border-radius: 0.5rem;
-  background-color: #181b22;
-  border-color: #374151;
-  color: #f3f4f6;
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  background-color: var(--nexus-panel);
+  color: var(--nexus-text);
 }
 input:focus, textarea:focus {
-  border-color: #3b82f6;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.4);
+  border-color: var(--nexus-accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.3);
 }
 
 /* ——————————— LIGHT MODE ——————————— */
@@ -132,21 +108,30 @@ html.light, body.light {
 }
 
 .light aside {
-  background-color: #f3f4f6;
+  background: linear-gradient(180deg, var(--nexus-light-surface), var(--nexus-light-panel));
+  border-right: 1px solid var(--nexus-light-border);
+}
+
+.light * {
+  border-color: var(--nexus-light-border);
+}
+
+.light header, .light footer {
+  background-color: var(--nexus-light-surface);
+  border-color: var(--nexus-light-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .light .card, .light .panel {
   background-color: var(--nexus-light-surface);
-  color: var(--nexus-light-text);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.05);
   border: 1px solid var(--nexus-light-border);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
 }
 
 .light button {
   background-color: #2563eb;
   color: #ffffff;
 }
-
 .light button:hover {
   background-color: #1d4ed8;
 }
@@ -158,15 +143,19 @@ html.light, body.light {
 }
 .light input:focus, .light textarea:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
-/* Animation */
-body {
-  opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
+/* ——————————— EXTRAS ——————————— */
+.glow-text {
+  text-shadow: 0 0 6px rgba(37, 99, 235, 0.25);
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.section-title {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.smooth {
+  transition: all 0.3s ease;
 }

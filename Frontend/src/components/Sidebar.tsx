@@ -14,6 +14,7 @@ import {
   Send,
   X,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type SidebarProps = {
   onNavigate?: () => void;
@@ -148,12 +149,12 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
     <>
       <aside
         className={[
-          "flex h-full flex-col justify-between bg-panel px-4 pb-6 pt-6 text-ink shadow-2xl backdrop-blur",
+          "flex h-full flex-col bg-panel px-4 pb-6 pt-6 text-ink shadow-2xl backdrop-blur",
           variant === "desktop" ? "w-64 border-r border-app" : "w-full",
         ].join(" ")}
       >
         {/* Top: Brand + Nav */}
-        <div>
+        <div className="flex flex-1 flex-col">
           {/* Brand / Logo (links Home) */}
           <Link
             to="/"
@@ -215,6 +216,10 @@ export function Sidebar({ onNavigate, variant }: SidebarProps) {
               ))}
             </ul>
           </nav>
+
+          <div className="px-3 pb-4 border-t border-border/40 mt-auto">
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Bottom: Feedback CTA + Beta note */}

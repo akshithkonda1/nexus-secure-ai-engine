@@ -1,18 +1,6 @@
-import {
-  useEffect,
-  useState,
-  useContext,
-  createContext,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 
-type ThemeContextValue = {
-  theme: string;
-  setTheme: Dispatch<SetStateAction<string>>;
-};
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState(
@@ -25,13 +13,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(theme);
     localStorage.setItem("nexus-theme", theme);
 
-    // Enforce dark gradient
-    root.style.background =
-      theme === "dark"
-        ? "radial-gradient(ellipse at top, #10141a 0%, #0a0d11 100%)"
-        : "#f9fafb";
-
-    // Disable forced color modes
+    // Disable forced-color issues
     if (window.matchMedia("(forced-colors: active)").matches) {
       root.style.setProperty("forced-color-adjust", "none");
     }
