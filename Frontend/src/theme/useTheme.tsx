@@ -1,21 +1,8 @@
-import {
-  useEffect,
-  useState,
-  useContext,
-  createContext,
-  type ReactNode,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useState, useContext, createContext } from "react";
 
-type ThemeContextValue = {
-  theme: string;
-  setTheme: Dispatch<SetStateAction<string>>;
-};
+const ThemeContext = createContext(null);
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState(
     localStorage.getItem("nexus-theme") || "dark"
   );
@@ -26,11 +13,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.add(theme);
     localStorage.setItem("nexus-theme", theme);
 
-    // Enforce dark background on load
-    root.style.backgroundColor =
-      theme === "dark" ? "#0f1116" : "#f9fafb";
+    // Enforce dark gradient
+    root.style.background =
+      theme === "dark"
+        ? "radial-gradient(ellipse at top, #10141a 0%, #0a0d11 100%)"
+        : "#f9fafb";
 
-    // Prevent Windows forced colors
+    // Disable forced color modes
     if (window.matchMedia("(forced-colors: active)").matches) {
       root.style.setProperty("forced-color-adjust", "none");
     }
