@@ -1,19 +1,33 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import "@/styles/theme.css";
+import "@/styles/globals.css";
 import App from "./App";
+import { Home } from "@/pages/Home";
+import { Chat } from "@/pages/Chat";
+import { Templates } from "@/pages/Templates";
+import { Documents } from "@/pages/Documents";
+import { History } from "@/pages/History";
+import { Settings } from "@/pages/Settings";
 
-import "./styles/globals.css";
-import "./styles/theme-nexus.css";
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "chat", element: <Chat /> },
+      { path: "templates", element: <Templates /> },
+      { path: "documents", element: <Documents /> },
+      { path: "history", element: <History /> },
+      { path: "settings", element: <Settings /> }
+    ]
+  }
+]);
 
-// Persisted theme restore
-const saved = localStorage.getItem("theme");
-if (saved) document.documentElement.classList.toggle("dark", saved === "dark");
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );

@@ -1,52 +1,58 @@
-/* Frontend/src/styles/globals.css */
-
-/* Tailwind v4 import */
 @import "tailwindcss";
+@layer theme, base, components, utilities;
 
-/* Dark (default) tokens via CSS variables */
-:root {
-  --bg: #0e1117;
-  --surface: 22 27 34;    /* #161b22 */
-  --panel: 31 39 51;      /* #1f2733 */
-  --border: 43 52 65;     /* #2b3441 */
-  --text: 230 237 243;    /* #e6edf3 */
-  --subtle: 148 163 184;  /* #94a3b8 */
+@layer theme {
+  @theme {
+    --color-brand: var(--brand);
+    --color-accent: var(--brand-strong);
+    --radius-xl: var(--radius-lg);
+  }
 }
 
-/* Light theme overrides */
-html.light, body.light {
-  --bg: #f9fafb;
-  --surface: 255 255 255; /* #ffffff */
-  --panel: 243 244 246;   /* #f3f4f6 */
-  --border: 229 231 235;  /* #e5e7eb */
-  --text: 17 24 39;       /* #111827 */
-  --subtle: 100 116 139;  /* #64748b */
-}
-
-/* Base resets */
 @layer base {
-  html, body, #root { height: 100%; width: 100%; }
-
-  html, body {
-    /* set stack directly in CSS (v4-safe). Use className="font-sans" in JSX if desired */
-    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    color-scheme: dark light;
+  :root { color-scheme: light dark; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
     background: var(--bg);
     color: rgb(var(--text));
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+      "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   }
 
-  * { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+  .surface {
+    background: rgb(var(--surface) / 1);
+    border: 1px solid rgb(var(--border) / 1);
+    border-radius: var(--radius);
+  }
 
-  @media (forced-colors: active) {
-    :root { forced-color-adjust: none !important; }
+  .panel {
+    background: rgb(var(--panel) / 1);
+    border: 1px solid rgb(var(--border) / 0.85);
+    border-radius: var(--radius-lg);
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium;
+    background: color-mix(in lab, var(--brand) 12%, transparent);
+    color: var(--brand);
+    border: 1px solid color-mix(in lab, var(--brand) 30%, transparent);
+    transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover {
+    background: var(--brand);
+    color: white;
+    box-shadow: 0 0 0 6px color-mix(in lab, var(--brand) 20%, transparent);
+  }
+  .btn-secondary {
+    background: rgb(var(--surface) / 1);
+    color: rgb(var(--text) / 0.9);
+    border: 1px solid rgb(var(--border) / 1);
+  }
+  .btn-secondary:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+    box-shadow: 0 0 0 6px color-mix(in lab, var(--brand) 18%, transparent);
   }
 }
-
-/* Optional helpers */
-.surface { background-color: rgb(var(--surface)); }
-.panel   { background-color: rgb(var(--panel)); box-shadow: var(--shadow-card, 0 10px 28px rgba(0,0,0,0.22)); }
-.border  { border-color: rgb(var(--border)); }
-.text-subtle { color: rgb(var(--subtle)); }

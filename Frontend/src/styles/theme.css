@@ -1,0 +1,30 @@
+:root {
+  --bg: #f9fafc;
+  --surface: 255 255 255;
+  --panel: 245 247 250;
+  --border: 229 231 235;
+  --text: 17 24 39;
+  --subtle: 107 114 128;
+
+  --brand: #0085ff;          /* Azure Radiance */
+  --brand-strong: #009eff;   /* Dodger Blue */
+  --purple: #9360ff;         /* Medium Purple */
+  --lilac: #c5b9da;          /* Prelude */
+
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+:root.dark {
+  --bg: #0b0f16;         /* Darker than Script; Nexus flavor */
+  --surface: 22 27 34;
+  --panel: 31 39 51;
+  --border: 43 52 65;
+  --text: 230 237 243;
+  --subtle: 140 148 158;
+
+  --brand: #3aa3ff;
+  --brand-strong: #4db1ff;
+  --purple: #a98bff;
+  --lilac: #bfb1d6;
+}
