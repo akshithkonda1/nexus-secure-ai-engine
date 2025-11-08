@@ -1,206 +1,98 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* ---------- Base reset ---------- */
 @layer base {
-  :root {
-    color-scheme: dark;
-    --background: #0e1117;
-    --surface: #161b22;
-    --card: #1f2733;
-    --border: #2b3441;
-    --muted: #94a3b8;
-    --accent: #2563eb;
-    --accent-foreground: #f8fafc;
-    --foreground: #f1f5f9;
-    --header: rgba(22, 27, 34, 0.92);
-    --sidebar: rgba(13, 17, 23, 0.92);
-    --input: rgba(31, 39, 51, 0.92);
-    --shadow-soft: 0 18px 45px rgba(2, 6, 23, 0.4);
-    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.4);
-  }
-
-  html.light {
-    color-scheme: light;
-    --background: #f5f7fb;
-    --surface: rgba(255, 255, 255, 0.88);
-    --card: rgba(255, 255, 255, 0.92);
-    --border: rgba(15, 23, 42, 0.08);
-    --muted: #64748b;
-    --accent: #2563eb;
-    --accent-foreground: #f8fafc;
-    --foreground: #0f172a;
-    --header: rgba(248, 250, 252, 0.92);
-    --sidebar: rgba(248, 250, 252, 0.9);
-    --input: rgba(248, 250, 252, 0.95);
-    --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.14);
-    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.18);
-  }
-
+  html, body { height: 100%; }
   html {
-    min-height: 100%;
-    scroll-behavior: smooth;
-    background-color: var(--background);
-  }
-
-  body {
-    margin: 0;
-    min-height: 100%;
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 55%)
-      var(--background);
-    color: var(--foreground);
+    color-scheme: dark light;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
-  * {
-    border-color: var(--border);
+  body {
+    @apply font-sans transition-colors duration-300;
+    background: var(--bg);
+    color: rgb(var(--text) / 1);
   }
-
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  ::selection {
-    background-color: rgba(37, 99, 235, 0.35);
-    color: var(--accent-foreground);
-  }
-
-  header {
-    backdrop-filter: blur(18px);
-    background-color: var(--header);
-  }
-
-  aside {
-    backdrop-filter: blur(20px);
-    background-color: var(--sidebar);
-  }
+  * { transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
 }
 
-@layer base {
-  button {
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    background-color: transparent;
-  }
+/* ---------- Theme tokens via CSS variables ---------- */
+/* Dark (default) — Script “Cod Gray” base, soft panels, premium contrast */
+:root,
+html.dark {
+  --bg: #090B1E;
+  --surface: 16 21 33;      /* ~#101525 */
+  --panel: 22 28 42;        /* ~#161C2A */
+  --border: 55 65 81;       /* slate-600 */
+  --text: 230 236 244;      /* ~#E6ECF4 */
+  --subtle: 156 163 175;    /* slate-400 */
 
-  input,
-  textarea,
-  select {
-    font: inherit;
-    color: var(--foreground);
-    background-color: var(--input);
-    border-radius: 1rem;
-    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    padding: 0.65rem 1rem;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: color-mix(in srgb, var(--muted) 80%, transparent);
-  }
-
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible {
-    outline: none;
-    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent),
-      0 0 0 8px color-mix(in srgb, var(--accent) 18%, transparent);
-  }
-
-  button:focus-visible,
-  [role="button"]:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent),
-      0 0 0 8px color-mix(in srgb, var(--accent) 18%, transparent);
-  }
+  --brand: #0085FF;
+  --brand-alt: #009EFF;
+  --brand-purple: #9360FF;
+  --lilac: #C5B9DA;
 }
 
-@layer components {
-  .glass-card {
-    background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--card) 96%, transparent),
-        color-mix(in srgb, var(--card) 84%, transparent)
-      )
-      padding-box,
-      linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--accent) 30%, transparent),
-        transparent 60%
-      )
-      border-box;
-    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-    border-radius: 1.5rem;
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(18px);
-  }
-
-  .surface-card {
-    border-radius: 1.5rem;
-    border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-    background: linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--card) 92%, transparent),
-      color-mix(in srgb, var(--card) 70%, transparent)
-    );
-    box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(14px);
-  }
-
-  .pill-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    padding: 0.4rem 0.95rem;
-    border-radius: 9999px;
-    border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-    background-color: color-mix(in srgb, var(--card) 88%, transparent);
-    color: var(--foreground);
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: all 150ms ease;
-  }
-
-  .pill-button:hover {
-    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-    color: var(--accent-foreground);
-    background-color: color-mix(in srgb, var(--accent) 65%, transparent);
-    box-shadow: var(--shadow-glow);
-  }
+/* Light — Script “Alabaster” base, crisp borders */
+html.light {
+  --bg: #F9FAFC;
+  --surface: 255 255 255;    /* white */
+  --panel: 246 248 252;      /* very light panel */
+  --border: 229 231 235;     /* gray-200 */
+  --text: 17 24 39;          /* gray-900 */
+  --subtle: 100 116 139;     /* slate-500 */
 }
 
-@layer utilities {
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
+/* ---------- Primitives ---------- */
+.app-shell { @apply min-h-screen bg-[var(--bg)] text-text; }
 
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
+.header {
+  @apply sticky top-0 z-40 border-b border-border/30 backdrop-blur-md;
+  background: color-mix(in oklab, rgb(var(--surface)), transparent 15%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+.aside {
+  @apply border-r border-border/20;
+  background:
+    radial-gradient(1200px 600px at -20% -20%, rgba(0,133,255,0.12), transparent 60%),
+    radial-gradient(1000px 500px at 130% 10%, rgba(147,96,255,0.10), transparent 55%),
+    color-mix(in oklab, rgb(var(--surface)), transparent 4%);
 }
 
-@media (forced-colors: active) {
-  :root,
-  body,
-  * {
-    forced-color-adjust: none;
-  }
+.card {
+  @apply rounded-2xl border border-border/20 shadow-card;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0) 60%),
+    color-mix(in oklab, rgb(var(--panel)), transparent 0%);
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium border border-transparent;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-alt) 35%, var(--brand-purple) 100%);
+  color: white;
+  box-shadow: 0 6px 18px rgba(0,133,255,0.28);
+}
+.btn:hover { box-shadow: 0 10px 26px rgba(0,133,255,0.38); transform: translateY(-1px); }
+.btn.ghost {
+  @apply border border-border/40 text-text;
+  background: color-mix(in oklab, rgb(var(--panel)), transparent 10%);
+}
+.input {
+  @apply w-full rounded-xl px-3 py-2 text-sm border outline-none;
+  @apply border-border/30 bg-[rgb(var(--panel))] text-text;
+}
+.input:focus { @apply border-brand/50 ring-2 ring-brand/20; }
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  background: color-mix(in oklab, rgb(var(--panel)), transparent 10%);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: rgb(var(--subtle));
+}
+
+/* Utility */
+.gradient-brand {
+  background: radial-gradient(120% 120% at 0% 0%, var(--brand) 0%, var(--brand-alt) 40%, var(--brand-purple) 100%);
 }
