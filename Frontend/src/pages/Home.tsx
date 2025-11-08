@@ -27,8 +27,8 @@ export function Home() {
           <button className="btn" onClick={() => navigate("/chat")}>
             Launch Console <ArrowRight className="h-4.5 w-4.5" />
           </button>
-          <button className="btn-secondary" onClick={() => navigate("/templates")}>
-            Browse Templates
+          <button className="btn" onClick={() => navigate("/templates")}>
+            Browse Templates <ArrowRight className="h-4.5 w-4.5" />
           </button>
         </div>
       </section>
