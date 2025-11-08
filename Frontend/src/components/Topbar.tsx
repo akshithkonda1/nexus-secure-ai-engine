@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 type TopbarProps = {
   activePath: string;
@@ -100,18 +101,26 @@ export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarP
   }, []);
 
   const title = useMemo(() => TITLE_MAP[activePath] ?? "Nexus.ai", [activePath]);
+  const profile = useMemo(
+    () => ({
+      name: "Morgan Vega",
+      email: "morgan.vega@nexus.ai",
+      role: "Workspace Admin"
+    }),
+    []
+  );
 
   return (
     <header
       className="sticky top-0 z-30 border-b border-[rgb(var(--border)/0.65)] bg-[rgb(var(--surface)/0.9)] backdrop-blur dark:border-[rgb(var(--border)/0.55)] dark:bg-[rgb(var(--surface)/0.72)]"
     >
-      <div className="mx-auto flex h-20 w-full items-center justify-between gap-6 px-4 sm:px-10">
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[rgb(var(--text)/0.45)]">
+      <div className="mx-auto flex h-24 w-full items-center justify-between gap-8 px-4 sm:px-10">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex items-center gap-3 text-[0.7rem] uppercase tracking-[0.28em] text-[rgb(var(--text)/0.45)]">
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="hidden h-8 w-8 items-center justify-center rounded-2xl border border-transparent bg-white/70 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10 md:inline-flex"
+              className="hidden h-9 w-9 items-center justify-center rounded-2xl border border-transparent bg-white/70 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10 md:inline-flex"
               aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
               aria-pressed={sidebarExpanded}
             >
@@ -123,35 +132,38 @@ export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarP
             <span>{title}</span>
           </div>
           <div className="relative w-full">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[rgb(var(--text)/0.35)]" />
+            <Search className="pointer-events-none absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-[rgb(var(--text)/0.35)]" />
             <input
               type="search"
               placeholder="Search sessions, documents, actions…"
-              className="h-11 w-full rounded-2xl border border-[rgb(var(--border)/0.45)] bg-[rgb(var(--surface)/0.78)] pl-12 pr-4 text-sm text-[rgb(var(--text))] shadow-inner outline-none transition focus:border-[color:var(--brand)] focus:shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.55)]"
+              className="h-12 w-full rounded-2xl border border-[rgb(var(--border)/0.45)] bg-[rgb(var(--surface)/0.78)] pl-14 pr-4 text-sm text-[rgb(var(--text))] shadow-inner outline-none transition focus:border-[color:var(--brand)] focus:shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.55)]"
             />
           </div>
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={() => {
-            setLock("manual");
-            setTheme((mode) => (mode === "dark" ? "light" : "dark"));
-          }}
-          className={cn(
-            "relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]"
-          )}
-          aria-label="Toggle theme"
-        >
-          <motion.span
-            key={theme}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
+        <div className="flex shrink-0 items-center gap-4">
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            onClick={() => {
+              setLock("manual");
+              setTheme((mode) => (mode === "dark" ? "light" : "dark"));
+            }}
+            className={cn(
+              "relative inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]"
+            )}
+            aria-label="Toggle theme"
           >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </motion.span>
-        </motion.button>
+            <motion.span
+              key={theme}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </motion.span>
+          </motion.button>
+          <ProfileMenu user={profile} />
+        </div>
       </div>
     </header>
   );
