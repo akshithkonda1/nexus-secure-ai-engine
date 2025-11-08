@@ -9,13 +9,15 @@ import { Templates } from "@/pages/Templates";
 import { Documents } from "@/pages/Documents";
 import { History } from "@/pages/History";
 import { Settings } from "@/pages/Settings";
+import { Home } from "@/pages/Home";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <Navigate to="/chat" replace /> },
+      { index: true, element: <Home /> },
+      { path: "home", element: <Navigate to="/" replace /> },
       { path: "chat", element: <Chat /> },
       { path: "templates", element: <Templates /> },
       { path: "documents", element: <Documents /> },

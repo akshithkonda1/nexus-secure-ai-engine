@@ -1,28 +1,34 @@
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import {
+  Home,
   MessageCircle,
   Layers,
   FileText,
-  History,
+  History as HistoryIcon,
   Settings,
-  Sparkle
+  Sparkle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 const NAVIGATION = [
+  { to: "/", label: "Home", icon: Home },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/templates", label: "Templates", icon: Layers },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/history", label: "History", icon: History },
+  { to: "/history", label: "History", icon: HistoryIcon },
   { to: "/settings", label: "Settings", icon: Settings }
 ];
 
 type SidebarProps = {
   active: string;
+  expanded: boolean;
   onNavigate: (path: string) => void;
+  onToggle: () => void;
 };
 
-export function Sidebar({ active, onNavigate }: SidebarProps) {
+export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps) {
   return (
     <motion.aside
       className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.92)] px-3 py-6 backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.68)] md:flex"
@@ -31,16 +37,22 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
       <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
         <Sparkle className="h-5 w-5" />
       </div>
-      <nav className="flex flex-1 flex-col items-center gap-2">
+
+      <nav className={clsx("flex flex-1 flex-col items-center gap-2", expanded && "items-stretch")}> 
         {NAVIGATION.map((item) => {
           const Icon = item.icon;
-          const isActive = active === item.to || active.startsWith(`${item.to}/`);
+          const isActive =
+            item.to === "/"
+              ? active === "/"
+              : active === item.to || active.startsWith(`${item.to}/`);
+
           return (
             <button
               key={item.to}
               onClick={() => onNavigate(item.to)}
               className={clsx(
-                "relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border text-[rgb(var(--text))] transition",
+                "relative flex h-12 items-center overflow-hidden rounded-2xl border text-sm transition focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/60 focus:ring-offset-2 focus:ring-offset-transparent dark:focus:ring-offset-[#0b0f16]",
+                expanded ? "w-full justify-start gap-3 px-4" : "w-12 justify-center",
                 isActive
                   ? "border-transparent bg-[color:var(--brand)] text-white shadow-glow"
                   : "border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.82)] hover:border-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.54)]"
@@ -55,6 +67,11 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
                 />
               )}
               <Icon className="relative h-5 w-5" />
+              {expanded ? (
+                <span className="relative z-10 font-medium">{item.label}</span>
+              ) : (
+                <span className="sr-only">{item.label}</span>
+              )}
             </button>
           );
         })}
