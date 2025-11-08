@@ -1,27 +1,22 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState, useContext, createContext } from 'react';
 
-type Theme = "light" | "dark";
-type ThemeCtx = { theme: Theme; setTheme: (t: Theme) => void };
-
+type ThemeCtx = { theme: 'light' | 'dark'; setTheme: (t: 'light' | 'dark') => void };
 const ThemeContext = createContext<ThemeCtx | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(
-    (localStorage.getItem("nexus-theme") as Theme) || "dark"
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    (localStorage.getItem('nexus-theme') as 'light' | 'dark') || 'dark'
   );
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("light", "dark");
+    root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    // keep background solid to avoid flash
-    root.style.backgroundColor =
-      theme === "dark" ? "var(--nexus-bg)" : "var(--nexus-bg-light)";
-    localStorage.setItem("nexus-theme", theme);
+    localStorage.setItem('nexus-theme', theme);
 
-    // prevent Windows forced-color hijack
-    if (window.matchMedia("(forced-colors: active)").matches) {
-      root.style.setProperty("forced-color-adjust", "none");
+    // Prevent Windows forced-color overrides
+    if (window.matchMedia('(forced-colors: active)').matches) {
+      root.style.setProperty('forced-color-adjust', 'none');
     }
   }, [theme]);
 
@@ -34,6 +29,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
   return ctx;
 }
