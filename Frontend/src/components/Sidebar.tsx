@@ -1,4 +1,5 @@
 import { type ReactNode, useMemo } from "react";
+import { NavLink } from "react-router-dom";
 import {
   MessageCircle,
   Folder,
@@ -10,10 +11,14 @@ import {
   SunMoon,
 } from "lucide-react";
 
-type SidebarProps = { active?: string; onNavigate?: (path: string) => void };
+type SidebarProps = {
+  active?: string;
+  onNavigate?: (path: string) => void;
+  variant?: "desktop" | "mobile";
+};
 type NavItem = { label: string; to: string; icon: ReactNode };
 
-export function Sidebar({ active = "/", onNavigate }: SidebarProps) {
+export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: SidebarProps) {
   const items = useMemo<NavItem[]>(
     () => [
       { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
@@ -27,6 +32,9 @@ export function Sidebar({ active = "/", onNavigate }: SidebarProps) {
     []
   );
 
+  const widthClass = variant === "mobile" ? "w-full" : "w-[76px]";
+  const isActivePath = (path: string) => active === path || (path !== "/" && active.startsWith(`${path}/`));
+
   const toggleTheme = () => {
     const root = document.documentElement;
     const dark = root.classList.toggle("dark", !root.classList.contains("dark"));
@@ -34,20 +42,28 @@ export function Sidebar({ active = "/", onNavigate }: SidebarProps) {
   };
 
   return (
-    <aside className="h-screen w-[76px] bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2">
+    <aside
+      className={`h-screen ${widthClass} bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2`}
+    >
       <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">Nx</div>
       <nav className="mt-1 flex flex-col items-center gap-1">
-        {items.map((i) => (
-          <button
-            key={i.to}
-            title={i.label}
-            onClick={() => onNavigate?.(i.to)}
-            className={`h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60 ${
-              active === i.to ? "bg-surface/70 ring-2 ring-[var(--brand)]" : ""
-            }`}
+        {items.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={() => onNavigate?.(item.to)}
+            title={item.label}
+            className={({ isActive }) => {
+              const selected = isActive || isActivePath(item.to);
+              const base = "h-10 w-10 rounded-xl grid place-items-center transition";
+              return selected
+                ? `${base} bg-surface/70 ring-2 ring-[var(--brand)]`
+                : `${base} hover:bg-surface/60`;
+            }}
           >
-            {i.icon}
-          </button>
+            <span className="sr-only">{item.label}</span>
+            {item.icon}
+          </NavLink>
         ))}
       </nav>
       <div className="mt-auto pb-2">
