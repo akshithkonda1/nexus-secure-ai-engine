@@ -1,40 +1,23 @@
-import { useMemo } from "react";
+import { NavLink } from "react-router-dom";
 import {
-  MessageCircle,
-  Folder,
-  Sparkles,
-  FileText,
-  BarChart3,
-  History,
-  Settings as SettingsIcon,
+  MessageCircle, Folder, Sparkles, FileText, BarChart3,
+  History, Settings, Sun
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
-type SidebarProps = {
-  onNavigate?: (path: string) => void;
-  active?: string;
-};
+type Item = { to: string; label: string; Icon: any };
 
-type NavItem = {
-  label: string;
-  to: string;
-  icon: JSX.Element;
-};
+const items: Item[] = [
+  { to: "/chat",      label: "Chat",      Icon: MessageCircle },
+  { to: "/sessions",  label: "Sessions",  Icon: Folder },
+  { to: "/templates", label: "Templates", Icon: Sparkles },
+  { to: "/docs",      label: "Documents", Icon: FileText },
+  { to: "/metrics",   label: "Metrics",   Icon: BarChart3 },
+  { to: "/history",   label: "History",   Icon: History },
+  { to: "/settings",  label: "Settings",  Icon: Settings },
+];
 
-export function Sidebar({ onNavigate, active = "/home" }: SidebarProps) {
-  const items = useMemo<NavItem[]>(
-    () => [
-      { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
-      { label: "Sessions", to: "/sessions", icon: <Folder className="h-5 w-5" /> },
-      { label: "Templates", to: "/templates", icon: <Sparkles className="h-5 w-5" /> },
-      { label: "Documents", to: "/docs", icon: <FileText className="h-5 w-5" /> },
-      { label: "Telemetry", to: "/metrics", icon: <BarChart3 className="h-5 w-5" /> },
-      { label: "History", to: "/history", icon: <History className="h-5 w-5" /> },
-      { label: "Settings", to: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
-    ],
-    []
-  );
-
+export function Sidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-white/10 bg-elevated px-4 pb-8 pt-20 text-white shadow-[0_10px_40px_rgba(0,0,0,0.45)] md:flex">
       {content}

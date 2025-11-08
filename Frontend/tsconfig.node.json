@@ -3,7 +3,7 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "allowSyntheticDefaultImports": true
+    "types": ["vite/client"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "scripts/**/*.mjs"]
+  "include": ["vite.config.ts"]
 }
