@@ -30,22 +30,11 @@ type SidebarProps = {
 
 export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps) {
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: expanded ? 256 : 94 }}
-      className="relative hidden h-screen flex-shrink-0 flex-col border-r border-[rgba(255,255,255,0.16)] bg-gradient-to-b from-white/80 via-white/60 to-white/30 px-3 py-6 backdrop-blur transition-[width] duration-200 dark:from-[#0b0f16]/80 dark:via-[#0b0f16]/60 dark:to-[#0b0f16]/30 md:flex"
-      style={{ width: expanded ? 256 : 94 }}
+    <aside
+      className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.92)] px-3 py-6 backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.68)] md:flex"
     >
-      <div className={clsx("mb-8 flex flex-col items-center gap-3", expanded && "items-start px-1")}> 
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
-          <Sparkle className="h-5 w-5" />
-        </div>
-        {expanded && (
-          <div className="space-y-1 text-left">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[rgb(var(--text)/0.45)]">Nexus</div>
-            <div className="text-sm font-semibold text-[rgb(var(--text))]">Secure AI Studio</div>
-          </div>
-        )}
+      <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
+        <Sparkle className="h-5 w-5" />
       </div>
 
       <nav className={clsx("flex flex-1 flex-col items-center gap-2", expanded && "items-stretch")}> 
@@ -65,7 +54,7 @@ export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps
                 expanded ? "w-full justify-start gap-3 px-4" : "w-12 justify-center",
                 isActive
                   ? "border-transparent bg-[color:var(--brand)] text-white shadow-glow"
-                  : "border-[rgba(0,0,0,0.08)] bg-white/70 hover:border-[color:var(--brand)] dark:border-white/10 dark:bg-white/5"
+                  : "border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.82)] hover:border-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.54)]"
               )}
               aria-label={item.label}
             >

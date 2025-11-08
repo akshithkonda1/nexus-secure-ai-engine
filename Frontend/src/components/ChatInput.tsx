@@ -56,13 +56,13 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
 
   return (
     <div className="relative w-full">
-      <div className="relative overflow-hidden rounded-3xl border border-[rgba(255,255,255,0.4)] bg-white/70 p-4 shadow-card backdrop-blur transition dark:border-white/10 dark:bg-white/10">
+      <div className="relative overflow-hidden rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.85)] p-4 shadow-card backdrop-blur transition dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.58)]">
         <div className="flex flex-wrap gap-2 pb-3">
           {suggestions.map((suggestion, idx) => (
             <button
               key={idx}
               type="button"
-              className="group inline-flex items-center gap-2 rounded-full border border-[rgba(0,133,255,0.18)] bg-[rgba(0,133,255,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand)] hover:text-white"
+              className="group inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand)] hover:text-white"
               onClick={() => setValue((prev) => (prev ? `${prev}\n${suggestion}` : suggestion))}
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -85,7 +85,7 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
               type="button"
               onClick={() => setUploading((state) => !state)}
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border))] bg-white/80 text-[rgb(var(--text))] transition hover:text-[color:var(--brand)] dark:bg-white/10",
+                "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.86)] text-[rgb(var(--text))] transition hover:text-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]",
                 isUploading && "border-[color:var(--brand)] text-[color:var(--brand)]"
               )}
               aria-label="Attach files"
@@ -101,7 +101,7 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
                   transition={{ duration: 0.18 }}
                   className="absolute left-1/2 top-[110%] z-20 w-[260px] -translate-x-1/2"
                 >
-                  <div className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/90 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-[#0f1323]">
+                  <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.9)] p-3 shadow-glow backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.62)]">
                     <FileUpload
                       description="Drop reference documents, screenshots or audio"
                       onFiles={(incoming) => {

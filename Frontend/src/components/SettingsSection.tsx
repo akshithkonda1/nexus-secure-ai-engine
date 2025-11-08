@@ -9,7 +9,7 @@ type SettingsSectionProps = {
 
 export function SettingsSection({ title, description, action, children }: SettingsSectionProps) {
   return (
-    <section className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/80 p-6 shadow-soft backdrop-blur transition dark:border-white/10 dark:bg-white/5">
+    <section className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] p-6 shadow-soft backdrop-blur transition dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div>
           <h3 className="text-lg font-semibold text-[rgb(var(--text))]">{title}</h3>

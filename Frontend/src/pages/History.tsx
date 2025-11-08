@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HistorySection } from "@/components/HistorySection";
 import { formatBytes } from "@/lib/utils";
 import { ButtonHTMLAttributes } from "react";
@@ -22,39 +22,28 @@ const auditTrail: AuditRecord[] = Array.from({ length: 6 }).map((_, idx) => ({
   tokens: 200 + idx * 45
 }));
 
-const analyticsData = {
-  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  datasets: [
-    {
-      label: "Secure sessions",
-      data: [8, 15, 12, 18, 22, 9, 14],
-      fill: true,
-      tension: 0.35,
-      borderColor: "#0085FF",
-      backgroundColor: "rgba(0,133,255,0.18)",
-      pointRadius: 3,
-      pointBackgroundColor: "#0085FF"
-    }
-  ]
-};
+function hexToRgba(hex: string, alpha: number) {
+  const value = hex.replace("#", "");
+  const normalized = value.length === 3 ? value.split("").map((char) => char + char).join("") : value;
+  const numeric = parseInt(normalized, 16);
+  if (Number.isNaN(numeric)) return `rgba(78, 123, 255, ${alpha})`;
+  const r = (numeric >> 16) & 255;
+  const g = (numeric >> 8) & 255;
+  const b = numeric & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
-const chartOptions = {
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    tooltip: { intersect: false, mode: "index" as const }
-  },
-  scales: {
-    x: {
-      ticks: { color: "rgba(9,11,30,0.45)" },
-      grid: { display: false }
-    },
-    y: {
-      ticks: { color: "rgba(9,11,30,0.45)", padding: 8 },
-      grid: { color: "rgba(9,11,30,0.05)" }
-    }
+function parseTuple(variable: string, fallback: [number, number, number]): [number, number, number] {
+  const values = variable
+    .trim()
+    .split(/\s+/)
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  if (values.length >= 3) {
+    return [values[0], values[1], values[2]];
   }
-};
+  return fallback;
+}
 
 const encryptedLogs = Array.from({ length: 4 }).map((_, idx) => ({
   device: `Device-${idx + 1024}`,
@@ -85,6 +74,98 @@ function downloadBlob(filename: string, content: string, type: string) {
 }
 
 export function History() {
+  const [themeName, setThemeName] = useState<"light" | "dark">(() => {
+    if (typeof document === "undefined") return "light";
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateTheme = () => {
+      setThemeName(document.documentElement.classList.contains("dark") ? "dark" : "light");
+    };
+    const handleThemeEvent = (event: Event) => {
+      const detail = (event as CustomEvent<string | undefined>).detail;
+      if (detail === "light" || detail === "dark") {
+        setThemeName(detail);
+      } else {
+        updateTheme();
+      }
+    };
+    updateTheme();
+    window.addEventListener("nexus-theme-change", handleThemeEvent);
+    return () => window.removeEventListener("nexus-theme-change", handleThemeEvent);
+  }, []);
+
+  const palette = useMemo(() => {
+    if (typeof window === "undefined") {
+      const fallbackTuple: [number, number, number] = themeName === "dark" ? [255, 255, 255] : [0, 0, 0];
+      const [r, g, b] = fallbackTuple;
+      const brand = "#4e7bff";
+      return {
+        brand,
+        brandFill: hexToRgba(brand, 0.18),
+        brandPoint: brand,
+        tick: `rgba(${r}, ${g}, ${b}, 0.55)`,
+        grid: `rgba(${r}, ${g}, ${b}, 0.12)`
+      };
+    }
+    const style = getComputedStyle(document.documentElement);
+    const brand = style.getPropertyValue("--brand").trim() || "#4e7bff";
+    const textTuple = parseTuple(
+      style.getPropertyValue("--text"),
+      themeName === "dark" ? [255, 255, 255] : [0, 0, 0]
+    );
+    const [r, g, b] = textTuple;
+    return {
+      brand,
+      brandFill: hexToRgba(brand, 0.18),
+      brandPoint: brand,
+      tick: `rgba(${r}, ${g}, ${b}, 0.55)`,
+      grid: `rgba(${r}, ${g}, ${b}, 0.12)`
+    };
+  }, [themeName]);
+
+  const analyticsData = useMemo(
+    () => ({
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      datasets: [
+        {
+          label: "Secure sessions",
+          data: [8, 15, 12, 18, 22, 9, 14],
+          fill: true,
+          tension: 0.35,
+          borderColor: palette.brand,
+          backgroundColor: palette.brandFill,
+          pointRadius: 3,
+          pointBackgroundColor: palette.brandPoint
+        }
+      ]
+    }),
+    [palette]
+  );
+
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { intersect: false, mode: "index" as const }
+      },
+      scales: {
+        x: {
+          ticks: { color: palette.tick },
+          grid: { display: false }
+        },
+        y: {
+          ticks: { color: palette.tick, padding: 8 },
+          grid: { color: palette.grid }
+        }
+      }
+    }),
+    [palette]
+  );
+
   const totalTokens = useMemo(() => auditTrail.reduce((sum, item) => sum + item.tokens, 0), []);
 
   return (
@@ -100,13 +181,13 @@ export function History() {
           </div>
         }
       >
-        <div className="overflow-hidden rounded-3xl border border-[rgba(255,255,255,0.6)] bg-white/80 shadow-soft dark:border-white/10 dark:bg-white/5">
-          <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-[rgba(255,255,255,0.4)] px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)] dark:border-white/10">
+        <div className="overflow-hidden rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
+          <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-[rgb(var(--border)/0.45)] px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)] dark:border-[rgb(var(--border)/0.5)]">
             <span>Query</span>
             <span>Timestamp</span>
             <span>Tokens</span>
           </div>
-          <div className="divide-y divide-[rgba(255,255,255,0.4)] text-sm dark:divide-white/10">
+          <div className="divide-y divide-[rgb(var(--border)/0.35)] text-sm dark:divide-[rgb(var(--border)/0.5)]">
             {auditTrail.map((record) => (
               <div key={record.id} className="grid grid-cols-[2fr_1fr_1fr] gap-4 px-6 py-3">
                 <span className="truncate">{record.query}</span>
@@ -126,7 +207,7 @@ export function History() {
         title="Visual Analytics"
         description="Behavioural insights derived from secure usage."
       >
-        <div className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/80 p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] p-6 shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.62)]">
           <Line data={analyticsData} options={chartOptions} />
         </div>
       </HistorySection>
@@ -137,7 +218,7 @@ export function History() {
       >
         <div className="grid gap-4 md:grid-cols-2">
           {encryptedLogs.map((log) => (
-            <div key={log.fingerprint} className="rounded-3xl border border-[rgba(255,255,255,0.6)] bg-white/80 p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
+            <div key={log.fingerprint} className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] p-4 shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
               <div className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))]">
                 <Shield className="h-4 w-4 text-[color:var(--brand)]" />
                 {log.device}
@@ -156,7 +237,7 @@ export function History() {
       >
         <div className="grid gap-4 md:grid-cols-2">
           {translations.map((item, idx) => (
-            <div key={idx} className="rounded-3xl border border-[rgba(255,255,255,0.6)] bg-white/80 p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
+            <div key={idx} className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] p-4 shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[rgb(var(--text)/0.5)]">Source</div>
               <p className="mt-1 text-sm text-[rgb(var(--text))]">{item.source}</p>
               <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-[rgb(var(--text)/0.5)]">Output</div>
@@ -173,7 +254,7 @@ function ExportButton({ label, onClick }: { label: string; onClick: ButtonHTMLAt
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-full border border-[rgba(255,255,255,0.6)] bg-white/80 px-3 py-1 text-xs font-semibold text-[rgb(var(--text))] shadow-soft transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-white/10 dark:bg-white/5"
+      className="inline-flex items-center gap-1 rounded-full border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] px-3 py-1 text-xs font-semibold text-[rgb(var(--text))] shadow-soft transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]"
     >
       <Download className="h-3.5 w-3.5" />
       {label}
