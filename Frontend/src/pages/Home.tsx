@@ -1,61 +1,50 @@
-import { MessageCircle, ArrowUpFromLine, Sparkles, Settings } from "lucide-react";
+import { MessageSquare, Upload, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 
-function QuickAction({
-  icon: Icon,
-  title,
-  desc,
-  onClick
-}: {
-  icon: any;
-  title: string;
-  desc: string;
-  onClick?: () => void;
-}) {
+function QuickAction({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
   return (
-    <button
-      onClick={onClick}
-      className="card w-full text-left p-5 flex items-start gap-4 hover:translate-y-[-2px]"
-    >
-      <div className="p-3 rounded-lg bg-[color:var(--nexus-accent)]/15">
-        <Icon className="h-5 w-5" />
+    <div className="card p-6 flex items-center gap-4 transition-all hover:shadow-glow">
+      <div className="p-3 rounded-lg" style={{ background: 'rgba(37,99,235,0.1)' }}>
+        <Icon className="w-6 h-6" style={{ color: 'var(--nexus-accent)' }} />
       </div>
       <div>
-        <div className="font-medium">{title}</div>
-        <div className="text-sm text-gray-400">{desc}</div>
+        <h3 className="font-medium">{title}</h3>
+        <p className="text-sm opacity-75">{desc}</p>
       </div>
-    </button>
+    </div>
   );
 }
 
 export function Home() {
   return (
-    <div className="pt-20 pl-64 pr-6 pb-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <QuickAction icon={MessageCircle} title="New session" desc="Launch a fresh multi-model debate." />
-        <QuickAction icon={ArrowUpFromLine} title="Import transcript" desc="Audit past debates instantly." />
-        <QuickAction icon={Sparkles} title="Templates" desc="Start trust-first workflows in seconds." />
-        <QuickAction icon={Settings} title="Settings" desc="Tune guardrails, quotas, providers." />
-      </div>
+    <div className="space-y-8">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <QuickAction icon={MessageSquare} title="New session" desc="Launch a fresh multi-model debate." />
+        <QuickAction icon={Upload} title="Import transcript" desc="Upload past debates for auditing." />
+        <QuickAction icon={Sparkles} title="Templates" desc="Start with trust-first workflows." />
+        <QuickAction icon={SettingsIcon} title="Settings" desc="Tune guardrails & providers." />
+      </section>
 
-      <div className="card p-6">
+      <section className="space-y-3">
         <h2 className="section-title">Recent sessions</h2>
-        <div className="space-y-3">
-          <div className="panel p-4 flex justify-between items-start">
-            <div>
-              <div className="font-medium">Market Intelligence thread 6</div>
-              <div className="text-sm text-gray-400">Spurs-inspired UI refinements for Nexus debates.</div>
-            </div>
-            <button className="text-[color:var(--nexus-accent)] hover:underline text-sm">Resume</button>
+        <div className="card p-4 flex justify-between items-start">
+          <div>
+            <h4 className="font-medium">Market Intelligence thread 6</h4>
+            <p className="text-sm opacity-75">Exploring Spurs-inspired UI refinements for Nexus debates.</p>
           </div>
-          <div className="panel p-4 flex justify-between items-start">
-            <div>
-              <div className="font-medium">Partner Enablement thread 12</div>
-              <div className="text-sm text-gray-400">Guardrail tuning & provider mix experiments.</div>
-            </div>
-            <button className="text-[color:var(--nexus-accent)] hover:underline text-sm">Resume</button>
-          </div>
+          <button className="text-sm" style={{ color: 'var(--nexus-accent)' }}>
+            Resume
+          </button>
         </div>
-      </div>
+        <div className="card p-4 flex justify-between items-start">
+          <div>
+            <h4 className="font-medium">Partner Enablement thread 12</h4>
+            <p className="text-sm opacity-75">Provider weighting + bias gating.</p>
+          </div>
+          <button className="text-sm" style={{ color: 'var(--nexus-accent)' }}>
+            Resume
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
