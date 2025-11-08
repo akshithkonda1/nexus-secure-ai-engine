@@ -1,25 +1,15 @@
-/** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
-  content: [
-    './index.html',
-    './src/**/*.{ts,tsx,js,jsx}',
-  ],
+  darkMode: "class",
+  content: ["./index.html", "./src/**/*.{ts,tsx,css}"],
   theme: {
     extend: {
-      colors: {
-        border: '#2b3441',
-        card: '#1f2733',
-        accent: '#2563eb',
-      },
-      borderRadius: {
-        xl: '1rem',
-      },
+      borderRadius: { xl: "12px", "2xl": "16px" },
       boxShadow: {
-        soft: '0 6px 18px rgba(0,0,0,0.25)',
-        glow: '0 0 20px rgba(37,99,235,0.4)',
-      },
-    },
+        soft: "0 8px 24px rgba(0,0,0,0.14)",
+        card: "0 10px 28px rgba(0,0,0,0.18)",
+        glow: "0 0 24px rgba(0,133,255,0.30)"
+      }
+    }
   },
-  plugins: [],
+  plugins: []
 };
