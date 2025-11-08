@@ -64,7 +64,15 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
       setIsRec(true);
       onStart?.();
     } catch (err) {
-      setPermDenied(true);
+      stopAnimation();
+      stopStreamTracks();
+      cleanupAudio();
+
+      const isPermissionError =
+        err instanceof DOMException &&
+        ["NotAllowedError", "SecurityError", "AbortError"].includes(err.name);
+      setPermDenied(isPermissionError);
+
       onError?.(err);
     }
   }
@@ -72,7 +80,7 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
   function stop() {
     try {
       mediaRef.current?.stop();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      stopStreamTracks();
       setIsRec(false);
     } catch (e) {
       onError?.(e);
@@ -88,6 +96,12 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
       analyserRef.current = null;
       audioCtxRef.current = null;
     } catch {}
+  }
+
+  function stopStreamTracks() {
+    if (!streamRef.current) return;
+    streamRef.current.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
   }
 
   function animate() {
