@@ -1,198 +1,75 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
+import { Mic, Square } from "lucide-react";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 
-/**
- * VoiceRecorder
- * - Press to start/stop recording.
- * - Animated waveform using WebAudio AnalyserNode.
- * - Attempts to use Web Speech API for transcription if available (best-effort).
- */
-type Props = {
-  active?: boolean;
-  onStart?: () => void;
-  onStop?: (transcript: string, audioBlob: Blob | null) => void;
-  onError?: (err: unknown) => void;
+type VoiceRecorderProps = {
+  onCapture: (payload: { transcript: string; blob: Blob | null }) => void;
+  compact?: boolean;
 };
 
-export default function VoiceRecorder({ active, onStart, onStop, onError }: Props) {
-  const [isRec, setIsRec] = useState(!!active);
-  const [permDenied, setPermDenied] = useState(false);
-  const mediaRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>();
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+export function VoiceRecorder({ onCapture, compact }: VoiceRecorderProps) {
+  const { status, levels, elapsed, start, stop, cancel } = useVoiceRecorder();
 
-  useEffect(() => {
-    setIsRec(!!active);
-  }, [active]);
+  const isRecording = status === "recording";
 
-  async function start() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+  const friendlyTimer = useMemo(() => {
+    const mins = Math.floor(elapsed / 60)
+      .toString()
+      .padStart(2, "0");
+    const secs = (elapsed % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  }, [elapsed]);
 
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioCtxRef.current = ctx;
-      const src = ctx.createMediaStreamSource(stream);
-      sourceRef.current = src;
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      src.connect(analyser);
-      analyserRef.current = analyser;
-
-      animate();
-
-      const rec = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      mediaRef.current = rec;
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      rec.onstop = async () => {
-        stopAnimation();
-        cleanupAudio();
-
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const transcript = await tryTranscribe(blob).catch(() => "");
-        onStop?.(transcript, blob);
-      };
-      rec.start();
-
-      setIsRec(true);
-      onStart?.();
-    } catch (err) {
-      setPermDenied(true);
-      onError?.(err);
+  const handleToggle = useCallback(async () => {
+    if (isRecording) {
+      const blob = await stop();
+      const transcript = createMockTranscript(elapsed);
+      onCapture({ transcript, blob });
+      return;
     }
-  }
-
-  function stop() {
     try {
-      mediaRef.current?.stop();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      setIsRec(false);
-    } catch (e) {
-      onError?.(e);
+      await start();
+    } catch (error) {
+      console.error("Voice recorder start failed", error);
+      cancel();
     }
-  }
-
-  function cleanupAudio() {
-    try {
-      sourceRef.current?.disconnect();
-      analyserRef.current?.disconnect();
-      audioCtxRef.current?.close();
-      sourceRef.current = null;
-      analyserRef.current = null;
-      audioCtxRef.current = null;
-    } catch {}
-  }
-
-  function animate() {
-    const canvas = canvasRef.current;
-    const analyser = analyserRef.current;
-    if (!canvas || !analyser) return;
-
-    const ctx = canvas.getContext("2d")!;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      analyser.getByteTimeDomainData(dataArray);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#0085FF";
-      ctx.beginPath();
-
-      const slice = canvas.width / bufferLength;
-      let x = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * canvas.height) / 2;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        x += slice;
-      }
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-  }
-
-  function stopAnimation() {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  }
+  }, [cancel, elapsed, isRecording, onCapture, start, stop]);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="relative flex items-center gap-2">
       <button
         type="button"
-        onClick={() => (isRec ? stop() : start())}
-        className={`grid h-10 w-10 place-items-center rounded-xl border transition ${
-          isRec
-            ? "border-red-500 bg-red-600 text-white hover:bg-red-700"
-            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-        }`}
-        title={isRec ? "Stop recording" : "Record voice"}
-        aria-label={isRec ? "Stop recording" : "Record voice"}
+        onClick={handleToggle}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border))] bg-white/80 text-[color:var(--brand)] shadow-soft transition hover:border-[color:var(--brand)] hover:text-white hover:bg-[color:var(--brand)] dark:bg-white/10"
+        aria-label={isRecording ? "Stop voice recording" : "Start voice recording"}
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-          <path
-            d="M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path d="M19 11a7 7 0 01-14 0M12 21v-3" stroke="currentColor" strokeWidth="2" />
-        </svg>
+        {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
       </button>
 
-      {/* waveform canvas (shows only when recording) */}
-      <div className="hidden sm:block">
-        <canvas
-          ref={canvasRef}
-          width={160}
-          height={32}
-          className={`rounded-md ${isRec ? "opacity-100" : "opacity-0"} transition-opacity`}
-        />
+      <div className="hidden sm:flex h-12 items-center overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white/60 px-3 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-end gap-[3px]">
+          {levels.map((value, idx) => (
+            <motion.span
+              key={idx}
+              animate={{ height: isRecording ? `${Math.max(6, value * 32)}px` : "6px" }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="w-[3px] rounded-full bg-[color:var(--brand)]/80"
+              style={{ opacity: isRecording ? Math.max(0.25, value) : 0.35 }}
+            />
+          ))}
+        </div>
+        <span className="ml-3 text-xs font-medium tracking-wide text-[rgb(var(--text)/0.6)]">
+          {isRecording ? friendlyTimer : compact ? "" : "Voice"}
+        </span>
       </div>
-
-      {permDenied && (
-        <span className="text-xs text-red-600 dark:text-red-400">Mic permission denied.</span>
-      )}
     </div>
   );
 }
 
-/** Try Web Speech API for quick transcript (best-effort, safe fallback). */
-async function tryTranscribe(_blob: Blob): Promise<string> {
-  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  if (!SR) return "";
-
-  return new Promise<string>((resolve) => {
-    try {
-      const rec = new SR();
-      rec.lang = "en-US";
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-      let text = "";
-      rec.onresult = (e: any) => {
-        text = e.results?.[0]?.[0]?.transcript || "";
-      };
-      rec.onend = () => resolve(text);
-      rec.onerror = () => resolve("");
-      rec.start();
-      setTimeout(() => {
-        try {
-          rec.stop();
-        } catch {}
-      }, 5000);
-    } catch {
-      resolve("");
-    }
-  });
+function createMockTranscript(seconds: number) {
+  if (!seconds) return "Voice memo";
+  if (seconds < 5) return "Voice memo (short)";
+  if (seconds < 15) return "Voice memo – summarise this snippet";
+  return "Voice memo – please transcribe and summarise.";
 }
