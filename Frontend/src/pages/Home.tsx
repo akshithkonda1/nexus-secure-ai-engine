@@ -1,54 +1,49 @@
-// Frontend/src/pages/Home.tsx
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { PlayCircle, UploadCloud, Sparkles, Settings2 } from "lucide-react";
 
-type Action = { title: string; desc: string; to: string };
-
-const quickActions: Action[] = [
-  { title: "New session", desc: "Start a fresh multi-model debate.", to: "/chat" },
-  { title: "Import transcript", desc: "Upload past debates for auditing.", to: "/documents" },
-  { title: "Templates", desc: "Kick off workflows fast.", to: "/templates" },
-  { title: "Settings", desc: "Tune guardrails & providers.", to: "/settings" },
-];
-
-function QuickCard({ title, desc, to }: Action) {
+function Capsule({ Icon, title, onClick }: { Icon: any; title: string; onClick: () => void }) {
   return (
-    <Link
-      to={to}
-      className="panel rounded-xl p-6 block hover:shadow-glow border"
-      style={{ borderColor: "rgb(var(--border))" }}
-    >
-      <h3 className="font-medium">{title}</h3>
-      <p className="text-sm text-subtle mt-1">{desc}</p>
-    </Link>
+    <button onClick={onClick} className="glass lift text-left px-5 py-4 flex items-center gap-4">
+      <span className="inline-grid place-items-center h-10 w-10 rounded-xl bg-prism ring-prism">
+        <Icon className="h-5 w-5" />
+      </span>
+      <span className="font-medium">{title}</span>
+    </button>
   );
 }
 
-export function Home() {
+export default function Home() {
+  const navigate = useNavigate();
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-6 py-8">
-      {/* Hero */}
-      <section className="mb-8">
-        <div className="panel rounded-2xl px-8 py-10 border" style={{ borderColor: "rgb(var(--border))" }}>
-          <h1 className="text-2xl font-semibold">Welcome to Nexus</h1>
-          <p className="text-subtle mt-2">
-            Aggregate models, debate outputs, and ship reliable answers.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <Link to="/chat" className="px-4 py-2 rounded-lg border hover:shadow-glow" style={{ borderColor: "rgb(var(--border))" }}>
-              Open Chat
-            </Link>
-            <Link to="/settings" className="px-4 py-2 rounded-lg border hover:shadow-glow" style={{ borderColor: "rgb(var(--border))" }}>
-              Settings
-            </Link>
+    <div className="p-6">
+      <section className="glass bg-grid px-8 py-10">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <div className="text-xs tracking-[0.18em] uppercase text-subtle mb-2">Nexus • Beta</div>
+            <h1 className="text-3xl font-semibold">
+              Welcome to <span className="bg-prism px-2 py-0.5 rounded-md">Nexus.ai</span>
+            </h1>
+            <p className="text-sm text-subtle mt-2">Orchestrate, debate, and ship with telemetry you can trust.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="h-10 px-4 rounded-xl bg-prism lift" onClick={() => navigate("/chat")}>
+              Launch Console
+            </button>
+            <button
+              className="h-10 px-4 rounded-xl border border-border/60 bg-surface/50 hover:bg-surface/70"
+              onClick={() => navigate("/templates")}
+            >
+              Browse Templates
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Quick actions */}
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => (
-          <QuickCard key={action.title} {...action} />
-        ))}
+      <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 mt-6">
+        <Capsule Icon={PlayCircle} title="New session" onClick={() => navigate("/chat")} />
+        <Capsule Icon={UploadCloud} title="Import transcript" onClick={() => navigate("/documents")} />
+        <Capsule Icon={Sparkles} title="Templates" onClick={() => navigate("/templates")} />
+        <Capsule Icon={Settings2} title="Settings" onClick={() => navigate("/settings")} />
       </section>
     </div>
   );
