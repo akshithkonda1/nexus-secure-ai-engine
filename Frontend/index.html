@@ -1,46 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
-    <!-- Safari/Android address bar colors -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9fafc" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1117" />
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://rsms.me" crossorigin />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-
     <title>Nexus</title>
-
-    <!-- Set theme ASAP to avoid flash -->
-    <script>
-      (function () {
-        try {
-          const KEY = "nexus-theme";
-          const saved = localStorage.getItem(KEY);
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const theme = saved || (prefersDark ? "dark" : "light");
-
-          const root = document.documentElement;
-          root.classList.remove("light", "dark");
-          root.classList.add(theme);
-
-          // Keep <body> in sync for any legacy selectors
-          document.addEventListener("DOMContentLoaded", () => {
-            document.body.classList.remove("light", "dark");
-            document.body.classList.add(theme);
-          });
-        } catch (_) {}
-      })();
-    </script>
   </head>
-
-  <body>
+  <!-- IMPORTANT: use real classes here (no @apply font-sans in CSS for Tailwind v4) -->
+  <body class="font-sans bg-background text-foreground antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,54 +1,68 @@
-// Frontend/src/pages/Home.tsx
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
+import { Play, Upload, LayoutTemplate, Settings as Cog } from 'lucide-react';
 
-type Action = { title: string; desc: string; to: string };
+type QA = { icon: React.ComponentType<{className?: string}>; title: string; desc: string; cta: string; to: string; };
 
-const quickActions: Action[] = [
-  { title: "New session", desc: "Start a fresh multi-model debate.", to: "/chat" },
-  { title: "Import transcript", desc: "Upload past debates for auditing.", to: "/documents" },
-  { title: "Templates", desc: "Kick off workflows fast.", to: "/templates" },
-  { title: "Settings", desc: "Tune guardrails & providers.", to: "/settings" },
+const quick: QA[] = [
+  { icon: Play, title: 'New session', desc: 'Spin up an AI copilot session with curated prompts.', cta: 'Explore', to: '/chat' },
+  { icon: Upload, title: 'Import transcript', desc: 'Bring existing chat history to continue.', cta: 'Explore', to: '/documents' },
+  { icon: LayoutTemplate, title: 'Templates', desc: 'Start faster with Script-style frameworks.', cta: 'Explore', to: '/templates' },
+  { icon: Cog, title: 'Settings', desc: 'Tweak providers, access, preferences.', cta: 'Explore', to: '/settings' }
 ];
 
-function QuickCard({ title, desc, to }: Action) {
+function QuickCard({ icon: Icon, title, desc, cta, to }: QA) {
   return (
-    <Link
-      to={to}
-      className="panel rounded-xl p-6 block hover:shadow-glow border"
-      style={{ borderColor: "rgb(var(--border))" }}
-    >
-      <h3 className="font-medium">{title}</h3>
-      <p className="text-sm text-subtle mt-1">{desc}</p>
+    <Link to={to} className="card p-6 hover-soft focus-ring block">
+      <div className="size-10 rounded-xl bg-brand/10 grid place-items-center mb-3">
+        <Icon className="size-5 text-brand" />
+      </div>
+      <div className="font-medium">{title}</div>
+      <div className="text-sm text-subtle mt-1">{desc}</div>
+      <div className="text-sm text-brand mt-3">{cta} ↗</div>
     </Link>
   );
 }
 
 export function Home() {
   return (
-    <div className="min-h-[calc(100vh-4rem)] px-6 py-8">
-      {/* Hero */}
-      <section className="mb-8">
-        <div className="panel rounded-2xl px-8 py-10 border" style={{ borderColor: "rgb(var(--border))" }}>
-          <h1 className="text-2xl font-semibold">Welcome to Nexus</h1>
-          <p className="text-subtle mt-2">
-            Aggregate models, debate outputs, and ship reliable answers.
+    <div className="space-y-10">
+      <section className="card relative overflow-hidden px-8 py-12">
+        <div className="text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center text-xs tracking-widest px-2 py-1 rounded-full bg-panel/70 border border-border/60">
+            NEXUS BETA
+          </span>
+          <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight">Welcome to Nexus.ai</h1>
+          <p className="mt-3 text-subtle">
+            A scriptable command center where AI orchestration feels natural. Craft prompts, resume sessions,
+            and manage provider intelligence within a polished workspace.
           </p>
-          <div className="mt-6 flex gap-3">
-            <Link to="/chat" className="px-4 py-2 rounded-lg border hover:shadow-glow" style={{ borderColor: "rgb(var(--border))" }}>
-              Open Chat
-            </Link>
-            <Link to="/settings" className="px-4 py-2 rounded-lg border hover:shadow-glow" style={{ borderColor: "rgb(var(--border))" }}>
-              Settings
-            </Link>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Link to="/chat" className="h-10 px-4 rounded-xl bg-accent text-accent-foreground hover:shadow-glow focus-ring">Launch Console</Link>
+            <Link to="/templates" className="h-10 px-4 rounded-xl border border-border/60 hover-soft focus-ring">Browse Templates</Link>
           </div>
         </div>
       </section>
 
-      {/* Quick actions */}
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => (
-          <QuickCard key={action.title} {...action} />
-        ))}
+        {quick.map((q) => <QuickCard key={q.title} {...q} />)}
+      </section>
+
+      <section className="card p-0">
+        <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between">
+          <div className="font-medium">Last 5 sessions</div>
+          <Link to="/history" className="text-sm text-brand">View all sessions</Link>
+        </div>
+        <div className="divide-y divide-border/60">
+          {['Growth strategy review', 'Product telemetry audit'].map((t, idx) => (
+            <div key={idx} className="px-6 py-4 flex items-center justify-between">
+              <div>
+                <div className="font-medium">{t}</div>
+                <div className="text-xs text-subtle mt-0.5">2 hours ago</div>
+              </div>
+              <Link to="/history" className="h-8 px-3 rounded-lg bg-panel/70 border border-border/60 hover-soft focus-ring">Resume</Link>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );
