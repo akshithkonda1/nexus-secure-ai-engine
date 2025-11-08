@@ -46,6 +46,151 @@
     border-radius: var(--radius-lg);
   }
 
+  .home-hero {
+    position: relative;
+    border-radius: 28px;
+    padding: 3rem clamp(1.75rem, 4vw, 3rem);
+    border: 1px solid rgb(var(--border) / 0.7);
+    background:
+      radial-gradient(
+        120% 140% at 0% 0%,
+        color-mix(in srgb, var(--brand) 24%, transparent) 0%,
+        transparent 62%
+      ),
+      radial-gradient(
+        120% 120% at 100% 100%,
+        color-mix(in srgb, var(--purple) 18%, transparent) 0%,
+        transparent 65%
+      ),
+      rgb(var(--surface) / 0.94);
+    box-shadow: 0 28px 46px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+    transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+  }
+
+  .home-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      140% 140% at 80% 20%,
+      color-mix(in srgb, var(--mint) 22%, transparent) 0%,
+      transparent 62%
+    );
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .home-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .dark .home-hero {
+    border-color: rgb(var(--border) / 0.55);
+    background:
+      radial-gradient(
+        120% 140% at 0% 0%,
+        color-mix(in srgb, var(--brand) 42%, transparent) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        120% 120% at 100% 100%,
+        color-mix(in srgb, var(--purple) 32%, transparent) 0%,
+        transparent 68%
+      ),
+      rgb(var(--surface) / 0.6);
+    box-shadow: 0 32px 54px rgba(7, 9, 18, 0.48);
+  }
+
+  .dark .home-hero::after {
+    opacity: 0.55;
+  }
+
+  .home-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgb(var(--text));
+    background: color-mix(in srgb, var(--brand) 18%, rgb(var(--surface) / 0.8));
+    border: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    box-shadow: 0 14px 26px color-mix(in srgb, var(--brand) 18%, transparent);
+    position: relative;
+    z-index: 1;
+  }
+
+  .dark .home-hero-badge {
+    color: #f8fbff;
+    background: color-mix(in srgb, var(--brand) 38%, transparent);
+    border-color: color-mix(in srgb, var(--brand) 68%, transparent);
+    box-shadow: 0 18px 34px color-mix(in srgb, var(--brand) 34%, transparent);
+  }
+
+  .home-highlight {
+    position: relative;
+    border-radius: 22px;
+    padding: 1.1rem 1.35rem;
+    border: 1px solid rgb(var(--border) / 0.58);
+    background: rgb(var(--surface) / 0.9);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    backdrop-filter: blur(12px);
+    z-index: 1;
+  }
+
+  .home-highlight:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--brand) 48%, transparent);
+    box-shadow: 0 22px 44px color-mix(in srgb, var(--brand) 22%, transparent);
+  }
+
+  .dark .home-highlight {
+    background: rgb(var(--surface) / 0.45);
+    border-color: rgb(var(--border) / 0.5);
+    box-shadow: 0 26px 52px rgba(5, 7, 16, 0.58);
+  }
+
+  .dark .home-highlight:hover {
+    border-color: color-mix(in srgb, var(--brand) 62%, transparent);
+    box-shadow: 0 30px 60px color-mix(in srgb, var(--brand) 26%, transparent);
+  }
+
+  .btn-glass {
+    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold;
+    color: rgb(var(--text));
+    border: 1px solid rgb(var(--border) / 0.72);
+    background: rgb(var(--surface) / 0.82);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
+    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-glass:hover {
+    border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+    box-shadow: 0 18px 32px color-mix(in srgb, var(--brand) 18%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .dark .btn-glass {
+    background: rgb(var(--surface) / 0.52);
+    border-color: rgb(var(--border) / 0.52);
+    color: rgb(var(--text));
+    box-shadow: 0 20px 38px rgba(5, 7, 16, 0.54);
+  }
+
+  .dark .btn-glass:hover {
+    border-color: color-mix(in srgb, var(--brand) 62%, transparent);
+    box-shadow: 0 26px 44px color-mix(in srgb, var(--brand) 28%, transparent);
+  }
+
   .btn {
     @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold;
     background: color-mix(in srgb, var(--brand) 18%, transparent);

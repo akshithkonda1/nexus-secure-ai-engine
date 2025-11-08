@@ -41,7 +41,7 @@ export default function App() {
           onToggleSidebar={() => setSidebarExpanded((value) => !value)}
         />
         <main className="relative flex-1 overflow-y-auto px-4 pb-16 pt-6 sm:px-10">
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="w-full max-w-6xl">
             <Outlet />
           </div>
         </main>
