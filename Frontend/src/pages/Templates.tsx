@@ -1,4 +1,7 @@
 import { Layers, Sparkles, Wand2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { sessionStore } from "@/store/sessionStore";
 
 const data = [
   { icon: Sparkles, title: "Brainstorm brief", desc: "Rapid idea generation", tag: "creative" },
@@ -7,6 +10,14 @@ const data = [
 ];
 
 export function Templates() {
+  const navigate = useNavigate();
+  const { createSession } = sessionStore.use();
+
+  function handleLaunch(template: (typeof data)[number]) {
+    const id = createSession({ title: template.title, template: template.tag });
+    navigate(`/sessions/${id}`);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -17,7 +28,9 @@ export function Templates() {
         {data.map((t) => (
           <button
             key={t.title}
+            type="button"
             className="text-left rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)] hover:bg-surface/50"
+            onClick={() => handleLaunch(t)}
           >
             <div className="size-10 rounded-xl bg-[color:var(--brand)]/10 grid place-items-center mb-3">
               <t.icon className="size-5" style={{ color: "var(--brand)" }} />
