@@ -1,79 +1,68 @@
-import { type ReactNode, useMemo } from "react";
+import { clsx } from "clsx";
 import {
   MessageCircle,
-  Folder,
-  Sparkles,
+  Layers,
   FileText,
-  BarChart3,
-  History as HistoryIcon,
-  Settings as SettingsIcon,
-  SunMoon,
+  History,
+  Settings,
+  LayoutDashboard
 } from "lucide-react";
 
-type SidebarProps = {
-  active?: string;
-  onNavigate?: (path: string) => void;
+type Item = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-type NavItem = { label: string; to: string; icon: ReactNode };
+const items: Item[] = [
+  { to: "/", label: "Home", icon: LayoutDashboard },
+  { to: "/chat", label: "Chat", icon: MessageCircle },
+  { to: "/templates", label: "Templates", icon: Layers },
+  { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/history", label: "History", icon: History },
+  { to: "/settings", label: "Settings", icon: Settings }
+];
 
-export function Sidebar({ active = "/", onNavigate }: SidebarProps) {
-  const items = useMemo<NavItem[]>(
-    () => [
-      { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
-      { label: "Sessions", to: "/sessions", icon: <Folder className="h-5 w-5" /> },
-      { label: "Templates", to: "/templates", icon: <Sparkles className="h-5 w-5" /> },
-      { label: "Documents", to: "/docs", icon: <FileText className="h-5 w-5" /> },
-      { label: "Metrics", to: "/metrics", icon: <BarChart3 className="h-5 w-5" /> },
-      { label: "History", to: "/history", icon: <HistoryIcon className="h-5 w-5" /> },
-      { label: "Settings", to: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
-    ],
-    []
-  );
-
-  const isActive = (to: string) => active === to;
-
-  const toggleTheme = () => {
-    const root = document.documentElement;
-    const isDark = root.classList.contains("dark");
-    root.classList.toggle("dark", !isDark);
-    localStorage.setItem("theme", !isDark ? "dark" : "light");
-  };
-
+export function Sidebar({
+  active,
+  onNavigate
+}: {
+  active: string;
+  onNavigate: (to: string) => void;
+}) {
   return (
     <aside
-      className="h-screen w-[76px] bg-[rgb(var(--panel))] border-r border-border/60 py-3
-                 flex flex-col items-center gap-2"
+      className="h-full border-r"
+      style={{ borderColor: `rgb(var(--border))` }}
     >
-      {/* Logo chip */}
-      <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">
-        Nx
+      <div className="flex h-16 items-center justify-center">
+        <span className="text-sm font-semibold tracking-wide"
+          style={{ color: "var(--brand)" }}>
+          Nexus
+        </span>
       </div>
-
-      {/* Nav icons */}
-      <nav className="mt-1 flex flex-col items-center gap-1">
-        {items.map((i) => (
-          <button
-            key={i.to}
-            title={i.label}
-            onClick={() => onNavigate?.(i.to)}
-            className={`h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60
-              ${isActive(i.to) ? "bg-surface/70 ring-2 ring-[var(--brand)]" : ""}`}
-          >
-            {i.icon}
-          </button>
-        ))}
+      <nav className="flex flex-col items-center gap-1 py-2">
+        {items.map((it) => {
+          const Icon = it.icon;
+          const selected = active === it.to || (it.to !== "/" && active.startsWith(it.to));
+          return (
+            <button
+              key={it.to}
+              onClick={() => onNavigate(it.to)}
+              title={it.label}
+              className={clsx(
+                "group relative my-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl",
+                selected
+                  ? "bg-[color:var(--brand)] text-white shadow-glow"
+                  : "bg-[rgb(var(--surface))] border border-[rgb(var(--border))] hover:border-[color:var(--brand)]"
+              )}
+            >
+              <Icon className={clsx("h-5 w-5",
+                selected ? "opacity-100" : "text-[rgb(var(--text)/.8)] group-hover:text-[color:var(--brand)]")} />
+            </button>
+          );
+        })}
       </nav>
-
-      <div className="mt-auto pb-2">
-        <button
-          title="Toggle theme"
-          onClick={toggleTheme}
-          className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60"
-        >
-          <SunMoon className="h-5 w-5" />
-        </button>
-      </div>
     </aside>
   );
 }

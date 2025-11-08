@@ -1,99 +1,56 @@
+import { ArrowRight, FileText, Layers, MessageCircle, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PlayCircle, UploadCloud, Sparkles, Settings2 } from "lucide-react";
-
-function Capsule({
-  Icon,
-  title,
-  onClick,
-}: {
-  Icon: any;
-  title: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="glass lift text-left px-5 py-4 flex items-center gap-4"
-    >
-      <span className="inline-grid place-items-center h-10 w-10 rounded-xl bg-prism ring-prism">
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="font-medium">{title}</span>
-    </button>
-  );
-}
 
 export function Home() {
   const navigate = useNavigate();
 
+  const actions = [
+    { title: "New session", desc: "Start a fresh multi-model debate.", to: "/chat", icon: MessageCircle },
+    { title: "Import transcript", desc: "Upload past debates for auditing.", to: "/documents", icon: FileText },
+    { title: "Templates", desc: "Kick off workflows fast.", to: "/templates", icon: Layers },
+    { title: "Settings", desc: "Tune guardrails & providers.", to: "/settings", icon: Settings }
+  ];
+
   return (
-    <main className="min-h-screen w-full text-foreground">
-      {/* Hero */}
-      <section className="glass bg-grid px-8 py-10">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="text-xs tracking-[0.18em] uppercase text-subtle mb-2">
-              Nexus • Beta
-            </div>
-            <h1 className="text-3xl sm:text-[34px] font-semibold">
-              Welcome to <span className="bg-prism px-2 py-0.5 rounded-md">Nexus.ai</span>
-            </h1>
-            <p className="text-sm text-subtle mt-2">
-              Orchestrate, debate, and ship with telemetry you can trust.
-            </p>
-          </div>
+    <div className="mx-auto max-w-[1200px] space-y-8 pt-8">
+      <section className="panel px-8 py-10 shadow-card">
+        <p className="mb-2 text-xs font-semibold tracking-widest text-[rgb(var(--subtle))]">
+          NEXUS BETA
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">Welcome to Nexus.ai</h1>
+        <p className="mt-2 max-w-[64ch] text-[rgb(var(--subtle))]">
+          A scriptable command center where AI orchestration feels natural.
+          Craft prompts, resume sessions, and manage provider intelligence within a polished workspace.
+        </p>
 
-          <div className="flex items-center gap-2">
-            <button
-              className="h-10 px-4 rounded-xl bg-prism lift"
-              onClick={() => navigate("/chat")}
-            >
-              Launch Console
-            </button>
-            <button
-              className="h-10 px-4 rounded-xl border border-border/60 bg-surface/50 hover:bg-surface/70"
-              onClick={() => navigate("/templates")}
-            >
-              Browse Templates
-            </button>
-          </div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button className="btn" onClick={() => navigate("/chat")}>
+            Launch Console <ArrowRight className="h-4.5 w-4.5" />
+          </button>
+          <button className="btn-secondary" onClick={() => navigate("/templates")}>
+            Browse Templates
+          </button>
         </div>
       </section>
 
-      {/* Quick actions */}
-      <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 mt-6">
-        <Capsule Icon={PlayCircle} title="New session" onClick={() => navigate("/chat")} />
-        <Capsule
-          Icon={UploadCloud}
-          title="Import transcript"
-          onClick={() => navigate("/documents")}
-        />
-        <Capsule Icon={Sparkles} title="Templates" onClick={() => navigate("/templates")} />
-        <Capsule Icon={Settings2} title="Settings" onClick={() => navigate("/settings")} />
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {actions.map((a) => {
+          const Icon = a.icon;
+          return (
+            <button
+              key={a.title}
+              className="panel group text-left px-5 py-5 transition-shadow hover:shadow-card"
+              onClick={() => navigate(a.to)}
+            >
+              <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--brand)] text-white">
+                <Icon className="h-4.5 w-4.5" />
+              </div>
+              <div className="text-base font-medium">{a.title}</div>
+              <div className="mt-1 text-sm text-[rgb(var(--subtle))]">{a.desc}</div>
+            </button>
+          );
+        })}
       </section>
-
-      {/* Last sessions (stub) */}
-      <section className="mt-8 grid gap-3">
-        <div className="glass px-5 py-3">
-          <div className="text-sm font-medium">Last 5 sessions</div>
-          <ul className="mt-2 grid gap-2">
-            <li className="flex items-center justify-between">
-              <span className="truncate text-sm">Growth strategy review</span>
-              <button className="text-xs px-2 py-1 rounded-full border border-border/60 hover:bg-surface/60">
-                Resume
-              </button>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="truncate text-sm">Partner enablement thread</span>
-              <button className="text-xs px-2 py-1 rounded-full border border-border/60 hover:bg-surface/60">
-                Resume
-              </button>
-            </li>
-          </ul>
-        </div>
-      </section>
-    </main>
+    </div>
   );
 }
-
-export default Home;
