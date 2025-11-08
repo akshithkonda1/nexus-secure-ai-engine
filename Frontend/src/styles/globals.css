@@ -4,7 +4,50 @@
 
 /* ---------- Base reset ---------- */
 @layer base {
-  html, body { height: 100%; }
+  :root {
+    color-scheme: dark;
+    --background: #0e1117;
+    --surface: #161b22;
+    --card: #1f2733;
+    --border: #2b3441;
+    --muted: #94a3b8;
+    --accent: #2563eb;
+    --accent-foreground: #f8fafc;
+    --foreground: #f1f5f9;
+    --nexus-bg: var(--background);
+    --nexus-surface: var(--surface);
+    --nexus-card: var(--card);
+    --nexus-border: var(--border);
+    --nexus-text: var(--foreground);
+    --header: rgba(22, 27, 34, 0.92);
+    --sidebar: rgba(13, 17, 23, 0.92);
+    --input: rgba(31, 39, 51, 0.92);
+    --shadow-soft: 0 18px 45px rgba(2, 6, 23, 0.4);
+    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+  }
+
+  html.light {
+    color-scheme: light;
+    --background: #f5f7fb;
+    --surface: rgba(255, 255, 255, 0.88);
+    --card: rgba(255, 255, 255, 0.92);
+    --border: rgba(15, 23, 42, 0.08);
+    --muted: #64748b;
+    --accent: #2563eb;
+    --accent-foreground: #f8fafc;
+    --foreground: #0f172a;
+    --nexus-bg: var(--background);
+    --nexus-surface: var(--surface);
+    --nexus-card: var(--card);
+    --nexus-border: var(--border);
+    --nexus-text: var(--foreground);
+    --header: rgba(248, 250, 252, 0.92);
+    --sidebar: rgba(248, 250, 252, 0.9);
+    --input: rgba(248, 250, 252, 0.95);
+    --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.14);
+    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  }
+
   html {
     color-scheme: dark light;
     -webkit-font-smoothing: antialiased;
