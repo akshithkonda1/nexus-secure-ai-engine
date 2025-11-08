@@ -1,101 +1,52 @@
-/* Tailwind v4 entry */
+/* Frontend/src/styles/globals.css */
+
+/* Tailwind v4 import */
 @import "tailwindcss";
 
-/* optional: if you later want to @apply any utilities in CSS,
-   uncomment the next line so v4 allows it.
-   @reference "tailwindcss";
-*/
-
-/* Theme tokens (v4) */
-@theme {
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
-    "Segoe UI Emoji";
-
-  /* Dark */
-  --color-bg: #0e1117;
-  --color-surface: #161b22;
-  --color-elevated: #1f2733;
-  --color-border: #2b3441;
-  --color-accent: #2563eb;
-  --color-text: #e6edf3;
-
-  /* Light */
-  --color-bg-light: #f9fafb;
-  --color-surface-light: #ffffff;
-  --color-elevated-light: #f3f4f6;
-  --color-border-light: #e5e7eb;
-  --color-text-light: #111827;
-
-  --radius-xl: 1rem;
-  --shadow-soft: 0 6px 18px rgba(0,0,0,.25);
-  --shadow-glow: 0 0 20px rgba(37,99,235,.4);
+/* Dark (default) tokens via CSS variables */
+:root {
+  --bg: #0e1117;
+  --surface: 22 27 34;    /* #161b22 */
+  --panel: 31 39 51;      /* #1f2733 */
+  --border: 43 52 65;     /* #2b3441 */
+  --text: 230 237 243;    /* #e6edf3 */
+  --subtle: 148 163 184;  /* #94a3b8 */
 }
 
-/* Base – set the font-family via plain CSS, not @apply */
-:root { color-scheme: light dark; }
-html, body, #root { height: 100%; }
-
-html.dark, body.dark {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-}
+/* Light theme overrides */
 html.light, body.light {
-  background-color: var(--color-bg-light);
-  color: var(--color-text-light);
-  font-family: var(--font-sans);
+  --bg: #f9fafb;
+  --surface: 255 255 255; /* #ffffff */
+  --panel: 243 244 246;   /* #f3f4f6 */
+  --border: 229 231 235;  /* #e5e7eb */
+  --text: 17 24 39;       /* #111827 */
+  --subtle: 100 116 139;  /* #64748b */
 }
 
-/* Surfaces */
-aside {
-  background: linear-gradient(180deg, var(--color-surface), var(--color-bg));
-  border-right: 1px solid var(--color-border);
-}
-html.light aside {
-  background: linear-gradient(180deg, var(--color-surface-light), var(--color-elevated-light));
-  border-right: 1px solid var(--color-border-light);
+/* Base resets */
+@layer base {
+  html, body, #root { height: 100%; width: 100%; }
+
+  html, body {
+    /* set stack directly in CSS (v4-safe). Use className="font-sans" in JSX if desired */
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: dark light;
+    background: var(--bg);
+    color: rgb(var(--text));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+  }
+
+  * { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+
+  @media (forced-colors: active) {
+    :root { forced-color-adjust: none !important; }
+  }
 }
 
-.card {
-  background: linear-gradient(180deg, var(--color-elevated), #15191f);
-  border: 1px solid rgba(255,255,255,.04);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-}
-html.light .card {
-  background: var(--color-surface-light);
-  border: 1px solid var(--color-border-light);
-  box-shadow: 0 8px 24px rgba(0,0,0,.08);
-}
-
-/* Tokeny helpers */
-.btn {
-  border-radius: .5rem;
-  font-weight: 500;
-  padding: .5rem 1rem;
-  border: 1px solid color-mix(in oklab, var(--color-accent), transparent 75%);
-  background-color: color-mix(in oklab, var(--color-accent), transparent 90%);
-  color: var(--color-accent);
-  transition: all .2s ease;
-}
-.btn:hover {
-  background-color: var(--color-accent);
-  color: #fff;
-  box-shadow: var(--shadow-glow);
-}
-
-.input {
-  width: 100%;
-  border-radius: .5rem;
-  padding: .5rem .75rem;
-  font-size: .875rem;
-  border: 1px solid rgba(255,255,255,.08);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-}
-html.light .input {
-  background-color: var(--color-surface-light);
-  color: var(--color-text-light);
-  border-color: var(--color-border-light);
-}
+/* Optional helpers */
+.surface { background-color: rgb(var(--surface)); }
+.panel   { background-color: rgb(var(--panel)); box-shadow: var(--shadow-card, 0 10px 28px rgba(0,0,0,0.22)); }
+.border  { border-color: rgb(var(--border)); }
+.text-subtle { color: rgb(var(--subtle)); }
