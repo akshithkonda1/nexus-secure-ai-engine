@@ -20,27 +20,26 @@
   }
 
   @media (forced-colors: active) {
-    :root {
-      forced-color-adjust: none !important;
-    }
+    :root { forced-color-adjust: none !important; }
   }
 }
 
 /* ——————————— THEME COLORS ——————————— */
 :root {
-  /* Dark Theme */
+  /* Dark */
   --nexus-bg: #0e1117;
   --nexus-surface: #161b22;
+  --nexus-panel: #1c222b;
   --nexus-card: #1f2733;
   --nexus-border: #2b3441;
   --nexus-accent: #2563eb;
-  --nexus-accent-glow: rgba(37,99,235,0.3);
+  --nexus-accent-glow: rgba(37,99,235,0.30);
   --nexus-text: #e6edf3;
 
-  /* Light Theme */
+  /* Light */
   --nexus-bg-light: #f9fafb;
   --nexus-surface-light: #ffffff;
-  --nexus-card-light: #f3f4f6;
+  --nexus-panel-light: #f4f6f8;
   --nexus-border-light: #e5e7eb;
   --nexus-text-light: #111827;
 }
@@ -49,6 +48,12 @@
 html.dark, body.dark {
   background: var(--nexus-bg);
   color: var(--nexus-text);
+}
+
+header {
+  background: rgba(22,27,34,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--nexus-border);
 }
 
 aside {
@@ -61,23 +66,17 @@ aside {
   background: linear-gradient(180deg, var(--nexus-card), #15191f);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   border-radius: 1rem;
-  border: 1px solid rgba(255,255,255,0.04);
-}
-
-header {
-  background-color: rgba(22,27,34,0.9);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--nexus-border);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* Buttons */
 button {
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   font-weight: 500;
-  padding: 0.5rem 1rem;
-  background-color: rgba(37,99,235,0.1);
+  padding: 0.5rem 0.9rem;
+  background-color: rgba(37,99,235,0.10);
   color: var(--nexus-accent);
-  border: 1px solid rgba(37,99,235,0.25);
+  border: 1px solid rgba(37,99,235,0.22);
 }
 button:hover {
   background-color: var(--nexus-accent);
@@ -88,12 +87,11 @@ button:hover {
 /* Inputs */
 input, textarea {
   width: 100%;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  background-color: var(--nexus-surface);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.95rem;
+  border: 1px solid rgba(255,255,255,0.09);
+  background-color: var(--nexus-panel);
   color: var(--nexus-text);
 }
 input:focus, textarea:focus {
@@ -107,33 +105,21 @@ html.light, body.light {
   background: var(--nexus-bg-light);
   color: var(--nexus-text-light);
 }
-
+.light header {
+  background: rgba(255,255,255,0.85);
+  border-bottom: 1px solid var(--nexus-border-light);
+  backdrop-filter: blur(10px);
+}
 .light aside {
-  background: linear-gradient(180deg, var(--nexus-surface-light), var(--nexus-card-light));
+  background: linear-gradient(180deg, var(--nexus-surface-light), var(--nexus-panel-light));
   border-right: 1px solid var(--nexus-border-light);
 }
-
 .light .card, .light .panel {
   background: var(--nexus-surface-light);
   border: 1px solid var(--nexus-border-light);
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
 
-/* ——————————— SHADOW GLOW ——————————— */
-.glow {
-  box-shadow: 0 0 18px var(--nexus-accent-glow);
-}
-
-/* Titles */
-h1, h2, h3 {
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-/* Section */
-.section-title {
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
+/* Helpers */
+.container-page { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+.section-title { @apply text-lg font-semibold mb-3; }
