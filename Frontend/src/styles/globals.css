@@ -68,6 +68,21 @@ html.light {
     color-mix(in oklab, rgb(var(--panel)), transparent 0%);
 }
 
+/* Legacy utilities kept for backward compatibility */
+.surface-card {
+  @apply rounded-2xl border border-border/20 shadow-card;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0) 55%),
+    color-mix(in oklab, rgb(var(--panel)), transparent 6%);
+}
+
+.glass-card {
+  @apply rounded-2xl border border-border/10 shadow-card backdrop-blur-xl;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 60%),
+    color-mix(in oklab, rgb(var(--panel)), transparent 30%);
+}
+
 .btn {
   @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium border border-transparent;
   background: linear-gradient(135deg, var(--brand) 0%, var(--brand-alt) 35%, var(--brand-purple) 100%);
