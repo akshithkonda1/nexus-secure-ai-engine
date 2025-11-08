@@ -44,7 +44,9 @@ export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarP
   const title = useMemo(() => TITLE_MAP[activePath] ?? "Nexus.ai", [activePath]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[rgba(255,255,255,0.35)] bg-white/70 backdrop-blur dark:border-white/10 dark:bg-[#0b0f16]/70">
+    <header
+      className="sticky top-0 z-30 border-b border-[rgba(180,200,255,0.45)] bg-gradient-to-r from-[rgba(247,250,255,0.85)] via-[rgba(226,238,255,0.75)] to-[rgba(247,250,255,0.7)] backdrop-blur dark:border-white/10 dark:bg-[#0b0f16]/70"
+    >
       <div className="mx-auto flex h-20 w-full items-center justify-between gap-6 px-4 sm:px-10">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div className="flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[rgb(var(--text)/0.45)]">
