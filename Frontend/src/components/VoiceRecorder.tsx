@@ -1,16 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { motion } from "framer-motion";
+import { Mic, Square } from "lucide-react";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 
-/**
- * VoiceRecorder
- * - Press to start/stop recording.
- * - Animated waveform using WebAudio AnalyserNode.
- * - Attempts to use Web Speech API for transcription if available (best-effort).
- */
-type Props = {
-  active?: boolean;
-  onStart?: () => void;
-  onStop?: (transcript: string, audioBlob: Blob | null) => void;
-  onError?: (err: unknown) => void;
+type VoiceRecorderProps = {
+  onCapture: (payload: { transcript: string; blob: Blob | null }) => void;
+  compact?: boolean;
 };
 
 export default function VoiceRecorder({ active, onStart, onStop, onError }: Props) {
@@ -78,9 +73,6 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
 
       onError?.(err);
     }
-  }
-
-  function stop() {
     try {
       mediaRef.current?.stop();
       stopStreamTracks();
@@ -151,70 +143,39 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="relative flex items-center gap-2">
       <button
         type="button"
-        onClick={() => (isRec ? stop() : start())}
-        className={`grid h-10 w-10 place-items-center rounded-xl border transition ${
-          isRec
-            ? "border-red-500 bg-red-600 text-white hover:bg-red-700"
-            : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-        }`}
-        title={isRec ? "Stop recording" : "Record voice"}
-        aria-label={isRec ? "Stop recording" : "Record voice"}
+        onClick={handleToggle}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border))] bg-white/80 text-[color:var(--brand)] shadow-soft transition hover:border-[color:var(--brand)] hover:text-white hover:bg-[color:var(--brand)] dark:bg-white/10"
+        aria-label={isRecording ? "Stop voice recording" : "Start voice recording"}
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-          <path
-            d="M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3z"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path d="M19 11a7 7 0 01-14 0M12 21v-3" stroke="currentColor" strokeWidth="2" />
-        </svg>
+        {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
       </button>
 
-      {/* waveform canvas (shows only when recording) */}
-      <div className="hidden sm:block">
-        <canvas
-          ref={canvasRef}
-          width={160}
-          height={32}
-          className={`rounded-md ${isRec ? "opacity-100" : "opacity-0"} transition-opacity`}
-        />
+      <div className="hidden sm:flex h-12 items-center overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white/60 px-3 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-end gap-[3px]">
+          {levels.map((value, idx) => (
+            <motion.span
+              key={idx}
+              animate={{ height: isRecording ? `${Math.max(6, value * 32)}px` : "6px" }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="w-[3px] rounded-full bg-[color:var(--brand)]/80"
+              style={{ opacity: isRecording ? Math.max(0.25, value) : 0.35 }}
+            />
+          ))}
+        </div>
+        <span className="ml-3 text-xs font-medium tracking-wide text-[rgb(var(--text)/0.6)]">
+          {isRecording ? friendlyTimer : compact ? "" : "Voice"}
+        </span>
       </div>
-
-      {permDenied && (
-        <span className="text-xs text-red-600 dark:text-red-400">Mic permission denied.</span>
-      )}
     </div>
   );
 }
 
-/** Try Web Speech API for quick transcript (best-effort, safe fallback). */
-async function tryTranscribe(_blob: Blob): Promise<string> {
-  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  if (!SR) return "";
-
-  return new Promise<string>((resolve) => {
-    try {
-      const rec = new SR();
-      rec.lang = "en-US";
-      rec.interimResults = false;
-      rec.maxAlternatives = 1;
-      let text = "";
-      rec.onresult = (e: any) => {
-        text = e.results?.[0]?.[0]?.transcript || "";
-      };
-      rec.onend = () => resolve(text);
-      rec.onerror = () => resolve("");
-      rec.start();
-      setTimeout(() => {
-        try {
-          rec.stop();
-        } catch {}
-      }, 5000);
-    } catch {
-      resolve("");
-    }
-  });
+function createMockTranscript(seconds: number) {
+  if (!seconds) return "Voice memo";
+  if (seconds < 5) return "Voice memo (short)";
+  if (seconds < 15) return "Voice memo – summarise this snippet";
+  return "Voice memo – please transcribe and summarise.";
 }
