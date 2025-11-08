@@ -66,7 +66,7 @@ export function Settings() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.6)] bg-white/80 px-4 py-2 text-sm text-[rgb(var(--text))] shadow-soft"
+            className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] px-4 py-2 text-sm text-[rgb(var(--text))] shadow-soft"
           >
             <Sparkle className="h-4 w-4 text-[color:var(--brand)]" />
             {toast}
@@ -90,11 +90,11 @@ export function Settings() {
         title="Preferred Models"
         description="Drag to rank your top large-language models. Highest priority is attempted first."
       >
-        <div className="rounded-3xl border border-[rgba(255,255,255,0.6)] bg-white/80 p-4 shadow-soft dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] p-4 shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
           <Reorder.Group axis="y" values={modelOrder} onReorder={setModelOrder} className="space-y-3">
             {modelOrder.map((model, index) => (
               <Reorder.Item key={model} value={model} className="list-none">
-                <motion.div layout className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(0,133,255,0.2)] bg-white/80 px-4 py-3 text-sm font-medium text-[rgb(var(--text))] shadow-soft dark:border-white/10 dark:bg-white/5">
+                <motion.div layout className="flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-4 py-3 text-sm font-medium text-[rgb(var(--text))] shadow-soft dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-3">
                     <GripVertical className="h-4 w-4 text-[rgb(var(--text)/0.4)]" />
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--brand)]/15 text-xs font-semibold text-[color:var(--brand)]">{index + 1}</span>
@@ -118,7 +118,7 @@ export function Settings() {
                   key={model}
                   type="button"
                   onClick={() => setModelOrder((prev) => [...prev, model])}
-                  className="inline-flex items-center gap-2 rounded-full border border-[rgba(0,133,255,0.2)] bg-[rgba(0,133,255,0.1)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)]"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-[color-mix(in_srgb,var(--brand)_16%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)]"
                 >
                   <Plus className="h-3 w-3" />
                   {model}
@@ -154,7 +154,7 @@ export function Settings() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           rows={6}
-          className="w-full rounded-3xl border border-[rgba(0,133,255,0.2)] bg-white/80 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--text))] shadow-inner outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[rgba(0,133,255,0.2)] dark:border-white/10 dark:bg-white/5"
+          className="w-full rounded-3xl border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--text))] shadow-inner outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:border-white/10 dark:bg-white/5"
           placeholder="Share tone, compliance rules, or escalation logic..."
         />
         <div className="text-xs text-[rgb(var(--text)/0.5)]">
@@ -191,13 +191,13 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (val
     >
       <span
         className={cn(
-          "flex h-10 w-20 items-center rounded-full border border-[rgba(0,133,255,0.25)] bg-white/80 px-1 shadow-soft transition dark:border-white/10 dark:bg-white/5",
+          "flex h-10 w-20 items-center rounded-full border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-white/80 px-1 shadow-soft transition dark:border-white/10 dark:bg-white/5",
           checked && "justify-end"
         )}
       >
         <motion.span
           layout
-          className="grid h-8 w-8 place-items-center rounded-full bg-[rgba(0,133,255,0.2)] text-[color:var(--brand)] shadow-inner"
+          className="grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] text-[color:var(--brand)] shadow-inner"
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           {checked ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
