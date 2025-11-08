@@ -1,34 +1,8 @@
-import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import React, { useMemo } from "react";
+import DOMPurify from "dompurify";
 import { cn, formatBytes } from "@/lib/utils";
+import { renderMarkdown } from "@/lib/markdown";
 import type { ChatMessage } from "@/hooks/useChatStore";
-
-const markdownComponents = {
-  code({ inline, className, children, ...props }: any) {
-    const match = /language-(\w+)/.exec(className || "");
-    return !inline ? (
-      <pre
-        className={cn(
-          "mt-3 overflow-x-auto rounded-xl border border-[rgba(0,0,0,0.06)] bg-[rgba(9,11,30,0.9)] p-4 text-sm text-white shadow-soft",
-          "dark:border-[rgba(255,255,255,0.05)]"
-        )}
-        {...props}
-      >
-        <code className={cn("font-mono", match ? className : "")}>{children}</code>
-      </pre>
-    ) : (
-      <code
-        className={cn(
-          "rounded bg-[rgba(0,133,255,0.1)] px-1.5 py-0.5 font-mono text-[13px] text-[color:var(--brand)]"
-        )}
-        {...props}
-      >
-        {children}
-      </code>
-    );
-  }
-};
 
 type Props = {
   message: ChatMessage;
@@ -36,6 +10,10 @@ type Props = {
 
 export function ChatMessageBubble({ message }: Props) {
   const isUser = message.role === "user";
+  const sanitizedContent = useMemo(() => {
+    if (!message.content) return "";
+    return DOMPurify.sanitize(renderMarkdown(message.content));
+  }, [message.content]);
   return (
     <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}> 
       <div
@@ -53,11 +31,10 @@ export function ChatMessageBubble({ message }: Props) {
             <span className="h-2 w-2 animate-bounce rounded-full bg-white" />
           </div>
         ) : (
-          <div className="markdown-body text-inherit">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {message.content}
-            </ReactMarkdown>
-          </div>
+          <div
+            className="markdown-body text-inherit"
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+          />
         )}
 
         {message.attachments && message.attachments.length > 0 && (
