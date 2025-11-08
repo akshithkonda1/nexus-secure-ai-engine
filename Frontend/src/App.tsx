@@ -1,45 +1,46 @@
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useMemo } from 'react';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
-import { Home } from './pages/Home';
-import { Chat } from './pages/Chat';
-import { History } from './pages/History';
-import { Templates } from './pages/Templates';
-import { Projects } from './pages/Projects';
-import { Documents } from './pages/Documents';
-import { Community } from './pages/Community';
-import { Settings } from './pages/Settings';
-
-function Shell() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const active = useMemo(() => location.pathname || '/home', [location.pathname]);
-
-  return (
-    <div className="min-h-screen grid grid-cols-[64px_1fr]">
-      <Sidebar active={active} onNavigate={(p) => navigate(p)} />
-      <div className="min-h-screen">
-        <Header />
-        <main className="px-8 pb-16 pt-8 max-w-7xl mx-auto">
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/templates" element={<Templates />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </div>
-  );
-}
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
+import { Home } from "@/pages/Home";
+import { Chat } from "@/pages/Chat";
+import { Settings } from "@/pages/Settings";
+import { Sessions } from "@/pages/Sessions";
+import { SessionConsole } from "@/pages/SessionConsole";
+import { Templates } from "@/pages/Templates";
+import { Documents } from "@/pages/Documents";
+import { Metrics } from "@/pages/Metrics";
+import { History } from "@/pages/History";
+import { ThemeProvider } from "@/theme/useTheme";
 
 export default function App() {
-  return <Shell />;
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-[var(--nexus-bg)] text-[var(--nexus-text)]">
+          <Header />
+          <Sidebar />
+          <main className="pt-16 pl-16 md:pl-20">
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/settings" element={<Settings />} />
+
+              <Route path="/sessions" element={<Sessions />} />
+              <Route path="/sessions/:id" element={<SessionConsole />} />
+
+              <Route path="/templates" element={<Templates />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/docs" element={<Navigate to="/documents" replace />} />
+              <Route path="/metrics" element={<Metrics />} />
+              <Route path="/history" element={<History />} />
+
+              <Route path="/console" element={<Navigate to="/sessions" replace />} />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </main>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 }
