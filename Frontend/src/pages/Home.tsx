@@ -40,23 +40,23 @@ export function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-10 pt-8">
+    <div className="space-y-12 pt-10 xl:space-y-16">
       <section className="home-hero shadow-card">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="flex flex-col gap-6">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] xl:gap-16 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <div className="flex flex-col gap-7">
             <span className="home-hero-badge">
               <ChevronRight className="h-3.5 w-3.5" /> Nexus Hub
             </span>
-            <div className="space-y-4 text-balance">
-              <h1 className="text-4xl font-semibold tracking-tight text-[rgb(var(--text))] sm:text-5xl">
+            <div className="space-y-5 text-balance">
+              <h1 className="text-4xl font-semibold tracking-tight text-[rgb(var(--text))] sm:text-5xl xl:text-6xl">
                 Welcome to Nexus
               </h1>
-              <p className="max-w-xl text-base text-[rgb(var(--text)/0.78)] sm:text-lg">
+              <p className="max-w-2xl text-base leading-relaxed text-[rgb(var(--text)/0.78)] sm:text-lg">
                 Orchestrate multi-model debates, keep knowledge synchronised, and move and
                 think with more certainty.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               <button type="button" className="btn" onClick={() => navigate("/chat")}>
                 Chat with Nexus <ArrowRight className="h-4.5 w-4.5" />
               </button>
@@ -65,7 +65,7 @@ export function Home() {
               </button>
             </div>
           </div>
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -83,7 +83,7 @@ export function Home() {
                       <div className="text-sm font-semibold text-[rgb(var(--text))] sm:text-base">
                         {feature.title}
                       </div>
-                      <p className="mt-1 text-sm text-[rgb(var(--text)/0.72)]">
+                      <p className="mt-1 text-sm leading-relaxed text-[rgb(var(--text)/0.72)]">
                         {feature.description}
                       </p>
                       <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--brand)]">
@@ -98,13 +98,13 @@ export function Home() {
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-7 md:grid-cols-2 xl:grid-cols-4 xl:gap-8">
         {FEATURES.map((feature) => {
           const Icon = feature.icon;
           return (
             <button
               key={feature.title}
-              className="panel group text-left px-5 py-5 transition-shadow hover:shadow-card"
+              className="panel group text-left px-6 py-6 transition-shadow hover:shadow-card xl:px-7 xl:py-7"
               type="button"
               onClick={() => navigate(feature.to)}
             >
@@ -112,7 +112,7 @@ export function Home() {
                 <Icon className="h-4.5 w-4.5" />
               </div>
               <div className="text-base font-medium text-[rgb(var(--text))]">{feature.title}</div>
-              <div className="mt-1 text-sm text-[rgb(var(--subtle))]">{feature.description}</div>
+              <div className="mt-1 text-sm leading-relaxed text-[rgb(var(--subtle))]">{feature.description}</div>
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[color:var(--brand)] opacity-0 transition group-hover:opacity-100">
                 Explore <ArrowRight className="h-3.5 w-3.5" />
               </span>
@@ -121,9 +121,9 @@ export function Home() {
         })}
       </section>
 
-      <section className="panel px-8 py-8 text-[rgb(var(--text)/0.8)]">
+      <section className="panel px-9 py-9 text-[rgb(var(--text)/0.8)] xl:px-12 xl:py-12">
         <h2 className="text-xl font-semibold text-[rgb(var(--text))]">Nexus Control Center</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed">
+        <p className="mt-3 max-w-3xl text-sm leading-relaxed">
           Customize your workspace, manage team access, and ensure every debate remains auditable. The settings area lets you
           connect data sources, configure model defaults, and toggle security guardrails without leaving your flow.
         </p>
