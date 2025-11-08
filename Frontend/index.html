@@ -1,49 +1,20 @@
-<!doctype html>
-<html lang="en" class="h-full">
+\<!doctype html>
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0B0F14" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <title>Nexus Secure Workspace</title>
-
-    <!-- HARD opt-out from Windows/Edge High-Contrast -->
-    <style>
-      /* global opt-out, you asked to get rid of it */
-      * { forced-color-adjust: none !important; }
-      html, body, #root { height: 100%; }
-    </style>
-
-    <!-- Early theme application to avoid any flash -->
-    <script>
-      (function () {
-        function apply(choice) {
-          try { localStorage.setItem("theme", choice); } catch (e) {}
-          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-          var isDark = choice === "dark" || (choice === "system" && prefersDark);
-          var el = document.documentElement;
-          if (isDark) el.classList.add("dark"); else el.classList.remove("dark");
-          el.dataset.theme = isDark ? "dark" : "light";
-        }
-        window.__setTheme = apply;
-        var saved = "system";
-        try { saved = localStorage.getItem("theme") || "system"; } catch (e) {}
-        apply(saved);
-        if (window.matchMedia) {
-          var mq = window.matchMedia("(prefers-color-scheme: dark)");
-          var onChange = function () {
-            var current = "system";
-            try { current = localStorage.getItem("theme") || "system"; } catch (e) {}
-            if (current === "system") apply("system");
-          };
-          mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
-        }
-      })();
-    </script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Nexus</title>
   </head>
-  <body class="bg-app text-ink antialiased">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

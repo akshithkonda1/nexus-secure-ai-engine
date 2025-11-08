@@ -1,59 +1,39 @@
-import { Fragment } from "react";
-import { Clock, MessageCircle, Settings, X } from "lucide-react";
+import { useMemo } from "react";
+import {
+  MessageCircle,
+  Folder,
+  Sparkles,
+  FileText,
+  BarChart3,
+  History,
+  Settings as SettingsIcon,
+} from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+type SidebarProps = {
+  onNavigate?: (path: string) => void;
+  active?: string;
+};
 
-interface SidebarProps {
-  variant?: "desktop" | "mobile";
-  onNavigate?: () => void;
-}
+type NavItem = {
+  label: string;
+  to: string;
+  icon: JSX.Element;
+};
 
-const NAV_ITEMS = [
-  { icon: MessageCircle, label: "Telemetry" },
-  { icon: Clock, label: "History" },
-  { icon: Settings, label: "Settings" },
-] as const;
-
-export function Sidebar({ variant = "desktop", onNavigate }: SidebarProps) {
-  const content = (
-    <Fragment>
-      <div className="flex-1 space-y-1">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            className="group flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-muted transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            onClick={onNavigate}
-          >
-            <item.icon className="h-5 w-5 text-muted transition group-hover:text-primary" aria-hidden="true" />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </div>
-      <div className="space-y-4 border-t border-white/5 pt-4">
-        <ThemeToggle />
-      </div>
-    </Fragment>
+export function Sidebar({ onNavigate, active = "/home" }: SidebarProps) {
+  const items = useMemo<NavItem[]>(
+    () => [
+      { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
+      { label: "Sessions", to: "/sessions", icon: <Folder className="h-5 w-5" /> },
+      { label: "Templates", to: "/templates", icon: <Sparkles className="h-5 w-5" /> },
+      { label: "Documents", to: "/docs", icon: <FileText className="h-5 w-5" /> },
+      { label: "Telemetry", to: "/metrics", icon: <BarChart3 className="h-5 w-5" /> },
+      { label: "History", to: "/history", icon: <History className="h-5 w-5" /> },
+      { label: "Settings", to: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
+    ],
+    []
   );
-
-  if (variant === "mobile") {
-    return (
-      <aside className="flex h-full w-72 max-w-full flex-col bg-elevated px-4 pb-6 pt-6 text-white shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <span className="text-sm font-semibold uppercase tracking-wide text-muted">Navigation</span>
-          <button
-            type="button"
-            onClick={onNavigate}
-            className="inline-flex items-center justify-center rounded-lg border border-white/10 p-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            aria-label="Close navigation"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        {content}
-      </aside>
-    );
-  }
 
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-white/10 bg-elevated px-4 pb-8 pt-20 text-white shadow-[0_10px_40px_rgba(0,0,0,0.45)] md:flex">
@@ -61,5 +41,3 @@ export function Sidebar({ variant = "desktop", onNavigate }: SidebarProps) {
     </aside>
   );
 }
-
-export default Sidebar;
