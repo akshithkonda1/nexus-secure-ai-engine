@@ -1,31 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Nexus</title>
-    <script>
-      // Pre-init theme to avoid dark background + black text "blank" flash
-      (function () {
-        try {
-          var t = localStorage.getItem('nexus-theme') || 'dark';
-          var root = document.documentElement;
-          root.classList.remove('light','dark');
-          root.classList.add(t);
-          // Ensure readable colors before CSS variables apply
-          if (t === 'dark') {
-            root.style.background = '#0e1117';
-            root.style.color = '#e6edf3';
-          } else {
-            root.style.background = '#f9fafb';
-            root.style.color = '#111827';
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <link rel="preconnect" href="https://rsms.me" />
+    <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
   </head>
-  <body>
+  <body class="dark">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

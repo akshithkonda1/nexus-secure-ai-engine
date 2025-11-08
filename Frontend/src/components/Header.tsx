@@ -1,43 +1,22 @@
-import { Menu, Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 
-interface HeaderProps {
-  onToggleSidebar?: () => void;
-}
-
-export function Header({ onToggleSidebar }: HeaderProps) {
+export function Header() {
   return (
-    <header className="fixed top-0 right-0 left-0 z-40 flex h-16 items-center border-b border-white/10 bg-elevated/90 backdrop-blur lg:left-64">
-      <div className="flex w-full items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          aria-label="Open navigation"
-          className="inline-flex items-center justify-center rounded-lg border border-white/10 p-2 text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
-          onClick={onToggleSidebar}
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <div className="flex flex-1 items-center gap-4">
-          <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
-            Nexus <span className="ml-1 text-xs font-medium uppercase text-muted">Beta</span>
-          </h1>
-          <div className="hidden flex-1 items-center gap-2 rounded-lg border border-white/10 bg-surface/60 px-3 py-2 text-sm text-muted shadow-inner transition hover:border-white/20 focus-within:border-primary focus-within:text-white lg:flex">
-            <Search className="h-4 w-4" aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Search"
-              className="h-5 w-full bg-transparent text-sm text-white placeholder:text-muted focus:outline-none"
-            />
-          </div>
+    <header className="fixed top-0 left-0 right-0 h-16 flex items-center z-50 px-4 bg-[color:var(--nexus-surface)]/90 backdrop-blur-md border-b border-[color:var(--nexus-border)]">
+      <div className="flex-1 flex items-center gap-3">
+        <span className="text-lg font-semibold glow-text">Nexus</span>
+        <div className="relative w-full max-w-md">
+          <Search className="h-4 w-4 absolute left-3 top-2.5 opacity-70" />
+          <input
+            className="pl-9 pr-3 py-2 w-full rounded-lg bg-[color:var(--nexus-card)] border border-[color:var(--nexus-border)] text-sm"
+            placeholder="Search sessions, templates, providers…"
+          />
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          Join Waitlist
-        </button>
       </div>
+      <button className="ml-4 flex items-center gap-2">
+        <Sparkles className="h-4 w-4" />
+        Join Waitlist
+      </button>
     </header>
   );
 }
-
-export default Header;
