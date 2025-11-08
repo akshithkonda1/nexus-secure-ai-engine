@@ -20,7 +20,7 @@ export function Home() {
         <h1 className="text-3xl font-semibold tracking-tight">Welcome to Nexus.ai</h1>
         <p className="mt-2 max-w-[64ch] text-[rgb(var(--subtle))]">
           An AI Debate Engine orchestration that feels natural.
-       Nexus allows you to debate multiple engines at once quickly but also helps you know how the model came to that answer.
+       Nexus allows you to debate multiple engines at once while also validating its own results quickly but also helps you know how the model came to that answer.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
