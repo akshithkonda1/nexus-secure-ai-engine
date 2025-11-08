@@ -3,7 +3,7 @@ import { ArrowUpRight, FolderKanban, PlayCircle, Settings, Upload } from "lucide
 const quickActions = [
   {
     title: "New session",
-    description: "Spin up an AI copilot session in seconds with curated prompts.",
+    description: "Spin up an AI debate session in seconds with curated prompts.",
     icon: PlayCircle,
     accent: "from-accent/40 via-accent/20 to-transparent",
   },
