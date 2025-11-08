@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useMemo } from "react";
+import { ThemeProvider } from "@/theme/useTheme";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Home } from "@/pages/Home";
@@ -10,36 +12,44 @@ import { Templates } from "@/pages/Templates";
 import { Documents } from "@/pages/Documents";
 import { Metrics } from "@/pages/Metrics";
 import { History } from "@/pages/History";
-import { ThemeProvider } from "@/theme/useTheme";
 
-export default function App() {
+function Shell() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const active = useMemo(() => (location.pathname === "/" ? "/home" : location.pathname), [location.pathname]);
+
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-[var(--nexus-bg)] text-[var(--nexus-text)]">
+    <div className="min-h-screen bg-[var(--bg)] text-[rgb(var(--text))]">
+      <div className="min-h-screen grid grid-cols-[200px_1fr]">
+        <Sidebar active={active} onNavigate={(path) => navigate(path)} />
+        <div className="flex min-h-screen flex-col">
           <Header />
-          <Sidebar />
-          <main className="pt-16 pl-16 md:pl-20">
+          <main className="w-full max-w-7xl flex-1 px-8 pb-16 pt-8 mx-auto">
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={<Home />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/settings" element={<Settings />} />
-
               <Route path="/sessions" element={<Sessions />} />
               <Route path="/sessions/:id" element={<SessionConsole />} />
-
               <Route path="/templates" element={<Templates />} />
               <Route path="/documents" element={<Documents />} />
-              <Route path="/docs" element={<Navigate to="/documents" replace />} />
               <Route path="/metrics" element={<Metrics />} />
               <Route path="/history" element={<History />} />
-
-              <Route path="/console" element={<Navigate to="/sessions" replace />} />
-              <Route path="*" element={<Home />} />
+              <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
           </main>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <Shell />
       </BrowserRouter>
     </ThemeProvider>
   );
