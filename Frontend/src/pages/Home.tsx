@@ -36,13 +36,9 @@ const quickActions: QuickAction[] = [
   },
 ];
 
-const recentSessions = [
-  { name: "Growth strategy review", date: "2 hours ago" },
-  { name: "Product launch sync", date: "Yesterday" },
-  { name: "Customer transcript import", date: "2 days ago" },
-  { name: "Quarterly metrics deep dive", date: "Last week" },
-  { name: "R&D narrative planning", date: "Last week" },
-];
+export function Home() {
+  const nav = useNavigate();
+  const { createSession, importTranscript, sessions } = sessionStore.use();
 
 function QuickCard({ title, description, cta, onClick, Icon }: QuickAction) {
   return (
@@ -90,7 +86,7 @@ const Home = () => {
             </button>
           </div>
         </div>
-      </section>
+      </div>
 
       <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {quickActions.map((action) => (
@@ -125,10 +121,9 @@ const Home = () => {
               </button>
             </div>
           ))}
+          {sessions.length === 0 && <div className="text-sm text-gray-400">No sessions yet.</div>}
         </div>
       </section>
     </div>
   );
-};
-
-export default Home;
+}

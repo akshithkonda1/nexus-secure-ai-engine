@@ -1,4 +1,4 @@
-const ChatPage = () => {
+export function Chat() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
       <div className="glass-card max-w-md space-y-3 px-8 py-10 text-center">
@@ -8,6 +8,6 @@ const ChatPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default ChatPage;
+export default Chat;

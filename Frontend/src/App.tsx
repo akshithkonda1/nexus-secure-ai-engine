@@ -1,53 +1,46 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
+import { Home } from "@/pages/Home";
+import { Chat } from "@/pages/Chat";
+import { Settings } from "@/pages/Settings";
+import { Sessions } from "@/pages/Sessions";
+import { SessionConsole } from "@/pages/SessionConsole";
+import { Templates } from "@/pages/Templates";
+import { Documents } from "@/pages/Documents";
+import { Metrics } from "@/pages/Metrics";
+import { History } from "@/pages/History";
+import { ThemeProvider } from "@/theme/useTheme";
 
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
-import ChatPage from "@/pages/Chat";
-import Home from "@/pages/Home";
-import SettingsPage from "@/pages/Settings";
-
-const AppShell = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const activePath = location.pathname;
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <div className="flex">
-        <Sidebar active={activePath} onNavigate={navigate} />
-        <main className="flex-1 lg:pl-24">
-          <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-24 sm:px-6 lg:px-12">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-};
+    <ThemeProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-[var(--nexus-bg)] text-[var(--nexus-text)]">
+          <Header />
+          <Sidebar />
+          <main className="pt-16 pl-16 md:pl-20">
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/settings" element={<Settings />} />
 
-const App = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route index element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          {[
-            "/sessions",
-            "/templates",
-            "/docs",
-            "/metrics",
-            "/history",
-          ].map((path) => (
-            <Route key={path} path={path} element={<Home />} />
-          ))}
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
-};
+              <Route path="/sessions" element={<Sessions />} />
+              <Route path="/sessions/:id" element={<SessionConsole />} />
 
-export default App;
+              <Route path="/templates" element={<Templates />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/docs" element={<Navigate to="/documents" replace />} />
+              <Route path="/metrics" element={<Metrics />} />
+              <Route path="/history" element={<History />} />
+
+              <Route path="/console" element={<Navigate to="/sessions" replace />} />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </main>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}

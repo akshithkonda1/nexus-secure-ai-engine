@@ -1,28 +1,31 @@
+import { NavLink } from "react-router-dom";
 import {
-  BarChart3,
-  FileText,
-  History,
+  MessageSquare,
   Layers,
-  MessageCircle,
-  Settings as SettingsIcon,
+  FileText,
+  BarChart3,
+  History as HistoryIcon,
+  Settings as Cog,
   Sparkles,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
-import ThemeToggle from "@/components/ThemeToggle";
+const item = "flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white/5 transition-colors";
+const active = "bg-white/10 text-white shadow-soft border border-white/10";
 
-const navItems = [
-  { label: "Chat", path: "/chat", icon: MessageCircle },
-  { label: "Sessions", path: "/sessions", icon: Layers },
-  { label: "Templates", path: "/templates", icon: Sparkles },
-  { label: "Documents", path: "/docs", icon: FileText },
-  { label: "Metrics", path: "/metrics", icon: BarChart3 },
-  { label: "History", path: "/history", icon: History },
-  { label: "Settings", path: "/settings", icon: SettingsIcon },
+const links = [
+  { to: "/chat", label: "Chat", Icon: MessageSquare },
+  { to: "/sessions", label: "Sessions", Icon: Layers },
+  { to: "/templates", label: "Templates", Icon: Sparkles },
+  { to: "/documents", label: "Documents", Icon: FileText },
+  { to: "/metrics", label: "Metrics", Icon: BarChart3 },
+  { to: "/history", label: "History", Icon: HistoryIcon },
+  { to: "/settings", label: "Settings", Icon: Cog },
 ];
 
 type SidebarProps = {
-  active: string;
-  onNavigate: (path: string) => void;
+  variant?: "desktop" | "mobile";
+  onNavigate?: (path: string) => void;
 };
 
 const Sidebar = ({ active, onNavigate }: SidebarProps) => {
@@ -55,6 +58,4 @@ const Sidebar = ({ active, onNavigate }: SidebarProps) => {
       </div>
     </aside>
   );
-};
-
-export default Sidebar;
+}
