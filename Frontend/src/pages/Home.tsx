@@ -1,9 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { PlayCircle, UploadCloud, Sparkles, Settings2 } from "lucide-react";
 
-function Capsule({ Icon, title, onClick }: { Icon: any; title: string; onClick: () => void }) {
+function Capsule({
+  Icon,
+  title,
+  onClick,
+}: {
+  Icon: any;
+  title: string;
+  onClick: () => void;
+}) {
   return (
-    <button onClick={onClick} className="glass lift text-left px-5 py-4 flex items-center gap-4">
+    <button
+      onClick={onClick}
+      className="glass lift text-left px-5 py-4 flex items-center gap-4"
+    >
       <span className="inline-grid place-items-center h-10 w-10 rounded-xl bg-prism ring-prism">
         <Icon className="h-5 w-5" />
       </span>
@@ -12,21 +23,31 @@ function Capsule({ Icon, title, onClick }: { Icon: any; title: string; onClick: 
   );
 }
 
-export default function Home() {
+export function Home() {
   const navigate = useNavigate();
+
   return (
-    <div className="p-6">
+    <main className="min-h-screen w-full text-foreground">
+      {/* Hero */}
       <section className="glass bg-grid px-8 py-10">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <div className="text-xs tracking-[0.18em] uppercase text-subtle mb-2">Nexus • Beta</div>
-            <h1 className="text-3xl font-semibold">
+            <div className="text-xs tracking-[0.18em] uppercase text-subtle mb-2">
+              Nexus • Beta
+            </div>
+            <h1 className="text-3xl sm:text-[34px] font-semibold">
               Welcome to <span className="bg-prism px-2 py-0.5 rounded-md">Nexus.ai</span>
             </h1>
-            <p className="text-sm text-subtle mt-2">Orchestrate, debate, and ship with telemetry you can trust.</p>
+            <p className="text-sm text-subtle mt-2">
+              Orchestrate, debate, and ship with telemetry you can trust.
+            </p>
           </div>
+
           <div className="flex items-center gap-2">
-            <button className="h-10 px-4 rounded-xl bg-prism lift" onClick={() => navigate("/chat")}>
+            <button
+              className="h-10 px-4 rounded-xl bg-prism lift"
+              onClick={() => navigate("/chat")}
+            >
               Launch Console
             </button>
             <button
@@ -39,9 +60,14 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Quick actions */}
       <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 mt-6">
         <Capsule Icon={PlayCircle} title="New session" onClick={() => navigate("/chat")} />
-        <Capsule Icon={UploadCloud} title="Import transcript" onClick={() => navigate("/documents")} />
+        <Capsule
+          Icon={UploadCloud}
+          title="Import transcript"
+          onClick={() => navigate("/documents")}
+        />
         <Capsule Icon={Sparkles} title="Templates" onClick={() => navigate("/templates")} />
         <Capsule Icon={Settings2} title="Settings" onClick={() => navigate("/settings")} />
       </section>
