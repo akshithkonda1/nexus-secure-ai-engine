@@ -45,6 +45,29 @@ export default function Home() {
         <Capsule Icon={Sparkles} title="Templates" onClick={() => navigate("/templates")} />
         <Capsule Icon={Settings2} title="Settings" onClick={() => navigate("/settings")} />
       </section>
-    </div>
+
+      {/* Last sessions (stub) */}
+      <section className="mt-8 grid gap-3">
+        <div className="glass px-5 py-3">
+          <div className="text-sm font-medium">Last 5 sessions</div>
+          <ul className="mt-2 grid gap-2">
+            <li className="flex items-center justify-between">
+              <span className="truncate text-sm">Growth strategy review</span>
+              <button className="text-xs px-2 py-1 rounded-full border border-border/60 hover:bg-surface/60">
+                Resume
+              </button>
+            </li>
+            <li className="flex items-center justify-between">
+              <span className="truncate text-sm">Partner enablement thread</span>
+              <button className="text-xs px-2 py-1 rounded-full border border-border/60 hover:bg-surface/60">
+                Resume
+              </button>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
   );
 }
+
+export default Home;

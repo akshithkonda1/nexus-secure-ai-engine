@@ -37,6 +37,6 @@ export default function Chat() {
         />
         <button className="h-11 px-5 rounded-full bg-prism">Send</button>
       </div>
-    </div>
+    </main>
   );
 }
