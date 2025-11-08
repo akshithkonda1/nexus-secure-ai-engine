@@ -41,13 +41,13 @@ export function VoiceRecorder({ onCapture, compact }: VoiceRecorderProps) {
       <button
         type="button"
         onClick={handleToggle}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border))] bg-white/80 text-[color:var(--brand)] shadow-soft transition hover:border-[color:var(--brand)] hover:text-white hover:bg-[color:var(--brand)] dark:bg-white/10"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.86)] text-[color:var(--brand)] shadow-soft transition hover:border-[color:var(--brand)] hover:text-white hover:bg-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]"
         aria-label={isRecording ? "Stop voice recording" : "Start voice recording"}
       >
         {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
       </button>
 
-      <div className="hidden sm:flex h-12 items-center overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white/60 px-3 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/5">
+      <div className="hidden sm:flex h-12 items-center overflow-hidden rounded-2xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.78)] px-3 shadow-soft backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.52)]">
         <div className="flex items-end gap-[3px]">
           {levels.map((value, idx) => (
             <motion.span

@@ -15,7 +15,7 @@ export function HistorySection({ title, description, defaultOpen = true, actions
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/70 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] shadow-soft backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
       <button
         type="button"
         onClick={() => setOpen((state) => !state)}
@@ -27,7 +27,7 @@ export function HistorySection({ title, description, defaultOpen = true, actions
         </div>
         <div className="flex items-center gap-4">
           {actions}
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-white/70 text-[rgb(var(--text))] shadow-inner dark:bg-white/10">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-[rgb(var(--surface)/0.82)] text-[rgb(var(--text))] shadow-inner dark:bg-[rgb(var(--surface)/0.5)]">
             <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-180" : "rotate-0")} />
           </span>
         </div>
@@ -40,7 +40,7 @@ export function HistorySection({ title, description, defaultOpen = true, actions
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden border-t border-[rgba(255,255,255,0.4)] px-6 py-6 text-sm text-[rgb(var(--text))] dark:border-white/10"
+            className="overflow-hidden border-t border-[rgb(var(--border)/0.45)] px-6 py-6 text-sm text-[rgb(var(--text))] dark:border-[rgb(var(--border)/0.5)]"
           >
             <div className="space-y-4">{children}</div>
           </motion.div>
