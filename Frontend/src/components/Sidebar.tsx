@@ -25,7 +25,7 @@ type SidebarProps = {
   onNavigate: (path: string) => void;
 };
 
-const Sidebar = ({ active, onNavigate }: SidebarProps) => {
+export const Sidebar = ({ active, onNavigate }: SidebarProps) => {
   return (
     <aside className="fixed inset-y-16 left-0 z-40 hidden w-16 flex-col items-center border-r border-border/70 px-2 py-8 lg:flex">
       <nav className="flex w-full flex-1 flex-col items-center gap-3">
