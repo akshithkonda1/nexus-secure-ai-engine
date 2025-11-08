@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { Moon, Sun, Search, Sparkle, ChevronRight } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Search,
+  Sparkle,
+  ChevronRight,
+  PanelLeft,
+  PanelLeftOpen
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type TopbarProps = {
   activePath: string;
+  sidebarExpanded: boolean;
+  onToggleSidebar: () => void;
 };
 
 const TITLE_MAP: Record<string, string> = {
+  "/": "Home Hub",
   "/chat": "Conversational Studio",
   "/templates": "Prompt Templates",
   "/documents": "Knowledge Vault",
@@ -15,7 +26,7 @@ const TITLE_MAP: Record<string, string> = {
   "/settings": "Control Center"
 };
 
-export function Topbar({ activePath }: TopbarProps) {
+export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarProps) {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
     const stored = localStorage.getItem("theme");
@@ -96,7 +107,16 @@ export function Topbar({ activePath }: TopbarProps) {
     >
       <div className="mx-auto flex h-20 w-full items-center justify-between gap-6 px-4 sm:px-10">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-[rgb(var(--text)/0.45)]">
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-[rgb(var(--text)/0.45)]">
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="hidden h-8 w-8 items-center justify-center rounded-2xl border border-transparent bg-white/70 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10 md:inline-flex"
+              aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
+              aria-pressed={sidebarExpanded}
+            >
+              {sidebarExpanded ? <PanelLeft className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            </button>
             <Sparkle className="h-4 w-4 text-[color:var(--brand)]" />
             Nexus.ai
             <ChevronRight className="h-3 w-3" />
