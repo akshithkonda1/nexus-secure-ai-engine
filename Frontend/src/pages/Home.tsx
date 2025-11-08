@@ -1,50 +1,53 @@
-import { MessageSquare, Upload, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { MessageCircle, Upload, Sparkles, Settings as Gear } from "lucide-react";
 
-function QuickAction({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
+function Quick({ Icon, title, desc }: { Icon: any; title: string; desc: string }) {
   return (
-    <div className="card p-6 flex items-center gap-4 transition-all hover:shadow-glow">
-      <div className="p-3 rounded-lg" style={{ background: 'rgba(37,99,235,0.1)' }}>
-        <Icon className="w-6 h-6" style={{ color: 'var(--nexus-accent)' }} />
+    <div className="card p-5 hover:shadow-glow transition">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-[var(--nexus-accent)]/12 border border-[var(--nexus-accent)]/30">
+          <Icon className="h-5 w-5 text-[var(--nexus-accent)]" />
+        </div>
+        <div>
+          <div className="font-medium">{title}</div>
+          <div className="text-sm opacity-70">{desc}</div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function Session({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="card p-4 flex items-start justify-between">
       <div>
-        <h3 className="font-medium">{title}</h3>
-        <p className="text-sm opacity-75">{desc}</p>
+        <div className="font-medium">{title}</div>
+        <div className="text-sm opacity-70">{desc}</div>
       </div>
+      <button className="text-sm border">Resume</button>
     </div>
   );
 }
 
 export function Home() {
   return (
-    <div className="space-y-8">
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <QuickAction icon={MessageSquare} title="New session" desc="Launch a fresh multi-model debate." />
-        <QuickAction icon={Upload} title="Import transcript" desc="Upload past debates for auditing." />
-        <QuickAction icon={Sparkles} title="Templates" desc="Start with trust-first workflows." />
-        <QuickAction icon={SettingsIcon} title="Settings" desc="Tune guardrails & providers." />
-      </section>
+    <div className="container-page pt-20 pl-64">
+      <h1 className="text-2xl font-semibold mb-4">Welcome to Nexus.ai</h1>
+      <p className="opacity-80 mb-6">
+        Orchestrate trusted AI debate sessions, audit every decision, and keep tabs on telemetry in one place.
+      </p>
 
-      <section className="space-y-3">
-        <h2 className="section-title">Recent sessions</h2>
-        <div className="card p-4 flex justify-between items-start">
-          <div>
-            <h4 className="font-medium">Market Intelligence thread 6</h4>
-            <p className="text-sm opacity-75">Exploring Spurs-inspired UI refinements for Nexus debates.</p>
-          </div>
-          <button className="text-sm" style={{ color: 'var(--nexus-accent)' }}>
-            Resume
-          </button>
-        </div>
-        <div className="card p-4 flex justify-between items-start">
-          <div>
-            <h4 className="font-medium">Partner Enablement thread 12</h4>
-            <p className="text-sm opacity-75">Provider weighting + bias gating.</p>
-          </div>
-          <button className="text-sm" style={{ color: 'var(--nexus-accent)' }}>
-            Resume
-          </button>
-        </div>
-      </section>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <Quick Icon={MessageCircle} title="New session" desc="Launch a fresh multi-model debate." />
+        <Quick Icon={Upload}         title="Import transcript" desc="Upload past debates for instant auditing." />
+        <Quick Icon={Sparkles}       title="Templates" desc="Kick off trust-first workflows in seconds." />
+        <Quick Icon={Gear}           title="Settings"  desc="Tune guardrails, quotas, and providers." />
+      </div>
+
+      <h2 className="section-title">Last 5 sessions</h2>
+      <div className="space-y-3">
+        <Session title="Market intelligence thread 6" desc="Exploring Spurs-inspired refinements." />
+        <Session title="Partner enablement thread 12" desc="Mapping telemetry for review workflows." />
+      </div>
     </div>
   );
 }

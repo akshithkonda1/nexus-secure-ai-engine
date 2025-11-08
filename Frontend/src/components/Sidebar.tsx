@@ -1,58 +1,53 @@
-import { ReactNode, useMemo } from 'react';
-import { useTheme } from '@/theme/useTheme';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { NavLink } from "react-router-dom";
 import {
-  MessageSquare,
-  Folder,
-  Sparkles,
-  FileText,
-  BarChart3,
-  History,
-  Settings as SettingsIcon,
-  Home as HomeIcon
-} from 'lucide-react';
+  MessageCircle, Folder, Sparkles, FileText, BarChart3,
+  History, Settings, Sun
+} from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
-type NavItem = { label: string; to: string; icon: ReactNode };
+type Item = { to: string; label: string; Icon: any };
 
-export function Sidebar({ active, onNavigate }: { active: string; onNavigate: (path: string) => void }) {
-  const items = useMemo<NavItem[]>(
-    () => [
-      { label: 'Home', to: '/home', icon: <HomeIcon className="h-5 w-5" /> },
-      { label: 'Chat', to: '/chat', icon: <MessageSquare className="h-5 w-5" /> },
-      { label: 'Sessions', to: '/sessions', icon: <Folder className="h-5 w-5" /> },
-      { label: 'Templates', to: '/templates', icon: <Sparkles className="h-5 w-5" /> },
-      { label: 'Documents', to: '/docs', icon: <FileText className="h-5 w-5" /> },
-      { label: 'Metrics', to: '/metrics', icon: <BarChart3 className="h-5 w-5" /> },
-      { label: 'History', to: '/history', icon: <History className="h-5 w-5" /> },
-      { label: 'Settings', to: '/settings', icon: <SettingsIcon className="h-5 w-5" /> },
-    ],
-    []
-  );
+const items: Item[] = [
+  { to: "/chat",      label: "Chat",      Icon: MessageCircle },
+  { to: "/sessions",  label: "Sessions",  Icon: Folder },
+  { to: "/templates", label: "Templates", Icon: Sparkles },
+  { to: "/docs",      label: "Documents", Icon: FileText },
+  { to: "/metrics",   label: "Metrics",   Icon: BarChart3 },
+  { to: "/history",   label: "History",   Icon: History },
+  { to: "/settings",  label: "Settings",  Icon: Settings },
+];
 
-  const isActive = (path: string) => (active === path ? 'bg-[rgba(37,99,235,0.15)] text-[var(--nexus-accent)]' : 'opacity-80');
-
-  useTheme(); // just to ensure provider exists (and to rerender on theme change)
-
+export function Sidebar() {
   return (
-    <aside className="fixed left-0 top-16 bottom-0 w-64 z-40 overflow-y-auto">
-      <div className="h-full flex flex-col">
-        <nav className="py-4">
-          {items.map((i) => (
-            <button
-              key={i.to}
-              onClick={() => onNavigate(i.to)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isActive(i.to)}`}
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+    <aside className="fixed left-0 top-14 bottom-0 w-64 z-30">
+      <nav className="h-full flex flex-col">
+        <div className="p-3 space-y-1">
+          {items.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                [
+                  "flex items-center gap-3 px-3 py-2 rounded-xl border",
+                  "hover:bg-[var(--nexus-accent)]/10 hover:border-[var(--nexus-accent)]",
+                  isActive ? "border-[var(--nexus-accent)] bg-[var(--nexus-accent)]/15 text-[var(--nexus-accent)]" : "border-[var(--nexus-border)]/50 opacity-90"
+                ].join(" ")
+              }
             >
-              {i.icon}
-              <span className="text-sm">{i.label}</span>
-            </button>
+              <Icon className="h-4 w-4" />
+              <span className="text-sm">{label}</span>
+            </NavLink>
           ))}
-        </nav>
-        <div className="mt-auto px-3 pb-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <ThemeToggle />
         </div>
-      </div>
+
+        <div className="mt-auto p-3 border-t border-[var(--nexus-border)]/60">
+          <ThemeToggle />
+          <div className="mt-2 flex items-center gap-2 text-xs opacity-70">
+            <Sun className="h-3.5 w-3.5" />
+            <span>Script-style polished theme</span>
+          </div>
+        </div>
+      </nav>
     </aside>
   );
 }

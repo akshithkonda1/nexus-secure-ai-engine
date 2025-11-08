@@ -1,26 +1,23 @@
-import { useTheme } from '@/theme/useTheme';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/theme/useTheme";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const isDark = theme === 'dark';
+  const next = theme === "dark" ? "light" : "dark";
 
   return (
     <button
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="flex items-center justify-between gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200"
-      style={{ borderColor: 'rgba(255,255,255,0.15)', background: isDark ? 'rgba(37,99,235,0.08)' : 'white' }}
+      onClick={() => setTheme(next)}
+      className="w-full flex items-center justify-between border mt-2 px-3 py-2 rounded-xl hover:border-[var(--nexus-accent)] hover:bg-[var(--nexus-accent)]/10"
     >
       <div className="flex items-center gap-2">
-        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+        {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-400" /> : <Moon className="h-4 w-4" />}
+        <span className="text-sm">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
       </div>
-      <div
-        className={`relative flex h-5 w-10 rounded-full transition-colors duration-300 ${isDark ? 'bg-blue-600' : 'bg-gray-300'}`}
-      >
+      <div className={`h-5 w-10 rounded-full ${theme === "dark" ? "bg-blue-600" : "bg-gray-300"} relative`}>
         <span
-          className={`absolute top-[2px] left-[2px] h-4 w-4 bg-white rounded-full transition-transform duration-300 ${
-            isDark ? 'translate-x-5' : 'translate-x-0'
+          className={`absolute top-[2px] h-4 w-4 bg-white rounded-full transition-transform ${
+            theme === "dark" ? "translate-x-5 left-[2px]" : "translate-x-0 left-[2px]"
           }`}
         />
       </div>
