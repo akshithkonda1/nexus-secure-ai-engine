@@ -16,7 +16,7 @@ type LimitState = {
   maxTokens: number;
 };
 
-const SettingsPage = () => {
+export function Settings() {
   const { theme, setTheme } = useTheme();
   const [appearance, setAppearance] = useState<AppearanceMode>(theme);
   const [providers, setProviders] = useState<ProviderState>({
@@ -172,6 +172,6 @@ const SettingsPage = () => {
       </section>
     </div>
   );
-};
+}
 
-export default SettingsPage;
+export default Settings;
