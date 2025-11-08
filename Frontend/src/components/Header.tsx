@@ -1,3 +1,4 @@
+import { Bell, Menu, ShieldCheck, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type HeaderProps = {
@@ -5,30 +6,52 @@ type HeaderProps = {
 };
 
 export function Header({ onToggleSidebar }: HeaderProps = {}) {
-  const nav = useNavigate();
+  const navigate = useNavigate();
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 z-40 border-b border-[var(--nexus-border)] bg-[var(--nexus-surface)] backdrop-blur">
-      <div className="h-full max-w-screen-2xl mx-auto flex items-center gap-3 px-3 md:px-6">
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-[rgb(var(--panel))]/80 backdrop-blur">
+      <div className="h-16 flex items-center gap-4 px-4 sm:px-6">
         <button
-          className="md:hidden h-9 w-9 rounded-lg border border-white/10 bg-white/10 text-white"
+          className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-surface/60 text-subtle sm:hidden"
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
-          ☰
+          <Menu className="size-4" />
         </button>
-        <button className="rounded-md px-2 py-1 text-sm bg-white/10 border border-white/10" onClick={() => nav("/home")}>
-          Nexus <span className="text-[10px] opacity-70 align-top">BETA</span>
+        <button
+          onClick={() => navigate("/home")}
+          className="hidden sm:inline-flex rounded-xl border border-border/60 px-3 py-2 text-sm font-medium shadow-[0_10px_28px_rgba(0,0,0,0.12)]"
+        >
+          Nexus <span className="ml-1 text-[10px] font-normal uppercase tracking-[0.2em] text-subtle">beta</span>
         </button>
-        <input
-          placeholder="Search workspace, sessions, commands…"
-          className="flex-1 h-9 rounded-lg bg-black/20 border border-white/10 px-3 text-sm"
-        />
-        <button className="h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 text-sm" onClick={() => nav("/sessions")}>
-          Launch Console
-        </button>
-        <button className="h-9 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 px-3 text-sm" onClick={() => nav("/templates")}>
-          Browse Templates
-        </button>
+        <div className="flex-1">
+          <div className="relative">
+            <input
+              placeholder="Search workspace, sessions, commands…"
+              className="h-10 w-full rounded-xl border border-border/60 bg-surface/60 px-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/templates")}
+            className="h-10 rounded-xl border border-border/60 bg-surface/60 px-4 text-sm font-medium flex items-center gap-2"
+          >
+            <Sparkles className="size-4" /> Prompts
+          </button>
+          <button
+            onClick={() => navigate("/sessions")}
+            className="h-10 rounded-xl text-white px-4 text-sm font-medium flex items-center gap-2"
+            style={{ backgroundColor: "var(--brand)" }}
+          >
+            <ShieldCheck className="size-4" /> Launch console
+          </button>
+          <button className="relative flex size-10 items-center justify-center rounded-full border border-border/60 bg-surface/60">
+            <Bell className="size-4 text-subtle" />
+            <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[color:var(--brand)] text-[10px] text-white">
+              3
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );

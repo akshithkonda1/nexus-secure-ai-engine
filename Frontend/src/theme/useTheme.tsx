@@ -1,22 +1,35 @@
-import { createContext, useContext, useEffect, useState } from "react";
-type T = { theme: "dark" | "light"; setTheme: (t: "dark" | "light") => void };
-const C = createContext<T | null>(null);
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-function getInitialTheme(): "dark" | "light" {
+export type ThemePref = "dark" | "light";
+type ThemeContextValue = {
+  theme: ThemePref;
+  setTheme: (t: ThemePref) => void;
+  pref: ThemePref;
+  setPref: (t: ThemePref) => void;
+  effective: ThemePref;
+};
+const C = createContext<ThemeContextValue | null>(null);
+
+export const THEME_STORAGE_KEY = "nexus:theme";
+const LEGACY_KEY = "nexus-theme";
+
+function getInitialTheme(): ThemePref {
   if (typeof window === "undefined") return "dark";
-  const saved = window.localStorage.getItem("nexus-theme");
+  const saved =
+    window.localStorage.getItem(THEME_STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_KEY);
   return saved === "light" ? "light" : "dark";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<"dark" | "light">(() => getInitialTheme());
+  const [theme, setTheme] = useState<ThemePref>(() => getInitialTheme());
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     try {
-      window.localStorage.setItem("nexus-theme", theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+      window.localStorage.removeItem(LEGACY_KEY);
     } catch {
       /* ignore */
     }
@@ -24,7 +37,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty("forced-color-adjust", "none");
     }
   }, [theme]);
-  return <C.Provider value={{ theme, setTheme }}>{children}</C.Provider>;
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      theme,
+      setTheme,
+      pref: theme,
+      setPref: setTheme,
+      effective: theme,
+    }),
+    [theme]
+  );
+  return <C.Provider value={value}>{children}</C.Provider>;
 }
 export function useTheme() {
   const ctx = useContext(C);

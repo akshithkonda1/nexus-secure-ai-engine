@@ -1,35 +1,97 @@
 import { useNavigate } from "react-router-dom";
+import { PlayCircle } from "lucide-react";
 import { sessionStore } from "@/store/sessionStore";
-import { Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
+
+function relativeTime(input: number) {
+  const diff = Date.now() - input;
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) {
+    const mins = Math.round(diff / 60_000);
+    return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  }
+  if (diff < 86_400_000) {
+    const hrs = Math.round(diff / 3_600_000);
+    return `${hrs} hr${hrs === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.round(diff / 86_400_000);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function statusFor(ts: number) {
+  const diff = Date.now() - ts;
+  if (diff < 90_000) return "active";
+  if (diff < 86_400_000) return "paused";
+  return "archived";
+}
 
 export function Sessions() {
-  const nav = useNavigate();
-  const { sessions, createSession, removeSession } = sessionStore.use();
+  const navigate = useNavigate();
+  const { sessions, createSession } = sessionStore.use();
+
+  const list = useMemo(
+    () =>
+      sessions.map((s) => ({
+        ...s,
+        status: statusFor(s.updatedAt),
+        updatedLabel: relativeTime(s.updatedAt),
+      })),
+    [sessions]
+  );
+
+  async function onNewSession() {
+    const id = createSession({ title: "New session" });
+    navigate(`/sessions/${id}`);
+  }
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Sessions</h1>
-        <button onClick={() => { const id = createSession({ title: "New session" }); nav(`/sessions/${id}`); }}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm">
-          <Plus className="h-4 w-4" /> New session
+        <h2 className="text-xl font-semibold">Sessions</h2>
+        <button
+          onClick={onNewSession}
+          className="h-10 px-4 rounded-xl text-white flex items-center gap-2"
+          style={{ backgroundColor: "var(--brand)" }}
+        >
+          <PlayCircle className="size-4" /> New session
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {sessions.map(s => (
-          <div key={s.id} className="rounded-xl border border-white/10 bg-[var(--nexus-card)] p-4 flex items-start justify-between">
-            <div><div className="font-medium">{s.title}</div><div className="text-xs text-gray-400">Updated {new Date(s.updatedAt).toLocaleString()}</div></div>
-            <div className="flex items-center gap-2">
-              <button className="px-3 py-1 rounded-md bg-white/10 border border-white/10 hover:bg-white/20 text-sm" onClick={() => nav(`/sessions/${s.id}`)}>Open</button>
-              <button className="p-2 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20" onClick={() => removeSession(s.id)} title="Delete">
-                <Trash2 className="h-4 w-4 text-red-300" />
-              </button>
+      {list.length === 0 ? (
+        <div className="rounded-2xl border border-border/60 bg-[rgb(var(--panel))] p-10 text-center text-sm text-subtle shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+          No sessions yet. Launch your first orchestration run to see it here.
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {list.map((s) => (
+            <div
+              key={s.id}
+              className="rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+            >
+              <div className="font-medium">{s.title}</div>
+              <div className="text-xs text-subtle mt-1">Updated {s.updatedLabel}</div>
+              <div className="mt-4 flex items-center gap-2">
+                <span
+                  className={`text-xs px-2 py-1 rounded-lg border border-border/60 capitalize ${
+                    s.status === "active" ? "text-white" : "text-foreground"
+                  }`}
+                  style={s.status === "active" ? { backgroundColor: "var(--brand)" } : undefined}
+                >
+                  {s.status}
+                </span>
+                <button
+                  onClick={() => navigate(`/sessions/${s.id}`)}
+                  className="ml-auto h-8 px-3 rounded-lg border border-border/60 hover:bg-surface/50"
+                >
+                  Open
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-        {sessions.length === 0 && <div className="text-sm text-gray-400">No sessions yet.</div>}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+export default Sessions;
