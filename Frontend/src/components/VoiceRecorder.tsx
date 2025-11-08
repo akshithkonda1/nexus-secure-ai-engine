@@ -31,6 +31,7 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
 
   async function start() {
     try {
+      setPermDenied(false);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
@@ -53,7 +54,8 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
       };
       rec.onstop = async () => {
         stopAnimation();
-        cleanupAudio();
+        stopStreamTracks();
+        await cleanupAudio();
 
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const transcript = await tryTranscribe(blob).catch(() => "");
@@ -64,7 +66,16 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
       setIsRec(true);
       onStart?.();
     } catch (err) {
-      setPermDenied(true);
+      stopAnimation();
+      stopStreamTracks();
+      await cleanupAudio();
+      setIsRec(false);
+
+      const isPermissionError =
+        err instanceof DOMException &&
+        ["NotAllowedError", "SecurityError", "AbortError"].includes(err.name);
+      setPermDenied(isPermissionError);
+
       onError?.(err);
     }
   }
@@ -72,22 +83,30 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
   function stop() {
     try {
       mediaRef.current?.stop();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      stopStreamTracks();
       setIsRec(false);
     } catch (e) {
       onError?.(e);
     }
   }
 
-  function cleanupAudio() {
+  async function cleanupAudio() {
     try {
       sourceRef.current?.disconnect();
       analyserRef.current?.disconnect();
-      audioCtxRef.current?.close();
+      if (audioCtxRef.current) {
+        await audioCtxRef.current.close().catch(() => undefined);
+      }
       sourceRef.current = null;
       analyserRef.current = null;
       audioCtxRef.current = null;
     } catch {}
+  }
+
+  function stopStreamTracks() {
+    if (!streamRef.current) return;
+    streamRef.current.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
   }
 
   function animate() {
@@ -125,7 +144,10 @@ export default function VoiceRecorder({ active, onStart, onStop, onError }: Prop
   }
 
   function stopAnimation() {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = undefined;
+    }
   }
 
   return (
