@@ -1,141 +1,101 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind v4 entry */
+@import "tailwindcss";
 
-/* ---------- Base reset ---------- */
-@layer base {
-  :root {
-    color-scheme: dark;
-    --background: #0e1117;
-    --surface: #161b22;
-    --card: #1f2733;
-    --border: #2b3441;
-    --muted: #94a3b8;
-    --accent: #2563eb;
-    --accent-foreground: #f8fafc;
-    --foreground: #f1f5f9;
-    --nexus-bg: var(--background);
-    --nexus-surface: var(--surface);
-    --nexus-card: var(--card);
-    --nexus-border: var(--border);
-    --nexus-text: var(--foreground);
-    --header: rgba(22, 27, 34, 0.92);
-    --sidebar: rgba(13, 17, 23, 0.92);
-    --input: rgba(31, 39, 51, 0.92);
-    --shadow-soft: 0 18px 45px rgba(2, 6, 23, 0.4);
-    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.4);
-  }
+/* optional: if you later want to @apply any utilities in CSS,
+   uncomment the next line so v4 allows it.
+   @reference "tailwindcss";
+*/
 
-  html.light {
-    color-scheme: light;
-    --background: #f5f7fb;
-    --surface: rgba(255, 255, 255, 0.88);
-    --card: rgba(255, 255, 255, 0.92);
-    --border: rgba(15, 23, 42, 0.08);
-    --muted: #64748b;
-    --accent: #2563eb;
-    --accent-foreground: #f8fafc;
-    --foreground: #0f172a;
-    --nexus-bg: var(--background);
-    --nexus-surface: var(--surface);
-    --nexus-card: var(--card);
-    --nexus-border: var(--border);
-    --nexus-text: var(--foreground);
-    --header: rgba(248, 250, 252, 0.92);
-    --sidebar: rgba(248, 250, 252, 0.9);
-    --input: rgba(248, 250, 252, 0.95);
-    --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.14);
-    --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.18);
-  }
+/* Theme tokens (v4) */
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+    "Segoe UI Emoji";
 
-  html {
-    color-scheme: dark light;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  body {
-    @apply font-sans transition-colors duration-300;
-    background: var(--bg);
-    color: rgb(var(--text) / 1);
-  }
-  * { transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+  /* Dark */
+  --color-bg: #0e1117;
+  --color-surface: #161b22;
+  --color-elevated: #1f2733;
+  --color-border: #2b3441;
+  --color-accent: #2563eb;
+  --color-text: #e6edf3;
+
+  /* Light */
+  --color-bg-light: #f9fafb;
+  --color-surface-light: #ffffff;
+  --color-elevated-light: #f3f4f6;
+  --color-border-light: #e5e7eb;
+  --color-text-light: #111827;
+
+  --radius-xl: 1rem;
+  --shadow-soft: 0 6px 18px rgba(0,0,0,.25);
+  --shadow-glow: 0 0 20px rgba(37,99,235,.4);
 }
 
-/* ---------- Theme tokens via CSS variables ---------- */
-/* Dark (default) — Script “Cod Gray” base, soft panels, premium contrast */
-:root,
-html.dark {
-  --bg: #090B1E;
-  --surface: 16 21 33;      /* ~#101525 */
-  --panel: 22 28 42;        /* ~#161C2A */
-  --border: 55 65 81;       /* slate-600 */
-  --text: 230 236 244;      /* ~#E6ECF4 */
-  --subtle: 156 163 175;    /* slate-400 */
+/* Base – set the font-family via plain CSS, not @apply */
+:root { color-scheme: light dark; }
+html, body, #root { height: 100%; }
 
-  --brand: #0085FF;
-  --brand-alt: #009EFF;
-  --brand-purple: #9360FF;
-  --lilac: #C5B9DA;
+html.dark, body.dark {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+html.light, body.light {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-light);
+  font-family: var(--font-sans);
 }
 
-/* Light — Script “Alabaster” base, crisp borders */
-html.light {
-  --bg: #F9FAFC;
-  --surface: 255 255 255;    /* white */
-  --panel: 246 248 252;      /* very light panel */
-  --border: 229 231 235;     /* gray-200 */
-  --text: 17 24 39;          /* gray-900 */
-  --subtle: 100 116 139;     /* slate-500 */
+/* Surfaces */
+aside {
+  background: linear-gradient(180deg, var(--color-surface), var(--color-bg));
+  border-right: 1px solid var(--color-border);
 }
-
-/* ---------- Primitives ---------- */
-.app-shell { @apply min-h-screen bg-[var(--bg)] text-text; }
-
-.header {
-  @apply sticky top-0 z-40 border-b border-border/30 backdrop-blur-md;
-  background: color-mix(in oklab, rgb(var(--surface)), transparent 15%);
-}
-
-.aside {
-  @apply border-r border-border/20;
-  background:
-    radial-gradient(1200px 600px at -20% -20%, rgba(0,133,255,0.12), transparent 60%),
-    radial-gradient(1000px 500px at 130% 10%, rgba(147,96,255,0.10), transparent 55%),
-    color-mix(in oklab, rgb(var(--surface)), transparent 4%);
+html.light aside {
+  background: linear-gradient(180deg, var(--color-surface-light), var(--color-elevated-light));
+  border-right: 1px solid var(--color-border-light);
 }
 
 .card {
-  @apply rounded-2xl border border-border/20 shadow-card;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0) 60%),
-    color-mix(in oklab, rgb(var(--panel)), transparent 0%);
+  background: linear-gradient(180deg, var(--color-elevated), #15191f);
+  border: 1px solid rgba(255,255,255,.04);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+html.light .card {
+  background: var(--color-surface-light);
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
 }
 
+/* Tokeny helpers */
 .btn {
-  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium border border-transparent;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-alt) 35%, var(--brand-purple) 100%);
-  color: white;
-  box-shadow: 0 6px 18px rgba(0,133,255,0.28);
+  border-radius: .5rem;
+  font-weight: 500;
+  padding: .5rem 1rem;
+  border: 1px solid color-mix(in oklab, var(--color-accent), transparent 75%);
+  background-color: color-mix(in oklab, var(--color-accent), transparent 90%);
+  color: var(--color-accent);
+  transition: all .2s ease;
 }
-.btn:hover { box-shadow: 0 10px 26px rgba(0,133,255,0.38); transform: translateY(-1px); }
-.btn.ghost {
-  @apply border border-border/40 text-text;
-  background: color-mix(in oklab, rgb(var(--panel)), transparent 10%);
+.btn:hover {
+  background-color: var(--color-accent);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
 }
+
 .input {
-  @apply w-full rounded-xl px-3 py-2 text-sm border outline-none;
-  @apply border-border/30 bg-[rgb(var(--panel))] text-text;
+  width: 100%;
+  border-radius: .5rem;
+  padding: .5rem .75rem;
+  font-size: .875rem;
+  border: 1px solid rgba(255,255,255,.08);
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
-.input:focus { @apply border-brand/50 ring-2 ring-brand/20; }
-
-.badge {
-  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
-  background: color-mix(in oklab, rgb(var(--panel)), transparent 10%);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: rgb(var(--subtle));
-}
-
-/* Utility */
-.gradient-brand {
-  background: radial-gradient(120% 120% at 0% 0%, var(--brand) 0%, var(--brand-alt) 40%, var(--brand-purple) 100%);
+html.light .input {
+  background-color: var(--color-surface-light);
+  color: var(--color-text-light);
+  border-color: var(--color-border-light);
 }
