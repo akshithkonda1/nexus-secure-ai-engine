@@ -6,9 +6,9 @@ export function Home() {
 
   const actions = [
     { title: "New session", desc: "Start a fresh multi-model debate.", to: "/chat", icon: MessageCircle },
-    { title: "Import transcript", desc: "Upload past debates for auditing.", to: "/documents", icon: FileText },
-    { title: "Templates", desc: "Kick off workflows fast.", to: "/templates", icon: Layers },
-    { title: "Settings", desc: "Tune guardrails & providers.", to: "/settings", icon: Settings }
+    { title: "Import Documents", desc: "Upload documents for ingestation and to allow us to create templates to help with your workflow.", to: "/documents", icon: FileText },
+    { title: "Templates", desc: "Kick off debates using custom-made prompts or Templates based on your data to optimize your time.", to: "/templates", icon: Layers },
+    { title: "Settings", desc: "Customize your Nexus Debate Experience.", to: "/settings", icon: Settings }
   ];
 
   return (
@@ -19,8 +19,8 @@ export function Home() {
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">Welcome to Nexus.ai</h1>
         <p className="mt-2 max-w-[64ch] text-[rgb(var(--subtle))]">
-          A scriptable command center where AI orchestration feels natural.
-          Craft prompts, resume sessions, and manage provider intelligence within a polished workspace.
+          An AI Debate Engine orchestration that feels natural.
+       Nexus allows you to debate multiple engines at once quickly but also helps you know how the model came to that answer.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
