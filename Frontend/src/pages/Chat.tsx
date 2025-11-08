@@ -7,6 +7,15 @@ export default function Chat() {
     { id: "a1", role: "assistant", text: "Welcome to Nexus. Ask me anything." },
   ]);
   const [text, setText] = useState("");
+  const handleSend = () => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
+    }
+    setMsgs((p) => [...p, { id: crypto.randomUUID(), role: "user", text: trimmed }]);
+    setText("");
+  };
+
   return (
     <div className="p-6 grid grid-rows-[1fr_auto] h-full">
       <div className="overflow-auto grid gap-3">
@@ -29,13 +38,19 @@ export default function Chat() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Type and press Enter…"
           onKeyDown={(e) => {
-            if (e.key === "Enter" && text.trim()) {
-              setMsgs((p) => [...p, { id: crypto.randomUUID(), role: "user", text }]);
-              setText("");
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSend();
             }
           }}
         />
-        <button className="h-11 px-5 rounded-full bg-prism">Send</button>
+        <button
+          type="button"
+          className="h-11 px-5 rounded-full bg-prism"
+          onClick={handleSend}
+        >
+          Send
+        </button>
       </div>
     </main>
   );
