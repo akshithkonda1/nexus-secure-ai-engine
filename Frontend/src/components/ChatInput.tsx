@@ -1,162 +1,152 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import VoiceRecorder from "./VoiceRecorder";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CornerDownLeft, Sparkles, Paperclip } from "lucide-react";
+import { VoiceRecorder } from "./VoiceRecorder";
+import { FileUpload, InlineFileBadge } from "./FileUpload";
+import { cn } from "@/lib/utils";
 
-type Props = {
-  onSend: (text: string, files: File[]) => void;
+type ChatInputProps = {
+  onSend: (payload: { text: string; files: File[] }) => void;
   suggestions?: string[];
-  onPickSuggestion?: (s: string) => void;
+  disabled?: boolean;
 };
 
-const Paperclip = (p: any) => (
-  <svg viewBox="0 0 24 24" fill="none" className={p.className}>
-    <path d="M21 7L10 18a5 5 0 11-7-7l11-11" stroke="currentColor" strokeWidth="2" />
-  </svg>
-);
-const Send = (p: any) => (
-  <svg viewBox="0 0 24 24" fill="none" className={p.className}>
-    <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" />
-    <path d="M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" />
-  </svg>
-);
-
-export default function ChatInput({ onSend, suggestions = [], onPickSuggestion }: Props) {
-  const [text, setText] = useState("");
+export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps) {
+  const [value, setValue] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [recording, setRecording] = useState(false);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setUploading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // autosize textarea
   useEffect(() => {
-    const ta = taRef.current;
-    if (!ta) return;
-    ta.style.height = "0px";
-    ta.style.height = Math.min(180, ta.scrollHeight) + "px";
-  }, [text]);
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+  }, [value]);
 
-  const canSend = useMemo(() => text.trim().length > 0 || files.length > 0, [text, files]);
+  const canSend = useMemo(() => {
+    return value.trim().length > 0 || files.length > 0;
+  }, [value, files]);
 
-  function handleAttach(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = Array.from(e.target.files || []);
-    if (f.length) setFiles((prev) => [...prev, ...f]);
-    e.currentTarget.value = "";
-  }
-
-  function removeFile(i: number) {
-    setFiles((prev) => prev.filter((_, idx) => idx !== i));
-  }
-
-  async function submit() {
-    if (!canSend) return;
-    onSend(text.trim(), files);
-    setText("");
+  const handleSubmit = useCallback(() => {
+    if (!canSend || disabled) return;
+    onSend({ text: value.trim(), files });
+    setValue("");
     setFiles([]);
-  }
+  }, [canSend, disabled, files, onSend, value]);
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  }
+  const handleVoiceCapture = useCallback(
+    ({ transcript, blob }: { transcript: string; blob: Blob | null }) => {
+      if (transcript) {
+        setValue((prev) => (prev ? `${prev}\n${transcript}` : transcript));
+      }
+      if (blob) {
+        const file = new File([blob], `voice-${Date.now()}.webm`, {
+          type: blob.type || "audio/webm"
+        });
+        setFiles((prev) => [...prev, file]);
+      }
+    },
+    []
+  );
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== index));
+  };
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white/80 p-3 shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-neutral-800 dark:bg-neutral-900/80">
-      {/* Suggestions */}
-      {suggestions.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {suggestions.map((s, i) => (
+    <div className="relative w-full">
+      <div className="relative overflow-hidden rounded-3xl border border-[rgba(255,255,255,0.4)] bg-white/70 p-4 shadow-card backdrop-blur transition dark:border-white/10 dark:bg-white/10">
+        <div className="flex flex-wrap gap-2 pb-3">
+          {suggestions.map((suggestion, idx) => (
             <button
-              key={i}
+              key={idx}
               type="button"
-              onClick={() => (onPickSuggestion ? onPickSuggestion(s) : setText(s))}
-              className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-700 hover:border-blue-300 hover:text-blue-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:border-blue-500 dark:hover:text-blue-400"
-              title="Insert suggestion"
+              className="group inline-flex items-center gap-2 rounded-full border border-[rgba(0,133,255,0.18)] bg-[rgba(0,133,255,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand)] hover:text-white"
+              onClick={() => setValue((prev) => (prev ? `${prev}\n${suggestion}` : suggestion))}
             >
-              {s}
+              <Sparkles className="h-3.5 w-3.5" />
+              {suggestion}
             </button>
           ))}
         </div>
-      )}
 
-      {/* Files preview */}
-      {files.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {files.map((f, idx) => (
-            <span
-              key={idx}
-              className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+        {files.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {files.map((file, idx) => (
+              <InlineFileBadge key={idx} file={file} onRemove={() => removeFile(idx)} />
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-end gap-3">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setUploading((state) => !state)}
+              className={cn(
+                "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border))] bg-white/80 text-[rgb(var(--text))] transition hover:text-[color:var(--brand)] dark:bg-white/10",
+                isUploading && "border-[color:var(--brand)] text-[color:var(--brand)]"
+              )}
+              aria-label="Attach files"
             >
-              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
-              {f.name}
-              <button
-                onClick={() => removeFile(idx)}
-                className="rounded p-1 text-neutral-400 hover:text-red-500"
-                aria-label="Remove file"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
+              <Paperclip className="h-5 w-5" />
+            </button>
+            <AnimatePresence>
+              {isUploading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute left-1/2 top-[110%] z-20 w-[260px] -translate-x-1/2"
+                >
+                  <div className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/90 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-[#0f1323]">
+                    <FileUpload
+                      description="Drop reference documents, screenshots or audio"
+                      onFiles={(incoming) => {
+                        setFiles((prev) => [...prev, ...incoming]);
+                        setUploading(false);
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex-1">
+            <textarea
+              ref={textareaRef}
+              value={value}
+              rows={1}
+              onChange={(event) => setValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder="Ask anything, drop a document, or dictate your intent…"
+              className="max-h-40 w-full resize-none rounded-2xl border border-transparent bg-transparent px-4 py-3 text-[15px] leading-relaxed text-[rgb(var(--text))] outline-none placeholder:text-[rgb(var(--text)/0.45)]"
+            />
+          </div>
+
+          <VoiceRecorder onCapture={handleVoiceCapture} />
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSend || disabled}
+            className={cn(
+              "inline-flex h-11 min-w-[54px] items-center justify-center gap-2 rounded-2xl bg-[color:var(--brand)] px-4 text-sm font-semibold text-white shadow-glow transition",
+              (!canSend || disabled) && "cursor-not-allowed opacity-60"
+            )}
+          >
+            Send
+            <CornerDownLeft className="h-4 w-4" />
+          </button>
         </div>
-      )}
-
-      <div className="flex items-end gap-2">
-        {/* Attach */}
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="grid h-10 w-10 place-items-center rounded-xl border border-neutral-200 text-neutral-600 hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800"
-          title="Attach files"
-          aria-label="Attach files"
-        >
-          <Paperclip className="h-5 w-5" />
-        </button>
-        <input ref={fileRef} type="file" multiple className="hidden" onChange={handleAttach} />
-
-        {/* Textarea */}
-        <textarea
-          ref={taRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="Message Nexus…"
-          rows={1}
-          className="max-h-44 min-h-[2.5rem] w-full resize-none rounded-xl border border-neutral-200 bg-white px-3 py-2 text-[15px] leading-relaxed text-neutral-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-blue-500 dark:focus:ring-blue-900/40"
-        />
-
-        {/* Voice */}
-        <div className="relative">
-          <VoiceRecorder
-            active={recording}
-            onStart={() => setRecording(true)}
-            onStop={(transcript, blob) => {
-              setRecording(false);
-              if (transcript && transcript.trim()) {
-                setText((t) => (t ? t + "\n" + transcript : transcript));
-              }
-              if (blob) {
-                const file = new File([blob], "voice.webm", { type: "audio/webm" });
-                setFiles((prev) => [...prev, file]);
-              }
-            }}
-            onError={() => setRecording(false)}
-          />
-        </div>
-
-        {/* Send */}
-        <button
-          onClick={submit}
-          disabled={!canSend}
-          className={`grid h-10 w-10 place-items-center rounded-xl border transition ${
-            canSend
-              ? "border-blue-500 bg-blue-600 text-white hover:bg-blue-700"
-              : "border-neutral-200 bg-white text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900"
-          }`}
-          title="Send"
-          aria-label="Send"
-        >
-          <Send className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
