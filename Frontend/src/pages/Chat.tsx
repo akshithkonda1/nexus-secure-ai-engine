@@ -4,7 +4,6 @@ import { ChatInput } from "@/components/ChatInput";
 import { ChatMessageBubble } from "@/components/ChatMessage";
 import { useChatStore, Attachment } from "@/hooks/useChatStore";
 import { readJSON } from "@/lib/utils";
-import { NexusLogo } from "@/components/NexusLogo";
 import { Button } from "@/components/ui/button";
 import { Copy, Sparkles, ArrowDown } from "lucide-react";
 
@@ -27,6 +26,22 @@ function pickRandom<T>(source: T[], count: number): T[] {
   return items;
 }
 
+/* -------------------------------------------------
+   Animated “N” fallback (no external component)
+   ------------------------------------------------- */
+function AnimatedN() {
+  return (
+    <motion.div
+      initial={{ rotate: -10, scale: 0.9 }}
+      animate={{ rotate: 0, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand/70 shadow-xl"
+    >
+      <span className="text-5xl font-bold text-white drop-shadow-md">N</span>
+    </motion.div>
+  );
+}
+
 export default function ChatPage() {
   const messages = useChatStore((state) => state.messages);
   const sendMessage = useChatStore((state) => state.sendMessage);
@@ -39,51 +54,49 @@ export default function ChatPage() {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [usedSuggestions, setUsedSuggestions] = useState<Set<string>>(new Set());
 
-  // Auto-scroll with user intent
+  /* ---------- Scroll-intent handling ---------- */
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
-    const checkScroll = () => {
-      const nearBottom =
-        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 150;
-      setIsNearBottom(nearBottom);
-      if (nearBottom) setNewMessagesCount(0);
+    const check = () => {
+      const near = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 150;
+      setIsNearBottom(near);
+      if (near) setNewMessagesCount(0);
     };
 
-    checkScroll();
-    const handleScroll = () => checkScroll();
-    viewport.addEventListener("scroll", handleScroll);
-    return () => viewport.removeEventListener("scroll", handleScroll);
+    check();
+    const onScroll = () => check();
+    viewport.addEventListener("scroll", onScroll);
+    return () => viewport.removeEventListener("scroll", onScroll);
   }, [messages]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport || !isNearBottom) {
-      if (messages.length > 0) setNewMessagesCount((c) => c + 1);
+    if (!viewport) return;
+
+    if (!isNearBottom && messages.length > 0) {
+      setNewMessagesCount((c) => c + 1);
       return;
     }
 
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior: "smooth",
-    });
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
   }, [messages, streamingMessage, isNearBottom]);
 
-  // Keyboard shortcuts
+  /* ---------- Keyboard shortcuts ---------- */
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") inputRef.current?.blur();
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
       }
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Smart suggestions
+  /* ---------- Smart suggestions ---------- */
   const suggestions = useMemo(() => {
     if (typeof window === "undefined") return pickRandom(SYSTEM_SUGGESTIONS, 3);
 
@@ -94,18 +107,18 @@ export default function ChatPage() {
       .map((t) => t.content || t.title)
       .filter(Boolean) as string[];
 
-    const fromTemplates = pickRandom(stored.filter(s => !usedSuggestions.has(s)), 2);
+    const fromTemplates = pickRandom(stored.filter((s) => !usedSuggestions.has(s)), 2);
     const fromSystem = pickRandom(
-      SYSTEM_SUGGESTIONS.filter(s => !usedSuggestions.has(s)),
+      SYSTEM_SUGGESTIONS.filter((s) => !usedSuggestions.has(s)),
       3
     );
 
     return [...fromTemplates, ...fromSystem].slice(0, 4);
   }, [usedSuggestions]);
 
-  const handleSuggestion = (suggestion: string) => {
-    sendMessage(suggestion);
-    setUsedSuggestions(prev => new Set(prev).add(suggestion));
+  const handleSuggestion = (s: string) => {
+    sendMessage(s);
+    setUsedSuggestions((prev) => new Set(prev).add(s));
   };
 
   const scrollToBottom = () => {
@@ -118,10 +131,10 @@ export default function ChatPage() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-background">
-      {/* Gradient Top Bar */}
+      {/* Gradient top fade */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 bg-gradient-to-b from-brand/10 via-transparent to-transparent" />
 
-      {/* Messages Viewport */}
+      {/* Messages viewport */}
       <div
         ref={viewportRef}
         className="relative z-10 flex-1 overflow-y-auto px-4 pb-32 pt-8 sm:px-12 scrollbar-thin scrollbar-thumb-muted/30"
@@ -132,18 +145,19 @@ export default function ChatPage() {
               <EmptyState />
             ) : (
               <>
-                {messages.map((message) => (
+                {messages.map((msg) => (
                   <motion.div
-                    key={message.id}
+                    key={msg.id}
                     layout
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     transition={{ duration: 0.22, ease: "easeOut" }}
                   >
-                    <ChatMessageBubble message={message} />
+                    <ChatMessageBubble message={msg} />
                   </motion.div>
                 ))}
+
                 {streamingMessage && (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -166,7 +180,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* New Messages Badge */}
+      {/* New-messages badge */}
       <AnimatePresence>
         {newMessagesCount > 0 && !isNearBottom && (
           <motion.div
@@ -188,7 +202,7 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      {/* Input Bar */}
+      {/* Input bar */}
       <div className="sticky bottom-0 z-20 mx-auto w-full max-w-3xl px-4 pb-6 sm:px-12">
         <div className="rounded-2xl bg-card/80 backdrop-blur-xl border border-border/50 shadow-2xl p-1.5">
           <ChatInput
@@ -209,15 +223,24 @@ export default function ChatPage() {
           />
         </div>
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Press <kbd className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">⌘ K</kbd> to focus •{" "}
-          <kbd className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">Esc</kbd> to dismiss
+          Press{" "}
+          <kbd className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">
+            Cmd K
+          </kbd>{" "}
+          to focus •{" "}
+          <kbd className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium">
+            Esc
+          </kbd>{" "}
+          to dismiss
         </p>
       </div>
     </div>
   );
 }
 
-// Empty State — TikTok Viral Gold
+/* -------------------------------------------------
+   Empty state – TikTok viral gold (no logo)
+   ------------------------------------------------- */
 function EmptyState() {
   return (
     <motion.div
@@ -226,11 +249,12 @@ function EmptyState() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="flex flex-col items-center justify-center h-full py-20 text-center"
     >
+      {/* Glowing backdrop + animated N */}
       <div className="relative mb-8">
         <div className="absolute inset-0 blur-3xl opacity-30">
           <div className="h-32 w-32 rounded-full bg-gradient-to-br from-brand to-brand/50" />
         </div>
-        <NexusLogo className="relative h-20 w-20 text-brand" />
+        <AnimatedN />
       </div>
 
       <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
