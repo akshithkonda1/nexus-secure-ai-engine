@@ -1,53 +1,62 @@
-import { NavLink } from "react-router-dom";
 import {
-  MessageCircle, Folder, Sparkles, FileText, BarChart3,
-  History, Settings, Sun
+  BarChart3,
+  FileText,
+  History,
+  Layers,
+  MessageCircle,
+  Settings as SettingsIcon,
+  Sparkles,
 } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
 
-type Item = { to: string; label: string; Icon: any };
+import ThemeToggle from "@/components/ThemeToggle";
 
-const items: Item[] = [
-  { to: "/chat",      label: "Chat",      Icon: MessageCircle },
-  { to: "/sessions",  label: "Sessions",  Icon: Folder },
-  { to: "/templates", label: "Templates", Icon: Sparkles },
-  { to: "/docs",      label: "Documents", Icon: FileText },
-  { to: "/metrics",   label: "Metrics",   Icon: BarChart3 },
-  { to: "/history",   label: "History",   Icon: History },
-  { to: "/settings",  label: "Settings",  Icon: Settings },
+const navItems = [
+  { label: "Chat", path: "/chat", icon: MessageCircle },
+  { label: "Sessions", path: "/sessions", icon: Layers },
+  { label: "Templates", path: "/templates", icon: Sparkles },
+  { label: "Documents", path: "/docs", icon: FileText },
+  { label: "Metrics", path: "/metrics", icon: BarChart3 },
+  { label: "History", path: "/history", icon: History },
+  { label: "Settings", path: "/settings", icon: SettingsIcon },
 ];
 
-export function Sidebar() {
-  return (
-    <aside className="fixed left-0 top-14 bottom-0 w-64 z-30">
-      <nav className="h-full flex flex-col">
-        <div className="p-3 space-y-1">
-          {items.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                [
-                  "flex items-center gap-3 px-3 py-2 rounded-xl border",
-                  "hover:bg-[var(--nexus-accent)]/10 hover:border-[var(--nexus-accent)]",
-                  isActive ? "border-[var(--nexus-accent)] bg-[var(--nexus-accent)]/15 text-[var(--nexus-accent)]" : "border-[var(--nexus-border)]/50 opacity-90"
-                ].join(" ")
-              }
-            >
-              <Icon className="h-4 w-4" />
-              <span className="text-sm">{label}</span>
-            </NavLink>
-          ))}
-        </div>
+type SidebarProps = {
+  active: string;
+  onNavigate: (path: string) => void;
+};
 
-        <div className="mt-auto p-3 border-t border-[var(--nexus-border)]/60">
-          <ThemeToggle />
-          <div className="mt-2 flex items-center gap-2 text-xs opacity-70">
-            <Sun className="h-3.5 w-3.5" />
-            <span>Script-style polished theme</span>
-          </div>
-        </div>
+const Sidebar = ({ active, onNavigate }: SidebarProps) => {
+  return (
+    <aside className="fixed inset-y-16 left-0 z-40 hidden w-16 flex-col items-center border-r border-border/70 px-2 py-8 lg:flex">
+      <nav className="flex w-full flex-1 flex-col items-center gap-3">
+        {navItems.map(({ label, path, icon: Icon }) => {
+          const isActive = active.startsWith(path);
+
+          return (
+            <button
+              key={path}
+              type="button"
+              onClick={() => onNavigate(path)}
+              aria-current={isActive ? "page" : undefined}
+              className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-200 ${
+                isActive
+                  ? "border-accent/60 bg-accent/20 text-accent shadow-glow"
+                  : "border-transparent bg-card/70 text-muted hover:border-border/60 hover:bg-card"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="pointer-events-none absolute left-full ml-3 hidden whitespace-nowrap rounded-xl border border-border/60 bg-card/95 px-3 py-1 text-sm font-medium text-foreground shadow-soft backdrop-blur group-hover:flex">
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </nav>
+      <div className="mt-6 w-full px-1">
+        <ThemeToggle />
+      </div>
     </aside>
   );
-}
+};
+
+export default Sidebar;

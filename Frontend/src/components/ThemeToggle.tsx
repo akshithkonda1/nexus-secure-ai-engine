@@ -1,26 +1,48 @@
-import { Sun, Moon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import { useMemo } from "react";
+
 import { useTheme } from "@/theme/useTheme";
 
-export function ThemeToggle() {
+const trackClasses =
+  "relative flex h-7 w-12 items-center justify-between rounded-full bg-surface/80 px-1 transition-colors duration-300 ease-out";
+
+export const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
-  const next = theme === "dark" ? "light" : "dark";
+  const isDark = theme === "dark";
+
+  const thumbClassName = useMemo(() => {
+    const base =
+      "pointer-events-none absolute h-5 w-5 rounded-full bg-accent text-accent-foreground shadow-soft transition-transform duration-300 ease-out";
+    return isDark ? `${base} translate-x-0` : `${base} translate-x-5`;
+  }, [isDark]);
+
+  const handleToggle = () => {
+    setTheme(isDark ? "light" : "dark");
+  };
 
   return (
     <button
-      onClick={() => setTheme(next)}
-      className="w-full flex items-center justify-between border mt-2 px-3 py-2 rounded-xl hover:border-[var(--nexus-accent)] hover:bg-[var(--nexus-accent)]/10"
+      type="button"
+      onClick={handleToggle}
+      aria-pressed={isDark}
+      className="group flex w-full flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card/80 px-3 py-3 text-xs font-semibold text-foreground shadow-soft transition hover:border-accent/70 hover:text-accent-foreground hover:shadow-glow focus-visible:outline-none"
     >
-      <div className="flex items-center gap-2">
-        {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-400" /> : <Moon className="h-4 w-4" />}
-        <span className="text-sm">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-      </div>
-      <div className={`h-5 w-10 rounded-full ${theme === "dark" ? "bg-blue-600" : "bg-gray-300"} relative`}>
-        <span
-          className={`absolute top-[2px] h-4 w-4 bg-white rounded-full transition-transform ${
-            theme === "dark" ? "translate-x-5 left-[2px]" : "translate-x-0 left-[2px]"
+      <span className={`${trackClasses} group-hover:bg-surface/90`}>
+        <Sun
+          className={`pointer-events-none h-3.5 w-3.5 text-muted transition-opacity duration-300 ${
+            isDark ? "opacity-0" : "opacity-100"
           }`}
         />
-      </div>
+        <Moon
+          className={`pointer-events-none h-3.5 w-3.5 text-muted transition-opacity duration-300 ${
+            isDark ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <span className={thumbClassName} />
+      </span>
+      <span>{isDark ? "Dark Mode" : "Light Mode"}</span>
     </button>
   );
-}
+};
+
+export default ThemeToggle;
