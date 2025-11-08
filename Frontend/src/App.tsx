@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -46,8 +46,10 @@ function Shell() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <Shell />
-    </ErrorBoundary>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <Shell />
+      </ErrorBoundary>
+    </BrowserRouter>
   );
 }
