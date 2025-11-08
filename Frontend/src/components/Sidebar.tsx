@@ -24,7 +24,9 @@ type SidebarProps = {
 
 export function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
-    <aside className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgba(255,255,255,0.16)] bg-gradient-to-b from-white/80 via-white/60 to-white/30 px-3 py-6 backdrop-blur dark:from-[#0b0f16]/80 dark:via-[#0b0f16]/60 dark:to-[#0b0f16]/30 md:flex">
+    <aside
+      className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgba(176,196,255,0.35)] bg-gradient-to-b from-[rgba(244,248,255,0.92)] via-[rgba(224,236,255,0.7)] to-[rgba(236,244,255,0.5)] px-3 py-6 backdrop-blur dark:border-[rgba(255,255,255,0.16)] dark:from-[#0b0f16]/80 dark:via-[#0b0f16]/60 dark:to-[#0b0f16]/30 md:flex"
+    >
       <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
         <Sparkle className="h-5 w-5" />
       </div>
