@@ -1,0 +1,66 @@
+/* --- Nexus Prism Theme: distinct from Script, still friendly --- */
+:root {
+  --prism-1: #009EFF;     /* Dodger Blue */
+  --prism-2: #9360FF;     /* Medium Purple */
+  --brand:   #0085FF;
+
+  --ink-900: 16 18 24;    /* deep slate */
+  --ink-700: 130 140 160; /* muted text */
+
+  --surface-0: 250 251 253; /* paper */
+  --surface-1: 245 247 251; /* panel */
+}
+:root.dark {
+  --ink-900: 241 244 248;
+  --ink-700: 162 172 190;
+
+  --surface-0: 14 17 22;
+  --surface-1: 22 27 35;
+}
+
+/* Utility colors mapped to your Tailwind tokens */
+:root {
+  --bg: rgb(var(--surface-0));
+  --surface: var(--surface-0);
+  --panel: var(--surface-1);
+  --border: 43 52 65;       /* matches your config's 'border' */
+  --text: var(--ink-900);
+  --subtle: var(--ink-700);
+}
+:root.dark {
+  --bg: rgb(var(--surface-0));
+}
+
+/* Distinct accents */
+.bg-prism {
+  background-image: linear-gradient(135deg, var(--prism-1), var(--prism-2));
+  color: #fff;
+}
+.ring-prism {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--prism-1) 42%, transparent);
+}
+
+/* Nexus glass panel */
+.glass {
+  background: rgb(var(--panel) / 0.50);
+  backdrop-filter: saturate(140%) blur(10px);
+  -webkit-backdrop-filter: saturate(140%) blur(10px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+  border-radius: 18px;
+}
+
+/* Soft “lift” hover */
+.lift { transition: transform 140ms ease, box-shadow 140ms ease; }
+.lift:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(0,0,0,0.20); }
+
+/* Subtle dot grid background for hero */
+.bg-grid { position: relative; isolation: isolate; }
+.bg-grid:before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.12) 1px, transparent 1px)
+    0 0 / 22px 22px;
+  opacity: .15;
+}
