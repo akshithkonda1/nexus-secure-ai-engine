@@ -1,123 +1,66 @@
-import { ArrowUpRight, FolderKanban, PlayCircle, Settings, Upload } from "lucide-react";
+import { type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { PlayCircle, Upload, FileCog, Settings as Cog } from "lucide-react";
+import { sessionStore } from "@/store/sessionStore";
 
-const quickActions = [
-  {
-    title: "New session",
-    description: "Spin up an AI copilot session in seconds with curated prompts.",
-    icon: PlayCircle,
-    accent: "from-accent/40 via-accent/20 to-transparent",
-  },
-  {
-    title: "Import transcript",
-    description: "Bring your existing chat history to continue seamlessly.",
-    icon: Upload,
-    accent: "from-emerald-400/30 via-emerald-400/10 to-transparent",
-  },
-  {
-    title: "Templates",
-    description: "Start from Script.app-inspired frameworks for faster workflows.",
-    icon: FolderKanban,
-    accent: "from-purple-500/35 via-purple-500/15 to-transparent",
-  },
-  {
-    title: "Settings",
-    description: "Tweak preferences, access providers, and manage the workspace.",
-    icon: Settings,
-    accent: "from-amber-400/35 via-amber-400/15 to-transparent",
-  },
-];
-
-const recentSessions = [
-  { name: "Growth strategy review", date: "2 hours ago" },
-  { name: "Product launch sync", date: "Yesterday" },
-  { name: "Customer transcript import", date: "2 days ago" },
-  { name: "Quarterly metrics deep dive", date: "Last week" },
-  { name: "R&D narrative planning", date: "Last week" },
-];
-
-const Home = () => {
+function ActionCard(props: { title: string; desc: string; onClick: () => void; icon: ReactNode; gradient: string; }) {
+  const { title, desc, onClick, icon, gradient } = props;
   return (
-    <div className="space-y-12">
-      <section className="glass-card overflow-hidden p-10">
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 text-center">
-          <span className="inline-flex items-center justify-center gap-2 self-center rounded-full border border-accent/40 bg-accent/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-accent">
-            Nexus BETA
-          </span>
-          <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Welcome to Nexus.ai
-          </h1>
-          <p className="text-base leading-relaxed text-muted sm:text-lg">
-            A scriptable command center where AI orchestration feels natural. Craft prompts, resume sessions,
-            and manage provider intelligence within a polished workspace.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button type="button" className="pill-button bg-accent text-accent-foreground hover:bg-accent">
-              Launch Console
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="pill-button border-dashed border-accent/40 bg-transparent text-accent hover:border-accent/60 hover:bg-accent/10"
-            >
-              Browse Templates
-            </button>
+    <button onClick={onClick} className={`text-left rounded-2xl p-5 md:p-6 border border-white/10 shadow-soft hover:shadow-glow transition-all ${gradient}`}>
+      <div className="flex items-center gap-3 mb-3"><div className="p-2 rounded-lg bg-black/20">{icon}</div><h3 className="font-semibold">{title}</h3></div>
+      <p className="text-sm text-gray-300">{desc}</p>
+    </button>
+  );
+}
+
+export function Home() {
+  const nav = useNavigate();
+  const { createSession, importTranscript, sessions } = sessionStore.use();
+
+  return (
+    <div className="container mx-auto max-w-6xl px-4 py-8 space-y-8">
+      <div className="rounded-2xl border border-white/10 bg-[var(--nexus-card)] p-8 shadow-soft">
+        <div className="text-center space-y-3">
+          <div className="text-xs tracking-[0.35em] text-gray-400">NEXUS BETA</div>
+          <h1 className="text-3xl md:text-4xl font-bold">Welcome to Nexus.ai</h1>
+          <p className="text-gray-300">Launch sessions, import transcripts, apply templates, and manage your workspace.</p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 hover:bg-white/20" onClick={() => nav("/sessions")}>Launch Console</button>
+            <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" onClick={() => nav("/templates")}>Browse Templates</button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map(({ title, description, icon: Icon, accent }) => (
-          <article
-            key={title}
-            className={`surface-card group relative overflow-hidden p-6 transition hover:-translate-y-1 hover:border-accent/50 hover:shadow-glow`}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} aria-hidden="true" />
-            <div className="relative flex h-full flex-col gap-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card/60 text-accent shadow-soft">
-                <Icon className="h-6 w-6" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted">{description}</p>
-              </div>
-              <div className="mt-auto flex items-center gap-2 text-sm font-semibold text-accent">
-                Explore
-                <ArrowUpRight className="h-4 w-4" />
-              </div>
-            </div>
-          </article>
-        ))}
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <ActionCard title="New session" desc="Spin up an AI copilot session in seconds."
+          onClick={() => { const id = createSession({ title: "New session" }); nav(`/sessions/${id}`); }}
+          icon={<PlayCircle className="h-5 w-5 text-blue-300" />} gradient="bg-gradient-to-b from-white/5 to-transparent" />
+        <ActionCard title="Import transcript" desc="Bring an existing chat log to continue seamlessly."
+          onClick={() => importTranscript().then(id => id && nav(`/sessions/${id}`))}
+          icon={<Upload className="h-5 w-5 text-emerald-300" />} gradient="bg-gradient-to-b from-emerald-500/10 to-transparent" />
+        <ActionCard title="Templates" desc="Start faster with pre-built frameworks."
+          onClick={() => nav("/templates")}
+          icon={<FileCog className="h-5 w-5 text-purple-300" />} gradient="bg-gradient-to-b from-purple-500/10 to-transparent" />
+        <ActionCard title="Settings" desc="Tweak preferences, providers, and quotas."
+          onClick={() => nav("/settings")}
+          icon={<Cog className="h-5 w-5 text-yellow-300" />} gradient="bg-gradient-to-b from-yellow-500/10 to-transparent" />
+      </div>
 
-      <section className="surface-card p-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Last 5 sessions</h2>
-            <p className="text-sm text-muted">Jump back into ongoing conversations or analytics instantly.</p>
-          </div>
-          <button type="button" className="pill-button bg-card/60 hover:bg-accent hover:text-accent-foreground">
-            View all sessions
-          </button>
+      <section className="rounded-2xl border border-white/10 bg-[var(--nexus-card)] p-5 shadow-soft">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold">Last 5 sessions</h2>
+          <button className="text-sm px-3 py-1 rounded-md bg-white/10 border border-white/10 hover:bg-white/20" onClick={() => nav("/sessions")}>View all sessions</button>
         </div>
-        <div className="mt-6 space-y-4">
-          {recentSessions.map(({ name, date }) => (
-            <div
-              key={name}
-              className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 px-5 py-4 shadow-soft transition hover:border-accent/40 hover:bg-card/80 hover:shadow-glow sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="text-base font-medium text-foreground">{name}</p>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted">{date}</p>
-              </div>
-              <button type="button" className="pill-button bg-accent text-accent-foreground hover:bg-accent/90">
-                Resume
-              </button>
+        <div className="space-y-2">
+          {sessions.slice(0,5).map(s => (
+            <div key={s.id} className="flex items-center justify-between rounded-lg px-4 py-3 bg-black/20 border border-white/10">
+              <div><div className="font-medium">{s.title}</div><div className="text-xs text-gray-400">{new Date(s.updatedAt).toLocaleString()}</div></div>
+              <button className="text-sm px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white" onClick={() => nav(`/sessions/${s.id}`)}>Resume</button>
             </div>
           ))}
+          {sessions.length === 0 && <div className="text-sm text-gray-400">No sessions yet.</div>}
         </div>
       </section>
     </div>
   );
-};
-
-export default Home;
+}
