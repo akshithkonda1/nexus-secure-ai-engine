@@ -21,7 +21,7 @@ export function ChatMessageBubble({ message }: Props) {
           "relative max-w-[min(640px,90vw)] rounded-3xl border px-5 py-4 text-[15px] leading-relaxed shadow-card transition-colors",
           isUser
             ? "bg-[color:var(--brand)] text-white border-transparent"
-            : "bg-[rgba(255,255,255,0.82)] text-[rgb(var(--text))] border-[rgb(var(--border))] dark:bg-[rgba(9,11,30,0.82)] dark:text-white dark:border-[rgba(255,255,255,0.08)]"
+            : "bg-[rgb(var(--surface)/0.9)] text-[rgb(var(--text))] border-[rgb(var(--border)/0.6)] dark:bg-[rgb(var(--surface)/0.68)] dark:text-[rgb(var(--text))] dark:border-[rgb(var(--border)/0.5)]"
         )}
       >
         {message.status === "loading" && !message.content ? (
@@ -45,7 +45,7 @@ export function ChatMessageBubble({ message }: Props) {
                 href={file.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 rounded-2xl border border-[rgba(255,255,255,0.6)] bg-white/40 px-3 py-1 text-xs font-medium text-[rgb(9,11,30)] shadow-sm backdrop-blur transition hover:shadow-glow dark:border-[rgba(255,255,255,0.08)] dark:bg-white/5 dark:text-white"
+                className="group inline-flex items-center gap-2 rounded-2xl border border-[rgb(var(--border)/0.45)] bg-[rgb(var(--surface)/0.82)] px-3 py-1 text-xs font-medium text-[rgb(var(--text))] shadow-sm backdrop-blur transition hover:shadow-glow dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.5)]"
               >
                 <span className="h-2 w-2 rounded-full bg-[color:var(--brand)]" />
                 <span className="truncate max-w-[180px]">{file.name}</span>

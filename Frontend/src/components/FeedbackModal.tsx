@@ -47,7 +47,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="w-full max-w-xl rounded-3xl border border-[rgba(255,255,255,0.4)] bg-white/90 p-8 shadow-card backdrop-blur-lg dark:border-white/10 dark:bg-[#0b0f16]/90"
+            className="w-full max-w-xl rounded-3xl border border-[rgb(var(--border)/0.5)] bg-[rgb(var(--surface)/0.92)] p-8 shadow-card backdrop-blur-lg dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.72)]"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -73,7 +73,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
                 }
               }}
               rows={8}
-              className="mt-6 w-full resize-none rounded-2xl border border-[rgba(0,133,255,0.18)] bg-white/80 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--text))] shadow-inner outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[rgba(0,133,255,0.2)] dark:bg-white/10"
+              className="mt-6 w-full resize-none rounded-2xl border border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/80 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--text))] shadow-inner outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
               placeholder="Be as specific as possible. What worked? What felt rough?"
             />
             <div className="mt-3 flex items-center justify-between text-xs text-[rgb(var(--text)/0.5)]">

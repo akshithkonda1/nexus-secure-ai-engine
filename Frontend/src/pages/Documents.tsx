@@ -100,7 +100,7 @@ export function Documents() {
         return (
           <div
             key={category}
-            className="rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/70 shadow-soft backdrop-blur dark:border-white/10 dark:bg-white/5"
+            className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] shadow-soft backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]"
           >
             <button
               onClick={() => setOpenSections((prev) => ({ ...prev, [category]: !prev[category] }))}
@@ -122,12 +122,12 @@ export function Documents() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2, ease: "easeInOut" }}
-                  className="overflow-hidden border-t border-[rgba(255,255,255,0.4)] px-6 pb-6 pt-4 dark:border-white/10"
+                  className="overflow-hidden border-t border-[rgb(var(--border)/0.45)] px-6 pb-6 pt-4 dark:border-[rgb(var(--border)/0.5)]"
                 >
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                     <div className="space-y-4">
                       {files.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-[rgba(0,133,255,0.18)] bg-white/50 px-6 py-12 text-center text-sm text-[rgb(var(--text)/0.55)] shadow-inner dark:border-white/10 dark:bg-white/5">
+                        <div className="rounded-3xl border border-dashed border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/50 px-6 py-12 text-center text-sm text-[rgb(var(--text)/0.55)] shadow-inner dark:border-white/10 dark:bg-white/5">
                           Nothing here yet. Drop files on the right.
                         </div>
                       ) : (
@@ -138,7 +138,7 @@ export function Documents() {
                             return (
                               <div
                                 key={file.id}
-                                className="group relative overflow-hidden rounded-3xl border border-[rgba(255,255,255,0.5)] bg-white/80 p-4 shadow-soft transition hover:shadow-glow dark:border-white/10 dark:bg-white/10"
+                                className="group relative overflow-hidden rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] p-4 shadow-soft transition hover:shadow-glow dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.62)]"
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
@@ -153,7 +153,7 @@ export function Documents() {
                                     <Trash2 className="h-4 w-4" />
                                   </button>
                                 </div>
-                                <div className="mt-3 overflow-hidden rounded-2xl border border-[rgba(0,133,255,0.18)] bg-white/70 shadow-inner dark:border-white/10 dark:bg-white/5">
+                                <div className="mt-3 overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/70 shadow-inner dark:border-white/10 dark:bg-white/5">
                                   {preview ? (
                                     <img src={preview} alt={file.name} className="h-32 w-full object-cover" />
                                   ) : (
@@ -172,7 +172,7 @@ export function Documents() {
                         </div>
                       )}
                     </div>
-                    <div className="rounded-3xl border border-[rgba(0,133,255,0.18)] bg-white/70 p-4 shadow-soft dark:border-white/10 dark:bg-white/10">
+                    <div className="rounded-3xl border border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/70 p-4 shadow-soft dark:border-white/10 dark:bg-white/10">
                       <h3 className="text-sm font-semibold text-[rgb(var(--text))]">Add files</h3>
                       <p className="mt-1 text-xs text-[rgb(var(--text)/0.55)]">Drag and drop or click to upload directly into {meta.title.toLowerCase()}.</p>
                       <div className="mt-4">

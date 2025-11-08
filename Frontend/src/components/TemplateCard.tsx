@@ -15,9 +15,9 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.18 }}
-      className="group relative overflow-hidden rounded-3xl border border-[rgba(0,133,255,0.12)] bg-white/70 p-6 shadow-soft backdrop-blur hover:shadow-glow dark:border-white/5 dark:bg-white/5"
+      className="group relative overflow-hidden rounded-3xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 p-6 shadow-soft backdrop-blur hover:shadow-glow dark:border-white/5 dark:bg-white/5"
     >
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[rgba(0,133,255,0.08)] via-transparent to-[rgba(147,96,255,0.14)] opacity-0 transition group-hover:opacity-100" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[color-mix(in_srgb,var(--brand)_16%,transparent)] via-transparent to-[color-mix(in_srgb,var(--purple)_18%,transparent)] opacity-0 transition group-hover:opacity-100" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-[rgb(var(--text))]">{title}</h3>
@@ -57,7 +57,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(0,133,255,0.25)] bg-[rgba(0,133,255,0.08)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]"
           >
             <BadgePlus className="h-3 w-3" />
             {tag}
@@ -70,7 +70,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
 
 export function EmptyTemplates({ label, action }: { label: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[rgba(0,133,255,0.18)] bg-white/40 px-6 py-12 text-center text-sm text-[rgb(var(--text)/0.6)] shadow-inner dark:border-white/10 dark:bg-white/5">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/40 px-6 py-12 text-center text-sm text-[rgb(var(--text)/0.6)] shadow-inner dark:border-white/10 dark:bg-white/5">
       <p>{label}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>

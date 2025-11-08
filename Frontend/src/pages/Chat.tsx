@@ -53,7 +53,7 @@ export default function ChatPage() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 bg-gradient-to-b from-[rgba(0,158,255,0.18)] via-transparent to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 bg-gradient-to-b from-[color-mix(in_srgb,var(--brand)_18%,transparent)] via-transparent to-transparent" />
       <div ref={viewportRef} className="relative z-10 flex-1 overflow-y-auto px-4 pb-32 pt-8 sm:px-12">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
           <AnimatePresence initial={false}>

@@ -63,7 +63,7 @@ export function FileUpload({ description, onFiles, accept, multiple = true, clas
 
 export function InlineFileBadge({ file, onRemove }: { file: File; onRemove?: () => void }) {
   return (
-    <div className="inline-flex items-center gap-3 rounded-2xl border border-[rgba(0,133,255,0.25)] bg-[rgba(0,133,255,0.08)] px-3 py-2 text-xs font-medium text-[color:var(--brand)] backdrop-blur">
+    <div className="inline-flex items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-2 text-xs font-medium text-[color:var(--brand)] backdrop-blur">
       <Files className="h-4 w-4" />
       <span className="max-w-[160px] truncate">{file.name}</span>
       {onRemove && (

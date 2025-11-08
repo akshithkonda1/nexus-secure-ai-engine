@@ -14,8 +14,17 @@
   html, body, #root { height: 100%; }
   body {
     margin: 0;
-    background: radial-gradient(circle at top, rgba(0, 158, 255, 0.08), transparent 55%),
-      radial-gradient(circle at bottom, rgba(147, 96, 255, 0.1), transparent 60%),
+    background:
+      radial-gradient(
+        circle at top,
+        color-mix(in srgb, var(--brand) 16%, transparent) 0%,
+        transparent 58%
+      ),
+      radial-gradient(
+        circle at bottom,
+        color-mix(in srgb, var(--purple) 14%, transparent) 0%,
+        transparent 62%
+      ),
       var(--bg);
     color: rgb(var(--text));
     font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -39,16 +48,16 @@
 
   .btn {
     @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold;
-    background: color-mix(in lab, var(--brand) 20%, transparent);
+    background: color-mix(in srgb, var(--brand) 18%, transparent);
     color: var(--brand);
-    border: 1px solid color-mix(in lab, var(--brand) 38%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand) 42%, transparent);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
   }
   .btn:hover {
     background: var(--brand);
     color: white;
-    box-shadow: 0 0 24px rgba(0, 133, 255, 0.25);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--brand) 32%, transparent);
     transform: translateY(-1px);
   }
   .btn-secondary {
@@ -60,7 +69,7 @@
   .btn-secondary:hover {
     border-color: var(--brand);
     color: var(--brand);
-    box-shadow: 0 0 24px rgba(0, 133, 255, 0.14);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--brand) 22%, transparent);
   }
 
   .markdown-body {
@@ -91,14 +100,14 @@
     align-items: center;
     border-radius: 0.75rem;
     padding: 0.1rem 0.55rem;
-    background: rgba(0, 133, 255, 0.12);
-    color: color-mix(in srgb, var(--brand) 75%, white);
+    background: color-mix(in srgb, var(--brand) 18%, transparent);
+    color: color-mix(in srgb, var(--brand) 74%, white);
     font-family: "SFMono-Regular", "JetBrains Mono", "Fira Code", "Menlo", "Monaco", "Courier New", monospace;
     font-size: 0.82rem;
   }
 
   .markdown-link {
-    color: color-mix(in srgb, var(--brand) 85%, white);
+    color: color-mix(in srgb, var(--brand) 82%, white);
     text-decoration: none;
     font-weight: 600;
     position: relative;
@@ -160,7 +169,7 @@
   .hljs-keyword,
   .hljs-selector-tag,
   .hljs-subst {
-    color: #82aaff;
+    color: color-mix(in srgb, var(--brand) 88%, white);
   }
 
   .hljs-string,
@@ -170,7 +179,7 @@
   .hljs-attribute,
   .hljs-symbol,
   .hljs-bullet {
-    color: #7ad8ff;
+    color: color-mix(in srgb, var(--brand) 62%, white);
   }
 
   .hljs-number,
@@ -191,11 +200,11 @@
   .hljs-selector-class,
   .hljs-selector-id,
   .hljs-emphasis {
-    color: #c8a8ff;
+    color: color-mix(in srgb, var(--purple) 76%, white);
   }
 
   .hljs-addition,
   .hljs-strong {
-    color: #9ef0c2;
+    color: color-mix(in srgb, var(--mint) 72%, white);
   }
 }
