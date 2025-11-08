@@ -30,8 +30,9 @@ type SidebarProps = {
 
 export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps) {
   return (
-    <aside
+    <motion.aside
       className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.92)] px-3 py-6 backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.68)] md:flex"
+      layout
     >
       <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
         <Sparkle className="h-5 w-5" />
@@ -75,19 +76,6 @@ export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps
           );
         })}
       </nav>
-
-      <div className={clsx("mt-auto flex w-full justify-center pt-6", expanded && "justify-between px-1")}> 
-        {expanded && <div className="text-xs font-medium uppercase tracking-[0.3em] text-[rgb(var(--text)/0.4)]">Layout</div>}
-        <button
-          onClick={onToggle}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white/80 px-4 text-sm font-semibold text-[rgb(var(--text))] shadow-sm transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-white/10 dark:bg-white/10"
-          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
-          aria-pressed={expanded}
-        >
-          {expanded && <span className="text-xs font-medium uppercase tracking-[0.32em]">Collapse</span>}
-          {expanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-      </div>
     </motion.aside>
   );
 }
