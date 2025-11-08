@@ -8,139 +8,33 @@ type VoiceRecorderProps = {
   compact?: boolean;
 };
 
-export default function VoiceRecorder({ active, onStart, onStop, onError }: Props) {
-  const [isRec, setIsRec] = useState(!!active);
-  const [permDenied, setPermDenied] = useState(false);
-  const mediaRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<BlobPart[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>();
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+export function VoiceRecorder({ onCapture, compact }: VoiceRecorderProps) {
+  const { status, levels, elapsed, start, stop, cancel } = useVoiceRecorder();
 
-  useEffect(() => {
-    setIsRec(!!active);
-  }, [active]);
+  const isRecording = status === "recording";
 
-  async function start() {
-    try {
-      setPermDenied(false);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+  const friendlyTimer = useMemo(() => {
+    const mins = Math.floor(elapsed / 60)
+      .toString()
+      .padStart(2, "0");
+    const secs = (elapsed % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  }, [elapsed]);
 
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioCtxRef.current = ctx;
-      const src = ctx.createMediaStreamSource(stream);
-      sourceRef.current = src;
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      src.connect(analyser);
-      analyserRef.current = analyser;
-
-      animate();
-
-      const rec = new MediaRecorder(stream, { mimeType: "audio/webm" });
-      mediaRef.current = rec;
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      rec.onstop = async () => {
-        stopAnimation();
-        stopStreamTracks();
-        await cleanupAudio();
-
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const transcript = await tryTranscribe(blob).catch(() => "");
-        onStop?.(transcript, blob);
-      };
-      rec.start();
-
-      setIsRec(true);
-      onStart?.();
-    } catch (err) {
-      stopAnimation();
-      stopStreamTracks();
-      await cleanupAudio();
-      setIsRec(false);
-
-      const isPermissionError =
-        err instanceof DOMException &&
-        ["NotAllowedError", "SecurityError", "AbortError"].includes(err.name);
-      setPermDenied(isPermissionError);
-
-      onError?.(err);
+  const handleToggle = useCallback(async () => {
+    if (isRecording) {
+      const blob = await stop();
+      const transcript = createMockTranscript(elapsed);
+      onCapture({ transcript, blob });
+      return;
     }
     try {
-      mediaRef.current?.stop();
-      stopStreamTracks();
-      setIsRec(false);
-    } catch (e) {
-      onError?.(e);
+      await start();
+    } catch (error) {
+      console.error("Voice recorder start failed", error);
+      cancel();
     }
-  }
-
-  async function cleanupAudio() {
-    try {
-      sourceRef.current?.disconnect();
-      analyserRef.current?.disconnect();
-      if (audioCtxRef.current) {
-        await audioCtxRef.current.close().catch(() => undefined);
-      }
-      sourceRef.current = null;
-      analyserRef.current = null;
-      audioCtxRef.current = null;
-    } catch {}
-  }
-
-  function stopStreamTracks() {
-    if (!streamRef.current) return;
-    streamRef.current.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-  }
-
-  function animate() {
-    const canvas = canvasRef.current;
-    const analyser = analyserRef.current;
-    if (!canvas || !analyser) return;
-
-    const ctx = canvas.getContext("2d")!;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      analyser.getByteTimeDomainData(dataArray);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#0085FF";
-      ctx.beginPath();
-
-      const slice = canvas.width / bufferLength;
-      let x = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * canvas.height) / 2;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        x += slice;
-      }
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-  }
-
-  function stopAnimation() {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = undefined;
-    }
-  }
+  }, [cancel, elapsed, isRecording, onCapture, start, stop]);
 
   return (
     <div className="relative flex items-center gap-2">
