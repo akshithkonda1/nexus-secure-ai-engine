@@ -1,34 +1,37 @@
-import { useNavigate } from "react-router-dom";
-import { sessionStore } from "@/store/sessionStore";
+import { Layers, Sparkles, Wand2 } from "lucide-react";
 
-const templates = [
-  { id: "market-review", title: "Market review", desc: "Summarize market signals and flags." },
-  { id: "bug-triage", title: "Bug triage", desc: "Collect logs, reproduce, propose fixes." },
-  { id: "pr-factcheck", title: "PR fact-check", desc: "Verify claims across sources." },
-  { id: "spec-drafter", title: "Spec drafter", desc: "Turn requirements into a light RFC." },
+const data = [
+  { icon: Sparkles, title: "Brainstorm brief", desc: "Rapid idea generation", tag: "creative" },
+  { icon: Wand2, title: "Summarize paper", desc: "Academic summary", tag: "research" },
+  { icon: Layers, title: "Debate compare", desc: "Model vs model", tag: "orchestration" },
 ];
 
 export function Templates() {
-  const nav = useNavigate();
-  const { createSession } = sessionStore.use();
-
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-semibold">Templates</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {templates.map(t => (
-          <div key={t.id} className="rounded-xl border border-white/10 bg-[var(--nexus-card)] p-5">
-            <div className="font-medium">{t.title}</div>
-            <div className="text-sm text-gray-300 mt-1">{t.desc}</div>
-            <div className="mt-4">
-              <button className="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                onClick={() => { const id = createSession({ title: `${t.title} session`, template: t.id }); nav(`/sessions/${id}`); }}>
-                Use template
-              </button>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-semibold">Templates</h2>
+        <span className="text-xs text-subtle">Script-style collection</span>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {data.map((t) => (
+          <button
+            key={t.title}
+            className="text-left rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)] hover:bg-surface/50"
+          >
+            <div className="size-10 rounded-xl bg-[color:var(--brand)]/10 grid place-items-center mb-3">
+              <t.icon className="size-5" style={{ color: "var(--brand)" }} />
             </div>
-          </div>
+            <div className="font-medium">{t.title}</div>
+            <div className="text-sm text-subtle mt-1">{t.desc}</div>
+            <div className="text-xs mt-3 inline-flex items-center gap-2 px-2 py-1 rounded-lg border border-border/60">
+              {t.tag}
+            </div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
+
+export default Templates;

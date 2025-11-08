@@ -1,173 +1,93 @@
-import { GaugeCircle, Palette, Server } from "lucide-react";
-import { useEffect, useState } from "react";
-
+import { useState } from "react";
 import { useTheme } from "@/theme/useTheme";
-
-type AppearanceMode = "light" | "dark" | "system";
-
-type ProviderState = {
-  openai: boolean;
-  anthropic: boolean;
-  mistral: boolean;
-};
-
-type LimitState = {
-  dailyRequests: number;
-  maxTokens: number;
-};
 
 export function Settings() {
   const { theme, setTheme } = useTheme();
-  const [appearance, setAppearance] = useState<AppearanceMode>(theme);
-  const [providers, setProviders] = useState<ProviderState>({
+  const [providers, setProviders] = useState({
     openai: true,
     anthropic: true,
     mistral: false,
   });
-  const [limits, setLimits] = useState<LimitState>({
-    dailyRequests: 250,
-    maxTokens: 500000,
-  });
 
-  useEffect(() => {
-    setAppearance(theme);
-  }, [theme]);
+  function toggle(name: keyof typeof providers) {
+    setProviders((p) => ({ ...p, [name]: !p[name] }));
+  }
 
-  const handleAppearanceChange = (mode: AppearanceMode) => {
-    setAppearance(mode);
-    if (mode === "light" || mode === "dark") {
-      setTheme(mode);
-    }
-  };
-
-  const toggleProvider = (provider: keyof ProviderState) => {
-    setProviders((current) => ({ ...current, [provider]: !current[provider] }));
-  };
-
-  const updateLimit = (field: keyof LimitState, value: number) => {
-    setLimits((current) => ({ ...current, [field]: Number.isNaN(value) ? current[field] : value }));
-  };
+  const [daily, setDaily] = useState(1500);
+  const [maxTokens, setMaxTokens] = useState(200000);
 
   return (
     <div className="space-y-10">
-      <section className="surface-card space-y-6 p-8">
-        <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-soft">
-            <Palette className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Appearance</h2>
-            <p className="text-sm text-muted">Choose how Nexus.ai adapts to your environment.</p>
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {([
-            { value: "dark", title: "Dark", helper: "Default, deep slate glass." },
-            { value: "light", title: "Light", helper: "Luminous, polished surfaces." },
-            { value: "system", title: "System", helper: "Follow device preference." },
-          ] as const).map(({ value, title, helper }) => (
-            <label
-              key={value}
-              className={`group flex cursor-pointer flex-col gap-2 rounded-2xl border border-border/60 bg-card/70 p-4 transition hover:border-accent/40 hover:bg-card/80 ${
-                appearance === value ? "border-accent/60 shadow-glow" : ""
+      <section className="rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+        <h3 className="font-medium">Appearance</h3>
+        <p className="text-sm text-subtle mt-1">Choose how Nexus renders.</p>
+        <div className="mt-4 flex gap-2">
+          {(["light", "dark"] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setTheme(mode)}
+              className={`h-9 px-3 rounded-lg border border-border/60 ${
+                theme === mode ? "text-white" : "text-foreground"
               }`}
+              style={theme === mode ? { backgroundColor: "var(--brand)" } : undefined}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">{title}</h3>
-                  <p className="text-sm text-muted">{helper}</p>
-                </div>
-                <input
-                  type="radio"
-                  name="appearance"
-                  value={value}
-                  checked={appearance === value}
-                  onChange={() => handleAppearanceChange(value)}
-                  className="h-4 w-4 border-border/70 text-accent focus:ring-accent"
-                />
-              </div>
-              {value === "system" && (
-                <p className="text-xs text-muted">
-                  System mode syncs with the OS theme when supported. Manual override keeps your choice persistent.
-                </p>
-              )}
-            </label>
+              {mode[0].toUpperCase() + mode.slice(1)}
+            </button>
           ))}
         </div>
       </section>
 
-      <section className="surface-card space-y-6 p-8">
-        <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-soft">
-            <Server className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Providers</h2>
-            <p className="text-sm text-muted">Enable or pause AI engines powering your workspace.</p>
-          </div>
-        </div>
-        <div className="space-y-3">
+      <section className="rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+        <h3 className="font-medium">Providers</h3>
+        <p className="text-sm text-subtle mt-1">
+          Enable or disable model providers available to this workspace.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            { key: "openai", label: "OpenAI GPT-4o", description: "Best for multimodal orchestration." },
-            { key: "anthropic", label: "Anthropic Claude", description: "Thoughtful, long-context reasoning." },
-            { key: "mistral", label: "Mistral Large", description: "Efficient, cost-optimized deployments." },
-          ].map(({ key, label, description }) => (
+            { key: "openai", label: "OpenAI GPT-4o" },
+            { key: "anthropic", label: "Anthropic Claude" },
+            { key: "mistral", label: "Mistral Large" },
+          ].map(({ key, label }) => (
             <label
               key={key}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/70 px-5 py-4 transition hover:border-accent/40 hover:bg-card/80"
+              className="flex items-center justify-between rounded-xl border border-border/60 bg-surface/40 px-3 py-2"
             >
-              <span>
-                <p className="text-base font-medium text-foreground">{label}</p>
-                <p className="text-sm text-muted">{description}</p>
-              </span>
-              <span className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={providers[key as keyof ProviderState]}
-                  onChange={() => toggleProvider(key as keyof ProviderState)}
-                />
-                <span className="relative inline-flex h-7 w-12 items-center rounded-full bg-card/60 transition peer-checked:bg-accent">
-                  <span className="absolute left-1 h-5 w-5 transform rounded-full bg-surface/80 shadow-soft transition peer-checked:translate-x-5 peer-checked:bg-accent-foreground" />
-                </span>
-              </span>
+              <span>{label}</span>
+              <input
+                type="checkbox"
+                checked={(providers as any)[key]}
+                onChange={() => toggle(key as keyof typeof providers)}
+                className="size-5 accent-[color:var(--brand)]"
+              />
             </label>
           ))}
         </div>
       </section>
 
-      <section className="surface-card space-y-6 p-8">
-        <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-soft">
-            <GaugeCircle className="h-5 w-5" />
-          </span>
+      <section className="rounded-2xl bg-[rgb(var(--panel))] border border-border/60 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+        <h3 className="font-medium">Limits & quotas</h3>
+        <p className="text-sm text-subtle mt-1">
+          Configure soft limits to keep your telemetry in check.
+        </p>
+        <div className="mt-4 grid sm:grid-cols-2 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Limits &amp; quotas</h2>
-            <p className="text-sm text-muted">Define guardrails for usage across the organization.</p>
+            <label className="text-sm text-subtle">Daily requests</label>
+            <input
+              type="number"
+              value={daily}
+              onChange={(e) => setDaily(Number(e.target.value))}
+              className="mt-1 w-full h-10 rounded-lg bg-surface/50 border border-border/60 px-3"
+            />
           </div>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-foreground">Daily requests</span>
+          <div>
+            <label className="text-sm text-subtle">Max tokens</label>
             <input
               type="number"
-              min={0}
-              value={limits.dailyRequests}
-              onChange={(event) => updateLimit("dailyRequests", Number(event.target.value))}
-              className="w-full"
+              value={maxTokens}
+              onChange={(e) => setMaxTokens(Number(e.target.value))}
+              className="mt-1 w-full h-10 rounded-lg bg-surface/50 border border-border/60 px-3"
             />
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-foreground">Max tokens</span>
-            <input
-              type="number"
-              min={0}
-              step={100}
-              value={limits.maxTokens}
-              onChange={(event) => updateLimit("maxTokens", Number(event.target.value))}
-              className="w-full"
-            />
-          </label>
+          </div>
         </div>
       </section>
     </div>

@@ -1,57 +1,53 @@
 import { NavLink } from "react-router-dom";
-import {
-  MessageSquare,
-  Layers,
-  FileText,
-  BarChart3,
-  History as HistoryIcon,
-  Settings as Cog,
-  Sparkles,
-} from "lucide-react";
+import { Bot, FileText, History, Layers, Settings, Sparkles, Home as HomeIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const item = "flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white/5 transition-colors";
-const active = "bg-white/10 text-white shadow-soft border border-white/10";
+type SidebarProps = {
+  active?: string;
+  onNavigate?: (path: string) => void;
+  variant?: "desktop" | "mobile";
+};
 
 const links = [
-  { to: "/chat", label: "Chat", Icon: MessageSquare },
+  { to: "/home", label: "Home", Icon: HomeIcon },
+  { to: "/chat", label: "Chat", Icon: Bot },
   { to: "/sessions", label: "Sessions", Icon: Layers },
   { to: "/templates", label: "Templates", Icon: Sparkles },
   { to: "/documents", label: "Documents", Icon: FileText },
-  { to: "/metrics", label: "Metrics", Icon: BarChart3 },
-  { to: "/history", label: "History", Icon: HistoryIcon },
-  { to: "/settings", label: "Settings", Icon: Cog },
+  { to: "/history", label: "History", Icon: History },
+  { to: "/settings", label: "Settings", Icon: Settings },
 ];
 
-type SidebarProps = {
-  variant?: "desktop" | "mobile";
-  onNavigate?: (path: string) => void;
-};
-
-export function Sidebar({ variant = "desktop", onNavigate }: SidebarProps = {}) {
-  const containerClass =
-    variant === "mobile"
-      ? "w-64 bg-[var(--nexus-surface)] border-r border-[var(--nexus-border)] flex flex-col py-6"
-      : "fixed left-0 top-16 bottom-0 w-16 md:w-20 bg-[var(--nexus-surface)] border-r border-[var(--nexus-border)] flex flex-col items-center py-3";
-  const navClass = variant === "mobile" ? "flex-1 flex flex-col gap-1 px-4" : "flex-1 w-full flex flex-col items-stretch gap-1 px-2";
-  const labelClass = variant === "mobile" ? "inline" : "hidden md:inline";
-
+export function Sidebar({ active = "/home", onNavigate, variant = "desktop" }: SidebarProps) {
+  const widthClass = variant === "mobile" ? "w-full" : "min-w-[200px]";
   return (
-    <aside className={containerClass}>
-      <nav className={navClass}>
-        {links.map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `${item} ${isActive ? active : "text-gray-300"}`}
-            onClick={() => onNavigate?.(to)}
-          >
-            <Icon className="h-5 w-5" />
-            <span className={labelClass}>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-      <div className={variant === "mobile" ? "px-4 pb-6 mt-auto" : "w-full px-2 pb-3 mt-auto"}>
+    <aside
+      className={`border-r border-border/60 bg-[rgb(var(--panel))] px-4 py-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)] ${widthClass}`}
+    >
+      <div className="flex flex-col gap-6">
+        <div className="space-y-1">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-subtle px-2">Navigate</div>
+          <nav className="mt-3 space-y-1">
+            {links.map(({ to, label, Icon }) => {
+              const isActive = active === to || (to !== "/" && active.startsWith(to));
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => onNavigate?.(to)}
+                  className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm transition ${
+                    isActive
+                      ? "border-transparent bg-[color:var(--brand)] text-white shadow-[0_14px_30px_rgba(0,0,0,0.3)]"
+                      : "border-border/60 text-subtle hover:bg-surface/60 hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-4" />
+                  <span>{label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
         <ThemeToggle />
       </div>
     </aside>

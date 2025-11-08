@@ -1,20 +1,73 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { FileText, UploadCloud } from "lucide-react";
+
+type Doc = { id: string; name: string; size: string; when: string };
 
 export function Documents() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [docs, setDocs] = useState<Doc[]>([
+    { id: "1", name: "meeting-notes.txt", size: "12 KB", when: "today" },
+  ]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function pick() {
+    inputRef.current?.click();
+  }
+
+  function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setDocs((d) => [
+      ...d,
+      {
+        id: crypto.randomUUID(),
+        name: f.name,
+        size: `${Math.max(1, Math.ceil(f.size / 1024))} KB`,
+        when: "now",
+      },
+    ]);
+  }
+
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-semibold">Documents</h1>
-      <label className="block rounded-xl border border-dashed border-white/20 bg-black/10 p-8 text-center cursor-pointer hover:bg-black/20">
-        <input type="file" multiple className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []))}/>
-        <div className="text-gray-300">Drop files here or click to upload</div>
-      </label>
-      {files.length > 0 && (
-        <div className="rounded-xl border border-white/10 bg-[var(--nexus-card)] p-4">
-          <div className="font-medium mb-2">Selected ({files.length})</div>
-          <ul className="text-sm text-gray-300 list-disc pl-5">{files.map(f => <li key={f.name}>{f.name}</li>)}</ul>
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Documents</h2>
+        <div className="flex items-center gap-2">
+          <input ref={inputRef} type="file" className="hidden" onChange={onFiles} />
+          <button
+            onClick={pick}
+            className="h-10 px-4 rounded-xl text-white flex items-center gap-2"
+            style={{ backgroundColor: "var(--brand)" }}
+          >
+            <UploadCloud className="size-4" /> Upload
+          </button>
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="rounded-2xl overflow-hidden border border-border/60 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+        <div className="bg-[rgb(var(--panel))] grid grid-cols-[1fr_120px_140px_120px] px-4 py-3 text-sm text-subtle">
+          <div>Name</div>
+          <div>Size</div>
+          <div>Uploaded</div>
+          <div></div>
+        </div>
+        <div className="divide-y divide-border/60">
+          {docs.map((d) => (
+            <div
+              key={d.id}
+              className="bg-surface/40 grid grid-cols-[1fr_120px_140px_120px] px-4 py-3 items-center"
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="size-4 text-subtle" /> {d.name}
+              </div>
+              <div className="text-sm text-subtle">{d.size}</div>
+              <div className="text-sm text-subtle">{d.when}</div>
+              <button className="h-8 px-3 rounded-lg border border-border/60 hover:bg-surface/50">Open</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
+
+export default Documents;
