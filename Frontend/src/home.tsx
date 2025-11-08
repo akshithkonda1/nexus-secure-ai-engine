@@ -100,14 +100,14 @@ export default function HomePage() {
               <Sparkle className="h-4 w-4" /> Nexus hub
             </div>
             <h1 className="text-3xl font-semibold tracking-tight text-[rgb(var(--text))] sm:text-4xl">
-              Welcome to your Nexus workspace
+              Welcome to Nexus
             </h1>
             <p className="text-base leading-relaxed text-[rgb(var(--text)/0.65)]">
-              Orchestrate multi-model debates, keep knowledge synchronized, and move from idea to approved deliverable with clarity.
+              Orchestrate multi-model debates, keep knowledge synchronized, and move and think with more certainty.
             </p>
             <div className="flex flex-wrap gap-3">
               <button className="btn" onClick={() => navigate("/chat")}>
-                Launch studio <ArrowRight className="h-4.5 w-4.5" />
+                Chat with Nexus <ArrowRight className="h-4.5 w-4.5" />
               </button>
               <button className="btn btn-secondary" onClick={() => navigate("/documents")}>
                 Upload knowledge <ArrowRight className="h-4.5 w-4.5" />
