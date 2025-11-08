@@ -1,8 +1,7 @@
-import type { Config } from 'tailwindcss'
-
+/** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
-  content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -12,28 +11,32 @@ export default {
           'BlinkMacSystemFont',
           'system-ui',
           'Inter',
-          'Segoe UI',
+          '"Segoe UI"',
           'Roboto',
-          'Helvetica Neue',
+          '"Helvetica Neue"',
           'Arial',
           'sans-serif',
         ],
       },
       colors: {
+        // Brand
         brand: '#0085FF',
-        'brand-alt': '#009EFF',
+        brandAlt: '#009EFF',
         purple: '#9360FF',
         lilac: '#C5B9DA',
-        // semantic surface tokens (used via CSS vars in globals.css)
+
+        // Semantic via CSS variables (defined in globals.css)
+        background: 'var(--bg)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         panel: 'rgb(var(--panel) / <alpha-value>)',
         border: 'rgb(var(--border) / <alpha-value>)',
         text: 'rgb(var(--text) / <alpha-value>)',
         subtle: 'rgb(var(--subtle) / <alpha-value>)',
-        background: 'var(--bg)',
+
+        // Conveniences
         card: 'rgb(var(--panel) / <alpha-value>)',
         accent: '#0085FF',
-        'accent-foreground': '#F9FAFC',
+        accentForeground: '#F9FAFC',
         foreground: 'rgb(var(--text) / <alpha-value>)',
         muted: 'rgb(var(--subtle) / <alpha-value>)',
       },
@@ -49,4 +52,4 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config
+};
