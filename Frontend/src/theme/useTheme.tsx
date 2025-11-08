@@ -1,29 +1,80 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-type Ctx = { theme: "dark" | "light"; setTheme: (t: "dark" | "light") => void };
-const ThemeContext = createContext<Ctx | null>(null);
+type ThemeMode = "light" | "dark";
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<"dark" | "light">(
-    (localStorage.getItem("nexus-theme") as "dark" | "light") || "dark"
-  );
+type ThemeContextValue = {
+  theme: ThemeMode;
+  setTheme: (nextTheme: ThemeMode) => void;
+};
+
+const STORAGE_KEY = "nexus-theme";
+
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+
+export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") {
+      return "dark";
+    }
+
+    const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+
+    return "dark";
+  });
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem("nexus-theme", theme);
-
-    if (window.matchMedia("(forced-colors: active)").matches) {
-      root.style.setProperty("forced-color-adjust", "none");
+    if (typeof document === "undefined") {
+      return;
     }
+
+    const root = document.documentElement;
+    const opposite = theme === "dark" ? "light" : "dark";
+    root.classList.remove(opposite);
+    root.classList.add(theme);
+    root.style.setProperty("color-scheme", theme);
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      /* no-op */
+    }
+
+    if (typeof window.matchMedia === "function") {
+      const media = window.matchMedia("(forced-colors: active)");
+      const applyForcedColorAdjust = () => {
+        if (media.matches) {
+          root.style.setProperty("forced-color-adjust", "none");
+        } else {
+          root.style.removeProperty("forced-color-adjust");
+        }
+      };
+
+      applyForcedColorAdjust();
+      media.addEventListener("change", applyForcedColorAdjust);
+      return () => media.removeEventListener("change", applyForcedColorAdjust);
+    }
+
+    return undefined;
   }, [theme]);
 
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
-}
+  const setTheme = useCallback((nextTheme: ThemeMode) => {
+    setThemeState(nextTheme === "light" ? "light" : "dark");
+  }, []);
 
-export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-  return ctx;
-}
+  const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+
+  return context;
+};

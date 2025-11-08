@@ -1,22 +1,41 @@
+import forms from "@tailwindcss/forms";
 import type { Config } from "tailwindcss";
 
-export default {
+const config: Config = {
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
     extend: {
       colors: {
-        border: "#2b3441",
-        card: "#1f2733",
-        accent: "#2563eb",
+        background: "var(--background)",
+        surface: "var(--surface)",
+        card: "var(--card)",
+        border: "var(--border)",
+        muted: "var(--muted)",
+        foreground: "var(--foreground)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
       },
       boxShadow: {
-        glow: "0 0 20px rgba(37,99,235,0.4)",
+        soft: "var(--shadow-soft)",
+        glow: "var(--shadow-glow)",
+      },
+      backgroundImage: {
+        "glass-light":
+          "linear-gradient(135deg, color-mix(in srgb, var(--card) 96%, transparent), color-mix(in srgb, var(--card) 80%, transparent))",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "\"Segoe UI\"", "sans-serif"],
       },
       borderRadius: {
-        xl: "1rem",
+        xl: "1.25rem",
+        "2xl": "1.5rem",
       },
     },
   },
-  plugins: [],
-} satisfies Config;
+  plugins: [forms()],
+};
+
+export default config;

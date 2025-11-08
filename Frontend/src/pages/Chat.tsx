@@ -1,12 +1,13 @@
-export function Chat() {
+const ChatPage = () => {
   return (
-    <div className="container-page pt-20 pl-64">
-      <div className="card p-6">
-        <div className="text-lg font-medium mb-3">Chat</div>
-        <p className="opacity-80">
-          This is a placeholder. Wire your engine when ready. The UI shell, routing, and theming are complete.
-        </p>
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="glass-card max-w-md space-y-3 px-8 py-10 text-center">
+        <p className="text-sm uppercase tracking-[0.3em] text-muted">Prototype</p>
+        <h2 className="text-2xl font-semibold text-foreground">Working on it…</h2>
+        <p className="text-sm text-muted">The Nexus chat experience is evolving. Expect a full Script.app-inspired console soon.</p>
       </div>
     </div>
   );
-}
+};
+
+export default ChatPage;
