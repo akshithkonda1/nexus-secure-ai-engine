@@ -1,4 +1,5 @@
-import type { Config } from 'tailwindcss'
+// Frontend/tailwind.config.ts
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: 'class',
@@ -24,7 +25,7 @@ export default {
         'brand-alt': '#009EFF',
         purple: '#9360FF',
         lilac: '#C5B9DA',
-        // semantic surface tokens (used via CSS vars in globals.css)
+
         surface: 'rgb(var(--surface) / <alpha-value>)',
         panel: 'rgb(var(--panel) / <alpha-value>)',
         border: 'rgb(var(--border) / <alpha-value>)',
@@ -49,4 +50,4 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config
+} satisfies Config;
