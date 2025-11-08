@@ -11,6 +11,11 @@
     --accent: #2563eb;
     --accent-foreground: #f8fafc;
     --foreground: #f1f5f9;
+    --nexus-bg: var(--background);
+    --nexus-surface: var(--surface);
+    --nexus-card: var(--card);
+    --nexus-border: var(--border);
+    --nexus-text: var(--foreground);
     --header: rgba(22, 27, 34, 0.92);
     --sidebar: rgba(13, 17, 23, 0.92);
     --input: rgba(31, 39, 51, 0.92);
@@ -28,6 +33,11 @@
     --accent: #2563eb;
     --accent-foreground: #f8fafc;
     --foreground: #0f172a;
+    --nexus-bg: var(--background);
+    --nexus-surface: var(--surface);
+    --nexus-card: var(--card);
+    --nexus-border: var(--border);
+    --nexus-text: var(--foreground);
     --header: rgba(248, 250, 252, 0.92);
     --sidebar: rgba(248, 250, 252, 0.9);
     --input: rgba(248, 250, 252, 0.95);
