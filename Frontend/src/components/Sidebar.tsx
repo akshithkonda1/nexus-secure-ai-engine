@@ -28,30 +28,32 @@ type SidebarProps = {
   onNavigate?: (path: string) => void;
 };
 
-export function Sidebar({ variant = "desktop", onNavigate }: SidebarProps = {}) {
-  const containerClass =
-    variant === "mobile"
-      ? "w-64 bg-[var(--nexus-surface)] border-r border-[var(--nexus-border)] flex flex-col py-6"
-      : "fixed left-0 top-16 bottom-0 w-16 md:w-20 bg-[var(--nexus-surface)] border-r border-[var(--nexus-border)] flex flex-col items-center py-3";
-  const navClass = variant === "mobile" ? "flex-1 flex flex-col gap-1 px-4" : "flex-1 w-full flex flex-col items-stretch gap-1 px-2";
-  const labelClass = variant === "mobile" ? "inline" : "hidden md:inline";
-
+const Sidebar = ({ active, onNavigate }: SidebarProps) => {
   return (
-    <aside className={containerClass}>
-      <nav className={navClass}>
-        {links.map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `${item} ${isActive ? active : "text-gray-300"}`}
-            onClick={() => onNavigate?.(to)}
-          >
-            <Icon className="h-5 w-5" />
-            <span className={labelClass}>{label}</span>
-          </NavLink>
-        ))}
+    <aside className="aside fixed bottom-0 left-0 top-16 hidden w-[76px] flex-col items-center gap-3 py-4 lg:flex">
+      <nav className="flex flex-1 flex-col items-center gap-3">
+        {navItems.map(({ label, path, icon: Icon }) => {
+          const isActive = active.startsWith(path);
+
+          return (
+            <button
+              key={path}
+              type="button"
+              onClick={() => onNavigate(path)}
+              title={label}
+              aria-current={isActive ? "page" : undefined}
+              className={`group relative grid h-12 w-12 place-items-center rounded-xl border border-border/20 text-subtle transition-all duration-200 hover:border-brand/30 hover:text-white/90 hover:shadow-glow ${
+                isActive
+                  ? "bg-brand/15 text-white/90 border-brand/40"
+                  : "bg-[rgb(var(--surface))]"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+            </button>
+          );
+        })}
       </nav>
-      <div className={variant === "mobile" ? "px-4 pb-6 mt-auto" : "w-full px-2 pb-3 mt-auto"}>
+      <div className="mt-auto w-full px-2 pb-2 [&>button]:bg-[rgb(var(--panel))] [&>button]:border-border/30 [&>button]:text-subtle [&>button:hover]:border-lilac/30">
         <ThemeToggle />
       </div>
     </aside>
