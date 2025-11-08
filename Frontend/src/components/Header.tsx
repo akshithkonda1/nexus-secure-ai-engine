@@ -23,7 +23,7 @@ const Header = () => {
             <input
               id="global-search"
               name="global-search"
-              placeholder="Search workspace, sessions, commands..."
+              placeholder="Search"
               className="ml-3 w-full bg-transparent text-sm text-foreground placeholder:text-muted/70 focus-visible:outline-none"
               type="search"
               autoComplete="off"
