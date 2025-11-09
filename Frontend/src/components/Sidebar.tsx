@@ -10,6 +10,7 @@ import {
   Settings as SettingsIcon,
   SunMoon,
 } from "lucide-react";
+import { useTheme } from "../theme/useTheme";
 
 type SidebarProps = {
   active?: string;
@@ -19,6 +20,7 @@ type SidebarProps = {
 type NavItem = { label: string; to: string; icon: ReactNode };
 
 export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: SidebarProps) {
+  const { resolved, setTheme } = useTheme();
   const items = useMemo<NavItem[]>(
     () => [
       { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
@@ -36,14 +38,12 @@ export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: Sideb
   const isActivePath = (path: string) => active === path || (path !== "/" && active.startsWith(`${path}/`));
 
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const dark = root.classList.toggle("dark", !root.classList.contains("dark"));
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    setTheme(resolved === "dark" ? "light" : "dark");
   };
 
   return (
     <aside
-      className={`h-screen ${widthClass} bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2`}
+      className={`h-screen ${widthClass} bg-panel border-r border-border/60 py-3 flex flex-col items-center gap-2`}
     >
       <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">Nx</div>
       <nav className="mt-1 flex flex-col items-center gap-1">
@@ -67,7 +67,11 @@ export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: Sideb
         ))}
       </nav>
       <div className="mt-auto pb-2">
-        <button title="Toggle theme" onClick={toggleTheme} className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60">
+        <button
+          title="Toggle theme"
+          onClick={toggleTheme}
+          className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60"
+        >
           <SunMoon className="h-5 w-5" />
         </button>
       </div>

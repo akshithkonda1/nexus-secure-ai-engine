@@ -15,7 +15,7 @@ function Capsule({ Icon, title, onClick }: { Icon: any; title: string; onClick: 
 export default function Home() {
   const navigate = useNavigate();
   return (
-    <div className="p-6">
+    <main className="p-6">
       <section className="glass bg-grid px-8 py-10">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
@@ -69,5 +69,3 @@ export default function Home() {
     </main>
   );
 }
-
-export default Home;

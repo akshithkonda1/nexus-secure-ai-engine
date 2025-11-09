@@ -8,7 +8,7 @@ type HeaderProps = {
 export function Header({ onToggleSidebar }: HeaderProps = {}) {
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-[rgb(var(--panel))]/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-panel/80 backdrop-blur">
       <div className="h-16 flex items-center gap-4 px-4 sm:px-6">
         <button
           className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-surface/60 text-subtle sm:hidden"
@@ -40,8 +40,7 @@ export function Header({ onToggleSidebar }: HeaderProps = {}) {
           </button>
           <button
             onClick={() => navigate("/sessions")}
-            className="h-10 rounded-xl text-white px-4 text-sm font-medium flex items-center gap-2"
-            style={{ backgroundColor: "var(--brand)" }}
+            className="h-10 rounded-xl bg-[color:var(--brand)] px-4 text-sm font-medium text-white flex items-center gap-2"
           >
             <ShieldCheck className="size-4" /> Launch console
           </button>

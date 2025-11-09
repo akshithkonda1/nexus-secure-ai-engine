@@ -1,52 +1,67 @@
-/* Frontend/src/styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Tailwind v4 import */
-@import "tailwindcss";
-
-/* Dark (default) tokens via CSS variables */
-:root {
-  --bg: #0e1117;
-  --surface: 22 27 34;    /* #161b22 */
-  --panel: 31 39 51;      /* #1f2733 */
-  --border: 43 52 65;     /* #2b3441 */
-  --text: 230 237 243;    /* #e6edf3 */
-  --subtle: 148 163 184;  /* #94a3b8 */
-}
-
-/* Light theme overrides */
-html.light, body.light {
-  --bg: #f9fafb;
-  --surface: 255 255 255; /* #ffffff */
-  --panel: 243 244 246;   /* #f3f4f6 */
-  --border: 229 231 235;  /* #e5e7eb */
-  --text: 17 24 39;       /* #111827 */
-  --subtle: 100 116 139;  /* #64748b */
-}
-
-/* Base resets */
 @layer base {
-  html, body, #root { height: 100%; width: 100%; }
+  :root {
+    /* LIGHT – page is white, text is blackish */
+    --bg: 255 255 255;
+    --surface: 255 255 255;
+    --panel: 248 250 252;
+    --border: 0 0 0 / 0.12;
+    --text: 10 10 10;
+    --subtle: 10 10 10 / 0.6;
+    --ring: 0 158 255;
 
-  html, body {
-    /* set stack directly in CSS (v4-safe). Use className="font-sans" in JSX if desired */
-    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    color-scheme: dark light;
-    background: var(--bg);
-    color: rgb(var(--text));
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+    --elev-1: 0 12px 32px rgba(0, 0, 0, 0.08);
+    --elev-2: 0 18px 48px rgba(0, 0, 0, 0.12);
   }
 
-  * { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+  .dark {
+    /* DARK – keep your current look */
+    --bg: 9 11 30;
+    --surface: 16 18 38;
+    --panel: 18 21 44;
+    --border: 255 255 255 / 0.08;
+    --text: 255 255 255;
+    --subtle: 255 255 255 / 0.65;
+    --ring: 0 158 255;
 
-  @media (forced-colors: active) {
-    :root { forced-color-adjust: none !important; }
+    --elev-1: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --elev-2: 0 18px 48px rgba(0, 0, 0, 0.6);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: rgb(var(--bg));
+    color: rgb(var(--text));
   }
 }
 
-/* Optional helpers */
-.surface { background-color: rgb(var(--surface)); }
-.panel   { background-color: rgb(var(--panel)); box-shadow: var(--shadow-card, 0 10px 28px rgba(0,0,0,0.22)); }
-.border  { border-color: rgb(var(--border)); }
-.text-subtle { color: rgb(var(--subtle)); }
+:root.theme-transition * {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+    fill 0.25s ease, stroke 0.25s ease, box-shadow 0.25s ease;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border;
+    background-color: rgb(var(--panel));
+    border-color: color-mix(in oklab, rgb(var(--text)) 10%, transparent);
+    box-shadow: var(--elev-1);
+  }
+
+  .card-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-2);
+  }
+}

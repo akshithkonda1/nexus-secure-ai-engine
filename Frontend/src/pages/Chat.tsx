@@ -17,14 +17,17 @@ export default function Chat() {
   };
 
   return (
-    <div className="p-6 grid grid-rows-[1fr_auto] h-full">
+    <main className="p-6 grid h-full grid-rows-[1fr_auto]">
       <div className="overflow-auto grid gap-3">
         {msgs.map((m) => (
           <div
             key={m.id}
-            className={`glass px-4 py-3 whitespace-pre-wrap ${
-              m.role === "user" ? "border border-[var(--brand)]/30" : ""
-            }`}
+            className={`glass px-4 py-3 whitespace-pre-wrap ${m.role === "user" ? "border" : ""}`}
+            style={
+              m.role === "user"
+                ? { borderColor: "color-mix(in oklab, var(--brand) 45%, transparent)" }
+                : undefined
+            }
           >
             <div className="text-xs text-subtle mb-1">{m.role}</div>
             <div className="leading-relaxed">{m.text}</div>
