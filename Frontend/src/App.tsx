@@ -17,11 +17,12 @@ function Shell() {
   const active = useMemo(() => location.pathname || "/home", [location.pathname]);
 
   return (
-    <div className="min-h-screen grid grid-cols-[76px_1fr] bg-background text-foreground">
+    <div className="min-h-screen grid grid-cols-[76px_1fr]">
       <Sidebar active={active} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-[rgb(var(--bg))] text-foreground">
         <header
-          className="sticky top-0 z-10 h-12 grid items-center px-4 border-b border-border/60 bg-panel/95 backdrop-blur"
+          className="sticky top-0 z-10 h-12 grid items-center px-4 border-b border-border/60 backdrop-blur"
+          style={{ background: "rgb(var(--panel) / 0.95)" }}
         >
           <div className="text-sm text-subtle">Nexus</div>
         </header>
