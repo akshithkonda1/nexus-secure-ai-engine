@@ -31,8 +31,12 @@ type SidebarProps = {
 export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps) {
   return (
     <motion.aside
-      className="relative hidden h-screen w-[86px] flex-col items-center border-r border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.92)] px-3 py-6 backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.68)] md:flex"
+      className={clsx(
+        "relative hidden h-screen flex-col items-center border-r border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.92)] px-3 py-6 backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.68)] md:flex",
+        expanded ? "w-[240px]" : "w-[86px]"
+      )}
       layout
+      transition={{ type: "spring", stiffness: 260, damping: 28 }}
     >
       <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--brand)] text-white shadow-glow">
         <Sparkle className="h-5 w-5" />
