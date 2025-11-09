@@ -25,8 +25,8 @@ export function FileUpload({ description, onFiles, accept, multiple = true, clas
   return (
     <label
       className={cn(
-        "flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-[rgb(var(--border))] bg-white/60 text-center text-sm text-[rgb(var(--text)/0.65)] shadow-inner transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/5",
-        dragActive && "border-[color:var(--brand)] bg-[color:var(--brand)]/10",
+        "flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] text-center text-sm text-[color:rgba(var(--text)/0.65)] transition hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]",
+        dragActive && "border-[color:var(--ring)] bg-[color:rgba(var(--ring)/0.1)]",
         className
       )}
       onDragOver={(event) => {
@@ -63,7 +63,7 @@ export function FileUpload({ description, onFiles, accept, multiple = true, clas
 
 export function InlineFileBadge({ file, onRemove }: { file: File; onRemove?: () => void }) {
   return (
-    <div className="inline-flex items-center gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-2 text-xs font-medium text-[color:var(--brand)] backdrop-blur">
+    <div className="inline-flex items-center gap-3 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-3 py-2 text-xs font-medium text-[color:var(--brand)]">
       <Files className="h-4 w-4" />
       <span className="max-w-[160px] truncate">{file.name}</span>
       {onRemove && (
