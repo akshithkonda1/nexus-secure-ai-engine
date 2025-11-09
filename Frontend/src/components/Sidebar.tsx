@@ -43,7 +43,7 @@ export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: Sideb
 
   return (
     <aside
-      className={`h-screen ${widthClass} bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2`}
+      className={`h-screen ${widthClass} bg-panel border-r border-border/60 py-3 flex flex-col items-center gap-2`}
     >
       <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">Nx</div>
       <nav className="mt-1 flex flex-col items-center gap-1">
@@ -67,7 +67,11 @@ export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: Sideb
         ))}
       </nav>
       <div className="mt-auto pb-2">
-        <button title="Toggle theme" onClick={toggleTheme} className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60">
+        <button
+          title="Toggle theme"
+          onClick={toggleTheme}
+          className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60"
+        >
           <SunMoon className="h-5 w-5" />
         </button>
       </div>

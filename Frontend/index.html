@@ -4,13 +4,13 @@
     <script>
       (() => {
         try {
-          const stored =
+          const pref =
             localStorage.getItem("theme") ??
             localStorage.getItem("nexus:theme") ??
             localStorage.getItem("nexus-theme");
           const sysDark = matchMedia("(prefers-color-scheme: dark)").matches;
-          const wantsDark = stored
-            ? stored === "dark" || (stored === "system" && sysDark)
+          const wantsDark = pref
+            ? pref === "dark" || (pref === "system" && sysDark)
             : sysDark;
           document.documentElement.classList.toggle("dark", wantsDark);
         } catch {}
