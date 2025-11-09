@@ -1,5 +1,5 @@
 import { Fragment, Suspense, useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Dialog, Transition } from "@headlessui/react";
 
 import { Header } from "@/components/Header";
@@ -19,6 +19,8 @@ function SkipLink() {
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const activePath = location.pathname || "/";
 
   useEffect(() => {
     if (!sidebarOpen) {
@@ -49,7 +51,7 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-surface text-white">
       <SkipLink />
-      <Sidebar variant="desktop" onNavigate={() => setSidebarOpen(false)} />
+      <Sidebar active={activePath} variant="desktop" />
 
       <Transition show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
@@ -75,7 +77,7 @@ export function Layout() {
             leaveTo="-translate-x-full"
           >
             <Dialog.Panel className="fixed inset-y-0 left-0 flex w-72 max-w-full">
-              <Sidebar variant="mobile" onNavigate={() => setSidebarOpen(false)} />
+              <Sidebar active={activePath} variant="mobile" onNavigate={() => setSidebarOpen(false)} />
             </Dialog.Panel>
           </Transition.Child>
         </Dialog>
