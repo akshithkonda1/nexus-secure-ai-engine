@@ -58,7 +58,7 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-8 pt-6">
+    <div className="space-y-[var(--section-gap)] pb-20 pt-10">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -66,7 +66,7 @@ export function Settings() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] px-4 py-2 text-sm text-[rgb(var(--text))] shadow-soft"
+            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-5 py-2.5 text-sm text-[rgb(var(--text))] shadow-[0_20px_60px_rgba(15,23,42,0.14)] backdrop-blur dark:border-white/10 dark:bg-white/10"
           >
             <Sparkle className="h-4 w-4 text-[color:var(--brand)]" />
             {toast}
@@ -90,11 +90,11 @@ export function Settings() {
         title="Preferred Models"
         description="Drag to rank your top large-language models. Highest priority is attempted first."
       >
-        <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] p-4 shadow-soft dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
+        <div className="rounded-[calc(var(--radius-xl)*1.2)] border border-white/30 bg-white/70 p-5 shadow-[0_32px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
           <Reorder.Group axis="y" values={modelOrder} onReorder={setModelOrder} className="space-y-3">
             {modelOrder.map((model, index) => (
               <Reorder.Item key={model} value={model} className="list-none">
-                <motion.div layout className="flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-4 py-3 text-sm font-medium text-[rgb(var(--text))] shadow-soft dark:border-white/10 dark:bg-white/5">
+                <motion.div layout className="flex items-center justify-between gap-4 rounded-2xl border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-4 py-3 text-sm font-medium text-[rgb(var(--text))] shadow-[0_18px_48px_rgba(64,110,255,0.12)] transition-all duration-300 hover:-translate-y-[1px] hover:shadow-glow dark:border-white/10 dark:bg-white/5">
                   <div className="flex items-center gap-3">
                     <GripVertical className="h-4 w-4 text-[rgb(var(--text)/0.4)]" />
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--brand)]/15 text-xs font-semibold text-[color:var(--brand)]">{index + 1}</span>
@@ -118,7 +118,7 @@ export function Settings() {
                   key={model}
                   type="button"
                   onClick={() => setModelOrder((prev) => [...prev, model])}
-                  className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-[color-mix(in_srgb,var(--brand)_16%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)]"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-[color-mix(in_srgb,var(--brand)_16%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] shadow-[0_12px_32px_rgba(64,110,255,0.16)] transition-all duration-300 hover:-translate-y-[1px]"
                 >
                   <Plus className="h-3 w-3" />
                   {model}
@@ -154,7 +154,7 @@ export function Settings() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           rows={6}
-          className="w-full rounded-3xl border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-4 py-3 text-sm leading-relaxed text-[rgb(var(--text))] shadow-inner outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:border-white/10 dark:bg-white/5"
+          className="w-full rounded-[calc(var(--radius-xl)*1.2)] border border-[color-mix(in_srgb,var(--brand)_22%,transparent)] bg-white/80 px-5 py-4 text-sm leading-relaxed text-[rgb(var(--text))] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:border-white/10 dark:bg-white/5"
           placeholder="Share tone, compliance rules, or escalation logic..."
         />
         <div className="text-xs text-[rgb(var(--text)/0.5)]">
@@ -191,13 +191,13 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (val
     >
       <span
         className={cn(
-          "flex h-10 w-20 items-center rounded-full border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-white/80 px-1 shadow-soft transition dark:border-white/10 dark:bg-white/5",
+          "flex h-10 w-20 items-center rounded-full border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-white/80 px-1 shadow-[0_18px_48px_rgba(64,110,255,0.12)] backdrop-blur transition-all duration-300 dark:border-white/10 dark:bg-white/10",
           checked && "justify-end"
         )}
       >
         <motion.span
           layout
-          className="grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] text-[color:var(--brand)] shadow-inner"
+          className="grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] text-[color:var(--brand)] shadow-[0_10px_30px_rgba(64,110,255,0.25)]"
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
         >
           {checked ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
