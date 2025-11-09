@@ -1,11 +1,4 @@
 :root {
-  --bg: #f4f7fb;
-  --surface: 255 255 255;
-  --panel: 243 246 252;
-  --border: 215 222 235;
-  --text: 0 0 0;
-  --subtle: 72 80 96;
-
   --brand: #4e7bff;          /* Nexus blue */
   --brand-strong: #3b6bef;   /* Deeper Nexus blue */
   --purple: #8a6fff;         /* Balanced purple */
@@ -17,13 +10,6 @@
 }
 
 :root.dark {
-  --bg: #070b12;
-  --surface: 24 28 40;
-  --panel: 32 39 54;
-  --border: 58 68 86;
-  --text: 255 255 255;
-  --subtle: 180 188 204;
-
   --brand: #4e7bff;
   --brand-strong: #3b6bef;
   --purple: #8a6fff;

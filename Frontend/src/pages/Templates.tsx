@@ -212,7 +212,7 @@ export function Templates() {
   }
 
   return (
-    <div className="space-y-[var(--section-gap)] pb-20 pt-10">
+    <div className="space-y-12 pb-16">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -220,7 +220,7 @@ export function Templates() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-5 py-2.5 text-sm text-[rgb(var(--text))] shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] px-5 py-2.5 text-sm text-[rgb(var(--text))] shadow-[var(--elev-1)]"
           >
             {toast}
           </motion.div>
@@ -231,12 +231,12 @@ export function Templates() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Custom Templates</h2>
-            <p className="text-sm text-[rgb(var(--text)/0.6)]">Personalised flows stored locally.</p>
+            <p className="text-sm text-[color:rgba(var(--text)/0.6)]">Personalised flows stored locally.</p>
           </div>
         </div>
 
         {sortedTemplates.length ? (
-          <div className="grid gap-[var(--card-gap)] md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {sortedTemplates.map((template) => (
               <TemplateCard
                 key={template.id}
@@ -257,9 +257,9 @@ export function Templates() {
       <section className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Suggested Templates</h2>
-          <p className="text-sm text-[rgb(var(--text)/0.6)]">Curated starting points based on documents and history.</p>
+          <p className="text-sm text-[color:rgba(var(--text)/0.6)]">Curated starting points based on documents and history.</p>
         </div>
-        <div className="grid gap-[var(--card-gap)] md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2">
           {suggestedTemplates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -275,56 +275,56 @@ export function Templates() {
       <section className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Create New Template</h2>
-          <p className="text-sm text-[rgb(var(--text)/0.6)]">Capture prompts, knowledge retrieval chains, or formatting macros.</p>
+          <p className="text-sm text-[color:rgba(var(--text)/0.6)]">Capture prompts, knowledge retrieval chains, or formatting macros.</p>
         </div>
-        <div className="rounded-[calc(var(--radius-xl)*1.4)] border border-white/30 bg-white/70 p-8 shadow-[0_40px_110px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
+        <div className="card p-8">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)]">Title</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.55)]">Title</span>
               <input
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+                className="h-11 w-full rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 text-sm outline-none focus:ring-2 focus:ring-[color:rgba(var(--ring)/.35)]"
                 placeholder="Summarise sprint board"
               />
             </label>
             <label className="space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)]">Tags</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.55)]">Tags</span>
               <input
                 value={form.tags}
                 onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
-                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+                className="h-11 w-full rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 text-sm outline-none focus:ring-2 focus:ring-[color:rgba(var(--ring)/.35)]"
                 placeholder="ops, daily"
               />
             </label>
           </div>
           <label className="mt-4 block space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)]">Description</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.55)]">Description</span>
             <input
               value={form.description}
               onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-              className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+              className="h-11 w-full rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 text-sm outline-none focus:ring-2 focus:ring-[color:rgba(var(--ring)/.35)]"
               placeholder="Quick summary of what this template does"
             />
           </label>
           <label className="mt-4 block space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)]">Content</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.55)]">Content</span>
             <textarea
               value={form.content}
               onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
               rows={6}
-              className="w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+              className="w-full rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-[color:rgba(var(--ring)/.35)]"
               placeholder="Full prompt body…"
             />
           </label>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-[rgb(var(--text)/0.5)]">Stored locally — export before clearing cache.</div>
+            <div className="text-xs text-[color:rgba(var(--text)/0.55)]">Stored locally — export before clearing cache.</div>
             <div className="flex items-center gap-2">
               {form.id && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="btn-secondary"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-2 text-sm font-semibold"
                 >
                   <RefreshCcw className="h-4 w-4" />
                   Reset
@@ -333,7 +333,10 @@ export function Templates() {
               <button
                 type="button"
                 onClick={handleSave}
-                className={cn("btn", (!form.title.trim() || !form.content.trim()) && "opacity-60 cursor-not-allowed")}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl bg-[color:var(--brand)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--elev-1)]",
+                  (!form.title.trim() || !form.content.trim()) && "opacity-60 cursor-not-allowed"
+                )}
                 disabled={!form.title.trim() || !form.content.trim()}
               >
                 <Save className="h-4 w-4" />
@@ -344,21 +347,25 @@ export function Templates() {
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="card p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Global Template Actions</h2>
-            <p className="text-sm text-[rgb(var(--text)/0.6)]">Backup or migrate flows between workspaces.</p>
+            <p className="text-sm text-[color:rgba(var(--text)/0.6)]">Backup or migrate flows between workspaces.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={handleExport} className="btn-secondary">
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-2 text-sm font-semibold"
+            >
               <Download className="h-4 w-4" />
               Export JSON
             </button>
             <button
               type="button"
               onClick={() => importRef.current?.click()}
-              className="btn-secondary"
+              className="inline-flex items-center gap-2 rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-2 text-sm font-semibold"
             >
               <Upload className="h-4 w-4" />
               Import JSON

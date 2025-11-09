@@ -1,5 +1,6 @@
 import { BadgePlus, Copy, Pencil, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import React from "react";
 
 type TemplateCardProps = {
   title: string;
@@ -13,21 +14,20 @@ type TemplateCardProps = {
 export function TemplateCard({ title, description, tags, onEdit, onDuplicate, onDelete }: TemplateCardProps) {
   return (
     <motion.div
-      whileHover={{ y: -6, scale: 1.02 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className="group relative overflow-hidden rounded-[calc(var(--radius-xl)*1.4)] border border-white/30 bg-white/70 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 hover:shadow-glow dark:border-white/10 dark:bg-[#0d111a]/70"
+      whileHover={{ y: -4, scale: 1.01 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="card card-hover relative overflow-hidden p-6"
     >
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[color-mix(in_srgb,var(--brand)_16%,transparent)] via-transparent to-[color-mix(in_srgb,var(--purple)_18%,transparent)] opacity-0 transition group-hover:opacity-100" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-[rgb(var(--text))]">{title}</h3>
-          <p className="mt-1 max-w-xl text-sm text-[rgb(var(--text)/0.65)]">{description}</p>
+          <p className="mt-1 max-w-xl text-sm text-[color:rgba(var(--text)/0.65)]">{description}</p>
         </div>
         <div className="flex items-center gap-2">
           {onEdit && (
             <button
               onClick={onEdit}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-transparent bg-white/80 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] text-[rgb(var(--text))] transition hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]"
               aria-label="Edit template"
             >
               <Pencil className="h-4 w-4" />
@@ -36,7 +36,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
           {onDuplicate && (
             <button
               onClick={onDuplicate}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-transparent bg-white/80 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] text-[rgb(var(--text))] transition hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]"
               aria-label="Duplicate template"
             >
               <Copy className="h-4 w-4" />
@@ -45,7 +45,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
           {onDelete && (
             <button
               onClick={onDelete}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-transparent bg-white/80 text-red-500 transition hover:border-red-400 dark:bg-white/10"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] text-red-500 transition hover:border-red-400"
               aria-label="Delete template"
             >
               <Trash2 className="h-4 w-4" />
@@ -57,7 +57,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand)]"
           >
             <BadgePlus className="h-3 w-3" />
             {tag}
@@ -70,7 +70,7 @@ export function TemplateCard({ title, description, tags, onEdit, onDuplicate, on
 
 export function EmptyTemplates({ label, action }: { label: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-white/40 px-6 py-12 text-center text-sm text-[rgb(var(--text)/0.6)] shadow-inner dark:border-white/10 dark:bg-white/5">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-6 py-12 text-center text-sm text-[color:rgba(var(--text)/0.6)]">
       <p>{label}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
