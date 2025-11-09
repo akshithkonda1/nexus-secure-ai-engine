@@ -42,7 +42,7 @@ export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps
         <Sparkle className="h-5 w-5" />
       </div>
 
-      <nav className={clsx("flex flex-1 flex-col items-center gap-2", expanded && "items-stretch")}> 
+      <nav className={clsx("flex flex-1 flex-col items-center gap-6", expanded && "items-stretch")}> 
         {NAVIGATION.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -55,11 +55,11 @@ export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps
               key={item.to}
               onClick={() => onNavigate(item.to)}
               className={clsx(
-                "relative flex h-12 items-center overflow-hidden rounded-2xl border text-sm transition focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/60 focus:ring-offset-2 focus:ring-offset-transparent dark:focus:ring-offset-[#0b0f16]",
+                "relative flex h-12 items-center overflow-hidden rounded-2xl border text-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/60 focus:ring-offset-2 focus:ring-offset-transparent dark:focus:ring-offset-[#0b0f16]",
                 expanded ? "w-full justify-start gap-3 px-4" : "w-12 justify-center",
                 isActive
                   ? "border-transparent bg-[color:var(--brand)] text-white shadow-glow"
-                  : "border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.82)] hover:border-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.54)]"
+                  : "border-white/30 bg-white/60 text-[rgb(var(--text)/0.75)] shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white/70 hover:border-[color:var(--brand)]/60 hover:text-[rgb(var(--text))]"
               )}
               aria-label={item.label}
             >
@@ -72,7 +72,7 @@ export function Sidebar({ active, expanded, onNavigate, onToggle }: SidebarProps
               )}
               <Icon className="relative h-5 w-5" />
               {expanded ? (
-                <span className="relative z-10 font-medium">{item.label}</span>
+                <span className="relative z-10 font-medium tracking-tight">{item.label}</span>
               ) : (
                 <span className="sr-only">{item.label}</span>
               )}

@@ -212,7 +212,7 @@ export function Templates() {
   }
 
   return (
-    <div className="space-y-10 pt-6">
+    <div className="space-y-[var(--section-gap)] pb-20 pt-10">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -220,7 +220,7 @@ export function Templates() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] px-4 py-2 text-sm text-[rgb(var(--text))] shadow-soft"
+            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-5 py-2.5 text-sm text-[rgb(var(--text))] shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur dark:border-white/10 dark:bg-white/10"
           >
             {toast}
           </motion.div>
@@ -236,7 +236,7 @@ export function Templates() {
         </div>
 
         {sortedTemplates.length ? (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-[var(--card-gap)] md:grid-cols-2">
             {sortedTemplates.map((template) => (
               <TemplateCard
                 key={template.id}
@@ -259,7 +259,7 @@ export function Templates() {
           <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Suggested Templates</h2>
           <p className="text-sm text-[rgb(var(--text)/0.6)]">Curated starting points based on documents and history.</p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-[var(--card-gap)] md:grid-cols-2">
           {suggestedTemplates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -277,14 +277,14 @@ export function Templates() {
           <h2 className="text-2xl font-semibold text-[rgb(var(--text))]">Create New Template</h2>
           <p className="text-sm text-[rgb(var(--text)/0.6)]">Capture prompts, knowledge retrieval chains, or formatting macros.</p>
         </div>
-        <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] p-6 shadow-soft backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]">
+        <div className="rounded-[calc(var(--radius-xl)*1.4)] border border-white/30 bg-white/70 p-8 shadow-[0_40px_110px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)]">Title</span>
               <input
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 px-4 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
                 placeholder="Summarise sprint board"
               />
             </label>
@@ -293,7 +293,7 @@ export function Templates() {
               <input
                 value={form.tags}
                 onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))}
-                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 px-4 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+                className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
                 placeholder="ops, daily"
               />
             </label>
@@ -303,7 +303,7 @@ export function Templates() {
             <input
               value={form.description}
               onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
-              className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 px-4 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+              className="h-11 w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 text-sm outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
               placeholder="Quick summary of what this template does"
             />
           </label>
@@ -313,7 +313,7 @@ export function Templates() {
               value={form.content}
               onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
               rows={6}
-              className="w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 px-4 py-3 text-sm leading-relaxed outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
+              className="w-full rounded-2xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/80 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand)_24%,transparent)] dark:bg-white/10"
               placeholder="Full prompt body…"
             />
           </label>
