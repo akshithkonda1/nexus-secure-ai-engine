@@ -169,7 +169,7 @@ export function History() {
   const totalTokens = useMemo(() => auditTrail.reduce((sum, item) => sum + item.tokens, 0), []);
 
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-[var(--section-gap)] pb-20 pt-10">
       <HistorySection
         title="Audit Trail"
         description="Immutable snapshot of anonymised user interactions."
@@ -181,22 +181,22 @@ export function History() {
           </div>
         }
       >
-        <div className="overflow-hidden rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))]">
-          <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-[color:rgba(var(--border))] px-7 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.55)]">
+        <div className="overflow-hidden rounded-[calc(var(--radius-xl)*1.25)] border border-white/30 bg-white/70 shadow-[0_36px_100px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
+          <div className="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-white/20 px-7 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--text)/0.55)] dark:border-white/10">
             <span>Query</span>
             <span>Timestamp</span>
             <span>Tokens</span>
           </div>
-          <div className="divide-y divide-[color:rgba(var(--border))] text-sm">
+          <div className="divide-y divide-white/20 text-sm dark:divide-white/10">
             {auditTrail.map((record) => (
               <div key={record.id} className="grid grid-cols-[2fr_1fr_1fr] gap-4 px-7 py-3">
                 <span className="truncate">{record.query}</span>
-                <span className="text-[color:rgba(var(--text)/0.6)]">{record.at}</span>
+                <span className="text-[rgb(var(--text)/0.6)]">{record.at}</span>
                 <span className="font-medium text-[color:var(--brand)]">{record.tokens}</span>
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between px-7 py-3 text-xs text-[color:rgba(var(--text)/0.6)]">
+          <div className="flex items-center justify-between px-7 py-3 text-xs text-[rgb(var(--text)/0.6)]">
             <span>Total tokens processed</span>
             <span className="font-semibold text-[rgb(var(--text))]">{totalTokens.toLocaleString()}</span>
           </div>
@@ -207,7 +207,7 @@ export function History() {
         title="Visual Analytics"
         description="Behavioural insights derived from secure usage."
       >
-        <div className="rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] p-7">
+        <div className="rounded-[calc(var(--radius-xl)*1.2)] border border-white/30 bg-white/70 p-7 shadow-[0_32px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
           <Line data={analyticsData} options={chartOptions} />
         </div>
       </HistorySection>
@@ -218,14 +218,14 @@ export function History() {
       >
         <div className="grid gap-4 md:grid-cols-2">
           {encryptedLogs.map((log) => (
-            <div key={log.fingerprint} className="card p-5">
+            <div key={log.fingerprint} className="rounded-[calc(var(--radius-xl)*1.2)] border border-white/30 bg-white/70 p-5 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
               <div className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))]">
                 <Shield className="h-4 w-4 text-[color:var(--brand)]" />
                 {log.device}
               </div>
-              <div className="mt-2 text-xs text-[color:rgba(var(--text)/0.6)]">Accessed {log.access}</div>
+              <div className="mt-2 text-xs text-[rgb(var(--text)/0.6)]">Accessed {log.access}</div>
               <div className="mt-2 text-xs font-mono text-[rgb(var(--text))]">{log.fingerprint}</div>
-              <div className="mt-3 text-xs text-[color:rgba(var(--text)/0.6)]">Payload: {formatBytes(log.size)}</div>
+              <div className="mt-3 text-xs text-[rgb(var(--text)/0.6)]">Payload: {formatBytes(log.size)}</div>
             </div>
           ))}
         </div>
@@ -237,10 +237,10 @@ export function History() {
       >
         <div className="grid gap-4 md:grid-cols-2">
           {translations.map((item, idx) => (
-            <div key={idx} className="card p-5">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.5)]">Source</div>
+            <div key={idx} className="rounded-[calc(var(--radius-xl)*1.2)] border border-white/30 bg-white/70 p-5 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0d111a]/70">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[rgb(var(--text)/0.5)]">Source</div>
               <p className="mt-1 text-sm text-[rgb(var(--text))]">{item.source}</p>
-              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-[color:rgba(var(--text)/0.5)]">Output</div>
+              <div className="mt-4 text-[11px] uppercase tracking-[0.18em] text-[rgb(var(--text)/0.5)]">Output</div>
               <p className="mt-1 text-sm font-medium text-[color:var(--brand)]">{item.output}</p>
             </div>
           ))}
@@ -254,7 +254,7 @@ function ExportButton({ label, onClick }: { label: string; onClick: ButtonHTMLAt
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--text))] transition-colors hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]"
+      className="inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/70 px-3.5 py-1.5 text-xs font-semibold text-[rgb(var(--text))] shadow-[0_18px_48px_rgba(15,23,42,0.14)] transition-all duration-300 hover:border-[color:var(--brand)]/60 hover:text-[color:var(--brand)] dark:border-white/10 dark:bg-white/10"
     >
       <Download className="h-3.5 w-3.5" />
       {label}
