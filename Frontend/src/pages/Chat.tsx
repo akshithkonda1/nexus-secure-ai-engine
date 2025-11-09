@@ -56,8 +56,10 @@ export default function ChatPage() {
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))]"
+      className="relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[color:var(--bg)] via-[color-mix(in_srgb,var(--bg)_88%,white)] to-[color-mix(in_srgb,var(--bg)_74%,white)] text-[rgb(var(--text))] dark:from-[#0f0f1e] dark:via-[#0a0a14] dark:to-[#05050a]"
     >
+      {/* Gradient top glow */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-64 bg-gradient-to-b from-[color-mix(in_srgb,var(--brand)_26%,transparent)] via-transparent to-transparent dark:from-[#4e46e5]/20" />
 
       {/* Messages viewport */}
       <div
@@ -93,22 +95,22 @@ export default function ChatPage() {
               animate={{ opacity: 1 }}
               className="flex justify-start"
             >
-              <div className="flex items-center gap-2 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] px-4 py-2 text-sm text-[color:rgba(var(--text)/0.75)]">
+              <div className="flex items-center gap-2 rounded-2xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.88)] px-4 py-2 text-sm text-[rgb(var(--text)/0.72)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/70">
                 <div className="flex space-x-1">
                   <motion.span
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                    className="inline-block h-2 w-2 rounded-full bg-[color:rgba(var(--text)/0.6)]"
+                    className="inline-block h-2 w-2 rounded-full bg-[rgb(var(--text)/0.6)] dark:bg-white/60"
                   />
                   <motion.span
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0.15 }}
-                    className="inline-block h-2 w-2 rounded-full bg-[color:rgba(var(--text)/0.6)]"
+                    className="inline-block h-2 w-2 rounded-full bg-[rgb(var(--text)/0.6)] dark:bg-white/60"
                   />
                   <motion.span
                     animate={{ y: [0, -4, 0] }}
                     transition={{ repeat: Infinity, duration: 0.6, delay: 0.3 }}
-                    className="inline-block h-2 w-2 rounded-full bg-[color:rgba(var(--text)/0.6)]"
+                    className="inline-block h-2 w-2 rounded-full bg-[rgb(var(--text)/0.6)] dark:bg-white/60"
                   />
                 </div>
                 <span>Thinking…</span>
@@ -127,7 +129,7 @@ export default function ChatPage() {
       >
         <div className="relative">
           {/* Glassmorphic backdrop */}
-          <div className="absolute inset-0 -m-2 rounded-3xl bg-[rgb(var(--surface))] shadow-[var(--elev-1)]" />
+          <div className="absolute inset-0 -m-2 rounded-3xl bg-[rgb(var(--surface)/0.85)] shadow-soft backdrop-blur-2xl dark:bg-white/5" />
 
           <ChatInput
             disabled={sending}
@@ -159,7 +161,7 @@ export default function ChatPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => sendMessage(s, [])}
-                className="rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-1.5 text-xs font-medium text-[color:rgba(var(--text)/0.8)] transition-colors hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]"
+                className="rounded-full border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.86)] px-4 py-1.5 text-xs font-medium text-[rgb(var(--text)/0.78)] backdrop-blur-xl transition-all hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/20"
               >
                 {s}
               </motion.button>
