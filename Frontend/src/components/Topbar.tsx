@@ -11,6 +11,7 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { useAuth } from "@/state/useAuth";
 
 type TopbarProps = {
   activePath: string;
@@ -101,13 +102,10 @@ export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarP
   }, []);
 
   const title = useMemo(() => TITLE_MAP[activePath] ?? "Nexus.ai", [activePath]);
+  const { user } = useAuth();
   const profile = useMemo(
-    () => ({
-      name: "Morgan Vega",
-      email: "morgan.vega@nexus.ai",
-      role: "Workspace Admin"
-    }),
-    []
+    () => ({ ...user, role: "Workspace Admin" }),
+    [user]
   );
 
   return (
