@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useModal } from "@/state/useModal";
 
 const LIMIT = 20000;
 
-type FeedbackModalProps = {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (feedback: string) => Promise<void> | void;
-};
-
-export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
+export function FeedbackModal() {
+  const { openKey, close } = useModal();
+  const open = openKey === "feedback";
   const [value, setValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,12 +19,15 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
   }, [open]);
 
   async function handleSubmit() {
-    if (!value.trim()) return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
     try {
       setSubmitting(true);
-      await onSubmit(value.trim());
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      console.log("POST /api/feedback", trimmed);
+      window.dispatchEvent(new CustomEvent("nexus-feedback-submitted", { detail: trimmed }));
       setValue("");
-      onClose();
+      close();
     } finally {
       setSubmitting(false);
     }
@@ -40,7 +40,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(9,11,30,0.55)] backdrop-blur"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(9,11,30,0.55)] backdrop-blur"
         >
           <motion.div
             initial={{ scale: 0.92, opacity: 0 }}
@@ -57,7 +57,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={close}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-white/70 text-[rgb(var(--text))] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] dark:bg-white/10"
                 aria-label="Close feedback"
               >
@@ -77,7 +77,9 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
               placeholder="Be as specific as possible. What worked? What felt rough?"
             />
             <div className="mt-3 flex items-center justify-between text-xs text-[rgb(var(--text)/0.5)]">
-              <span>{value.length.toLocaleString()} / {LIMIT.toLocaleString()} characters</span>
+              <span>
+                {value.length.toLocaleString()} / {LIMIT.toLocaleString()} characters
+              </span>
               <button
                 onClick={handleSubmit}
                 disabled={!value.trim() || submitting}

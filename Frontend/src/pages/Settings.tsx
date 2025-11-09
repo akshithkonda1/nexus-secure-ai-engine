@@ -4,7 +4,7 @@ import { useLocalStore } from "@/hooks/useLocalStore";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, Reorder, motion } from "framer-motion";
 import { Check, GripVertical, Plus, Send, Sparkle, AlertCircle } from "lucide-react";
-import { FeedbackModal } from "@/components/FeedbackModal";
+import { useModal } from "@/state/useModal";
 
 const modelPool = [
   "gpt-4.1-secure",
@@ -27,7 +27,7 @@ export function Settings() {
   const [draft, setDraft] = useState(storedInstructions);
   const [lastSaved, setLastSaved] = useState<Date | null>(storedInstructions ? new Date() : null);
   const [toast, setToast] = useState<string | null>(null);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const openModal = useModal((state) => state.open);
 
   useEffect(() => {
     const handler = window.setTimeout(() => {
@@ -51,11 +51,13 @@ export function Settings() {
     setToast("Instructions sent to engine");
   }
 
-  async function handleFeedbackSubmit(feedback: string) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    console.log("POST /api/feedback", feedback);
-    setToast("Feedback received — thank you!");
-  }
+  useEffect(() => {
+    const handleFeedbackSubmitted = () => {
+      setToast("Feedback received — thank you!");
+    };
+    window.addEventListener("nexus-feedback-submitted", handleFeedbackSubmitted);
+    return () => window.removeEventListener("nexus-feedback-submitted", handleFeedbackSubmitted);
+  }, []);
 
   return (
     <div className="space-y-[var(--section-gap)] pb-20 pt-10">
@@ -166,7 +168,7 @@ export function Settings() {
         title="User Feedback"
         description="Tell us what feels magical or rough. Responses go straight to the Nexus.ai team."
         action={
-          <button className="btn" onClick={() => setFeedbackOpen(true)}>
+          <button className="btn" onClick={() => openModal("feedback")}>
             <Sparkle className="h-4 w-4" />
             Share
           </button>
@@ -176,8 +178,6 @@ export function Settings() {
           We cap feedback at 20,000 characters and respond within 48 hours. Include screenshots or reproduction steps if relevant.
         </p>
       </SettingsSection>
-
-      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} onSubmit={handleFeedbackSubmit} />
     </div>
   );
 }

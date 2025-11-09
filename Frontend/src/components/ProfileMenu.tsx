@@ -12,11 +12,13 @@ import {
   LifeBuoy,
   LogOut,
   Settings,
-  User
+  User,
+  Sparkles
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useModal } from "@/state/useModal";
 
 type ProfileMenuProps = {
   className?: string;
@@ -47,6 +49,7 @@ export function ProfileMenu({ className, user, onSignOut }: ProfileMenuProps) {
   const menuId = useId();
   const buttonId = useId();
   const navigate = useNavigate();
+  const openModal = useModal((state) => state.open);
 
   const items: MenuItem[] = useMemo(
     () => [
@@ -55,7 +58,7 @@ export function ProfileMenu({ className, user, onSignOut }: ProfileMenuProps) {
         label: "View profile",
         description: "Manage your personal details and security keys.",
         icon: User,
-        action: () => navigate("/settings?section=profile")
+        action: () => openModal("profile")
       },
       {
         id: "settings",
@@ -69,19 +72,24 @@ export function ProfileMenu({ className, user, onSignOut }: ProfileMenuProps) {
         label: "Billing & usage",
         description: "Review plan limits, invoices, and usage analytics.",
         icon: CreditCard,
-        action: () => navigate("/settings?section=billing")
+        action: () => openModal("billing-waitlist")
       },
       {
         id: "support",
         label: "Support",
         description: "Get help from the Nexus team and knowledge base.",
         icon: LifeBuoy,
-        action: () => {
-          window.open("https://support.nexus.ai", "_blank", "noopener,noreferrer");
-        }
+        action: () => openModal("feedback")
+      },
+      {
+        id: "refer",
+        label: "Refer",
+        description: "Invite peers and earn credits soon.",
+        icon: Sparkles,
+        action: () => openModal("refer")
       }
     ],
-    [navigate]
+    [navigate, openModal]
   );
 
   itemsRef.current.length = items.length;
