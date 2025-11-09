@@ -1,20 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
-    <script>
-      (() => {
-        try {
-          const pref = localStorage.getItem('theme'); // 'light' | 'dark' | 'system' | null
-          const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const wantsDark = pref ? (pref === 'dark' || (pref === 'system' && sysDark)) : sysDark;
-          const root = document.documentElement;
-          if (wantsDark) root.classList.add('dark'); else root.classList.remove('dark');
-        } catch {}
-      })();
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     <title>Nexus</title>
+    <script>
+      const saved = localStorage.getItem("theme");
+      if (saved === "light") document.documentElement.classList.remove("dark");
+      else document.documentElement.classList.add("dark");
+    </script>
   </head>
   <body>
     <div id="root"></div>

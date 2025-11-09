@@ -1,42 +1,43 @@
 import { create } from "zustand";
 
 export type Provider = "password" | "google" | "apple" | "facebook" | "x";
+
 export type User = {
   id: string;
   name: string;
   email: string;
   avatarUrl?: string;
-  dob?: string;          // ISO yyyy-mm-dd
-  provider: Provider;    // decides locking behavior
+  dob?: string;
+  provider: Provider;
 };
 
-type S = {
+type AuthState = {
   user: User;
   updateProfile: (patch: Partial<User>) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
   updatePassword: (pwd: string) => Promise<void>;
 };
 
-export const useAuth = create<S>(() => ({
+export const useAuth = create<AuthState>(() => ({
   user: {
     id: "u_123",
     name: "Morgan Vega",
     email: "morgan.vega@nexus.ai",
     avatarUrl: "",
     dob: "1998-06-15",
-    provider: "google",
+    provider: "google"
   },
   async updateProfile(patch) {
-    const s = useAuth.getState();
-    useAuth.setState({ user: { ...s.user, ...patch } });
-    await new Promise((r) => setTimeout(r, 250));
+    const state = useAuth.getState();
+    useAuth.setState({ user: { ...state.user, ...patch } });
+    await new Promise((resolve) => setTimeout(resolve, 250));
   },
   async updateEmail(email) {
-    const s = useAuth.getState();
-    useAuth.setState({ user: { ...s.user, email } });
-    await new Promise((r) => setTimeout(r, 250));
+    const state = useAuth.getState();
+    useAuth.setState({ user: { ...state.user, email } });
+    await new Promise((resolve) => setTimeout(resolve, 250));
   },
   async updatePassword(_pwd) {
-    await new Promise((r) => setTimeout(r, 250));
-  },
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
 }));

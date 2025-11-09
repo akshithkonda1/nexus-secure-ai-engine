@@ -56,13 +56,13 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
 
   return (
     <div className="relative w-full">
-      <div className="relative overflow-hidden rounded-3xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-4 shadow-[var(--elev-1)] transition">
+      <div className="relative overflow-hidden rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.85)] p-4 shadow-card backdrop-blur transition dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.58)]">
         <div className="flex flex-wrap gap-2 pb-3">
           {suggestions.map((suggestion, idx) => (
             <button
               key={idx}
               type="button"
-              className="group inline-flex items-center gap-2 rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--ring)]"
+              className="group inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_20%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] px-3 py-1 text-xs font-semibold text-[color:var(--brand)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand)] hover:text-white"
               onClick={() => setValue((prev) => (prev ? `${prev}\n${suggestion}` : suggestion))}
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -85,8 +85,8 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
               type="button"
               onClick={() => setUploading((state) => !state)}
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] text-[rgb(var(--text))] transition hover:border-[color:var(--ring)] hover:text-[color:var(--ring)]",
-                isUploading && "border-[color:var(--ring)] text-[color:var(--ring)]"
+                "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgb(var(--border)/0.6)] bg-[rgb(var(--surface)/0.86)] text-[rgb(var(--text))] transition hover:text-[color:var(--brand)] dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.6)]",
+                isUploading && "border-[color:var(--brand)] text-[color:var(--brand)]"
               )}
               aria-label="Attach files"
             >
@@ -101,7 +101,7 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
                   transition={{ duration: 0.18 }}
                   className="absolute left-1/2 top-[110%] z-20 w-[260px] -translate-x-1/2"
                 >
-                  <div className="rounded-3xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-3 shadow-[var(--elev-1)]">
+                  <div className="rounded-3xl border border-[rgb(var(--border)/0.55)] bg-[rgb(var(--surface)/0.9)] p-3 shadow-glow backdrop-blur dark:border-[rgb(var(--border)/0.5)] dark:bg-[rgb(var(--surface)/0.62)]">
                     <FileUpload
                       description="Drop reference documents, screenshots or audio"
                       onFiles={(incoming) => {
@@ -128,7 +128,7 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
                 }
               }}
               placeholder="Ask anything, drop a document, or dictate your intent…"
-              className="max-h-40 w-full resize-none rounded-2xl border border-transparent bg-transparent px-4 py-3 text-[15px] leading-relaxed text-[rgb(var(--text))] outline-none placeholder:text-[color:rgba(var(--text)/0.5)]"
+              className="max-h-40 w-full resize-none rounded-2xl border border-transparent bg-transparent px-4 py-3 text-[15px] leading-relaxed text-[rgb(var(--text))] outline-none placeholder:text-[rgb(var(--text)/0.45)]"
             />
           </div>
 
@@ -139,7 +139,7 @@ export function ChatInput({ onSend, suggestions = [], disabled }: ChatInputProps
             onClick={handleSubmit}
             disabled={!canSend || disabled}
             className={cn(
-              "inline-flex h-11 min-w-[54px] items-center justify-center gap-2 rounded-2xl bg-[color:var(--brand)] px-4 text-sm font-semibold text-white shadow-[var(--elev-1)] transition",
+              "inline-flex h-11 min-w-[54px] items-center justify-center gap-2 rounded-2xl bg-[color:var(--brand)] px-4 text-sm font-semibold text-white shadow-glow transition",
               (!canSend || disabled) && "cursor-not-allowed opacity-60"
             )}
           >
