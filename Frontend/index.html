@@ -1,6 +1,21 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (() => {
+        try {
+          const stored =
+            localStorage.getItem("theme") ??
+            localStorage.getItem("nexus:theme") ??
+            localStorage.getItem("nexus-theme");
+          const sysDark = matchMedia("(prefers-color-scheme: dark)").matches;
+          const wantsDark = stored
+            ? stored === "dark" || (stored === "system" && sysDark)
+            : sysDark;
+          document.documentElement.classList.toggle("dark", wantsDark);
+        } catch {}
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta
       name="viewport"
@@ -16,28 +31,6 @@
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 
     <title>Nexus</title>
-
-    <!-- Set theme ASAP to avoid flash -->
-    <script>
-      (function () {
-        try {
-          const KEY = "nexus-theme";
-          const saved = localStorage.getItem(KEY);
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const theme = saved || (prefersDark ? "dark" : "light");
-
-          const root = document.documentElement;
-          root.classList.remove("light", "dark");
-          root.classList.add(theme);
-
-          // Keep <body> in sync for any legacy selectors
-          document.addEventListener("DOMContentLoaded", () => {
-            document.body.classList.remove("light", "dark");
-            document.body.classList.add(theme);
-          });
-        } catch (_) {}
-      })();
-    </script>
   </head>
 
   <body>
