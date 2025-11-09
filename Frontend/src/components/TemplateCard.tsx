@@ -13,9 +13,9 @@ type TemplateCardProps = {
 export function TemplateCard({ title, description, tags, onEdit, onDuplicate, onDelete }: TemplateCardProps) {
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.18 }}
-      className="group relative overflow-hidden rounded-3xl border border-[color-mix(in_srgb,var(--brand)_18%,transparent)] bg-white/70 p-6 shadow-soft backdrop-blur hover:shadow-glow dark:border-white/5 dark:bg-white/5"
+      whileHover={{ y: -6, scale: 1.02 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="group relative overflow-hidden rounded-[calc(var(--radius-xl)*1.4)] border border-white/30 bg-white/70 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-all duration-300 hover:shadow-glow dark:border-white/10 dark:bg-[#0d111a]/70"
     >
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-[color-mix(in_srgb,var(--brand)_16%,transparent)] via-transparent to-[color-mix(in_srgb,var(--purple)_18%,transparent)] opacity-0 transition group-hover:opacity-100" />
       <div className="flex flex-wrap items-center justify-between gap-4">
