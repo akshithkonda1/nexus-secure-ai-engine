@@ -1,54 +1,75 @@
+import { type ReactNode, useMemo } from "react";
 import { NavLink } from "react-router-dom";
-import { Bot, FileText, History, Layers, Settings, Sparkles, Home as HomeIcon } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  MessageCircle,
+  Folder,
+  Sparkles,
+  FileText,
+  BarChart3,
+  History as HistoryIcon,
+  Settings as SettingsIcon,
+  SunMoon,
+} from "lucide-react";
 
 type SidebarProps = {
   active?: string;
   onNavigate?: (path: string) => void;
   variant?: "desktop" | "mobile";
 };
+type NavItem = { label: string; to: string; icon: ReactNode };
 
-const links = [
-  { to: "/home", label: "Home", Icon: HomeIcon },
-  { to: "/chat", label: "Chat", Icon: Bot },
-  { to: "/sessions", label: "Sessions", Icon: Layers },
-  { to: "/templates", label: "Templates", Icon: Sparkles },
-  { to: "/documents", label: "Documents", Icon: FileText },
-  { to: "/history", label: "History", Icon: History },
-  { to: "/settings", label: "Settings", Icon: Settings },
-];
+export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: SidebarProps) {
+  const items = useMemo<NavItem[]>(
+    () => [
+      { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
+      { label: "Sessions", to: "/sessions", icon: <Folder className="h-5 w-5" /> },
+      { label: "Templates", to: "/templates", icon: <Sparkles className="h-5 w-5" /> },
+      { label: "Documents", to: "/documents", icon: <FileText className="h-5 w-5" /> },
+      { label: "Metrics", to: "/metrics", icon: <BarChart3 className="h-5 w-5" /> },
+      { label: "History", to: "/history", icon: <HistoryIcon className="h-5 w-5" /> },
+      { label: "Settings", to: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
+    ],
+    []
+  );
 
-export function Sidebar({ active = "/home", onNavigate, variant = "desktop" }: SidebarProps) {
-  const widthClass = variant === "mobile" ? "w-full" : "min-w-[200px]";
+  const widthClass = variant === "mobile" ? "w-full" : "w-[76px]";
+  const isActivePath = (path: string) => active === path || (path !== "/" && active.startsWith(`${path}/`));
+
+  const toggleTheme = () => {
+    const root = document.documentElement;
+    const dark = root.classList.toggle("dark", !root.classList.contains("dark"));
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  };
+
   return (
     <aside
-      className={`border-r border-border/60 bg-[rgb(var(--panel))] px-4 py-6 shadow-[0_10px_28px_rgba(0,0,0,0.22)] ${widthClass}`}
+      className={`h-screen ${widthClass} bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2`}
     >
-      <div className="flex flex-col gap-6">
-        <div className="space-y-1">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-subtle px-2">Navigate</div>
-          <nav className="mt-3 space-y-1">
-            {links.map(({ to, label, Icon }) => {
-              const isActive = active === to || (to !== "/" && active.startsWith(to));
-              return (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => onNavigate?.(to)}
-                  className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm transition ${
-                    isActive
-                      ? "border-transparent bg-[color:var(--brand)] text-white shadow-[0_14px_30px_rgba(0,0,0,0.3)]"
-                      : "border-border/60 text-subtle hover:bg-surface/60 hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="size-4" />
-                  <span>{label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-        <ThemeToggle />
+      <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">Nx</div>
+      <nav className="mt-1 flex flex-col items-center gap-1">
+        {items.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={() => onNavigate?.(item.to)}
+            title={item.label}
+            className={({ isActive }) => {
+              const selected = isActive || isActivePath(item.to);
+              const base = "h-10 w-10 rounded-xl grid place-items-center transition";
+              return selected
+                ? `${base} bg-surface/70 ring-2 ring-[var(--brand)]`
+                : `${base} hover:bg-surface/60`;
+            }}
+          >
+            <span className="sr-only">{item.label}</span>
+            {item.icon}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="mt-auto pb-2">
+        <button title="Toggle theme" onClick={toggleTheme} className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60">
+          <SunMoon className="h-5 w-5" />
+        </button>
       </div>
     </aside>
   );
