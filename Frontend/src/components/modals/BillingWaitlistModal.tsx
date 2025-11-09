@@ -15,11 +15,14 @@ export function BillingWaitlistModal() {
 
   async function onSubmit(values: FormValues) {
     try {
-      await fetch("/api/waitlist", {
+      const response = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "billing", ...values })
       });
+      if (!response.ok) {
+        throw new Error(`Waitlist request failed with status ${response.status}`);
+      }
       alert("Thanks! You’re on the billing waitlist.");
       reset();
       close();
