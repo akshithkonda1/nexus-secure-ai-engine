@@ -3,6 +3,7 @@ import { Search, Sparkle, ChevronRight, PanelLeft, PanelLeftOpen } from "lucide-
 import { motion } from "framer-motion";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useAuth } from "@/state/useAuth";
 
 type TopbarProps = {
   activePath: string;
@@ -21,13 +22,15 @@ const TITLE_MAP: Record<string, string> = {
 
 export function Topbar({ activePath, sidebarExpanded, onToggleSidebar }: TopbarProps) {
   const title = useMemo(() => TITLE_MAP[activePath] ?? "Nexus.ai", [activePath]);
+  const { user } = useAuth();
   const profile = useMemo(
     () => ({
-      name: "Morgan Vega",
-      email: "morgan.vega@nexus.ai",
-      role: "Workspace Admin"
+      name: user.name,
+      email: user.email,
+      role: "Workspace Admin",
+      avatarUrl: user.avatarUrl
     }),
-    []
+    [user.avatarUrl, user.email, user.name]
   );
 
   return (
