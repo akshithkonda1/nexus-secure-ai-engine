@@ -33,14 +33,16 @@ export function SurveyTooltip({ open, onSubmit, onDismiss }: SurveyTooltipProps)
       role="dialog"
       aria-live="polite"
       aria-label="Share quick feedback"
-      className="fixed bottom-6 right-4 z-40 w-64 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 text-slate-100 shadow-2xl backdrop-blur"
+      className="fixed bottom-6 right-4 z-40 w-64 rounded-2xl border border-border p-4 text-foreground shadow-2xl backdrop-blur"
+      style={{ background: "rgb(var(--panel) / 0.9)" }}
     >
       <p className="text-sm font-semibold">How’s the debate quality?</p>
-      <p className="mt-1 text-xs text-slate-300">Tap an emoji to send anonymous feedback.</p>
+      <p className="mt-1 text-xs text-subtle">Tap an emoji to send anonymous feedback.</p>
       <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-800 px-3 py-2 text-sm font-medium transition hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-200"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--ring))]"
+          style={{ background: "rgb(var(--panel))" }}
           onClick={() => handleChoice("up")}
           disabled={submitted !== null}
           aria-label="Debate quality is good"
@@ -50,7 +52,8 @@ export function SurveyTooltip({ open, onSubmit, onDismiss }: SurveyTooltipProps)
         </button>
         <button
           type="button"
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-800 px-3 py-2 text-sm font-medium transition hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-200"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--ring))]"
+          style={{ background: "rgb(var(--panel))" }}
           onClick={() => handleChoice("down")}
           disabled={submitted !== null}
           aria-label="Debate quality needs work"
@@ -60,13 +63,13 @@ export function SurveyTooltip({ open, onSubmit, onDismiss }: SurveyTooltipProps)
         </button>
       </div>
       {submitted ? (
-        <p className="mt-3 text-center text-xs text-slate-300" role="status">
+        <p className="mt-3 text-center text-xs text-subtle" role="status">
           Thanks for the {submitted === "up" ? "love" : "feedback"}! We’ll use it to improve Nexus.ai.
         </p>
       ) : null}
       <button
         type="button"
-        className="mt-2 w-full text-center text-xs text-slate-400 underline-offset-2 hover:underline"
+        className="mt-2 w-full text-center text-xs text-subtle underline-offset-2 hover:underline"
         onClick={() => {
           setVisible(false);
           onDismiss?.();

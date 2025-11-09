@@ -8,7 +8,10 @@ type HeaderProps = {
 export function Header({ onToggleSidebar }: HeaderProps = {}) {
   const navigate = useNavigate();
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-[rgb(var(--panel))]/80 backdrop-blur">
+    <header
+      className="sticky top-0 z-20 border-b border-border/60 backdrop-blur"
+      style={{ background: "rgb(var(--panel) / 0.8)" }}
+    >
       <div className="h-16 flex items-center gap-4 px-4 sm:px-6">
         <button
           className="flex size-10 items-center justify-center rounded-xl border border-border/60 bg-surface/60 text-subtle sm:hidden"

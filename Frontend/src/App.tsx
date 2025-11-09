@@ -19,8 +19,11 @@ function Shell() {
   return (
     <div className="min-h-screen grid grid-cols-[76px_1fr]">
       <Sidebar active={active} />
-      <div className="min-h-screen bg-[var(--bg)] text-foreground">
-        <header className="sticky top-0 z-10 h-12 grid items-center px-4 border-b border-border/60 bg-[rgb(var(--panel))]/95 backdrop-blur">
+      <div className="min-h-screen bg-[rgb(var(--bg))] text-foreground">
+        <header
+          className="sticky top-0 z-10 h-12 grid items-center px-4 border-b border-border/60 backdrop-blur"
+          style={{ background: "rgb(var(--panel) / 0.95)" }}
+        >
           <div className="text-sm text-subtle">Nexus</div>
         </header>
 

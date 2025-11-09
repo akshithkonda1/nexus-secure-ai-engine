@@ -10,6 +10,7 @@ import {
   Settings as SettingsIcon,
   SunMoon,
 } from "lucide-react";
+import { useTheme } from "../theme/useTheme";
 
 type SidebarProps = {
   active?: string;
@@ -19,6 +20,7 @@ type SidebarProps = {
 type NavItem = { label: string; to: string; icon: ReactNode };
 
 export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: SidebarProps) {
+  const { resolved, setTheme } = useTheme();
   const items = useMemo<NavItem[]>(
     () => [
       { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
@@ -36,9 +38,7 @@ export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: Sideb
   const isActivePath = (path: string) => active === path || (path !== "/" && active.startsWith(`${path}/`));
 
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const dark = root.classList.toggle("dark", !root.classList.contains("dark"));
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    setTheme(resolved === "dark" ? "light" : "dark");
   };
 
   return (
