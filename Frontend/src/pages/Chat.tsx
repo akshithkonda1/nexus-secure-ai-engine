@@ -153,7 +153,7 @@ export function Chat() {
 
           <button
             type="submit"
-            className="rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white shadow-[var(--elev-1)] transition hover:shadow-[var(--elev-2)]"
+            className="rounded-full bg-[rgba(var(--brand),0.98)] px-6 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[var(--elev-1)] transition hover:shadow-[var(--elev-2)]"
           >
             Send
           </button>
