@@ -82,7 +82,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             aria-label="Notifications"
           >
             <Bell className="size-4" />
-            <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-[rgba(var(--brand),1)] px-1 text-[10px] font-semibold text-white">
+            <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[rgba(var(--brand),1)] text-[10px] font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_0_1px_rgba(12,16,24,0.08)]">
               3
             </span>
           </button>

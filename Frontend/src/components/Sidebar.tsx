@@ -113,13 +113,13 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         </nav>
 
         <div className="mt-auto space-y-4">
-          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-white shadow-[var(--shadow-lift)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] opacity-80">Plan</p>
-            <h3 className="mt-2 text-lg font-semibold">Professional</h3>
-            <p className="mt-1 text-sm opacity-80">Unlock orchestration across teams with unlimited workspaces.</p>
+          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-[rgb(var(--on-accent))] shadow-[var(--shadow-lift)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--on-accent),0.7)]">Plan</p>
+            <h3 className="mt-2 text-lg font-semibold text-[rgb(var(--on-accent))]">Professional</h3>
+            <p className="mt-1 text-sm text-[rgba(var(--on-accent),0.82)]">Unlock orchestration across teams with unlimited workspaces.</p>
             <button
               type="button"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] backdrop-blur transition hover:bg-white/20"
               onClick={() => requestBillingUpgrade()}
             >
               <Zap className="size-4" /> Upgrade
