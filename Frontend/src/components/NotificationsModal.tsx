@@ -1,50 +1,19 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Bell, Check, Inbox, ShieldAlert, Sparkles, X } from "lucide-react";
-import React, { Fragment, useMemo } from "react";
+import React, { Fragment } from "react";
 
+import {
+  type NotificationItem,
+  useNotifications,
+} from "@/features/notifications/useNotifications";
 import { cn } from "@/shared/lib/cn";
-
-const notifications = [
-  {
-    id: "security-audit",
-    title: "Security policy updated",
-    description: "Your SOC 2 controls were refreshed. Review the diff before rollout.",
-    time: "2m ago",
-    tone: "critical" as const,
-    cta: "View policy",
-  },
-  {
-    id: "workflow-approved",
-    title: "Workflow \"Roadmap brief\" shipped",
-    description: "Avery Quinn enabled the new summarization workflow for the GTM workspace.",
-    time: "35m ago",
-    tone: "success" as const,
-    cta: "Open workflow",
-  },
-  {
-    id: "new-signal",
-    title: "New research signal",
-    description: "Voice mode beta hit a 18% improvement in grounding time.",
-    time: "1h ago",
-    tone: "info" as const,
-    cta: "View insight",
-  },
-  {
-    id: "usage-threshold",
-    title: "Usage threshold",
-    description: "Weekly document sync is at 82% of the limit. Increase allocation to avoid throttling.",
-    time: "Today, 08:14",
-    tone: "warning" as const,
-    cta: "Manage plan",
-  },
-];
 
 type NotificationsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-type Tone = "info" | "success" | "warning" | "critical";
+type Tone = NotificationItem["tone"];
 
 const toneIcon: Record<Tone, React.ReactNode> = {
   info: <Inbox className="size-4" aria-hidden="true" />,
@@ -61,7 +30,8 @@ const toneStyles: Record<Tone, string> = {
 };
 
 export function NotificationsModal({ open, onOpenChange }: NotificationsModalProps) {
-  const unreadCount = useMemo(() => notifications.length, []);
+  const notifications = useNotifications();
+  const unreadCount = notifications.length;
 
   return (
     <Transition.Root show={open} as={Fragment}>

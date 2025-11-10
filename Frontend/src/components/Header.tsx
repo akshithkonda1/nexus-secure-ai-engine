@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Bell, Command, Menu, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { useUnreadNotificationsCount } from "@/features/notifications/useNotifications";
 import { useProfile } from "@/features/profile/ProfileProvider";
 import { requestNewPrompt, requestNotifications, requestProfileOpen } from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
@@ -16,6 +17,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const today = new Intl.DateTimeFormat("en", { weekday: "long", month: "short", day: "numeric" }).format(new Date());
   const navigate = useNavigate();
   const { profile, loading } = useProfile();
+  const unreadNotifications = useUnreadNotificationsCount();
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -82,9 +84,11 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             aria-label="Notifications"
           >
             <Bell className="size-4" />
-            <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[rgba(var(--brand),1)] text-[10px] font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_0_1px_rgba(12,16,24,0.08)]">
-              3
-            </span>
+            {unreadNotifications > 0 ? (
+              <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[#EF3B4C] text-[10px] font-semibold text-white shadow-[0_0_0_1px_rgba(12,16,24,0.08)]">
+                {unreadNotifications}
+              </span>
+            ) : null}
           </button>
           <ThemeToggle className="hidden lg:inline-flex" />
           <div className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.7)] lg:block" aria-hidden="true" />
