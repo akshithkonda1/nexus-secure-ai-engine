@@ -13,7 +13,7 @@ const navItems = [
 export function Sidebar() {
   return (
     <aside className="w-64 bg-[rgb(var(--surface))] border-r border-[color:rgba(var(--border))] p-4">
-      <h2 className="text-xl font-semibold mb-6">Nexus</h2>
+      <h2 className="text-xl font-semibold mb-6">Nexus(Beta)</h2>
       <nav className="space-y-2">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
