@@ -113,7 +113,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
           fullName: form.fullName.trim(),
           handle: form.handle.trim(),
           role: form.role.trim(),
-          email: form.email.trim(),
+          email: form.email.trim(),FF
           workspace: form.workspace.trim(),
           timezone: form.timezone,
           phone: form.phone.trim() || null,
@@ -173,7 +173,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       </button>
                     </div>
                     <p className="text-sm text-[rgba(var(--subtle),0.8)]">
-                      Manage how teammates see you across Nexus: update your details, security contact, and notification
+                      Manage how people see you across Nexus: update your details, security contact, and notification
                       preferences. Changes sync instantly once saved.
                     </p>
 
