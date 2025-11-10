@@ -1,21 +1,39 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Bell, Command, Menu, Search, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
+import { useProfile } from "@/features/profile/ProfileProvider";
+import { requestNewPrompt, requestNotifications, requestProfileOpen } from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
+import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
 type HeaderProps = {
   onToggleSidebar?: () => void;
+  onOpenProfile?: () => void;
 };
 
-export function Header({ onToggleSidebar }: HeaderProps = {}) {
+export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const today = new Intl.DateTimeFormat("en", { weekday: "long", month: "short", day: "numeric" }).format(new Date());
+  const navigate = useNavigate();
+  const { profile, loading } = useProfile();
+
+  const initials = useMemo(() => {
+    const name = profile?.fullName;
+    if (!name) return "AI";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [profile?.fullName]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[rgba(var(--border),0.6)] bg-white/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-[rgba(var(--border),0.6)] bg-white/70 backdrop-blur-xl dark:bg-[rgba(var(--surface),0.8)]">
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
-          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-white text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand lg:hidden"
+          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-white text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)] lg:hidden"
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
@@ -28,7 +46,7 @@ export function Header({ onToggleSidebar }: HeaderProps = {}) {
         </div>
 
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.7)] bg-white/90 px-4 py-2 shadow-sm sm:flex">
+          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.7)] bg-white/90 px-4 py-2 shadow-sm dark:border-[rgba(var(--border),0.4)] dark:bg-[rgba(var(--panel),0.7)] sm:flex">
             <Search className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]" aria-hidden="true" />
             <input
               type="search"
@@ -42,6 +60,10 @@ export function Header({ onToggleSidebar }: HeaderProps = {}) {
 
           <button
             type="button"
+            onClick={() => {
+              requestNewPrompt();
+              navigate("/chat");
+            }}
             className="inline-flex items-center gap-2 rounded-2xl bg-[rgba(var(--brand),0.1)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--brand),0.18)]"
           >
             <Sparkles className="size-4" /> New prompt
@@ -55,7 +77,8 @@ export function Header({ onToggleSidebar }: HeaderProps = {}) {
           </div>
           <button
             type="button"
-            className="relative flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-white/90 text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand"
+            onClick={() => requestNotifications()}
+            className="relative flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-white/90 text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)]"
             aria-label="Notifications"
           >
             <Bell className="size-4" />
@@ -63,21 +86,33 @@ export function Header({ onToggleSidebar }: HeaderProps = {}) {
               3
             </span>
           </button>
+          <ThemeToggle className="hidden lg:inline-flex" />
           <div className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.7)] lg:block" aria-hidden="true" />
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-2xl border border-[rgba(var(--border),0.7)] bg-white/90 px-3 py-2 text-left text-sm font-medium text-[rgb(var(--text))] shadow-sm transition hover:border-brand hover:text-brand",
+              "hidden items-center gap-3 rounded-2xl border border-[rgba(var(--border),0.7)] bg-white/90 px-3 py-2 text-left text-sm font-medium text-[rgb(var(--text))] shadow-sm transition hover:border-brand hover:text-brand dark:bg-[rgba(var(--panel),0.7)]",
               "lg:flex",
             )}
+            onClick={() => {
+              requestProfileOpen();
+              onOpenProfile?.();
+            }}
+            disabled={loading}
           >
-            <span className="inline-flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
-              AI
+            <span className="inline-flex size-9 items-center justify-center overflow-hidden rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Profile avatar" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
             </span>
             <span className="leading-tight">
-              Admin
+              {profile?.fullName ?? "Workspace admin"}
               <br />
-              <span className="text-xs font-normal text-[rgba(var(--subtle),0.7)]">Secure workspace</span>
+              <span className="text-xs font-normal text-[rgba(var(--subtle),0.7)]">
+                {profile?.role ?? "Secure workspace"}
+              </span>
             </span>
           </button>
         </div>

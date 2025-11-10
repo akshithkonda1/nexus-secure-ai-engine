@@ -3,15 +3,18 @@ import { NavLink } from "react-router-dom";
 import {
   BookOpen,
   FileText,
-  History,
+  Inbox,
   LayoutDashboard,
   MessageCircle,
+  ScrollText,
   Settings,
+  ShieldCheck,
   Sparkles,
   Zap,
 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
+import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -21,12 +24,14 @@ type SidebarProps = {
 const primaryNav = [
   { to: "/home", label: "Overview", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
+  { to: "/outbox", label: "Outbox", icon: Inbox },
   { to: "/templates", label: "Templates", icon: Sparkles },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/history", label: "History", icon: History },
+  { to: "/history", label: "Activity", icon: ScrollText },
 ];
 
 const supportNav = [
+  { to: "/governance", label: "Governance", icon: ShieldCheck },
   { to: "/guides", label: "Guides", icon: BookOpen },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
@@ -43,7 +48,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       />
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform",
+          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform dark:bg-[rgba(var(--sidebar),0.85)]",
           "lg:static lg:translate-x-0 lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
@@ -115,6 +120,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <button
               type="button"
               className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+              onClick={() => requestBillingUpgrade()}
             >
               <Zap className="size-4" /> Upgrade
             </button>
@@ -124,6 +130,13 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <p className="mt-1 leading-relaxed">
               Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
             </p>
+            <button
+              type="button"
+              onClick={() => requestProjectCreation()}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-white/80"
+            >
+              <Sparkles className="size-3.5" /> New project
+            </button>
           </div>
         </div>
       </aside>

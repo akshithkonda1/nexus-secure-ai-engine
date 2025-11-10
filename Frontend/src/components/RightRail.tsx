@@ -1,5 +1,8 @@
 import React from "react";
 import { CalendarClock, FileText, Lightbulb, Plus, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { requestDocumentsView, requestProjectCreation, requestProjectOpen } from "@/lib/actions";
 
 const featuredProjects = [
   {
@@ -37,6 +40,8 @@ const researchSignals = [
 ];
 
 export function RightRail() {
+  const navigate = useNavigate();
+
   return (
     <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-[rgba(var(--border),0.6)] bg-white/60 px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl lg:flex xl:max-w-sm">
       <section className="rounded-3xl border border-[rgba(var(--border),0.8)] bg-white/80 p-5 shadow-[var(--shadow-soft)]">
@@ -49,6 +54,7 @@ export function RightRail() {
             type="button"
             className="inline-flex size-9 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.12)] text-brand transition hover:bg-[rgba(var(--brand),0.2)]"
             aria-label="Create project"
+            onClick={() => requestProjectCreation()}
           >
             <Plus className="size-4" />
           </button>
@@ -58,6 +64,19 @@ export function RightRail() {
             <li
               key={project.id}
               className="rounded-2xl border border-[rgba(var(--border),0.9)] bg-[rgba(var(--panel),0.6)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                requestProjectOpen(project.id);
+                navigate(`/home?project=${project.id}`);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  requestProjectOpen(project.id);
+                  navigate(`/home?project=${project.id}`);
+                }
+              }}
             >
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-[rgb(var(--text))]">{project.name}</span>
@@ -105,6 +124,10 @@ export function RightRail() {
         <button
           type="button"
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(var(--border),0.9)] bg-white px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--panel),0.65)]"
+          onClick={() => {
+            requestDocumentsView("updates");
+            navigate("/documents");
+          }}
         >
           <FileText className="size-4" /> View updates
         </button>

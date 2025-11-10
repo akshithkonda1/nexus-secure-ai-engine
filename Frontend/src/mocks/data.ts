@@ -24,6 +24,26 @@ type MockDatabase = {
   telemetry: TelemetryPoint[];
   messages: Map<string, MessageRecord[]>;
   settings: SettingsData;
+  profile: ProfileRecord;
+};
+
+type ProfileRecord = {
+  id: string;
+  fullName: string;
+  handle: string;
+  role: string;
+  email: string;
+  workspace: string;
+  timezone: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  notifications: {
+    productUpdates: boolean;
+    weeklyDigest: boolean;
+    securityAlerts: boolean;
+  };
 };
 
 function mulberry32(seed: number) {
@@ -229,6 +249,28 @@ function defaultSettings(): SettingsData {
   };
 }
 
+function defaultProfile(): ProfileRecord {
+  const timestamp = new Date().toISOString();
+  return {
+    id: "profile-1",
+    fullName: "Avery Quinn",
+    handle: "@avery.quinn",
+    role: "Director of AI Programs",
+    email: "avery.quinn@nexus.ai",
+    workspace: "Secure AI Engine",
+    timezone: "America/Los_Angeles",
+    phone: "+1-415-555-0147",
+    avatarUrl: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    notifications: {
+      productUpdates: true,
+      weeklyDigest: true,
+      securityAlerts: true,
+    },
+  };
+}
+
 const rand = mulberry32(42);
 const projects = createProjects(rand);
 const [sessions, messages, audit] = createSessions(rand, projects);
@@ -236,6 +278,7 @@ const templates = createTemplates(rand);
 const documents = createDocuments(rand);
 const telemetry = createTelemetry(rand);
 const settings = defaultSettings();
+const profile = defaultProfile();
 
 const db: MockDatabase = {
   sessions,
@@ -246,6 +289,7 @@ const db: MockDatabase = {
   telemetry,
   messages,
   settings,
+  profile,
 };
 
 export function getDb() {
@@ -282,4 +326,4 @@ export function insertDocument(item: DocumentItem) {
   return item;
 }
 
-export type { MessageRecord };
+export type { MessageRecord, ProfileRecord };
