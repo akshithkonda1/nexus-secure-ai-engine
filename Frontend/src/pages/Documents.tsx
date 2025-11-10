@@ -78,7 +78,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-75"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-75"
               disabled={uploadDocument.isPending}
             >
               {uploadDocument.isPending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Upload
