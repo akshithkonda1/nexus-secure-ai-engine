@@ -1,76 +1,37 @@
-import { type ReactNode, useMemo } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  MessageCircle,
-  Folder,
-  Sparkles,
-  FileText,
-  BarChart3,
-  History as HistoryIcon,
-  Settings as SettingsIcon,
-  SunMoon,
-} from "lucide-react";
-import { useTheme } from "../theme/useTheme";
+import { MessageCircle, Folder, FileText, History, Settings } from "lucide-react";
 
-type SidebarProps = {
-  active?: string;
-  onNavigate?: (path: string) => void;
-  variant?: "desktop" | "mobile";
-};
-type NavItem = { label: string; to: string; icon: ReactNode };
+const navItems = [
+  { to: "/chat", label: "Chat", icon: MessageCircle },
+  { to: "/templates", label: "Templates", icon: Folder },
+  { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/history", label: "History", icon: History },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
 
-export function Sidebar({ active = "/", onNavigate, variant = "desktop" }: SidebarProps) {
-  const { resolved, setTheme } = useTheme();
-  const items = useMemo<NavItem[]>(
-    () => [
-      { label: "Chat", to: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
-      { label: "Sessions", to: "/sessions", icon: <Folder className="h-5 w-5" /> },
-      { label: "Templates", to: "/templates", icon: <Sparkles className="h-5 w-5" /> },
-      { label: "Documents", to: "/documents", icon: <FileText className="h-5 w-5" /> },
-      { label: "Metrics", to: "/metrics", icon: <BarChart3 className="h-5 w-5" /> },
-      { label: "History", to: "/history", icon: <HistoryIcon className="h-5 w-5" /> },
-      { label: "Settings", to: "/settings", icon: <SettingsIcon className="h-5 w-5" /> },
-    ],
-    []
-  );
-
-  const widthClass = variant === "mobile" ? "w-full" : "w-[76px]";
-  const isActivePath = (path: string) => active === path || (path !== "/" && active.startsWith(`${path}/`));
-
-  const toggleTheme = () => {
-    setTheme(resolved === "dark" ? "light" : "dark");
-  };
-
+export function Sidebar() {
   return (
-    <aside
-      className={`h-screen ${widthClass} bg-[rgb(var(--panel))] border-r border-border/60 py-3 flex flex-col items-center gap-2`}
-    >
-      <div className="h-9 w-9 rounded-xl bg-prism grid place-items-center text-[10px] font-semibold shadow">Nx</div>
-      <nav className="mt-1 flex flex-col items-center gap-1">
-        {items.map((item) => (
+    <aside className="w-64 bg-[rgb(var(--surface))] border-r border-[color:rgba(var(--border))] p-4">
+      <h2 className="text-xl font-semibold mb-6">Nexus</h2>
+      <nav className="space-y-2">
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={() => onNavigate?.(item.to)}
-            title={item.label}
-            className={({ isActive }) => {
-              const selected = isActive || isActivePath(item.to);
-              const base = "h-10 w-10 rounded-xl grid place-items-center transition";
-              return selected
-                ? `${base} bg-surface/70 ring-2 ring-[var(--brand)]`
-                : `${base} hover:bg-surface/60`;
-            }}
+            key={to}
+            to={to}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-lg px-3 py-2 transition ${
+                isActive
+                  ? "bg-brand text-white shadow-[var(--elev-1)]"
+                  : "text-[rgb(var(--text))] hover:bg-[rgb(var(--panel))]"
+              }`
+            }
           >
-            <span className="sr-only">{item.label}</span>
-            {item.icon}
+            <Icon className="h-5 w-5" />
+            {label}
           </NavLink>
         ))}
       </nav>
-      <div className="mt-auto pb-2">
-        <button title="Toggle theme" onClick={toggleTheme} className="h-10 w-10 rounded-xl grid place-items-center hover:bg-surface/60">
-          <SunMoon className="h-5 w-5" />
-        </button>
-      </div>
     </aside>
   );
 }
