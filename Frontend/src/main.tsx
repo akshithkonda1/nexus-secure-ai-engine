@@ -13,22 +13,26 @@ import { History } from "@/pages/History";
 import { Settings } from "@/pages/Settings";
 import { Outbox } from "@/pages/Outbox";
 import { Governance } from "@/pages/Governance";
+import { Guides } from "@/pages/Guides";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeToggle";
 import { ProfileProvider } from "@/features/profile/ProfileProvider";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <AppErrorBoundary />,
     children: [
-      { index: true, element: <Navigate to="/home" replace /> },
-      { path: "home", element: <Home /> },
+      { index: true, element: <Home /> },
+      { path: "home", element: <Navigate to="/" replace /> },
       { path: "chat", element: <Chat /> },
       { path: "outbox", element: <Outbox /> },
       { path: "templates", element: <Templates /> },
       { path: "documents", element: <Documents /> },
       { path: "history", element: <History /> },
       { path: "governance", element: <Governance /> },
+      { path: "guides", element: <Guides /> },
       { path: "settings", element: <Settings /> },
     ],
   },
