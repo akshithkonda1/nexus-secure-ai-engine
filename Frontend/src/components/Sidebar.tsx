@@ -1,37 +1,145 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { MessageCircle, Folder, FileText, History, Settings } from "lucide-react";
+import {
+  BookOpen,
+  FileText,
+  Inbox,
+  LayoutDashboard,
+  MessageCircle,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
-const navItems = [
-  { to: "/chat", label: "Chat", icon: MessageCircle },
-  { to: "/templates", label: "Templates", icon: Folder },
+import { cn } from "@/shared/lib/cn";
+import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
+
+type SidebarProps = {
+  isOpen?: boolean;
+  onClose?: () => void;
+};
+
+const primaryNav = [
+  { to: "/home", label: "Overview", icon: LayoutDashboard },
+  { to: "/chat", label: "AI Chat", icon: MessageCircle },
+  { to: "/outbox", label: "Outbox", icon: Inbox },
+  { to: "/templates", label: "Templates", icon: Sparkles },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/history", label: "History", icon: History },
+  { to: "/history", label: "Activity", icon: ScrollText },
+];
+
+const supportNav = [
+  { to: "/governance", label: "Governance", icon: ShieldCheck },
+  { to: "/guides", label: "Guides", icon: BookOpen },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
-    <aside className="w-64 bg-[rgb(var(--surface))] border-r border-[color:rgba(var(--border))] p-4">
-      <h2 className="text-xl font-semibold mb-6">Nexus</h2>
-      <nav className="space-y-2">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2 transition ${
-                isActive
-                  ? "bg-brand text-white shadow-[var(--elev-1)]"
-                  : "text-[rgb(var(--text))] hover:bg-[rgb(var(--panel))]"
-              }`
-            }
-          >
-            <Icon className="h-5 w-5" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+    <>
+      <div
+        className={cn(
+          "fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity lg:hidden",
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={onClose}
+      />
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform dark:bg-[rgba(var(--sidebar),0.85)]",
+          "lg:static lg:translate-x-0 lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">Nexus</p>
+            <h1 className="mt-1 text-xl font-semibold">Secure AI Engine</h1>
+          </div>
+          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand">
+            Beta
+          </span>
+        </div>
+
+        <nav className="mt-10 space-y-8 text-sm font-medium">
+          <div className="space-y-1">
+            {primaryNav.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  cn(
+                    "group flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors",
+                    "hover:bg-[rgba(var(--brand),0.08)]",
+                    isActive
+                      ? "bg-[rgba(var(--brand),0.12)] text-brand shadow-[var(--shadow-soft)]"
+                      : "text-[rgb(var(--subtle))]",
+                  )
+                }
+              >
+                <span className="flex size-9 items-center justify-center rounded-xl bg-white/80 text-brand shadow-sm">
+                  <Icon className="size-4" />
+                </span>
+                <span className="flex-1 text-left tracking-tight">{label}</span>
+                <span className="opacity-0 transition group-hover:opacity-100">→</span>
+              </NavLink>
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            <p className="px-4 text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Workspace</p>
+            {supportNav.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-white/70",
+                    isActive && "bg-white text-brand shadow-[var(--shadow-soft)]",
+                  )
+                }
+              >
+                <span className="flex size-9 items-center justify-center rounded-xl bg-white/70 text-[rgb(var(--subtle))]">
+                  <Icon className="size-4" />
+                </span>
+                <span className="flex-1 text-left tracking-tight">{label}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+
+        <div className="mt-auto space-y-4">
+          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-white shadow-[var(--shadow-lift)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] opacity-80">Plan</p>
+            <h3 className="mt-2 text-lg font-semibold">Professional</h3>
+            <p className="mt-1 text-sm opacity-80">Unlock orchestration across teams with unlimited workspaces.</p>
+            <button
+              type="button"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+              onClick={() => requestBillingUpgrade()}
+            >
+              <Zap className="size-4" /> Upgrade
+            </button>
+          </div>
+          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-white/70 p-4 text-xs text-[rgb(var(--subtle))]">
+            <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
+            <p className="mt-1 leading-relaxed">
+              Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
+            </p>
+            <button
+              type="button"
+              onClick={() => requestProjectCreation()}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-white/80"
+            >
+              <Sparkles className="size-3.5" /> New project
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

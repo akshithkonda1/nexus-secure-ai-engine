@@ -124,6 +124,24 @@ export async function handleMockRequest(method: string, url: string, body?: unkn
     return response satisfies CreateSessionData;
   }
 
+  if (method === "GET" && path === "/api/profile") {
+    return db.profile;
+  }
+
+  if (method === "PATCH" && path === "/api/profile") {
+    const payload = (body ?? {}) as Partial<typeof db.profile>;
+    db.profile = {
+      ...db.profile,
+      ...payload,
+      notifications: {
+        ...db.profile.notifications,
+        ...(payload.notifications ?? {}),
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    return db.profile;
+  }
+
   if (method === "GET" && path === "/api/templates") {
     return { templates: db.templates };
   }
