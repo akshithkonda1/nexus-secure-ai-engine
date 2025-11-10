@@ -1,15 +1,35 @@
-// Frontend/src/main.tsx
 import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 
-import "./styles/globals.css";
-import App from "./App";
+import "@/styles/globals.css";
+import "@/styles/theme.css";
+import { App } from "@/App";
+import { Home } from "@/pages/Home";
+import { Chat } from "@/pages/Chat";
+import { Templates } from "@/pages/Templates";
+import { Documents } from "@/pages/Documents";
+import { History } from "@/pages/History";
+import { Settings } from "@/pages/Settings";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      { index: true, element: <Navigate to="/home" replace /> },
+      { path: "home", element: <Home /> },
+      { path: "chat", element: <Chat /> },
+      { path: "templates", element: <Templates /> },
+      { path: "documents", element: <Documents /> },
+      { path: "history", element: <History /> },
+      { path: "settings", element: <Settings /> },
+    ],
+  },
+]);
+
+createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </React.StrictMode>
 );

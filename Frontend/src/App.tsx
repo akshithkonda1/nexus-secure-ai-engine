@@ -1,55 +1,15 @@
-import { Routes, Route, useLocation } from "react-router-dom";
-import { useMemo } from "react";
-import { Sidebar } from "./components/Sidebar";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "@/components/Sidebar";
+import "@/styles/globals.css";
 
-import Home from "./pages/Home";
-import Chat from "./pages/Chat";
-import Sessions from "./pages/Sessions";
-import Templates from "./pages/Templates";
-import Documents from "./pages/Documents";
-import Metrics from "./pages/Metrics";
-import History from "./pages/History";
-import Settings from "./pages/Settings";
-
-function Shell() {
-  const location = useLocation();
-  const active = useMemo(() => location.pathname || "/home", [location.pathname]);
-
+export function App() {
   return (
-    <div className="min-h-screen grid grid-cols-[76px_1fr]">
-      <Sidebar active={active} />
-      <div className="min-h-screen bg-[rgb(var(--bg))] text-foreground">
-        <header
-          className="sticky top-0 z-10 h-12 grid items-center px-4 border-b border-border/60 backdrop-blur"
-          style={{ background: "rgb(var(--panel) / 0.95)" }}
-        >
-          <div className="text-sm text-subtle">Nexus</div>
-        </header>
-
-        <div className="p-3 sm:p-6">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/templates" element={<Templates />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/metrics" element={<Metrics />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Home />} />
-          </Routes>
-        </div>
-      </div>
+    <div className="flex h-screen bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-8">
+        <Outlet />
+      </main>
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <ErrorBoundary>
-      <Shell />
-    </ErrorBoundary>
   );
 }
