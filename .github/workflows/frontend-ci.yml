@@ -40,6 +40,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'Frontend/package-lock.json'
       - run: npm ci
+      - run: npm run build
       - run: npx playwright install --with-deps
       - run: npm run preview &
       - run: npx wait-on http://localhost:4173
