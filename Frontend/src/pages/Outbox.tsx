@@ -59,7 +59,7 @@ export function Outbox() {
                 requestNewPrompt();
                 navigate("/chat");
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-5 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-5 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF] hover:shadow-[var(--shadow-lift)]"
             >
               <Sparkles className="size-4" /> Compose new
             </button>
