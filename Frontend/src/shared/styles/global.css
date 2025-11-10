@@ -1,24 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Light (default) */
-:root{
-  --bg-app:#f7f8fb;
-  --bg-panel:#ffffff;
-  --ink:#0f172a;
-  --muted:#64748b;
+/* Global design tokens and transitions */
+:root {
+  --bg-app: #f7f8fb;
+  --bg-panel: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
 }
 
-/* Dark */
-:root[data-theme="dark"]{
-  --bg-app:#0b1220;
-  --bg-panel:#121a2b;
-  --ink:#e5e7eb;
-  --muted:#94a3b8;
+:root[data-theme="dark"] {
+  --bg-app: #0b1220;
+  --bg-panel: #121a2b;
+  --ink: #e5e7eb;
+  --muted: #94a3b8;
 }
 
-html{ color-scheme: light dark; }
+html {
+  color-scheme: light dark;
+}
 
 /* Gentle transitions after first paint (index.html disables them initially) */
-*{ transition: background-color .16s ease, color .16s ease, border-color .16s ease; }
+* {
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}

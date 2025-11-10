@@ -1,8 +1,6 @@
 @import url('https://rsms.me/inter/inter.css');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@reference "tailwindcss";
 
 /* Custom toggle styles for providers/limits (Image 3) */
 .toggle {
