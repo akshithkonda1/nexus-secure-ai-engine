@@ -28,7 +28,7 @@ export function Guides() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="rounded-[26px] border border-[rgba(var(--border),0.7)] bg-white/85 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
+      <section className="rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.75)]">Guides</p>
           <h1 className="text-2xl font-semibold text-[rgb(var(--text))]">{userName}, chart the secure way to ship AI.</h1>
@@ -48,7 +48,7 @@ export function Guides() {
         {steps.map(({ title, description, icon: Icon }) => (
           <article
             key={title}
-            className="flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-white/90 p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.7)]"
+            className="flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.7)]"
           >
             <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.12)] text-brand">
               <Icon className="size-5" />

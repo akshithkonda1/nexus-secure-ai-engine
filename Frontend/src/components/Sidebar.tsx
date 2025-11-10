@@ -80,7 +80,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   )
                 }
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white/80 text-brand shadow-sm">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.85)] text-brand shadow-sm">
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 text-left tracking-tight">{label}</span>
@@ -98,12 +98,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-white/70",
-                    isActive && "bg-white text-brand shadow-[var(--shadow-soft)]",
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-[rgba(var(--panel),0.65)]",
+                    isActive && "bg-[rgba(var(--surface),0.95)] text-brand shadow-[var(--shadow-soft)]",
                   )
                 }
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white/70 text-[rgb(var(--subtle))]">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.82)] text-[rgb(var(--subtle))]">
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 text-left tracking-tight">{label}</span>
@@ -125,7 +125,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <Zap className="size-4" /> Upgrade
             </button>
           </div>
-          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-white/70 p-4 text-xs text-[rgb(var(--subtle))]">
+          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.85)] p-4 text-xs text-[rgb(var(--subtle))]">
             <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
             <p className="mt-1 leading-relaxed">
               Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
@@ -133,7 +133,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <button
               type="button"
               onClick={() => requestProjectCreation()}
-              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-white/80"
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.65)]"
             >
               <Sparkles className="size-3.5" /> New project
             </button>
