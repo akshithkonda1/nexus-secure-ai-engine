@@ -97,7 +97,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-6 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+                className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-6 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF] hover:shadow-[var(--shadow-lift)]"
               >
                 <ShieldCheck className="size-4" /> Launch Chat
               </button>
