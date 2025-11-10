@@ -81,7 +81,7 @@ export function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Nexus • Welcome back
+              Nexus • Welcome back, {user_name}
             </div>
             <h1 className="text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
@@ -95,7 +95,7 @@ export function Home() {
                 onClick={() => navigate("/chat")}
                 className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-6 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
               >
-                <ShieldCheck className="size-4" /> Launch console
+                <ShieldCheck className="size-4" /> Launch Chat
               </button>
               <button
                 type="button"
