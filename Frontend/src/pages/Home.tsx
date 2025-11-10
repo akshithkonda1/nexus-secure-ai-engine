@@ -11,6 +11,8 @@ import {
   Wand2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useProfile } from "@/features/profile/ProfileProvider";
+import { getFirstName } from "@/lib/userName";
 
 const quickStarts = [
   {
@@ -72,16 +74,18 @@ const highlights = [
 
 export function Home() {
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  const userName = getFirstName(profile);
 
   return (
     <div className="flex flex-col gap-12">
-      <section className="relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-white/85 p-10 shadow-[var(--shadow-soft)]">
+      <section className="relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--brand),0.16),transparent_55%)]" aria-hidden="true" />
         <div className="absolute -right-20 -top-24 size-[260px] rounded-full bg-[radial-gradient(circle_at_center,rgba(var(--brand-soft),0.18),transparent_70%)]" aria-hidden="true" />
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Nexus • Welcome back, {user_name}
+              Nexus • Welcome back, {userName}
             </div>
             <h1 className="text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
@@ -100,14 +104,14 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/templates")}
-                className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.8)] bg-white/80 px-6 py-2 text-sm font-semibold text-[rgb(var(--text))] transition hover:bg-[rgba(var(--panel),0.7)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.9)] px-6 py-2 text-sm font-semibold text-[rgb(var(--text))] transition hover:bg-[rgba(var(--panel),0.7)]"
               >
                 Browse playbooks
               </button>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               {highlights.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-[rgba(var(--border),0.55)] bg-white/70 p-4">
+                <div key={item.title} className="rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">{item.title}</p>
                   <div className="mt-3 flex items-end justify-between">
                     <span className="text-2xl font-semibold text-[rgb(var(--text))]">{item.value}</span>
@@ -128,7 +132,7 @@ export function Home() {
                 We already collected transcripts from legal and research. Draft a shareable brief?
               </p>
             </div>
-            <div className="flex flex-col gap-3 rounded-2xl bg-white/90 p-4 shadow-inner">
+            <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(var(--surface),0.94)] p-4 shadow-inner dark:bg-[rgba(var(--panel),0.75)]">
               <div className="flex items-center justify-between text-xs text-[rgba(var(--subtle),0.8)]">
                 <span className="inline-flex items-center gap-2">
                   <MessageSquare className="h-3.5 w-3.5 text-brand" /> Latest thread
@@ -148,7 +152,7 @@ export function Home() {
                 <Wand2 className="size-4" /> Generate brief
               </button>
             </div>
-            <div className="rounded-2xl border border-[rgba(var(--border),0.7)] bg-white/80 p-4">
+            <div className="rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Queue</p>
               <ul className="mt-3 space-y-2 text-sm text-[rgb(var(--text))]">
                 <li className="flex items-center justify-between">
@@ -175,7 +179,7 @@ export function Home() {
             key={item.label}
             type="button"
             onClick={() => navigate(item.to)}
-            className={`group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-white/90 p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
+            className={`group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.92)] p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
           >
             <span className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.hue} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white`}>Quick start</span>
             <div className="mt-5 space-y-3">
@@ -193,7 +197,7 @@ export function Home() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-[26px] border border-[rgba(var(--border),0.6)] bg-white/90 p-6 shadow-[var(--shadow-soft)]">
+        <div className="rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
           <header className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Recent documents</p>
@@ -202,7 +206,7 @@ export function Home() {
             <button
               type="button"
               onClick={() => navigate("/documents")}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.7)] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.7)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.7)]"
             >
               View all
             </button>
@@ -222,13 +226,13 @@ export function Home() {
                     <p className="text-xs text-[rgba(var(--subtle),0.7)]">{doc.owner}</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[rgba(var(--subtle),0.8)]">{doc.status}</span>
+                <span className="rounded-full bg-[rgba(var(--surface),0.95)] px-3 py-1 text-xs font-semibold text-[rgba(var(--subtle),0.8)]">{doc.status}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex h-full flex-col rounded-[26px] border border-[rgba(var(--border),0.6)] bg-white/90 p-6 shadow-[var(--shadow-soft)]">
+        <div className="flex h-full flex-col rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Quick briefs</p>
           <h2 className="mt-2 text-lg font-semibold text-[rgb(var(--text))]">Latest decisions</h2>
           <div className="mt-4 flex-1 space-y-4 text-sm text-[rgb(var(--text))]">

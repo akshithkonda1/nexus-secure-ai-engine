@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useCommand } from "@/lib/actions";
 import "@/styles/globals.css";
+import { Toaster } from "@/shared/ui/components/toast";
 
 export function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -36,6 +37,7 @@ export function App() {
         </div>
       </div>
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
+      <Toaster />
     </div>
   );
 }
