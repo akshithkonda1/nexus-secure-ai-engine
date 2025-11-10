@@ -48,13 +48,18 @@ function applyTheme(theme: Theme, systemDark: boolean, withTransition: boolean) 
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const dark = resolveTheme(theme, systemDark) === "dark";
+  const toggle = () => root.classList.toggle("dark", dark);
   if (withTransition) {
     root.classList.add("theme-transition");
-    window.setTimeout(() => {
-      root.classList.remove("theme-transition");
-    }, 260);
+    window.requestAnimationFrame(() => {
+      toggle();
+      window.setTimeout(() => {
+        root.classList.remove("theme-transition");
+      }, 260);
+    });
+    return;
   }
-  root.classList.toggle("dark", dark);
+  toggle();
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
