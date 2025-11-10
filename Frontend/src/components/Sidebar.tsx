@@ -22,12 +22,12 @@ type SidebarProps = {
 };
 
 const primaryNav = [
-  { to: "/", label: "Overview", icon: LayoutDashboard },
+  { to: "/home", label: "Overview", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
   { to: "/outbox", label: "Outbox", icon: Inbox },
   { to: "/templates", label: "Templates", icon: Sparkles },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/activity", label: "Activity", icon: ScrollText },
+  { to: "/history", label: "Activity", icon: ScrollText },
 ];
 
 const supportNav = [

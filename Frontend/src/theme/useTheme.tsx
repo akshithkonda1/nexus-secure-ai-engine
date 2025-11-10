@@ -48,18 +48,12 @@ function applyTheme(theme: Theme, systemDark: boolean, withTransition: boolean) 
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const dark = resolveTheme(theme, systemDark) === "dark";
-
   if (withTransition) {
     root.classList.add("theme-transition");
-    requestAnimationFrame(() => {
-      root.classList.toggle("dark", dark);
-      window.setTimeout(() => {
-        root.classList.remove("theme-transition");
-      }, 260);
-    });
-    return;
+    window.setTimeout(() => {
+      root.classList.remove("theme-transition");
+    }, 260);
   }
-
   root.classList.toggle("dark", dark);
 }
 
