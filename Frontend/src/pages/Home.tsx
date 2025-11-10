@@ -11,6 +11,8 @@ import {
   Wand2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useProfile } from "@/features/profile/ProfileProvider";
+import { getFirstName } from "@/lib/userName";
 
 const quickStarts = [
   {
@@ -72,6 +74,8 @@ const highlights = [
 
 export function Home() {
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  const userName = getFirstName(profile);
 
   return (
     <div className="flex flex-col gap-12">
@@ -81,7 +85,7 @@ export function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Nexus • Welcome back, {user_name}
+              Nexus • Welcome back, {userName}
             </div>
             <h1 className="text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
