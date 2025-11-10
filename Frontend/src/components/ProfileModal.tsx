@@ -472,24 +472,27 @@ type ToggleProps = {
 function Toggle({ label, description, checked, onChange }: ToggleProps) {
   return (
     <Switch.Group>
-      <div className="flex items-start justify-between gap-3 text-sm">
-        <Switch.Label className="space-y-1">
-          <div className="font-semibold text-[rgb(var(--text))]">{label}</div>
-          <div className="text-xs text-[rgba(var(--subtle),0.8)]">{description}</div>
-        </Switch.Label>
+      <div className="flex items-center justify-between gap-4 text-sm">
+        <div className="flex-1 space-y-1">
+          <Switch.Label className="block font-semibold text-[rgb(var(--text))]">{label}</Switch.Label>
+          <Switch.Description className="block text-xs text-[rgba(var(--subtle),0.8)]">{description}</Switch.Description>
+        </div>
         <Switch
           checked={checked}
           onChange={onChange}
           className={cn(
-            "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border transition",
+            "relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer items-center rounded-full border transition",
             checked
               ? "border-transparent bg-[rgba(var(--brand),0.9)]"
-              : "border-[rgba(var(--border),0.7)] bg-white/80",
+              : "border-[rgba(var(--border),0.45)] bg-[rgba(var(--surface),0.92)]",
           )}
         >
           <span
             aria-hidden
-            className={cn("inline-block size-5 rounded-full bg-white shadow transition", checked ? "translate-x-5" : "translate-x-1")}
+            className={cn(
+              "inline-block size-5 rounded-full bg-white shadow-[0_2px_6px_rgba(15,23,42,0.22)] transition",
+              checked ? "translate-x-6" : "translate-x-1"
+            )}
           />
         </Switch>
       </div>
