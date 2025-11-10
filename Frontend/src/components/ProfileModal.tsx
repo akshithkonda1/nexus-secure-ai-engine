@@ -91,7 +91,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const handleFile = useCallback(async (file: File) => {
     if (!file) return;
     if (file.size > MAX_AVATAR_BYTES) {
-      setLocalError("Avatar must be under 2MB");
+      setLocalError("Avatar must be under 50MB");
       return;
     }
     const reader = new FileReader();
