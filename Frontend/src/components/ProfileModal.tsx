@@ -6,7 +6,7 @@ import { useProfile } from "@/features/profile/ProfileProvider";
 import { requestSignOut } from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
 
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
 const TIMEZONES = [
   "America/Los_Angeles",
   "America/Chicago",
@@ -15,11 +15,17 @@ const TIMEZONES = [
   "Europe/Paris",
   "Asia/Singapore",
   "Asia/Tokyo",
-];
+] as const;
 
 type ProfileModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+};
+
+type Notifications = {
+  productUpdates: boolean;
+  weeklyDigest: boolean;
+  securityAlerts: boolean;
 };
 
 type FormState = {
@@ -28,72 +34,97 @@ type FormState = {
   role: string;
   email: string;
   workspace: string;
-  timezone: string;
+  timezone: (typeof TIMEZONES)[number];
   phone: string;
   avatarUrl: string | null;
-  notifications: {
-    productUpdates: boolean;
-    weeklyDigest: boolean;
-    securityAlerts: boolean;
-  };
+  notifications: Notifications;
 };
 
 function toInitialState(profile: ReturnType<typeof useProfile>["profile"]): FormState {
-  const notifications = profile?.notifications ?? {
+  const defaults: Notifications = {
     productUpdates: true,
     weeklyDigest: true,
     securityAlerts: true,
   };
+  const notifications = { ...defaults, ...(profile?.notifications ?? {}) };
+
   return {
     fullName: profile?.fullName ?? "",
     handle: profile?.handle ?? "",
     role: profile?.role ?? "",
     email: profile?.email ?? "",
     workspace: profile?.workspace ?? "",
-    timezone: profile?.timezone ?? TIMEZONES[0],
+    timezone: (profile?.timezone as FormState["timezone"]) ?? TIMEZONES[0],
     phone: profile?.phone ?? "",
     avatarUrl: profile?.avatarUrl ?? null,
-    notifications: {
-      productUpdates: notifications.productUpdates,
-      weeklyDigest: notifications.weeklyDigest,
-      securityAlerts: notifications.securityAlerts,
-    },
+    notifications,
   };
+}
+
+type Errors = Partial<Record<keyof FormState, string>> & { form?: string };
+
+function validate(f: FormState): Errors {
+  const errors: Errors = {};
+
+  if (!f.fullName.trim()) errors.fullName = "Full name is required.";
+  if (!f.handle.trim()) errors.handle = "Handle is required.";
+  if (f.handle && !/^@?[a-zA-Z0-9._-]{2,30}$/.test(f.handle))
+    errors.handle = "Use 2–30 letters/numbers/._-";
+  if (!f.email.trim()) errors.email = "Email is required.";
+  if (f.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email))
+    errors.email = "Enter a valid email.";
+  if (f.phone && !/^[\d+()\-.\s]{7,20}$/.test(f.phone))
+    errors.phone = "Enter a valid phone number.";
+  // workspace is optional; add a rule if you need it to be non-empty.
+
+  return errors;
+}
+
+function isEqualForm(a: FormState, b: FormState) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const { profile, loading, saving, error, update } = useProfile();
   const [form, setForm] = useState<FormState>(() => toInitialState(profile));
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errors, setErrors] = useState<Errors>({});
   const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const initial = useMemo(() => toInitialState(profile), [profile]);
+  const busy = loading || saving;
 
   useEffect(() => {
     if (open) {
       setForm(toInitialState(profile));
+      setErrors({});
       setStatus("idle");
       setLocalError(null);
     }
   }, [profile, open]);
 
-  const busy = loading || saving;
-
   const avatarInitials = useMemo(() => {
     if (!form.fullName) return "AI";
     return form.fullName
       .split(" ")
-      .map((part) => part[0])
-      .join("")
+      .filter(Boolean)
+      .map((part) => part[0]!.toUpperCase())
       .slice(0, 2)
-      .toUpperCase();
+      .join("");
   }, [form.fullName]);
 
-  const handleFile = useCallback(async (file: File) => {
+  const onFilePick = useCallback(async (file: File) => {
     if (!file) return;
-    if (file.size > MAX_AVATAR_BYTES) {
-      setLocalError("Avatar must be under 50MB");
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+      setLocalError("Avatar must be PNG, JPEG, or WebP.");
       return;
     }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setLocalError("Avatar must be under 2MB.");
+      return;
+    }
+    setLocalError(null);
     const reader = new FileReader();
     const dataUrl = await new Promise<string>((resolve, reject) => {
       reader.onload = () => resolve(reader.result as string);
@@ -106,31 +137,55 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const onSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      setLocalError(null);
       setStatus("idle");
+      setLocalError(null);
+
+      const next: FormState = {
+        ...form,
+        fullName: form.fullName.trim(),
+        handle: form.handle.startsWith("@") ? form.handle.trim() : `@${form.handle.trim()}`,
+        role: form.role.trim(),
+        email: form.email.trim(),
+        workspace: form.workspace.trim(),
+        phone: form.phone.trim(),
+        // timezone, avatarUrl, notifications unchanged
+      };
+
+      const v = validate(next);
+      setErrors(v);
+      if (Object.keys(v).length > 0) {
+        setStatus("error");
+        return;
+      }
+
       try {
         await update({
-          fullName: form.fullName.trim(),
-          handle: form.handle.trim(),
-          role: form.role.trim(),
-          email: form.email.trim(),FF
-          workspace: form.workspace.trim(),
-          timezone: form.timezone,
-          phone: form.phone.trim() || null,
-          avatarUrl: form.avatarUrl ?? undefined,
-          notifications: { ...form.notifications },
+          fullName: next.fullName,
+          handle: next.handle,
+          role: next.role,
+          email: next.email,
+          workspace: next.workspace,
+          timezone: next.timezone,
+          phone: next.phone || null,
+          avatarUrl: next.avatarUrl ?? undefined,
+          notifications: { ...next.notifications },
         });
+        setForm(next);
         setStatus("success");
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unable to update profile";
+        const message = err instanceof Error ? err.message : "Unable to update profile.";
         setLocalError(message);
         setStatus("error");
       }
     },
-    [update, form],
+    [form, update],
   );
 
   const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+
+  const dirty = useMemo(() => !isEqualForm(form, initial), [form, initial]);
+  const invalid = Object.keys(validate(form)).length > 0;
+  const saveDisabled = busy || invalid || !dirty;
 
   return (
     <Transition.Root show={open} as={Fragment}>
@@ -160,9 +215,12 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
             >
               <Dialog.Panel className="relative w-full overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] shadow-[var(--shadow-lift)] backdrop-blur-xl">
                 <form onSubmit={onSubmit} className="grid gap-8 p-8 lg:grid-cols-[320px,1fr] lg:p-10">
+                  {/* Left column */}
                   <div className="space-y-6">
                     <div className="flex items-start justify-between">
-                      <Dialog.Title className="text-2xl font-semibold text-[rgb(var(--text))]">Profile</Dialog.Title>
+                      <Dialog.Title className="text-2xl font-semibold text-[rgb(var(--text))]">
+                        Profile
+                      </Dialog.Title>
                       <button
                         type="button"
                         onClick={close}
@@ -172,9 +230,9 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         <X className="size-4" />
                       </button>
                     </div>
+
                     <p className="text-sm text-[rgba(var(--subtle),0.8)]">
-                      Manage how people see you across Nexus: update your details, security contact, and notification
-                      preferences. Changes sync instantly once saved.
+                      Manage how people see you across Nexus. Changes sync instantly once saved.
                     </p>
 
                     <div className="space-y-4">
@@ -182,7 +240,9 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         {form.avatarUrl ? (
                           <img src={form.avatarUrl} alt="Profile avatar" className="h-full w-full object-cover" />
                         ) : (
-                          <span className="text-2xl font-semibold text-brand">{avatarInitials}</span>
+                          <span className="text-2xl font-semibold text-brand" aria-label="Avatar initials">
+                            {avatarInitials}
+                          </span>
                         )}
                         <button
                           type="button"
@@ -196,15 +256,16 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                           type="file"
                           accept="image/png,image/jpeg,image/webp"
                           className="hidden"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
                             if (file) {
-                              void handleFile(file);
-                              event.target.value = "";
+                              void onFilePick(file);
+                              e.currentTarget.value = "";
                             }
                           }}
                         />
                       </div>
+
                       {form.avatarUrl && (
                         <button
                           type="button"
@@ -221,7 +282,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         <Shield className="size-4" /> Workspace
                       </div>
                       <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-                        Updating your contact details keeps alerts routed to the right owner for governance events.
+                        Keep your details up to date so governance and alerts go to the right owner.
                       </p>
                     </div>
 
@@ -235,54 +296,61 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                     </div>
                   </div>
 
+                  {/* Right column */}
                   <div className="space-y-6">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Field
                         label="Full name"
                         required
                         value={form.fullName}
-                        onChange={(value) => setForm((prev) => ({ ...prev, fullName: value }))}
+                        error={errors.fullName}
+                        onChange={(value) => setForm((p) => ({ ...p, fullName: value }))}
                       />
                       <Field
                         label="Handle"
                         required
                         helper="Visible to teammates"
                         value={form.handle}
-                        onChange={(value) => setForm((prev) => ({ ...prev, handle: value.startsWith("@") ? value : `@${value}` }))}
+                        error={errors.handle}
+                        onChange={(value) =>
+                          setForm((p) => ({ ...p, handle: value.startsWith("@") ? value : `@${value}` }))
+                        }
                       />
                       <Field
                         label="Role"
                         value={form.role}
-                        onChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
+                        onChange={(value) => setForm((p) => ({ ...p, role: value }))}
                       />
                       <Field
                         label="Workspace"
                         value={form.workspace}
-                        onChange={(value) => setForm((prev) => ({ ...prev, workspace: value }))}
+                        onChange={(value) => setForm((p) => ({ ...p, workspace: value }))}
                       />
                       <Field
                         label="Email"
                         type="email"
                         required
                         value={form.email}
-                        onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
+                        error={errors.email}
+                        onChange={(value) => setForm((p) => ({ ...p, email: value }))}
                       />
                       <Field
                         label="Phone"
                         type="tel"
                         value={form.phone}
-                        onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+                        error={errors.phone}
+                        onChange={(value) => setForm((p) => ({ ...p, phone: value }))}
                       />
                       <label className="flex flex-col gap-2 text-sm text-[rgb(var(--text))]">
                         <span className="font-semibold">Timezone</span>
                         <select
                           value={form.timezone}
-                          onChange={(event) => setForm((prev) => ({ ...prev, timezone: event.target.value }))}
+                          onChange={(event) => setForm((p) => ({ ...p, timezone: event.target.value as FormState["timezone"] }))}
                           className="h-11 rounded-xl border border-[rgba(var(--border),0.7)] bg-white/70 px-3 text-sm outline-none focus:border-brand"
                         >
                           {TIMEZONES.map((zone) => (
                             <option key={zone} value={zone}>
-                              {zone.replace("_", " ")}
+                              {zone.replaceAll("_", " ")}
                             </option>
                           ))}
                         </select>
@@ -296,10 +364,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         description="Friday summary of agent activity across your workspace"
                         checked={form.notifications.weeklyDigest}
                         onChange={(value) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            notifications: { ...prev.notifications, weeklyDigest: value },
-                          }))
+                          setForm((p) => ({ ...p, notifications: { ...p.notifications, weeklyDigest: value } }))
                         }
                       />
                       <Toggle
@@ -307,10 +372,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         description="Major launches, policy updates, and roadmap invitations"
                         checked={form.notifications.productUpdates}
                         onChange={(value) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            notifications: { ...prev.notifications, productUpdates: value },
-                          }))
+                          setForm((p) => ({ ...p, notifications: { ...p.notifications, productUpdates: value } }))
                         }
                       />
                       <Toggle
@@ -318,10 +380,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         description="Critical incidents, retention changes, and governance tasks"
                         checked={form.notifications.securityAlerts}
                         onChange={(value) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            notifications: { ...prev.notifications, securityAlerts: value },
-                          }))
+                          setForm((p) => ({ ...p, notifications: { ...p.notifications, securityAlerts: value } }))
                         }
                       />
                     </fieldset>
@@ -330,7 +389,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          requestSignOut();
+                          void requestSignOut();
                           close();
                         }}
                         className="inline-flex items-center gap-2 rounded-2xl border border-[rgba(var(--border),0.7)] px-4 py-2 text-sm font-semibold text-[rgba(var(--subtle),0.8)] transition hover:text-brand"
@@ -340,9 +399,12 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       <button
                         type="submit"
                         className="inline-flex items-center gap-2 rounded-2xl bg-[rgba(var(--brand),1)] px-6 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={busy}
+                        disabled={saveDisabled}
+                        aria-disabled={saveDisabled}
+                        title={invalid ? "Fix validation errors to save" : dirty ? "" : "No changes to save"}
                       >
-                        {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Save changes
+                        {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                        Save changes
                       </button>
                     </div>
                   </div>
@@ -356,6 +418,8 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   );
 }
 
+/* ---------- Reusable Field / Toggle ---------- */
+
 type FieldProps = {
   label: string;
   value: string;
@@ -363,23 +427,37 @@ type FieldProps = {
   type?: string;
   required?: boolean;
   helper?: string;
+  error?: string;
 };
 
-function Field({ label, value, onChange, type = "text", required, helper }: FieldProps) {
+function Field({ label, value, onChange, type = "text", required, helper, error }: FieldProps) {
+  const id = useMemo(() => `fld_${label.replace(/\s+/g, "_").toLowerCase()}`, [label]);
   return (
-    <label className="flex flex-col gap-2 text-sm text-[rgb(var(--text))]">
+    <label htmlFor={id} className="flex flex-col gap-2 text-sm text-[rgb(var(--text))]">
       <span className="font-semibold">
         {label}
         {required ? <span className="ml-1 text-[rgba(var(--brand),0.9)]">*</span> : null}
       </span>
       <input
+        id={id}
         type={type}
         required={required}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-err` : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 rounded-xl border border-[rgba(var(--border),0.7)] bg-white/70 px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-[rgba(var(--brand),0.2)]"
+        className={cn(
+          "h-11 rounded-xl border px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-[rgba(var(--brand),0.2)]",
+          "bg-white/70 border-[rgba(var(--border),0.7)]",
+          error && "border-[#ff5c5c]"
+        )}
       />
       {helper ? <span className="text-xs text-[rgba(var(--subtle),0.7)]">{helper}</span> : null}
+      {error ? (
+        <span id={`${id}-err`} className="text-xs text-[#ff5c5c]">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -411,10 +489,7 @@ function Toggle({ label, description, checked, onChange }: ToggleProps) {
         >
           <span
             aria-hidden
-            className={cn(
-              "inline-block size-5 rounded-full bg-white shadow transition",
-              checked ? "translate-x-5" : "translate-x-1",
-            )}
+            className={cn("inline-block size-5 rounded-full bg-white shadow transition", checked ? "translate-x-5" : "translate-x-1")}
           />
         </Switch>
       </div>
