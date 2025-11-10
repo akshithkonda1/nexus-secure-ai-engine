@@ -13,7 +13,7 @@ const initialMessages: ChatMessage[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: "Welcome to Nexus. Ask anything about your projects or documents.",
+    content: "Welcome to Nexus, an AI Debate Engine. Ask anything about your projects or documents.",
   },
 ];
 
@@ -63,7 +63,7 @@ export function Chat() {
       <header className="rounded-2xl bg-[rgb(var(--panel))] px-6 py-4 shadow-[var(--elev-1)]">
         <h1 className="text-xl font-semibold">Chat Console</h1>
         <p className="text-sm text-[rgb(var(--subtle))]">
-          Collaborate with Nexus agents, attach documents, and keep discussions in one place.
+          Collaborate with Nexus, attach documents, and keep discussions in one place.
         </p>
       </header>
 
