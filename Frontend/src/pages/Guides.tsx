@@ -37,7 +37,7 @@ export function Guides() {
           </p>
           <button
             type="button"
-            className="inline-flex w-fit items-center gap-2 rounded-2xl bg-[rgba(var(--brand),1)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+            className="inline-flex w-fit items-center gap-2 rounded-2xl bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF] hover:shadow-[var(--shadow-lift)]"
           >
             <PlayCircle className="size-4" /> Start walkthrough
           </button>

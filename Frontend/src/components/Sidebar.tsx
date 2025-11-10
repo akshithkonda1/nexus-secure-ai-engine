@@ -58,8 +58,8 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">Nexus</p>
             <h1 className="mt-1 text-xl font-semibold">Secure AI Debate Engine</h1>
           </div>
-          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand">
-            Beta
+          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-transparent [background:linear-gradient(120deg,#009EFF,#9360FF)] bg-clip-text">
+            BETA
           </span>
         </div>
 
