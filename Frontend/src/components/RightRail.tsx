@@ -43,8 +43,8 @@ export function RightRail() {
   const navigate = useNavigate();
 
   return (
-    <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-[rgba(var(--border),0.6)] bg-white/60 px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl lg:flex xl:max-w-sm">
-      <section className="rounded-3xl border border-[rgba(var(--border),0.8)] bg-white/80 p-5 shadow-[var(--shadow-soft)]">
+    <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.65)] px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl lg:flex xl:max-w-sm">
+      <section className="rounded-3xl border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">Projects</p>
@@ -93,7 +93,7 @@ export function RightRail() {
         </ul>
       </section>
 
-      <section className="rounded-3xl border border-[rgba(var(--border),0.7)] bg-white/80 p-5 shadow-[var(--shadow-soft)]">
+      <section className="rounded-3xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <CalendarClock className="size-4" /> Upcoming
         </p>
@@ -109,7 +109,7 @@ export function RightRail() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[rgba(var(--border),0.6)] bg-white/90 p-5 shadow-[var(--shadow-soft)]">
+      <section className="rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
         <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <Lightbulb className="size-4 text-brand" /> Research signals
         </header>
@@ -123,7 +123,7 @@ export function RightRail() {
         </ul>
         <button
           type="button"
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(var(--border),0.9)] bg-white px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--panel),0.65)]"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[rgba(var(--border),0.9)] bg-[rgba(var(--surface),0.95)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--panel),0.65)]"
           onClick={() => {
             requestDocumentsView("updates");
             navigate("/documents");

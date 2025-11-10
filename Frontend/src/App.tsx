@@ -5,16 +5,24 @@ import { Header } from "@/components/Header";
 import { RightRail } from "@/components/RightRail";
 import { Sidebar } from "@/components/Sidebar";
 import { ProfileModal } from "@/components/ProfileModal";
+import { NotificationsModal } from "@/components/NotificationsModal";
 import { useCommand } from "@/lib/actions";
 import "@/styles/globals.css";
+import { Toaster } from "@/shared/ui/components/toast";
 
 export function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
+  const [isNotificationsOpen, setNotificationsOpen] = useState(false);
 
   useCommand((command) => {
     if (command.type === "profile:open") {
       setProfileOpen(true);
+      return;
+    }
+
+    if (command.type === "notifications:open") {
+      setNotificationsOpen(true);
     }
   });
 
@@ -36,6 +44,8 @@ export function App() {
         </div>
       </div>
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
+      <NotificationsModal open={isNotificationsOpen} onOpenChange={setNotificationsOpen} />
+      <Toaster />
     </div>
   );
 }
