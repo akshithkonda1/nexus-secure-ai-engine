@@ -1,10 +1,18 @@
 import React, { useMemo, useRef, useState } from "react";
-import { CloudCog, FolderPlus, Loader2, RefreshCcw, Search, Upload } from "lucide-react";
+import {
+  CloudCog,
+  FolderPlus,
+  Loader2,
+  RefreshCcw,
+  Search,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useDocuments, useUploadDocument } from "@/queries/documents";
 import type { DocumentItem } from "@/types/models";
 import { formatFileSize, formatRelativeTime } from "@/lib/formatters";
+import SkeletonBlock from "@/components/SkeletonBlock";
 
 const EMPTY_ITEMS: DocumentItem[] = [];
 
@@ -18,8 +26,10 @@ export function Documents() {
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return items;
-    return items.filter((item) =>
-      item.name.toLowerCase().includes(needle) || item.type.toLowerCase().includes(needle)
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(needle) ||
+        item.type.toLowerCase().includes(needle),
     );
   }, [items, query]);
 
@@ -59,9 +69,12 @@ export function Documents() {
         />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">Documents</h2>
+            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+              Documents
+            </h2>
             <p className="text-sm text-[rgba(var(--subtle),0.82)]">
-              Connect storage providers or upload transcripts, evidence, and knowledge packs.
+              Connect storage providers or upload transcripts, evidence, and
+              knowledge packs.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -72,21 +85,30 @@ export function Documents() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search documents"
-                className="h-10 w-64 rounded-full border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.9)] px-10 text-sm text-[rgb(var(--text))] shadow-sm outline-none transition focus:border-[rgba(var(--brand),0.4)] focus:ring-2 focus:ring-[rgba(var(--brand),0.25)]"
+                className="input w-64 pl-10 pr-4"
               />
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-75"
+              className="btn btn-primary btn-neo ripple rounded-full disabled:cursor-not-allowed disabled:opacity-75"
               disabled={uploadDocument.isPending}
             >
-              {uploadDocument.isPending ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Upload
+              {uploadDocument.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Upload className="size-4" />
+              )}{" "}
+              Upload
             </button>
             <button
               type="button"
-              onClick={() => toast.info("Drive connectors are ready once the backend issues credentials.")}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.35)] px-4 py-2 text-sm font-semibold text-[rgba(var(--subtle),0.85)] transition hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
+              onClick={() =>
+                toast.info(
+                  "Drive connectors are ready once the backend issues credentials.",
+                )
+              }
+              className="btn btn-ghost btn-neo rounded-full text-[rgba(var(--subtle),0.85)] hover:text-brand"
             >
               <CloudCog className="size-4" /> Connect Drive
             </button>
@@ -108,14 +130,17 @@ export function Documents() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
+              className="btn btn-ghost btn-neo text-brand"
             >
-              <RefreshCcw className={`size-4 ${isRefetching ? "animate-spin" : ""}`} /> Retry sync
+              <RefreshCcw
+                className={`size-4 ${isRefetching ? "animate-spin" : ""}`}
+              />{" "}
+              Retry sync
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-6 text-sm text-[rgba(var(--subtle),0.85)]">
-            <p>No documents found. Upload files or connect a provider to populate this space.</p>
+          <div className="mt-6">
+            <SkeletonBlock />
           </div>
         ) : (
           <ul className="mt-6 space-y-3">
@@ -130,7 +155,9 @@ export function Documents() {
                       <FolderPlus className="size-5" />
                     </span>
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-[rgb(var(--text))]">{item.name}</p>
+                      <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                        {item.name}
+                      </p>
                       <p className="text-xs text-[rgba(var(--subtle),0.7)]">
                         {item.folder ? "Folder" : "Document"} • {item.type}
                       </p>
@@ -145,15 +172,21 @@ export function Documents() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="rounded-full border border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.85)] transition hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
-                      onClick={() => toast.info(`Opening ${item.name} from storage soon`)}
+                      className="btn btn-ghost btn-neo rounded-full border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.85)] hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
+                      onClick={() =>
+                        toast.info(`Opening ${item.name} from storage soon`)
+                      }
                     >
                       Open
                     </button>
                     <button
                       type="button"
-                      className="rounded-full border border-[rgba(var(--status-warning),0.35)] px-3 py-1.5 font-semibold text-[rgb(var(--status-warning))] transition hover:border-[rgba(var(--status-warning),0.55)]"
-                      onClick={() => toast.info(`Share settings for ${item.name} will live here.`)}
+                      className="btn btn-ghost btn-neo rounded-full border-[rgba(var(--status-warning),0.35)] px-3 py-1.5 font-semibold text-[rgb(var(--status-warning))] hover:border-[rgba(var(--status-warning),0.55)]"
+                      onClick={() =>
+                        toast.info(
+                          `Share settings for ${item.name} will live here.`,
+                        )
+                      }
                     >
                       Share
                     </button>

@@ -9,6 +9,7 @@ import { NotificationsModal } from "@/components/NotificationsModal";
 import { useCommand } from "@/lib/actions";
 import "@/styles/globals.css";
 import { Toaster } from "@/shared/ui/components/toast";
+import AmbientFX from "@/components/AmbientFX";
 
 export function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -44,8 +45,12 @@ export function App() {
         </div>
       </div>
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
-      <NotificationsModal open={isNotificationsOpen} onOpenChange={setNotificationsOpen} />
+      <NotificationsModal
+        open={isNotificationsOpen}
+        onOpenChange={setNotificationsOpen}
+      />
       <Toaster />
+      <AmbientFX />
     </div>
   );
 }

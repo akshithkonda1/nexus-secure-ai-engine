@@ -44,22 +44,23 @@ function resolveTheme(theme: Theme, systemDark: boolean): "light" | "dark" {
   return theme;
 }
 
-function applyTheme(theme: Theme, systemDark: boolean, withTransition: boolean) {
+function applyTheme(
+  theme: Theme,
+  systemDark: boolean,
+  withTransition: boolean,
+) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const dark = resolveTheme(theme, systemDark) === "dark";
-  const toggle = () => root.classList.toggle("dark", dark);
   if (withTransition) {
     root.classList.add("theme-transition");
-    window.requestAnimationFrame(() => {
-      toggle();
-      window.setTimeout(() => {
-        root.classList.remove("theme-transition");
-      }, 260);
-    });
-    return;
   }
-  toggle();
+  root.classList.toggle("dark", dark);
+  if (withTransition) {
+    window.setTimeout(() => {
+      root.classList.remove("theme-transition");
+    }, 250);
+  }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -102,12 +103,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
       applyTheme(next, systemDark, true);
     },
-    [systemDark]
+    [systemDark],
   );
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (!event.key || !WATCH_KEYS.includes(event.key as (typeof WATCH_KEYS)[number])) {
+      if (
+        !event.key ||
+        !WATCH_KEYS.includes(event.key as (typeof WATCH_KEYS)[number])
+      ) {
         return;
       }
       const next = event.newValue as Theme | null;
@@ -132,7 +136,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [theme, systemDark, setTheme]);
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {

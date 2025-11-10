@@ -7,17 +7,20 @@ import { getFirstName } from "@/lib/userName";
 const steps = [
   {
     title: "Map your workflows",
-    description: "Document the agents, guardrails, and approval paths that matter most.",
+    description:
+      "Document the agents, guardrails, and approval paths that matter most.",
     icon: Compass,
   },
   {
     title: "Harden your deployment",
-    description: "Review escalation playbooks, fallback prompts, and audit policies before launch.",
+    description:
+      "Review escalation playbooks, fallback prompts, and audit policies before launch.",
     icon: ShieldCheck,
   },
   {
     title: "Share best practices",
-    description: "Publish recording-ready playbacks so every team adopts the same patterns.",
+    description:
+      "Publish recording-ready playbacks so every team adopts the same patterns.",
     icon: BookOpenCheck,
   },
 ];
@@ -25,15 +28,22 @@ const steps = [
 export function Guides() {
   const { profile } = useProfile();
   const userName = getFirstName(profile);
+  const who = profile?.fullName || profile?.handle || userName || "there";
 
   return (
     <div className="flex flex-col gap-8">
       <section className="rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.75)]">Guides</p>
-          <h1 className="text-2xl font-semibold text-[rgb(var(--text))]">{userName}, chart the secure way to ship AI.</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.75)]">
+            Guides
+          </p>
+          <h1 className="text-2xl font-semibold text-[rgb(var(--text))]">
+            {who}, chart the secure way to ship AI.
+          </h1>
           <p className="max-w-3xl text-sm text-[rgba(var(--subtle),0.8)]">
-            Follow the recommended playbooks from Nexus so launches feel predictable. Browse setup recipes, governance checklists, and troubleshooting primers built for regulated teams.
+            Follow the recommended playbooks from Nexus so launches feel
+            predictable. Browse setup recipes, governance checklists, and
+            troubleshooting primers built for regulated teams.
           </p>
           <button
             type="button"
@@ -54,7 +64,9 @@ export function Guides() {
               <Icon className="size-5" />
             </span>
             <div className="space-y-2 text-sm">
-              <h2 className="text-lg font-semibold text-[rgb(var(--text))]">{title}</h2>
+              <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+                {title}
+              </h2>
               <p className="text-[rgba(var(--subtle),0.82)]">{description}</p>
             </div>
             <button

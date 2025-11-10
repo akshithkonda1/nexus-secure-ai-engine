@@ -4,7 +4,11 @@ import { useNavigate } from "react-router-dom";
 
 import { useUnreadNotificationsCount } from "@/features/notifications/useNotifications";
 import { useProfile } from "@/features/profile/ProfileProvider";
-import { requestNewPrompt, requestNotifications, requestProfileOpen } from "@/lib/actions";
+import {
+  requestNewPrompt,
+  requestNotifications,
+  requestProfileOpen,
+} from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 
@@ -14,7 +18,11 @@ type HeaderProps = {
 };
 
 export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
-  const today = new Intl.DateTimeFormat("en", { weekday: "long", month: "short", day: "numeric" }).format(new Date());
+  const today = new Intl.DateTimeFormat("en", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(new Date());
   const navigate = useNavigate();
   const { profile, loading } = useProfile();
   const unreadNotifications = useUnreadNotificationsCount();
@@ -43,17 +51,24 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
         </button>
 
         <div className="hidden flex-col sm:flex">
-          <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Welcome</span>
-          <span className="text-lg font-semibold tracking-tight text-[rgb(var(--text))]">AI Control Center</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
+            Welcome
+          </span>
+          <span className="text-lg font-semibold tracking-tight text-[rgb(var(--text))]">
+            AI Control Center
+          </span>
         </div>
 
         <div className="flex flex-1 items-center gap-3">
           <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.92)] px-4 py-2 shadow-sm dark:border-[rgba(var(--border),0.4)] dark:bg-[rgba(var(--panel),0.7)] sm:flex">
-            <Search className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]" aria-hidden="true" />
+            <Search
+              className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]"
+              aria-hidden="true"
+            />
             <input
               type="search"
               placeholder="Search sessions, documents, or commands"
-              className="h-9 flex-1 border-0 bg-transparent text-sm text-[rgb(var(--text))] outline-none placeholder:text-[rgba(var(--subtle),0.7)]"
+              className="input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)]"
             />
             <span className="hidden items-center gap-1 rounded-full bg-[rgba(var(--panel),0.65)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.8)] sm:inline-flex">
               <Command className="size-3" /> K
@@ -66,7 +81,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               requestNewPrompt();
               navigate("/chat");
             }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[rgba(var(--brand),0.12)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--brand),0.2)]"
+            className="btn btn-primary btn-neo ripple rounded-2xl"
           >
             <Sparkles className="size-4" /> New prompt
           </button>
@@ -74,8 +89,12 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
 
         <div className="ml-auto flex items-center gap-3">
           <div className="hidden flex-col text-right md:flex">
-            <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">Today</span>
-            <span className="text-sm font-medium text-[rgb(var(--text))]">{today}</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">
+              Today
+            </span>
+            <span className="text-sm font-medium text-[rgb(var(--text))]">
+              {today}
+            </span>
           </div>
           <button
             type="button"
@@ -91,7 +110,10 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             ) : null}
           </button>
           <ThemeToggle className="hidden lg:inline-flex" />
-          <div className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.7)] lg:block" aria-hidden="true" />
+          <div
+            className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.7)] lg:block"
+            aria-hidden="true"
+          />
           <button
             type="button"
             className={cn(
@@ -106,7 +128,11 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           >
             <span className="inline-flex size-9 items-center justify-center overflow-hidden rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
               {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="Profile avatar" className="h-full w-full object-cover" />
+                <img
+                  src={profile.avatarUrl}
+                  alt="Profile avatar"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 initials
               )}

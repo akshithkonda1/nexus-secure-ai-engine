@@ -5,21 +5,29 @@ import { toast } from "sonner";
 import { useTemplates, useTemplateLaunch } from "@/queries/templates";
 import type { Template } from "@/types/models";
 import { formatRelativeTime } from "@/lib/formatters";
+import SkeletonBlock from "@/components/SkeletonBlock";
 
 const CATEGORY_ACCENTS: Record<string, string> = {
-  governance: "bg-[rgba(var(--accent-rose),0.16)] text-[rgb(var(--accent-rose-ink))]",
+  governance:
+    "bg-[rgba(var(--accent-rose),0.16)] text-[rgb(var(--accent-rose-ink))]",
   security: "bg-[rgba(var(--brand),0.16)] text-brand",
   research: "bg-[rgba(var(--accent-lilac),0.28)] text-[rgb(var(--text))]",
-  operations: "bg-[rgba(var(--accent-emerald),0.18)] text-[rgb(var(--accent-emerald-ink))]",
-  default: "bg-[rgba(var(--accent-amber),0.18)] text-[rgb(var(--accent-amber-ink))]",
+  operations:
+    "bg-[rgba(var(--accent-emerald),0.18)] text-[rgb(var(--accent-emerald-ink))]",
+  default:
+    "bg-[rgba(var(--accent-amber),0.18)] text-[rgb(var(--accent-amber-ink))]",
 };
 
 function getAccent(category: string) {
   const key = category.trim().toLowerCase();
-  if (key.includes("govern") || key.includes("policy")) return CATEGORY_ACCENTS.governance;
-  if (key.includes("secure") || key.includes("trust")) return CATEGORY_ACCENTS.security;
-  if (key.includes("research") || key.includes("knowledge")) return CATEGORY_ACCENTS.research;
-  if (key.includes("ops") || key.includes("operation")) return CATEGORY_ACCENTS.operations;
+  if (key.includes("govern") || key.includes("policy"))
+    return CATEGORY_ACCENTS.governance;
+  if (key.includes("secure") || key.includes("trust"))
+    return CATEGORY_ACCENTS.security;
+  if (key.includes("research") || key.includes("knowledge"))
+    return CATEGORY_ACCENTS.research;
+  if (key.includes("ops") || key.includes("operation"))
+    return CATEGORY_ACCENTS.operations;
   return CATEGORY_ACCENTS.default;
 }
 
@@ -37,7 +45,10 @@ export function Templates() {
   const { data, isLoading, isError, refetch, isRefetching } = useTemplates();
   const launchTemplate = useTemplateLaunch();
 
-  const templates = useMemo(() => sortTemplates(data?.templates ?? []), [data?.templates]);
+  const templates = useMemo(
+    () => sortTemplates(data?.templates ?? []),
+    [data?.templates],
+  );
   const categories = useMemo(() => {
     const unique = new Set<string>();
     templates.forEach((template) => {
@@ -51,11 +62,13 @@ export function Templates() {
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return templates.filter((template) => {
-      const matchesCategory = category === "all" || template.category === category;
+      const matchesCategory =
+        category === "all" || template.category === category;
       if (!query) return matchesCategory;
       return (
         matchesCategory &&
-        (template.name.toLowerCase().includes(query) || template.description.toLowerCase().includes(query))
+        (template.name.toLowerCase().includes(query) ||
+          template.description.toLowerCase().includes(query))
       );
     });
   }, [templates, search, category]);
@@ -75,9 +88,12 @@ export function Templates() {
       <div className="card card-hover p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">Templates</h2>
+            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+              Templates
+            </h2>
             <p className="text-sm text-[rgba(var(--subtle),0.82)]">
-              Standardize launches with pre-approved prompts, inputs, and guardrails.
+              Standardize launches with pre-approved prompts, inputs, and
+              guardrails.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -85,7 +101,7 @@ export function Templates() {
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[rgba(var(--subtle),0.7)]" />
               <input
                 type="search"
-                className="h-10 w-64 rounded-full border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.92)] px-10 text-sm text-[rgb(var(--text))] shadow-sm outline-none transition focus:border-[rgba(var(--brand),0.45)] focus:ring-2 focus:ring-[rgba(var(--brand),0.25)]"
+                className="input w-64 pl-10 pr-4"
                 placeholder="Search templates"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -93,8 +109,12 @@ export function Templates() {
             </div>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)]"
-              onClick={() => toast.info("Template builder connects to the backend in the next sprint.")}
+              className="btn btn-primary btn-neo ripple rounded-full"
+              onClick={() =>
+                toast.info(
+                  "Template builder connects to the backend in the next sprint.",
+                )
+              }
             >
               <Sparkles className="size-4" /> New template
             </button>
@@ -136,12 +156,15 @@ export function Templates() {
               onClick={() => refetch()}
               className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
             >
-              <RefreshCcw className={`size-4 ${isRefetching ? "animate-spin" : ""}`} /> Try again
+              <RefreshCcw
+                className={`size-4 ${isRefetching ? "animate-spin" : ""}`}
+              />{" "}
+              Try again
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.45)] p-6 text-sm text-[rgba(var(--subtle),0.85)]">
-            <p>No templates match your filters yet. Create one or adjust the search.</p>
+          <div className="mt-6">
+            <SkeletonBlock />
           </div>
         ) : (
           <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -151,10 +174,16 @@ export function Templates() {
                 className="flex h-full flex-col justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.55)] p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
               >
                 <div className="space-y-3 text-sm">
-                  <span className={`badge ${getAccent(template.category)}`}>{template.category}</span>
+                  <span className={`badge ${getAccent(template.category)}`}>
+                    {template.category}
+                  </span>
                   <div>
-                    <h3 className="text-base font-semibold text-[rgb(var(--text))]">{template.name}</h3>
-                    <p className="mt-2 text-[rgba(var(--subtle),0.85)]">{template.description}</p>
+                    <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+                      {template.name}
+                    </h3>
+                    <p className="mt-2 text-[rgba(var(--subtle),0.85)]">
+                      {template.description}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-5 flex items-center justify-between text-xs text-[rgba(var(--subtle),0.75)]">
@@ -162,8 +191,10 @@ export function Templates() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--brand),0.35)]"
-                      onClick={() => toast.info(`Previewing ${template.name} coming soon`)}
+                      className="btn btn-primary btn-neo ripple rounded-full px-3 py-1.5 text-xs"
+                      onClick={() =>
+                        toast.info(`Previewing ${template.name} coming soon`)
+                      }
                     >
                       <Search className="size-3.5" /> Preview
                     </button>
@@ -171,9 +202,14 @@ export function Templates() {
                       type="button"
                       onClick={() => handleLaunch(template)}
                       disabled={launchTemplate.isPending}
-                      className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="btn btn-primary btn-neo ripple rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {launchTemplate.isPending ? <Loader2 className="size-3 animate-spin" /> : <Wand2 className="size-3.5" />} Start
+                      {launchTemplate.isPending ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <Wand2 className="size-3.5" />
+                      )}{" "}
+                      Start
                     </button>
                   </div>
                 </div>

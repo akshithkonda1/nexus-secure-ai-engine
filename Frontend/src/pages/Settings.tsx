@@ -1,13 +1,24 @@
 import React from "react";
-import { CheckCircle2, Loader2, RefreshCcw, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  RefreshCcw,
+  Save,
+  ShieldCheck,
+  SlidersHorizontal,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useSettings, useSaveSettings } from "@/queries/settings";
 import type { SettingsData } from "@/types/models";
 import { Switch } from "@/shared/ui/components/switch";
 import { useTheme } from "@/theme/useTheme";
+import SkeletonBlock from "@/components/SkeletonBlock";
 
-function createPayload(settings: SettingsData, overrides: Partial<SettingsData>): SettingsData {
+function createPayload(
+  settings: SettingsData,
+  overrides: Partial<SettingsData>,
+): SettingsData {
   return {
     ...settings,
     ...overrides,
@@ -22,7 +33,7 @@ export function Settings() {
   const handleProviderToggle = (id: string, enabled: boolean) => {
     if (!data) return;
     const updatedProviders = data.providers.map((provider) =>
-      provider.id === id ? { ...provider, enabled } : provider
+      provider.id === id ? { ...provider, enabled } : provider,
     );
     saveSettings
       .mutateAsync(createPayload(data, { providers: updatedProviders }))
@@ -56,7 +67,7 @@ export function Settings() {
       <div className="px-[var(--page-padding)] py-6">
         <div className="grid gap-5 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-44 animate-pulse rounded-3xl bg-[rgba(var(--panel),0.55)]" />
+            <SkeletonBlock key={index} />
           ))}
         </div>
       </div>
@@ -71,7 +82,7 @@ export function Settings() {
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
+            className="mt-4 btn btn-ghost btn-neo text-brand"
           >
             <RefreshCcw className="size-4" /> Try again
           </button>
@@ -90,8 +101,12 @@ export function Settings() {
         <div className="card p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-[rgb(var(--text))]">Workspace identity</h3>
-              <p className="text-sm text-[rgba(var(--subtle),0.78)]">Profile and appearance controls for Nexus.</p>
+              <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+                Workspace identity
+              </h3>
+              <p className="text-sm text-[rgba(var(--subtle),0.78)]">
+                Profile and appearance controls for Nexus.
+              </p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand),0.14)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand">
               <ShieldCheck className="size-3.5" /> Verified
@@ -100,7 +115,9 @@ export function Settings() {
           <dl className="mt-4 space-y-3 text-sm">
             <div>
               <dt className="text-[rgba(var(--subtle),0.7)]">Display name</dt>
-              <dd className="text-[rgb(var(--text))]">{data.profile.displayName}</dd>
+              <dd className="text-[rgb(var(--text))]">
+                {data.profile.displayName}
+              </dd>
             </div>
             <div>
               <dt className="text-[rgba(var(--subtle),0.7)]">Email</dt>
@@ -108,20 +125,26 @@ export function Settings() {
             </div>
             <div>
               <dt className="text-[rgba(var(--subtle),0.7)]">Theme</dt>
-              <dd className="text-[rgb(var(--text))] capitalize">{data.appearance.theme}</dd>
+              <dd className="text-[rgb(var(--text))] capitalize">
+                {data.appearance.theme}
+              </dd>
             </div>
           </dl>
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.35)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.85)] transition hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
-              onClick={() => toast.info("Profile editing opens once the backend issues the endpoint.")}
+              className="btn btn-ghost btn-neo rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.85)] hover:text-brand"
+              onClick={() =>
+                toast.info(
+                  "Profile editing opens once the backend issues the endpoint.",
+                )
+              }
             >
               <SlidersHorizontal className="size-4" /> Edit profile
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+              className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
               onClick={handleApplyTheme}
             >
               <CheckCircle2 className="size-4" /> Apply theme
@@ -131,8 +154,15 @@ export function Settings() {
 
         <div className="card p-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-[rgb(var(--text))]">Security providers</h3>
-            {saveSettings.isPending && <Loader2 className="size-4 animate-spin text-brand" aria-hidden="true" />}
+            <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+              Security providers
+            </h3>
+            {saveSettings.isPending && (
+              <Loader2
+                className="size-4 animate-spin text-brand"
+                aria-hidden="true"
+              />
+            )}
           </div>
           <p className="mt-1 text-sm text-[rgba(var(--subtle),0.78)]">
             Toggle integrations as you wire Nexus to production guardrails.
@@ -144,14 +174,18 @@ export function Settings() {
                 className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-3"
               >
                 <div>
-                  <p className="text-sm font-semibold text-[rgb(var(--text))]">{provider.name}</p>
+                  <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                    {provider.name}
+                  </p>
                   <p className="text-xs text-[rgba(var(--subtle),0.7)]">
                     {provider.enabled ? "Enabled" : "Disabled"}
                   </p>
                 </div>
                 <Switch
                   checked={provider.enabled}
-                  onCheckedChange={(checked) => handleProviderToggle(provider.id, checked)}
+                  onCheckedChange={(checked) =>
+                    handleProviderToggle(provider.id, checked)
+                  }
                   disabled={saveSettings.isPending}
                 />
               </li>
@@ -160,27 +194,38 @@ export function Settings() {
         </div>
 
         <div className="card p-5">
-          <h3 className="text-base font-semibold text-[rgb(var(--text))]">Usage & retention</h3>
+          <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+            Usage & retention
+          </h3>
           <p className="mt-1 text-sm text-[rgba(var(--subtle),0.78)]">
             Align rate limits with your compliance requirements before go-live.
           </p>
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Daily requests</dt>
-              <dd className="text-[rgb(var(--text))]">{data.limits.dailyRequests.toLocaleString()}</dd>
+              <dd className="text-[rgb(var(--text))]">
+                {data.limits.dailyRequests.toLocaleString()}
+              </dd>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Max tokens</dt>
-              <dd className="text-[rgb(var(--text))]">{data.limits.maxTokens.toLocaleString()}</dd>
+              <dd className="text-[rgb(var(--text))]">
+                {data.limits.maxTokens.toLocaleString()}
+              </dd>
             </div>
           </dl>
           <button
             type="button"
             onClick={handleRetentionUpdate}
-            className="mt-5 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.35)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand"
+            className="mt-5 btn btn-ghost btn-neo text-brand text-xs uppercase tracking-[0.2em]"
             disabled={saveSettings.isPending}
           >
-            {saveSettings.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save limits
+            {saveSettings.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}{" "}
+            Save limits
           </button>
         </div>
       </div>
