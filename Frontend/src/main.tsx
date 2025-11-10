@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "@/styles/globals.css";
 import "@/styles/theme.css";
@@ -17,6 +18,8 @@ import { Guides } from "@/pages/Guides";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeToggle";
 import { ProfileProvider } from "@/features/profile/ProfileProvider";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -40,10 +43,12 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <ProfileProvider>
-        <RouterProvider router={router} />
-      </ProfileProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <ProfileProvider>
+          <RouterProvider router={router} />
+        </ProfileProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

@@ -38,12 +38,6 @@ function formatTypeLabel(type: AuditEvent["type"]) {
     .trim();
 }
 
-const rows = [
-  { when: "2m", who: "Avery", what: "Ran prompt ‘Roadmap brief’" },
-  { when: "1h", who: "Jordan", what: "Uploaded 5 docs" },
-  { when: "3h", who: "Avery", what: "Changed retention to 30d" },
-];
-
 export function History() {
   const [selectedRange, setSelectedRange] = useState<(typeof RANGE_OPTIONS)[number]>(RANGE_OPTIONS[0]);
   const [selectedType, setSelectedType] = useState<AuditEvent["type"] | "all">("all");
