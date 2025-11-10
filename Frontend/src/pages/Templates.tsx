@@ -162,7 +162,7 @@ export function Templates() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.35)] px-3 py-1.5 text-xs font-semibold text-[rgba(var(--subtle),0.8)] transition hover:border-[rgba(var(--brand),0.3)] hover:text-brand"
+                      className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--on-accent))] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--brand),0.35)]"
                       onClick={() => toast.info(`Previewing ${template.name} coming soon`)}
                     >
                       <Search className="size-3.5" /> Preview
