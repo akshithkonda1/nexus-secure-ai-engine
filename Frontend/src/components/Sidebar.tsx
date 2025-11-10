@@ -22,7 +22,7 @@ type SidebarProps = {
 };
 
 const primaryNav = [
-  { to: "/home", label: "Overview", icon: LayoutDashboard },
+  { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
   { to: "/outbox", label: "Outbox", icon: Inbox },
   { to: "/templates", label: "Templates", icon: Sparkles },
@@ -58,8 +58,8 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">Nexus</p>
             <h1 className="mt-1 text-xl font-semibold">Secure AI Engine</h1>
           </div>
-          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand">
-            Beta
+          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-transparent [background:linear-gradient(120deg,#009EFF,#9360FF)] bg-clip-text">
+            BETA
           </span>
         </div>
 
@@ -80,7 +80,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                   )
                 }
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white/80 text-brand shadow-sm">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.85)] text-brand shadow-sm">
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 text-left tracking-tight">{label}</span>
@@ -98,12 +98,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-white/70",
-                    isActive && "bg-white text-brand shadow-[var(--shadow-soft)]",
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-[rgba(var(--panel),0.65)]",
+                    isActive && "bg-[rgba(var(--surface),0.95)] text-brand shadow-[var(--shadow-soft)]",
                   )
                 }
               >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white/70 text-[rgb(var(--subtle))]">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.82)] text-[rgb(var(--subtle))]">
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 text-left tracking-tight">{label}</span>
@@ -113,19 +113,19 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         </nav>
 
         <div className="mt-auto space-y-4">
-          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-white shadow-[var(--shadow-lift)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] opacity-80">Plan</p>
-            <h3 className="mt-2 text-lg font-semibold">Professional</h3>
-            <p className="mt-1 text-sm opacity-80">Unlock orchestration across teams with unlimited workspaces.</p>
+          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-[rgb(var(--on-accent))] shadow-[var(--shadow-lift)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--on-accent),0.7)]">Plan</p>
+            <h3 className="mt-2 text-lg font-semibold text-[rgb(var(--on-accent))]">Professional</h3>
+            <p className="mt-1 text-sm text-[rgba(var(--on-accent),0.82)]">Unlock orchestration across teams with unlimited workspaces.</p>
             <button
               type="button"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/20"
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] backdrop-blur transition hover:bg-white/20"
               onClick={() => requestBillingUpgrade()}
             >
               <Zap className="size-4" /> Upgrade
             </button>
           </div>
-          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-white/70 p-4 text-xs text-[rgb(var(--subtle))]">
+          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.85)] p-4 text-xs text-[rgb(var(--subtle))]">
             <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
             <p className="mt-1 leading-relaxed">
               Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
@@ -133,7 +133,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <button
               type="button"
               onClick={() => requestProjectCreation()}
-              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-white/80"
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.6)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.65)]"
             >
               <Sparkles className="size-3.5" /> New project
             </button>
