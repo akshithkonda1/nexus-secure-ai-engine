@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --app-bg: 248 250 252;
   --app-surface: 236 239 244;
@@ -66,72 +62,69 @@
   background-color: rgb(var(--panel-bg));
 }
 
-@layer base {
-  html {
-    @apply antialiased;
-    color-scheme: light;
-  }
-
-  html.dark {
-    color-scheme: dark;
-  }
-
-  body {
-    background-color: rgb(var(--app-bg));
-    color: rgb(var(--ink));
-    transition: background-color 0.25s ease, color 0.25s ease;
-  }
-
-  textarea,
-  input,
-  select {
-    background-color: rgb(var(--panel-bg));
-    color: rgb(var(--ink));
-  }
-
-  ::placeholder {
-    color: rgb(var(--muted));
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
 }
 
-@layer utilities {
-  .bg-app {
-    background-color: rgb(var(--app-bg));
-  }
+html.dark {
+  color-scheme: dark;
+}
 
-  .bg-app-surface {
-    background-color: rgb(var(--app-surface));
-  }
+body {
+  background-color: rgb(var(--app-bg));
+  color: rgb(var(--ink));
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
 
-  .bg-panel {
-    background-color: rgb(var(--panel-bg));
-  }
+textarea,
+input,
+select {
+  background-color: rgb(var(--panel-bg));
+  color: rgb(var(--ink));
+}
 
-  .bg-surface {
-    background-color: rgb(var(--surface-bg));
-  }
+::placeholder {
+  color: rgb(var(--muted));
+}
 
-  .text-ink {
-    color: rgb(var(--ink));
-  }
+.bg-app {
+  background-color: rgb(var(--app-bg));
+}
 
-  .text-app {
-    color: rgb(var(--app-text));
-  }
+.bg-app-surface {
+  background-color: rgb(var(--app-surface));
+}
 
-  .text-muted {
-    color: rgb(var(--muted));
-  }
+.bg-panel {
+  background-color: rgb(var(--panel-bg));
+}
 
-  .border-app {
-    border-color: rgb(var(--border));
-  }
+.bg-surface {
+  background-color: rgb(var(--surface-bg));
+}
 
-  .panel-hover:hover {
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-  }
+.text-ink {
+  color: rgb(var(--ink));
+}
 
-  .ring-app {
-    box-shadow: 0 0 0 2px rgb(var(--border));
-  }
+.text-app {
+  color: rgb(var(--app-text));
+}
+
+.text-muted {
+  color: rgb(var(--muted));
+}
+
+.border-app {
+  border-color: rgb(var(--border));
+}
+
+.panel-hover:hover {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+.ring-app {
+  box-shadow: 0 0 0 2px rgb(var(--border));
 }

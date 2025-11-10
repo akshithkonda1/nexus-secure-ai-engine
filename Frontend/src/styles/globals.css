@@ -1,67 +1,19 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Frontend/src/styles/globals.css */
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    /* LIGHT – page is white, text is blackish */
-    --bg: 255 255 255;
-    --surface: 255 255 255;
-    --panel: 248 250 252;
-    --border: 0 0 0 / 0.12;
-    --text: 10 10 10;
-    --subtle: 10 10 10 / 0.6;
-    --ring: 0 158 255;
+/* Tell Tailwind v4 where to scan for class usage */
+@source "../../index.html";
+@source "../**/*.{ts,tsx,js,jsx,html}";
 
-    --elev-1: 0 12px 32px rgba(0, 0, 0, 0.08);
-    --elev-2: 0 18px 48px rgba(0, 0, 0, 0.12);
-  }
-
-  .dark {
-    /* DARK – keep your current look */
-    --bg: 9 11 30;
-    --surface: 16 18 38;
-    --panel: 18 21 44;
-    --border: 255 255 255 / 0.08;
-    --text: 255 255 255;
-    --subtle: 255 255 255 / 0.65;
-    --ring: 0 158 255;
-
-    --elev-1: 0 12px 32px rgba(0, 0, 0, 0.45);
-    --elev-2: 0 18px 48px rgba(0, 0, 0, 0.6);
-  }
-
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
-
-  body {
-    background: rgb(var(--bg));
-    color: rgb(var(--text));
-  }
+/* (Optional) Theme tokens you referenced like --bg / --text */
+:root {
+  --bg: 248 250 252;         /* light background */
+  --text: 17 24 39;          /* light text */
+}
+.dark {
+  --bg: 12 13 22;            /* dark background */
+  --text: 226 232 240;       /* dark text */
 }
 
-:root.theme-transition * {
-  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease,
-    fill 0.25s ease, stroke 0.25s ease, box-shadow 0.25s ease;
-}
-
-@layer components {
-  .card {
-    @apply rounded-2xl border;
-    background-color: rgb(var(--panel));
-    border-color: color-mix(in oklab, rgb(var(--text)) 10%, transparent);
-    box-shadow: var(--elev-1);
-  }
-
-  .card-hover {
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--elev-2);
-  }
-}
+/* Global resets */
+html, body, #root { height: 100%; }
