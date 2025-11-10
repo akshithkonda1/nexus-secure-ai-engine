@@ -1,45 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
-  --app-bg: 248 250 252;
-  --app-surface: 236 239 244;
-  --surface-bg: 243 244 246;
+  --app-bg: 249 250 252;
+  --app-surface: 237 240 250;
+  --surface-bg: 242 246 255;
   --panel-bg: 255 255 255;
-  --app-text: 17 24 39;
-  --ink: 17 24 39;
-  --muted: 107 114 128;
-  --border: 229 231 235;
+  --app-text: 9 11 30;
+  --ink: 9 11 30;
+  --muted: 100 116 139;
+  --border: 216 226 239;
 
-  --radius-card: 16px;
-  --radius-button: 12px;
-  --radius-input: 12px;
+  --radius-card: 22px;
+  --radius-button: 16px;
+  --radius-input: 14px;
 
-  --shadow-ambient: 0 18px 30px rgba(15, 23, 42, 0.1);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  --shadow-ambient: var(--shadow-soft);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
 
-  --accent-student: 59 130 246;
-  --accent-business: 99 102 241;
-  --accent-nexus: 139 92 246;
+  --accent-student: 0 133 255;
+  --accent-business: 147 96 255;
+  --accent-nexus: 0 158 255;
 }
 
 .dark {
-  --app-bg: 15 17 22;          /* #0f1116 */
-  --app-surface: 24 27 34;     /* #181b22 */
-  --surface-bg: 27 31 39;      /* #1b1f27 */
-  --panel-bg: 29 33 42;        /* #1d212a */
-  --app-text: 222 226 236;     /* #dee2ec */
-  --ink: 229 231 235;          /* #e5e7eb */
-  --muted: 148 163 184;        /* #94a3b8 */
-  --border: 44 48 60;          /* #2c303c */
+  --app-bg: 10 12 24;
+  --app-surface: 22 26 40;
+  --surface-bg: 24 29 44;
+  --panel-bg: 20 23 36;
+  --app-text: 226 232 240;
+  --ink: 226 232 240;
+  --muted: 148 163 184;
+  --border: 52 56 72;
 
-  --shadow-ambient: 0 30px 60px rgba(5, 7, 11, 0.6);
-  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow-ambient: var(--shadow-soft);
+  --shadow-press: 0 1px 0 rgba(255, 255, 255, 0.12) inset;
 
-  --accent-student: 59 130 246;
-  --accent-business: 99 102 241;
-  --accent-nexus: 139 92 246;
+  --accent-student: 0 158 255;
+  --accent-business: 147 96 255;
+  --accent-nexus: 0 133 255;
 }
 
 .round-card {
@@ -66,72 +62,68 @@
   background-color: rgb(var(--panel-bg));
 }
 
-@layer base {
-  html {
-    @apply antialiased;
-    color-scheme: light;
-  }
-
-  html.dark {
-    color-scheme: dark;
-  }
-
-  body {
-    background-color: rgb(var(--app-bg));
-    color: rgb(var(--ink));
-    transition: background-color 0.25s ease, color 0.25s ease;
-  }
-
-  textarea,
-  input,
-  select {
-    background-color: rgb(var(--panel-bg));
-    color: rgb(var(--ink));
-  }
-
-  ::placeholder {
-    color: rgb(var(--muted));
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer utilities {
-  .bg-app {
-    background-color: rgb(var(--app-bg));
-  }
+html.dark {
+  color-scheme: dark;
+}
 
-  .bg-app-surface {
-    background-color: rgb(var(--app-surface));
-  }
+body {
+  background-color: transparent;
+  color: rgb(var(--ink));
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
 
-  .bg-panel {
-    background-color: rgb(var(--panel-bg));
-  }
+textarea,
+input,
+select {
+  background-color: rgb(var(--panel-bg));
+  color: rgb(var(--ink));
+}
 
-  .bg-surface {
-    background-color: rgb(var(--surface-bg));
-  }
+::placeholder {
+  color: rgb(var(--muted));
+}
 
-  .text-ink {
-    color: rgb(var(--ink));
-  }
+.bg-app {
+  background-color: rgb(var(--app-bg));
+}
 
-  .text-app {
-    color: rgb(var(--app-text));
-  }
+.bg-app-surface {
+  background-color: rgb(var(--app-surface));
+}
 
-  .text-muted {
-    color: rgb(var(--muted));
-  }
+.bg-panel {
+  background-color: rgb(var(--panel-bg));
+}
 
-  .border-app {
-    border-color: rgb(var(--border));
-  }
+.bg-surface {
+  background-color: rgb(var(--surface-bg));
+}
 
-  .panel-hover:hover {
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-  }
+.text-ink {
+  color: rgb(var(--ink));
+}
 
-  .ring-app {
-    box-shadow: 0 0 0 2px rgb(var(--border));
-  }
+.text-app {
+  color: rgb(var(--app-text));
+}
+
+.text-muted {
+  color: rgb(var(--muted));
+}
+
+.border-app {
+  border-color: rgb(var(--border));
+}
+
+.panel-hover:hover {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.ring-app {
+  box-shadow: 0 0 0 2px rgba(var(--border), 0.8);
 }
