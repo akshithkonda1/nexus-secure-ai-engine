@@ -93,7 +93,7 @@ export function Templates() {
             </div>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)]"
               onClick={() => toast.info("Template builder connects to the backend in the next sprint.")}
             >
               <Sparkles className="size-4" /> New template
@@ -162,7 +162,7 @@ export function Templates() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--on-accent))] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--brand),0.35)]"
+                      className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--brand),0.35)]"
                       onClick={() => toast.info(`Previewing ${template.name} coming soon`)}
                     >
                       <Search className="size-3.5" /> Preview
@@ -171,7 +171,7 @@ export function Templates() {
                       type="button"
                       onClick={() => handleLaunch(template)}
                       disabled={launchTemplate.isPending}
-                      className="inline-flex items-center gap-2 rounded-full bg-[rgba(var(--brand),1)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#0074E0] hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {launchTemplate.isPending ? <Loader2 className="size-3 animate-spin" /> : <Wand2 className="size-3.5" />} Start
                     </button>
