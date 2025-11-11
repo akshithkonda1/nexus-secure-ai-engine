@@ -27,9 +27,9 @@ const spotlightProjects: SpotlightProject[] = [
 ];
 
 function statusTone(status: SpotlightProject["status"]) {
-  return status === "Active"
-    ? "bg-[rgba(var(--brand),0.12)] text-[rgba(var(--brand-ink),1)]"
-    : "bg-[rgba(var(--text),0.08)] text-[rgba(var(--text),0.82)] dark:bg-white/10 dark:text-white";
+  if (status === "Active") return "chip--ok";
+  if (status === "Review") return "chip--warn";
+  return "";
 }
 
 export function ProjectsPane({ standalone }: { standalone?: boolean }) {
@@ -59,13 +59,23 @@ export function ProjectsPane({ standalone }: { standalone?: boolean }) {
         standalone ? "min-h-[22rem]" : ""
       }`}
     >
-      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100" style={{ background: "radial-gradient(120% 100% at 0% 0%, rgba(var(--brand),0.08), transparent)" }} />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(120% 100% at 0% 0%, rgba(var(--brand),0.08), transparent)",
+        }}
+      />
 
       <div className="relative flex h-full flex-col justify-between gap-6">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">Projects</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[rgb(var(--text))]">In motion</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
+              Projects
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-[rgb(var(--text))]">
+              In motion
+            </h2>
           </div>
           <button
             type="button"
@@ -73,7 +83,7 @@ export function ProjectsPane({ standalone }: { standalone?: boolean }) {
               event.stopPropagation();
               openAllProjects();
             }}
-            className="flex size-9 items-center justify-center rounded-full border border-transparent bg-[rgba(var(--brand),0.16)] text-lg font-medium text-[rgba(var(--brand-ink),1)] shadow-sm transition hover:bg-[rgba(var(--brand),0.24)] hover:text-[rgba(var(--brand-ink),1)]"
+            className="btn btn-primary btn-neo ripple size-9 rounded-full p-0 text-lg"
             aria-label="Open all projects"
           >
             +
@@ -88,10 +98,14 @@ export function ProjectsPane({ standalone }: { standalone?: boolean }) {
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-[rgb(var(--text))]">{project.name}</h3>
-                  <p className="mt-1 text-sm text-[rgb(var(--subtle))]">{project.description}</p>
+                  <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+                    {project.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-[rgb(var(--subtle))]">
+                    {project.description}
+                  </p>
                 </div>
-                <span className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold ${statusTone(project.status)}`}>
+                <span className={`chip ${statusTone(project.status)}`}>
                   {project.status}
                 </span>
               </div>
@@ -109,7 +123,10 @@ export function ProjectsPane({ standalone }: { standalone?: boolean }) {
 
         <footer className="flex items-center justify-between text-xs text-[rgb(var(--subtle))]">
           <span>Tap to open the full project workspace</span>
-          <span aria-hidden className="text-sm text-[rgba(var(--brand-ink),1)] transition group-hover:translate-x-1">
+          <span
+            aria-hidden
+            className="text-sm text-[rgba(var(--brand-ink),1)] transition group-hover:translate-x-1"
+          >
             →
           </span>
         </footer>
