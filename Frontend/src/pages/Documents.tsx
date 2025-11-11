@@ -60,7 +60,7 @@ export function Documents() {
 
   return (
     <div className="px-[var(--page-padding)] py-6">
-      <div className="card card-hover p-5">
+      <div className="panel panel--immersive panel--edge panel--alive card card-hover p-5">
         <input
           ref={fileInputRef}
           type="file"
@@ -69,7 +69,7 @@ export function Documents() {
         />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
               Documents
             </h2>
             <p className="text-sm text-[rgba(var(--subtle),0.82)]">
@@ -108,7 +108,7 @@ export function Documents() {
                   "Drive connectors are ready once the backend issues credentials.",
                 )
               }
-              className="btn btn-ghost btn-neo rounded-full text-[rgba(var(--subtle),0.85)] hover:text-brand"
+              className="btn btn-ghost btn-neo btn-quiet rounded-full text-[rgba(var(--subtle),0.85)] hover:text-brand"
             >
               <CloudCog className="size-4" /> Connect Drive
             </button>
@@ -120,17 +120,17 @@ export function Documents() {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="h-20 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
+                className="panel panel--immersive h-20 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
               />
             ))}
           </div>
         ) : isError ? (
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
+          <div className="panel panel--immersive panel--alive mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
             <p>Documents are offline right now.</p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="btn btn-ghost btn-neo text-brand"
+              className="btn btn-ghost btn-neo btn-quiet text-brand"
             >
               <RefreshCcw
                 className={`size-4 ${isRefetching ? "animate-spin" : ""}`}
@@ -139,7 +139,7 @@ export function Documents() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-6">
+          <div className="panel panel--immersive panel--alive mt-6">
             <SkeletonBlock />
           </div>
         ) : (
@@ -147,7 +147,7 @@ export function Documents() {
             {filtered.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.88)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.6)]"
+                className="panel panel--immersive panel--alive flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.88)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.6)]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -163,7 +163,7 @@ export function Documents() {
                       </p>
                     </div>
                   </div>
-                  <span className="badge bg-[rgba(var(--accent-emerald),0.14)] text-[rgb(var(--accent-emerald-ink))]">
+                  <span className="chip chip--ok badge bg-[rgba(var(--accent-emerald),0.14)] text-[rgb(var(--accent-emerald-ink))]">
                     {formatFileSize(item.size)}
                   </span>
                 </div>
@@ -172,7 +172,7 @@ export function Documents() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="btn btn-ghost btn-neo rounded-full border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.85)] hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
+                      className="btn btn-ghost btn-neo btn-quiet rounded-full border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.85)] hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
                       onClick={() =>
                         toast.info(`Opening ${item.name} from storage soon`)
                       }
@@ -181,7 +181,7 @@ export function Documents() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-ghost btn-neo rounded-full border-[rgba(var(--status-warning),0.35)] px-3 py-1.5 font-semibold text-[rgb(var(--status-warning))] hover:border-[rgba(var(--status-warning),0.55)]"
+                      className="btn btn-ghost btn-neo btn-quiet rounded-full border-[rgba(var(--status-warning),0.35)] px-3 py-1.5 font-semibold text-[rgb(var(--status-warning))] hover:border-[rgba(var(--status-warning),0.55)]"
                       onClick={() =>
                         toast.info(
                           `Share settings for ${item.name} will live here.`,

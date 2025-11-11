@@ -85,10 +85,10 @@ export function Templates() {
 
   return (
     <div className="px-[var(--page-padding)] py-6">
-      <div className="card card-hover p-5">
+      <div className="panel panel--immersive panel--edge panel--alive card card-hover p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
               Templates
             </h2>
             <p className="text-sm text-[rgba(var(--subtle),0.82)]">
@@ -143,18 +143,18 @@ export function Templates() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
-                className="h-32 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
+                className="panel panel--immersive h-32 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
                 aria-hidden="true"
               />
             ))}
           </div>
         ) : isError ? (
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
+          <div className="panel panel--immersive panel--alive mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
             <p>We couldn&apos;t load templates from the workspace API.</p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
+              className="btn btn-quiet inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
             >
               <RefreshCcw
                 className={`size-4 ${isRefetching ? "animate-spin" : ""}`}
@@ -163,7 +163,7 @@ export function Templates() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-6">
+          <div className="panel panel--immersive panel--alive mt-6">
             <SkeletonBlock />
           </div>
         ) : (
@@ -171,7 +171,7 @@ export function Templates() {
             {filtered.map((template) => (
               <li
                 key={template.id}
-                className="flex h-full flex-col justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.55)] p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+                className="panel panel--immersive panel--alive flex h-full flex-col justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.55)] p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
               >
                 <div className="space-y-3 text-sm">
                   <span className={`badge ${getAccent(template.category)}`}>
