@@ -9,6 +9,7 @@ import { NotificationsModal } from "@/components/NotificationsModal";
 import { useCommand } from "@/lib/actions";
 import "@/styles/globals.css";
 import { Toaster } from "@/shared/ui/components/toast";
+import AmbientFX from "@/components/AmbientFX";
 
 export function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -35,7 +36,7 @@ export function App() {
           onOpenProfile={() => setProfileOpen(true)}
         />
         <div className="flex flex-1 overflow-hidden">
-          <main className="flex-1 overflow-y-auto px-5 pb-10 pt-6 md:px-8 lg:px-12">
+          <main className="ambient-page flex-1 overflow-y-auto px-5 pb-10 pt-6 md:px-8 lg:px-12">
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
               <Outlet />
             </div>
@@ -44,8 +45,12 @@ export function App() {
         </div>
       </div>
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
-      <NotificationsModal open={isNotificationsOpen} onOpenChange={setNotificationsOpen} />
+      <NotificationsModal
+        open={isNotificationsOpen}
+        onOpenChange={setNotificationsOpen}
+      />
       <Toaster />
+      <AmbientFX />
     </div>
   );
 }

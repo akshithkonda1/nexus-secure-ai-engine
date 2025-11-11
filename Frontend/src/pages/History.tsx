@@ -4,6 +4,7 @@ import { Clock, Filter, RefreshCcw } from "lucide-react";
 import { useHistory } from "@/queries/history";
 import type { AuditEvent } from "@/types/models";
 import { formatRelativeTime } from "@/lib/formatters";
+import SkeletonBlock from "@/components/SkeletonBlock";
 
 const RANGE_OPTIONS = [
   { label: "24h", hours: 24 },
@@ -12,13 +13,17 @@ const RANGE_OPTIONS = [
 ] as const;
 
 const TYPE_ACCENTS: Partial<Record<AuditEvent["type"], string>> = {
-  created: "bg-[rgba(var(--accent-emerald),0.18)] text-[rgb(var(--accent-emerald-ink))]",
+  created:
+    "bg-[rgba(var(--accent-emerald),0.18)] text-[rgb(var(--accent-emerald-ink))]",
   renamed: "bg-[rgba(var(--accent-sky),0.2)] text-brand",
   message: "bg-[rgba(var(--accent-lilac),0.28)] text-[rgb(var(--text))]",
-  archived: "bg-[rgba(var(--status-warning),0.25)] text-[rgb(var(--status-warning))]",
+  archived:
+    "bg-[rgba(var(--status-warning),0.25)] text-[rgb(var(--status-warning))]",
   restored: "bg-[rgba(var(--brand),0.18)] text-brand",
-  deleted: "bg-[rgba(var(--status-critical),0.25)] text-[rgb(var(--status-critical))]",
-  exported: "bg-[rgba(var(--accent-amber),0.2)] text-[rgb(var(--accent-amber-ink))]",
+  deleted:
+    "bg-[rgba(var(--status-critical),0.25)] text-[rgb(var(--status-critical))]",
+  exported:
+    "bg-[rgba(var(--accent-amber),0.2)] text-[rgb(var(--accent-amber-ink))]",
   modelRun: "bg-[rgba(var(--brand-soft),0.22)] text-brand",
 };
 
@@ -39,8 +44,12 @@ function formatTypeLabel(type: AuditEvent["type"]) {
 }
 
 export function History() {
-  const [selectedRange, setSelectedRange] = useState<(typeof RANGE_OPTIONS)[number]>(RANGE_OPTIONS[0]);
-  const [selectedType, setSelectedType] = useState<AuditEvent["type"] | "all">("all");
+  const [selectedRange, setSelectedRange] = useState<
+    (typeof RANGE_OPTIONS)[number]
+  >(RANGE_OPTIONS[0]);
+  const [selectedType, setSelectedType] = useState<AuditEvent["type"] | "all">(
+    "all",
+  );
   const filters = useMemo(() => {
     const base = computeRange(selectedRange.hours);
     return {
@@ -49,7 +58,8 @@ export function History() {
     };
   }, [selectedRange.hours, selectedType]);
 
-  const { data, isLoading, isError, refetch, isRefetching } = useHistory(filters);
+  const { data, isLoading, isError, refetch, isRefetching } =
+    useHistory(filters);
   const events = data?.events ?? [];
 
   const visibleEvents = useMemo(() => {
@@ -61,7 +71,9 @@ export function History() {
     <div className="px-[var(--page-padding)] py-6">
       <div className="card p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold text-[rgb(var(--text))]">Activity</h2>
+          <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+            Activity
+          </h2>
           <div className="flex flex-wrap items-center gap-2 text-xs text-[rgba(var(--subtle),0.75)]">
             <Clock className="size-4" />
             Workspace audit trail • {visibleEvents.length} events
@@ -90,7 +102,11 @@ export function History() {
             <span>Event type</span>
             <select
               value={selectedType}
-              onChange={(event) => setSelectedType(event.target.value as AuditEvent["type"] | "all")}
+              onChange={(event) =>
+                setSelectedType(
+                  event.target.value as AuditEvent["type"] | "all",
+                )
+              }
               className="rounded-full border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.92)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text))] shadow-sm focus:border-[rgba(var(--brand),0.35)] focus:outline-none"
             >
               <option value="all">All</option>
@@ -109,7 +125,10 @@ export function History() {
         {isLoading ? (
           <div className="mt-6 space-y-3" aria-hidden="true">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="h-16 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse" />
+              <div
+                key={index}
+                className="h-16 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
+              />
             ))}
           </div>
         ) : isError ? (
@@ -118,14 +137,17 @@ export function History() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.4)] px-4 py-2 text-sm font-semibold text-brand"
+              className="btn btn-ghost btn-neo text-brand"
             >
-              <RefreshCcw className={`size-4 ${isRefetching ? "animate-spin" : ""}`} /> Try again
+              <RefreshCcw
+                className={`size-4 ${isRefetching ? "animate-spin" : ""}`}
+              />{" "}
+              Try again
             </button>
           </div>
         ) : visibleEvents.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-6 text-sm text-[rgba(var(--subtle),0.85)]">
-            <p>No events in this window. Activity will appear as soon as requests hit the backend.</p>
+          <div className="mt-6">
+            <SkeletonBlock />
           </div>
         ) : (
           <div className="mt-6 overflow-x-auto">
@@ -140,18 +162,31 @@ export function History() {
               </thead>
               <tbody className="divide-y divide-[rgba(var(--border),0.12)]">
                 {visibleEvents.map((event) => (
-                  <tr key={event.id} className="transition hover:bg-[rgba(var(--panel),0.4)]">
+                  <tr
+                    key={event.id}
+                    className="transition hover:bg-[rgba(var(--panel),0.4)]"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className={`badge ${TYPE_ACCENTS[event.type] ?? TYPE_ACCENTS.created}`}>{formatTypeLabel(event.type)}</span>
-                        <span className="text-sm font-semibold text-[rgb(var(--text))]">{event.details ?? "—"}</span>
+                        <span
+                          className={`chip ${TYPE_ACCENTS[event.type] ?? TYPE_ACCENTS.created}`}
+                        >
+                          {formatTypeLabel(event.type)}
+                        </span>
+                        <span className="text-sm font-semibold text-[rgb(var(--text))]">
+                          {event.details ?? "—"}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[rgba(var(--subtle),0.85)]">{event.actor}</td>
+                    <td className="px-4 py-3 text-[rgba(var(--subtle),0.85)]">
+                      {event.actor}
+                    </td>
                     <td className="px-4 py-3 text-[rgba(var(--subtle),0.75)]">
                       {event.sessionId ?? event.projectId ?? "workspace"}
                     </td>
-                    <td className="px-4 py-3 text-[rgba(var(--subtle),0.7)]">{formatRelativeTime(event.at)}</td>
+                    <td className="px-4 py-3 text-[rgba(var(--subtle),0.7)]">
+                      {formatRelativeTime(event.at)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
