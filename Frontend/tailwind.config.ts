@@ -9,6 +9,7 @@ export default {
         bg: "rgb(var(--bg))",
         surface: "rgb(var(--surface))",
         panel: "rgb(var(--panel))",
+        border: "rgb(var(--border))",
         text: "rgb(var(--text))",
         brand: "rgb(var(--brand))",
         brand2: "rgb(var(--brand-2))",
