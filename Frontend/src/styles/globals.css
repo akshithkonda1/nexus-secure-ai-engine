@@ -35,6 +35,8 @@
 
   .dark {
     /* Cod Gray background family */
+    color-scheme: dark;
+
     --bg: 9 11 30;            /* #090B1E (page) */
     --surface: 13 17 36;      /* #0D1124 (chrome) */
     --panel: 18 24 42;        /* #121A2A (cards) */
