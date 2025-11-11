@@ -5,8 +5,10 @@ import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } fr
 import { useProfile } from "@/features/profile/ProfileProvider";
 import { requestSignOut } from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
+import ImageCropDialog from "@/components/ImageCropDialog";
+import { readFileAsDataURL, downscale } from "@/utils/imageTools";
 
-const MAX_AVATAR_BYTES = 50 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 50 * 1024 * 1024; // 50 MB
 const TIMEZONES = [
   "America/Los_Angeles",
   "America/Chicago",
@@ -84,38 +86,6 @@ function isEqualForm(a: FormState, b: FormState) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n));
-}
-
-async function dataUrlFromFile(file: File): Promise<string> {
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Unable to read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function compressImageFromFile(file: File, maxDim = 2400, quality = 0.9): Promise<string> {
-  const src = await dataUrlFromFile(file);
-  const img = await new Promise<HTMLImageElement>((res, rej) => {
-    const el = new Image();
-    el.onload = () => res(el);
-    el.onerror = rej;
-    el.src = src;
-  });
-  const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-  const w = Math.round(img.naturalWidth * scale);
-  const h = Math.round(img.naturalHeight * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0, w, h);
-  return canvas.toDataURL("image/jpeg", quality);
-}
-
 export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const { profile, loading, saving, error, update } = useProfile();
   const [form, setForm] = useState<FormState>(() => toInitialState(profile));
@@ -124,7 +94,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const [localError, setLocalError] = useState<string | null>(null);
   const [compressedNotice, setCompressedNotice] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [pendingSrc, setPendingSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const initial = useMemo(() => toInitialState(profile), [profile]);
@@ -138,7 +108,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
       setLocalError(null);
       setCompressedNotice(false);
       setCropOpen(false);
-      setCropSrc(null);
+      setPendingSrc(null);
     }
   }, [profile, open]);
 
@@ -159,16 +129,15 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
       return;
     }
     try {
-      const needsCompression = file.size > MAX_AVATAR_BYTES;
-      const src = needsCompression
-        ? await compressImageFromFile(file, 2400, 0.9)
-        : await dataUrlFromFile(file);
+      const raw = await readFileAsDataURL(file);
+      const needsCompress = file.size > MAX_AVATAR_BYTES;
+      const prepped = needsCompress ? await downscale(raw, 1600, 0.9) : raw;
       setLocalError(null);
-      setCompressedNotice(needsCompression);
-      setCropSrc(src);
+      setCompressedNotice(needsCompress);
+      setPendingSrc(prepped);
       setCropOpen(true);
-    } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Unable to process file.");
+    } catch {
+      setLocalError("Unable to process image.");
     }
   }, []);
 
@@ -287,7 +256,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                           onClick={(event) => {
                             if (form.avatarUrl && !(event.altKey || event.metaKey || event.shiftKey || event.ctrlKey)) {
                               event.preventDefault();
-                              setCropSrc(form.avatarUrl);
+                              setPendingSrc(form.avatarUrl);
                               setCropOpen(true);
                               return;
                             }
@@ -465,22 +434,19 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
           </div>
         </div>
       </Dialog>
-      {cropOpen && cropSrc && (
-        <AvatarCropDialog
-          open={cropOpen}
-          src={cropSrc}
-          onCancel={() => {
-            setCropOpen(false);
-            setCropSrc(null);
-            setCompressedNotice(false);
-          }}
-          onSave={(dataUrl) => {
-            setCropOpen(false);
-            setCropSrc(null);
-            setForm((prev) => ({ ...prev, avatarUrl: dataUrl }));
-          }}
-        />
-      )}
+      <ImageCropDialog
+        open={cropOpen && Boolean(pendingSrc)}
+        src={pendingSrc ?? ""}
+        onClose={() => {
+          setCropOpen(false);
+          setPendingSrc(null);
+        }}
+        onCropped={(dataUrl) => {
+          setCropOpen(false);
+          setPendingSrc(null);
+          setForm((prev) => ({ ...prev, avatarUrl: dataUrl }));
+        }}
+      />
     </Transition.Root>
   );
 }
@@ -567,194 +533,3 @@ function Toggle({ label, description, checked, onChange }: ToggleProps) {
   );
 }
 
-function AvatarCropDialog({
-  open,
-  src,
-  onCancel,
-  onSave,
-  size = 512,
-}: {
-  open: boolean;
-  src: string;
-  onCancel: () => void;
-  onSave: (dataUrl: string) => void;
-  size?: number;
-}) {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
-  const [scale, setScale] = useState(1);
-  const [minScale, setMinScale] = useState(1);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const img = new Image();
-    img.onload = () => {
-      setNatural({ w: img.naturalWidth, h: img.naturalHeight });
-      const v = 360;
-      const s = Math.max(v / img.naturalWidth, v / img.naturalHeight);
-      setMinScale(s);
-      setScale(s * 1.05);
-      setPos({ x: 0, y: 0 });
-    };
-    img.src = src;
-  }, [open, src]);
-
-  const clampPan = useCallback(
-    (nx: number, ny: number) => {
-      const v = 360;
-      if (!natural) return { x: nx, y: ny };
-      const dispW = natural.w * scale;
-      const dispH = natural.h * scale;
-      const minX = v - dispW;
-      const minY = v - dispH;
-      return { x: clamp(nx, minX, 0), y: clamp(ny, minY, 0) };
-    },
-    [natural, scale],
-  );
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    const el = e.currentTarget as HTMLElement;
-    el.setPointerCapture(e.pointerId);
-    drag.current = { x: pos.x, y: pos.y, px: e.clientX, py: e.clientY };
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current) return;
-    const dx = e.clientX - drag.current.px;
-    const dy = e.clientY - drag.current.py;
-    setPos(clampPan(drag.current.x + dx, drag.current.y + dy));
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    drag.current = null;
-  };
-
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.05 : 0.95;
-    const nextScale = clamp(scale * factor, minScale, 4);
-    setScale(nextScale);
-    setPos((p) => clampPan(p.x, p.y));
-  };
-
-  const doSave = async () => {
-    if (!natural) return;
-    const v = 360;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d")!;
-    const sx = (-pos.x) / scale;
-    const sy = (-pos.y) / scale;
-    const sSize = v / scale;
-    const img = new Image();
-    img.src = src;
-    await new Promise((res) => (img.onload = res));
-    ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
-    onSave(canvas.toDataURL("image/jpeg", 0.92));
-  };
-
-  return (
-    <Transition.Root show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-[120]" onClose={onCancel}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-200"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-150"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-[rgba(3,7,18,0.55)] backdrop-blur-sm" />
-        </Transition.Child>
-        <div className="fixed inset-0 z-[130] overflow-y-auto px-4 py-8 sm:px-6">
-          <div className="mx-auto flex w-full max-w-2xl items-center justify-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-200"
-              enterFrom="translate-y-6 opacity-0"
-              enterTo="translate-y-0 opacity-100"
-              leave="ease-in duration-150"
-              leaveFrom="translate-y-0 opacity-100"
-              leaveTo="translate-y-4 opacity-0"
-            >
-              <Dialog.Panel className="panel w-full overflow-hidden rounded-2xl p-6">
-                <Dialog.Title className="mb-4 text-lg font-semibold">Adjust avatar</Dialog.Title>
-                <div
-                  ref={wrapRef}
-                  className="relative mx-auto size-[360px] overflow-hidden rounded-2xl border border-[rgba(var(--border),0.6)] bg-black/40"
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
-                  onWheel={onWheel}
-                >
-                  <img
-                    ref={imgRef}
-                    src={src}
-                    alt="Crop"
-                    draggable={false}
-                    style={{
-                      transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
-                      transformOrigin: "top left",
-                      userSelect: "none",
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                    }}
-                  />
-                  <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/15">
-                    <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                      {Array.from({ length: 9 }).map((_, i) => (
-                        <div key={i} className="border-[0.5px] border-white/10" />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-4">
-                  <label className="text-sm font-medium">Zoom</label>
-                  <input
-                    type="range"
-                    min={minScale}
-                    max={4}
-                    step={0.01}
-                    value={scale}
-                    onChange={(e) => {
-                      setScale(Number(e.target.value));
-                      setPos((p) => clampPan(p.x, p.y));
-                    }}
-                    className="w-full"
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      if (!natural) return;
-                      const v = 360;
-                      const s = Math.max(v / natural.w, v / natural.h);
-                      setMinScale(s);
-                      setScale(s * 1.05);
-                      setPos({ x: 0, y: 0 });
-                    }}
-                  >
-                    Reset
-                  </button>
-                </div>
-                <div className="mt-6 flex items-center justify-end gap-3">
-                  <button type="button" className="btn btn-ghost" onClick={onCancel}>
-                    Cancel
-                  </button>
-                  <button type="button" className="btn btn-primary" onClick={doSave}>
-                    Save avatar
-                  </button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-  );
-}
