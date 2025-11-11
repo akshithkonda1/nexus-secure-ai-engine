@@ -14,16 +14,6 @@
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--prism-1) 42%, transparent);
 }
 
-:root {
-  --grid-gap: 32px;
-  --grid-dot: 0.6px;
-  --grid-alpha: 0.028;
-}
-
-.dark {
-  --grid-alpha: 0.045;
-}
-
 /* Nexus glass panel */
 .glass {
   background: rgb(var(--panel) / 0.55);
@@ -39,20 +29,12 @@
 .lift:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
 
 /* Subtle dot grid background for hero */
-.bg-grid {
-  position: relative;
-  isolation: isolate;
-}
-.bg-grid::before {
+.bg-grid { position: relative; isolation: isolate; }
+.bg-grid:before {
   content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgb(var(--text) / var(--grid-alpha)) var(--grid-dot),
-    transparent var(--grid-dot)
-  );
-  background-size: var(--grid-gap) var(--grid-gap);
-  pointer-events: none;
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in oklab, rgb(var(--text)) 14%, transparent) 1px, transparent 1px)
+    0 0 / 22px 22px;
+  opacity: .15;
 }
