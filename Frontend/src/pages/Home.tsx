@@ -56,21 +56,30 @@ const highlights = [
     title: "Summaries delivered",
     value: "248",
     delta: "+18%", // mimic style
-    tone: "bg-[rgba(var(--brand),0.12)] text-brand",
   },
   {
     title: "Avg. response",
     value: "1m 42s",
     delta: "-9%",
-    tone: "bg-[rgba(var(--accent-lilac),0.22)] text-[rgb(var(--text))]",
   },
   {
     title: "CSAT",
     value: "96%",
     delta: "+4%",
-    tone: "bg-[rgba(var(--brand-soft),0.15)] text-[rgb(var(--text))]",
   },
 ];
+
+const getDeltaStyles = (delta: string) => {
+  if (delta.startsWith("+")) {
+    return "bg-[rgba(34,197,94,0.12)] text-[#22C55E]";
+  }
+
+  if (delta.startsWith("-")) {
+    return "bg-[rgba(239,68,68,0.12)] text-[#EF4444]";
+  }
+
+  return "bg-[rgba(var(--subtle),0.16)] text-[rgba(var(--subtle),0.8)]";
+};
 
 export function Home() {
   const navigate = useNavigate();
@@ -105,7 +114,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-full px-6"
+                className="btn btn-neo ripple rounded-full px-6 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
               >
                 <ShieldCheck className="size-4" /> Launch Chat
               </button>
@@ -133,7 +142,7 @@ export function Home() {
                     <span
                       className={
                         "inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold uppercase " +
-                        item.tone
+                        getDeltaStyles(item.delta)
                       }
                     >
                       {item.delta}
@@ -177,7 +186,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-2xl px-4"
+                className="btn btn-neo ripple rounded-2xl px-4 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
               >
                 <Wand2 className="size-4" /> Generate brief
               </button>
