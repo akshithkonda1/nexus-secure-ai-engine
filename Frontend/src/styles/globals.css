@@ -3,45 +3,54 @@
 @source "../../index.html";
 @source "../**/*.{ts,tsx}";
 
-/* ---------------- TOKENS ---------------- */
+/* --------------------------------------------------------
+   THEME TOKENS (class-based theming + proper color-scheme)
+   -------------------------------------------------------- */
 @layer base {
   :root {
-    /* LIGHT — Alabaster + Cod Gray + Azure Radiance */
-    --bg: 249 250 252;          /* #F9FAFC (Alabaster) */
-    --surface: 255 255 255;     /* white glass surfaces */
-    --panel: 246 248 252;       /* card panels */
-    --text: 9 11 30;            /* #090B1E (Cod Gray) */
-    --subtle: 9 11 30 / 0.64;
-    --border: 9 11 30 / 0.12;
+    /* Light mode (Alabaster) */
+    color-scheme: light;
 
-    /* Brand */
-    --brand: 0 133 255;         /* #0085FF (Azure Radiance) */
-    --brand-2: 147 96 255;      /* #9360FF (Medium Purple accent) */
+    /* Neutrals */
+    --bg: 249 250 252;           /* Alabaster-esque page */
+    --surface: 255 255 255;      /* chrome */
+    --panel: 246 248 252;        /* cards */
+    --text: 17 24 39;            /* slate-900 */
+    --subtle: 17 24 39 / 0.70;
+    --border: 30 41 59 / 0.12;
 
-    /* Focus / Elevation */
-    --ring: 0 158 255;          /* bright blue ring */
+    /* Brand + rings */
+    --brand: 0 158 255;          /* #009EFF */
+    --ring: 56 189 248;          /* sky-400 */
+
+    /* Elevation */
     --elev-1: 0 12px 32px rgba(2, 6, 23, 0.06);
-    --elev-2: 0 22px 64px rgba(2, 6, 23, 0.10);
+    --elev-2: 0 18px 48px rgba(2, 6, 23, 0.10);
 
-    /* Page gradient (very subtle alabaster glow) */
-    --page-grad-from: 249 250 252;
-    --page-grad-via: 245 247 255;   /* faint indigo-50 */
-    --page-grad-to: 241 248 255;    /* faint sky-50 */
+    /* Page halo (light) */
+    --page-grad-from: 255 255 255;
+    --page-grad-via: 248 250 255;
+    --page-grad-to: 245 249 255;
   }
 
   .dark {
-    /* DARK — deep navy futurist */
-    --bg: 9 14 26;
+    /* Dark mode (navy, not pure black) */
+    color-scheme: dark;
+
+    --bg: 9 14 26;               /* deep navy */
     --surface: 15 20 34;
     --panel: 18 24 42;
-    --text: 241 245 249;
-    --subtle: 241 245 249 / 0.70;
-    --border: 241 245 249 / 0.10;
+    --text: 241 245 249;         /* slate-100 */
+    --subtle: 241 245 249 / 0.65;
+    --border: 241 245 249 / 0.08;
 
-    --ring: 125 211 252;
-    --elev-1: 0 20px 50px rgba(0,0,0,0.35);
-    --elev-2: 0 28px 80px rgba(0,0,0,0.55);
+    --brand: 0 158 255;          /* same brand */
+    --ring: 125 211 252;         /* sky-300 */
 
+    --elev-1: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --elev-2: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+    /* Page halo (dark) */
     --page-grad-from: 8 12 24;
     --page-grad-via: 10 15 28;
     --page-grad-to: 14 20 36;
@@ -49,69 +58,53 @@
 
   html, body, #root { height: 100%; }
 
-  /* Kill any tiled/noise textures; replace with soft ambient gradient */
   body {
     color: rgb(var(--text));
     background:
       radial-gradient(1200px 600px at 10% -10%, rgba(var(--brand),0.06), transparent 60%),
-      linear-gradient(180deg,
+      linear-gradient(
+        180deg,
         rgb(var(--page-grad-from)) 0%,
-        rgb(var(--page-grad-via)) 28%,
-        rgb(var(--page-grad-to)) 100%);
+        rgb(var(--page-grad-via)) 30%,
+        rgb(var(--page-grad-to)) 100%
+      );
     background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(var(--brand), 0.18);
   }
 }
 
-/* smooth theme flip */
+/* Smooth theme switch */
 :root.theme-transition * {
-  transition: background-color .25s ease, color .25s ease, border-color .25s ease,
-             box-shadow .25s ease, fill .25s ease, stroke .25s ease !important;
+  transition:
+    background-color .25s ease,
+    color .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease,
+    fill .25s ease,
+    stroke .25s ease !important;
 }
 
-/* ---------------- PRESENTATION (no layout change) ---------------- */
+/* Presentation utilities (no layout change) */
 @layer components {
   .panel {
     @apply rounded-2xl border backdrop-blur-xl;
-    background: color-mix(in oklab, rgb(var(--surface)) 88%, transparent);
+    background-color: color-mix(in oklab, rgb(var(--panel)) 92%, transparent);
     border-color: color-mix(in oklab, rgb(var(--text)) 12%, transparent);
     box-shadow: var(--elev-1);
-  }
-  .panel--glassy::after {
-    content: "";
-    position: absolute; inset: 0 0 auto 0; height: 38%;
-    pointer-events: none; border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255 255 255 /.55), rgba(255 255 255 / 0) 70%);
   }
   .panel--hover { transition: transform .18s ease, box-shadow .18s ease; }
   .panel--hover:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
 
-  .chip {
-    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium border;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--brand)) 8%, transparent);
-  }
-
-  .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition; }
-  .btn-primary {
-    color: white;
-    background: linear-gradient(180deg,
-      color-mix(in oklab, rgb(var(--brand)) 96%, white 8%),
-      color-mix(in oklab, rgb(var(--brand)) 82%, black 6%));
-    box-shadow: 0 10px 28px color-mix(in oklab, rgb(var(--brand)) 28%, transparent);
-  }
-  .btn-ghost {
-    @apply border;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--surface)) 72%, transparent);
-  }
-
   .input {
     @apply h-11 rounded-xl px-3 text-sm outline-none border transition;
     border-color: color-mix(in oklab, rgb(var(--text)) 16%, transparent);
-    background: color-mix(in oklab, rgb(var(--surface)) 90%, transparent);
+    background: color-mix(in oklab, rgb(var(--surface)) 88%, transparent);
   }
   .input:focus {
     box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--ring)) 45%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--ring)) 55%, transparent);
+    border-color: color-mix(in oklab, rgb(var(--ring)) 50%, transparent);
   }
 }
