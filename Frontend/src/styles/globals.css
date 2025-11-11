@@ -72,6 +72,7 @@
 @layer components {
   .panel {
     @apply rounded-2xl border backdrop-blur-xl;
+    position: relative;
     background: color-mix(in oklab, rgb(var(--surface)) 88%, transparent);
     border-color: color-mix(in oklab, rgb(var(--text)) 12%, transparent);
     box-shadow: var(--elev-1);
