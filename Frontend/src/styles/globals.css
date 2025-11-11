@@ -34,31 +34,26 @@
   }
 
   .dark {
-    /* Cod Gray background family */
-    --bg: 9 11 30;            /* #090B1E (page) */
-    --surface: 13 17 36;      /* #0D1124 (chrome) */
-    --panel: 18 24 42;        /* #121A2A (cards) */
+    /* Dark mode (navy, not pure black) */
+    color-scheme: dark;
 
-    /* Typography */
-    --text: 255 255 255;      /* white text */
-    --subtle: 203 213 225;    /* #CBD5E1 for muted copy */
+    --bg: 9 14 26;               /* deep navy */
+    --surface: 15 20 34;
+    --panel: 18 24 42;
+    --text: 241 245 249;         /* slate-100 */
+    --subtle: 241 245 249 / 0.65;
+    --border: 241 245 249 / 0.08;
 
-    /* Lines / focus */
-    --border: 255 255 255 / 0.12; /* soft white border */
-    --ring: 0 153 255;            /* #0099FF focus ring */
+    --brand: 0 158 255;          /* same brand */
+    --ring: 125 211 252;         /* sky-300 */
 
-    /* Brand blues (style guide) */
-    --brand: 0 133 255;       /* #0085FF primary */
-    --brand-2: 0 158 255;     /* #009EFF hover/alt */
+    --elev-1: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --elev-2: 0 20px 60px rgba(0, 0, 0, 0.55);
 
-    /* Elevations */
-    --elev-1: 0 12px 28px rgba(0, 0, 0, 0.45);
-    --elev-2: 0 20px 60px rgba(0, 0, 0, 0.60);
-
-    /* Optional page gradient for depth */
-    --page-grad-from: 9 11 30;
-    --page-grad-via: 11 14 32;
-    --page-grad-to: 13 17 36;
+    /* Page halo (dark) */
+    --page-grad-from: 8 12 24;
+    --page-grad-via: 10 15 28;
+    --page-grad-to: 14 20 36;
   }
 
   html, body, #root { height: 100%; }
@@ -66,7 +61,7 @@
   body {
     color: rgb(var(--text));
     background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(var(--brand),0.05), transparent 60%),
+      radial-gradient(1200px 600px at 10% -10%, rgba(var(--brand),0.06), transparent 60%),
       linear-gradient(
         180deg,
         rgb(var(--page-grad-from)) 0%,
@@ -94,25 +89,6 @@
 
 /* Presentation utilities (no layout change) */
 @layer components {
-  .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition; }
-
-  .btn-primary {
-    color: white;
-    background: linear-gradient(180deg,
-      color-mix(in oklab, rgb(var(--brand)) 96%, white 6%),
-      color-mix(in oklab, rgb(var(--brand)) 86%, black 6%));
-    box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--brand)) 30%, transparent);
-  }
-  .btn-primary:hover  { filter: brightness(1.06); }
-  .btn-primary:active { transform: translateY(1px); filter: brightness(0.98); }
-
-  .btn-ghost {
-    @apply border;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--surface)) 70%, transparent);
-    color: rgb(var(--text));
-  }
-
   .panel {
     @apply rounded-2xl border backdrop-blur-xl;
     background-color: color-mix(in oklab, rgb(var(--panel)) 92%, transparent);
