@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,10 +8,6 @@ import "@/styles/theme.css";
 import { App } from "@/App";
 import { Home } from "@/pages/Home";
 import { Chat } from "@/pages/Chat";
-import { Templates } from "@/pages/Templates";
-import { Documents } from "@/pages/Documents";
-import { History } from "@/pages/History";
-import { Settings } from "@/pages/Settings";
 import { Outbox } from "@/pages/Outbox";
 import { Governance } from "@/pages/Governance";
 import { Guides } from "@/pages/Guides";
@@ -20,27 +16,130 @@ import { ProfileProvider } from "@/features/profile/ProfileProvider";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import ProjectsPage from "@/features/projects/ProjectsPage";
 import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
+import { ErrorBoundary } from "@/routes/ErrorBoundary";
+
+const Templates = lazy(() => import("@/pages/Templates"));
+const Documents = lazy(() => import("@/pages/Documents"));
+const Activity = lazy(() => import("@/pages/History"));
+const Settings = lazy(() => import("@/pages/Settings"));
+
+const Fallback = () => (
+  <section className="panel p-6 space-y-4">
+    <div className="skeleton skeleton-line w-48" />
+    <div className="skeleton skeleton-line w-80" />
+    <div className="skeleton skeleton-line w-64" />
+  </section>
+);
 
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: (
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    ),
     errorElement: <AppErrorBoundary />,
     children: [
-      { index: true, element: <Home /> },
+      {
+        index: true,
+        element: (
+          <ErrorBoundary>
+            <Home />
+          </ErrorBoundary>
+        ),
+      },
       { path: "home", element: <Navigate to="/" replace /> },
-      { path: "chat", element: <Chat /> },
-      { path: "outbox", element: <Outbox /> },
-      { path: "templates", element: <Templates /> },
-      { path: "documents", element: <Documents /> },
-      { path: "history", element: <History /> },
-      { path: "projects", element: <ProjectsPage /> },
-      { path: "projects/all", element: <ProjectsAllPage /> },
-      { path: "governance", element: <Governance /> },
-      { path: "guides", element: <Guides /> },
-      { path: "settings", element: <Settings /> },
+      {
+        path: "chat",
+        element: (
+          <ErrorBoundary>
+            <Chat />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "outbox",
+        element: (
+          <ErrorBoundary>
+            <Outbox />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "templates",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<Fallback />}>
+              <Templates />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "documents",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<Fallback />}>
+              <Documents />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "history",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<Fallback />}>
+              <Activity />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "projects",
+        element: (
+          <ErrorBoundary>
+            <ProjectsPage />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "projects/all",
+        element: (
+          <ErrorBoundary>
+            <ProjectsAllPage />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "governance",
+        element: (
+          <ErrorBoundary>
+            <Governance />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "guides",
+        element: (
+          <ErrorBoundary>
+            <Guides />
+          </ErrorBoundary>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<Fallback />}>
+              <Settings />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
     ],
   },
 ]);

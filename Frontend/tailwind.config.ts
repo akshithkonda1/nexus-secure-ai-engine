@@ -2,8 +2,8 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: "class",
-  content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
@@ -21,24 +21,18 @@ export default {
         ],
       },
       colors: {
-        brand: "rgb(var(--brand))",
-        brand2: "rgb(var(--brand-2))",
-        "brand-alt": "#009EFF",
-        purple: "#9360FF",
-        lilac: "#C5B9DA",
-
         bg: "rgb(var(--bg))",
         surface: "rgb(var(--surface))",
         panel: "rgb(var(--panel))",
         text: "rgb(var(--text))",
         border: "rgb(var(--border))",
-        subtle: "rgb(var(--subtle))",
-        background: "rgb(var(--bg) / <alpha-value>)",
-        card: "rgb(var(--panel) / <alpha-value>)",
+        brand: "rgb(var(--brand))",
+        brand2: "rgb(var(--brand-2))",
+        "brand-alt": "#009EFF",
+        purple: "#9360FF",
+        lilac: "#C5B9DA",
         accent: "#0085FF",
         "accent-foreground": "#F9FAFC",
-        foreground: "rgb(var(--text) / <alpha-value>)",
-        muted: "rgb(var(--subtle))",
       },
       boxShadow: {
         soft: "var(--elev-1)",

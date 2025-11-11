@@ -89,7 +89,7 @@ export function Home() {
 
   return (
     <div className="flex flex-col gap-12">
-      <section className="panel panel--immersive panel--edge panel--halo panel--alive relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
+      <section className="panel halo panel--hover panel--immersive panel--edge panel--alive relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
         <div
           className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--brand),0.16),transparent_55%)]"
           aria-hidden="true"
@@ -130,7 +130,7 @@ export function Home() {
               {highlights.map((item) => (
                 <div
                   key={item.title}
-                  className="panel panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4"
+                  className="panel panel--hover panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">
                     {item.title}
@@ -153,7 +153,7 @@ export function Home() {
             </div>
           </div>
 
-          <div className="panel panel--immersive panel--alive flex flex-col gap-6 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-6 shadow-[var(--shadow-soft)]">
+          <div className="panel panel--hover panel--immersive panel--alive flex flex-col gap-6 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-6 shadow-[var(--shadow-soft)]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.8)]">
                 Autopilot
