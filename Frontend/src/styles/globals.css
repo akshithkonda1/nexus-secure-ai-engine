@@ -68,7 +68,10 @@
 @layer components {
   .panel {
     position: relative;
-    @apply rounded-2xl border backdrop-blur-xl;
+    border-radius: 1.25rem;
+    border-width: 1px;
+    border-style: solid;
+    backdrop-filter: blur(24px);
     /* glass: translucent, works in both themes */
     background: color-mix(in oklab, rgb(var(--panel)) 65%, transparent);
     border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
