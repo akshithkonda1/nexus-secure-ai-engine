@@ -80,7 +80,7 @@ export function Home() {
 
   return (
     <div className="flex flex-col gap-12">
-      <section className="relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
+      <section className="panel panel--immersive panel--edge panel--halo panel--alive relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
         <div
           className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--brand),0.16),transparent_55%)]"
           aria-hidden="true"
@@ -94,7 +94,7 @@ export function Home() {
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
               Nexus • Welcome back, {who}
             </div>
-            <h1 className="text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
+            <h1 className="accent-ink text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
             </h1>
             <p className="max-w-2xl text-base text-[rgba(var(--subtle),0.85)]">
@@ -112,7 +112,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/templates")}
-                className="btn btn-ghost btn-neo rounded-full px-6"
+                className="btn btn-ghost btn-neo btn-quiet rounded-full px-6"
               >
                 Browse playbooks
               </button>
@@ -121,7 +121,7 @@ export function Home() {
               {highlights.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4"
+                  className="panel panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">
                     {item.title}
@@ -144,12 +144,12 @@ export function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-6 shadow-[var(--shadow-soft)]">
+          <div className="panel panel--immersive panel--alive flex flex-col gap-6 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-6 shadow-[var(--shadow-soft)]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.8)]">
                 Autopilot
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-[rgb(var(--text))]">
+              <h2 className="accent-ink mt-2 text-xl font-semibold text-[rgb(var(--text))]">
                 Summarize the latest
               </h2>
               <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
@@ -187,19 +187,19 @@ export function Home() {
                 Queue
               </p>
               <ul className="mt-3 space-y-2 text-sm text-[rgb(var(--text))]">
-                <li className="flex items-center justify-between">
+                <li className="panel panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
                   <span>Voice agents rollout</span>
                   <span className="text-xs text-[rgba(var(--subtle),0.7)]">
                     Due today
                   </span>
                 </li>
-                <li className="flex items-center justify-between">
+                <li className="panel panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
                   <span>Compliance audit pack</span>
                   <span className="text-xs text-[rgba(var(--subtle),0.7)]">
                     Tomorrow
                   </span>
                 </li>
-                <li className="flex items-center justify-between">
+                <li className="panel panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
                   <span>UX research synthesis</span>
                   <span className="text-xs text-[rgba(var(--subtle),0.7)]">
                     Fri
@@ -217,7 +217,7 @@ export function Home() {
             key={item.label}
             type="button"
             onClick={() => navigate(item.to)}
-            className={`group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.92)] p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
+            className={`panel panel--immersive panel--alive group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.92)] p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
           >
             <span
               className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.hue} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white`}
@@ -243,20 +243,20 @@ export function Home() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
+        <div className="panel panel--immersive panel--alive rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
           <header className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
                 Recent documents
               </p>
-              <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+              <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
                 Workspace library
               </h2>
             </div>
             <button
               type="button"
               onClick={() => navigate("/documents")}
-              className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.7)]"
+              className="btn btn-quiet inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.7)]"
             >
               View all
             </button>
@@ -265,7 +265,7 @@ export function Home() {
             {recentDocs.map((doc) => (
               <div
                 key={doc.name}
-                className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.7)] px-4 py-3 text-sm text-[rgb(var(--text))]"
+                className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.7)] px-4 py-3 text-sm text-[rgb(var(--text))]"
               >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
@@ -278,7 +278,7 @@ export function Home() {
                     </p>
                   </div>
                 </div>
-                <span className="rounded-full bg-[rgba(var(--surface),0.95)] px-3 py-1 text-xs font-semibold text-[rgba(var(--subtle),0.8)]">
+                <span className="chip chip--warn rounded-full bg-[rgba(var(--surface),0.95)] px-3 py-1 text-xs font-semibold text-[rgba(var(--subtle),0.8)]">
                   {doc.status}
                 </span>
               </div>
@@ -286,11 +286,11 @@ export function Home() {
           </div>
         </div>
 
-        <div className="flex h-full flex-col rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
+        <div className="panel panel--immersive panel--alive flex h-full flex-col rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
           <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
             Quick briefs
           </p>
-          <h2 className="mt-2 text-lg font-semibold text-[rgb(var(--text))]">
+          <h2 className="accent-ink mt-2 text-lg font-semibold text-[rgb(var(--text))]">
             Latest decisions
           </h2>
           <div className="mt-4 flex-1 space-y-4 text-sm text-[rgb(var(--text))]">
@@ -316,7 +316,7 @@ export function Home() {
           <button
             type="button"
             onClick={() => navigate("/history")}
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[rgba(var(--brand),0.12)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--brand),0.18)]"
+            className="btn btn-quiet mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[rgba(var(--brand),0.12)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--brand),0.18)]"
           >
             Review timeline <ArrowRight className="size-4" />
           </button>

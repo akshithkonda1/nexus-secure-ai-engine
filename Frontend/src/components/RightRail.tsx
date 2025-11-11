@@ -60,13 +60,13 @@ export function RightRail() {
 
   return (
     <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.65)] px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl lg:flex xl:max-w-sm">
-      <section className="panel panel--glow rounded-3xl border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="panel panel--immersive panel--alive rounded-3xl border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
               Projects
             </p>
-            <h3 className="text-lg font-semibold">In motion</h3>
+            <h3 className="accent-ink text-lg font-semibold">In motion</h3>
           </div>
           <button
             type="button"
@@ -81,7 +81,7 @@ export function RightRail() {
           {featuredProjects.map((project) => (
             <li
               key={project.id}
-              className="rounded-2xl border border-[rgba(var(--border),0.9)] bg-[rgba(var(--panel),0.6)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+              className="panel panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.9)] bg-[rgba(var(--panel),0.6)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
               role="button"
               tabIndex={0}
               onClick={() => {
@@ -117,25 +117,25 @@ export function RightRail() {
         </ul>
       </section>
 
-      <section className="panel panel--glow rounded-3xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="panel panel--immersive rounded-3xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <CalendarClock className="size-4" /> Upcoming
         </p>
         <div className="mt-4 space-y-3 text-sm text-[rgb(var(--text))]">
-          <div className="rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
+          <div className="panel panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
             <p className="font-medium">Roadmap sync</p>
             <p className="text-xs text-[rgb(var(--subtle))]">
               Tomorrow • 9:30am
             </p>
           </div>
-          <div className="rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
+          <div className="panel panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
             <p className="font-medium">Data retention review</p>
             <p className="text-xs text-[rgb(var(--subtle))]">Thu • 2:00pm</p>
           </div>
         </div>
       </section>
 
-      <section className="panel panel--glow rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="panel panel--immersive rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
         <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <Lightbulb className="size-4 text-brand" /> Research signals
         </header>
@@ -143,7 +143,7 @@ export function RightRail() {
           {researchSignals.map((signal) => (
             <li
               key={signal.id}
-              className="rounded-2xl bg-[rgba(var(--panel),0.55)] p-3"
+              className="panel panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3"
             >
               <p className="font-semibold text-[rgb(var(--text))]">
                 {signal.title}
@@ -156,7 +156,7 @@ export function RightRail() {
         </ul>
         <button
           type="button"
-          className="mt-5 btn btn-ghost btn-neo w-full justify-center rounded-2xl text-brand"
+          className="mt-5 btn btn-ghost btn-neo btn-quiet w-full justify-center rounded-2xl text-brand"
           onClick={() => {
             requestDocumentsView("updates");
             navigate("/documents");

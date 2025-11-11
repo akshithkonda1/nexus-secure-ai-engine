@@ -67,7 +67,9 @@ export function Settings() {
       <div className="px-[var(--page-padding)] py-6">
         <div className="grid gap-5 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <SkeletonBlock key={index} />
+            <div key={index} className="panel panel--immersive panel--alive">
+              <SkeletonBlock />
+            </div>
           ))}
         </div>
       </div>
@@ -77,12 +79,12 @@ export function Settings() {
   if (isError) {
     return (
       <div className="px-[var(--page-padding)] py-6">
-        <div className="card p-6 text-center text-sm text-[rgba(var(--subtle),0.85)]">
+        <div className="panel panel--immersive panel--alive card p-6 text-center text-sm text-[rgba(var(--subtle),0.85)]">
           <p>Settings are currently unavailable.</p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="mt-4 btn btn-ghost btn-neo text-brand"
+            className="mt-4 btn btn-ghost btn-neo btn-quiet text-brand"
           >
             <RefreshCcw className="size-4" /> Try again
           </button>
@@ -98,10 +100,10 @@ export function Settings() {
   return (
     <div className="px-[var(--page-padding)] py-6">
       <div className="grid gap-5 lg:grid-cols-3">
-        <div className="card p-5">
+        <div className="panel panel--immersive panel--alive card p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+              <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
                 Workspace identity
               </h3>
               <p className="text-sm text-[rgba(var(--subtle),0.78)]">
@@ -133,7 +135,7 @@ export function Settings() {
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               type="button"
-              className="btn btn-ghost btn-neo rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.85)] hover:text-brand"
+              className="btn btn-ghost btn-neo btn-quiet rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.85)] hover:text-brand"
               onClick={() =>
                 toast.info(
                   "Profile editing opens once the backend issues the endpoint.",
@@ -152,9 +154,9 @@ export function Settings() {
           </div>
         </div>
 
-        <div className="card p-5">
+        <div className="panel panel--immersive panel--alive card p-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+            <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
               Security providers
             </h3>
             {saveSettings.isPending && (
@@ -171,7 +173,7 @@ export function Settings() {
             {data.providers.map((provider) => (
               <li
                 key={provider.id}
-                className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-3"
+                className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-[rgb(var(--text))]">
@@ -193,21 +195,21 @@ export function Settings() {
           </ul>
         </div>
 
-        <div className="card p-5">
-          <h3 className="text-base font-semibold text-[rgb(var(--text))]">
+        <div className="panel panel--immersive panel--alive card p-5">
+          <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
             Usage & retention
           </h3>
           <p className="mt-1 text-sm text-[rgba(var(--subtle),0.78)]">
             Align rate limits with your compliance requirements before go-live.
           </p>
           <dl className="mt-4 space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <div className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Daily requests</dt>
               <dd className="text-[rgb(var(--text))]">
                 {data.limits.dailyRequests.toLocaleString()}
               </dd>
             </div>
-            <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <div className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Max tokens</dt>
               <dd className="text-[rgb(var(--text))]">
                 {data.limits.maxTokens.toLocaleString()}
@@ -217,7 +219,7 @@ export function Settings() {
           <button
             type="button"
             onClick={handleRetentionUpdate}
-            className="mt-5 btn btn-ghost btn-neo text-brand text-xs uppercase tracking-[0.2em]"
+            className="mt-5 btn btn-ghost btn-neo btn-quiet text-brand text-xs uppercase tracking-[0.2em]"
             disabled={saveSettings.isPending}
           >
             {saveSettings.isPending ? (
