@@ -195,8 +195,8 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
   const saveDisabled = busy || invalid || !dirty;
 
   return (
-    <Transition.Root show={open} as={Fragment} appear>
-      <Dialog as="div" className="relative z-[100]" open={open} onClose={close}>
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-[100]" onClose={close}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -205,9 +205,8 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
           leave="ease-in duration-150"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
-          unmount
         >
-          <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/55 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-[rgba(3,7,18,0.55)] backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-[110] overflow-y-auto px-4 py-8 sm:px-6">
@@ -220,7 +219,6 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
               leave="ease-in duration-150"
               leaveFrom="translate-y-0 opacity-100"
               leaveTo="translate-y-4 opacity-0"
-              unmount
             >
               <Dialog.Panel className="relative w-full overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] shadow-[var(--shadow-lift)] backdrop-blur-xl">
                 <form onSubmit={onSubmit} className="grid gap-8 p-8 lg:grid-cols-[320px,1fr] lg:p-10">
