@@ -17,11 +17,14 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import ProjectsPage from "@/features/projects/ProjectsPage";
 import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
 import { ErrorBoundary } from "@/routes/ErrorBoundary";
+import { initTheme } from "./theme";
 
 const Templates = lazy(() => import("@/pages/Templates"));
 const Documents = lazy(() => import("@/pages/Documents"));
 const Activity = lazy(() => import("@/pages/History"));
 const Settings = lazy(() => import("@/pages/Settings"));
+
+initTheme();
 
 const Fallback = () => (
   <section className="panel panel--glassy panel--hover p-6 space-y-4">
