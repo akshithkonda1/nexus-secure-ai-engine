@@ -588,9 +588,24 @@ function AvatarCropDialog({
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
 
+  const needsAnonymousCors = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    if (!src) return false;
+    if (src.startsWith("data:") || src.startsWith("blob:")) return false;
+    try {
+      const url = new URL(src, window.location.href);
+      return url.origin !== window.location.origin;
+    } catch (err) {
+      return false;
+    }
+  }, [src]);
+
   useEffect(() => {
     if (!open) return;
     const img = new Image();
+    if (needsAnonymousCors) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => {
       setNatural({ w: img.naturalWidth, h: img.naturalHeight });
       const v = 360;
@@ -600,7 +615,7 @@ function AvatarCropDialog({
       setPos({ x: 0, y: 0 });
     };
     img.src = src;
-  }, [open, src]);
+  }, [open, src, needsAnonymousCors]);
 
   const clampPan = useCallback(
     (nx: number, ny: number) => {
@@ -650,10 +665,27 @@ function AvatarCropDialog({
     const sy = (-pos.y) / scale;
     const sSize = v / scale;
     const img = new Image();
+    if (needsAnonymousCors) {
+      img.crossOrigin = "anonymous";
+    }
+    const loadImage = new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (event) => reject(event);
+    });
     img.src = src;
-    await new Promise((res) => (img.onload = res));
+    try {
+      await loadImage;
+    } catch (err) {
+      console.error("Failed to load avatar for cropping", err);
+      return;
+    }
     ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, size, size);
-    onSave(canvas.toDataURL("image/jpeg", 0.92));
+    try {
+      onSave(canvas.toDataURL("image/jpeg", 0.92));
+    } catch (err) {
+      console.error("Failed to export cropped avatar", err);
+      return;
+    }
   };
 
   return (
@@ -696,6 +728,7 @@ function AvatarCropDialog({
                     src={src}
                     alt="Crop"
                     draggable={false}
+                    crossOrigin={needsAnonymousCors ? "anonymous" : undefined}
                     style={{
                       transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`,
                       transformOrigin: "top left",
