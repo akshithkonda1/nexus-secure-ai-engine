@@ -5,7 +5,7 @@ export function Panel({ className, children }: PropsWithChildren<{ className?: s
   return (
     <div
       className={cn(
-        "rounded-2xl border border-app bg-panel shadow-sm",
+        "rounded-2xl border border-app bg-panel panel panel--glassy panel--hover shadow-sm",
         className
       )}
     >
@@ -18,7 +18,7 @@ export function InputShell({ className, children }: PropsWithChildren<{ classNam
   return (
     <div
       className={cn(
-        "rounded-2xl border border-app bg-panel text-ink placeholder:text-muted focus-within:border-trustBlue/40 focus-within:ring-2 focus-within:ring-trustBlue/50",
+        "rounded-2xl border border-app bg-panel panel panel--glassy panel--hover text-ink placeholder:text-muted focus-within:border-trustBlue/40 focus-within:ring-2 focus-within:ring-trustBlue/50",
         className
       )}
     >

@@ -60,7 +60,7 @@ export function Documents() {
 
   return (
     <div className="px-[var(--page-padding)] py-6">
-      <div className="panel panel--immersive panel--edge panel--alive card card-hover p-5">
+      <div className="panel panel--glassy panel--hover panel--immersive panel--edge panel--alive card card-hover p-5">
         <input
           ref={fileInputRef}
           type="file"
@@ -120,12 +120,12 @@ export function Documents() {
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="panel panel--immersive h-20 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
+                className="panel panel--glassy panel--hover panel--immersive h-20 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
               />
             ))}
           </div>
         ) : isError ? (
-          <div className="panel panel--immersive panel--alive mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
+          <div className="panel panel--glassy panel--hover panel--immersive panel--alive mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.45)] p-6 text-center text-sm text-[rgb(var(--subtle))]">
             <p>Documents are offline right now.</p>
             <button
               type="button"
@@ -139,7 +139,7 @@ export function Documents() {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="panel panel--immersive panel--alive mt-6">
+          <div className="panel panel--glassy panel--hover panel--immersive panel--alive mt-6">
             <SkeletonBlock />
           </div>
         ) : (
@@ -147,7 +147,7 @@ export function Documents() {
             {filtered.map((item) => (
               <li
                 key={item.id}
-                className="panel panel--immersive panel--alive flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.88)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.6)]"
+                className="panel panel--glassy panel--hover panel--immersive panel--alive flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.88)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.6)]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">

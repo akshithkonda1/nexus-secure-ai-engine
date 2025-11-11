@@ -32,7 +32,7 @@ export function Guides() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="panel halo panel--hover rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
+      <section className="panel panel--glassy panel--hover halo panel--hover rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.75)]">
             Guides
@@ -58,7 +58,7 @@ export function Guides() {
         {steps.map(({ title, description, icon: Icon }) => (
           <article
             key={title}
-            className="panel panel--hover flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.7)]"
+            className="panel panel--glassy panel--hover flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.7)]"
           >
             <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.12)] text-brand">
               <Icon className="size-5" />

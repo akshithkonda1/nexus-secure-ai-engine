@@ -28,13 +28,9 @@
 .lift { transition: transform 140ms ease, box-shadow 140ms ease; }
 .lift:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
 
-/* Subtle dot grid background for hero */
-.bg-grid { position: relative; isolation: isolate; }
+/* Subtle dot grid background removed in favor of ambient gradients */
+.bg-grid { position: relative; isolation: isolate; background: none !important; }
 .bg-grid:before {
   content: "";
-  position: absolute; inset: 0; z-index: -1;
-  background:
-    radial-gradient(circle at 1px 1px, color-mix(in oklab, rgb(var(--text)) 14%, transparent) 1px, transparent 1px)
-    0 0 / 22px 22px;
-  opacity: .15;
+  position: absolute; inset: 0; z-index: -1; opacity: 0; background: none;
 }

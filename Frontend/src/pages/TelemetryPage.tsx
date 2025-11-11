@@ -60,7 +60,7 @@ export default function TelemetryPage() {
         description="Monitor usage, latency, and guardrail health across your Nexus providers."
       />
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-ink">Usage trends</h2>
@@ -75,7 +75,7 @@ export default function TelemetryPage() {
                 className="bg-transparent text-sm text-ink focus:outline-none"
               >
                 {providerOptions.map((option) => (
-                  <option key={option} value={option} className="bg-panel text-ink">
+                  <option key={option} value={option} className="bg-panel panel panel--glassy panel--hover text-ink">
                     {option === "all" ? "All providers" : option}
                   </option>
                 ))}
@@ -91,7 +91,7 @@ export default function TelemetryPage() {
                 className="bg-transparent text-sm text-ink focus:outline-none"
               >
                 {RANGES.map((option) => (
-                  <option key={option.value} value={option.value} className="bg-panel text-ink">
+                  <option key={option.value} value={option.value} className="bg-panel panel panel--glassy panel--hover text-ink">
                     {option.label}
                   </option>
                 ))}
@@ -133,7 +133,7 @@ type MetricCardProps = {
 
 function MetricCard({ title, value, points, dataKey, accent }: MetricCardProps) {
   return (
-    <div className="flex h-full flex-col gap-3 rounded-3xl border border-app bg-panel p-5 shadow-lg">
+    <div className="flex h-full flex-col gap-3 rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-5 shadow-lg">
       <div>
         <h3 className="text-sm font-semibold text-ink">{title}</h3>
         <p className="text-2xl font-semibold text-ink">{value}</p>

@@ -8,7 +8,7 @@ export function AppearanceControls() {
       onClick={() => setPref(value)}
       className={[
         "rounded-xl border px-3.5 py-2 text-sm transition",
-        pref === value ? "bg-panel text-ink border-trustBlue" : "bg-app text-muted border-app hover:text-ink"
+        pref === value ? "bg-panel panel panel--glassy panel--hover text-ink border-trustBlue" : "bg-app text-muted border-app hover:text-ink"
       ].join(" ")}
       aria-pressed={pref === value}
     >
@@ -16,7 +16,7 @@ export function AppearanceControls() {
     </button>
   );
   return (
-    <div className="rounded-2xl border border-app bg-panel p-4">
+    <div className="rounded-2xl border border-app bg-panel panel panel--glassy panel--hover p-4">
       <h3 className="mb-2 text-base font-semibold text-ink">Appearance</h3>
       <p className="mb-3 text-sm text-muted">Choose how Nexus renders. <span className="ml-2 text-ink/60">Current: {effective}</span></p>
       <div className="flex flex-wrap gap-2">

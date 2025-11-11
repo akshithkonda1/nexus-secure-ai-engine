@@ -31,11 +31,11 @@ export function AppShell() {
           <label className="sr-only" htmlFor="global-search">
             Search
           </label>
-          <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+          <div className="panel panel--glassy panel--hover flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
             <div className="i" aria-hidden>
               🔎
             </div>
-            <input id="global-search" placeholder="Search" className="flex-1 bg-transparent outline-none text-sm" />
+            <input id="global-search" placeholder="Search" className="input flex-1 border-0 bg-transparent px-0 outline-none text-sm" />
             <kbd className="text-xs text-muted-foreground">⌘K</kbd>
           </div>
 
@@ -58,7 +58,7 @@ export function AppShell() {
         {/* Footer: theme + profile */}
         <div className="absolute bottom-0 left-0 right-0 border-t p-3 space-y-3">
           <ThemeToggle className="w-full justify-between rounded-xl border border-border bg-background text-xs uppercase tracking-wide" />
-          <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+          <div className="panel panel--glassy panel--hover flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
             <div className="grid size-7 place-items-center rounded-full bg-muted text-xs font-medium">{initials}</div>
             <div className="text-sm">
               <div className="font-medium">{user.name}</div>
@@ -74,7 +74,7 @@ export function AppShell() {
           <div className="text-sm font-semibold">
             Projects <span className="text-muted-foreground">(7)</span>
           </div>
-          <button className="text-muted-foreground">⋯</button>
+          <button className="btn btn-ghost text-muted-foreground">⋯</button>
         </div>
         <ProjectsRail />
       </aside>
@@ -87,13 +87,13 @@ export function AppShell() {
             <Button className="rounded-full px-3 py-1 text-sm">
               ⚡ Upgrade
             </Button>
-            <button aria-label="Notifications" className="rounded-full p-2 hover:bg-muted">
+            <button aria-label="Notifications" className="btn btn-ghost rounded-full p-2 hover:bg-muted">
               🔔
             </button>
-            <button aria-label="Grid" className="rounded-full p-2 hover:bg-muted">
+            <button aria-label="Grid" className="btn btn-ghost rounded-full p-2 hover:bg-muted">
               ⬛
             </button>
-            <button aria-label="Assistant" className="rounded-full p-2 hover:bg-muted">
+            <button aria-label="Assistant" className="btn btn-ghost rounded-full p-2 hover:bg-muted">
               🤖
             </button>
           </div>
