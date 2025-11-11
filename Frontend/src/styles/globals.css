@@ -115,3 +115,15 @@
     border-color: color-mix(in oklab, rgb(var(--ring)) 55%, transparent);
   }
 }
+
+/* --- BEGIN PATCH: ambient layering and z-index safety --- */
+#root, .app-root { position: relative; z-index: 1; }
+
+.page-ambient, .page-halo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+/* --- END PATCH --- */
