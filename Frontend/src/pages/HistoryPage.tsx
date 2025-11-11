@@ -75,7 +75,7 @@ export default function HistoryPage() {
         description="Inspect every action across Nexus sessions with fine-grained filters."
       />
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex flex-wrap items-center gap-3">
           <Filter className="h-5 w-5 text-trustBlue" aria-hidden="true" />
           <h2 className="text-lg font-semibold text-ink">Filters</h2>
@@ -159,7 +159,7 @@ export default function HistoryPage() {
         </div>
       </section>
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <History className="h-5 w-5 text-trustBlue" aria-hidden="true" />
           <h2 className="text-lg font-semibold text-ink">Audit log</h2>

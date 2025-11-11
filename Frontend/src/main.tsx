@@ -24,7 +24,7 @@ const Activity = lazy(() => import("@/pages/History"));
 const Settings = lazy(() => import("@/pages/Settings"));
 
 const Fallback = () => (
-  <section className="panel p-6 space-y-4">
+  <section className="panel panel--glassy panel--hover p-6 space-y-4">
     <div className="skeleton skeleton-line w-48" />
     <div className="skeleton skeleton-line w-80" />
     <div className="skeleton skeleton-line w-64" />

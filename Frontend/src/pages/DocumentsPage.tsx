@@ -51,7 +51,7 @@ export default function DocumentsPage() {
         description="Manage transcripts, attachments, and guardrail evidence with in a way that is easy to use."
       />
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold text-ink">Workspace library</h2>
@@ -61,14 +61,14 @@ export default function DocumentsPage() {
             <button
               type="button"
               onClick={handleUpload}
-              className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              className="btn btn-primary inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             >
               <Upload className="h-4 w-4" aria-hidden="true" /> Upload
             </button>
             <button
               type="button"
               onClick={handleNewFolder}
-              className="inline-flex items-center gap-2 rounded-full border border-app px-4 py-2 text-sm font-semibold text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              className="btn btn-ghost inline-flex items-center gap-2 rounded-full border border-app px-4 py-2 text-sm font-semibold text-muted transition hover:border-trustBlue/60 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             >
               <FolderPlus className="h-4 w-4" aria-hidden="true" /> New folder
             </button>
@@ -82,7 +82,7 @@ export default function DocumentsPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search documents"
-              className="h-10 w-full rounded-full border border-app bg-app px-9 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
+              className="input h-10 w-full rounded-full border border-app bg-app px-9 text-sm text-ink placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70"
             />
           </div>
           <span className="text-xs text-muted">{filtered.length} items</span>

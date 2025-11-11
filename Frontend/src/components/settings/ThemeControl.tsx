@@ -15,7 +15,7 @@ export default function ThemeControl() {
   const { pref, setPref } = useTheme();
 
   return (
-    <fieldset className="panel p-4">
+    <fieldset className="panel panel--glassy panel--hover p-4">
       <legend className="mb-2 text-sm font-medium text-muted">Appearance</legend>
       <div className="flex flex-wrap gap-2">
         {OPTIONS.map(o => (

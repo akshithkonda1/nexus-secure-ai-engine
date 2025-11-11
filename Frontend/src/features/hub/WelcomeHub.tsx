@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function WelcomeHub() {
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="rounded-3xl bg-card/40 border p-10 text-center">
+      <div className="panel panel--glassy panel--hover rounded-3xl bg-card/40 border p-10 text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Welcome to Nexus</h1>
         <p className="mt-3 text-muted-foreground">Get started by asking Nexus to do something. Not sure where to start?</p>
 
@@ -18,7 +18,7 @@ export default function WelcomeHub() {
 
         {/* Prompt bar */}
         <div className="mt-10 max-w-3xl mx-auto">
-          <div className="rounded-2xl border bg-background p-2">
+          <div className="panel panel--glassy panel--hover rounded-2xl border bg-background p-2">
             <div className="flex items-center gap-2 px-2 pb-2">
               <Button variant="ghost" size="sm">
                 📎 Attach
@@ -30,9 +30,9 @@ export default function WelcomeHub() {
                 🔍 Browse Prompts
               </Button>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-3">
-              <input className="flex-1 bg-transparent outline-none text-sm" placeholder="Summarize the latest…" />
-              <button className="rounded-full p-2 hover:bg-muted" aria-label="Send">
+            <div className="panel panel--glassy panel--hover flex items-center gap-2 rounded-xl border bg-background px-3 py-3">
+              <input className="input flex-1 border-0 bg-transparent px-0 outline-none text-sm" placeholder="Summarize the latest…" />
+              <button className="btn btn-primary rounded-full p-2 hover:bg-muted" aria-label="Send">
                 ➤
               </button>
             </div>
@@ -50,7 +50,7 @@ function Chip({ label, to }: { label: string; to: string }) {
   return (
     <Link
       to={to}
-      className="group w-full rounded-2xl border bg-background px-4 py-3 flex items-center justify-between hover:bg-muted transition"
+      className="panel panel--glassy panel--hover group w-full rounded-2xl border bg-background px-4 py-3 flex items-center justify-between hover:bg-muted transition"
     >
       <div className="flex items-center gap-3">
         <span className="size-9 rounded-xl grid place-items-center bg-muted">🟡</span>

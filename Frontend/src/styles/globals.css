@@ -6,83 +6,57 @@
 /* ---------- TOKENS ---------- */
 @layer base {
   :root {
-    /* Light */
-    --bg: 249 250 252;           /* page */
-    --surface: 255 255 255;      /* chrome */
-    --panel: 246 248 252;        /* cards */
-    --text: 17 24 39;            /* slate-900 */
-    --border: 30 41 59 / 0.12;
-    --subtle: 100 116 139;
-    --muted: 148 163 184;
+    /* Light (alabaster) */
+    --alabaster: 250 250 249;           /* #FAFAF9 */
+    --bg: var(--alabaster);
+    --surface: 255 255 255;
+    --panel: 255 255 255;
+    --text: 17 24 39;                   /* slate-900 */
+    --border: 17 24 39 / 0.10;          /* faint */
 
-    --accent-emerald: 20 184 166;
-    --accent-emerald-ink: 15 118 110;
-    --accent-amber: 249 115 22;
-    --accent-amber-ink: 180 83 9;
-    --accent-lilac: 196 181 253;
-    --accent-rose: 244 114 182;
-    --accent-rose-ink: 190 24 93;
-    --brand-soft: 99 102 241;
-    --status-success: 34 197 94;
-    --status-warning: 234 179 8;
-    --status-critical: 239 68 68;
+    /* Brand blues */
+    --brand: 30 64 175;                 /* #1E40AF */
+    --brand-ice: 147 197 253;           /* #93C5FD */
 
-    --brand: 30 64 175;          /* #1E40AF */
-    --brand-2: 13 148 136;       /* #0EA5A4 */
-    --ring: 56 189 248;          /* sky-400 */
-
-    --elev-1: 0 10px 30px rgba(2, 6, 23, 0.06);
-    --elev-2: 0 20px 60px rgba(2, 6, 23, 0.10);
-
-    --page-grad-from: 255 255 255;
-    --page-grad-via: 238 242 255;
-    --page-grad-to: 231 245 255;
+    /* Elevation */
+    --elev-1: 0 10px 30px rgba(30,64,175,.06);
+    --elev-2: 0 18px 48px rgba(2,6,23,.12);
   }
 
   .dark {
-    /* Dark (deep navy) */
+    /* Deep navy dark */
     --bg: 9 14 26;
     --surface: 15 20 34;
     --panel: 18 24 42;
     --text: 241 245 249;
     --border: 241 245 249 / 0.08;
-    --subtle: 148 163 184;
-    --muted: 100 116 139;
 
-    --accent-emerald: 16 185 129;
-    --accent-emerald-ink: 45 212 191;
-    --accent-amber: 251 191 36;
-    --accent-amber-ink: 253 230 138;
-    --accent-lilac: 165 180 252;
-    --accent-rose: 244 114 182;
-    --accent-rose-ink: 249 168 212;
-    --brand-soft: 79 70 229;
-    --status-success: 45 212 191;
-    --status-warning: 251 191 36;
-    --status-critical: 248 113 113;
-
-    --ring: 125 211 252;         /* sky-300 */
-    --elev-1: 0 10px 30px rgba(0, 0, 0, 0.35);
-    --elev-2: 0 20px 60px rgba(0, 0, 0, 0.55);
-
-    --page-grad-from: 8 12 24;
-    --page-grad-via: 10 15 28;
-    --page-grad-to: 14 20 36;
+    --elev-1: 0 12px 32px rgba(0,0,0,.35);
+    --elev-2: 0 20px 60px rgba(0,0,0,.55);
   }
 
   html, body, #root { height: 100%; }
+
+  /* Kill any dot/grid backgrounds */
+  .bg-grid, .page-grid, body.bg-grid { background: none !important; }
+
+  /* Page background: alabaster + blue ambience */
   body {
     color: rgb(var(--text));
     background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(var(--brand),0.06), transparent 60%),
-      linear-gradient(180deg,
-        rgb(var(--page-grad-from)) 0%,
-        rgb(var(--page-grad-via)) 30%,
-        rgb(var(--page-grad-to)) 100%);
+      radial-gradient(1000px 520px at 8% -10%, rgba(var(--brand) / .08), transparent 60%),
+      radial-gradient(820px 420px at 92% 8%, rgba(var(--brand-ice) / .22), transparent 65%),
+      linear-gradient(180deg, rgb(var(--alabaster)) 0%, #F6F8FF 100%);
     background-attachment: fixed;
   }
 
-  :root { color-scheme: light dark; }
+  /* Page background: dark */
+  .dark body {
+    background:
+      radial-gradient(1000px 520px at -10% 0%, rgba(125 211 252 /.10), transparent 55%),
+      linear-gradient(180deg, #0B111E 0%, #0E1524 60%, #0B0F1A 100%);
+    background-attachment: fixed;
+  }
 }
 
 /* Smooth theme switch */
@@ -91,54 +65,23 @@
              box-shadow .25s ease, fill .25s ease, stroke .25s ease !important;
 }
 
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce){
-  * { animation: none !important; transition: none !important; }
-}
-
-/* ---------- UTILITIES (no layout change) ---------- */
+/* ---------- GLASSY UTILITIES (non-layout) ---------- */
 @layer components {
   .panel {
-    @apply rounded-2xl border backdrop-blur-xl;
-    background-color: color-mix(in oklab, rgb(var(--panel)) 92%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--text)) 12%, transparent);
+    @apply relative rounded-2xl border backdrop-blur-xl;
+    background: color-mix(in oklab, rgb(var(--panel)) 82%, transparent);
+    border-color:
+      color-mix(in oklab, rgb(var(--text)) 10%, color-mix(in oklab, rgb(var(--brand)) 14%, transparent));
     box-shadow: var(--elev-1);
+  }
+  .panel--glassy::after {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 38%;
+    pointer-events: none; border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255 255 255 /.55), rgba(255 255 255 / 0) 70%);
   }
   .panel--hover { transition: transform .18s ease, box-shadow .18s ease; }
   .panel--hover:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
-  .panel--lift { box-shadow: var(--elev-2); }
-
-  .halo { position: relative; }
-  .halo::before {
-    content: ""; position: absolute; inset: -1px -1px auto -1px; height: 80px; z-index: 0;
-    background: radial-gradient(60% 120% at 10% 0%,
-      color-mix(in oklab, rgb(var(--brand)) 12%, transparent), transparent 70%);
-    filter: blur(16px); pointer-events: none;
-  }
-
-  .chip {
-    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--brand)) 8%, transparent);
-  }
-  .chip--ok    { background: color-mix(in oklab, rgb(var(--brand-2)) 16%, transparent); }
-  .chip--warn  { background: color-mix(in oklab, #f59e0b 22%, transparent); }
-  .chip--alert { background: color-mix(in oklab, #ef4444 22%, transparent); }
-
-  .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition; }
-  .btn-primary {
-    color: white;
-    background: linear-gradient(180deg,
-      color-mix(in oklab, rgb(var(--brand)) 94%, white 8%),
-      color-mix(in oklab, rgb(var(--brand)) 84%, black 4%));
-    box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--brand)) 30%, transparent);
-  }
-  .btn-primary:hover { filter: brightness(1.04); }
-  .btn-ghost {
-    @apply border;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--panel)) 70%, transparent);
-  }
 
   .input {
     @apply h-11 rounded-xl px-3 text-sm outline-none border transition;
@@ -146,10 +89,23 @@
     background: color-mix(in oklab, rgb(var(--surface)) 88%, transparent);
   }
   .input:focus {
-    box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--ring)) 45%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--ring)) 50%, transparent);
+    box-shadow: 0 0 0 3px rgba(147 197 253 /.45);
+    border-color: rgba(147 197 253 /.55);
   }
 
-  .skeleton { @apply animate-pulse rounded-lg bg-white/30 dark:bg-white/10; }
-  .skeleton-line { height: 12px; }
+  .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition; }
+  .btn-primary {
+    color: white;
+    background: linear-gradient(180deg,
+      color-mix(in oklab, rgb(var(--brand)) 94%, white 8%),
+      color-mix(in oklab, rgb(var(--brand)) 84%, black 4%));
+    box-shadow: 0 8px 24px rgba(30 64 175 /.25);
+  }
+  .btn-primary:hover { filter: brightness(1.04); }
+
+  .btn-ghost {
+    @apply border;
+    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
+    background: color-mix(in oklab, rgb(var(--surface)) 70%, transparent);
+  }
 }

@@ -101,7 +101,7 @@ export default function ChatPage() {
       {error && (
         <div className="flex items-center justify-between gap-3 border-b border-red-800/20 bg-red-500/10 px-4 py-2 text-sm text-red-600 dark:text-red-300">
           <span>{error}</span>
-          <button onClick={reconnect} className="rounded-md border border-red-500/30 px-2 py-1">Reconnect</button>
+          <button onClick={reconnect} className="btn btn-ghost rounded-md border border-red-500/30 px-2 py-1">Reconnect</button>
         </div>
       )}
 
@@ -142,7 +142,7 @@ export default function ChatPage() {
       {!isAtBottom && (
         <button
           onClick={() => scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" })}
-          className="fixed bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-app bg-panel px-4 py-2 text-sm shadow-lg transition hover:shadow-xl"
+          className="fixed bottom-28 left-1/2 -translate-x-1/2 rounded-full border border-app bg-panel panel panel--glassy panel--hover px-4 py-2 text-sm shadow-lg transition hover:shadow-xl"
         >
           <span className="inline-flex items-center gap-1"><ChevronDown className="h-4 w-4" /> New messages</span>
         </button>
@@ -161,7 +161,7 @@ export default function ChatPage() {
           <div className="flex items-end gap-2">
             <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={(e) => handleFileSelect(e.target.files)} />
 
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={attachments.length >= MAX_ATTACHMENTS} className="grid h-10 w-10 place-items-center rounded-full bg-app text-muted transition hover:bg-app/80 hover:text-ink disabled:opacity-50" aria-label="Attach files">
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={attachments.length >= MAX_ATTACHMENTS} className="btn btn-ghost grid h-10 w-10 place-items-center rounded-full bg-app text-muted transition hover:bg-app/80 hover:text-ink disabled:opacity-50" aria-label="Attach files">
               <Paperclip className="h-5 w-5" />
             </button>
 
@@ -181,7 +181,7 @@ export default function ChatPage() {
               </div>
             </div>
 
-            <motion.button type="button" onClick={handleSend} disabled={!canSend} whileHover={canSend ? { scale: 1.05 } : {}} whileTap={canSend ? { scale: 0.95 } : {}} className="grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50" aria-label="Send message">
+            <motion.button type="button" onClick={handleSend} disabled={!canSend} whileHover={canSend ? { scale: 1.05 } : {}} whileTap={canSend ? { scale: 0.95 } : {}} className="btn btn-primary grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50" aria-label="Send message">
               <Send className="h-5 w-5" />
             </motion.button>
           </div>

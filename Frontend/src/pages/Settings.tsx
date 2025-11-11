@@ -67,7 +67,7 @@ export function Settings() {
       <div className="px-[var(--page-padding)] py-6">
         <div className="grid gap-5 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="panel panel--immersive panel--alive">
+            <div key={index} className="panel panel--glassy panel--hover panel--immersive panel--alive">
               <SkeletonBlock />
             </div>
           ))}
@@ -79,7 +79,7 @@ export function Settings() {
   if (isError) {
     return (
       <div className="px-[var(--page-padding)] py-6">
-        <div className="panel panel--immersive panel--alive card p-6 text-center text-sm text-[rgba(var(--subtle),0.85)]">
+        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-6 text-center text-sm text-[rgba(var(--subtle),0.85)]">
           <p>Settings are currently unavailable.</p>
           <button
             type="button"
@@ -100,7 +100,7 @@ export function Settings() {
   return (
     <div className="px-[var(--page-padding)] py-6">
       <div className="grid gap-5 lg:grid-cols-3">
-        <div className="panel panel--immersive panel--alive card p-5">
+        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
@@ -154,7 +154,7 @@ export function Settings() {
           </div>
         </div>
 
-        <div className="panel panel--immersive panel--alive card p-5">
+        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
           <div className="flex items-center justify-between">
             <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
               Security providers
@@ -173,7 +173,7 @@ export function Settings() {
             {data.providers.map((provider) => (
               <li
                 key={provider.id}
-                className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-3"
+                className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-3"
               >
                 <div>
                   <p className="text-sm font-semibold text-[rgb(var(--text))]">
@@ -195,7 +195,7 @@ export function Settings() {
           </ul>
         </div>
 
-        <div className="panel panel--immersive panel--alive card p-5">
+        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
           <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
             Usage & retention
           </h3>
@@ -203,13 +203,13 @@ export function Settings() {
             Align rate limits with your compliance requirements before go-live.
           </p>
           <dl className="mt-4 space-y-3 text-sm">
-            <div className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Daily requests</dt>
               <dd className="text-[rgb(var(--text))]">
                 {data.limits.dailyRequests.toLocaleString()}
               </dd>
             </div>
-            <div className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
               <dt className="text-[rgba(var(--subtle),0.7)]">Max tokens</dt>
               <dd className="text-[rgb(var(--text))]">
                 {data.limits.maxTokens.toLocaleString()}

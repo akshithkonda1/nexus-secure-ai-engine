@@ -60,7 +60,7 @@ function SessionCard({ session }: { session: Session }) {
   return (
     <motion.article
       layout
-      className="group flex flex-col justify-between rounded-3xl border border-app bg-panel p-5 text-ink shadow-lg transition hover:-translate-y-1 hover:border-trustBlue/60 hover:shadow-2xl"
+      className="group flex flex-col justify-between rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-5 text-ink shadow-lg transition hover:-translate-y-1 hover:border-trustBlue/60 hover:shadow-2xl"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -110,7 +110,7 @@ function SessionCard({ session }: { session: Session }) {
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <div className="flex flex-col gap-4 rounded-3xl border border-app bg-panel p-5 text-ink shadow-lg">
+    <div className="flex flex-col gap-4 rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-5 text-ink shadow-lg">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-ink">{project.name}</h3>
@@ -161,7 +161,7 @@ function AuditTrail({ events }: { events: AuditEvent[] }) {
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <Star className="h-4 w-4 text-trustBlue" aria-hidden="true" /> {group.label}
           </div>
-          <div className="space-y-3 rounded-3xl border border-app bg-panel p-4 text-sm text-muted shadow-inner">
+          <div className="space-y-3 rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-4 text-sm text-muted shadow-inner">
             {group.items.map((event) => (
               <div key={event.id} className="flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-1 rounded-full bg-app/60 px-2 py-1 text-[0.7rem] uppercase tracking-[0.2em] text-trustBlue">
@@ -221,7 +221,7 @@ export default function SessionsPage() {
         }
       />
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-ink">Recent sessions</h2>

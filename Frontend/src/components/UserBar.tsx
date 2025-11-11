@@ -116,7 +116,7 @@ function PromptBrowserButton({ items }: { items: MenuItem[] }) {
         <div
           ref={menuRef}
           role="menu"
-          className="absolute right-0 z-50 mt-2 min-w-[18rem] overflow-hidden rounded-xl border border-white/10 bg-panel text-ink shadow-xl backdrop-blur"
+          className="absolute right-0 z-50 mt-2 min-w-[18rem] overflow-hidden rounded-xl border border-white/10 bg-panel panel panel--glassy panel--hover text-ink shadow-xl backdrop-blur"
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">Quick Prompts</div>
           <div className="h-px w-full bg-white/10" />
@@ -377,7 +377,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
           </div>
 
           {/* Photo */}
-          <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
             <p className="mb-3 text-sm font-medium">Photo</p>
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-full ring-1 ring-white/15">
@@ -421,7 +421,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
           </div>
 
           {/* Identity */}
-          <div className="mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
             <p className="mb-3 text-sm font-medium">Identity</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
               <div className="sm:col-span-4">
@@ -456,14 +456,14 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2">
-            <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink">
+            <button type="button" onClick={onClose} className="btn btn-ghost rounded-md px-3 py-1.5 text-sm text-muted transition hover:text-ink">
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSave}
               aria-disabled={!canSave}
-              className="inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
+              className="btn btn-primary inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
             >
               {saveState === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save
@@ -594,7 +594,7 @@ export function UserBar() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="border-t border-app bg-panel px-4 py-4 text-muted backdrop-blur lg:px-8"
+        className="border-t border-app bg-panel panel panel--glassy panel--hover px-4 py-4 text-muted backdrop-blur lg:px-8"
         aria-label="User controls"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

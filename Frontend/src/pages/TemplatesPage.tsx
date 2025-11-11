@@ -46,7 +46,7 @@ export default function TemplatesPage() {
         description="Kick-start trusted workflows built for compliance, audits, and research."
       />
 
-      <section className="rounded-3xl border border-app bg-panel p-6 shadow-xl">
+      <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-ink">Browse templates</h2>
@@ -70,7 +70,7 @@ export default function TemplatesPage() {
                 className="bg-transparent text-sm text-ink focus:outline-none"
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat} className="bg-panel text-ink">
+                  <option key={cat} value={cat} className="bg-panel panel panel--glassy panel--hover text-ink">
                     {cat === "all" ? "All categories" : cat}
                   </option>
                 ))}
@@ -91,7 +91,7 @@ export default function TemplatesPage() {
               <motion.article
                 key={template.id}
                 whileHover={{ y: -6 }}
-                className="flex h-full flex-col justify-between rounded-3xl border border-app bg-panel p-5 shadow-lg"
+                className="flex h-full flex-col justify-between rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-5 shadow-lg"
               >
                 <div className="space-y-3">
                   <span className="inline-flex items-center gap-2 rounded-full bg-trustBlue/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-trustBlue">

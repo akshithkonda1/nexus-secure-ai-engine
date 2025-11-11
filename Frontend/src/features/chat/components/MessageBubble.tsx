@@ -22,7 +22,7 @@ export function MessageBubble({ message }: { message: Message }) {
           "relative max-w-[78ch] whitespace-pre-wrap leading-relaxed text-[15px]",
           "px-4 py-2.5 rounded-2xl shadow-lg border",
           mine ? "bg-gradient-to-br from-trustBlue to-blue-600 text-white border-trustBlue/70 rounded-tr-none"
-               : "bg-panel text-ink border-app rounded-tl-none"
+               : "bg-panel panel panel--glassy panel--hover text-ink border-app rounded-tl-none"
         ].join(" ")}>
         {message.text}
         <div className={`mt-1.5 text-[10px] tracking-wide ${mine ? "text-white/70" : "text-ink/50"}`} aria-hidden="true">
