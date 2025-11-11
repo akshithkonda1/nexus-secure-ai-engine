@@ -10,6 +10,7 @@ const controls = [
     owner: "Security",
     status: "In progress",
     due: "Due Thu",
+    tone: "warn",
   },
   {
     id: "ctl-2",
@@ -17,6 +18,7 @@ const controls = [
     owner: "Legal",
     status: "Scheduled",
     due: "Due Fri",
+    tone: "warn",
   },
   {
     id: "ctl-3",
@@ -24,17 +26,18 @@ const controls = [
     owner: "Compliance",
     status: "Ready",
     due: "Due Mon",
+    tone: "ok",
   },
 ];
 
 export function Governance() {
   return (
     <div className="space-y-8">
-      <header className="rounded-[28px] border border-[rgba(var(--border),0.7)] bg-white/80 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+      <header className="panel panel--immersive panel--edge panel--halo panel--alive halo panel--hover panel--glow panel--gradient-border rounded-[28px] border border-[rgba(var(--border),0.7)] bg-white/80 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Governance center</p>
-            <h1 className="text-2xl font-semibold text-[rgb(var(--text))]">Policies, guardrails, and audit trails</h1>
+            <h1 className="accent-ink text-2xl font-semibold text-[rgb(var(--text))]">Policies, guardrails, and audit trails</h1>
           </div>
           <ShieldCheck className="size-8 text-brand" />
         </div>
@@ -45,7 +48,7 @@ export function Governance() {
       </header>
 
       <section className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+        <div className="panel panel--immersive panel--alive panel--hover panel--glow panel--gradient-border rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
           <div className="flex items-center gap-3">
             <ShieldAlert className="size-5 text-brand" />
             <div>
@@ -55,7 +58,7 @@ export function Governance() {
           </div>
           <p className="mt-3 text-sm text-[rgba(var(--subtle),0.8)]">Auto-enforced on chat, uploads, and batch orchestrations.</p>
         </div>
-        <div className="rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+        <div className="panel panel--immersive panel--alive panel--hover panel--glow panel--gradient-border rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
           <div className="flex items-center gap-3">
             <Workflow className="size-5 text-brand" />
             <div>
@@ -65,7 +68,7 @@ export function Governance() {
           </div>
           <p className="mt-3 text-sm text-[rgba(var(--subtle),0.8)]">Risk sign-off triggered when sensitive prompts are detected.</p>
         </div>
-        <div className="rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+        <div className="panel panel--immersive panel--alive panel--hover panel--glow panel--gradient-border rounded-[24px] border border-[rgba(var(--border),0.7)] bg-white/85 p-5 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
           <div className="flex items-center gap-3">
             <CheckCircle className="size-5 text-brand" />
             <div>
@@ -77,16 +80,16 @@ export function Governance() {
         </div>
       </section>
 
-      <section className="rounded-[26px] border border-[rgba(var(--border),0.7)] bg-white/85 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+      <section className="panel panel--immersive panel--alive panel--hover panel--glow panel--gradient-border rounded-[26px] border border-[rgba(var(--border),0.7)] bg-white/85 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">Open items</p>
-            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">Compliance tasks</h2>
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">Compliance tasks</h2>
           </div>
           <button
             type="button"
             onClick={() => requestDocumentsView("audit")}
-            className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.6)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand"
+            className="btn btn-ghost btn-neo btn-quiet rounded-full px-3 py-1 text-xs uppercase tracking-[0.24em] text-brand"
           >
             <FileWarning className="size-4" /> Export audit log
           </button>
@@ -95,7 +98,7 @@ export function Governance() {
           {controls.map((item) => (
             <li
               key={item.id}
-              className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] px-4 py-3 text-sm text-[rgb(var(--text))]"
+              className="panel panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] px-4 py-3 text-sm text-[rgb(var(--text))]"
             >
               <div>
                 <p className="font-semibold">{item.title}</p>
@@ -103,7 +106,15 @@ export function Governance() {
               </div>
               <div className="text-right">
                 <span className="text-xs text-[rgba(var(--subtle),0.7)]">{item.due}</span>
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand">
+                <span
+                  className={`ml-2 ${
+                    item.tone === "ok"
+                      ? "chip chip--ok"
+                      : item.tone === "warn"
+                        ? "chip chip--warn"
+                        : "chip"
+                  }`}
+                >
                   {item.status}
                 </span>
               </div>
@@ -112,7 +123,7 @@ export function Governance() {
         </ul>
       </section>
 
-      <section className="rounded-[26px] border border-[rgba(var(--border),0.7)] bg-white/85 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
+      <section className="panel panel--immersive panel--alive panel--glow rounded-[26px] border border-[rgba(var(--border),0.7)] bg-white/85 p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.7)]">
         <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
           <AlertTriangle className="size-4 text-brand" /> Policy alerts
         </header>

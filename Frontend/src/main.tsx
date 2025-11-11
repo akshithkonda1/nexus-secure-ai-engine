@@ -18,6 +18,8 @@ import { Guides } from "@/pages/Guides";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeToggle";
 import { ProfileProvider } from "@/features/profile/ProfileProvider";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
+import ProjectsPage from "@/features/projects/ProjectsPage";
+import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const router = createBrowserRouter([
       { path: "templates", element: <Templates /> },
       { path: "documents", element: <Documents /> },
       { path: "history", element: <History /> },
+      { path: "projects", element: <ProjectsPage /> },
+      { path: "projects/all", element: <ProjectsAllPage /> },
       { path: "governance", element: <Governance /> },
       { path: "guides", element: <Guides /> },
       { path: "settings", element: <Settings /> },

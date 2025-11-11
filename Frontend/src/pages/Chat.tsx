@@ -60,20 +60,20 @@ export function Chat() {
 
   return (
     <section className="flex h-full flex-col gap-6">
-      <header className="rounded-2xl bg-[rgb(var(--panel))] px-6 py-4 shadow-[var(--elev-1)]">
-        <h1 className="text-xl font-semibold">Chat Console</h1>
+      <header className="panel panel--immersive panel--alive rounded-2xl bg-[rgb(var(--panel))] px-6 py-4 shadow-[var(--elev-1)]">
+        <h1 className="accent-ink text-xl font-semibold">Chat Console</h1>
         <p className="text-sm text-[rgb(var(--subtle))]">
           Collaborate with Nexus, attach documents, and keep discussions in one place.
         </p>
       </header>
 
-      <div className="flex-1 overflow-hidden rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] shadow-[var(--elev-1)]">
+      <div className="panel panel--immersive flex-1 overflow-hidden rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] shadow-[var(--elev-1)]">
         <div className="h-full overflow-y-auto p-6">
           <div className="space-y-4">
             {messages.map((message) => (
               <article
                 key={message.id}
-                className={`rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-5 py-4 shadow-sm ${
+                className={`panel panel--immersive panel--alive rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-5 py-4 shadow-sm ${
                   message.role === "user" ? "border-brand/40" : ""
                 }`}
               >
@@ -104,14 +104,14 @@ export function Chat() {
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-3 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-4 shadow-[var(--elev-1)]"
+        className="panel panel--immersive panel--alive flex flex-col gap-3 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-4 shadow-[var(--elev-1)]"
       >
         <textarea
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
           rows={3}
           placeholder="Ask a question or describe what you need..."
-          className="w-full resize-none rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/40"
+          className="input w-full resize-none rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/40"
         />
 
         {pendingAttachments.length > 0 && (
@@ -136,7 +136,7 @@ export function Chat() {
             <button
               type="button"
               onClick={triggerFilePicker}
-              className="rounded-full border border-[color:rgba(var(--border))] px-4 py-2 text-sm text-[rgb(var(--text))] transition hover:bg-[rgb(var(--panel))]"
+              className="btn btn-quiet rounded-full border border-[color:rgba(var(--border))] px-4 py-2 text-sm text-[rgb(var(--text))] transition hover:bg-[rgb(var(--panel))]"
             >
               Attach files
             </button>
@@ -153,7 +153,7 @@ export function Chat() {
 
           <button
             type="submit"
-            className="rounded-full bg-[rgba(var(--brand),0.98)] px-6 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[var(--elev-1)] transition hover:shadow-[var(--elev-2)]"
+            className="btn btn-primary rounded-full bg-[rgba(var(--brand),0.98)] px-6 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[var(--elev-1)] transition hover:shadow-[var(--elev-2)]"
           >
             Send
           </button>
