@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],  // we toggle by adding/removing .dark on <html>
+  darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -17,10 +17,7 @@ export default {
         soft: "var(--elev-1)",
         lift: "var(--elev-2)",
       },
-      borderRadius: {
-        '2xl': '1.25rem',
-        '3xl': '1.75rem',
-      },
+      borderRadius: { '2xl': '1.25rem' },
     },
   },
   plugins: [],
