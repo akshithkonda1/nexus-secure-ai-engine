@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
 
 import { Header } from "@/components/Header";
 import { RightRail } from "@/components/RightRail";
@@ -15,7 +15,6 @@ export function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
-  const location = useLocation();
 
   useCommand((command) => {
     if (command.type === "profile:open") {
@@ -27,12 +26,6 @@ export function App() {
       setNotificationsOpen(true);
     }
   });
-
-  useEffect(() => {
-    setProfileOpen(false);
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-  }, [location.pathname]);
 
   return (
     <>
