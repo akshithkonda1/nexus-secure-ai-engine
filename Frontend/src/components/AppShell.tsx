@@ -12,6 +12,7 @@ const LEFT_OPEN = 288;
 const LEFT_COLLAPSED = 56;
 const RIGHT_OPEN = 360;
 const RIGHT_COLLAPSED = 0;
+const RIGHT_TOGGLE_VISIBLE = 40;
 
 export default function AppShell({ left, right, children }: Props) {
   const { leftOpen, rightOpen, toggleLeft, toggleRight } = usePanels();
@@ -20,7 +21,10 @@ export default function AppShell({ left, right, children }: Props) {
   const rightW = rightOpen ? RIGHT_OPEN : RIGHT_COLLAPSED;
 
   const gridCols = useMemo(() => {
-    if (!leftOpen && !rightOpen) return "0px 1fr 0px";
+    if (!leftOpen && !rightOpen) {
+      return `${LEFT_COLLAPSED}px 1fr ${RIGHT_TOGGLE_VISIBLE}px`;
+    }
+
     return `${leftW}px 1fr ${rightW}px`;
   }, [leftOpen, rightOpen, leftW, rightW]);
 
