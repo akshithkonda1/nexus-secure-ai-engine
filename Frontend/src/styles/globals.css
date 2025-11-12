@@ -1,12 +1,3 @@
-/* === NEXUS TEMP QUARANTINE — neutralize legacy generic classes === */
-:where(.panel, .panel--glassy, .panel--hover, .panel--immersive,
-       .panel--alive, .panel--gradient-border,
-       .btn, .btn-primary, .btn-ghost, .btn-neo, .btn-quiet,
-       .input, .card, .card-hover, .chip, .badge,
-       .skeleton, .skeleton-line, .accent-ink) {
-  all: unset;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,6 +79,9 @@ body{
 }
 
 /* ---- GLASS PANELS ---- */
+/* Temporary dual selectors keep legacy .panel/.btn/etc. styles alive while
+   markup migrates to the nx-* namespace. */
+.panel,
 .nx-panel{
   background: rgba(var(--panel), .7);
   backdrop-filter: blur(12px) saturate(150%);
@@ -96,11 +90,17 @@ body{
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
 }
+.panel--glassy,
 .nx-panel--glassy{ background: rgba(var(--surface), .6); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%) }
+.panel--hover,
 .nx-panel--hover{ transition: transform .2s, box-shadow .2s, border-color .2s }
+.panel--hover:hover,
 .nx-panel--hover:hover{ transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: rgba(var(--brand), .4) }
+.panel--immersive,
 .nx-panel--immersive{ background: rgba(var(--panel), .5); backdrop-filter: blur(20px) saturate(200%); -webkit-backdrop-filter: blur(20px) saturate(200%) }
+html.dark .panel--glassy,
 html.dark .nx-panel--glassy{ background: rgba(var(--surface), .4); border: 1px solid rgba(var(--brand), .15) }
+html.dark .panel--immersive,
 html.dark .nx-panel--immersive{ background: rgba(var(--panel), .35); border: 1px solid rgba(var(--brand), .2) }
 
 /* ---- PULSE (dark only) ---- */
@@ -108,8 +108,11 @@ html.dark .nx-panel--immersive{ background: rgba(var(--panel), .35); border: 1px
   0%,100%{ box-shadow:0 0 20px rgba(var(--brand), .3),0 0 40px rgba(var(--brand-soft), .2) }
   50%{    box-shadow:0 0 30px rgba(var(--brand), .5),0 0 60px rgba(var(--brand-soft), .3) }
 }
+html.dark .panel--alive,
 html.dark .nx-panel--alive{ animation: pulse-glow 4s ease-in-out infinite }
+html.dark .panel--gradient-border,
 html.dark .nx-panel--gradient-border{ position:relative; border:none }
+html.dark .panel--gradient-border::before,
 html.dark .nx-panel--gradient-border::before{
   content:""; position:absolute; inset:0; border-radius:inherit; padding:1px;
   background: linear-gradient(135deg, rgba(var(--brand), .5), rgba(var(--brand-soft), .5));
@@ -133,39 +136,57 @@ html.dark body::after{
 }
 
 /* ---- COMPONENTS ---- */
+.btn,
 .nx-btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.625rem 1rem;
   border-radius:var(--radius-button); font-size:.875rem; font-weight:600; transition:all .2s; cursor:pointer }
+.btn-primary,
 .nx-btn-primary{
   background: linear-gradient(135deg, rgb(var(--brand)), rgb(var(--brand-soft)));
   color: rgb(var(--on-accent)); box-shadow: 0 8px 24px rgba(var(--brand), .35); border:none;
 }
+.btn-primary:hover,
 .nx-btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 12px 32px rgba(var(--brand), .45) }
+.btn-ghost,
 .nx-btn-ghost{ background: rgba(var(--surface), .6); border:1px solid rgba(var(--border), .3); color: rgb(var(--text)) }
+.btn-ghost:hover,
 .nx-btn-ghost:hover{ background: rgba(var(--surface), .9); border-color: rgba(var(--brand), .3) }
+.btn-neo,
 .nx-btn-neo{ box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.1) }
+.btn-quiet,
 .nx-btn-quiet{ box-shadow:none }
+html.dark .btn-primary,
 html.dark .nx-btn-primary{ position:relative; overflow:hidden }
+html.dark .btn-primary::after,
 html.dark .nx-btn-primary::after{
   content:""; position:absolute; inset:0;
   background: radial-gradient(circle at center, rgba(255,255,255,.2), transparent 70%);
   opacity:0; transition:opacity .3s;
 }
+html.dark .btn-primary:hover::after,
 html.dark .nx-btn-primary:hover::after{ opacity:1 }
 
+.input,
 .nx-input{
   height:2.75rem; border-radius:var(--radius-input);
   border:1px solid rgba(var(--border), .3); background: rgba(var(--surface), .8);
   padding:0 .75rem; font-size:.875rem; color: rgb(var(--text)); transition: all .2s;
 }
+.input::placeholder,
 .nx-input::placeholder{ color: rgb(var(--subtle)) }
+.input:focus,
 .nx-input:focus{ outline:none; border-color: rgba(var(--brand), .5); box-shadow: 0 0 0 3px rgba(var(--ring), .15); background: rgb(var(--surface)) }
 
+.chip,
 .nx-chip{ display:inline-flex; align-items:center; gap:.375rem; padding:.25rem .75rem; border-radius:9999px;
   font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em }
+.chip--ok,
 .nx-chip--ok{   background: rgba(var(--accent-emerald), .15); color: rgb(var(--accent-emerald-ink)); border:1px solid rgba(var(--accent-emerald), .3) }
+.chip--warn,
 .nx-chip--warn{ background: rgba(var(--accent-amber), .15);   color: rgb(var(--accent-amber-ink));   border:1px solid rgba(var(--accent-amber), .3) }
+.chip--alert,
 .nx-chip--alert{background: rgba(var(--accent-rose), .15);     color: rgb(var(--accent-rose-ink));     border:1px solid rgba(var(--accent-rose), .3) }
 
+.accent-ink,
 .nx-accent-ink{
   background: linear-gradient(135deg, rgb(var(--brand)), rgb(var(--brand-soft)));
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
@@ -178,16 +199,21 @@ html.dark .nx-btn-primary:hover::after{ opacity:1 }
   filter: blur(20px);
 }
 
+.card,
 .nx-card{ border-radius:var(--radius-card); background: rgba(var(--panel), .8); border:1px solid rgba(var(--border), .3); box-shadow: var(--shadow-soft) }
+.card-hover,
 .nx-card-hover{ transition:transform .2s, box-shadow .2s }
+.card-hover:hover,
 .nx-card-hover:hover{ transform:translateY(-2px); box-shadow: var(--shadow-lift) }
 
 /* Skeletons */
+.skeleton,
 .nx-skeleton{
   background: linear-gradient(90deg, rgba(var(--surface), .5) 0%, rgba(var(--panel), .8) 50%, rgba(var(--surface), .5) 100%);
   background-size:200% 100%; animation: skeleton-shimmer 1.5s ease-in-out infinite; border-radius:.5rem;
 }
 @keyframes skeleton-shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.skeleton-line,
 .nx-skeleton-line{ height:.75rem; border-radius:.25rem }
 
 /* A11y & motion */
