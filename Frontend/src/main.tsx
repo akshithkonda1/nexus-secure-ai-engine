@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "@/styles/globals.css";
-import { App } from "@/App";
+import RootLayout from "@/layouts/RootLayout";
 import { Home } from "@/pages/Home";
 import { Chat } from "@/pages/Chat";
 import { Outbox } from "@/pages/Outbox";
@@ -16,6 +16,7 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import ProjectsPage from "@/features/projects/ProjectsPage";
 import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
 import { ErrorBoundary } from "@/routes/ErrorBoundary";
+import { PanelProvider } from "@/panels/PanelProvider";
 import { initTheme } from "./theme";
 
 const Templates = lazy(() => import("@/pages/Templates"));
@@ -40,7 +41,7 @@ const router = createBrowserRouter([
     path: "/",
     element: (
       <ErrorBoundary>
-        <App />
+        <RootLayout />
       </ErrorBoundary>
     ),
     errorElement: <AppErrorBoundary />,
@@ -151,7 +152,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ProfileProvider>
-          <RouterProvider router={router} />
+          <PanelProvider>
+            <RouterProvider router={router} />
+          </PanelProvider>
         </ProfileProvider>
       </ThemeProvider>
     </QueryClientProvider>
