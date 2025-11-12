@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePanels } from "@/hooks/usePanels";
 import { PanelToggle } from "@/components/PanelToggle";
 
@@ -8,8 +8,34 @@ type Props = {
   children: ReactNode; // main content
 };
 
+const LG_BREAKPOINT = 1024;
+const isBrowser = typeof window !== "undefined";
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    isBrowser ? window.matchMedia(`(min-width: ${LG_BREAKPOINT}px)`).matches : true,
+  );
+
+  useEffect(() => {
+    if (!isBrowser) return;
+
+    const mql = window.matchMedia(`(min-width: ${LG_BREAKPOINT}px)`);
+    const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+
+    setIsDesktop(mql.matches);
+    mql.addEventListener("change", handleChange);
+
+    return () => {
+      mql.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  return isDesktop;
+}
+
 export default function AppShell({ left, right, children }: Props) {
   const { leftOpen, rightOpen, toggleLeft, toggleRight } = usePanels();
+  const isDesktop = useIsDesktop();
 
   // Tune these to your design
   const LEFT_OPEN = 288;       // px (match w-72)
@@ -21,8 +47,8 @@ export default function AppShell({ left, right, children }: Props) {
   const rightW = rightOpen ? RIGHT_OPEN : RIGHT_COLLAPSED;
 
   const gridTemplate = useMemo(
-    () => `${leftW}px 1fr ${rightW}px`,
-    [leftW, rightW]
+    () => (isDesktop ? `${leftW}px 1fr ${rightW}px` : "1fr"),
+    [isDesktop, leftW, rightW]
   );
 
   return (
@@ -34,11 +60,14 @@ export default function AppShell({ left, right, children }: Props) {
         {/* LEFT SIDEBAR (width-only animation) */}
         <aside
           className="relative border-r border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
-          style={{ width: leftW }}
-          aria-expanded={leftOpen}
+          style={{ width: isDesktop ? leftW : 0 }}
+          aria-expanded={leftOpen && isDesktop}
+          aria-hidden={!isDesktop}
         >
           <div className="h-full">{left}</div>
-          <PanelToggle side="left" open={leftOpen} onClick={toggleLeft} />
+          {isDesktop && (
+            <PanelToggle side="left" open={leftOpen} onClick={toggleLeft} />
+          )}
         </aside>
 
         {/* MAIN CONTENT */}
@@ -49,11 +78,14 @@ export default function AppShell({ left, right, children }: Props) {
         {/* RIGHT RAIL */}
         <aside
           className="relative border-l border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
-          style={{ width: rightW }}
-          aria-expanded={rightOpen}
+          style={{ width: isDesktop ? rightW : 0 }}
+          aria-expanded={rightOpen && isDesktop}
+          aria-hidden={!isDesktop}
         >
           <div className="h-full">{right}</div>
-          <PanelToggle side="right" open={rightOpen} onClick={toggleRight} />
+          {isDesktop && (
+            <PanelToggle side="right" open={rightOpen} onClick={toggleRight} />
+          )}
         </aside>
       </div>
     </div>
