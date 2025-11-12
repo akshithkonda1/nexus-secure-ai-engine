@@ -1,7 +1,6 @@
 import React from "react";
 import { ArrowRight, Clock, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 import { requestDocumentsView, requestNewPrompt } from "@/lib/actions";
 
 const deliveries = [
@@ -41,9 +40,26 @@ const templates = [
   },
 ];
 
+const aiSuggestions = [
+  {
+    id: "ai-1",
+    title: "Prioritize Executive briefing draft",
+    reason: "Due today and critical for leadership alignment.",
+  },
+  {
+    id: "ai-2",
+    title: "Accelerate Governance pulse",
+    reason: "Potential risks identified; early review recommended.",
+  },
+  {
+    id: "ai-3",
+    title: "Enhance Research synthesis",
+    reason: "Incorporate latest insights for better accuracy.",
+  },
+];
+
 export function Outbox() {
   const navigate = useNavigate();
-
   const statusBuckets = deliveries.reduce<Record<string, number>>((acc, item) => {
     acc[item.status] = (acc[item.status] ?? 0) + 1;
     return acc;
@@ -55,11 +71,11 @@ export function Outbox() {
         <div className="card space-y-4">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
-              Workspace outbox
+              Smart workspace outbox
             </p>
             <h1 className="text-[22px] font-bold leading-tight text-[rgb(var(--text))]">Scheduled briefs</h1>
             <p className="text-sm text-[rgb(var(--subtle))]">
-              Monitor queue health at a glance and see which automations are currently staged.
+              Monitor queue health at a glance, get AI-powered insights, and see which automations are currently staged.
             </p>
           </div>
           <div className="space-y-3 text-sm">
@@ -73,7 +89,6 @@ export function Outbox() {
             ))}
           </div>
         </div>
-
         <div className="card space-y-3">
           <h2 className="text-lg font-semibold text-[rgb(var(--text))]">Automation controls</h2>
           <p className="text-sm text-[rgb(var(--subtle))]">
@@ -83,16 +98,16 @@ export function Outbox() {
             <span className="chip">Auto-sync</span>
             <span className="chip">Audit log</span>
             <span className="chip">Policy map</span>
+            <span className="chip">AI insights</span>
           </div>
         </div>
       </aside>
-
       <section className="content-col">
         <div className="card panel-hover space-y-5">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
-                Workspace outbox
+                Smart workspace outbox
               </p>
               <h2 className="text-[22px] font-bold text-[rgb(var(--text))]">Scheduled briefs &amp; auto sends</h2>
             </div>
@@ -117,11 +132,9 @@ export function Outbox() {
             </div>
           </header>
           <p className="max-w-2xl text-sm text-[rgb(var(--subtle))]">
-            Nexus keeps drafts, approvals, and distribution in one queue. Review upcoming sends, accelerate handoffs, and trace
-            governance-ready audit trails before anything leaves the workspace.
+            Nexus keeps drafts, approvals, and distribution in one queue. Get smart recommendations powered by AI, review upcoming sends, accelerate handoffs, and trace governance-ready audit trails before anything leaves the workspace.
           </p>
         </div>
-
         <div className="card panel-hover space-y-4">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -150,7 +163,38 @@ export function Outbox() {
             ))}
           </ul>
         </div>
-
+        <div className="card panel-hover space-y-4">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">AI Insights</p>
+              <h3 className="text-lg font-semibold text-[rgb(var(--text))]">Smart Recommendations</h3>
+            </div>
+            <span className="inline-flex items-center gap-2 text-xs text-[rgb(var(--subtle))]">
+              <Sparkles className="size-4" /> Powered by Grok
+            </span>
+          </header>
+          <ul className="space-y-3">
+            {aiSuggestions.map((item) => (
+              <li
+                key={item.id}
+                className="panel panel-hover flex flex-col rounded-2xl px-4 py-3 text-sm text-[rgb(var(--text))]"
+              >
+                <p className="font-semibold">{item.title}</p>
+                <p className="text-xs text-[rgb(var(--subtle))]">{item.reason}</p>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => {
+              requestNewPrompt("Generate more smart recommendations for my outbox");
+              navigate("/chat");
+            }}
+            className="btn btn-ghost w-full justify-center"
+          >
+            Ask Grok for more insights
+          </button>
+        </div>
         <div className="card panel-hover space-y-3">
           <header className="flex items-center justify-between">
             <div>
@@ -167,7 +211,6 @@ export function Outbox() {
           </p>
         </div>
       </section>
-
       <aside className="right-rail flex flex-col gap-4">
         <div className="card panel-hover space-y-3">
           <div>
@@ -190,7 +233,6 @@ export function Outbox() {
             ))}
           </ul>
         </div>
-
         <div className="card panel-hover space-y-3 text-sm text-[rgb(var(--text))]">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
