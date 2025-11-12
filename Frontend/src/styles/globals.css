@@ -1,135 +1,125 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* =======================
-   THEME TOKENS
-   ======================= */
-@layer base {
-  :root {
-    /* LIGHT — Alabaster paper + black text */
-    --bg: 249 250 252;             /* #F9FAFC (Alabaster) */
-    --surface: 255 255 255;        /* white */
-    --panel: 255 255 255;          /* glass base mixes from this */
-    --text: 17 24 39;              /* #111827 near-black */
-    --muted: 71 85 105;            /* slate-600 */
-    --border: 2 6 23 / 0.10;       /* very subtle */
-    --ring: 0 153 255;             /* #0099FF */
+/* ---------- Tokens (Light = Alabaster, Dark = Navy) ---------- */
+:root {
+  /* Light (Alabaster-ish) */
+  --bg: 249 250 252;        /* page */
+  --surface: 255 255 255;   /* app chrome */
+  --panel: 246 248 252;     /* cards/panels */
+  --text: 17 24 39;         /* slate-900 */
+  --border: 30 41 59 / 0.12;
 
-    /* Brand blues for buttons/underglow */
-    --brand: 0 133 255;            /* #0085FF */
-    --brand-2: 0 158 255;          /* #009EFF */
+  /* Brand */
+  --brand: 30 64 175;       /* trust blue #1E40AF */
+  --brand-2: 13 148 136;    /* teal accent #0EA5A4 */
 
-    /* Elevation */
-    --elev-1: 0 10px 30px rgba(2, 6, 23, 0.06);
-    --elev-2: 0 22px 60px rgba(2, 6, 23, 0.10);
-  }
+  /* Focus ring + elevations */
+  --ring: 56 189 248;       /* sky-400 */
+  --elev-1: 0 10px 30px rgba(2, 6, 23, 0.06);
+  --elev-2: 0 16px 50px rgba(2, 6, 23, 0.10);
 
-  .dark {
-    /* DARK — Cod Gray + white text */
-    --bg: 9 11 30;                 /* #090B1E */
-    --surface: 13 17 36;           /* #0D1124 */
-    --panel: 18 24 42;             /* #121A2A */
-    --text: 248 250 252;           /* white-ish */
-    --muted: 203 213 225;          /* slate-300 */
-    --border: 255 255 255 / 0.10;
-    --ring: 0 153 255;             /* #0099FF */
-    --brand: 0 133 255;            /* #0085FF */
-    --brand-2: 0 158 255;          /* #009EFF */
-
-    --elev-1: 0 12px 32px rgba(0,0,0,.45);
-    --elev-2: 0 28px 70px rgba(0,0,0,.60);
-  }
-
-  html, body, #root { height: 100%; }
-
-  /* Page backgrounds */
-  :root:not(.dark) body {
-    color: rgb(var(--text));
-    background: rgb(var(--bg));
-  }
-  .dark body {
-    color: rgb(var(--text));
-    background: rgb(var(--bg)) !important;       /* flat Cod Gray */
-    background-image: none !important;           /* remove halos */
-  }
+  /* Page gradient (light) */
+  --page-grad-from: 255 255 255;
+  --page-grad-via: 245 250 255;
+  --page-grad-to: 240 248 255;
 }
 
-/* Smooth theme switch (optional) */
+.dark {
+  /* Dark (navy, not pure black) */
+  --bg: 9 14 26;
+  --surface: 15 20 34;
+  --panel: 18 24 42;
+  --text: 241 245 249;
+  --border: 241 245 249 / 0.08;
+
+  --ring: 125 211 252;
+  --elev-1: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+  /* Page gradient (dark) */
+  --page-grad-from: 8 12 24;
+  --page-grad-via: 10 15 28;
+  --page-grad-to: 14 20 36;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  color: rgb(var(--text));
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(var(--brand),0.06), transparent 60%),
+    linear-gradient(180deg,
+      rgb(var(--page-grad-from)) 0%,
+      rgb(var(--page-grad-via)) 30%,
+      rgb(var(--page-grad-to)) 100%);
+  background-attachment: fixed;
+}
+
+/* Smooth theme swap */
 :root.theme-transition * {
-  transition: background-color .25s ease, color .25s ease, border-color .25s ease,
-             box-shadow .25s ease, fill .25s ease, stroke .25s ease !important;
+  transition:
+    background-color .25s ease, color .25s ease, border-color .25s ease,
+    box-shadow .25s ease, fill .25s ease, stroke .25s ease !important;
 }
 
-/* =======================
-   GLASS PANELS + UNDERGLOW
-   Apply to existing .panel wrappers (no layout change)
-   ======================= */
-@layer components {
-  .panel {
-    position: relative;
-    border-radius: 1.25rem;
-    border-width: 1px;
-    border-style: solid;
-    backdrop-filter: blur(24px);
-    /* glass: translucent, works in both themes */
-    background: color-mix(in oklab, rgb(var(--panel)) 65%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    box-shadow: var(--elev-1);
-    /* subtle inner highlight for glass */
-    outline: 1px solid color-mix(in oklab, rgb(var(--surface)) 12%, transparent);
-  }
+/* ---------- Presentation utilities (no layout changes) ---------- */
 
-  /* Blue underglow that softly matches primary buttons */
-  .panel::after {
-    content: "";
-    position: absolute; inset: -2px -2px -8px -2px;
-    pointer-events: none; z-index: 0;
-    background:
-      radial-gradient(60% 120% at 20% -10%,
-        color-mix(in oklab, rgb(var(--brand-2)) 28%, transparent),
-        transparent 70%);
-    filter: blur(22px);
-    opacity: 0.35;                 /* Light */
-  }
-  .dark .panel::after {
-    opacity: 0.45;                 /* a bit stronger in dark */
-  }
-
-  /* Lift on hover for interactivity, no layout changes */
-  .panel--hover { transition: transform .18s ease, box-shadow .18s ease; }
-  .panel--hover:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
-
-  /* Inputs: crisp glass fields */
-  .input {
-    @apply h-11 rounded-xl px-3 text-sm outline-none border;
-    background: color-mix(in oklab, rgb(var(--surface)) 78%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--text)) 16%, transparent);
-  }
-  .input:focus {
-    box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--ring)) 45%, transparent);
-    border-color: color-mix(in oklab, rgb(var(--ring)) 55%, transparent);
-  }
-
-  /* Primary buttons: blue, consistent in both themes */
-  .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold;
-    color: #fff;
-    background: linear-gradient(180deg,
-      color-mix(in oklab, rgb(var(--brand)) 96%, white 6%),
-      color-mix(in oklab, rgb(var(--brand)) 86%, black 6%));
-    box-shadow: 0 10px 26px color-mix(in oklab, rgb(var(--brand)) 30%, transparent);
-  }
-  .btn-primary:hover { filter: brightness(1.05); }
-
-  /* Pill chips (status) read well in both themes */
-  .chip {
-    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium;
-    border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
-    background: color-mix(in oklab, rgb(var(--panel)) 70%, transparent);
-  }
-
-  /* Disable any previous halo/header glows that fight glass */
-  .halo::before { display: none; }
-  .dark .halo::before { display: none; }
+.panel {
+  @apply rounded-2xl border backdrop-blur-xl;
+  background-color: color-mix(in oklab, rgb(var(--panel)) 92%, transparent);
+  border-color: color-mix(in oklab, rgb(var(--text)) 12%, transparent);
+  box-shadow: var(--elev-1);
 }
+.panel--lift { box-shadow: var(--elev-2); }
+.panel--hover { transition: transform .18s ease, box-shadow .18s ease; }
+.panel--hover:hover { transform: translateY(-2px); box-shadow: var(--elev-2); }
+
+.halo { position: relative; }
+.halo::before {
+  content: "";
+  position: absolute; inset: -1px -1px auto -1px; height: 80px; z-index: 0;
+  background: radial-gradient(60% 120% at 10% 0%,
+    color-mix(in oklab, rgb(var(--brand)) 12%, transparent), transparent 70%);
+  filter: blur(16px); pointer-events: none;
+}
+
+/* Badges / chips */
+.chip {
+  @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium;
+  border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
+  background: color-mix(in oklab, rgb(var(--brand)) 8%, transparent);
+}
+.chip--ok    { background: color-mix(in oklab, rgb(var(--brand-2)) 16%, transparent); }
+.chip--warn  { background: color-mix(in oklab, #f59e0b 22%, transparent); }
+.chip--alert { background: color-mix(in oklab, #ef4444 22%, transparent); }
+
+/* Buttons */
+.btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition; }
+.btn-primary {
+  color: white;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, rgb(var(--brand)) 94%, white 8%),
+    color-mix(in oklab, rgb(var(--brand)) 84%, black 4%));
+  box-shadow: 0 8px 24px color-mix(in oklab, rgb(var(--brand)) 30%, transparent);
+}
+.btn-primary:hover { filter: brightness(1.04); }
+.btn-ghost {
+  @apply border;
+  border-color: color-mix(in oklab, rgb(var(--text)) 14%, transparent);
+  background: color-mix(in oklab, rgb(var(--panel)) 70%, transparent);
+}
+
+/* Inputs */
+.input {
+  @apply h-11 rounded-xl px-3 text-sm outline-none border transition;
+  border-color: color-mix(in oklab, rgb(var(--text)) 16%, transparent);
+  background: color-mix(in oklab, rgb(var(--surface)) 88%, transparent);
+}
+.input:focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, rgb(var(--ring)) 45%, transparent);
+  border-color: color-mix(in oklab, rgb(var(--ring)) 50%, transparent);
+}
+
+/* Skeletons for stubs */
+.skeleton { @apply animate-pulse rounded-lg bg-white/30 dark:bg-white/10; }
+.skeleton-line { height: 12px; }
