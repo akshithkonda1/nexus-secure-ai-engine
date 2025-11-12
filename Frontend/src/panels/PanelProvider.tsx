@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-type PanelsState = {
+type Panels = {
   leftOpen: boolean;
   rightOpen: boolean;
   toggleLeft: () => void;
@@ -9,9 +9,10 @@ type PanelsState = {
   setRight: (v: boolean) => void;
 };
 
+const Ctx = createContext<Panels | null>(null);
 const LS_KEY = "nexus.panels.v1";
 
-export function usePanels(): PanelsState {
+export function PanelProvider({ children }: { children: ReactNode }) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
 
@@ -22,6 +23,11 @@ export function usePanels(): PanelsState {
         const parsed = JSON.parse(raw) as Partial<{ leftOpen: boolean; rightOpen: boolean }>;
         if (typeof parsed.leftOpen === "boolean") setLeftOpen(parsed.leftOpen);
         if (typeof parsed.rightOpen === "boolean") setRightOpen(parsed.rightOpen);
+      } else {
+        if (window.matchMedia("(max-width: 1024px)").matches) {
+          setLeftOpen(false);
+          setRightOpen(false);
+        }
       }
     } catch {}
   }, []);
@@ -37,5 +43,16 @@ export function usePanels(): PanelsState {
   const setLeft = useCallback((v: boolean) => setLeftOpen(v), []);
   const setRight = useCallback((v: boolean) => setRightOpen(v), []);
 
-  return { leftOpen, rightOpen, toggleLeft, toggleRight, setLeft, setRight };
+  const value = useMemo(
+    () => ({ leftOpen, rightOpen, toggleLeft, toggleRight, setLeft, setRight }),
+    [leftOpen, rightOpen, toggleLeft, toggleRight, setLeft, setRight]
+  );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function usePanels(): Panels {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("usePanels must be used within PanelProvider");
+  return ctx;
 }
