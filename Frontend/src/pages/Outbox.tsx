@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowRight,
   Clock,
@@ -21,34 +21,30 @@ import { useNavigate } from "react-router-dom";
 import { requestDocumentsView, requestNewPrompt } from "@/lib/actions";
 
 /* ------------------------------------------------------------------ */
-/*  Demo data                                                         */
+/* Demo data */
 /* ------------------------------------------------------------------ */
 const deliveries = [
   { id: "dl-1", title: "Executive briefing draft", owner: "Leadership", due: "Today • 5:00pm", status: "Awaiting review" },
   { id: "dl-2", title: "Governance pulse", owner: "Risk Team", due: "Tomorrow • 11:00am", status: "Queued" },
   { id: "dl-3", title: "Research synthesis", owner: "Product Insights", due: "Fri • 3:30pm", status: "Drafting" },
 ];
-
 const templates = [
   { id: "tp-1", name: "Policy variance summary", description: "Capture weekly guardrail exceptions and mitigations." },
   { id: "tp-2", name: "Red team recap", description: "Send a condensed walkthrough of the latest adversarial test." },
 ];
-
 /* ------------------------------------------------------------------ */
-/*  Types                                                             */
+/* Types */
 /* ------------------------------------------------------------------ */
 type Role = "student" | "professional" | "executive" | "parent" | "custom";
 type Connector = "canvas" | "google-calendar" | "slack" | "jira" | "notion" | "outlook" | "apple-reminders";
-
 interface WorkflowConfig {
   roles: Role[];
   customRoleLabel?: string;
   connectors: Connector[];
   customInstructions: string;
 }
-
 /* ------------------------------------------------------------------ */
-/*  Local storage                                                     */
+/* Local storage */
 /* ------------------------------------------------------------------ */
 const CONFIG_KEY = "nexusWorkflowConfig";
 const loadConfig = (): WorkflowConfig | null => {
@@ -64,9 +60,8 @@ const saveConfig = (cfg: WorkflowConfig) => {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
   } catch {}
 };
-
 /* ------------------------------------------------------------------ */
-/*  Connector Info                                                    */
+/* Connector Info */
 /* ------------------------------------------------------------------ */
 const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }> = {
   canvas: { label: "Canvas", icon: <BookOpen className="size-4" /> },
@@ -77,9 +72,8 @@ const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }>
   outlook: { label: "Outlook", icon: <Calendar className="size-4" /> },
   "apple-reminders": { label: "Apple Reminders", icon: <Bell className="size-4" /> },
 };
-
 /* ------------------------------------------------------------------ */
-/*  Role Widgets                                                      */
+/* Role Widgets */
 /* ------------------------------------------------------------------ */
 const RoleWidget = ({ role }: { role: Role }) => {
   const data = {
@@ -88,9 +82,7 @@ const RoleWidget = ({ role }: { role: Role }) => {
     executive: { title: "Board Prep", content: "Calendar sync • 3 meetings today", icon: <Calendar className="size-6" /> },
     parent: { title: "Family Calendar", content: "Apple Reminders • Soccer practice at 4pm", icon: <Home className="size-6" /> },
   }[role];
-
   if (!data) return null;
-
   return (
     <div className="widget p-6 rounded-3xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 shadow-sm border border-gray-100 dark:border-gray-800">
       <div className="flex items-start justify-between mb-4">
@@ -103,9 +95,8 @@ const RoleWidget = ({ role }: { role: Role }) => {
     </div>
   );
 };
-
 /* ------------------------------------------------------------------ */
-/*  Setup Modal                                                       */
+/* Setup Modal */
 /* ------------------------------------------------------------------ */
 function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -113,11 +104,9 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
   const [customRoleLabel, setCustomRoleLabel] = useState("");
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [custom, setCustom] = useState("");
-
   const toggleRole = (r: Role) => {
     setRoles(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
   };
-
   const finish = () => {
     if (!roles.length) return;
     const cfg: WorkflowConfig = {
@@ -129,7 +118,6 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
     saveConfig(cfg);
     onClose(cfg);
   };
-
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="card max-w-3xl w-full p-10 space-y-10 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl">
@@ -139,7 +127,6 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
             ×
           </button>
         </div>
-
         {step === 1 && (
           <div className="space-y-8">
             <p className="text-lg">1. Who are you? (select all that apply)</p>
@@ -185,7 +172,6 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
             </div>
           </div>
         )}
-
         {step === 2 && (
           <div className="space-y-8">
             <p className="text-lg">2. Which calendars and services do you use daily?</p>
@@ -215,7 +201,6 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
             </div>
           </div>
         )}
-
         {step === 3 && (
           <div className="space-y-8">
             <p className="text-lg">3. Any custom workflows or instructions?</p>
@@ -236,22 +221,19 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
     </div>
   );
 }
-
 /* ------------------------------------------------------------------ */
-/*  Notification Bell                                                 */
+/* Notification Bell */
 /* ------------------------------------------------------------------ */
 function NotificationBell({ config }: { config: WorkflowConfig | null }) {
   const [open, setOpen] = useState(false);
   const roles = config?.roles ?? [];
   const connectors = config?.connectors ?? [];
-
   const alerts = [
     roles.includes("student") && "Canvas quiz due in 2h",
     connectors.includes("google-calendar") && "Meeting at 3pm",
     config?.customInstructions && "Custom task ready",
     roles.includes("parent") && "Family event reminder",
   ].filter(Boolean) as string[];
-
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="p-3 rounded-full hover:bg-white/10 transition">
@@ -266,37 +248,53 @@ function NotificationBell({ config }: { config: WorkflowConfig | null }) {
     </div>
   );
 }
-
 /* ------------------------------------------------------------------ */
-/*  MAIN OUTBOX                                                       */
+/* MAIN OUTBOX */
 /* ------------------------------------------------------------------ */
 export function Outbox() {
   const navigate = useNavigate();
   const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
   const [showSetup, setShowSetup] = useState(!config);
 
+  // Theme handling
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  useEffect(() => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   const handleSetupClose = (newCfg?: WorkflowConfig) => {
     if (newCfg) setConfig(newCfg);
     setShowSetup(false);
   };
-
   const statusBuckets = deliveries.reduce<Record<string, number>>((acc, item) => {
     acc[item.status] = (acc[item.status] ?? 0) + 1;
     return acc;
   }, {});
-
   const safeRoles = config?.roles ?? [];
   const roleDisplay = safeRoles.includes("custom") && config?.customRoleLabel
     ? config.customRoleLabel
     : safeRoles.length > 0 ? safeRoles.join(" / ") : "Workspace";
-
   return (
     <>
       {showSetup && <SetupModal onClose={handleSetupClose} />}
-
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 p-8">
         <div className="max-w-screen-2xl mx-auto">
-
           {/* HEADER */}
           <header className="flex items-center justify-between mb-10">
             <div>
@@ -321,12 +319,9 @@ export function Outbox() {
               </button>
             </div>
           </header>
-
           <div className="grid grid-cols-12 gap-8">
-
             {/* LEFT COLUMN - QUEUE & ROLES */}
             <div className="col-span-3 space-y-8">
-
               {/* Queue Health Widget */}
               <div className="widget p-8 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand))] to-[rgb(var(--brand-dark))] text-white shadow-lg">
                 <h2 className="text-2xl font-bold mb-6">Scheduled Briefs</h2>
@@ -339,10 +334,8 @@ export function Outbox() {
                   ))}
                 </div>
               </div>
-
               {/* Role Widgets */}
               {safeRoles.length > 0 && safeRoles.map(role => <RoleWidget key={role} role={role} />)}
-
               {/* Automation Controls */}
               {config?.connectors?.length ? (
                 <div className="widget p-6 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
@@ -358,12 +351,9 @@ export function Outbox() {
                   </div>
                 </div>
               ) : null}
-
             </div>
-
             {/* CENTER COLUMN - DELIVERY & COMPLIANCE */}
             <div className="col-span-6 space-y-8">
-
               {/* Delivery Queue */}
               <div className="widget p-8 rounded-3xl bg-white dark:bg-gray-900 shadow-lg border border-gray-100 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-6">
@@ -392,7 +382,6 @@ export function Outbox() {
                   ))}
                 </div>
               </div>
-
               {/* Compliance */}
               <div className="widget p-8 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800">
                 <div className="flex items-center justify-between mb-4">
@@ -406,12 +395,9 @@ export function Outbox() {
                   Every outbound asset runs through Nexus guardrails. Track pending approvals and ensure each stakeholder signs off before final delivery.
                 </p>
               </div>
-
             </div>
-
             {/* RIGHT COLUMN - TEMPLATES & DISTRIBUTION */}
             <div className="col-span-3 space-y-8">
-
               {/* Templates */}
               <div className="widget p-6 rounded-3xl bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20">
                 <div className="flex items-center justify-between mb-5">
@@ -433,7 +419,6 @@ export function Outbox() {
                   ))}
                 </div>
               </div>
-
               {/* Distribution */}
               <div className="widget p-6 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
                 <div className="flex items-center justify-between mb-4">
@@ -451,7 +436,6 @@ export function Outbox() {
                   Review History
                 </button>
               </div>
-
               {/* Active Connectors */}
               {config?.connectors?.length ? (
                 <div className="widget p-6 rounded-3xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
@@ -468,7 +452,6 @@ export function Outbox() {
                   </button>
                 </div>
               ) : null}
-
             </div>
           </div>
         </div>
@@ -476,5 +459,4 @@ export function Outbox() {
     </>
   );
 }
-
 export default Outbox;
