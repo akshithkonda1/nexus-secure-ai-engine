@@ -53,10 +53,20 @@ interface WorkflowConfig {
 /* ------------------------------------------------------------------ */
 const CONFIG_KEY = "nexusWorkflowConfig";
 const loadConfig = (): WorkflowConfig | null => {
-  const raw = localStorage.getItem(CONFIG_KEY);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 };
-const saveConfig = (cfg: WorkflowConfig) => localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+const saveConfig = (cfg: WorkflowConfig) => {
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  } catch {
+    // ignore
+  }
+};
 
 /* ------------------------------------------------------------------ */
 /*  Connector UI data                                                 */
@@ -74,54 +84,45 @@ const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }>
 /* ------------------------------------------------------------------ */
 /*  Role-specific sections                                            */
 /* ------------------------------------------------------------------ */
-const RoleSections = ({ roles }: { roles: Role[] }) => (
-  <>
-    {roles.map((role) => {
-      switch (role) {
-        case "student":
-          return (
-            <div key={role} className="card space-y-4">
-              <h3 className="text-lg font-semibold">Upcoming Assignments</h3>
-              <p className="text-sm text-[rgb(var(--subtle))]">
-                Canvas sync • 2 items due this week
-              </p>
-            </div>
-          );
-        case "professional":
-          return (
-            <div key={role} className="card space-y-4">
-              <h3 className="text-lg font-semibold">Sprint Board</h3>
-              <p className="text-sm text-[rgb(var(--subtle))]">
-                Jira sync • 5 tickets in review
-              </p>
-            </div>
-          );
-        case "executive":
-          return (
-            <div key={role} className="card space-y-4">
-              <h3 className="text-lg font-semibold">Board Prep</h3>
-              <p className="text-sm text-[rgb(var(--subtle))]">
-                Calendar sync • 3 meetings today
-              </p>
-            </div>
-          );
-        case "parent":
-          return (
-            <div key={role} className="card space-y-4">
-              <h3 className="text-lg font-semibold">Family Calendar</h3>
-              <p className="text-sm text-[rgb(var(--subtle))]">
-                Apple Reminders • Soccer practice at 4pm
-              </p>
-            </div>
-          );
-        case "custom":
-          return null; // Handled via custom label in headers
-        default:
-          return null;
-      }
-    })}
-  </>
-);
+const RoleSection = ({ role }: { role: Role }) => {
+  const sections: Record<Role, React.ReactNode> = {
+    student: (
+      <div className="card space-y-4 p-6">
+        <h3 className="text-lg font-semibold">Upcoming Assignments</h3>
+        <p className="text-sm text-[rgb(var(--subtle))]">
+          Canvas sync • 2 items due this week
+        </p>
+      </div>
+    ),
+    professional: (
+      <div className="card space-y-4 p-6">
+        <h3 className="text-lg font-semibold">Sprint Board</h3>
+        <p className="text-sm text-[rgb(var(--subtle))]">
+          Jira sync • 5 tickets in review
+        </p>
+      </div>
+    ),
+    executive: (
+      <div className="card space-y-4 p-6">
+        <h3 className="text-lg font-semibold">Board Prep</h3>
+        <p className="text-sm text-[rgb(var(--subtle))]">
+          Calendar sync • 3 meetings today
+        </p>
+      </div>
+    ),
+    parent: (
+      <div className="card space-y-4 p-6">
+        <h3 className="text-lg font-semibold">Family Calendar</h3>
+        <p className="text-sm text-[rgb(var(--subtle))]">
+          Apple Reminders • Soccer practice at 4pm
+        </p>
+      </div>
+    ),
+    custom: null,
+  };
+
+  return sections[role] || null;
+};
 
 /* ------------------------------------------------------------------ */
 /*  Setup Modal (3 steps)                                             */
@@ -140,7 +141,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
   };
 
   const finish = () => {
-    if (!roles.length) return;
+    if (roles.length === 0) return;
     const cfg: WorkflowConfig = {
       roles,
       customRoleLabel: roles.includes("custom") ? customRoleLabel.trim() : undefined,
@@ -161,19 +162,17 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
           </button>
         </div>
 
-        {/* Step 1 – Roles (multi-select) */}
+        {/* Step 1 – Roles */}
         {step === 1 && (
           <div className="space-y-6">
             <p className="text-base">1. Who are you? (select all that apply)</p>
             <div className="grid grid-cols-2 gap-4">
-              {(
-                [
-                  { value: "student", label: "Student" },
-                  { value: "professional", label: "Professional / Employee" },
-                  { value: "executive", label: "Executive" },
-                  { value: "parent", label: "Parent" },
-                ] as const
-              ).map((opt) => (
+              {[
+                { value: "student" as const, label: "Student" },
+                { value: "professional" as const, label: "Professional / Employee" },
+                { value: "executive" as const, label: "Executive" },
+                { value: "parent" as const, label: "Parent" },
+              ].map((opt) => (
                 <label
                   key={opt.value}
                   className={`flex items-center gap-3 p-5 rounded-2xl border-2 cursor-pointer transition-all text-left font-medium
@@ -213,7 +212,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
               />
             )}
             <div className="flex justify-end">
-              <button disabled={!roles.length} onClick={() => setStep(2)} className="btn btn-primary">
+              <button disabled={roles.length === 0} onClick={() => setStep(2)} className="btn btn-primary">
                 Next
               </button>
             </div>
@@ -289,15 +288,19 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Notification Bell (demo)                                          */
+/*  Notification Bell (SAFE)                                          */
 /* ------------------------------------------------------------------ */
-function NotificationBell({ config }: { config: WorkflowConfig }) {
+function NotificationBell({ config }: { config: WorkflowConfig | null }) {
   const [open, setOpen] = useState(false);
+
+  const roles = config?.roles ?? [];
+  const connectors = config?.connectors ?? [];
+
   const alerts = [
-    config.roles.includes("student") && "Canvas quiz due in 2h",
-    config.connectors.includes("google-calendar") && "Meeting at 3pm",
-    config.customInstructions && "Custom task ready",
-    config.roles.includes("parent") && "Family event reminder",
+    roles.includes("student") && "Canvas quiz due in 2h",
+    connectors.includes("google-calendar") && "Meeting at 3pm",
+    config?.customInstructions && "Custom task ready",
+    roles.includes("parent") && "Family event reminder",
   ].filter(Boolean) as string[];
 
   return (
@@ -329,7 +332,6 @@ function NotificationBell({ config }: { config: WorkflowConfig }) {
 export function Outbox() {
   const navigate = useNavigate();
 
-  /* ---------- Config ---------- */
   const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
   const [showSetup, setShowSetup] = useState(!config);
 
@@ -338,22 +340,26 @@ export function Outbox() {
     setShowSetup(false);
   };
 
-  /* ---------- UI helpers ---------- */
   const statusBuckets = deliveries.reduce<Record<string, number>>((acc, item) => {
     acc[item.status] = (acc[item.status] ?? 0) + 1;
     return acc;
   }, {});
 
-  const roleDisplay = config?.roles.includes("custom") && config.customRoleLabel
-    ? config.customRoleLabel
-    : (config?.roles ?? []).join(" / ") || "Workspace";
+  // Safe role display
+  const safeRoles = config?.roles ?? [];
+  const roleDisplay =
+    safeRoles.includes("custom") && config?.customRoleLabel
+      ? config.customRoleLabel
+      : safeRoles.length > 0
+      ? safeRoles.join(" / ")
+      : "Workspace";
 
   return (
     <>
       {showSetup && <SetupModal onClose={handleSetupClose} />}
 
       <main className="dashboard-grid">
-        {/* ---------- LEFT SIDEBAR ---------- */}
+        {/* LEFT SIDEBAR */}
         <aside className="sidebar flex flex-col gap-8">
           {/* Queue health */}
           <div className="card space-y-6 p-6">
@@ -382,10 +388,11 @@ export function Outbox() {
           </div>
 
           {/* Role-specific blocks */}
-          {config && <RoleSections roles={config.roles} />}
+          {safeRoles.length > 0 &&
+            safeRoles.map((role) => <RoleSection key={role} role={role} />)}
 
-          {/* Automation controls – only if connectors exist */}
-          {config?.connectors.length ? (
+          {/* Automation controls */}
+          {config?.connectors?.length ? (
             <div className="card space-y-4 p-6">
               <h2 className="text-lg font-semibold">Automation controls</h2>
               <div className="flex flex-wrap gap-3">
@@ -399,9 +406,8 @@ export function Outbox() {
           ) : null}
         </aside>
 
-        {/* ---------- MAIN CONTENT ---------- */}
+        {/* MAIN CONTENT */}
         <section className="content-col space-y-8">
-          {/* Header */}
           <header className="card panel-hover flex items-center justify-between p-8">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-[rgb(var(--subtle))]">
@@ -413,7 +419,7 @@ export function Outbox() {
             </div>
 
             <div className="flex items-center gap-4">
-              {config && <NotificationBell config={config} />}
+              <NotificationBell config={config} />
 
               <button
                 onClick={() => setShowSetup(true)}
@@ -474,7 +480,7 @@ export function Outbox() {
             </ul>
           </div>
 
-          {/* Compliance – always shown (core Nexus feature) */}
+          {/* Compliance */}
           <div className="card panel-hover space-y-4 p-8">
             <header className="flex items-center justify-between">
               <div>
@@ -493,9 +499,8 @@ export function Outbox() {
           </div>
         </section>
 
-        {/* ---------- RIGHT RAIL ---------- */}
+        {/* RIGHT RAIL */}
         <aside className="right-rail flex flex-col gap-8">
-          {/* Templates */}
           <div className="card panel-hover space-y-6 p-8">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[rgb(var(--subtle))]">
@@ -521,7 +526,6 @@ export function Outbox() {
             </ul>
           </div>
 
-          {/* Distribution */}
           <div className="card panel-hover space-y-4 p-8">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-widest text-[rgb(var(--subtle))]">
@@ -544,8 +548,7 @@ export function Outbox() {
             </button>
           </div>
 
-          {/* Active connectors – only if any */}
-          {config?.connectors.length ? (
+          {config?.connectors?.length ? (
             <div className="card panel-hover space-y-4 p-8">
               <p className="text-xs font-semibold uppercase tracking-widest text-[rgb(var(--subtle))]">
                 Active connectors
