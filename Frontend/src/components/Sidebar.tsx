@@ -1,5 +1,4 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
 import {
   BookOpen,
   FileText,
@@ -15,6 +14,7 @@ import {
 
 import { cn } from "@/shared/lib/cn";
 import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
+import NavItem from "@/components/nav/NavItem";
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -37,121 +37,97 @@ const supportNav = [
 ];
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+  const handleNavigate = () => {
+    onClose?.();
+  };
+
   return (
     <>
       <div
         className={cn(
-          "fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity lg:hidden",
+          "fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-xs transition-opacity lg:hidden",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={onClose}
       />
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform dark:bg-[rgba(var(--sidebar),0.85)]",
-          "lg:static lg:translate-x-0 lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
+          "glass-surface fixed inset-y-4 left-4 z-50 flex w-[min(18rem,calc(100%-2rem))] max-w-[20rem] flex-col gap-8 overflow-hidden p-6 text-slate-800 shadow-glass transition-transform duration-200 dark:text-slate-100",
+          "lg:static lg:inset-auto lg:left-auto lg:top-auto lg:h-full lg:w-full lg:max-w-none lg:rounded-none lg:border-l-0 lg:border-t-0 lg:border-b-0 lg:border-r lg:border-slate-200/60 lg:bg-white/55 lg:p-8 lg:shadow-none lg:dark:border-slate-800/60 lg:dark:bg-slate-900/45",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
               Nexus
             </p>
-            <h1 className="mt-1 text-xl font-semibold">
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Secure AI Debate Engine
             </h1>
           </div>
-          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-transparent [background:linear-gradient(120deg,#009EFF,#9360FF)] bg-clip-text">
+          <span className="inline-flex items-center rounded-2xl border border-slate-200/60 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-600 shadow-glass dark:border-slate-800/60 dark:bg-slate-900/60 dark:text-slate-200">
             BETA
           </span>
         </div>
 
-        <nav className="mt-10 space-y-8 text-sm font-medium">
-          <div className="space-y-1">
+        <nav className="space-y-8 text-sm font-medium">
+          <div className="space-y-2">
             {primaryNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
+              <NavItem
                 key={to}
                 to={to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  cn(
-                    "group flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors",
-                    "hover:bg-[rgba(var(--brand),0.08)]",
-                    isActive
-                      ? "bg-[rgba(var(--brand),0.12)] text-brand shadow-[var(--shadow-soft)]"
-                      : "text-[rgb(var(--subtle))]",
-                  )
-                }
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.85)] text-brand shadow-sm">
-                  <Icon className="size-4" />
-                </span>
-                <span className="flex-1 text-left tracking-tight">{label}</span>
-                <span className="opacity-0 transition group-hover:opacity-100">
-                  →
-                </span>
-              </NavLink>
+                icon={<Icon className="size-4" />}
+                label={label}
+                onNavigate={handleNavigate}
+              />
             ))}
           </div>
 
-          <div className="space-y-1">
-            <p className="px-4 text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
+          <div className="space-y-2">
+            <p className="px-1 text-xs font-semibold uppercase tracking-[0.26em] text-slate-500 dark:text-slate-400">
               Workspace
             </p>
             {supportNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
+              <NavItem
                 key={to}
                 to={to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-[rgba(var(--panel),0.65)]",
-                    isActive &&
-                      "bg-[rgba(var(--surface),0.95)] text-brand shadow-[var(--shadow-soft)]",
-                  )
-                }
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.82)] text-[rgb(var(--subtle))]">
-                  <Icon className="size-4" />
-                </span>
-                <span className="flex-1 text-left tracking-tight">{label}</span>
-              </NavLink>
+                icon={<Icon className="size-4" />}
+                label={label}
+                onNavigate={handleNavigate}
+              />
             ))}
           </div>
         </nav>
 
         <div className="mt-auto space-y-4">
-          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-[rgb(var(--on-accent))] shadow-[var(--shadow-lift)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--on-accent),0.7)]">
+          <div className="rounded-3xl bg-gradient-to-br from-nexus-blue/90 via-nexus-mpurple/80 to-nexus-azure/90 p-5 text-white shadow-glass">
+            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/70">
               Plan
             </p>
-            <h3 className="mt-2 text-lg font-semibold text-[rgb(var(--on-accent))]">
-              Professional
-            </h3>
-            <p className="mt-1 text-sm text-[rgba(var(--on-accent),0.82)]">
+            <h3 className="mt-2 text-lg font-semibold">Professional</h3>
+            <p className="mt-1 text-sm text-white/80">
               Unlock orchestration across teams with unlimited workspaces.
             </p>
             <button
               type="button"
-              className="mt-4 btn btn-primary btn-neo ripple rounded-2xl"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-4 text-sm font-semibold shadow-glass backdrop-blur-xs transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               onClick={() => requestBillingUpgrade()}
             >
               <Zap className="size-4" /> Upgrade
             </button>
           </div>
-          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.85)] p-4 text-xs text-[rgb(var(--subtle))]">
-            <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
-            <p className="mt-1 leading-relaxed">
-              Compliance-friendly workspace for secure agent collaboration. Last
-              synced 2 mins ago.
+          <div className="rounded-3xl border border-slate-200/70 bg-white/65 p-4 text-xs text-slate-600 shadow-glass backdrop-blur-xs dark:border-slate-800/60 dark:bg-slate-900/55 dark:text-slate-300">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">Nexus HQ</p>
+            <p className="mt-1 leading-relaxed text-slate-600 dark:text-slate-300">
+              Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
             </p>
             <button
               type="button"
               onClick={() => requestProjectCreation()}
-              className="mt-3 btn btn-primary btn-neo ripple text-xs uppercase tracking-[0.2em]"
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/70 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 shadow-glass transition hover:bg-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-blue/60 dark:border-slate-800/60 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70"
             >
-              <Sparkles className="size-3.5" /> New project
+              <Sparkles className="size-4" /> New project
             </button>
           </div>
         </div>

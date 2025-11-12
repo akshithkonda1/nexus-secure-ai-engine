@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "@/styles/globals.css";
+import "@/styles/glass.css";
 import RootLayout from "@/layouts/RootLayout";
 import { Home } from "@/pages/Home";
 import { Chat } from "@/pages/Chat";
