@@ -51,13 +51,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
         </button>
 
         <div className="hidden flex-col sm:flex">
-          <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-            Welcome
-          </span>
-          <span className="text-lg font-semibold tracking-tight text-[rgb(var(--text))]">
-            AI Control Center
-          </span>
-        </div>
+         </div>
 
         <div className="flex flex-1 items-center gap-3">
           <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.92)] px-4 py-2 shadow-sm dark:border-[rgba(var(--border),0.4)] dark:bg-[rgba(var(--panel),0.7)] sm:flex">
