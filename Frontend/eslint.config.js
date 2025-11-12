@@ -34,7 +34,7 @@ export default [
       "react/prop-types": "off",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      "no-undef": "off"
+      "no-undef": "error"
     },
     settings: {
       react: {
