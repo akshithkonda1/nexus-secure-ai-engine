@@ -1,4 +1,19 @@
 import React, { useState, useEffect } from "react";
+import {
+  ArrowRight,
+  Clock,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Settings,
+  Bell,
+  Check,
+  Loader2,
+  AlertCircle,
+  Inbox,
+  Menu,
+  X,
+} from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Demo data (simulated API)                                         */
@@ -35,88 +50,16 @@ interface WorkflowConfig {
 }
 
 /* ------------------------------------------------------------------ */
-/*  SVG Icons (replacing lucide-react)                               */
-/* ------------------------------------------------------------------ */
-const Icons = {
-  ArrowRight: () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-  ),
-  Clock: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-  Send: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-    </svg>
-  ),
-  ShieldCheck: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-    </svg>
-  ),
-  Sparkles: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-    </svg>
-  ),
-  Settings: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  ),
-  Bell: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-    </svg>
-  ),
-  Check: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  ),
-  Loader: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={`${className} animate-spin`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-    </svg>
-  ),
-  AlertCircle: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  ),
-  Inbox: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-    </svg>
-  ),
-  Menu: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  ),
-  X: ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  ),
-};
-
-/* ------------------------------------------------------------------ */
 /*  Connector UI data                                                 */
 /* ------------------------------------------------------------------ */
 const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }> = {
-  canvas: { label: "Canvas", icon: <span className="w-4 h-4 rounded bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">C</span> },
-  "google-calendar": { label: "Google Calendar", icon: <Icons.Clock className="w-4 h-4 text-green-600" /> },
-  slack: { label: "Slack", icon: <Icons.Send className="w-4 h-4 text-purple-600" /> },
-  jira: { label: "Jira", icon: <span className="w-4 h-4 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-bold">J</span> },
-  notion: { label: "Notion", icon: <span className="w-4 h-4 rounded bg-gray-800 dark:bg-white text-white dark:text-gray-800 flex items-center justify-center text-xs font-bold">N</span> },
-  outlook: { label: "Outlook", icon: <Icons.Clock className="w-4 h-4 text-blue-600" /> },
-  "apple-reminders": { label: "Apple Reminders", icon: <Icons.Bell className="w-4 h-4 text-orange-600" /> },
+  canvas: { label: "Canvas", icon: <span className="size-4 rounded bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">C</span> },
+  "google-calendar": { label: "Google Calendar", icon: <Clock className="size-4 text-green-600" /> },
+  slack: { label: "Slack", icon: <Send className="size-4 text-purple-600" /> },
+  jira: { label: "Jira", icon: <span className="size-4 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-bold">J</span> },
+  notion: { label: "Notion", icon: <span className="size-4 rounded bg-gray-800 dark:bg-white text-white dark:text-gray-800 flex items-center justify-center text-xs font-bold">N</span> },
+  outlook: { label: "Outlook", icon: <Clock className="size-4 text-blue-600" /> },
+  "apple-reminders": { label: "Apple Reminders", icon: <Bell className="size-4 text-orange-600" /> },
 };
 
 /* ------------------------------------------------------------------ */
@@ -186,6 +129,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
     onClose(cfg);
   };
 
+  // Keyboard navigation
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -209,10 +153,11 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition"
             aria-label="Close dialog"
           >
-            <Icons.X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
 
+        {/* Progress indicator */}
         <div className="flex items-center gap-2">
           {[1, 2, 3].map((s) => (
             <div
@@ -224,6 +169,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
           ))}
         </div>
 
+        {/* Step 1 – Role */}
         {step === 1 && (
           <div className="space-y-6">
             <div>
@@ -277,12 +223,13 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
                 onClick={() => setStep(2)} 
                 className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
               >
-                Next <Icons.ArrowRight />
+                Next <ArrowRight className="size-4" />
               </button>
             </div>
           </div>
         )}
 
+        {/* Step 2 – Connectors */}
         {step === 2 && (
           <div className="space-y-6">
             <div>
@@ -312,7 +259,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
                     />
                     <div className="shrink-0">{icon}</div>
                     <span className="font-medium">{label}</span>
-                    {checked && <Icons.Check className="w-5 h-5 ml-auto text-blue-600" />}
+                    {checked && <Check className="size-5 ml-auto text-blue-600" />}
                   </label>
                 );
               })}
@@ -322,12 +269,13 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
                 Back
               </button>
               <button onClick={() => setStep(3)} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2">
-                Next <Icons.ArrowRight />
+                Next <ArrowRight className="size-4" />
               </button>
             </div>
           </div>
         )}
 
+        {/* Step 3 – Custom */}
         {step === 3 && (
           <div className="space-y-6">
             <div>
@@ -347,7 +295,7 @@ function SetupModal({ onClose }: { onClose: (cfg?: WorkflowConfig) => void }) {
                 Back
               </button>
               <button onClick={finish} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2">
-                Finish <Icons.Check className="w-4 h-4" />
+                Finish <Check className="size-4" />
               </button>
             </div>
           </div>
@@ -376,9 +324,9 @@ function NotificationBell({ config }: { config: WorkflowConfig }) {
         aria-label={`Notifications${alerts.length > 0 ? ` (${alerts.length} new)` : ""}`}
         aria-expanded={open}
       >
-        <Icons.Bell className="w-5 h-5" />
+        <Bell className="size-5" />
         {alerts.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse">
+          <span className="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse">
             {alerts.length}
           </span>
         )}
@@ -389,13 +337,13 @@ function NotificationBell({ config }: { config: WorkflowConfig }) {
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-sm">Notifications</h3>
             <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-              <Icons.X className="w-4 h-4" />
+              <X className="size-4" />
             </button>
           </div>
           {alerts.length > 0 ? (
             alerts.map((a, i) => (
               <div key={i} className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-sm flex items-start gap-2">
-                <Icons.AlertCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <AlertCircle className="size-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>{a}</span>
               </div>
             ))
@@ -414,7 +362,7 @@ function NotificationBell({ config }: { config: WorkflowConfig }) {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Icons.Inbox className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+      <Inbox className="size-16 text-gray-300 dark:text-gray-700 mb-4" />
       <p className="text-gray-500 dark:text-gray-400 font-medium">{message}</p>
     </div>
   );
@@ -426,7 +374,7 @@ function EmptyState({ message }: { message: string }) {
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <Icons.AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+      <AlertCircle className="size-16 text-red-500 mb-4" />
       <p className="text-gray-700 dark:text-gray-300 font-medium mb-4">{message}</p>
       <button onClick={onRetry} className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition">
         Try Again
@@ -446,17 +394,21 @@ export default function Outbox() {
   const [deliveryData, setDeliveryData] = useState<typeof deliveries>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Simulate API load
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
+        // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 800));
         setDeliveryData(deliveries);
-        const hasConfig = false;
+        // Check for existing config (would normally come from API)
+        const hasConfig = false; // Simulate first-time user
         if (!hasConfig) {
           setShowSetup(true);
         } else {
+          // Simulate loading config
           setConfig({
             role: "professional",
             connectors: ["jira", "slack"],
@@ -486,7 +438,7 @@ export default function Outbox() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Icons.Loader className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+          <Loader2 className="size-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 font-medium">Loading your workspace...</p>
         </div>
       </div>
@@ -513,16 +465,176 @@ export default function Outbox() {
         .animate-slideDown { animation: slideDown 0.2s ease-out; }
         
         .card {
-          background: white;
-          border-radius: 1rem;
-          box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-          padding: 1.5rem;
-          border: 1px solid rgb(243 244 246);
+          @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-100 dark:border-gray-700;
         }
-        .dark .card {
-          background: rgb(31 41 55);
-          border-color: rgb(55 65 81);
+        .panel-hover {
+          @apply hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all;
         }
-        .panel-hover:hover {
-          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-          border-color:
+        .chip {
+          @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300;
+        }
+        .chip-warn {
+          @apply bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400;
+        }
+      `}</style>
+
+      {showSetup && <SetupModal onClose={handleSetupClose} />}
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        
+        {/* Mobile menu button */}
+        <div className="lg:hidden fixed top-4 left-4 z-40">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
+
+        <div className="max-w-[1800px] mx-auto p-4 lg:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {/* LEFT SIDEBAR */}
+            <aside className={`lg:col-span-3 space-y-6 ${mobileMenuOpen ? "block" : "hidden lg:block"}`}>
+              
+              <div className="card space-y-5">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    {config?.roleLabel ?? config?.role ?? "Workspace"} outbox
+                  </p>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Scheduled briefs
+                  </h1>
+                </div>
+
+                {deliveryData.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(statusBuckets).map(([status, count]) => (
+                      <div
+                        key={status}
+                        className="flex flex-col items-center rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 p-3"
+                      >
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300">
+                          {status}
+                        </span>
+                        <span className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No scheduled deliveries</p>
+                )}
+              </div>
+
+              {config && <RoleSection role={config.role} />}
+
+              {config?.connectors.length ? (
+                <div className="card space-y-3">
+                  <h2 className="text-lg font-semibold">Automation controls</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {config.connectors.map((c) => (
+                      <span key={c} className="chip flex items-center gap-1.5">
+                        {connectorInfo[c].icon}
+                        {connectorInfo[c].label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+            </aside>
+
+            {/* MAIN CONTENT */}
+            <section className="lg:col-span-6 space-y-6">
+
+              {/* Header */}
+              <header className="card panel-hover">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                      {config?.roleLabel ?? config?.role ?? "Workspace"} outbox
+                    </p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                      Scheduled briefs &amp; auto sends
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {config && <NotificationBell config={config} />}
+
+                    <button
+                      onClick={() => setShowSetup(true)}
+                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                      title="Re-configure workflow"
+                      aria-label="Settings"
+                    >
+                      <Settings className="size-5" />
+                    </button>
+
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition flex items-center gap-2 font-semibold text-sm">
+                      <Sparkles className="size-4" /> Compose new
+                    </button>
+                  </div>
+                </div>
+              </header>
+
+              {/* Delivery queue */}
+              <div className="card panel-hover space-y-5">
+                <header className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                      Delivery queue
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Next sends
+                    </h3>
+                  </div>
+                  <span className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <Clock className="size-4" /> Auto-sync enabled
+                  </span>
+                </header>
+
+                {error ? (
+                  <ErrorState message={error} onRetry={() => window.location.reload()} />
+                ) : deliveryData.length > 0 ? (
+                  <ul className="space-y-3">
+                    {deliveryData.map((item) => (
+                      <li
+                        key={item.id}
+                        className="bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between rounded-xl p-4 text-sm transition cursor-pointer"
+                      >
+                        <div className="mb-2 sm:mb-0">
+                          <p className="font-semibold text-gray-900 dark:text-white">{item.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.owner}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{item.due}</p>
+                          <span className="chip chip-warn">{item.status}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <EmptyState message="No deliveries scheduled" />
+                )}
+              </div>
+
+              {/* Compliance */}
+              <div className="card panel-hover space-y-4">
+                <header className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                      Compliance routing
+                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Approvals &amp; guardrails
+                    </h3>
+                  </div>
+                  <ShieldCheck className="size-6 text-blue-600" />
+                </header>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Every outbound asset runs through Nexus guardrails. Track pending approvals and ensure each stakeholder signs off before final delivery.
+                </p>
+              </div>
