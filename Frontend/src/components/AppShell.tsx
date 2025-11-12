@@ -2,15 +2,11 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePanels } from "@/hooks/usePanels";
 import { PanelToggle } from "@/components/PanelToggle";
 import { PanelFlag } from "@/constants/panels";
-import BackButtons from "@/components/layout/BackButtons";
-import HamburgerMenu from "@/components/layout/HamburgerMenu";
 
 type Props = {
   left: ReactNode;
   right: ReactNode;
   children: ReactNode;
-  mainSidebarId?: string;
-  onToggleMainSidebar?: () => void;
 };
 
 const LG_BREAKPOINT = 1024;
@@ -41,13 +37,7 @@ function useIsDesktop() {
 const LEFT_PANEL_WIDTH = 320;
 const RIGHT_PANEL_WIDTH = 320;
 
-export default function AppShell({
-  left,
-  right,
-  children,
-  mainSidebarId,
-  onToggleMainSidebar,
-}: Props) {
+export default function AppShell({ left, right, children }: Props) {
   const { leftOpen, rightOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
 
@@ -61,10 +51,10 @@ export default function AppShell({
 
   return (
     <div className="h-screen w-full overflow-hidden">
-      <div
-        className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
-        style={{ gridTemplateColumns }}
-      >
+        <div
+          className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
+          style={{ gridTemplateColumns }}
+        >
         <aside
           className="relative border-r border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
           style={{ width: isDesktop ? leftW : 0 }}
@@ -99,12 +89,6 @@ export default function AppShell({
             )}
         </aside>
       </div>
-
-      <HamburgerMenu
-        mainSidebarId={mainSidebarId}
-        onToggleMainMenu={onToggleMainSidebar}
-      />
-      <BackButtons />
     </div>
   );
 }
