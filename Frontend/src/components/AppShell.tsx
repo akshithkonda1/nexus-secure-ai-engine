@@ -56,7 +56,7 @@ export default function AppShell({ left, right, children }: Props) {
           style={{ gridTemplateColumns }}
         >
         <aside
-          className="relative overflow-visible"
+          className="relative border-r border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
           style={{ width: isDesktop ? leftW : 0 }}
           aria-expanded={leftOpen && isDesktop}
           aria-hidden={!isDesktop}

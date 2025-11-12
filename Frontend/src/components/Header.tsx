@@ -39,11 +39,11 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   }, [profile?.fullName]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/60 backdrop-blur-xl transition-colors dark:border-slate-800/60 dark:bg-slate-900/40">
+    <header className="sticky top-0 z-30 border-b border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.82)] backdrop-blur-xl">
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
-          className="inline-flex size-10 items-center justify-center rounded-2xl border border-slate-200/70 bg-white/70 text-slate-600 shadow-glass backdrop-blur-xs transition hover:bg-white/80 hover:text-nexus-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-blue/60 dark:border-slate-800/70 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70 lg:hidden"
+          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)] lg:hidden"
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
@@ -54,17 +54,17 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
          </div>
 
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative hidden max-w-md flex-1 items-center gap-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-2 shadow-glass backdrop-blur-xs transition focus-within:ring-2 focus-within:ring-nexus-blue/60 dark:border-slate-800/70 dark:bg-slate-900/60 sm:flex">
+          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.92)] px-4 py-2 shadow-sm dark:border-[rgba(var(--border),0.4)] dark:bg-[rgba(var(--panel),0.7)] sm:flex">
             <Search
-              className="size-4 text-slate-500 dark:text-slate-400"
+              className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]"
               aria-hidden="true"
             />
             <input
               type="search"
               placeholder="Search sessions, documents, or commands"
-              className="h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none dark:text-slate-200 dark:placeholder:text-slate-500"
+              className="input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)]"
             />
-            <span className="hidden items-center gap-1 rounded-full border border-slate-200/60 bg-white/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-300 sm:inline-flex">
+            <span className="hidden items-center gap-1 rounded-full bg-[rgba(var(--panel),0.65)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.8)] sm:inline-flex">
               <Command className="size-3" /> K
             </span>
           </div>
@@ -75,9 +75,8 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               requestNewPrompt();
               navigate("/chat");
             }}
-            className="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/70 px-4 text-sm font-semibold text-slate-700 shadow-glass backdrop-blur-xs transition hover:bg-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-blue/60 dark:border-slate-800/70 dark:bg-slate-900/60 dark:text-slate-100 dark:hover:bg-slate-900/70"
+            className="btn btn-primary btn-neo ripple rounded-2xl"
           >
-            <span className="h-2 w-2 rounded-full bg-gradient-to-br from-nexus-blue to-nexus-mpurple" aria-hidden="true" />
             <Sparkles className="size-4" /> New prompt
           </button>
         </div>
@@ -94,7 +93,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             onClick={() => requestNotifications()}
-            className="relative inline-flex size-10 items-center justify-center rounded-2xl border border-slate-200/70 bg-white/70 text-slate-600 shadow-glass backdrop-blur-xs transition hover:bg-white/80 hover:text-nexus-blue focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-blue/60 dark:border-slate-800/70 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70"
+            className="relative flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.92)] text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)]"
             aria-label="Notifications"
           >
             <Bell className="size-4" />
@@ -112,7 +111,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/70 px-3 py-2 text-left text-sm font-medium text-slate-700 shadow-glass backdrop-blur-xs transition hover:bg-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-nexus-blue/60 dark:border-slate-800/70 dark:bg-slate-900/60 dark:text-slate-200 dark:hover:bg-slate-900/70",
+              "hidden items-center gap-3 rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-3 py-2 text-left text-sm font-medium text-[rgb(var(--text))] shadow-sm transition hover:border-brand hover:text-brand dark:bg-[rgba(var(--panel),0.7)]",
               "lg:flex",
             )}
             onClick={() => {
