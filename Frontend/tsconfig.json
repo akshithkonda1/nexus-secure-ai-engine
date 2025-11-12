@@ -14,7 +14,9 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] },
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "types": ["vite/client", "vitest/globals"]
   },
   "include": ["src"]
