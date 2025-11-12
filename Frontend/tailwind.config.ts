@@ -2,23 +2,34 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: "class",
+  content: [
+    "./index.html",
+    "./src/**/*.{ts,tsx,js,jsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        bg: "rgb(var(--bg))",
-        surface: "rgb(var(--surface))",
-        panel: "rgb(var(--panel))",
-        text: "rgb(var(--text))",
-        brand: "rgb(var(--brand))",
-        brand2: "rgb(var(--brand-2))",
+        background: "rgb(var(--bg) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        panel: "rgb(var(--panel) / <alpha-value>)",
+        foreground: "rgb(var(--text) / <alpha-value>)",
+        muted: "rgb(var(--subtle) / <alpha-value>)",
+        brand: "rgb(var(--brand) / <alpha-value>)",
+        "brand-soft": "rgb(var(--brand-soft) / <alpha-value>)",
+        border: "rgb(var(--border) / <alpha-value>)",
+        ring: "rgb(var(--ring) / <alpha-value>)",
       },
       boxShadow: {
-        soft: "var(--elev-1)",
-        lift: "var(--elev-2)",
+        soft: "var(--shadow-soft)",
+        lift: "var(--shadow-lift)",
       },
       borderRadius: {
-        "2xl": "1.25rem",
-        "3xl": "1.75rem",
+        card: "var(--radius-card)",
+        button: "var(--radius-button)",
+        input: "var(--radius-input)",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
       },
     },
   },
