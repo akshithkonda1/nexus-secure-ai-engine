@@ -8,18 +8,67 @@ export default {
   theme: {
     extend: {
       colors: {
-        border: '#2b3441',
-        card: '#1f2733',
-        accent: '#2563eb',
+        background: 'rgb(var(--bg) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        panel: 'rgb(var(--panel) / <alpha-value>)',
+        foreground: 'rgb(var(--text) / <alpha-value>)',
+        muted: 'rgb(var(--subtle) / <alpha-value>)',
+
+        brand: 'rgb(var(--brand) / <alpha-value>)',
+        'brand-soft': 'rgb(var(--brand-soft) / <alpha-value>)',
+
+        accent: {
+          emerald: 'rgb(var(--accent-emerald) / <alpha-value>)',
+          amber: 'rgb(var(--accent-amber) / <alpha-value>)',
+          rose: 'rgb(var(--accent-rose) / <alpha-value>)',
+          sky: 'rgb(var(--accent-sky) / <alpha-value>)',
+          lilac: 'rgb(var(--accent-lilac) / <alpha-value>)',
+        },
+
+        border: 'rgb(var(--border) / <alpha-value>)',
+        ring: 'rgb(var(--ring) / <alpha-value>)',
+
+        // Compatibility aliases
+        app: 'rgb(var(--bg) / <alpha-value>)',
+        ink: 'rgb(var(--text) / <alpha-value>)',
+        'app-bg': 'rgb(var(--bg) / <alpha-value>)',
+        'app-surface': 'rgb(var(--surface) / <alpha-value>)',
+        'app-text': 'rgb(var(--text) / <alpha-value>)',
+        'muted-foreground': 'rgb(var(--subtle) / <alpha-value>)',
+        card: 'rgb(var(--panel) / <alpha-value>)',
+        'app-border': 'rgb(var(--border) / <alpha-value>)',
+        trustBlue: 'rgb(var(--brand) / <alpha-value>)',
       },
       borderRadius: {
-        xl: '1rem',
+        card: 'var(--radius-card)',
+        button: 'var(--radius-button)',
+        input: 'var(--radius-input)',
       },
       boxShadow: {
-        soft: '0 6px 18px rgba(0,0,0,0.25)',
-        glow: '0 0 20px rgba(37,99,235,0.4)',
+        ambient: 'var(--shadow-soft)',
+        soft: 'var(--shadow-soft)',
+        lift: 'var(--shadow-lift)',
+        press: 'inset 0 1px 0 rgba(255,255,255,.1)',
+      },
+      fontFamily: {
+        sans: ['Inter','system-ui','-apple-system','BlinkMacSystemFont','Segoe UI','sans-serif'],
+      },
+      animation: {
+        'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
+        'skeleton-shimmer': 'skeleton-shimmer 1.5s ease-in-out infinite',
+      },
+      keyframes: {
+        'pulse-glow': {
+          '0%,100%': { boxShadow: '0 0 20px rgba(var(--brand), .3), 0 0 40px rgba(var(--brand-soft), .2)' },
+          '50%': { boxShadow: '0 0 30px rgba(var(--brand), .5), 0 0 60px rgba(var(--brand-soft), .3)' },
+        },
+        'skeleton-shimmer': {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
     },
   },
   plugins: [],
+  future: { hoverOnlyWhenSupported: true },
 };
