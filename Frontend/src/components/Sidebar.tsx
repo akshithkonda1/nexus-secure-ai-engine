@@ -24,7 +24,7 @@ type SidebarProps = {
 const primaryNav = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/chat", label: "AI Chat", icon: MessageCircle },
-  { to: "/outbox", label: "Outbox", icon: Inbox },
+  { to: "/outbox", label: "Workspace", icon: Inbox },
   { to: "/templates", label: "Templates", icon: Sparkles },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/history", label: "Activity", icon: ScrollText },
