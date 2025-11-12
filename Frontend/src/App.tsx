@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 
+import AppShell from "@/components/AppShell";
 import { Header } from "@/components/Header";
 import { RightRail } from "@/components/RightRail";
 import { Sidebar } from "@/components/Sidebar";
@@ -35,25 +36,28 @@ export function App() {
       >
         Skip to content
       </a>
-      <div className="flex min-h-screen bg-transparent text-[rgb(var(--text))]">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex min-h-screen flex-1 flex-col bg-transparent/0">
-        <Header
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-          onOpenProfile={() => setProfileOpen(true)}
-        />
-        <div className="flex flex-1 overflow-hidden">
-          <main
-            id="main"
-            className="ambient-page flex-1 overflow-y-auto px-5 pb-10 pt-6 md:px-8 lg:px-12"
-          >
-            <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
-              <Outlet />
+      <AppShell
+        left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}
+        right={<RightRail />}
+      >
+        <div className="flex min-h-full flex-col bg-transparent text-[rgb(var(--text))]">
+          <Header
+            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onOpenProfile={() => setProfileOpen(true)}
+          />
+          <div className="flex-1">
+            <div
+              id="main"
+              role="main"
+              className="ambient-page h-full px-5 pb-10 pt-6 md:px-8 lg:px-12"
+            >
+              <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
+                <Outlet />
+              </div>
             </div>
-          </main>
-          <RightRail />
+          </div>
         </div>
-      </div>
+      </AppShell>
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
       <NotificationsModal
         open={isNotificationsOpen}
@@ -61,7 +65,6 @@ export function App() {
       />
       <Toaster />
       <AmbientFX />
-      </div>
     </>
   );
 }
