@@ -36,13 +36,14 @@ function useIsDesktop() {
 
 const LEFT_PANEL_WIDTH = 320;
 const RIGHT_PANEL_WIDTH = 320;
+const COLLAPSED_PANEL_WIDTH = 40;
 
 export default function AppShell({ left, right, children }: Props) {
   const { leftOpen, rightOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
 
-  const leftW = leftOpen ? LEFT_PANEL_WIDTH : 0;
-  const rightW = rightOpen ? RIGHT_PANEL_WIDTH : 0;
+  const leftW = leftOpen ? LEFT_PANEL_WIDTH : COLLAPSED_PANEL_WIDTH;
+  const rightW = rightOpen ? RIGHT_PANEL_WIDTH : COLLAPSED_PANEL_WIDTH;
 
   const gridTemplateColumns = useMemo(
     () => (isDesktop ? `${leftW}px 1fr ${rightW}px` : "1fr"),
