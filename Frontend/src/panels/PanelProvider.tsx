@@ -1,15 +1,14 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { PanelFlag } from "@/constants/panels";
 
-type Panels = {
+type PanelsContextValue = {
   leftOpen: boolean;
   rightOpen: boolean;
-  toggleLeft: () => void;
-  toggleRight: () => void;
-  setLeft: (v: boolean) => void;
-  setRight: (v: boolean) => void;
+  toggle: (flag: PanelFlag) => void;
+  set: (flag: PanelFlag, value: boolean) => void;
 };
 
-const Ctx = createContext<Panels | null>(null);
+const Ctx = createContext<PanelsContextValue | null>(null);
 const LS_KEY = "nexus.panels.v1";
 
 export function PanelProvider({ children }: { children: ReactNode }) {
@@ -38,20 +37,43 @@ export function PanelProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, [leftOpen, rightOpen]);
 
-  const toggleLeft = useCallback(() => setLeftOpen((v) => !v), []);
-  const toggleRight = useCallback(() => setRightOpen((v) => !v), []);
-  const setLeft = useCallback((v: boolean) => setLeftOpen(v), []);
-  const setRight = useCallback((v: boolean) => setRightOpen(v), []);
+  const toggle = useCallback(
+    (flag: PanelFlag) => {
+      if (flag === PanelFlag.LEFT_OPEN) {
+        setLeftOpen((value) => !value);
+        return;
+      }
+
+      if (flag === PanelFlag.RIGHT_OPEN) {
+        setRightOpen((value) => !value);
+      }
+    },
+    [setLeftOpen, setRightOpen]
+  );
+
+  const setPanelState = useCallback(
+    (flag: PanelFlag, value: boolean) => {
+      if (flag === PanelFlag.LEFT_OPEN) {
+        setLeftOpen(value);
+        return;
+      }
+
+      if (flag === PanelFlag.RIGHT_OPEN) {
+        setRightOpen(value);
+      }
+    },
+    [setLeftOpen, setRightOpen]
+  );
 
   const value = useMemo(
-    () => ({ leftOpen, rightOpen, toggleLeft, toggleRight, setLeft, setRight }),
-    [leftOpen, rightOpen, toggleLeft, toggleRight, setLeft, setRight]
+    () => ({ leftOpen, rightOpen, toggle, set: setPanelState }),
+    [leftOpen, rightOpen, toggle, setPanelState]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function usePanels(): Panels {
+export function usePanels(): PanelsContextValue {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("usePanels must be used within PanelProvider");
   return ctx;

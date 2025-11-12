@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { PanelSide } from "@/constants/panels";
 
 type Props = {
-  side: "left" | "right";
+  side: PanelSide;
   open: boolean;
   onClick: () => void;
   className?: string;

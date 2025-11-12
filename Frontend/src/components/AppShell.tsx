@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePanels } from "@/hooks/usePanels";
 import { PanelToggle } from "@/components/PanelToggle";
+import { PanelFlag } from "@/constants/panels";
 
 type Props = {
   left: ReactNode;
@@ -33,24 +34,27 @@ function useIsDesktop() {
   return isDesktop;
 }
 
+const LEFT_PANEL_WIDTH = 320;
+const RIGHT_PANEL_WIDTH = 320;
+
 export default function AppShell({ left, right, children }: Props) {
-  const { leftOpen, rightOpen, toggleLeft, toggleRight } = usePanels();
+  const { leftOpen, rightOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
 
-  const leftW = leftOpen ? LEFT_OPEN : LEFT_COLLAPSED;
-  const rightW = rightOpen ? RIGHT_OPEN : RIGHT_COLLAPSED;
+  const leftW = leftOpen ? LEFT_PANEL_WIDTH : 0;
+  const rightW = rightOpen ? RIGHT_PANEL_WIDTH : 0;
 
-  const gridTemplate = useMemo(
+  const gridTemplateColumns = useMemo(
     () => (isDesktop ? `${leftW}px 1fr ${rightW}px` : "1fr"),
     [isDesktop, leftW, rightW]
   );
 
   return (
     <div className="h-screen w-full overflow-hidden">
-      <div
-        className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
-        style={{ gridTemplateColumns: gridCols }}
-      >
+        <div
+          className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
+          style={{ gridTemplateColumns }}
+        >
         <aside
           className="relative border-r border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
           style={{ width: isDesktop ? leftW : 0 }}
@@ -58,9 +62,13 @@ export default function AppShell({ left, right, children }: Props) {
           aria-hidden={!isDesktop}
         >
           <div className="h-full">{left}</div>
-          {isDesktop && (
-            <PanelToggle side="left" open={leftOpen} onClick={toggleLeft} />
-          )}
+            {isDesktop && (
+              <PanelToggle
+                side="left"
+                open={leftOpen}
+                onClick={() => toggle(PanelFlag.LEFT_OPEN)}
+              />
+            )}
         </aside>
 
         <main className="min-w-0 overflow-y-auto">{children}</main>
@@ -72,9 +80,13 @@ export default function AppShell({ left, right, children }: Props) {
           aria-hidden={!isDesktop}
         >
           <div className="h-full">{right}</div>
-          {isDesktop && (
-            <PanelToggle side="right" open={rightOpen} onClick={toggleRight} />
-          )}
+            {isDesktop && (
+              <PanelToggle
+                side="right"
+                open={rightOpen}
+                onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
+              />
+            )}
         </aside>
       </div>
     </div>
