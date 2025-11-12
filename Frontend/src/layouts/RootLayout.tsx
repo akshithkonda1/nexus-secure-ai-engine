@@ -38,8 +38,6 @@ export default function RootLayout() {
       <AppShell
         left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}
         right={<RightRail />}
-        mainSidebarId="app-sidebar"
-        onToggleMainSidebar={() => setSidebarOpen((prev) => !prev)}
       >
         <div className="flex min-h-full flex-col bg-transparent text-[rgb(var(--text))]">
           <Header
