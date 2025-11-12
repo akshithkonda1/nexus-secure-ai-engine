@@ -47,10 +47,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         onClick={onClose}
       />
       <aside
+        id="app-sidebar"
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform dark:bg-[rgba(var(--sidebar),0.85)]",
-          "lg:static lg:translate-x-0 lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "lg:static lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
+          "-translate-x-full lg:translate-x-0",
+          isOpen && "translate-x-0",
         )}
       >
         <div className="flex items-center justify-between">
