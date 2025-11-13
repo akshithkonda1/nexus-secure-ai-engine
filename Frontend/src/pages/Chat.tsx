@@ -526,6 +526,24 @@ export function Chat() {
     setActiveSessionId(next.id);
   };
 
+  const handleDeleteSession = (id: string) => {
+    setSessions((prev) => {
+      if (prev.length <= 1) {
+        // Don't allow deleting the final session
+        return prev;
+      }
+
+      const next = prev.filter((s) => s.id !== id);
+      if (id === activeSessionId && next.length > 0) {
+        // Fallback: select the most recent remaining session
+        const fallback = next[next.length - 1] ?? next[0];
+        setActiveSessionId(fallback.id);
+      }
+
+      return next;
+    });
+  };
+
   /* Message & reply logic */
 
   const addUserMessage = (content: string, attachments: string[]) => {
@@ -812,13 +830,27 @@ export function Chat() {
                   type="button"
                   onClick={() => setActiveSessionId(session.id)}
                   className={[
-                    "mr-1 rounded-full px-3 py-1 whitespace-nowrap border text-[11px] transition-colors",
+                    "relative mr-1 flex items-center gap-1 rounded-full px-3 py-1 whitespace-nowrap border text-[11px] transition-colors",
                     session.id === activeSessionId
                       ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.15)] text-[rgb(var(--text))]"
                       : "border-[rgba(var(--border),0.8)] text-[rgb(var(--subtle))] hover:bg-[rgba(var(--border),0.3)]",
                   ].join(" ")}
                 >
-                  {session.title}
+                  <span className="truncate max-w-[120px]">
+                    {session.title}
+                  </span>
+                  {sessions.length > 1 && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSession(session.id);
+                      }}
+                      className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-[rgb(var(--subtle))] hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgb(var(--text))]"
+                      aria-label="Delete session"
+                    >
+                      ×
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
