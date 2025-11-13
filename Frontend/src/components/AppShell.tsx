@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePanels } from "@/hooks/usePanels";
 import { PanelToggle } from "@/components/PanelToggle";
 import { PanelFlag } from "@/constants/panels";
+import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
 
 type Props = {
   left: ReactNode;
@@ -34,14 +35,17 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-const LEFT_PANEL_WIDTH = 320;
+const SIDEBAR_COLLAPSED_WIDTH = 72;
+const SIDEBAR_EXPANDED_WIDTH = 288;
 const RIGHT_PANEL_WIDTH = 320;
 
 export default function AppShell({ left, right, children }: Props) {
   const { leftOpen, rightOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
+  const { collapsed } = useSidebar();
 
-  const leftW = leftOpen ? LEFT_PANEL_WIDTH : 0;
+  const baseSidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
+  const leftW = leftOpen ? baseSidebarWidth : 0;
   const rightW = rightOpen ? RIGHT_PANEL_WIDTH : 0;
 
   const gridTemplateColumns = useMemo(
@@ -50,43 +54,43 @@ export default function AppShell({ left, right, children }: Props) {
   );
 
   return (
-    <div className="h-screen w-full overflow-hidden">
-        <div
-          className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
-          style={{ gridTemplateColumns }}
-        >
+    <div className="h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
+      <div
+        className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
+        style={{ gridTemplateColumns }}
+      >
         <aside
-          className="relative border-r border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
+          className="relative overflow-visible"
           style={{ width: isDesktop ? leftW : 0 }}
           aria-expanded={leftOpen && isDesktop}
           aria-hidden={!isDesktop}
         >
-          <div className="h-full">{left}</div>
-            {isDesktop && (
-              <PanelToggle
-                side="left"
-                open={leftOpen}
-                onClick={() => toggle(PanelFlag.LEFT_OPEN)}
-              />
-            )}
+          <div className="h-full w-full">{left}</div>
+          {isDesktop && (
+            <PanelToggle
+              side="left"
+              open={leftOpen}
+              onClick={() => toggle(PanelFlag.LEFT_OPEN)}
+            />
+          )}
         </aside>
 
         <main className="min-w-0 overflow-y-auto">{children}</main>
 
         <aside
-          className="relative border-l border-slate-200/60 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-slate-900/30 overflow-hidden"
+          className="relative overflow-visible"
           style={{ width: isDesktop ? rightW : 0 }}
           aria-expanded={rightOpen && isDesktop}
           aria-hidden={!isDesktop}
         >
-          <div className="h-full">{right}</div>
-            {isDesktop && (
-              <PanelToggle
-                side="right"
-                open={rightOpen}
-                onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
-              />
-            )}
+          <div className="h-full w-full">{right}</div>
+          {isDesktop && (
+            <PanelToggle
+              side="right"
+              open={rightOpen}
+              onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
+            />
+          )}
         </aside>
       </div>
     </div>

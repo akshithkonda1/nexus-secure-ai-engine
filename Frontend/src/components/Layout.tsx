@@ -1,10 +1,11 @@
-import { Fragment, Suspense, useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { Dialog, Transition } from "@headlessui/react";
+import { Suspense, useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { UserBar } from "@/components/UserBar";
+import { SidebarProvider, useSidebar } from "@/components/layout/sidebar/SidebarContext";
+import { cn } from "@/shared/lib/cn";
 
 function SkipLink() {
   return (
@@ -17,15 +18,12 @@ function SkipLink() {
   );
 }
 
-export function Layout() {
+function LayoutContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-  const activePath = location.pathname || "/";
+  const { collapsed } = useSidebar();
 
   useEffect(() => {
-    if (!sidebarOpen) {
-      return undefined;
-    }
+    if (!sidebarOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSidebarOpen(false);
@@ -36,55 +34,24 @@ export function Layout() {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-    document.body.style.backgroundColor = "";
-    document.body.classList.add("bg-surface");
+    if (typeof document === "undefined") return;
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => {
-      document.body.classList.remove("bg-surface");
       document.body.style.overflow = "";
     };
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-surface text-white">
+    <div className="min-h-screen bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
       <SkipLink />
-      <Sidebar active={activePath} variant="desktop" />
-
-      <Transition show={sidebarOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
-          <Transition.Child
-            as={Fragment}
-            enter="duration-200 ease-out"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="duration-150 ease-in"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/70" aria-hidden="true" />
-          </Transition.Child>
-
-          <Transition.Child
-            as={Fragment}
-            enter="duration-200 ease-out"
-            enterFrom="-translate-x-full"
-            enterTo="translate-x-0"
-            leave="duration-150 ease-in"
-            leaveFrom="translate-x-0"
-            leaveTo="-translate-x-full"
-          >
-            <Dialog.Panel className="fixed inset-y-0 left-0 flex w-72 max-w-full">
-              <Sidebar active={activePath} variant="mobile" onNavigate={() => setSidebarOpen(false)} />
-            </Dialog.Panel>
-          </Transition.Child>
-        </Dialog>
-      </Transition>
-
-      <div className="flex min-h-screen flex-1 flex-col pl-0 lg:pl-64">
-        <Header onToggleSidebar={() => setSidebarOpen(true)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div
+        className={cn(
+          "flex min-h-screen flex-1 flex-col pl-0 transition-[padding-left] duration-200",
+          collapsed ? "lg:pl-[88px]" : "lg:pl-80",
+        )}
+      >
+        <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
         <main
           id="main-content"
           className="flex-1 overflow-y-auto px-4 pb-10 pt-24 sm:px-6 lg:px-10"
@@ -103,5 +70,13 @@ export function Layout() {
         <UserBar />
       </div>
     </div>
+  );
+}
+
+export function Layout() {
+  return (
+    <SidebarProvider>
+      <LayoutContent />
+    </SidebarProvider>
   );
 }

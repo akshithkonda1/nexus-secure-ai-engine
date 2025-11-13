@@ -10,6 +10,7 @@ import { NotificationsModal } from "@/components/NotificationsModal";
 import { useCommand } from "@/lib/actions";
 import { Toaster } from "@/shared/ui/components/toast";
 import AmbientFX from "@/components/AmbientFX";
+import { SidebarProvider } from "@/components/layout/sidebar/SidebarContext";
 
 export default function RootLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function RootLayout() {
   });
 
   return (
-    <>
+    <SidebarProvider>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 btn-ghost z-50"
@@ -64,6 +65,6 @@ export default function RootLayout() {
       />
       <Toaster />
       <AmbientFX />
-    </>
+    </SidebarProvider>
   );
 }
