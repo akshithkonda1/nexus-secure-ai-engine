@@ -259,49 +259,6 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
 };
 
 /* ------------------------------------------------------------------ */
-/* Notification Bell (Safe, Accessible, Animated)                     */
-/* ------------------------------------------------------------------ */
-const NotificationBell: React.FC<{ config: WorkflowConfig | null }> = ({ config }) => {
-  const [open, setOpen] = useState(false);
-
-  const alerts = useMemo(() => {
-    const roles = config?.roles ?? [];
-    const connectors = config?.connectors ?? [];
-    return [
-      roles.includes("student") && "Canvas quiz due in 2h",
-      connectors.includes("google-calendar") && "Meeting at 3pm",
-      config?.customInstructions && "Custom task ready",
-      roles.includes("parent") && "Family event reminder",
-    ].filter(Boolean) as string[];
-  }, [config]);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-3 rounded-full hover:bg-white/10 transition-all hover:scale-110"
-        aria-label={`Notifications (${alerts.length})`}
-      >
-        <Bell className="size-6 text-[rgb(var(--text))]" />
-        {alerts.length > 0 && (
-          <span className="absolute top-1 right-1 size-3 bg-red-500 rounded-full animate-pulse ring-2 ring-white dark:ring-gray-900" />
-        )}
-      </button>
-
-      {open && alerts.length > 0 && (
-        <div className="absolute right-0 mt-3 w-80 card p-5 space-y-3 text-base rounded-3xl shadow-2xl animate-in slide-in-from-top-2 duration-200 z-50">
-          {alerts.map((alert, i) => (
-            <p key={i} className="font-medium text-[rgb(var(--text))]">
-              {alert}
-            </p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ------------------------------------------------------------------ */
 /* MAIN OUTBOX COMPONENT (PERFECTED)                                  */
 /* ------------------------------------------------------------------ */
 export const Outbox: React.FC = () => {
@@ -367,7 +324,6 @@ export const Outbox: React.FC = () => {
               </h1>
             </div>
             <nav className="flex items-center gap-4">
-              <NotificationBell config={config} />
               <button
                 onClick={() => setShowSetup(true)}
                 className="p-3 rounded-full hover:bg-white/10 transition-all hover:scale-110"
