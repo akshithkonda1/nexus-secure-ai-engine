@@ -18,7 +18,6 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -118,7 +117,7 @@ const IOSSwitch: React.FC<{
         "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
         checked ? "translate-x-5" : "translate-x-1",
       ].join(" ")}
-    />
+  />
   </button>
 );
 
@@ -152,8 +151,6 @@ const Waveform: React.FC<{ active: boolean }> = ({ active }) => {
 /* ------------------------------------------------------------------ */
 
 export function Chat() {
-  const navigate = useNavigate();
-
   const [sessions, setSessions] = useState<ChatSession[]>(() => [
     createFreshSession(),
   ]);
@@ -393,30 +390,13 @@ export function Chat() {
               Chat Console
             </h1>
             <p className="text-xs text-[rgb(var(--subtle))]">
-              Ask anything — Nexus will route to Workspace, Outbox, or
-              Documents when needed.
+              Ask anything — Nexus will route to Workspace, Outbox, or Documents
+              when needed.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("/workspace")}
-            className="hidden items-center rounded-full border border-[rgba(var(--border),0.8)] bg-[rgb(var(--panel))] px-3 py-1 text-xs font-medium text-[rgb(var(--subtle))] hover:text-[rgb(var(--text))] sm:inline-flex"
-          >
-            Workspace
-            <ArrowUpRight className="ml-1 h-3 w-3" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/outbox")}
-            className="hidden items-center rounded-full border border-[rgba(var(--border),0.8)] bg-[rgb(var(--panel))] px-3 py-1 text-xs font-medium text-[rgb(var(--subtle))] hover:text-[rgb(var(--text))] sm:inline-flex"
-          >
-            Outbox
-            <ArrowUpRight className="ml-1 h-3 w-3" />
-          </button>
-
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}
