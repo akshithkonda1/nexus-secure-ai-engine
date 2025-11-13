@@ -1,103 +1,96 @@
-"""Telemetry recording primitives.
+"""Telemetry recorder restricted to model-level metadata only.
 
-The recorder intentionally captures metadata about model orchestration without
-persisting user content. This implementation is designed to be safe for use in
-regulated environments and can easily be replaced with a more sophisticated
-backend (for example CloudWatch, Firehose, or an internal metrics pipeline).
+This module intentionally avoids collecting *any* user provided content. The
+recorded payloads are limited to model level operational signals so they can be
+forwarded to monitoring systems without risking sensitive data disclosure.
 """
 from __future__ import annotations
 
 import json
 import logging
-import os
+import time
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, Mapping, Optional
+from typing import Dict, Optional
 
 log = logging.getLogger(__name__)
 
 
 @dataclass
 class TelemetryEvent:
-    """Structured telemetry payload containing no user content."""
+    """Structured metadata describing the behaviour of a single model call."""
 
-    request_id: str
-    session_id: str
-    models: Iterable[str]
-    latencies: Mapping[str, float]
-    policy: Optional[str] = None
+    model_name: str
+    latency_ms: Optional[float] = None
+    failure_type: Optional[str] = None
+    hallucination_score: Optional[float] = None
     disagreement: Optional[float] = None
-    consensus: Optional[str] = None
-    errors: Optional[Mapping[str, str]] = None
+    token_usage: Optional[int] = None
+    timestamp: float = field(default_factory=lambda: time.time())
+    debate_metadata: Dict[str, object] = field(default_factory=dict)
     extra: Dict[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, object]:
-        payload: Dict[str, object] = {
-            "request_id": self.request_id,
-            "session_id": self.session_id,
-            "models": list(self.models),
-            "latencies": dict(self.latencies),
-        }
-        if self.policy is not None:
-            payload["policy"] = self.policy
+        payload: Dict[str, object] = {"model_name": self.model_name, "timestamp": self.timestamp}
+        if self.latency_ms is not None:
+            payload["latency_ms"] = float(self.latency_ms)
+        if self.failure_type is not None:
+            payload["failure_type"] = self.failure_type
+        if self.hallucination_score is not None:
+            payload["hallucination_score"] = float(self.hallucination_score)
         if self.disagreement is not None:
-            payload["disagreement"] = self.disagreement
-        if self.consensus is not None:
-            payload["consensus"] = self.consensus
-        if self.errors:
-            payload["errors"] = dict(self.errors)
+            payload["disagreement"] = float(self.disagreement)
+        if self.token_usage is not None:
+            payload["token_usage"] = int(self.token_usage)
+        if self.debate_metadata:
+            payload["debate_metadata"] = dict(self.debate_metadata)
         if self.extra:
             payload["extra"] = dict(self.extra)
         return payload
 
 
 class TelemetryRecorder:
-    """Best-effort telemetry logger.
+    """Best-effort recorder that never captures user supplied content."""
 
-    The recorder emits JSON payloads to the configured logger when telemetry is
-    enabled. It is intentionally conservative and will never raise exceptions –
-    telemetry must never impact the user facing request lifecycle.
-    """
+    def __init__(self, *, enabled: bool = False) -> None:
+        self._enabled = bool(enabled)
 
-    def __init__(self, *, enabled: Optional[bool] = None) -> None:
-        self._enabled = (
-            enabled
-            if enabled is not None
-            else os.getenv("NEXUS_TELEMETRY_ENABLED", "1").lower() in {"1", "true", "yes"}
-        )
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
 
-    def record(self, event: TelemetryEvent) -> None:
-        if not self._enabled:
-            return
-        try:
-            log.info("telemetry.event", extra={"telemetry": json.dumps(event.to_dict())})
-        except Exception:  # pragma: no cover - logging failures are non-fatal
-            log.debug("telemetry_emit_failed", exc_info=True)
-
-    def record_inference(
+    def record_model_behavior(
         self,
         *,
-        request_id: str,
-        session_id: str,
-        models: Iterable[str],
-        latencies: Mapping[str, float],
-        policy: Optional[str] = None,
+        model_name: str,
+        latency_ms: Optional[float] = None,
+        failure_type: Optional[str] = None,
+        hallucination_score: Optional[float] = None,
         disagreement: Optional[float] = None,
-        consensus: Optional[str] = None,
-        errors: Optional[Mapping[str, str]] = None,
+        token_usage: Optional[int] = None,
+        timestamp: Optional[float] = None,
+        debate_metadata: Optional[Dict[str, object]] = None,
         extra: Optional[Dict[str, object]] = None,
     ) -> None:
+        if not self._enabled:
+            return
         event = TelemetryEvent(
-            request_id=request_id,
-            session_id=session_id,
-            models=models,
-            latencies=latencies,
-            policy=policy,
+            model_name=model_name,
+            latency_ms=latency_ms,
+            failure_type=failure_type,
+            hallucination_score=hallucination_score,
             disagreement=disagreement,
-            consensus=consensus,
-            errors=errors,
-            extra=extra or {},
+            token_usage=token_usage,
+            timestamp=timestamp if timestamp is not None else time.time(),
+            debate_metadata=dict(debate_metadata or {}),
+            extra=dict(extra or {}),
         )
-        self.record(event)
+        self._emit(event)
+
+    def _emit(self, event: TelemetryEvent) -> None:
+        try:
+            log.info("telemetry.model_behavior", extra={"telemetry": json.dumps(event.to_dict())})
+        except Exception:  # pragma: no cover - telemetry failures must be silent
+            log.debug("telemetry_emit_failed", exc_info=True)
 
 
 __all__ = ["TelemetryRecorder", "TelemetryEvent"]

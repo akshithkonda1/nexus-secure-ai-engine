@@ -110,19 +110,13 @@ def test_engine_run_happy_path():
     eng = mk_engine()
     out = eng.run(session_id="s1", query="what is nexus?")
     assert out["status"] == "ok"
-    # required top-level keys
-    for k in (
-        "answer",
-        "winner",
-        "winner_ref",
-        "participants",
-        "code",
-        "sources",
-        "photos",
-        "meta",
-    ):
-        assert k in out, f"missing key: {k}"
+    # required schema keys
+    for key in ("answer", "pii_detected", "pii_details", "models_used", "timings", "meta"):
+        assert key in out, f"missing key: {key}"
     assert isinstance(out["answer"], str) and out["answer"]
+    assert isinstance(out["models_used"], list) and out["models_used"]
+    assert isinstance(out["timings"], dict)
+    assert isinstance(out["meta"], dict)
     assert out["winner"] in out["participants"]
     assert len(out["sources"]) >= 1
 
@@ -163,7 +157,9 @@ def test_pii_detection_blocks_by_default():
     assert result["status"] == "pii_detected"
     assert result["pii_detected"] is True
     assert result["pii_details"]
-    assert result["answer"] == ""
+    assert result["answer"] is None
+    assert result.get("error_message")
+    assert result.get("sanitized_preview")
 
 
 def test_pii_override_allows_request():
