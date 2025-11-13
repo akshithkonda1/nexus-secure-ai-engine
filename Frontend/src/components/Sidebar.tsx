@@ -1,18 +1,17 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
 import {
-  BookOpen,
+  Book,
   FileText,
-  Inbox,
-  LayoutDashboard,
+  Folder,
+  Grid,
+  History,
   MessageCircle,
-  ScrollText,
   Settings,
-  ShieldCheck,
+  Shield,
   Sparkles,
-  Zap,
 } from "lucide-react";
 
+import NavItem from "@/components/nav/NavItem";
+import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
 import { cn } from "@/shared/lib/cn";
 import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
 
@@ -22,21 +21,23 @@ type SidebarProps = {
 };
 
 const primaryNav = [
-  { to: "/", label: "Overview", icon: LayoutDashboard },
+  { to: "/", label: "Overview", icon: Grid },
   { to: "/chat", label: "Chat", icon: MessageCircle },
-  { to: "/outbox", label: "Workspace", icon: Inbox },
+  { to: "/outbox", label: "Workspace", icon: Folder },
   { to: "/templates", label: "Templates", icon: Sparkles },
   { to: "/documents", label: "Documents", icon: FileText },
-  { to: "/history", label: "Activity", icon: ScrollText },
+  { to: "/history", label: "Activity", icon: History },
 ];
 
 const supportNav = [
-  { to: "/governance", label: "Governance", icon: ShieldCheck },
-  { to: "/guides", label: "Guides", icon: BookOpen },
+  { to: "/governance", label: "Governance", icon: Shield },
+  { to: "/guides", label: "Guides", icon: Book },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+  const { collapsed, toggle } = useSidebar();
+
   return (
     <>
       <div
@@ -47,113 +48,105 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         onClick={onClose}
       />
       <aside
+        data-collapsed={collapsed ? "true" : "false"}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-[rgba(var(--border),0.6)] bg-[rgba(var(--sidebar),0.92)] px-6 pb-8 pt-10 text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition-transform dark:bg-[rgba(var(--sidebar),0.85)]",
-          "lg:static lg:translate-x-0 lg:bg-[rgba(var(--sidebar),0.75)] lg:shadow-none",
+          "glass-surface fixed left-0 top-0 z-40 flex h-full flex-col overflow-visible px-3 py-4 transition-[transform,width] duration-200 ease-out",
+          collapsed ? "w-[72px]" : "w-72",
+          "lg:static lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
-              Nexus
-            </p>
-            <h1 className="mt-1 text-xl font-semibold">
-              Secure AI Debate Engine
-            </h1>
+        <div className="flex h-full flex-col overflow-y-auto">
+          <div className="mb-4 flex items-center gap-2 px-1">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#009EFF] to-[#9360FF]" />
+            {!collapsed && <div className="text-sm font-semibold tracking-wide">NEXUS</div>}
+            <button
+              type="button"
+              className={cn(
+                "ml-auto nav-icon transition-transform",
+                collapsed ? "rotate-180" : "",
+              )}
+              aria-label={collapsed ? "Expand menu" : "Collapse menu"}
+              aria-expanded={!collapsed}
+              onClick={toggle}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 6l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
-          <span className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-transparent [background:linear-gradient(120deg,#009EFF,#9360FF)] bg-clip-text">
-            BETA
-          </span>
-        </div>
 
-        <nav className="mt-10 space-y-8 text-sm font-medium">
-          <div className="space-y-1">
+          <nav className="space-y-2">
             {primaryNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
+              <NavItem
                 key={to}
                 to={to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  cn(
-                    "group flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors",
-                    "hover:bg-[rgba(var(--brand),0.08)]",
-                    isActive
-                      ? "bg-[rgba(var(--brand),0.12)] text-brand shadow-[var(--shadow-soft)]"
-                      : "text-[rgb(var(--subtle))]",
-                  )
-                }
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.85)] text-brand shadow-sm">
-                  <Icon className="size-4" />
-                </span>
-                <span className="flex-1 text-left tracking-tight">{label}</span>
-                <span className="opacity-0 transition group-hover:opacity-100">
-                  →
-                </span>
-              </NavLink>
+                label={label}
+                icon={<Icon className="size-4" />}
+                onNavigate={onClose}
+              />
             ))}
-          </div>
 
-          <div className="space-y-1">
-            <p className="px-4 text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-              Workspace
-            </p>
+            {!collapsed && (
+              <div className="pt-4 pb-1 text-[11px] tracking-[0.14em] uppercase text-slate-500 dark:text-slate-400">
+                Workspace
+              </div>
+            )}
+
             {supportNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
+              <NavItem
                 key={to}
                 to={to}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-[rgb(var(--subtle))] transition hover:bg-[rgba(var(--panel),0.65)]",
-                    isActive &&
-                      "bg-[rgba(var(--surface),0.95)] text-brand shadow-[var(--shadow-soft)]",
-                  )
-                }
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[rgba(var(--surface),0.82)] text-[rgb(var(--subtle))]">
-                  <Icon className="size-4" />
-                </span>
-                <span className="flex-1 text-left tracking-tight">{label}</span>
-              </NavLink>
+                label={label}
+                icon={<Icon className="size-4" />}
+                onNavigate={onClose}
+              />
             ))}
-          </div>
-        </nav>
+          </nav>
 
-        <div className="mt-auto space-y-4">
-          <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--brand),0.85)_0%,rgba(var(--brand-soft),0.75)_100%)] p-5 text-[rgb(var(--on-accent))] shadow-[var(--shadow-lift)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--on-accent),0.7)]">
-              Plan
-            </p>
-            <h3 className="mt-2 text-lg font-semibold text-[rgb(var(--on-accent))]">
-              Professional
-            </h3>
-            <p className="mt-1 text-sm text-[rgba(var(--on-accent),0.82)]">
-              Unlock orchestration across teams with unlimited workspaces.
-            </p>
-            <button
-              type="button"
-              className="mt-4 btn btn-primary btn-neo ripple rounded-2xl"
-              onClick={() => requestBillingUpgrade()}
-            >
-              <Zap className="size-4" /> Upgrade
-            </button>
-          </div>
-          <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.85)] p-4 text-xs text-[rgb(var(--subtle))]">
-            <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
-            <p className="mt-1 leading-relaxed">
-              Compliance-friendly workspace for secure agent collaboration. Last
-              synced 2 mins ago.
-            </p>
-            <button
-              type="button"
-              onClick={() => requestProjectCreation()}
-              className="mt-3 btn btn-primary btn-neo ripple text-xs uppercase tracking-[0.2em]"
-            >
-              <Sparkles className="size-3.5" /> New project
-            </button>
-          </div>
+          {!collapsed && (
+            <div className="mt-auto space-y-4 pt-6">
+              <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--glow-blue),0.55)_0%,rgba(var(--glow-purple),0.45)_100%)] p-5 text-[rgb(var(--surface))] shadow-[0_20px_45px_rgba(2,6,23,0.25)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/70">Plan</p>
+                <h3 className="mt-2 text-lg font-semibold">Professional</h3>
+                <p className="mt-1 text-sm text-white/85">
+                  Unlock orchestration across teams with unlimited workspaces.
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 btn btn-primary btn-neo ripple rounded-2xl"
+                  onClick={() => requestBillingUpgrade()}
+                >
+                  Upgrade
+                </button>
+              </div>
+              <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.9)] p-4 text-xs text-[rgb(var(--muted))] dark:bg-[rgba(var(--surface),0.3)]">
+                <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
+                <p className="mt-1 leading-relaxed text-[rgb(var(--muted))]">
+                  Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => requestProjectCreation()}
+                  className="mt-3 btn btn-primary btn-neo ripple text-xs uppercase tracking-[0.2em]"
+                >
+                  New project
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>
