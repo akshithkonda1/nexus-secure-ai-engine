@@ -221,7 +221,8 @@ const useVoiceWaveform = () => {
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const ctx = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 2048;
@@ -252,11 +253,9 @@ const useVoiceWaveform = () => {
         const { width, height } = canvas;
         ctx2d.clearRect(0, 0, width, height);
 
-        // background
         ctx2d.fillStyle = "rgba(15,23,42,0.02)";
         ctx2d.fillRect(0, 0, width, height);
 
-        // waveform
         ctx2d.lineWidth = 2;
         ctx2d.strokeStyle = "rgba(56,189,248,0.9)";
         ctx2d.beginPath();
@@ -300,6 +299,103 @@ const useVoiceWaveform = () => {
 };
 
 /* ------------------------------------------------------------------ */
+/* Speech-to-Text (Dictation) Hook                                    */
+/* ------------------------------------------------------------------ */
+
+type SpeechToTextOptions = {
+  onFinal: (text: string) => void;
+};
+
+const useSpeechToText = (options: SpeechToTextOptions) => {
+  const [isDictating, setIsDictating] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<any | null>(null);
+
+  const stop = useCallback(() => {
+    setIsDictating(false);
+    setInterimTranscript("");
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  }, []);
+
+  const start = useCallback(() => {
+    if (isDictating) {
+      stop();
+      return;
+    }
+
+    setError(null);
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsDictating(true);
+      setInterimTranscript("");
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interim = "";
+      let finalText = "";
+
+      for (let i = 0; i < event.results.length; i++) {
+        const res = event.results[i];
+        if (res.isFinal) {
+          finalText += res[0].transcript;
+        } else {
+          interim += res[0].transcript;
+        }
+      }
+
+      if (interim) setInterimTranscript(interim.trim());
+      if (finalText) {
+        setInterimTranscript("");
+        options.onFinal(finalText.trim());
+      }
+    };
+
+    recognition.onerror = (e: any) => {
+      console.error(e);
+      setError("Speech recognition error.");
+      setIsDictating(false);
+    };
+
+    recognition.onend = () => {
+      setIsDictating(false);
+      setInterimTranscript("");
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [isDictating, options, stop]);
+
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
+
+  return { isDictating, interimTranscript, error, start, stop };
+};
+
+/* ------------------------------------------------------------------ */
 /* Typing Indicator (iOS-style bubble)                                */
 /* ------------------------------------------------------------------ */
 
@@ -333,12 +429,34 @@ export function Chat() {
   const [speed, setSpeed] = useState<Speed>("medium");
   const [settings, setSettings] = useState<SettingsState>(() => loadSettings());
 
-  const { isRecording, error: voiceError, start: toggleRecording, canvasRef } =
-    useVoiceWaveform();
+  const {
+    isRecording,
+    error: voiceWaveError,
+    start: startWaveform,
+    stop: stopWaveform,
+    canvasRef,
+  } = useVoiceWaveform();
+
+  const {
+    isDictating,
+    interimTranscript,
+    error: dictationError,
+    start: startDictation,
+    stop: stopDictation,
+  } = useSpeechToText({
+    onFinal: (text) => {
+      setInputValue((prev) => {
+        if (!prev) return text;
+        const separator = prev.endsWith(" ") ? "" : " ";
+        return `${prev}${separator}${text}`;
+      });
+    },
+  });
 
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* Persist settings & sessions */
 
@@ -519,8 +637,6 @@ export function Chat() {
     setPendingAttachments(fileNames);
   };
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const triggerFilePicker = () => {
     fileInputRef.current?.click();
   };
@@ -564,6 +680,21 @@ export function Chat() {
   const handleGoOutbox = () => navigate("/outbox");
   const handleGoDocuments = () => navigate("/documents");
 
+  /* Mic toggle: waveform + dictation together */
+
+  const handleToggleVoice = () => {
+    const shouldStop = isRecording || isDictating;
+
+    if (shouldStop) {
+      stopWaveform();
+      stopDictation();
+    } else {
+      // Start dictation first so permissions are prompt-synced
+      startDictation();
+      startWaveform();
+    }
+  };
+
   /* Render */
 
   return (
@@ -579,7 +710,7 @@ export function Chat() {
               Nexus Chat Console
             </h1>
             <p className="text-xs text-[rgb(var(--subtle))]">
-              Debate engine · voice ready · multi-session
+              Debate engine · voice dictation · multi-session
             </p>
           </div>
         </div>
@@ -752,17 +883,17 @@ export function Chat() {
                 {/* Speed control */}
                 <SpeedControl />
 
-                {/* Voice button */}
+                {/* Voice button (waveform + dictation) */}
                 <button
                   type="button"
-                  onClick={toggleRecording}
+                  onClick={handleToggleVoice}
                   className={[
                     "flex h-9 w-9 items-center justify-center rounded-full border text-[rgb(var(--text))] transition-colors",
-                    isRecording
+                    isRecording || isDictating
                       ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.15)]"
                       : "border-[rgb(var(--border))] bg-[rgb(var(--panel))] hover:bg-[rgba(var(--panel),0.9)]",
                   ].join(" ")}
-                  aria-label="Toggle voice input"
+                  aria-label="Toggle voice dictation"
                 >
                   <Mic className="h-4 w-4" />
                 </button>
@@ -789,6 +920,17 @@ export function Chat() {
               className="input w-full resize-none rounded-xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] p-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/40"
             />
 
+            {/* Dictation live transcript */}
+            {(isDictating || interimTranscript) && (
+              <div className="rounded-xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-2 text-[11px] text-[rgb(var(--subtle))] flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-[rgb(var(--brand))] animate-pulse" />
+                <span className="font-medium">Listening:</span>
+                <span className="truncate">
+                  {interimTranscript || "Say your message…"}
+                </span>
+              </div>
+            )}
+
             {/* Attachments preview */}
             {pendingAttachments.length > 0 && (
               <div className="flex flex-wrap gap-2 text-[10px]">
@@ -803,13 +945,13 @@ export function Chat() {
               </div>
             )}
 
-            {/* Voice + file + send */}
+            {/* Voice waveform + file + send */}
             <div className="flex flex-col gap-3">
-              {isRecording && (
+              {(isRecording || canvasRef.current) && (
                 <div className="flex items-center gap-3 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-2">
                   <div className="flex flex-col flex-1">
                     <span className="text-[10px] font-medium text-[rgb(var(--subtle))]">
-                      Recording…
+                      Mic input
                     </span>
                     <canvas
                       ref={canvasRef}
@@ -817,18 +959,13 @@ export function Chat() {
                       className="mt-1 w-full rounded-lg bg-[rgba(var(--surface),0.8)]"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={toggleRecording}
-                    className="rounded-full border border-[rgb(var(--border))] px-3 py-1 text-[10px] text-[rgb(var(--subtle))] hover:bg-[rgb(var(--surface))]"
-                  >
-                    Stop
-                  </button>
                 </div>
               )}
 
-              {voiceError && (
-                <p className="text-[10px] text-red-500">{voiceError}</p>
+              {(voiceWaveError || dictationError) && (
+                <p className="text-[10px] text-red-500">
+                  {dictationError || voiceWaveError}
+                </p>
               )}
 
               <div className="flex items-center justify-between gap-3">
