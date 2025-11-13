@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, type ReactNode } from "react";
 import {
   ArrowRight,
   Clock,
@@ -279,6 +279,17 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
   );
 };
 
+const OutboxShell = ({ children }: { children: ReactNode }) => (
+  <div
+    className={[
+      "min-h-screen w-full p-8 transition-colors duration-300",
+      "bg-[rgb(var(--surface))] text-[rgb(var(--text))]",
+    ].join(" ")}
+  >
+    {children}
+  </div>
+);
+
 /* ------------------------------------------------------------------ */
 /* MAIN OUTBOX COMPONENT (PERFECTED)                                  */
 /* ------------------------------------------------------------------ */
@@ -357,7 +368,7 @@ export const Outbox: React.FC = () => {
     <>
       {showSetup && <SetupModal onClose={handleSetupClose} />}
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 p-8 transition-colors duration-300">
+      <OutboxShell>
         <div className="max-w-screen-2xl mx-auto">
 
           {/* HEADER */}
@@ -550,7 +561,7 @@ export const Outbox: React.FC = () => {
             </aside>
           </div>
         </div>
-      </div>
+      </OutboxShell>
     </>
   );
 };
