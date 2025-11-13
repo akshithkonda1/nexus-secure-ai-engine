@@ -504,22 +504,6 @@ export function Chat() {
 
   /* Session operations */
 
-  const updateSessionMessages = (sessionId: string, newMessages: ChatMessage[]) => {
-    setSessions((prev) =>
-      prev.map((s) => (s.id === sessionId ? { ...s, messages: newMessages } : s))
-    );
-  };
-
-  const renameSessionIfNeeded = (sessionId: string, userMessage: string) => {
-    setSessions((prev) =>
-      prev.map((s) =>
-        s.id === sessionId && s.title === "New chat"
-          ? { ...s, title: autoTitleFromMessage(userMessage) }
-          : s
-      )
-    );
-  };
-
   const handleNewSession = () => {
     const next = createEmptySession();
     setSessions((prev) => [...prev, next]);
@@ -543,7 +527,7 @@ export function Chat() {
     });
   };
 
-  /* Message & reply logic */
+  /* Message & reply logic — FIX: always append using functional setSessions */
 
   const addUserMessage = (content: string, attachments: string[]) => {
     if (!activeSession) return;
@@ -553,8 +537,24 @@ export function Chat() {
       content,
       attachments: attachments.length ? attachments : undefined,
     };
-    updateSessionMessages(activeSession.id, [...messages, userMsg]);
-    renameSessionIfNeeded(activeSession.id, content);
+
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id !== activeSessionId) return session;
+
+        const newMessages = [...session.messages, userMsg];
+        const newTitle =
+          session.title === "New chat"
+            ? autoTitleFromMessage(content)
+            : session.title;
+
+        return {
+          ...session,
+          title: newTitle,
+          messages: newMessages,
+        };
+      })
+    );
   };
 
   const addAssistantMessage = (content: string) => {
@@ -564,7 +564,16 @@ export function Chat() {
       role: "assistant",
       content,
     };
-    updateSessionMessages(activeSession.id, [...messages, msg]);
+
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id !== activeSessionId) return session;
+        return {
+          ...session,
+          messages: [...session.messages, msg],
+        };
+      })
+    );
   };
 
   const simulateAssistantReply = (userContent: string) => {
@@ -622,7 +631,9 @@ export function Chat() {
 
   /* Form handlers */
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement> | { preventDefault: () => void }) => {
+  const handleSubmit = (
+    event: FormEvent<HTMLFormElement> | { preventDefault: () => void }
+  ) => {
     event.preventDefault();
     if (!activeSession) return;
 
@@ -714,7 +725,7 @@ export function Chat() {
 
   return (
     <section className="flex h-full flex-col gap-4">
-      {/* Header (sleek, not over-glass) */}
+      {/* Header */}
       <header className="flex items-center justify-between gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-6 py-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.15)] text-[rgb(var(--brand))]">
@@ -782,63 +793,71 @@ export function Chat() {
               {messages.map((message) => {
                 const isAssistant = message.role === "assistant";
                 return (
-                  <article
+                  <div
                     key={message.id}
                     className={[
-                      "rounded-2xl px-5 py-4 shadow-sm border transition-colors",
-                      isAssistant
-                        ? "bg-[rgb(var(--brand))] border-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
-                        : "bg-white dark:bg-[rgb(var(--panel))] border-[rgb(var(--border))] text-[rgb(var(--text))]",
+                      "flex w-full",
+                      isAssistant ? "justify-start" : "justify-end",
                     ].join(" ")}
                   >
-                    <header
+                    <article
                       className={[
-                        "mb-2 flex items-center gap-2 text-xs font-medium",
+                        "max-w-xl rounded-2xl px-5 py-4 shadow-sm border transition-colors",
                         isAssistant
-                          ? "text-[rgba(255,255,255,0.85)]"
-                          : "text-[rgb(var(--subtle))]",
+                          ? "bg-[rgb(var(--brand))] border-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
+                          : "bg-white dark:bg-[rgb(var(--panel))] border-[rgb(var(--border))] text-[rgb(var(--text))]",
                       ].join(" ")}
                     >
-                      <span
+                      <header
                         className={[
-                          "inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px]",
+                          "mb-2 flex items-center gap-2 text-xs font-medium",
                           isAssistant
-                            ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
-                            : "bg-brand/10 text-brand",
+                            ? "text-[rgba(255,255,255,0.85)]"
+                            : "text-[rgb(var(--subtle))]",
                         ].join(" ")}
                       >
-                        {isAssistant ? "AI" : "You"}
-                      </span>
-                      <span>{isAssistant ? "Nexus" : "You"}</span>
-                    </header>
-                    <p
-                      className={[
-                        "whitespace-pre-wrap leading-relaxed",
-                        isAssistant
-                          ? "text-[rgb(var(--on-accent))]"
-                          : "text-[rgb(var(--text))]",
-                      ].join(" ")}
-                    >
-                      {message.content}
-                    </p>
-                    {message.attachments && message.attachments.length > 0 && (
-                      <ul className="mt-3 flex flex-wrap gap-2 text-[10px]">
-                        {message.attachments.map((attachment) => (
-                          <li
-                            key={attachment}
-                            className={[
-                              "rounded-full px-3 py-1",
-                              isAssistant
-                                ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
-                                : "border border-brand/30 bg-brand/10 text-brand",
-                            ].join(" ")}
-                          >
-                            {attachment}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </article>
+                        <span
+                          className={[
+                            "inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px]",
+                            isAssistant
+                              ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
+                              : "bg-brand/10 text-brand",
+                          ].join(" ")}
+                        >
+                          {isAssistant ? "AI" : "You"}
+                        </span>
+                        <span>{isAssistant ? "Nexus" : "You"}</span>
+                      </header>
+                      <p
+                        className={[
+                          "whitespace-pre-wrap leading-relaxed",
+                          isAssistant
+                            ? "text-[rgb(var(--on-accent))]"
+                            : "text-[rgb(var(--text))]",
+                        ].join(" ")}
+                      >
+                        {message.content}
+                      </p>
+                      {message.attachments &&
+                        message.attachments.length > 0 && (
+                          <ul className="mt-3 flex flex-wrap gap-2 text-[10px]">
+                            {message.attachments.map((attachment) => (
+                              <li
+                                key={attachment}
+                                className={[
+                                  "rounded-full px-3 py-1",
+                                  isAssistant
+                                    ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
+                                    : "border border-brand/30 bg-brand/10 text-brand",
+                                ].join(" ")}
+                              >
+                                {attachment}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                    </article>
+                  </div>
                 );
               })}
 
