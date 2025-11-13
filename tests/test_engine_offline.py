@@ -1,6 +1,5 @@
 import os
 from typing import Dict, Any, List, Optional, Tuple
-import pytest
 
 # Allow optional deps fallbacks inside engine (requests/bs4/cryptography)
 os.environ.setdefault("NEXUS_ALLOW_TEST_FALLBACKS", "1")
@@ -110,6 +109,7 @@ def mk_engine(text="Hello from fake model") -> Engine:
 def test_engine_run_happy_path():
     eng = mk_engine()
     out = eng.run(session_id="s1", query="what is nexus?")
+    assert out["status"] == "ok"
     # required top-level keys
     for k in (
         "answer",
@@ -134,9 +134,9 @@ def test_engine_verification_failure_when_no_sources():
 
     eng = mk_engine()
     eng.web = EmptyWeb()
-    with pytest.raises(Exception) as ei:
-        eng.run(session_id="s1", query="force failure")
-    assert "verification" in ei.exconly().lower()
+    result = eng.run(session_id="s1", query="force failure")
+    assert result["status"] == "error"
+    assert result.get("error_code") == "verification_failed"
 
 
 def test_rate_limit_and_concurrency_do_not_crash():
@@ -148,9 +148,31 @@ def test_rate_limit_and_concurrency_do_not_crash():
         except Exception as e:
             results.append({"error": str(e)})
     assert len(results) == 3
+    assert all(isinstance(item, dict) for item in results)
 
 
 def test_health_snapshot_minimal():
     eng = mk_engine()
     snap = eng.health_snapshot()
     assert "ok" in snap and "components" in snap
+
+
+def test_pii_detection_blocks_by_default():
+    eng = mk_engine()
+    result = eng.run(session_id="s1", query="contact me at jane@example.com")
+    assert result["status"] == "pii_detected"
+    assert result["pii_detected"] is True
+    assert result["pii_details"]
+    assert result["answer"] == ""
+
+
+def test_pii_override_allows_request():
+    eng = mk_engine()
+    result = eng.run(
+        session_id="s1",
+        query="contact me at jane@example.com",
+        pii_override=True,
+    )
+    assert result["status"] == "ok"
+    assert result["pii_detected"] is True
+    assert "[REDACTED]" in result["answer"]

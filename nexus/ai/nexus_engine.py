@@ -42,6 +42,7 @@ object is reserved for additive telemetry (schema version, policy selection,
 latency metrics) that clients may ignore safely.
 """
 from __future__ import annotations
+import inspect
 import json
 import logging
 import os
@@ -52,9 +53,8 @@ import math
 import threading
 import shutil
 import asyncio
-import yaml
 from collections import Counter, deque
-from dataclasses import dataclass
+from dataclasses import MISSING, dataclass, fields
 from fnmatch import fnmatch
 from functools import lru_cache
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Deque
@@ -63,10 +63,39 @@ from urllib.robotparser import RobotFileParser
 from nexus.audit_logger import Actor, log_event
 from nexus.entitlements import entitlement_for
 from nexus.plan_resolver import UserTierContext, get_effective_tier
+from nexus.security import redact_and_detect
+from nexus.telemetry import TelemetryRecorder
 @lru_cache(maxsize=1)
 def _allow_test_fallbacks() -> bool:
     """Return whether optional dependency fallbacks are permitted."""
     return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes"}
+
+
+try:
+    import yaml  # type: ignore[assignment]
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    if not _allow_test_fallbacks():
+        raise
+
+    class _YamlStub:
+        @staticmethod
+        def safe_load(stream):  # type: ignore[no-untyped-def]
+            if hasattr(stream, "read"):
+                data = stream.read()
+            else:
+                data = stream
+            if not data:
+                return {}
+            try:
+                import json
+
+                return json.loads(data)
+            except Exception:
+                return {}
+
+    yaml = _YamlStub()  # type: ignore[assignment]
+else:
+    yaml = yaml
 try:
     import requests # type: ignore
 except ModuleNotFoundError as exc: # pragma: no cover - exercised only when optional deps missing
@@ -192,6 +221,7 @@ except ModuleNotFoundError as exc: # pragma: no cover - lightweight fallback for
 import uuid
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
+MAX_MODELS_PER_REQUEST = max(1, int(os.getenv("NEXUS_MAX_MODELS", "5")))
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
         self.per_minute = per_minute
@@ -1384,12 +1414,13 @@ class HtmlScraper:
             return src
         async def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
-            return await self._session.get(
+            resp = self._session.get(
                 src.url,
                 headers={"User-Agent": self.UA},
                 timeout=max(0.1, timeout),
                 stream=True,
             )
+            return await resp if inspect.isawaitable(resp) else resp
         try:
             r = await _retry_call_async(_do)
             if not r.ok:
@@ -1547,7 +1578,9 @@ class ConsensusSimplePolicy(ResultPolicy):
             other_keys = [o for o in toks.keys() if o != k]
             jac_vals = [self._jac(toks[k], toks[o]) for o in other_keys]
             bm25_vals = (
-                _bm25_scores(answers[k], [answers[o] for o in other_keys]) if other_keys else []
+                _bm25_scores(answers[k], tuple(answers[o] for o in other_keys))
+                if other_keys
+                else []
             )
             jac_score = sum(jac_vals) / len(jac_vals) if jac_vals else 0.0
             bm25_score = sum(bm25_vals) / len(bm25_vals) if bm25_vals else 0.0
@@ -1618,13 +1651,28 @@ class EngineConfig:
         if os.getenv("NEXUS_DEFAULT_DEADLINE_MS")
         else None
     )
-    def __init__(self, config_path: str = 'nexus.yaml'):
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                yaml_config = yaml.safe_load(f)
-                for key, value in yaml_config.items():
-                    if hasattr(self, key):
-                        setattr(self, key, value)
+    def __init__(self, config_path: str = 'nexus.yaml', **overrides: Any):
+        for field_def in fields(self):
+            if field_def.init is False:
+                continue
+            if field_def.default is not MISSING:
+                value = field_def.default
+            elif field_def.default_factory is not MISSING:  # type: ignore[attr-defined]
+                value = field_def.default_factory()  # type: ignore[operator]
+            else:
+                value = None
+            setattr(self, field_def.name, value)
+        path = overrides.pop('config_path', None) or config_path
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                yaml_config = yaml.safe_load(f) or {}
+                if isinstance(yaml_config, dict):
+                    for key, value in yaml_config.items():
+                        if hasattr(self, key):
+                            setattr(self, key, value)
+        for key, value in overrides.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
 _CODE_RE = re.compile(
     r"```(?P<lang>[a-zA-Z0-9_\-+. ]*)\r?\n(?P<body>[\s\S]*?)```",
     re.MULTILINE,
@@ -1671,7 +1719,7 @@ def _sanitize(txt: Optional[str]) -> Optional[str]:
     return txt
 @lru_cache(maxsize=128)
 def _bm25_scores(
-    answer_text: str, docs: List[str], *, k1: float = 1.2, b: float = 0.75
+    answer_text: str, docs: Tuple[str, ...], *, k1: float = 1.2, b: float = 0.75
 ) -> List[float]:
     q_terms = [t for t in _tokenize(answer_text) if t not in _STOP]
     if not q_terms:
@@ -1752,7 +1800,7 @@ def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[st
     doc = f"{title or ''} {snippet or ''}".strip()
     if not doc:
         return 0.0
-    bm25 = _bm25_scores(answer_text, [doc])[0]
+    bm25 = _bm25_scores(answer_text, (doc,))[0]
     keys = _keywords(answer_text)
     hay = doc.lower()
     overlap = sum(1 for k in keys if k in hay) / float(max(1, len(keys)))
@@ -1823,6 +1871,7 @@ class Engine:
         access: AccessContext,
         crypter: Crypter,
         config: Optional[EngineConfig] = None,
+        telemetry: Optional[TelemetryRecorder] = None,
     ):
         self.schema_version = ENGINE_SCHEMA_VERSION
         # Encryption is MANDATORY — crypter and access are required.
@@ -1842,6 +1891,7 @@ class Engine:
         self.config = config or EngineConfig()
         self.access = access
         self.crypter = crypter
+        self.telemetry = telemetry or TelemetryRecorder()
         if self.config.max_parallel is None:
             self.config.max_parallel = min(16, max(1, len(connectors)))
         if web.scraper is None:
@@ -1967,11 +2017,12 @@ class Engine:
         if self._health_monitor:
             return self._health_monitor.snapshot()
         mon = HealthMonitor(self, interval_seconds=10, autostart=False)
-        return mon.run_once()
+        return asyncio.run(mon.run_once())
     def run_health_check_once(self) -> Dict[str, Any]:
         if self._health_monitor:
-            return self._health_monitor.run_once()
-        return self.health_snapshot()
+            return asyncio.run(self._health_monitor.run_once())
+        mon = HealthMonitor(self, interval_seconds=10, autostart=False)
+        return asyncio.run(mon.run_once())
     # ---- core infer ----
     async def _infer_one(
         self,
@@ -1993,9 +2044,13 @@ class Engine:
                     bounded_history = list(history)
             else:
                 bounded_history = []
-            text, _meta = await conn.infer(
+            inference = conn.infer(
                 prompt, history=bounded_history, model_name=name, deadline=deadline
             )
+            if inspect.isawaitable(inference):
+                text, _meta = await inference
+            else:
+                text, _meta = inference
             if isinstance(text, str) and not text.strip():
                 text = ""
             return name, text, round(time.time() - t0, 3)
@@ -2034,13 +2089,18 @@ class Engine:
             if deadline and time.monotonic() >= deadline:
                 break
             try:
-                batch = await self.web.search_all(
+                search_result = self.web.search_all(
                     q,
                     k_per_provider=k_per_provider,
                     want_images=want_images,
                     max_total=max_total,
                     deadline=deadline,
                     request_id=request_id,
+                )
+                batch = (
+                    await search_result
+                    if inspect.isawaitable(search_result)
+                    else search_result
                 )
                 for s in batch:
                     if s.url in seen:
@@ -2106,7 +2166,106 @@ class Engine:
                 if len(web_refs) >= need:
                     break
         return web_refs, photos
-    async def run(
+    def _base_response(
+        self,
+        *,
+        status: str,
+        pii_detected: bool,
+        pii_details: List[str],
+        answer: str = "",
+        winner: Optional[str] = None,
+        winner_ref: Optional[Dict[str, Optional[str]]] = None,
+        participants: Optional[List[str]] = None,
+        code: Optional[List[Dict[str, str]]] = None,
+        sources: Optional[List[Dict[str, Any]]] = None,
+        photos: Optional[List[Dict[str, Any]]] = None,
+        models_used: Optional[List[str]] = None,
+        timings: Optional[Dict[str, float]] = None,
+        meta_extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        meta = {"schema_version": self.schema_version}
+        if meta_extra:
+            meta.update(meta_extra)
+        return {
+            "status": status,
+            "answer": answer,
+            "winner": winner,
+            "winner_ref": winner_ref
+            if winner_ref is not None
+            else {"name": None, "adapter": None, "endpoint": None},
+            "participants": participants or [],
+            "code": code or [],
+            "sources": sources or [],
+            "photos": photos or [],
+            "pii_detected": pii_detected,
+            "pii_details": list(pii_details),
+            "models_used": models_used or [],
+            "timings": timings or {},
+            "meta": meta,
+        }
+
+    def _error_response(
+        self,
+        *,
+        message: str,
+        error_code: str,
+        request_id: str,
+        pii_detected: bool,
+        pii_details: List[str],
+        models_used: Optional[List[str]] = None,
+        timings: Optional[Dict[str, float]] = None,
+        meta_extra: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        payload = self._base_response(
+            status="error",
+            answer="",
+            winner=None,
+            winner_ref=None,
+            participants=[],
+            code=[],
+            sources=[],
+            photos=[],
+            pii_detected=pii_detected,
+            pii_details=pii_details,
+            models_used=models_used,
+            timings=timings,
+            meta_extra=meta_extra,
+        )
+        payload["message"] = message
+        payload["error_code"] = error_code
+        payload.setdefault("meta", {})["request_id"] = request_id
+        return payload
+
+    def _pii_block_response(
+        self,
+        *,
+        sanitized: str,
+        pii_details: List[str],
+        request_id: str,
+    ) -> Dict[str, Any]:
+        payload = self._base_response(
+            status="pii_detected",
+            answer="",
+            winner=None,
+            winner_ref=None,
+            participants=[],
+            code=[],
+            sources=[],
+            photos=[],
+            pii_detected=True,
+            pii_details=pii_details,
+            models_used=[],
+            timings={},
+            meta_extra={"request_id": request_id},
+        )
+        payload["message"] = (
+            "We detected sensitive information and automatically removed it to "
+            "protect your privacy."
+        )
+        payload["sanitized_preview"] = sanitized[:300]
+        return payload
+
+    def run(
         self,
         session_id: str,
         query: str,
@@ -2116,20 +2275,104 @@ class Engine:
         deadline_ms: Optional[int] = None,
         requested_models: Optional[List[str]] = None,
         user: Optional[UserTierContext] = None,
+        pii_protection: bool = True,
+        pii_override: bool = False,
+    ) -> Dict[str, Any]:
+        """Execute the Nexus engine synchronously.
+
+        The synchronous wrapper is convenient for WSGI/ASGI frameworks that do
+        not expose an event loop to handlers.
+        """
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            raise RuntimeError("Engine.run cannot be used inside an async loop; use run_async")
+        return asyncio.run(
+            self.run_async(
+                session_id=session_id,
+                query=query,
+                policy_name=policy_name,
+                want_photos=want_photos,
+                deadline_ms=deadline_ms,
+                requested_models=requested_models,
+                user=user,
+                pii_protection=pii_protection,
+                pii_override=pii_override,
+            )
+        )
+
+    async def run_async(
+        self,
+        session_id: str,
+        query: str,
+        *,
+        policy_name: Optional[str] = None,
+        want_photos: bool = False,
+        deadline_ms: Optional[int] = None,
+        requested_models: Optional[List[str]] = None,
+        user: Optional[UserTierContext] = None,
+        pii_protection: bool = True,
+        pii_override: bool = False,
     ) -> Dict[str, Any]:
         request_id = uuid.uuid4().hex[:12]
+        sanitized_query, pii_details = redact_and_detect(query or "")
+        pii_detected = bool(pii_details)
+        if pii_protection and pii_detected and not pii_override:
+            return self._pii_block_response(
+                sanitized=sanitized_query,
+                pii_details=pii_details,
+                request_id=request_id,
+            )
+        return await self._run_internal(
+            session_id=session_id,
+            query=sanitized_query,
+            policy_name=policy_name,
+            want_photos=want_photos,
+            deadline_ms=deadline_ms,
+            requested_models=requested_models,
+            user=user,
+            request_id=request_id,
+            pii_detected=pii_detected,
+            pii_details=pii_details,
+        )
+
+    async def _run_internal(
+        self,
+        *,
+        session_id: str,
+        query: str,
+        policy_name: Optional[str],
+        want_photos: bool,
+        deadline_ms: Optional[int],
+        requested_models: Optional[List[str]],
+        user: Optional[UserTierContext],
+        request_id: str,
+        pii_detected: bool,
+        pii_details: List[str],
+    ) -> Dict[str, Any]:
         if not _GLOBAL_CONCURRENCY_SEMAPHORE.acquire(timeout=CONCURRENCY_WAIT_SECONDS):
-            raise RateLimitExceeded(
-                "Engine is at capacity; please retry shortly.",
-                details={"retry_after_seconds": CONCURRENCY_WAIT_SECONDS},
+            return self._error_response(
+                message="Engine is at capacity; please retry shortly.",
+                error_code="capacity",
+                request_id=request_id,
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+                meta_extra={"retry_after_seconds": CONCURRENCY_WAIT_SECONDS},
             )
         scope_key = f"{self.access.tenant_id}:{self.access.instance_id}:{self.access.user_id}"
         allowed, retry_in = _GLOBAL_RATE_LIMITER.try_acquire(scope_key)
         if not allowed:
             _GLOBAL_CONCURRENCY_SEMAPHORE.release()
-            raise RateLimitExceeded(
-                f"Rate limit exceeded. Retry in {retry_in:.2f}s",
-                details={"retry_after_seconds": round(retry_in, 3)},
+            return self._error_response(
+                message=f"Rate limit exceeded. Retry in {retry_in:.2f}s",
+                error_code="rate_limited",
+                request_id=request_id,
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+                meta_extra={"retry_after_seconds": round(retry_in, 3)},
             )
         effective_deadline_ms = (
             deadline_ms if deadline_ms is not None else self.config.default_deadline_ms
@@ -2141,7 +2384,6 @@ class Engine:
             deadline = None
         log.info("engine_run_start", extra={"request_id": request_id, "session_id": session_id})
         try:
-            # Save user query (scoped + encrypted)
             self._save_mem(session_id, "user", query, {"ephemeral": False})
             history = self._history_for(session_id)
             default_tier = os.getenv("NEXUS_DEFAULT_TIER", "pro")
@@ -2154,6 +2396,16 @@ class Engine:
             chosen_models, pro_only, suggestion = _choose_models(
                 available_models, requested_models, tier_name
             )
+            if len(chosen_models) > MAX_MODELS_PER_REQUEST:
+                log.info(
+                    "model_limit_applied",
+                    extra={
+                        "request_id": request_id,
+                        "requested": len(chosen_models),
+                        "limit": MAX_MODELS_PER_REQUEST,
+                    },
+                )
+                chosen_models = chosen_models[:MAX_MODELS_PER_REQUEST]
             connectors_to_use = {
                 name: self.connectors[name]
                 for name in chosen_models
@@ -2161,7 +2413,10 @@ class Engine:
             }
             if not connectors_to_use:
                 connectors_to_use = self.connectors
-                chosen_models = list(connectors_to_use.keys())
+                chosen_models = list(connectors_to_use.keys())[:MAX_MODELS_PER_REQUEST]
+                connectors_to_use = {
+                    name: connectors_to_use[name] for name in chosen_models
+                }
             participants = list(connectors_to_use.keys())
             log_event(
                 "model.selection",
@@ -2171,7 +2426,6 @@ class Engine:
                     "chosen": participants,
                 },
             )
-            # 1) Run models in parallel async
             answers: Dict[str, str] = {}
             latencies: Dict[str, float] = {}
             coros = [
@@ -2192,14 +2446,15 @@ class Engine:
                 if text:
                     answers[name] = text
             if not answers:
-                raise ConnectorError(
-                    "No model produced an answer.",
-                    details={
-                        "participants": participants,
-                        "latencies_ms": latencies,
-                    },
+                return self._error_response(
+                    message="No model produced an answer.",
+                    error_code="no_answers",
+                    request_id=request_id,
+                    pii_detected=pii_detected,
+                    pii_details=pii_details,
+                    models_used=participants,
+                    timings=latencies,
                 )
-            # 2) Policy
             policy = get_policy(policy_name or self.config.default_policy)
             agg = policy.aggregate(
                 query,
@@ -2212,7 +2467,6 @@ class Engine:
             )
             winner = agg.get("winner") or min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
             answer_text = (agg.get("result") or answers[winner]).strip()
-            # Ensure verification gets time; adapt search breadth if time is tight
             search_k_per_provider = self.config.search_k_per_provider
             search_max_total = self.config.search_max_total
             if deadline:
@@ -2220,7 +2474,6 @@ class Engine:
                 if remaining < (MAX_MODEL_TIMEOUT * 0.5):
                     search_k_per_provider = max(2, search_k_per_provider // 2)
                     search_max_total = max(6, search_max_total // 2)
-            # 3) Web verification (mandatory) async
             sources = await self._collect_sources(
                 queries=[query, answer_text],
                 want_images=want_photos,
@@ -2254,19 +2507,20 @@ class Engine:
                             if len(web_refs) >= self.config.min_sources_required:
                                 break
             if len(web_refs) < self.config.min_sources_required:
-                raise VerificationError(
-                    f"Insufficient verification sources (need ≥ {self.config.min_sources_required}).",
-                    details={
-                        "required": self.config.min_sources_required,
-                        "collected": len(web_refs),
-                        "schema_version": self.schema_version,
-                    },
+                return self._error_response(
+                    message=(
+                        f"Insufficient verification sources (need ≥ {self.config.min_sources_required})."
+                    ),
+                    error_code="verification_failed",
+                    request_id=request_id,
+                    pii_detected=pii_detected,
+                    pii_details=pii_details,
+                    models_used=participants,
+                    timings=latencies,
+                    meta_extra={"collected_sources": len(web_refs)},
                 )
-            # 4) Extract code blocks
             code_blocks = _extract_code_blocks(answer_text)
-            # 5) Save assistant output (scoped + encrypted)
             self._save_mem(session_id, "assistant", answer_text, {"ephemeral": False})
-            # 6) Winner ref
             wconn = self.connectors.get(winner)
             winner_ref = {
                 "name": winner,
@@ -2277,37 +2531,67 @@ class Engine:
                 "engine_run_complete",
                 extra={"request_id": request_id, "session_id": session_id, "winner": winner},
             )
-            # 7) Strict schema output (DO NOT change required keys)
-            payload = {
-                "answer": answer_text,
-                "winner": winner,
-                "winner_ref": winner_ref,
-                "participants": participants,
-                "code": code_blocks,
-                "sources": web_refs, # verified (>= min_sources_required)
-                "photos": photos if want_photos else [],
-            }
             routes = {
                 n: getattr(c, "route", "vendor_direct")
                 for n, c in connectors_to_use.items()
             }
-            payload["meta"] = {
-                "schema_version": self.schema_version,
+            meta_extra: Dict[str, Any] = {
                 "policy": getattr(policy, "name", None),
                 "latencies": latencies,
                 "policy_scores": agg.get("scores"),
-                "routes": routes, # cloud_native vs vendor_direct
+                "routes": routes,
                 "tier": tier_name,
+                "request_id": request_id,
             }
             if pro_only:
+                meta_extra["pro_only"] = True
+            if suggestion:
+                meta_extra["suggested"] = suggestion
+            payload = self._base_response(
+                status="ok",
+                answer=answer_text,
+                winner=winner,
+                winner_ref=winner_ref,
+                participants=participants,
+                code=code_blocks,
+                sources=web_refs,
+                photos=photos if want_photos else [],
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+                models_used=participants,
+                timings=latencies,
+                meta_extra=meta_extra,
+            )
+            if pro_only:
                 payload["pro_only"] = True
-                payload["meta"]["pro_only"] = True
-                if suggestion:
-                    payload["suggested"] = suggestion
-                    payload["meta"]["suggested"] = suggestion
-            elif suggestion:
+            if suggestion:
                 payload.setdefault("meta", {})["suggested"] = suggestion
+            try:
+                self.telemetry.record_inference(
+                    request_id=request_id,
+                    session_id=session_id,
+                    models=participants,
+                    latencies=latencies,
+                    policy=meta_extra.get("policy"),
+                    disagreement=agg.get("disagreement"),
+                    consensus=winner,
+                )
+            except Exception:  # pragma: no cover - defensive
+                log.debug("telemetry_record_failed", exc_info=True)
             return payload
+        except Exception as exc:
+            log.error(
+                "engine_run_exception",
+                exc_info=True,
+                extra={"request_id": request_id, "session_id": session_id},
+            )
+            return self._error_response(
+                message=str(exc),
+                error_code="internal_error",
+                request_id=request_id,
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+            )
         finally:
             _GLOBAL_CONCURRENCY_SEMAPHORE.release()
 # =========================================================

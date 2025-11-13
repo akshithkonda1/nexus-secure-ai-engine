@@ -61,6 +61,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from nexus.audit_logger import Actor, log_event
 from nexus.plan_resolver import UserTierContext, get_effective_tier
 from nexus.qos import enforce_qos
+from nexus.security import redact_and_detect
 
 
 def node_health():
@@ -73,6 +74,16 @@ def node_health():
 
 def _allow_test_fallbacks() -> bool:
     return os.getenv("NEXUS_ALLOW_TEST_FALLBACKS", "0").lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _coerce_bool(value, *, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() not in {"", "0", "false", "no", "off"}
+    return bool(value)
 
 
 class AppInitializationError(RuntimeError):
@@ -816,6 +827,8 @@ def debate():
     requested_models = data.get("models")
     if not isinstance(requested_models, list):
         requested_models = []
+    pii_protection = _coerce_bool(data.get("pii_protection"), default=True)
+    pii_override = _coerce_bool(data.get("pii_override"), default=False)
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
     try:
@@ -830,18 +843,21 @@ def debate():
             query=prompt,
             requested_models=requested_models,
             user=_current_user(),
+            pii_protection=pii_protection,
+            pii_override=pii_override,
         )
         log_event(
             "debate.end",
             _current_actor(),
             {"session_id": session_id, "context": context},
         )
+        sanitized_prompt, _ = redact_and_detect(prompt)
         _audit_put(
             {
                 "user_id": session_id,
                 "timestamp": dt.utcnow().isoformat(),
                 "event": "debate",
-                "prompt": prompt,
+                "prompt": sanitized_prompt[:300],
                 "context": context,
                 "log_type": "debate",
                 "ttl": int(time.time()) + 60 * 60 * 24 * 90,
