@@ -1,6 +1,7 @@
+// Outbox
 'use client';
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, type ReactNode } from "react";
 import {
   ArrowRight,
   Clock,
@@ -19,6 +20,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { requestDocumentsView, requestNewPrompt } from "@/lib/actions";
+import {
+  type NotificationItem,
+  useGlobalNotifications,
+} from "@/features/notifications/useNotifications";
 
 /* ------------------------------------------------------------------ */
 /* Demo Data (Replace with API in production)                         */
@@ -105,22 +110,42 @@ const saveConfig = (cfg: WorkflowConfig): void => {
 /* ------------------------------------------------------------------ */
 /* Connector Metadata                                                 */
 /* ------------------------------------------------------------------ */
-const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }> =
-  {
-    canvas: { label: "Canvas", icon: <BookOpen className="size-4" /> },
-    "google-calendar": {
-      label: "Google Calendar",
-      icon: <Calendar className="size-4" />,
-    },
-    slack: { label: "Slack", icon: <Send className="size-4" /> },
-    jira: { label: "Jira", icon: <Briefcase className="size-4" /> },
-    notion: { label: "Notion", icon: <FileText className="size-4" /> },
-    outlook: { label: "Outlook", icon: <Calendar className="size-4" /> },
-    "apple-reminders": {
-      label: "Apple Reminders",
-      icon: <Bell className="size-4" />,
-    },
-  };
+const connectorInfo: Record<
+  Connector,
+  { label: string; icon: React.ReactNode }
+> = {
+  canvas: { label: "Canvas", icon: <BookOpen className="size-4" /> },
+  "google-calendar": {
+    label: "Google Calendar",
+    icon: <Calendar className="size-4" />,
+  },
+  slack: { label: "Slack", icon: <Send className="size-4" /> },
+  jira: { label: "Jira", icon: <Briefcase className="size-4" /> },
+  notion: { label: "Notion", icon: <FileText className="size-4" /> },
+  outlook: { label: "Outlook", icon: <Calendar className="size-4" /> },
+  "apple-reminders": {
+    label: "Apple Reminders",
+    icon: <Bell className="size-4" />,
+  },
+};
+
+const WORKSPACE_NOTIFICATION_SOURCE = "workspace/outbox";
+
+const slugify = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+function buildWorkspaceAlerts(config: WorkflowConfig | null): string[] {
+  const roles = config?.roles ?? [];
+  const connectors = config?.connectors ?? [];
+  const customInstructions = config?.customInstructions?.trim();
+
+  return [
+    roles.includes("student") && "Canvas quiz due in 2h",
+    connectors.includes("google-calendar") && "Meeting at 3pm",
+    customInstructions && "Custom task ready",
+    roles.includes("parent") && "Family event reminder",
+  ].filter(Boolean) as string[];
+}
 
 /* ------------------------------------------------------------------ */
 /* Role Widget Component                                              */
@@ -159,16 +184,15 @@ const RoleWidget: React.FC<{ role: Role }> = ({ role }) => {
     <div
       className={`
         widget group p-6 rounded-3xl
-        bg-white/95 dark:bg-slate-950/90
-        shadow-sm border border-slate-100/80 dark:border-slate-800
-        transition-all hover:shadow-md hover:-translate-y-0.5
+        bg-[rgb(var(--surface))] border border-[rgb(var(--border))]
+        shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5
       `}
     >
       <div className="flex items-start justify-between mb-4">
         <div
           className={`
             p-3 rounded-2xl
-            bg-[rgb(var(--brand))]/10 text-[rgb(var(--brand))]
+            bg-[rgb(var(--brand))]/12 text-[rgb(var(--brand))]
             group-hover:bg-[rgb(var(--brand))]/20 group-hover:shadow-md
             transition-all
           `}
@@ -176,11 +200,10 @@ const RoleWidget: React.FC<{ role: Role }> = ({ role }) => {
           {config.icon}
         </div>
       </div>
-
-      <h3 className="text-lg font-semibold mb-1 text-slate-900 dark:text-slate-50">
+      <h3 className="text-lg font-semibold mb-1 text-[rgb(var(--text))]">
         {config.title}
       </h3>
-      <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+      <p className="text-sm leading-relaxed text-[rgb(var(--subtle))]">
         {config.content}
       </p>
     </div>
@@ -220,7 +243,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="card max-w-3xl w-full p-10 space-y-10 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div className="card max-w-3xl w-full p-10 space-y-10 rounded-3xl border border-[rgba(var(--border),0.45)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-2xl animate-in fade-in zoom-in duration-200">
         <header className="flex items-center justify-between">
           <h2 className="text-3xl font-bold text-[rgb(var(--text))]">
             Configure Your Workspace
@@ -344,7 +367,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                       }
                       className="sr-only"
                     />
-                    <div className="p-3 rounded-2xl bg-gray-100 dark:bg-gray-800">
+                    <div className="p-3 rounded-2xl bg-[rgb(var(--panel))]">
                       {icon}
                     </div>
                     <span className="text-base font-medium">{label}</span>
@@ -406,6 +429,17 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
   );
 };
 
+const OutboxShell = ({ children }: { children: ReactNode }) => (
+  <div
+    className={[
+      "min-h-screen w-full p-8 transition-colors duration-300",
+      "bg-[rgb(var(--bg))] text-[rgb(var(--text))]",
+    ].join(" ")}
+  >
+    {children}
+  </div>
+);
+
 /* ------------------------------------------------------------------ */
 /* MAIN OUTBOX COMPONENT                                              */
 /* ------------------------------------------------------------------ */
@@ -413,21 +447,36 @@ export const Outbox: React.FC = () => {
   const navigate = useNavigate();
   const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
   const [showSetup, setShowSetup] = useState(!config);
+  const { replaceBySource } = useGlobalNotifications();
 
-  // Theme: System Preference Sync
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateTheme = () => setTheme(mediaQuery.matches ? "dark" : "light");
-    updateTheme();
-    mediaQuery.addEventListener("change", updateTheme);
-    return () => mediaQuery.removeEventListener("change", updateTheme);
-  }, []);
+  // NOTE: No local theme switching here anymore.
+  // We fully respect the app-wide theme provider so
+  // navigating to Workspace won't flip light/dark.
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
+    const alerts = buildWorkspaceAlerts(config);
+
+    const notifications: NotificationItem[] = alerts.map((message, index) => {
+      const createdAt = new Date();
+      return {
+        id: `outbox-${slugify(message)}-${index}`,
+        title: "Workspace update",
+        description: message,
+        body: message,
+        time: new Intl.DateTimeFormat("en", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(createdAt),
+        tone: "info",
+        kind: "workspace",
+        source: WORKSPACE_NOTIFICATION_SOURCE,
+        read: false,
+        createdAt: createdAt.toISOString(),
+      };
+    });
+
+    replaceBySource(WORKSPACE_NOTIFICATION_SOURCE, notifications);
+  }, [config, replaceBySource]);
 
   const handleSetupClose = (newCfg?: WorkflowConfig) => {
     if (newCfg) setConfig(newCfg);
@@ -458,7 +507,7 @@ export const Outbox: React.FC = () => {
     <>
       {showSetup && <SetupModal onClose={handleSetupClose} />}
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 p-8 transition-colors duration-300">
+      <OutboxShell>
         <div className="max-w-screen-2xl mx-auto">
           {/* HEADER */}
           <header className="flex items-center justify-between mb-12">
@@ -471,7 +520,6 @@ export const Outbox: React.FC = () => {
               </h1>
             </div>
             <nav className="flex items-center gap-4">
-              {/* Global notification bell lives in the app shell */}
               <button
                 onClick={() => setShowSetup(true)}
                 className="p-3 rounded-full hover:bg-white/10 transition-all hover:scale-110"
@@ -534,7 +582,7 @@ export const Outbox: React.FC = () => {
                     {config.connectors.map((c) => (
                       <span
                         key={c}
-                        className="chip px-4 py-2 bg-white dark:bg-gray-800 shadow-sm text-sm font-medium"
+                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium"
                       >
                         {connectorInfo[c].label}
                       </span>
@@ -547,7 +595,7 @@ export const Outbox: React.FC = () => {
             {/* CENTER COLUMN */}
             <main className="col-span-6 space-y-8">
               {/* Delivery Queue */}
-              <div className="widget p-8 rounded-3xl bg-white dark:bg-gray-900 shadow-lg border border-gray-100 dark:border-gray-800">
+              <div className="widget p-8 rounded-3xl bg-[rgb(var(--surface))] shadow-lg border border-[rgb(var(--border))]">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
@@ -627,7 +675,7 @@ export const Outbox: React.FC = () => {
                   {templates.map((t) => (
                     <article
                       key={t.id}
-                      className="panel p-5 rounded-3xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:shadow-md transition-all"
+                      className="panel p-5 rounded-3xl bg-[rgba(var(--surface),0.7)] backdrop-blur-sm hover:shadow-md transition-all"
                     >
                       <p className="font-semibold text-base text-[rgb(var(--text))]">
                         {t.name}
@@ -683,7 +731,7 @@ export const Outbox: React.FC = () => {
                     {config.connectors.map((c) => (
                       <span
                         key={c}
-                        className="chip px-4 py-2 bg-white dark:bg-gray-800 shadow-sm text-sm font-medium"
+                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium"
                       >
                         {connectorInfo[c].label}
                       </span>
@@ -700,7 +748,7 @@ export const Outbox: React.FC = () => {
             </aside>
           </div>
         </div>
-      </div>
+      </OutboxShell>
     </>
   );
 };
