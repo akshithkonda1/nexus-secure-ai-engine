@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 
+import asyncio
 import importlib
 import os
 import pathlib
@@ -118,6 +119,8 @@ def test_engine_run_includes_schema_and_policy(monkeypatch):
     engine = _make_engine(sources, min_sources=2)
     result = engine.run("session", "question")
 
+    assert result["status"] == "ok"
+    assert result["pii_detected"] is False
     assert "meta" in result
     assert result["meta"]["schema_version"] == nexus_engine.ENGINE_SCHEMA_VERSION
     assert result["meta"]["policy"] == "consensus.simple"
@@ -176,6 +179,7 @@ def test_verification_fallback_collects_additional_sources(monkeypatch):
     ]
     engine = _make_engine([primary, [], fallback], min_sources=2)
     result = engine.run("session", "Need more evidence")
+    assert result["status"] == "ok"
     assert len(result["sources"]) >= 2
 
 
@@ -189,6 +193,7 @@ def test_allowlist_filters_sources(monkeypatch):
     ]
     engine = _make_engine(sources, min_sources=1)
     result = engine.run("session", "question")
+    assert result["status"] == "ok"
     assert result["sources"]
     assert all("allowed.example" in src["url"] for src in result["sources"])
 
@@ -230,7 +235,7 @@ def test_html_scraper_respects_robots_rules(monkeypatch):
     scraper = nexus_engine.HtmlScraper(session=session)
     src = nexus_engine.WebSource(url="https://site.test/private/page")
 
-    blocked = scraper.enrich(src)
+    blocked = asyncio.run(scraper.enrich(src))
     assert blocked is src
     assert session.calls == [robots_url]
 
@@ -238,7 +243,7 @@ def test_html_scraper_respects_robots_rules(monkeypatch):
         raise AssertionError("robots.txt should not be fetched twice")
 
     session.routes[robots_url] = _unexpected
-    blocked_again = scraper.enrich(src)
+    blocked_again = asyncio.run(scraper.enrich(src))
     assert blocked_again is src
     assert session.calls == [robots_url]
 
@@ -288,6 +293,6 @@ def test_html_scraper_fetches_when_robots_allows(monkeypatch):
     scraper = nexus_engine.HtmlScraper(session=session)
     src = nexus_engine.WebSource(url=page_url)
 
-    enriched = scraper.enrich(src)
+    enriched = asyncio.run(scraper.enrich(src))
     assert enriched.url == page_url
     assert session.calls == [robots_url, page_url]
