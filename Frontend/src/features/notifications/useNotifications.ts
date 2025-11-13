@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
 export type NotificationTone = "info" | "success" | "warning" | "critical";
 
@@ -115,15 +115,6 @@ const setState = (updater: (prev: NotificationsState) => NotificationsState) => 
   emit();
 };
 
-const subscribe = (listener: Listener) => {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-};
-
-const getSnapshot = () => state.items;
-
 const addNotification = (notification: NotificationItem) => {
   setState((prev) => ({ items: [...prev.items, ensureReadFlag(notification)] }));
 };
@@ -138,17 +129,29 @@ const replaceNotificationsBySource = (source: string, notifications: Notificatio
 };
 
 export function useNotifications() {
-  return useSyncExternalStore(subscribe, getSnapshot);
+  const [notifications, setNotifications] = useState(() => state.items);
+
+  useEffect(() => {
+    const listener = () => {
+      setNotifications(state.items);
+    };
+
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  return notifications;
 }
 
+const globalNotificationsApi: GlobalNotificationsAPI = {
+  add: addNotification,
+  replaceBySource: replaceNotificationsBySource,
+};
+
 export function useGlobalNotifications(): GlobalNotificationsAPI {
-  return useMemo(
-    () => ({
-      add: addNotification,
-      replaceBySource: replaceNotificationsBySource,
-    }),
-    []
-  );
+  return globalNotificationsApi;
 }
 
 export function useUnreadNotificationsCount() {
