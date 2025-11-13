@@ -6,7 +6,7 @@
   /* Light – Alabaster base */
   --bg: 249 250 252;
   --surface: 255 255 255;
-  --panel: 250 251 253;
+  --panel: 241 245 249;
   --text: 15 23 42;
   --subtle: 100 116 139;
   --border: 226 232 240;
@@ -24,12 +24,12 @@
 
 .dark {
   /* Dark – Cod Gray vibe */
-  --bg: 9 11 15;      /* #090B0F */
-  --surface: 14 17 23;
-  --panel: 17 20 28;
+  --bg: 9 11 30;      /* #090B1E */
+  --surface: 15 23 42;
+  --panel: 30 41 59;
   --text: 241 245 249;
   --subtle: 148 163 184;
-  --border: 30 41 59;
+  --border: 51 65 85;
 
   --brand: 0 158 255;     /* #009EFF */
   --brand-soft: 147 96 255;
