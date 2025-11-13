@@ -1,4 +1,3 @@
-// Outbox
 'use client';
 
 import React, { useState, useEffect, useMemo, type ReactNode } from "react";
@@ -28,20 +27,37 @@ import {
 /* ------------------------------------------------------------------ */
 /* Demo Data (Replace with API in production)                         */
 /* ------------------------------------------------------------------ */
-const deliveries = [
+
+type DeliveryBucket = "today-morning" | "today-afternoon" | "today-evening" | "later-week";
+
+interface DeliveryItem {
+  id: string;
+  title: string;
+  owner: string;
+  due: string;
+  status: string;
+  bucket: DeliveryBucket;
+  priority: number; // higher = more important
+}
+
+const deliveries: readonly DeliveryItem[] = [
   {
     id: "dl-1",
     title: "Executive briefing draft",
     owner: "Leadership",
-    due: "Today • 5:00pm",
+    due: "Today • 9:30am",
     status: "Awaiting review",
+    bucket: "today-morning",
+    priority: 3,
   },
   {
     id: "dl-2",
     title: "Governance pulse",
     owner: "Risk Team",
-    due: "Tomorrow • 11:00am",
+    due: "Today • 2:00pm",
     status: "Queued",
+    bucket: "today-afternoon",
+    priority: 2,
   },
   {
     id: "dl-3",
@@ -49,8 +65,10 @@ const deliveries = [
     owner: "Product Insights",
     due: "Fri • 3:30pm",
     status: "Drafting",
+    bucket: "later-week",
+    priority: 1,
   },
-] as const;
+];
 
 const templates = [
   {
@@ -68,6 +86,7 @@ const templates = [
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
 /* ------------------------------------------------------------------ */
+
 type Role = "student" | "professional" | "executive" | "parent" | "custom";
 type Connector =
   | "canvas"
@@ -88,6 +107,7 @@ interface WorkflowConfig {
 /* ------------------------------------------------------------------ */
 /* Local Storage (Safe, Minimal)                                      */
 /* ------------------------------------------------------------------ */
+
 const CONFIG_KEY = "nexusWorkflowConfig";
 
 const loadConfig = (): WorkflowConfig | null => {
@@ -103,36 +123,32 @@ const saveConfig = (cfg: WorkflowConfig): void => {
   try {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
   } catch {
-    // Silent fail — non-critical
+    // non-critical
   }
 };
 
 /* ------------------------------------------------------------------ */
 /* Connector Metadata                                                 */
 /* ------------------------------------------------------------------ */
-const connectorInfo: Record<
-  Connector,
-  { label: string; icon: React.ReactNode }
-> = {
+
+const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }> = {
   canvas: { label: "Canvas", icon: <BookOpen className="size-4" /> },
-  "google-calendar": {
-    label: "Google Calendar",
-    icon: <Calendar className="size-4" />,
-  },
+  "google-calendar": { label: "Google Calendar", icon: <Calendar className="size-4" /> },
   slack: { label: "Slack", icon: <Send className="size-4" /> },
   jira: { label: "Jira", icon: <Briefcase className="size-4" /> },
   notion: { label: "Notion", icon: <FileText className="size-4" /> },
   outlook: { label: "Outlook", icon: <Calendar className="size-4" /> },
-  "apple-reminders": {
-    label: "Apple Reminders",
-    icon: <Bell className="size-4" />,
-  },
+  "apple-reminders": { label: "Apple Reminders", icon: <Bell className="size-4" /> },
 };
+
+/* ------------------------------------------------------------------ */
+/* Notification helpers                                               */
+/* ------------------------------------------------------------------ */
 
 const WORKSPACE_NOTIFICATION_SOURCE = "workspace/outbox";
 
 const slugify = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 function buildWorkspaceAlerts(config: WorkflowConfig | null): string[] {
   const roles = config?.roles ?? [];
@@ -140,16 +156,17 @@ function buildWorkspaceAlerts(config: WorkflowConfig | null): string[] {
   const customInstructions = config?.customInstructions?.trim();
 
   return [
-    roles.includes("student") && "Canvas quiz due in 2h",
-    connectors.includes("google-calendar") && "Meeting at 3pm",
-    customInstructions && "Custom task ready",
-    roles.includes("parent") && "Family event reminder",
+    roles.includes("student") && "Canvas quiz due in 2 hours.",
+    connectors.includes("google-calendar") && "You have a meeting this afternoon.",
+    customInstructions && "Your custom workflow has tasks queued.",
+    roles.includes("parent") && "Family event coming up on your shared calendar.",
   ].filter(Boolean) as string[];
 }
 
 /* ------------------------------------------------------------------ */
 /* Role Widget Component                                              */
 /* ------------------------------------------------------------------ */
+
 const RoleWidget: React.FC<{ role: Role }> = ({ role }) => {
   const config = useMemo(
     () =>
@@ -182,30 +199,18 @@ const RoleWidget: React.FC<{ role: Role }> = ({ role }) => {
 
   return (
     <div
-      className={`
-        widget group p-6 rounded-3xl
-        bg-[rgb(var(--surface))] border border-[rgb(var(--border))]
-        shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5
-      `}
+      className={[
+        "widget group p-6 rounded-3xl shadow-sm border transition-all hover:shadow-md",
+        "bg-[rgb(var(--surface))] border-[rgba(var(--border),0.7)]",
+      ].join(" ")}
     >
       <div className="flex items-start justify-between mb-4">
-        <div
-          className={`
-            p-3 rounded-2xl
-            bg-[rgb(var(--brand))]/12 text-[rgb(var(--brand))]
-            group-hover:bg-[rgb(var(--brand))]/20 group-hover:shadow-md
-            transition-all
-          `}
-        >
+        <div className="p-3 rounded-2xl bg-[rgba(var(--brand),0.12)] text-[rgb(var(--brand))] group-hover:scale-110 transition-transform">
           {config.icon}
         </div>
       </div>
-      <h3 className="text-lg font-semibold mb-1 text-[rgb(var(--text))]">
-        {config.title}
-      </h3>
-      <p className="text-sm leading-relaxed text-[rgb(var(--subtle))]">
-        {config.content}
-      </p>
+      <h3 className="text-lg font-semibold mb-2 text-[rgb(var(--text))]">{config.title}</h3>
+      <p className="text-sm text-[rgb(var(--subtle))]">{config.content}</p>
     </div>
   );
 };
@@ -213,9 +218,8 @@ const RoleWidget: React.FC<{ role: Role }> = ({ role }) => {
 /* ------------------------------------------------------------------ */
 /* Setup Modal (3-Step, Accessible, Responsive)                       */
 /* ------------------------------------------------------------------ */
-const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
-  onClose,
-}) => {
+
+const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onClose }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [roles, setRoles] = useState<Role[]>([]);
   const [customRoleLabel, setCustomRoleLabel] = useState("");
@@ -223,20 +227,18 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
   const [custom, setCustom] = useState("");
 
   const toggleRole = (r: Role) =>
-    setRoles((prev) =>
-      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]
-    );
+    setRoles((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
 
   const finish = () => {
     if (roles.length === 0) return;
+
     const cfg: WorkflowConfig = {
       roles,
-      customRoleLabel: roles.includes("custom")
-        ? customRoleLabel.trim() || undefined
-        : undefined,
+      customRoleLabel: roles.includes("custom") ? customRoleLabel.trim() || undefined : undefined,
       connectors,
       customInstructions: custom.trim(),
     };
+
     saveConfig(cfg);
     onClose(cfg);
   };
@@ -245,9 +247,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="card max-w-3xl w-full p-10 space-y-10 rounded-3xl border border-[rgba(var(--border),0.45)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-2xl animate-in fade-in zoom-in duration-200">
         <header className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-[rgb(var(--text))]">
-            Configure Your Workspace
-          </h2>
+          <h2 className="text-3xl font-bold text-[rgb(var(--text))]">Configure Your Workspace</h2>
           <button
             onClick={() => onClose()}
             className="text-3xl text-[rgb(var(--subtle))] hover:text-[rgb(var(--text))] transition-colors"
@@ -261,15 +261,12 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
         {step === 1 && (
           <section className="space-y-8">
             <p className="text-lg text-[rgb(var(--text))]">
-              1. Who are you? (select all that apply)
+              1. Who are you? <span className="text-[rgb(var(--subtle))]">(select all that apply)</span>
             </p>
             <div className="grid grid-cols-2 gap-6">
               {[
                 { value: "student" as const, label: "Student" },
-                {
-                  value: "professional" as const,
-                  label: "Professional / Employee",
-                },
+                { value: "professional" as const, label: "Professional / Employee" },
                 { value: "executive" as const, label: "Executive" },
                 { value: "parent" as const, label: "Parent" },
               ].map(({ value, label }) => (
@@ -278,8 +275,8 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                   className={`flex items-center gap-4 p-6 rounded-3xl border-2 cursor-pointer transition-all text-left font-medium text-base
                     ${
                       roles.includes(value)
-                        ? "border-[rgb(var(--brand))] bg-[rgb(var(--brand))]/5 shadow-md"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                        ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.06)] shadow-md"
+                        : "border-[rgba(var(--border),0.9)] hover:border-[rgb(var(--brand))]/60"
                     }`}
                 >
                   <input
@@ -298,8 +295,8 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                 className={`flex items-center gap-4 p-6 rounded-3xl border-2 cursor-pointer transition-all text-left font-medium text-base
                   ${
                     roles.includes("custom")
-                      ? "border-[rgb(var(--brand))] bg-[rgb(var(--brand))]/5 shadow-md"
-                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.06)] shadow-md"
+                      : "border-[rgba(var(--border),0.9)] hover:border-[rgb(var(--brand))]/60"
                   }`}
               >
                 <input
@@ -320,7 +317,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                 placeholder="e.g. Freelance Designer"
                 value={customRoleLabel}
                 onChange={(e) => setCustomRoleLabel(e.target.value)}
-                className="input w-full text-lg p-4 rounded-2xl border border-gray-300 dark:border-gray-700 focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgb(var(--brand))]/20"
+                className="input w-full text-lg p-4 rounded-2xl border border-[rgba(var(--border),0.9)] focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgb(var(--brand))]/20 bg-[rgb(var(--bg))]"
               />
             )}
             <div className="flex justify-end">
@@ -351,8 +348,8 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                     className={`flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all
                       ${
                         checked
-                          ? "border-[rgb(var(--brand))] bg-[rgb(var(--brand))]/5 shadow-md"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                          ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.06)] shadow-md"
+                          : "border-[rgba(var(--border),0.9)] hover:border-[rgb(var(--brand))]/60"
                       }`}
                   >
                     <input
@@ -360,16 +357,12 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
                       checked={checked}
                       onChange={(e) =>
                         setConnectors((prev) =>
-                          e.target.checked
-                            ? [...prev, c]
-                            : prev.filter((x) => x !== c)
+                          e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)
                         )
                       }
                       className="sr-only"
                     />
-                    <div className="p-3 rounded-2xl bg-[rgb(var(--panel))]">
-                      {icon}
-                    </div>
+                    <div className="p-3 rounded-2xl bg-[rgb(var(--panel))]">{icon}</div>
                     <span className="text-base font-medium">{label}</span>
                     {checked && (
                       <Check className="size-6 ml-auto text-[rgb(var(--brand))]" />
@@ -406,7 +399,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
               placeholder="e.g. Sync my student assignments with family calendar for better planning"
               value={custom}
               onChange={(e) => setCustom(e.target.value)}
-              className="input w-full resize-none p-5 rounded-3xl text-base border border-gray-300 dark:border-gray-700 focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgb(var(--brand))]/20"
+              className="input w-full resize-none p-5 rounded-3xl text-base border border-[rgba(var(--border),0.9)] focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgb(var(--brand))]/20 bg-[rgb(var(--bg))]"
             />
             <div className="flex justify-between">
               <button
@@ -429,6 +422,10 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({
   );
 };
 
+/* ------------------------------------------------------------------ */
+/* Layout shell                                                       */
+/* ------------------------------------------------------------------ */
+
 const OutboxShell = ({ children }: { children: ReactNode }) => (
   <div
     className={[
@@ -443,16 +440,17 @@ const OutboxShell = ({ children }: { children: ReactNode }) => (
 /* ------------------------------------------------------------------ */
 /* MAIN OUTBOX COMPONENT                                              */
 /* ------------------------------------------------------------------ */
+
 export const Outbox: React.FC = () => {
   const navigate = useNavigate();
   const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
   const [showSetup, setShowSetup] = useState(!config);
   const { replaceBySource } = useGlobalNotifications();
 
-  // NOTE: No local theme switching here anymore.
-  // We fully respect the app-wide theme provider so
-  // navigating to Workspace won't flip light/dark.
+  // Whether Nexus "balanced" the day (affects ordering + copy)
+  const [isBalanced, setIsBalanced] = useState(false);
 
+  // Push workspace alerts into the global notifications panel
   useEffect(() => {
     const alerts = buildWorkspaceAlerts(config);
 
@@ -483,16 +481,9 @@ export const Outbox: React.FC = () => {
     setShowSetup(false);
   };
 
-  const statusBuckets = useMemo(
-    () =>
-      deliveries.reduce<Record<string, number>>((acc, item) => {
-        acc[item.status] = (acc[item.status] ?? 0) + 1;
-        return acc;
-      }, {}),
-    []
-  );
-
   const safeRoles = config?.roles ?? [];
+  const primaryRole: Role | null = safeRoles[0] ?? null;
+
   const roleDisplay = useMemo(
     () =>
       safeRoles.includes("custom") && config?.customRoleLabel
@@ -501,6 +492,62 @@ export const Outbox: React.FC = () => {
         ? safeRoles.join(" / ")
         : "Workspace",
     [safeRoles, config?.customRoleLabel]
+  );
+
+  const todayTitle = useMemo(() => {
+    switch (primaryRole) {
+      case "student":
+        return "Today’s Classes & Assignments";
+      case "professional":
+        return "Today’s Workload";
+      case "executive":
+        return "Briefings & Decisions";
+      case "parent":
+        return "Today’s Family Plan";
+      default:
+        return "Today’s Plan";
+    }
+  }, [primaryRole]);
+
+  const todaySubtitle = useMemo(() => {
+    if (isBalanced) {
+      return "Sorted by impact and urgency · Balanced by Nexus";
+    }
+    switch (primaryRole) {
+      case "student":
+        return "A quick view of what’s due and what can wait.";
+      case "professional":
+        return "Meetings, drafts, and follow-ups in one place.";
+      case "executive":
+        return "Nexus lines up the prep you need for the day.";
+      case "parent":
+        return "School, work, and family reminders in one list.";
+      default:
+        return "What matters most over the next few days.";
+    }
+  }, [primaryRole, isBalanced]);
+
+  // Buckets for the "Today" view
+  const bucketMeta: { key: DeliveryBucket; label: string }[] = [
+    { key: "today-morning", label: "This morning" },
+    { key: "today-afternoon", label: "This afternoon" },
+    { key: "today-evening", label: "This evening" },
+    { key: "later-week", label: "Later this week" },
+  ];
+
+  const orderedDeliveries = useMemo(() => {
+    const base = [...deliveries];
+    if (!isBalanced) return base;
+    return base.sort((a, b) => b.priority - a.priority);
+  }, [isBalanced]);
+
+  const statusBuckets = useMemo(
+    () =>
+      deliveries.reduce<Record<string, number>>((acc, item) => {
+        acc[item.status] = (acc[item.status] ?? 0) + 1;
+        return acc;
+      }, {}),
+    []
   );
 
   return (
@@ -518,11 +565,15 @@ export const Outbox: React.FC = () => {
               <h1 className="text-4xl font-bold text-[rgb(var(--text))]">
                 Scheduled Briefs & Auto Sends
               </h1>
+              <p className="text-sm text-[rgb(var(--subtle))]">
+                Nexus keeps your important sends, reminders, and workflows aligned so you
+                don’t have to juggle them in your head.
+              </p>
             </div>
             <nav className="flex items-center gap-4">
               <button
                 onClick={() => setShowSetup(true)}
-                className="p-3 rounded-full hover:bg-white/10 transition-all hover:scale-110"
+                className="p-3 rounded-full hover:bg-[rgba(var(--panel),0.9)] transition-all hover:scale-110"
                 title="Configure Workspace"
                 aria-label="Configure"
               >
@@ -539,7 +590,7 @@ export const Outbox: React.FC = () => {
               </button>
               <button
                 onClick={() => navigate("/templates")}
-                className="btn btn-ghost px-6 py-3 text-lg rounded-2xl hover:bg-white/10 transition-all"
+                className="btn btn-ghost px-6 py-3 text-lg rounded-2xl hover:bg-[rgba(var(--panel),0.9)] transition-all"
               >
                 Browse Templates
               </button>
@@ -551,7 +602,7 @@ export const Outbox: React.FC = () => {
             <aside className="col-span-3 space-y-8">
               {/* Queue Health */}
               <div className="widget p-8 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand))] to-[rgb(var(--brand-dark))] text-white shadow-xl overflow-hidden">
-                <h2 className="text-2xl font-bold mb-6">Scheduled Briefs</h2>
+                <h2 className="text-2xl font-bold mb-6">Scheduled Sends</h2>
                 <div className="grid grid-cols-1 gap-4">
                   {Object.entries(statusBuckets).map(([status, count]) => (
                     <div
@@ -569,20 +620,24 @@ export const Outbox: React.FC = () => {
 
               {/* Role Widgets */}
               {safeRoles.length > 0 &&
-                safeRoles.map((role) => <RoleWidget key={role} role={role} />)}
+                safeRoles
+                  .filter((r) => r !== "custom")
+                  .map((role) => <RoleWidget key={role} role={role} />)}
 
               {/* Automation Controls */}
               {config?.connectors?.length ? (
                 <div className="widget p-6 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-sm border border-indigo-200/50 dark:border-purple-800/30">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[rgb(var(--text))]">
-                    <Zap className="size-5 text-[rgb(var(--brand))]" />{" "}
-                    Automation Controls
+                    <Zap className="size-5 text-[rgb(var(--brand))]" /> Automation Controls
                   </h3>
+                  <p className="text-sm text-[rgb(var(--subtle))] mb-3">
+                    Connected tools that Nexus uses to keep your schedule in sync:
+                  </p>
                   <div className="flex flex-wrap gap-3">
                     {config.connectors.map((c) => (
                       <span
                         key={c}
-                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium"
+                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium rounded-full"
                       >
                         {connectorInfo[c].label}
                       </span>
@@ -594,67 +649,93 @@ export const Outbox: React.FC = () => {
 
             {/* CENTER COLUMN */}
             <main className="col-span-6 space-y-8">
-              {/* Delivery Queue */}
+              {/* Today View */}
               <div className="widget p-8 rounded-3xl bg-[rgb(var(--surface))] shadow-lg border border-[rgb(var(--border))]">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4 gap-4">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
-                      Delivery Queue
+                      Today’s View
                     </p>
                     <h3 className="text-2xl font-bold mt-1 text-[rgb(var(--text))]">
-                      Next Sends
+                      {todayTitle}
                     </h3>
+                    <p className="text-sm text-[rgb(var(--subtle))] mt-1">{todaySubtitle}</p>
                   </div>
-                  <span className="flex items-center gap-2 text-sm text-[rgb(var(--subtle))]">
-                    <Clock className="size-5" /> Auto-sync enabled
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsBalanced((prev) => !prev)}
+                    className={[
+                      "inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all",
+                      isBalanced
+                        ? "bg-[rgba(var(--brand),0.12)] text-[rgb(var(--brand))]"
+                        : "bg-[rgb(var(--panel))] text-[rgb(var(--text))] hover:bg-[rgba(var(--brand),0.08)]",
+                    ].join(" ")}
+                  >
+                    <Sparkles className="size-4" />
+                    {isBalanced ? "Revert to original order" : "Let Nexus balance my day"}
+                  </button>
                 </div>
-                <div className="space-y-5">
-                  {deliveries.map((item) => (
-                    <article
-                      key={item.id}
-                      className="panel p-5 rounded-3xl hover:shadow-md transition-all hover:scale-[1.01] cursor-pointer"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-lg text-[rgb(var(--text))]">
-                            {item.title}
-                          </p>
-                          <p className="text-sm text-[rgb(var(--subtle))] mt-1">
-                            {item.owner}
-                          </p>
+
+                <div className="space-y-6 mt-4">
+                  {bucketMeta.map(({ key, label }) => {
+                    const items = orderedDeliveries.filter((d) => d.bucket === key);
+                    if (!items.length) return null;
+
+                    return (
+                      <section key={key} className="space-y-3">
+                        <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--subtle))]">
+                          {label}
+                        </h4>
+                        <div className="space-y-3">
+                          {items.map((item) => (
+                            <article
+                              key={item.id}
+                              className="panel p-5 rounded-3xl bg-[rgb(var(--panel))] hover:shadow-md transition-all hover:scale-[1.01] cursor-pointer"
+                            >
+                              <div className="flex justify-between items-start gap-4">
+                                <div>
+                                  <p className="font-semibold text-base text-[rgb(var(--text))]">
+                                    {item.title}
+                                  </p>
+                                  <p className="text-sm text-[rgb(var(--subtle))] mt-1">
+                                    {item.owner}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-[rgb(var(--subtle))]">
+                                    {item.due}
+                                  </p>
+                                  <span className="chip chip-warn mt-2 inline-flex">
+                                    {item.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </article>
+                          ))}
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-[rgb(var(--subtle))]">
-                            {item.due}
-                          </p>
-                          <span className="chip chip-warn mt-2">
-                            {item.status}
-                          </span>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                      </section>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Compliance */}
+              {/* Compliance / Guardrails */}
               <div className="widget p-8 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 shadow-md">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
-                      Compliance Routing
+                      Approvals & Guardrails
                     </p>
                     <h3 className="text-2xl font-bold mt-1 text-[rgb(var(--text))]">
-                      Approvals & Guardrails
+                      Safety checks before anything goes out
                     </h3>
                   </div>
                   <ShieldCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <p className="text-base text-[rgb(var(--subtle))]">
-                  Every outbound asset runs through Nexus guardrails. Track
-                  pending approvals and ensure each stakeholder signs off before
-                  final delivery.
+                  Every outbound asset runs through Nexus guardrails. Track pending approvals
+                  and make sure the right people sign off before anything hits inboxes or
+                  dashboards.
                 </p>
               </div>
             </main>
@@ -663,19 +744,19 @@ export const Outbox: React.FC = () => {
             <aside className="col-span-3 space-y-8">
               {/* Templates */}
               <div className="widget p-6 rounded-3xl bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 shadow-sm">
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
                     Quick Actions
                   </p>
                 </div>
-                <h3 className="text-xl font-bold mb-6 text-[rgb(var(--text))]">
+                <h3 className="text-xl font-bold mb-4 text-[rgb(var(--text))]">
                   Templates in Focus
                 </h3>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {templates.map((t) => (
                     <article
                       key={t.id}
-                      className="panel p-5 rounded-3xl bg-[rgba(var(--surface),0.7)] backdrop-blur-sm hover:shadow-md transition-all"
+                      className="panel p-5 rounded-3xl bg-[rgba(var(--surface),0.9)] backdrop-blur-sm hover:shadow-md transition-all"
                     >
                       <p className="font-semibold text-base text-[rgb(var(--text))]">
                         {t.name}
@@ -684,9 +765,7 @@ export const Outbox: React.FC = () => {
                         {t.description}
                       </p>
                       <button
-                        onClick={() =>
-                          navigate(`/templates?highlight=${t.id}`)
-                        }
+                        onClick={() => navigate(`/templates?highlight=${t.id}`)}
                         className="btn btn-ghost w-full mt-4 flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wider hover:text-[rgb(var(--brand))]"
                       >
                         Launch <ArrowRight className="size-4" />
@@ -704,11 +783,9 @@ export const Outbox: React.FC = () => {
                   </p>
                   <Send className="size-5 text-amber-600 dark:text-amber-400" />
                 </div>
-                <p className="text-lg font-semibold text-[rgb(var(--text))]">
-                  Last Export
-                </p>
+                <p className="text-lg font-semibold text-[rgb(var(--text))]">Last Export</p>
                 <p className="text-base text-[rgb(var(--subtle))] mt-1">
-                  Sent to stakeholder list • 18 hours ago
+                  Sent to stakeholder list • 18 hours ago.
                 </p>
                 <button
                   onClick={() => {
@@ -724,14 +801,14 @@ export const Outbox: React.FC = () => {
               {/* Active Connectors */}
               {config?.connectors?.length ? (
                 <div className="widget p-6 rounded-3xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 shadow-sm">
-                  <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))] mb-4">
+                  <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))] mb-3">
                     Active Connectors
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {config.connectors.map((c) => (
                       <span
                         key={c}
-                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium"
+                        className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium rounded-full"
                       >
                         {connectorInfo[c].label}
                       </span>
