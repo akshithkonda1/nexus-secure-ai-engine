@@ -57,7 +57,7 @@ from collections import Counter, deque
 from dataclasses import MISSING, dataclass, fields
 from fnmatch import fnmatch
 from functools import lru_cache
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Deque
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Deque, Mapping
 from urllib.parse import quote_plus, urlparse, urljoin
 from urllib.robotparser import RobotFileParser
 from nexus.audit_logger import Actor, log_event
@@ -2172,37 +2172,30 @@ class Engine:
         status: str,
         pii_detected: bool,
         pii_details: List[str],
-        answer: str = "",
-        winner: Optional[str] = None,
-        winner_ref: Optional[Dict[str, Optional[str]]] = None,
-        participants: Optional[List[str]] = None,
-        code: Optional[List[Dict[str, str]]] = None,
-        sources: Optional[List[Dict[str, Any]]] = None,
-        photos: Optional[List[Dict[str, Any]]] = None,
+        answer: Optional[str] = None,
         models_used: Optional[List[str]] = None,
         timings: Optional[Dict[str, float]] = None,
         meta_extra: Optional[Dict[str, Any]] = None,
+        error_message: Optional[str] = None,
+        extra_fields: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        meta = {"schema_version": self.schema_version}
+        meta: Dict[str, Any] = {"schema_version": self.schema_version}
         if meta_extra:
             meta.update(meta_extra)
-        return {
+        payload: Dict[str, Any] = {
             "status": status,
             "answer": answer,
-            "winner": winner,
-            "winner_ref": winner_ref
-            if winner_ref is not None
-            else {"name": None, "adapter": None, "endpoint": None},
-            "participants": participants or [],
-            "code": code or [],
-            "sources": sources or [],
-            "photos": photos or [],
             "pii_detected": pii_detected,
             "pii_details": list(pii_details),
-            "models_used": models_used or [],
-            "timings": timings or {},
+            "models_used": list(models_used or []),
+            "timings": dict(timings or {}),
             "meta": meta,
         }
+        if error_message is not None:
+            payload["error_message"] = error_message
+        if extra_fields:
+            payload.update(extra_fields)
+        return payload
 
     def _error_response(
         self,
@@ -2216,25 +2209,19 @@ class Engine:
         timings: Optional[Dict[str, float]] = None,
         meta_extra: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        payload = self._base_response(
+        meta = dict(meta_extra or {})
+        meta["request_id"] = request_id
+        return self._base_response(
             status="error",
-            answer="",
-            winner=None,
-            winner_ref=None,
-            participants=[],
-            code=[],
-            sources=[],
-            photos=[],
+            answer=None,
             pii_detected=pii_detected,
             pii_details=pii_details,
             models_used=models_used,
             timings=timings,
-            meta_extra=meta_extra,
+            meta_extra=meta,
+            error_message=message,
+            extra_fields={"error_code": error_code},
         )
-        payload["message"] = message
-        payload["error_code"] = error_code
-        payload.setdefault("meta", {})["request_id"] = request_id
-        return payload
 
     def _pii_block_response(
         self,
@@ -2243,27 +2230,21 @@ class Engine:
         pii_details: List[str],
         request_id: str,
     ) -> Dict[str, Any]:
-        payload = self._base_response(
+        meta = {"request_id": request_id, "sanitized_preview": sanitized[:300]}
+        return self._base_response(
             status="pii_detected",
-            answer="",
-            winner=None,
-            winner_ref=None,
-            participants=[],
-            code=[],
-            sources=[],
-            photos=[],
+            answer=None,
             pii_detected=True,
             pii_details=pii_details,
             models_used=[],
             timings={},
-            meta_extra={"request_id": request_id},
+            meta_extra=meta,
+            error_message="Sensitive information was detected and removed.",
+            extra_fields={
+                "message": "Sensitive information was detected and removed.",
+                "sanitized_preview": sanitized[:300],
+            },
         )
-        payload["message"] = (
-            "We detected sensitive information and automatically removed it to "
-            "protect your privacy."
-        )
-        payload["sanitized_preview"] = sanitized[:300]
-        return payload
 
     def run(
         self,
@@ -2277,6 +2258,7 @@ class Engine:
         user: Optional[UserTierContext] = None,
         pii_protection: bool = True,
         pii_override: bool = False,
+        telemetry_opt_in: bool = False,
     ) -> Dict[str, Any]:
         """Execute the Nexus engine synchronously.
 
@@ -2301,6 +2283,7 @@ class Engine:
                 user=user,
                 pii_protection=pii_protection,
                 pii_override=pii_override,
+                telemetry_opt_in=telemetry_opt_in,
             )
         )
 
@@ -2316,6 +2299,7 @@ class Engine:
         user: Optional[UserTierContext] = None,
         pii_protection: bool = True,
         pii_override: bool = False,
+        telemetry_opt_in: bool = False,
     ) -> Dict[str, Any]:
         request_id = uuid.uuid4().hex[:12]
         sanitized_query, pii_details = redact_and_detect(query or "")
@@ -2332,12 +2316,13 @@ class Engine:
             policy_name=policy_name,
             want_photos=want_photos,
             deadline_ms=deadline_ms,
-            requested_models=requested_models,
-            user=user,
-            request_id=request_id,
-            pii_detected=pii_detected,
-            pii_details=pii_details,
-        )
+                requested_models=requested_models,
+                user=user,
+                request_id=request_id,
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+                telemetry_opt_in=telemetry_opt_in,
+            )
 
     async def _run_internal(
         self,
@@ -2352,6 +2337,7 @@ class Engine:
         request_id: str,
         pii_detected: bool,
         pii_details: List[str],
+        telemetry_opt_in: bool,
     ) -> Dict[str, Any]:
         if not _GLOBAL_CONCURRENCY_SEMAPHORE.acquire(timeout=CONCURRENCY_WAIT_SECONDS):
             return self._error_response(
@@ -2550,34 +2536,60 @@ class Engine:
             payload = self._base_response(
                 status="ok",
                 answer=answer_text,
-                winner=winner,
-                winner_ref=winner_ref,
-                participants=participants,
-                code=code_blocks,
-                sources=web_refs,
-                photos=photos if want_photos else [],
                 pii_detected=pii_detected,
                 pii_details=pii_details,
                 models_used=participants,
                 timings=latencies,
                 meta_extra=meta_extra,
+                extra_fields={
+                    "winner": winner,
+                    "winner_ref": winner_ref,
+                    "participants": participants,
+                    "code": code_blocks,
+                    "sources": web_refs,
+                    "photos": photos if want_photos else [],
+                },
             )
             if pro_only:
                 payload["pro_only"] = True
+                payload.setdefault("meta", {})["pro_only"] = True
             if suggestion:
                 payload.setdefault("meta", {})["suggested"] = suggestion
-            try:
-                self.telemetry.record_inference(
-                    request_id=request_id,
-                    session_id=session_id,
-                    models=participants,
-                    latencies=latencies,
-                    policy=meta_extra.get("policy"),
-                    disagreement=agg.get("disagreement"),
-                    consensus=winner,
-                )
-            except Exception:  # pragma: no cover - defensive
-                log.debug("telemetry_record_failed", exc_info=True)
+            if telemetry_opt_in and self.telemetry.enabled:
+                try:
+                    scores = agg.get("scores") if isinstance(agg, dict) else None
+                    disagreement = agg.get("disagreement") if isinstance(agg, dict) else None
+                    for model_name in participants:
+                        latency_val = latencies.get(model_name)
+                        latency_ms = (
+                            float(latency_val) * 1000.0
+                            if isinstance(latency_val, (int, float))
+                            else None
+                        )
+                        failure_type = None if model_name in answers else "no_output"
+                        score_val = None
+                        if isinstance(scores, Mapping):
+                            raw_score = scores.get(model_name)
+                            if isinstance(raw_score, (int, float)):
+                                score_val = float(raw_score)
+                        disagreement_val = None
+                        if isinstance(disagreement, (int, float)):
+                            disagreement_val = float(disagreement)
+                        self.telemetry.record_model_behavior(
+                            model_name=model_name,
+                            latency_ms=latency_ms,
+                            failure_type=failure_type,
+                            hallucination_score=score_val,
+                            disagreement=disagreement_val,
+                            token_usage=None,
+                            debate_metadata={
+                                "policy": meta_extra.get("policy"),
+                                "winner": model_name == winner,
+                                "route": routes.get(model_name),
+                            },
+                        )
+                except Exception:  # pragma: no cover - defensive
+                    log.debug("telemetry_record_failed", exc_info=True)
             return payload
         except Exception as exc:
             log.error(
@@ -2586,7 +2598,7 @@ class Engine:
                 extra={"request_id": request_id, "session_id": session_id},
             )
             return self._error_response(
-                message=str(exc),
+                message="An internal error occurred. Please try again later.",
                 error_code="internal_error",
                 request_id=request_id,
                 pii_detected=pii_detected,
