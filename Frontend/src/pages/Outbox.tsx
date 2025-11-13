@@ -19,6 +19,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { requestDocumentsView, requestNewPrompt } from "@/lib/actions";
+import {
+  type NotificationItem,
+  useGlobalNotifications,
+} from "@/features/notifications/useNotifications";
 
 /* ------------------------------------------------------------------ */
 /* Demo Data (Replace with API in production)                         */
@@ -81,6 +85,23 @@ const connectorInfo: Record<Connector, { label: string; icon: React.ReactNode }>
   outlook: { label: "Outlook", icon: <Calendar className="size-4" /> },
   "apple-reminders": { label: "Apple Reminders", icon: <Bell className="size-4" /> },
 };
+
+const WORKSPACE_NOTIFICATION_SOURCE = "workspace/outbox";
+
+const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+function buildWorkspaceAlerts(config: WorkflowConfig | null): string[] {
+  const roles = config?.roles ?? [];
+  const connectors = config?.connectors ?? [];
+  const customInstructions = config?.customInstructions?.trim();
+
+  return [
+    roles.includes("student") && "Canvas quiz due in 2h",
+    connectors.includes("google-calendar") && "Meeting at 3pm",
+    customInstructions && "Custom task ready",
+    roles.includes("parent") && "Family event reminder",
+  ].filter(Boolean) as string[];
+}
 
 /* ------------------------------------------------------------------ */
 /* Role Widget Component                                              */
@@ -265,6 +286,7 @@ export const Outbox: React.FC = () => {
   const navigate = useNavigate();
   const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
   const [showSetup, setShowSetup] = useState(!config);
+  const { replaceBySource } = useGlobalNotifications();
 
   // Theme: System Preference Sync (Perfect)
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -280,6 +302,31 @@ export const Outbox: React.FC = () => {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => {
+    const alerts = buildWorkspaceAlerts(config);
+
+    const notifications: NotificationItem[] = alerts.map((message, index) => {
+      const createdAt = new Date();
+      return {
+        id: `outbox-${slugify(message)}-${index}`,
+        title: "Workspace update",
+        description: message,
+        body: message,
+        time: new Intl.DateTimeFormat("en", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(createdAt),
+        tone: "info",
+        kind: "workspace",
+        source: WORKSPACE_NOTIFICATION_SOURCE,
+        read: false,
+        createdAt: createdAt.toISOString(),
+      };
+    });
+
+    replaceBySource(WORKSPACE_NOTIFICATION_SOURCE, notifications);
+  }, [config, replaceBySource]);
 
   const handleSetupClose = (newCfg?: WorkflowConfig) => {
     if (newCfg) setConfig(newCfg);
