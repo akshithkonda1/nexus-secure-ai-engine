@@ -1,9 +1,10 @@
 :root {
   --bg: 249 250 252;
   --surface: 255 255 255;
-  --panel: 247 249 252;
+  --panel: 241 245 249;
   --text: 15 23 42;
-  --muted: 71 85 105;
+  --subtle: 100 116 139;
+  --muted: 100 116 139;
   --border: 226 232 240;
   --glow-blue: 0 158 255;
   --glow-purple: 147 96 255;
@@ -12,11 +13,12 @@
 }
 :root.dark {
   --bg: 9 11 30;
-  --surface: 15 18 36;
-  --panel: 14 16 30;
-  --text: 226 232 240;
+  --surface: 15 23 42;
+  --panel: 30 41 59;
+  --text: 241 245 249;
+  --subtle: 148 163 184;
   --muted: 148 163 184;
-  --border: 30 41 59;
+  --border: 51 65 85;
   --glow-blue: 0 133 255;
   --glow-purple: 147 96 255;
   --glass-alpha: .55;

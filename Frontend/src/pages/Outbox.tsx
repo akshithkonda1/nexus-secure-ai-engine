@@ -160,7 +160,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="card max-w-3xl w-full p-10 space-y-10 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div className="card max-w-3xl w-full p-10 space-y-10 rounded-3xl border border-[rgba(var(--border),0.45)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-2xl animate-in fade-in zoom-in duration-200">
         <header className="flex items-center justify-between">
           <h2 className="text-3xl font-bold text-[rgb(var(--text))]">Configure Your Workspace</h2>
           <button
@@ -243,7 +243,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
                       onChange={(e) => setConnectors((prev) => (e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)))}
                       className="sr-only"
                     />
-                    <div className="p-3 rounded-2xl bg-gray-100 dark:bg-gray-800">{icon}</div>
+                    <div className="p-3 rounded-2xl bg-[rgb(var(--panel))]">{icon}</div>
                     <span className="text-base font-medium">{label}</span>
                     {checked && <Check className="size-6 ml-auto text-[rgb(var(--brand))]" />}
                   </label>
@@ -283,7 +283,7 @@ const OutboxShell = ({ children }: { children: ReactNode }) => (
   <div
     className={[
       "min-h-screen w-full p-8 transition-colors duration-300",
-      "bg-[rgb(var(--surface))] text-[rgb(var(--text))]",
+      "bg-[rgb(var(--bg))] text-[rgb(var(--text))]",
     ].join(" ")}
   >
     {children}
@@ -436,7 +436,7 @@ export const Outbox: React.FC = () => {
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {config.connectors.map((c) => (
-                      <span key={c} className="chip px-4 py-2 bg-white dark:bg-gray-800 shadow-sm text-sm font-medium">
+                      <span key={c} className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium">
                         {connectorInfo[c].label}
                       </span>
                     ))}
@@ -448,7 +448,7 @@ export const Outbox: React.FC = () => {
             {/* CENTER COLUMN */}
             <main className="col-span-6 space-y-8">
               {/* Delivery Queue */}
-              <div className="widget p-8 rounded-3xl bg-white dark:bg-gray-900 shadow-lg border border-gray-100 dark:border-gray-800">
+              <div className="widget p-8 rounded-3xl bg-[rgb(var(--surface))] shadow-lg border border-[rgb(var(--border))]">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">Delivery Queue</p>
@@ -466,7 +466,7 @@ export const Outbox: React.FC = () => {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-semibold text-lg text-[rgb(var(--text)))]">{item.title}</p>
+                          <p className="font-semibold text-lg text-[rgb(var(--text))]">{item.title}</p>
                           <p className="text-sm text-[rgb(var(--subtle))] mt-1">{item.owner}</p>
                         </div>
                         <div className="text-right">
@@ -484,7 +484,7 @@ export const Outbox: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">Compliance Routing</p>
-                    <h3 className="text-2xl font-bold mt-1 text-[rgb(var(--text)))]">Approvals & Guardrails</h3>
+                    <h3 className="text-2xl font-bold mt-1 text-[rgb(var(--text))]">Approvals & Guardrails</h3>
                   </div>
                   <ShieldCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -501,11 +501,11 @@ export const Outbox: React.FC = () => {
                 <div className="flex items-center justify-between mb-5">
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">Quick Actions</p>
                 </div>
-                <h3 className="text-xl font-bold mb-6 text-[rgb(var(--text)))]">Templates in Focus</h3>
+                <h3 className="text-xl font-bold mb-6 text-[rgb(var(--text))]">Templates in Focus</h3>
                 <div className="space-y-5">
                   {templates.map((t) => (
-                    <article key={t.id} className="panel p-5 rounded-3xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:shadow-md transition-all">
-                      <p className="font-semibold text-base text-[rgb(var(--text)))]">{t.name}</p>
+                    <article key={t.id} className="panel p-5 rounded-3xl bg-[rgba(var(--surface),0.7)] backdrop-blur-sm hover:shadow-md transition-all">
+                      <p className="font-semibold text-base text-[rgb(var(--text))]">{t.name}</p>
                       <p className="text-sm text-[rgb(var(--subtle))] mt-2">{t.description}</p>
                       <button
                         onClick={() => navigate(`/templates?highlight=${t.id}`)}
@@ -524,7 +524,7 @@ export const Outbox: React.FC = () => {
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">Distribution</p>
                   <Send className="size-5 text-amber-600 dark:text-amber-400" />
                 </div>
-                <p className="text-lg font-semibold text-[rgb(var(--text)))]">Last Export</p>
+                <p className="text-lg font-semibold text-[rgb(var(--text))]">Last Export</p>
                 <p className="text-base text-[rgb(var(--subtle))] mt-1">
                   Sent to stakeholder list • 18 hours ago
                 </p>
@@ -545,7 +545,7 @@ export const Outbox: React.FC = () => {
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))] mb-4">Active Connectors</p>
                   <div className="flex flex-wrap gap-3">
                     {config.connectors.map((c) => (
-                      <span key={c} className="chip px-4 py-2 bg-white dark:bg-gray-800 shadow-sm text-sm font-medium">
+                      <span key={c} className="chip px-4 py-2 bg-[rgb(var(--panel))] shadow-sm text-sm font-medium">
                         {connectorInfo[c].label}
                       </span>
                     ))}
