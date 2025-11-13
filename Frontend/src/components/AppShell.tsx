@@ -65,7 +65,12 @@ export default function AppShell({ left, right, children }: Props) {
           aria-expanded={leftOpen && isDesktop}
           aria-hidden={!isDesktop}
         >
-          <div className="h-full w-full">{left}</div>
+          <div
+            className="h-full w-full"
+            style={{ overflow: leftOpen && isDesktop ? "visible" : "hidden" }}
+          >
+            {left}
+          </div>
           {isDesktop && (
             <PanelToggle
               side="left"
@@ -83,7 +88,12 @@ export default function AppShell({ left, right, children }: Props) {
           aria-expanded={rightOpen && isDesktop}
           aria-hidden={!isDesktop}
         >
-          <div className="h-full w-full">{right}</div>
+          <div
+            className="h-full w-full"
+            style={{ overflow: rightOpen && isDesktop ? "visible" : "hidden" }}
+          >
+            {right}
+          </div>
           {isDesktop && (
             <PanelToggle
               side="right"
