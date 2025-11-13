@@ -149,7 +149,7 @@ const Toggle: React.FC<ToggleProps> = ({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className="flex items-center justify-between gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-4 py-3 text-left hover:bg-[rgba(var(--panel),0.9)] transition-colors"
+      className="flex items-center justify-between gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-4 py-3 text-left hover:bg-[rgba(var(--panel),0.95)] transition-colors"
     >
       <div className="flex-1">
         <p className="text-sm font-medium text-[rgb(var(--text))]">{label}</p>
@@ -163,7 +163,7 @@ const Toggle: React.FC<ToggleProps> = ({
         className={[
           "relative h-6 w-11 rounded-full transition-colors",
           checked
-            ? "bg-[rgb(var(--brand))] shadow-[0_0_0_2px_rgba(15,23,42,0.2)]"
+            ? "bg-[rgb(var(--brand))] shadow-[0_0_0_1px_rgba(15,23,42,0.25)]"
             : "bg-[rgba(var(--border),0.9)]",
         ].join(" ")}
       >
@@ -241,19 +241,19 @@ const useVoiceWaveform = () => {
 
       const draw = () => {
         const canvas = canvasRef.current;
-        const analyser = analyserRef.current;
+        const analyserNode = analyserRef.current;
         const data = dataArrayRef.current;
-        if (!canvas || !analyser || !data) return;
+        if (!canvas || !analyserNode || !data) return;
 
         const ctx2d = canvas.getContext("2d");
         if (!ctx2d) return;
 
-        analyser.getByteTimeDomainData(data);
+        analyserNode.getByteTimeDomainData(data);
 
         const { width, height } = canvas;
         ctx2d.clearRect(0, 0, width, height);
 
-        ctx2d.fillStyle = "rgba(15,23,42,0.02)";
+        ctx2d.fillStyle = "rgba(15,23,42,0.03)";
         ctx2d.fillRect(0, 0, width, height);
 
         ctx2d.lineWidth = 2;
@@ -401,7 +401,7 @@ const useSpeechToText = (options: SpeechToTextOptions) => {
 
 const TypingIndicator: React.FC = () => (
   <div className="mt-4 flex justify-start">
-    <div className="inline-flex items-center gap-2 rounded-2xl bg-[rgb(var(--panel))] px-4 py-2 shadow-sm border border-[rgb(var(--border))]">
+    <div className="inline-flex items-center gap-2 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-4 py-2 shadow-sm">
       <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-[rgb(var(--subtle))] [animation-delay:-0.2s]" />
       <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-[rgb(var(--subtle))] [animation-delay:-0.1s]" />
       <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-[rgb(var(--subtle))]" />
@@ -535,7 +535,6 @@ export function Chat() {
 
       const next = prev.filter((s) => s.id !== id);
       if (id === activeSessionId && next.length > 0) {
-        // Fallback: select the most recent remaining session
         const fallback = next[next.length - 1] ?? next[0];
         setActiveSessionId(fallback.id);
       }
@@ -623,7 +622,7 @@ export function Chat() {
 
   /* Form handlers */
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement> | { preventDefault: () => void }) => {
     event.preventDefault();
     if (!activeSession) return;
 
@@ -641,8 +640,7 @@ export function Chat() {
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      const fakeEvent = { preventDefault() {} } as FormEvent<HTMLFormElement>;
-      handleSubmit(fakeEvent);
+      handleSubmit({ preventDefault() {} });
     }
   };
 
@@ -673,7 +671,7 @@ export function Chat() {
               "px-3 py-1 capitalize transition-colors",
               speed === value
                 ? "bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
-                : "text-[rgb(var(--subtle))] hover:bg-[rgba(var(--border),0.3)]",
+                : "text-[rgb(var(--subtle))] hover:bg-[rgba(var(--border),0.35)]",
             ].join(" ")}
           >
             {value}
@@ -707,7 +705,6 @@ export function Chat() {
       stopWaveform();
       stopDictation();
     } else {
-      // Start dictation first so permissions are prompt-synced
       startDictation();
       startWaveform();
     }
@@ -717,14 +714,14 @@ export function Chat() {
 
   return (
     <section className="flex h-full flex-col gap-4">
-      {/* Header */}
-      <header className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between gap-4 rounded-2xl bg-[rgb(var(--panel))] px-6 py-4 shadow-[var(--elev-1)]">
+      {/* Header (sleek, not over-glass) */}
+      <header className="flex items-center justify-between gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-6 py-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.15)] text-[rgb(var(--brand))] shadow-[var(--elev-1)]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.15)] text-[rgb(var(--brand))]">
             <Zap className="h-4 w-4" />
           </div>
           <div>
-            <h1 className="accent-ink text-base font-semibold">
+            <h1 className="text-base font-semibold text-[rgb(var(--text))]">
               Nexus Chat Console
             </h1>
             <p className="text-xs text-[rgb(var(--subtle))]">
@@ -735,7 +732,7 @@ export function Chat() {
 
         <div className="flex items-center gap-3">
           {/* Tabs */}
-          <div className="inline-flex rounded-full bg-[rgba(var(--panel),0.8)] border border-[rgb(var(--border))] p-1 text-xs">
+          <div className="inline-flex rounded-full bg-[rgb(var(--panel))] border border-[rgb(var(--border))] p-1 text-xs">
             <button
               type="button"
               onClick={() => setActiveTab("chat")}
@@ -766,7 +763,7 @@ export function Chat() {
           <button
             type="button"
             onClick={() => setIsCollapsed((prev) => !prev)}
-            className="rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-3 py-1 text-xs text-[rgb(var(--subtle))] hover:bg-[rgb(var(--panel))] transition-colors"
+            className="rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-xs text-[rgb(var(--subtle))] hover:bg-[rgba(var(--panel),0.95)] transition-colors"
           >
             {isCollapsed ? "Expand" : "Minimize"}
           </button>
@@ -777,49 +774,80 @@ export function Chat() {
       {!isCollapsed && activeTab === "chat" && (
         <>
           {/* Chat panel */}
-          <div className="panel panel--glassy panel--hover panel--immersive flex-1 overflow-hidden rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] shadow-[var(--elev-1)]">
+          <div className="flex-1 overflow-hidden rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] shadow-sm">
             <div
               ref={scrollContainerRef}
               className="h-full overflow-y-auto p-6 space-y-4"
             >
-              {messages.map((message) => (
-                <article
-                  key={message.id}
-                  className={[
-                    "panel panel--glassy panel--hover panel--immersive panel--alive rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-5 py-4 shadow-sm",
-                    message.role === "user" ? "border-brand/40" : "",
-                  ].join(" ")}
-                >
-                  <header className="mb-2 flex items-center gap-2 text-xs font-medium text-[rgb(var(--subtle))]">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand/10 text-brand text-[11px]">
-                      {message.role === "assistant" ? "AI" : "You"}
-                    </span>
-                    <span>{message.role === "assistant" ? "Nexus" : "You"}</span>
-                  </header>
-                  <p className="whitespace-pre-wrap leading-relaxed text-[rgb(var(--text))]">
-                    {message.content}
-                  </p>
-                  {message.attachments && message.attachments.length > 0 && (
-                    <ul className="mt-3 flex flex-wrap gap-2 text-[10px]">
-                      {message.attachments.map((attachment) => (
-                        <li
-                          key={attachment}
-                          className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-brand"
-                        >
-                          {attachment}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </article>
-              ))}
+              {messages.map((message) => {
+                const isAssistant = message.role === "assistant";
+                return (
+                  <article
+                    key={message.id}
+                    className={[
+                      "rounded-2xl px-5 py-4 shadow-sm border transition-colors",
+                      isAssistant
+                        ? "bg-[rgb(var(--brand))] border-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
+                        : "bg-white dark:bg-[rgb(var(--panel))] border-[rgb(var(--border))] text-[rgb(var(--text))]",
+                    ].join(" ")}
+                  >
+                    <header
+                      className={[
+                        "mb-2 flex items-center gap-2 text-xs font-medium",
+                        isAssistant
+                          ? "text-[rgba(255,255,255,0.85)]"
+                          : "text-[rgb(var(--subtle))]",
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px]",
+                          isAssistant
+                            ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
+                            : "bg-brand/10 text-brand",
+                        ].join(" ")}
+                      >
+                        {isAssistant ? "AI" : "You"}
+                      </span>
+                      <span>{isAssistant ? "Nexus" : "You"}</span>
+                    </header>
+                    <p
+                      className={[
+                        "whitespace-pre-wrap leading-relaxed",
+                        isAssistant
+                          ? "text-[rgb(var(--on-accent))]"
+                          : "text-[rgb(var(--text))]",
+                      ].join(" ")}
+                    >
+                      {message.content}
+                    </p>
+                    {message.attachments && message.attachments.length > 0 && (
+                      <ul className="mt-3 flex flex-wrap gap-2 text-[10px]">
+                        {message.attachments.map((attachment) => (
+                          <li
+                            key={attachment}
+                            className={[
+                              "rounded-full px-3 py-1",
+                              isAssistant
+                                ? "bg-[rgba(255,255,255,0.18)] text-[rgb(var(--on-accent))]"
+                                : "border border-brand/30 bg-brand/10 text-brand",
+                            ].join(" ")}
+                          >
+                            {attachment}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </article>
+                );
+              })}
 
               {isSending && <TypingIndicator />}
             </div>
           </div>
 
           {/* Sessions row (below chat) */}
-          <div className="panel panel--glassy panel--hover panel--immersive flex items-center justify-between gap-3 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-4 py-3 text-xs shadow-[var(--elev-1)]">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-4 py-3 text-xs shadow-sm">
             <div className="flex items-center gap-2 overflow-x-auto max-w-full">
               <span className="text-[rgb(var(--subtle))] whitespace-nowrap">
                 Sessions:
@@ -832,8 +860,8 @@ export function Chat() {
                   className={[
                     "relative mr-1 flex items-center gap-1 rounded-full px-3 py-1 whitespace-nowrap border text-[11px] transition-colors",
                     session.id === activeSessionId
-                      ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.15)] text-[rgb(var(--text))]"
-                      : "border-[rgba(var(--border),0.8)] text-[rgb(var(--subtle))] hover:bg-[rgba(var(--border),0.3)]",
+                      ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.18)] text-[rgb(var(--text))]"
+                      : "border-[rgba(var(--border),0.9)] text-[rgb(var(--subtle))] hover:bg-[rgba(var(--border),0.35)]",
                   ].join(" ")}
                 >
                   <span className="truncate max-w-[120px]">
@@ -845,7 +873,7 @@ export function Chat() {
                         e.stopPropagation();
                         handleDeleteSession(session.id);
                       }}
-                      className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-[rgb(var(--subtle))] hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgb(var(--text))]"
+                      className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-[rgb(var(--subtle))] hover:bg-[rgba(0,0,0,0.08)] hover:text-[rgb(var(--text))]"
                       aria-label="Delete session"
                     >
                       ×
@@ -857,7 +885,7 @@ export function Chat() {
             <button
               type="button"
               onClick={handleNewSession}
-              className="flex items-center gap-1 rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--surface))] px-3 py-1 text-[11px] text-[rgb(var(--text))] hover:bg-[rgb(var(--panel))]"
+              className="flex items-center gap-1 rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-[11px] text-[rgb(var(--text))] hover:bg-[rgba(var(--panel),0.96)]"
             >
               <Plus className="h-3 w-3" />
               New
@@ -867,7 +895,7 @@ export function Chat() {
           {/* Composer */}
           <form
             onSubmit={handleSubmit}
-            className="panel panel--glassy panel--hover panel--immersive panel--alive flex flex-col gap-3 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-4 shadow-[var(--elev-1)]"
+            className="flex flex-col gap-3 rounded-2xl border border-[color:rgba(var(--border))] bg-[rgb(var(--surface))] p-4 shadow-sm"
           >
             <div className="flex items-center justify-between gap-3">
               {/* Left: plus + speed + voice */}
@@ -877,13 +905,13 @@ export function Chat() {
                   <button
                     type="button"
                     onClick={() => setPlusMenuOpen((v) => !v)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] text-[rgb(var(--text))] hover:bg-[rgba(var(--panel),0.9)]"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] text-[rgb(var(--text))] hover:bg-[rgba(var(--panel),0.95)]"
                     aria-label="More actions"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                   {plusMenuOpen && (
-                    <div className="absolute left-0 top-10 z-20 w-52 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-2 text-xs shadow-[var(--elev-2)]">
+                    <div className="absolute left-0 top-10 z-20 w-52 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-2 text-xs shadow-md">
                       <button
                         type="button"
                         className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[rgb(var(--text))] hover:bg-[rgb(var(--panel))]"
@@ -922,8 +950,8 @@ export function Chat() {
                   className={[
                     "flex h-9 w-9 items-center justify-center rounded-full border text-[rgb(var(--text))] transition-colors",
                     isRecording || isDictating
-                      ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.15)]"
-                      : "border-[rgb(var(--border))] bg-[rgb(var(--panel))] hover:bg-[rgba(var(--panel),0.9)]",
+                      ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.18)]"
+                      : "border-[rgb(var(--border))] bg-[rgb(var(--panel))] hover:bg-[rgba(var(--panel),0.95)]",
                   ].join(" ")}
                   aria-label="Toggle voice dictation"
                 >
@@ -935,7 +963,7 @@ export function Chat() {
               <button
                 type="button"
                 onClick={() => setActiveTab("settings")}
-                className="flex items-center gap-1 rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-[10px] text-[rgb(var(--subtle))] hover:bg-[rgba(var(--panel),0.9)]"
+                className="flex items-center gap-1 rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--panel))] px-3 py-1 text-[10px] text-[rgb(var(--subtle))] hover:bg-[rgba(var(--panel),0.95)]"
               >
                 <Settings className="h-3 w-3" />
                 Chat settings
@@ -988,7 +1016,7 @@ export function Chat() {
                     <canvas
                       ref={canvasRef}
                       height={40}
-                      className="mt-1 w-full rounded-lg bg-[rgba(var(--surface),0.8)]"
+                      className="mt-1 w-full rounded-lg bg-[rgba(var(--surface),0.9)]"
                     />
                   </div>
                 </div>
@@ -1012,7 +1040,7 @@ export function Chat() {
                   <button
                     type="button"
                     onClick={triggerFilePicker}
-                    className="btn btn-ghost btn-quiet rounded-full border border-[color:rgba(var(--border))] px-4 py-2 text-xs text-[rgb(var(--text))] transition hover:bg-[rgb(var(--panel))]"
+                    className="rounded-full border border-[color:rgba(var(--border))] bg-[rgb(var(--panel))] px-4 py-2 text-xs text-[rgb(var(--text))] transition hover:bg-[rgba(var(--panel),0.95)]"
                   >
                     Attach files
                   </button>
@@ -1030,7 +1058,7 @@ export function Chat() {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="group relative flex items-center gap-2 rounded-full bg-[rgba(var(--brand),0.98)] px-6 py-2 text-xs font-semibold text-[rgb(var(--on-accent))] shadow-[var(--elev-1)] transition hover:shadow-[var(--elev-2)] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group relative flex items-center gap-2 rounded-full bg-[rgba(var(--brand),0.98)] px-6 py-2 text-xs font-semibold text-[rgb(var(--on-accent))] shadow-sm transition hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <span>Send</span>
                   <span className="relative flex h-4 w-4 items-center justify-center overflow-hidden">
@@ -1045,7 +1073,7 @@ export function Chat() {
 
       {/* Settings tab content */}
       {!isCollapsed && activeTab === "settings" && (
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex flex-col gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-5 text-sm shadow-[var(--elev-1)]">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--surface))] p-5 text-sm shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-[rgb(var(--text))]">
