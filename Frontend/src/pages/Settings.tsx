@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useSettings, useSaveSettings } from "@/queries/settings";
 import type { SettingsData } from "@/types/models";
 import { Switch } from "@/shared/ui/components/switch";
-import { useTheme } from "@/theme/useTheme";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 function createPayload(

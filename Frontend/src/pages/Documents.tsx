@@ -106,12 +106,12 @@ export function Documents() {
             </div>
 
             {/* Upload */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center justify-center rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-75"
-              disabled={uploadDocument.isPending}
-            >
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-75"
+                disabled={uploadDocument.isPending}
+              >
               {uploadDocument.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
@@ -136,9 +136,9 @@ export function Documents() {
               "Google Drive connector will activate once OAuth credentials are configured.",
             )
           }
-          className="inline-flex items-center gap-2 rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
+          className="inline-flex items-center gap-2 rounded-full bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:bg-[rgba(var(--brand),0.9)] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)]"
         >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(var(--surface),0.95)] shadow-sm">
               <img
                 src={googleDriveLogoUrl}
                 alt="Google Drive"
@@ -157,9 +157,9 @@ export function Documents() {
               "Dropbox connector will activate once OAuth credentials are configured.",
             )
           }
-          className="inline-flex items-center gap-2 rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
+          className="inline-flex items-center gap-2 rounded-full bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:bg-[rgba(var(--brand),0.9)] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)]"
         >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(var(--surface),0.95)] shadow-sm">
               <img
                 src={dropboxLogoUrl}
                 alt="Dropbox"
@@ -206,7 +206,7 @@ export function Documents() {
             {filtered.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.96)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.9)]"
+                className="flex flex-col gap-4 rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--surface),0.96)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3">

@@ -40,7 +40,7 @@ const RECENT_SESSIONS = [
 
 export function Dashboard() {
   return (
-    <div className="space-y-10 text-white">
+    <div className="space-y-10 text-[rgb(var(--text))]">
       <header className="space-y-2">
         <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome to Nexus.ai</h2>
         <p className="max-w-2xl text-sm text-muted sm:text-base">
@@ -58,12 +58,12 @@ export function Dashboard() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-elevated/70 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
+        <div className="space-y-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
           <div className="flex items-center justify-between gap-4">
             <h3 className="text-lg font-semibold">Last 5 sessions</h3>
             <button
               type="button"
-              className="text-xs font-semibold text-muted transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="text-xs font-semibold text-muted transition hover:text-[rgb(var(--text))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--brand),0.5)]"
             >
               View all
             </button>
@@ -75,7 +75,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-elevated/70 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
+        <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] p-6 shadow-[0_18px_45px_rgba(15,23,42,0.35)]">
           <SettingsPanel />
         </div>
       </section>

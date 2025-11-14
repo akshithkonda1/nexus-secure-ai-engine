@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: "class",
+  darkMode: ["class", "[data-theme='dark']"],
   content: [
     "./index.html",
     "./src/**/*.{ts,tsx,js,jsx}",
@@ -41,6 +41,9 @@ export default {
         input: "var(--radius-input)",
         "zora-lg": "18px",
         "zora-xl": "24px",
+      },
+      transitionDuration: {
+        DEFAULT: "200ms",
       },
       transitionDuration: {
         DEFAULT: "200ms",

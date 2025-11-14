@@ -165,7 +165,7 @@ export function LocalAccountForm({ className }: LocalAccountFormProps) {
 
       <button
         type="submit"
-        className="w-full rounded-xl bg-gradient-to-r from-accent via-accent/90 to-primary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-gradient-to-r from-accent via-accent/90 to-primary px-4 py-3 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-lg shadow-accent/30 transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
         disabled={
           isLoading ||
           !email ||

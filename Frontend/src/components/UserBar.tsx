@@ -106,7 +106,7 @@ function PromptBrowserButton({ items }: { items: MenuItem[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+        className="inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--on-accent))] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/60 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
       >
         <Sparkles className="h-4 w-4" aria-hidden="true" />
         Prompt Browser
@@ -116,24 +116,24 @@ function PromptBrowserButton({ items }: { items: MenuItem[] }) {
         <div
           ref={menuRef}
           role="menu"
-          className="absolute right-0 z-50 mt-2 min-w-[18rem] overflow-hidden rounded-xl border border-white/10 bg-panel panel panel--glassy panel--hover text-ink shadow-xl backdrop-blur"
+          className="absolute right-0 z-50 mt-2 min-w-[18rem] overflow-hidden rounded-xl border border-[rgba(var(--border),0.35)] bg-panel panel panel--glassy panel--hover text-ink shadow-xl backdrop-blur"
         >
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">Quick Prompts</div>
-          <div className="h-px w-full bg-white/10" />
+          <div className="h-px w-full bg-[rgba(var(--border),0.35)]" />
           {items.map((it) => (
             <button
               key={it.key}
               role="menuitem"
-              className="block w-full cursor-pointer px-3 py-2 text-left text-sm text-muted outline-none transition hover:bg-white/5 hover:text-ink"
+              className="block w-full cursor-pointer px-3 py-2 text-left text-sm text-muted outline-none transition hover:bg-[rgba(var(--panel),0.2)] hover:text-ink"
               onClick={() => { setOpen(false); it.onSelect(); }}
             >
               {it.label}
             </button>
           ))}
-          <div className="h-px w-full bg-white/10" />
+          <div className="h-px w-full bg-[rgba(var(--border),0.35)]" />
           <button
             role="menuitem"
-            className="block w-full cursor-pointer px-3 py-2 text-left text-xs text-muted outline-none transition hover:bg-white/5 hover:text-ink"
+            className="block w-full cursor-pointer px-3 py-2 text-left text-xs text-muted outline-none transition hover:bg-[rgba(var(--panel),0.2)] hover:text-ink"
             onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/prompts" })); }}
           >
             Manage prompts…
@@ -349,14 +349,14 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[rgba(var(--bg),0.72)] backdrop-blur-sm"
         onClick={onClose}
       />
       {/* Panel */}
       <motion.div
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        className="relative w-[min(92vw,640px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-app-surface/95 p-5 text-ink shadow-2xl"
+        className="relative w-[min(92vw,640px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-[rgba(var(--border),0.35)] bg-app-surface/95 p-5 text-ink shadow-2xl"
       >
         <form onSubmit={(e) => { e.preventDefault(); manualSave(); }} className="contents">
           <div className="mb-4 flex items-center justify-between">
@@ -368,7 +368,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
               <button
                 onClick={onClose}
                 type="button"
-                className="rounded-full p-2 text-muted transition hover:bg-white/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+                className="rounded-full p-2 text-muted transition hover:bg-[rgba(var(--panel),0.2)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
                 aria-label="Close profile"
               >
                 <X className="h-5 w-5" />
@@ -377,10 +377,10 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
           </div>
 
           {/* Photo */}
-          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-[rgba(var(--border),0.35)] bg-panel/80 p-4">
             <p className="mb-3 text-sm font-medium">Photo</p>
             <div className="flex items-center gap-4">
-              <div className="relative h-16 w-16 overflow-hidden rounded-full ring-1 ring-white/15">
+              <div className="relative h-16 w-16 overflow-hidden rounded-full ring-1 ring-[rgba(var(--border),0.45)]">
                 {avatar ? (
                   <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
@@ -417,11 +417,11 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
                 </button>
               </div>
             </div>
-            {errMsg && <p className="mt-3 text-xs text-red-400">{errMsg}</p>}
+            {errMsg && <p className="mt-3 text-xs text-[rgb(var(--accent-rose))]">{errMsg}</p>}
           </div>
 
           {/* Identity */}
-          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-white/10 bg-panel/80 p-4">
+          <div className="panel panel--glassy panel--hover mb-5 rounded-2xl border border-[rgba(var(--border),0.35)] bg-panel/80 p-4">
             <p className="mb-3 text-sm font-medium">Identity</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
               <div className="sm:col-span-4">
@@ -437,7 +437,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs text-muted">Handle</label>
-                <div className="rounded-md border border-app bg-white/5 px-3 py-2 text-sm text-muted">{profile.handle}</div>
+                <div className="rounded-md border border-app bg-[rgba(var(--panel),0.18)] px-3 py-2 text-sm text-muted">{profile.handle}</div>
               </div>
               <div className="sm:col-span-6">
                 <label htmlFor="prof-about" className="mb-1 block text-xs text-muted">About</label>
@@ -463,7 +463,7 @@ function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void })
               type="submit"
               disabled={!canSave}
               aria-disabled={!canSave}
-              className="btn btn-primary inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
+              className="btn btn-primary inline-flex items-center gap-2 rounded-md bg-trustBlue px-4 py-1.5 text-sm font-semibold text-[rgb(var(--on-accent))] transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-lg disabled:opacity-50"
             >
               {saveState === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save
@@ -602,7 +602,7 @@ export function UserBar() {
           <button
             type="button"
             onClick={() => setProfileOpen(true)}
-            className="group flex items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+            className="group flex items-center gap-3 rounded-xl p-1 text-left transition hover:bg-[rgba(var(--panel),0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             aria-label="Open profile"
           >
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-app text-base font-semibold text-ink">
@@ -637,7 +637,7 @@ export function UserBar() {
               type="button"
               onClick={toggleRecording}
               aria-pressed={recording}
-              className={`inline-flex items-center gap-2 rounded-full border border-app px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${recording ? "text-ink bg-white/5" : "text-muted hover:text-ink"}`}
+              className={`inline-flex items-center gap-2 rounded-full border border-app px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${recording ? "text-ink bg-[rgba(var(--panel),0.22)]" : "text-muted hover:text-ink"}`}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" aria-hidden="true" />}
               {recording ? "Stop" : "Voice"}

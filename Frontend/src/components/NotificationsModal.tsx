@@ -24,9 +24,9 @@ const toneIcon: Record<Tone, React.ReactNode> = {
 
 const toneStyles: Record<Tone, string> = {
   info: "bg-[rgba(var(--accent-sky),0.12)] text-brand",
-  success: "bg-[rgba(var(--accent-emerald),0.16)] text-[rgb(var(--accent-emerald-ink))] dark:text-[rgb(var(--accent-emerald-ink))]",
-  warning: "bg-[rgba(var(--accent-amber),0.16)] text-[rgb(var(--accent-amber-ink))] dark:text-[rgb(var(--accent-amber-ink))]",
-  critical: "bg-[rgba(var(--accent-rose),0.18)] text-[rgb(var(--accent-rose-ink))] dark:text-[rgb(var(--accent-rose-ink))]",
+  success: "bg-[rgba(var(--accent-emerald),0.16)] text-[rgb(var(--accent-emerald-ink))]",
+  warning: "bg-[rgba(var(--accent-amber),0.16)] text-[rgb(var(--accent-amber-ink))]",
+  critical: "bg-[rgba(var(--accent-rose),0.18)] text-[rgb(var(--accent-rose-ink))]",
 };
 
 export function NotificationsModal({ open, onOpenChange }: NotificationsModalProps) {
@@ -62,7 +62,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.98)] shadow-[var(--shadow-lift)] backdrop-blur-xl dark:bg-[rgba(var(--panel),0.95)]">
+            <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.98)] shadow-[var(--shadow-lift)] backdrop-blur-xl">
               <header className="flex items-start justify-between border-b border-[rgba(var(--border),0.35)] px-6 py-5">
                 <div>
                   <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-[rgb(var(--text))]">
@@ -75,7 +75,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
                 <button
                   type="button"
                   onClick={() => onOpenChange(false)}
-                  className="flex size-9 items-center justify-center rounded-full border border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.9)] text-[rgb(var(--subtle))] transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)]"
+                  className="flex size-9 items-center justify-center rounded-full border border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.9)] text-[rgb(var(--subtle))] transition hover:text-brand"
                   aria-label="Close notifications"
                 >
                   <X className="size-4" />
@@ -86,7 +86,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
                 {notifications.map((item) => (
                   <article
                     key={item.id}
-                    className="rounded-2xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--surface),0.86)] p-4 shadow-sm transition hover:border-[rgba(var(--brand),0.5)] dark:bg-[rgba(var(--panel),0.82)]"
+                    className="rounded-2xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--surface),0.86)] p-4 shadow-sm transition hover:border-[rgba(var(--brand),0.5)]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
                     ) : null}
                   </article>
                 ))}
-                <div className="rounded-2xl border border-dashed border-[rgba(var(--border),0.4)] bg-[rgba(var(--surface),0.6)] p-5 text-center text-sm text-[rgb(var(--subtle))] dark:bg-[rgba(var(--panel),0.7)]">
+                <div className="rounded-2xl border border-dashed border-[rgba(var(--border),0.4)] bg-[rgba(var(--surface),0.6)] p-5 text-center text-sm text-[rgb(var(--subtle))]">
                   You're all caught up. Production wiring can populate these alerts via the notifications API.
                 </div>
               </div>

@@ -1,26 +1,26 @@
 :root {
-  --bg: var(--zora-night);
-  --surface: var(--zora-space);
-  --panel: var(--zora-soft);
-  --text: 247 249 252;
-  --subtle: 156 163 175;
-  --muted: 156 163 175;
-  --border: 148 163 184;
-  --glow-blue: 62 228 255;
-  --glow-purple: 139 92 246;
-  --glass-alpha: .78;
-  --glass-border: .7;
+  --accent-emerald: 16 185 129;
+  --accent-emerald-ink: 6 78 59;
+  --accent-amber: 245 158 11;
+  --accent-amber-ink: 120 53 15;
+  --accent-rose: 244 114 182;
+  --accent-rose-ink: 131 24 67;
+  --accent-lilac: 167 139 250;
+  --accent-sky: 56 189 248;
+  --accent-nexus: 0 133 255;
+  --accent-business: 99 102 241;
 }
-:root.dark {
-  --bg: var(--zora-night);
-  --surface: var(--zora-space);
-  --panel: var(--zora-soft);
-  --text: 247 249 252;
-  --subtle: 156 163 175;
-  --muted: 156 163 175;
-  --border: 148 163 184;
-  --glow-blue: 62 228 255;
-  --glow-purple: 139 92 246;
-  --glass-alpha: .55;
-  --glass-border: .6;
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  --accent-emerald: 45 212 191;
+  --accent-emerald-ink: 236 253 245;
+  --accent-amber: 251 191 36;
+  --accent-amber-ink: 255 247 237;
+  --accent-rose: 251 113 133;
+  --accent-rose-ink: 255 228 235;
+  --accent-lilac: 196 181 253;
+  --accent-sky: 125 211 252;
+  --accent-nexus: 0 133 255;
+  --accent-business: 129 140 248;
 }

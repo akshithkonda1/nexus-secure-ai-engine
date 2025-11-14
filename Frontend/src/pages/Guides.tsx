@@ -32,7 +32,7 @@ export function Guides() {
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="panel panel--glassy panel--hover halo panel--hover rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)] dark:bg-[rgba(var(--panel),0.75)]">
+        <section className="panel panel--glassy panel--hover halo panel--hover rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)]">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.75)]">
             Guides
@@ -45,10 +45,10 @@ export function Guides() {
             predictable. Browse setup recipes, governance checklists, and
             troubleshooting primers built for regulated teams.
           </p>
-          <button
-            type="button"
-            className="inline-flex w-fit items-center gap-2 rounded-zora-lg bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
-          >
+            <button
+              type="button"
+              className="inline-flex w-fit items-center gap-2 rounded-[var(--radius-button)] bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)]"
+            >
             <PlayCircle className="size-4" /> Start walkthrough
           </button>
         </div>
@@ -56,9 +56,9 @@ export function Guides() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {steps.map(({ title, description, icon: Icon }) => (
-          <article
-            key={title}
-            className="panel panel--glassy panel--hover flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)] dark:bg-[rgba(var(--panel),0.7)]"
+            <article
+              key={title}
+              className="panel panel--glassy panel--hover flex h-full flex-col gap-4 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-5 shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
           >
             <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.12)] text-brand">
               <Icon className="size-5" />

@@ -107,9 +107,9 @@ export function Templates() {
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               onClick={() =>
                 toast.info(
                   "Template builder connects to the backend in the next sprint.",
@@ -189,20 +189,20 @@ export function Templates() {
                 <div className="mt-5 flex items-center justify-between text-xs text-[rgba(var(--subtle),0.75)]">
                   <span>Updated {formatRelativeTime(template.updatedAt)}</span>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center rounded-zora-lg border border-zora-border bg-zora-space/80 px-3 py-1.5 text-xs font-semibold text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:scale-[1.01] active:scale-[0.99]"
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center rounded-[var(--radius-button)] border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.68)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.82)] hover:border-[rgba(var(--brand),0.4)] hover:scale-[1.01] active:scale-[0.99]"
                       onClick={() =>
                         toast.info(`Previewing ${template.name} coming soon`)
                       }
                     >
                       <Search className="size-3.5" /> Preview
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleLaunch(template)}
-                      disabled={launchTemplate.isPending}
-                      className="inline-flex items-center justify-center rounded-zora-lg bg-zora-aurora px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+                      <button
+                        type="button"
+                        onClick={() => handleLaunch(template)}
+                        disabled={launchTemplate.isPending}
+                        className="inline-flex items-center justify-center rounded-[var(--radius-button)] bg-[rgb(var(--brand))] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[rgb(var(--on-accent))] shadow-[0_0_30px_rgba(0,133,255,0.25)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_36px_rgba(0,133,255,0.32)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {launchTemplate.isPending ? (
                         <Loader2 className="size-3 animate-spin" />

@@ -161,7 +161,7 @@ function PlanCard({
       )}
     >
       {plan.ribbon ? (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1 text-xs font-semibold text-white shadow-ambient">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1 text-xs font-semibold text-[rgb(var(--on-accent))] shadow-ambient">
           {plan.ribbon}
         </span>
       ) : null}

@@ -8,11 +8,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-accent-nexus via-accent-business to-accent-nexus text-white shadow-ambient",
-        subtle: "bg-surface text-app border border-app shadow-sm",
-        outline: "border border-app bg-transparent text-app",
-        ghost: "bg-transparent text-app hover:bg-surface",
-        destructive: "bg-red-500 text-white shadow-ambient"
+        default: "bg-gradient-to-r from-accent-nexus via-accent-business to-accent-nexus text-[rgb(var(--on-accent))] shadow-ambient",
+        subtle: "bg-surface text-[rgb(var(--text))] border border-app shadow-sm",
+        outline: "border border-app bg-transparent text-[rgb(var(--text))]",
+        ghost: "bg-transparent text-[rgb(var(--text))] hover:bg-surface",
+        destructive: "bg-[rgb(var(--accent-rose))] text-[rgb(var(--accent-rose-ink))] shadow-ambient"
       },
       size: {
         default: "h-10 px-4 py-2",

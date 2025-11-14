@@ -61,7 +61,7 @@ export default function DocumentsPage() {
             <button
               type="button"
               onClick={handleUpload}
-              className="btn btn-primary inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
+              className="btn btn-primary inline-flex items-center gap-2 rounded-full bg-trustBlue px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-trustBlue/70 focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg"
             >
               <Upload className="h-4 w-4" aria-hidden="true" /> Upload
             </button>

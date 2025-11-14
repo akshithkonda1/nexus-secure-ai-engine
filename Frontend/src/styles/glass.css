@@ -22,7 +22,7 @@
   transition: background-color .2s ease, border-color .2s ease;
   outline: none;
 }
-:root.dark .nav-pill {
+:root[data-theme="dark"] .nav-pill {
   background: rgba(var(--surface), .55);
 }
 

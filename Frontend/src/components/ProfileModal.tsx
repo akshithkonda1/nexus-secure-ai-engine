@@ -262,7 +262,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                             }
                             fileInputRef.current?.click();
                           }}
-                          className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand),0.9)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white shadow-[var(--shadow-soft)]"
+                          className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand),0.9)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[rgb(var(--on-accent))] shadow-[var(--shadow-soft)]"
                         >
                           <Camera className="size-3.5" /> Edit
                         </button>
@@ -292,7 +292,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       )}
                     </div>
 
-                    <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-white/70 p-4 text-sm text-[rgb(var(--text))]">
+                    <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.7)] p-4 text-sm text-[rgb(var(--text))]">
                       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
                         <Shield className="size-4" /> Workspace
                       </div>
@@ -307,7 +307,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       {status === "success" && !localError && (
                         <p className="text-[rgb(var(--brand))]">Profile saved successfully.</p>
                       )}
-                      {localError && <p className="text-[#ff5c5c]">{localError}</p>}
+                      {localError && <p className="text-[rgb(var(--accent-rose))]">{localError}</p>}
                       {compressedNotice && (
                         <p className="text-xs text-[rgba(var(--subtle),0.8)]">
                           Original image exceeded 50 MB — compressed automatically.
@@ -366,7 +366,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                         <select
                           value={form.timezone}
                           onChange={(event) => setForm((p) => ({ ...p, timezone: event.target.value as FormState["timezone"] }))}
-                          className="h-11 rounded-xl border border-[rgba(var(--border),0.7)] bg-white/70 px-3 text-sm outline-none focus:border-brand"
+                          className="h-11 rounded-xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.7)] px-3 text-sm outline-none focus:border-brand"
                         >
                           {TIMEZONES.map((zone) => (
                             <option key={zone} value={zone}>
@@ -377,7 +377,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       </label>
                     </div>
 
-                    <fieldset className="space-y-4 rounded-2xl border border-[rgba(var(--border),0.6)] bg-white/70 p-5">
+                    <fieldset className="space-y-4 rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.7)] p-5">
                       <legend className="text-sm font-semibold text-[rgb(var(--text))]">Notifications</legend>
                       <Toggle
                         label="Weekly digest"
@@ -418,7 +418,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                       </button>
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-2 rounded-2xl bg-[rgba(var(--brand),1)] px-6 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-2xl bg-[rgba(var(--brand),1)] px-6 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-60"
                         disabled={saveDisabled}
                         aria-disabled={saveDisabled}
                         title={invalid ? "Fix validation errors to save" : dirty ? "" : "No changes to save"}
@@ -481,13 +481,13 @@ function Field({ label, value, onChange, type = "text", required, helper, error 
         onChange={(event) => onChange(event.target.value)}
         className={cn(
           "h-11 rounded-xl border px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-[rgba(var(--brand),0.2)]",
-          "bg-white/70 border-[rgba(var(--border),0.7)]",
-          error && "border-[#ff5c5c]"
+          "bg-[rgba(var(--surface),0.7)] border-[rgba(var(--border),0.7)]",
+          error && "border-[rgba(var(--accent-rose),0.7)]"
         )}
       />
       {helper ? <span className="text-xs text-[rgba(var(--subtle),0.7)]">{helper}</span> : null}
       {error ? (
-        <span id={`${id}-err`} className="text-xs text-[#ff5c5c]">
+        <span id={`${id}-err`} className="text-xs text-[rgb(var(--accent-rose))]">
           {error}
         </span>
       ) : null}
@@ -523,7 +523,7 @@ function Toggle({ label, description, checked, onChange }: ToggleProps) {
           <span
             aria-hidden
             className={cn(
-              "inline-block size-5 rounded-full bg-white shadow-[0_2px_6px_rgba(15,23,42,0.22)] transition",
+              "inline-block size-5 rounded-full bg-[rgb(var(--surface))] shadow-[0_2px_6px_rgba(15,23,42,0.22)] transition",
               checked ? "translate-x-6" : "translate-x-1"
             )}
           />

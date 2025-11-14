@@ -15,7 +15,7 @@ export function AppErrorBoundary() {
         <p className="mt-2 text-sm opacity-75">{message}</p>
         <button
           onClick={() => location.reload()}
-          className="mt-5 rounded-xl bg-[rgba(var(--brand),1)] px-4 py-2 text-white"
+          className="mt-5 rounded-xl bg-[rgba(var(--brand),1)] px-4 py-2 text-[rgb(var(--on-accent))]"
         >
           Reload
         </button>
