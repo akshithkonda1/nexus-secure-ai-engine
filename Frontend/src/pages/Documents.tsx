@@ -10,7 +10,7 @@ import SkeletonBlock from "@/components/SkeletonBlock";
 const EMPTY_ITEMS: DocumentItem[] = [];
 
 /* ------------------------------------------------------------------ */
-/* Brand-ish Logos (clean + recognisable, not pixel-perfect copies)   */
+/* Brand-ish Logos (clean + centered)                                 */
 /* ------------------------------------------------------------------ */
 
 const GoogleDriveLogo: React.FC<{ className?: string }> = ({ className }) => (
@@ -20,12 +20,21 @@ const GoogleDriveLogo: React.FC<{ className?: string }> = ({ className }) => (
     aria-hidden="true"
     focusable="false"
   >
-    {/* Top bar (yellow) */}
-    <polygon fill="#F4B400" points="18,4 30,4 40,20 28,20" />
-    {/* Left bar (green) */}
-    <polygon fill="#0F9D58" points="8,20 18,4 28,20 18,36 8,20" />
-    {/* Right bar (blue) */}
-    <polygon fill="#4285F4" points="28,20 40,20 30,36 18,36 28,20" />
+    {/* Top (yellow) */}
+    <polygon
+      fill="#F4B400"
+      points="18,4 30,4 40,21 28,21"
+    />
+    {/* Left (green) */}
+    <polygon
+      fill="#0F9D58"
+      points="8,21 18,4 28,21 18,38"
+    />
+    {/* Right (blue) */}
+    <polygon
+      fill="#4285F4"
+      points="28,21 40,21 30,38 18,38"
+    />
   </svg>
 );
 
@@ -36,16 +45,16 @@ const DropboxLogo: React.FC<{ className?: string }> = ({ className }) => (
     aria-hidden="true"
     focusable="false"
   >
-    {/* Uses currentColor so it stays perfectly in sync with the label */}
+    {/* Uses currentColor so it matches the label (white) */}
     <g fill="currentColor">
       {/* top left diamond */}
-      <polygon points="9,3 13,7 9,11 5,7" />
+      <polygon points="7,3.5 11,6 7,8.5 3,6" />
       {/* top right diamond */}
-      <polygon points="15,3 19,7 15,11 11,7" />
+      <polygon points="17,3.5 21,6 17,8.5 13,6" />
       {/* bottom left diamond */}
-      <polygon points="9,13 13,17 9,21 5,17" />
+      <polygon points="7,10.5 11,13 7,15.5 3,13" />
       {/* bottom right diamond */}
-      <polygon points="15,13 19,17 15,21 11,17" />
+      <polygon points="17,10.5 21,13 17,15.5 13,13" />
     </g>
   </svg>
 );
@@ -69,7 +78,7 @@ export function Documents() {
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(needle) ||
-        item.type.toLowerCase().includes(needle),
+        item.type.toLowerCase().includes(needle)
     );
   }, [items, query]);
 
@@ -161,12 +170,12 @@ export function Documents() {
             type="button"
             onClick={() =>
               toast.info(
-                "Google Drive connector will activate once OAuth credentials are configured.",
+                "Google Drive connector will activate once OAuth credentials are configured."
               )
             }
             className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm">
               <GoogleDriveLogo className="h-4 w-4" />
             </span>
             <span>Google Drive</span>
@@ -176,13 +185,13 @@ export function Documents() {
             type="button"
             onClick={() =>
               toast.info(
-                "Dropbox connector will activate once OAuth credentials are configured.",
+                "Dropbox connector will activate once OAuth credentials are configured."
               )
             }
             className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
-              <DropboxLogo className="h-4 w-4" />
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/95 shadow-sm text-[#0085FF]">
+              <DropboxLogo className="h-3.5 w-3.5" />
             </span>
             <span>Dropbox</span>
           </button>
@@ -261,7 +270,7 @@ export function Documents() {
                       className="rounded-full border border-[rgba(var(--status-warning),0.35)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--status-warning))] transition hover:border-[rgba(var(--status-warning),0.55)]"
                       onClick={() =>
                         toast.info(
-                          `Share settings for ${item.name} will live here.`,
+                          `Share settings for ${item.name} will live here.`
                         )
                       }
                     >
