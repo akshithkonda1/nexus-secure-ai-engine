@@ -99,14 +99,14 @@ export default function ChatPage() {
   return (
     <div className="flex h-screen flex-col bg-app text-ink">
       {error && (
-        <div className="flex items-center justify-between gap-3 border-b border-red-800/20 bg-red-500/10 px-4 py-2 text-sm text-red-600 dark:text-red-300">
+        <div className="flex items-center justify-between gap-3 border-b border-[rgba(var(--accent-rose),0.35)] bg-[rgba(var(--accent-rose),0.18)] px-4 py-2 text-sm text-[rgb(var(--accent-rose-ink))]">
           <span>{error}</span>
           <button onClick={reconnect} className="btn btn-ghost rounded-md border border-red-500/30 px-2 py-1">Reconnect</button>
         </div>
       )}
 
       {!isConnected && !error && (
-        <div className="flex items-center justify-center gap-2 border-b border-app bg-yellow-500/10 px-4 py-2 text-sm text-yellow-700 dark:text-yellow-300">
+        <div className="flex items-center justify-center gap-2 border-b border-[rgba(var(--accent-amber),0.3)] bg-[rgba(var(--accent-amber),0.18)] px-4 py-2 text-sm text-[rgb(var(--accent-amber-ink))]">
           <Loader2 className="h-4 w-4 animate-spin" />
           Connecting to Nexus…
         </div>
@@ -181,7 +181,15 @@ export default function ChatPage() {
               </div>
             </div>
 
-            <motion.button type="button" onClick={handleSend} disabled={!canSend} whileHover={canSend ? { scale: 1.05 } : {}} whileTap={canSend ? { scale: 0.95 } : {}} className="btn btn-primary grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50" aria-label="Send message">
+            <motion.button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend}
+              whileHover={canSend ? { scale: 1.05 } : {}}
+              whileTap={canSend ? { scale: 0.95 } : {}}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] font-semibold shadow-[0_0_34px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Send message"
+            >
               <Send className="h-5 w-5" />
             </motion.button>
           </div>

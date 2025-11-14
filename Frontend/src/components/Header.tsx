@@ -43,7 +43,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
-          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)] lg:hidden"
+          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] text-[rgba(var(--subtle),0.85)] shadow-sm transition hover:border-[rgba(var(--brand),0.5)] hover:text-[rgb(var(--text))] lg:hidden"
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
@@ -54,7 +54,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
          </div>
 
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.92)] px-4 py-2 shadow-sm dark:border-[rgba(var(--border),0.4)] dark:bg-[rgba(var(--panel),0.7)] sm:flex">
+          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.9)] px-4 py-2 shadow-sm sm:flex">
             <Search
               className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]"
               aria-hidden="true"
@@ -75,7 +75,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               requestNewPrompt();
               navigate("/chat");
             }}
-            className="btn btn-primary btn-neo ripple rounded-2xl"
+            className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-4 py-2.5 bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] font-semibold shadow-[0_0_34px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
           >
             <Sparkles className="size-4" /> New prompt
           </button>
@@ -93,12 +93,12 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             onClick={() => requestNotifications()}
-            className="relative flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.92)] text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)]"
+            className="relative inline-flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.72)] text-[rgba(var(--subtle),0.85)] shadow-[0_18px_40px_rgba(15,23,42,0.25)] transition hover:bg-[rgba(var(--panel),0.85)] hover:shadow-[0_0_32px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:scale-[0.99]"
             aria-label="Notifications"
           >
             <Bell className="size-4" />
             {unreadNotifications > 0 ? (
-              <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[#EF3B4C] text-[10px] font-semibold text-white shadow-[0_0_0_1px_rgba(12,16,24,0.08)]">
+              <span className="absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full bg-[rgba(var(--accent-rose),0.95)] text-[10px] font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_0_1px_rgba(12,16,24,0.08)]">
                 {unreadNotifications}
               </span>
             ) : null}
@@ -111,7 +111,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-3 py-2 text-left text-sm font-medium text-[rgb(var(--text))] shadow-sm transition hover:border-brand hover:text-brand dark:bg-[rgba(var(--panel),0.7)]",
+              "hidden items-center gap-3 rounded-[var(--radius-button)] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.68)] px-3 py-2.5 text-left text-sm font-medium text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.8)] hover:border-[rgba(var(--brand),0.5)] hover:text-[rgb(var(--text))]",
               "lg:flex",
             )}
             onClick={() => {

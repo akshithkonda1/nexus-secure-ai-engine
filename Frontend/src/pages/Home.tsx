@@ -19,7 +19,7 @@ const quickStarts = [
     label: "Write copy",
     description: "Launch marketing-ready narratives",
     icon: PenSquare,
-    hue: "from-[#009EFF] to-[#0085FF]",
+    hue: "from-[#3EE4FF] to-[#8B5CF6]",
     to: "/templates",
   },
   {
@@ -33,7 +33,7 @@ const quickStarts = [
     label: "Create avatar",
     description: "Train a spokesperson persona",
     icon: Bot,
-    hue: "from-[#0085FF] to-[#00B2FF]",
+    hue: "from-[#8B5CF6] to-[#34D399]",
     to: "/settings",
   },
   {
@@ -101,7 +101,7 @@ export function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Nexus • Welcome back, {who}
+              Zora • Welcome back, {who}
             </div>
             <h1 className="accent-ink text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
@@ -114,7 +114,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-full px-6 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
+                className="inline-flex items-center gap-2 rounded-full bg-[rgb(var(--brand))] px-6 py-2.5 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_34px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(0,133,255,0.35)]"
               >
                 <ShieldCheck className="size-4" /> Launch Chat
               </button>
@@ -166,7 +166,7 @@ export function Home() {
                 a shareable brief?
               </p>
             </div>
-            <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(var(--surface),0.94)] p-4 shadow-inner dark:bg-[rgba(var(--panel),0.75)]">
+            <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(var(--surface),0.94)] p-4 shadow-inner">
               <div className="flex items-center justify-between text-xs text-[rgba(var(--subtle),0.8)]">
                 <span className="inline-flex items-center gap-2">
                   <MessageSquare className="h-3.5 w-3.5 text-brand" /> Latest
@@ -186,7 +186,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-2xl px-4 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
+                className="inline-flex items-center gap-2 rounded-[var(--radius-button)] bg-[rgb(var(--brand))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-[0_0_34px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(0,133,255,0.35)]"
               >
                 <Wand2 className="size-4" /> Generate brief
               </button>
@@ -229,7 +229,7 @@ export function Home() {
             className={`panel panel--glassy panel--hover panel--immersive panel--alive group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.92)] p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
           >
             <span
-              className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.hue} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white`}
+              className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.hue} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[rgb(var(--on-accent))]`}
             >
               Quick start
             </span>

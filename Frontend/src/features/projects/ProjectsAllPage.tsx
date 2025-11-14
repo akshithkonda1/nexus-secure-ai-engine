@@ -87,7 +87,7 @@ export default function ProjectsAllPage() {
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-full bg-[rgba(var(--brand),1)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgba(var(--brand-ink),1)]"
+          className="inline-flex items-center justify-center rounded-full bg-[rgba(var(--brand),1)] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] shadow-sm transition hover:bg-[rgba(var(--brand-ink),1)]"
         >
           New project
         </button>

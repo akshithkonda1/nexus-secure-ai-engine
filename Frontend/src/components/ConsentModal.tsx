@@ -117,7 +117,7 @@ export function ConsentModal() {
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg bg-[rgb(var(--ring))] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--ring))] disabled:opacity-50"
+                      className="rounded-lg bg-[rgb(var(--ring))] px-4 py-2 text-sm font-semibold text-[rgb(var(--on-accent))] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--ring))] disabled:opacity-50"
                       onClick={handleConfirm}
                       disabled={!checked || isSubmitting}
                     >

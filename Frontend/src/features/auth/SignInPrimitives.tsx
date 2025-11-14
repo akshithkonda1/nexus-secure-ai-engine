@@ -16,7 +16,7 @@ export function SocialButton({ provider }: { provider: SignInProvider }) {
       className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-app bg-background/40 p-4 text-left transition hover:border-app/80 hover:bg-background/60 backdrop-blur"
     >
       <span className="flex items-center gap-3">
-        <span className={cn("grid size-10 place-items-center rounded-full font-semibold text-white", provider.accent)}>
+        <span className={cn("grid size-10 place-items-center rounded-full font-semibold text-[rgb(var(--on-accent))]", provider.accent)}>
           {provider.label[0]}
         </span>
         <span className="flex flex-col">

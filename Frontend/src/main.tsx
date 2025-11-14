@@ -12,21 +12,18 @@ import { Chat } from "@/pages/Chat";
 import { Outbox } from "@/pages/Outbox";
 import { Governance } from "@/pages/Governance";
 import { Guides } from "@/pages/Guides";
-import { ThemeProvider } from "@/shared/ui/theme/ThemeToggle";
+import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
 import { ProfileProvider } from "@/features/profile/ProfileProvider";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import ProjectsPage from "@/features/projects/ProjectsPage";
 import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
 import { ErrorBoundary } from "@/routes/ErrorBoundary";
 import { PanelProvider } from "@/panels/PanelProvider";
-import { initTheme } from "./theme";
 
 const Templates = lazy(() => import("@/pages/Templates"));
 const Documents = lazy(() => import("@/pages/Documents"));
 const Activity = lazy(() => import("@/pages/History"));
 const Settings = lazy(() => import("@/pages/Settings"));
-
-initTheme();
 
 const Fallback = () => (
   <section className="panel panel--glassy panel--hover p-6 space-y-4">

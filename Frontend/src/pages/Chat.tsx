@@ -233,12 +233,12 @@ const IOSSwitch = React.forwardRef<
       "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
       checked
         ? "bg-[rgb(var(--brand))]"
-        : "bg-[rgba(var(--border),0.9)] dark:bg-slate-600",
+        : "bg-[rgba(var(--border),0.6)]",
     ].join(" ")}
   >
     <span
       className={[
-        "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
+        "inline-block h-5 w-5 transform rounded-full bg-[rgb(var(--surface))] shadow-sm transition-transform",
         checked ? "translate-x-5" : "translate-x-1",
       ].join(" ")}
     />
@@ -1003,17 +1003,17 @@ export function Chat() {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2 rounded-xl border border-red-200 bg-red-50 p-3 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
+                <div className="mt-4 space-y-2 rounded-xl border border-[rgba(var(--accent-rose),0.35)] bg-[rgba(var(--accent-rose),0.18)] p-3 text-[11px] text-[rgb(var(--accent-rose-ink))]">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">Danger zone</span>
                   <AlertCircle className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <p>Remove sessions you no longer need. This action cannot be undone.</p>
-                <button
-                  type="button"
-                  onClick={handleClearAllSessions}
-                  className="inline-flex items-center gap-1 rounded-full border border-red-300 px-3 py-1 text-[11px] font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 dark:border-red-700 dark:text-red-100 dark:hover:bg-red-900"
-                >
+                  <button
+                    type="button"
+                    onClick={handleClearAllSessions}
+                    className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--accent-rose),0.45)] px-3 py-1 text-[11px] font-semibold text-[rgb(var(--accent-rose-ink))] transition hover:bg-[rgba(var(--accent-rose),0.22)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent-rose),0.35)]"
+                  >
                   Clear all sessions
                 </button>
               </div>
@@ -1034,7 +1034,7 @@ export function Chat() {
                   const bubbleClasses = [
                     "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm", // base
                     isAssistant
-                      ? "self-start bg-[rgb(var(--brand))] text-white"
+                      ? "self-start bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
                       : "self-end border border-[rgba(var(--border),0.6)] bg-[rgb(var(--panel))] text-[rgb(var(--text))]",
                   ];
 
@@ -1053,7 +1053,7 @@ export function Chat() {
                                 {[0, 1, 2].map((dot) => (
                                   <span
                                     key={dot}
-                                    className="h-2 w-2 rounded-full bg-white/80"
+                                    className="h-2 w-2 rounded-full bg-[rgba(var(--surface),0.8)]"
                                     style={{
                                       animation: "nexus-dot 1.2s infinite",
                                       animationDelay: `${dot * 0.2}s`,
@@ -1078,7 +1078,7 @@ export function Chat() {
                                   {message.attachments.map((name) => (
                                     <span
                                       key={name}
-                                      className="rounded-full bg-white/20 px-2 py-0.5"
+                                      className="rounded-full bg-[rgba(var(--surface),0.2)] px-2 py-0.5"
                                     >
                                       {name}
                                     </span>
@@ -1209,8 +1209,8 @@ export function Chat() {
                     </button>
                     <Waveform active={isRecording} />
                   </div>
-                  {voiceWarning && (
-                    <span className="flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-100">
+                    {voiceWarning && (
+                      <span className="flex items-center gap-1 rounded-full border border-[rgba(var(--accent-amber),0.45)] bg-[rgba(var(--accent-amber),0.2)] px-2 py-0.5 text-[10px] text-[rgb(var(--accent-amber-ink))]">
                       <AlertCircle className="h-3 w-3" /> {voiceWarning}
                     </span>
                   )}

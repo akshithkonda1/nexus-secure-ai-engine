@@ -324,7 +324,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
               <button
                 disabled={roles.length === 0}
                 onClick={() => setStep(2)}
-                className="btn btn-primary px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-8 py-3 text-lg font-semibold bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-[0_0_36px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_42px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>
@@ -374,13 +374,13 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="btn btn-ghost px-6 py-3 text-base"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.68)] px-6 py-3 text-base font-semibold text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.82)] hover:border-[rgba(var(--brand),0.4)] hover:scale-[1.01] active:scale-[0.99]"
               >
                 Back
               </button>
               <button
                 onClick={() => setStep(3)}
-                className="btn btn-primary px-8 py-3 text-lg"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-8 py-3 text-lg font-semibold bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-[0_0_36px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_42px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 Next
               </button>
@@ -404,13 +404,13 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(2)}
-                className="btn btn-ghost px-6 py-3 text-base"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.68)] px-6 py-3 text-base font-semibold text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.82)] hover:border-[rgba(var(--brand),0.4)] hover:scale-[1.01] active:scale-[0.99]"
               >
                 Back
               </button>
               <button
                 onClick={finish}
-                className="btn btn-primary px-8 py-3 text-lg"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-8 py-3 text-lg font-semibold bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-[0_0_36px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_42px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 Finish
               </button>
@@ -573,24 +573,24 @@ export const Outbox: React.FC = () => {
             <nav className="flex items-center gap-4">
               <button
                 onClick={() => setShowSetup(true)}
-                className="p-3 rounded-full hover:bg-[rgba(var(--panel),0.9)] transition-all hover:scale-110"
+                className="inline-flex items-center justify-center rounded-full border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.72)] p-3 text-[rgb(var(--text))] shadow-[0_18px_40px_rgba(15,23,42,0.25)] transition hover:bg-[rgba(var(--panel),0.85)] hover:shadow-[0_0_32px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:scale-[0.99]"
                 title="Configure Workspace"
                 aria-label="Configure"
               >
-                <Settings className="size-6 text-[rgb(var(--text))]" />
+                <Settings className="size-6" />
               </button>
               <button
                 onClick={() => {
                   requestNewPrompt();
                   navigate("/chat");
                 }}
-                className="btn btn-primary flex items-center gap-3 px-6 py-3 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="inline-flex items-center gap-3 rounded-[var(--radius-button)] px-6 py-3 text-lg font-semibold bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-[0_0_36px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_42px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 <Sparkles className="size-5" /> Compose New
               </button>
               <button
                 onClick={() => navigate("/templates")}
-                className="btn btn-ghost px-6 py-3 text-lg rounded-2xl hover:bg-[rgba(var(--panel),0.9)] transition-all"
+                className="inline-flex items-center justify-center rounded-[var(--radius-button)] border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.68)] px-6 py-3 text-lg font-semibold text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.82)] hover:border-[rgba(var(--brand),0.4)] hover:scale-[1.01] active:scale-[0.99]"
               >
                 Browse Templates
               </button>
@@ -601,13 +601,13 @@ export const Outbox: React.FC = () => {
             {/* LEFT COLUMN */}
             <aside className="col-span-3 space-y-8">
               {/* Queue Health */}
-              <div className="widget p-8 rounded-3xl bg-gradient-to-br from-[rgb(var(--brand))] to-[rgb(var(--brand-dark))] text-white shadow-xl overflow-hidden">
+              <div className="widget p-8 rounded-3xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--brand),0.14)] text-[rgb(var(--text))] shadow-[var(--shadow-soft)] overflow-hidden">
                 <h2 className="text-2xl font-bold mb-6">Scheduled Sends</h2>
                 <div className="grid grid-cols-1 gap-4">
                   {Object.entries(statusBuckets).map(([status, count]) => (
                     <div
                       key={status}
-                      className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 text-center hover:scale-105 transition-transform"
+                      className="rounded-2xl bg-[rgba(var(--surface),0.2)] p-4 text-center transition-transform backdrop-blur-sm hover:scale-105"
                     >
                       <p className="text-xs uppercase tracking-wider opacity-90">
                         {status}
@@ -626,7 +626,7 @@ export const Outbox: React.FC = () => {
 
               {/* Automation Controls */}
               {config?.connectors?.length ? (
-                <div className="widget p-6 rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 shadow-sm border border-indigo-200/50 dark:border-purple-800/30">
+                <div className="widget p-6 rounded-3xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.92)] shadow-[var(--shadow-soft)]">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[rgb(var(--text))]">
                     <Zap className="size-5 text-[rgb(var(--brand))]" /> Automation Controls
                   </h3>
@@ -720,7 +720,7 @@ export const Outbox: React.FC = () => {
               </div>
 
               {/* Compliance / Guardrails */}
-              <div className="widget p-8 rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 shadow-md">
+              <div className="widget p-8 rounded-3xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.94)] shadow-[var(--shadow-soft)]">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
@@ -730,7 +730,7 @@ export const Outbox: React.FC = () => {
                       Safety checks before anything goes out
                     </h3>
                   </div>
-                  <ShieldCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
+                  <ShieldCheck className="size-8 text-[rgb(var(--accent-emerald))]" />
                 </div>
                 <p className="text-base text-[rgb(var(--subtle))]">
                   Every outbound asset runs through Nexus guardrails. Track pending approvals
@@ -743,7 +743,7 @@ export const Outbox: React.FC = () => {
             {/* RIGHT COLUMN */}
             <aside className="col-span-3 space-y-8">
               {/* Templates */}
-              <div className="widget p-6 rounded-3xl bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 shadow-sm">
+              <div className="widget p-6 rounded-3xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.92)] shadow-[var(--shadow-soft)]">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
                     Quick Actions
@@ -776,12 +776,12 @@ export const Outbox: React.FC = () => {
               </div>
 
               {/* Distribution */}
-              <div className="widget p-6 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 shadow-sm">
+              <div className="widget p-6 rounded-3xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.9)] shadow-[var(--shadow-soft)]">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))]">
                     Distribution
                   </p>
-                  <Send className="size-5 text-amber-600 dark:text-amber-400" />
+                  <Send className="size-5 text-[rgb(var(--accent-amber))]" />
                 </div>
                 <p className="text-lg font-semibold text-[rgb(var(--text))]">Last Export</p>
                 <p className="text-base text-[rgb(var(--subtle))] mt-1">
@@ -800,7 +800,7 @@ export const Outbox: React.FC = () => {
 
               {/* Active Connectors */}
               {config?.connectors?.length ? (
-                <div className="widget p-6 rounded-3xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 shadow-sm">
+                <div className="widget p-6 rounded-3xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.9)] shadow-[var(--shadow-soft)]">
                   <p className="text-sm uppercase tracking-widest text-[rgb(var(--subtle))] mb-3">
                     Active Connectors
                   </p>

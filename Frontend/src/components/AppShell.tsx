@@ -54,7 +54,7 @@ export default function AppShell({ left, right, children }: Props) {
   );
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))]">
+    <div className="h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))] antialiased">
       <div
         className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
         style={{ gridTemplateColumns }}

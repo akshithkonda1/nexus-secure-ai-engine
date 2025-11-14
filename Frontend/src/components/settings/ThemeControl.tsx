@@ -1,10 +1,9 @@
-import { useTheme } from "@/theme/useTheme";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 
-type Opt = "light" | "dark" | "system";
+type Opt = "light" | "dark";
 const OPTIONS: { id: Opt; label: string }[] = [
-  { id: "light",  label: "Light"  },
-  { id: "dark",   label: "Dark"   },
-  { id: "system", label: "System" },
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
 ];
 
 /**
@@ -12,25 +11,26 @@ const OPTIONS: { id: Opt; label: string }[] = [
  * no localStorage writes except via useTheme.setPref (user intent only).
  */
 export default function ThemeControl() {
-  const { pref, setPref } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <fieldset className="panel panel--glassy panel--hover p-4">
       <legend className="mb-2 text-sm font-medium text-muted">Appearance</legend>
       <div className="flex flex-wrap gap-2">
-        {OPTIONS.map(o => (
-          <label key={o.id}
-                 className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm"
-                 style={{ borderColor: "var(--border)" }}>
+        {OPTIONS.map((option) => (
+          <label
+            key={option.id}
+            className="inline-flex items-center gap-2 rounded-xl border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.6)] px-3 py-2 text-sm text-[rgb(var(--text))] transition hover:border-[rgba(var(--brand),0.5)]"
+          >
             <input
               type="radio"
               name="theme"
-              value={o.id}
-              checked={pref === o.id}
-              onChange={() => setPref(o.id)}
+              value={option.id}
+              checked={theme === option.id}
+              onChange={() => setTheme(option.id)}
               className="accent-current"
             />
-            <span>{o.label}</span>
+            <span>{option.label}</span>
           </label>
         ))}
       </div>

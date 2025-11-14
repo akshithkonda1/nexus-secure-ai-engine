@@ -1,8 +1,8 @@
 import { BRAND } from "@/config/branding";
-import { useTheme } from "../../theme/useTheme";
+import { useTheme } from "./theme/ThemeProvider";
 
 export function BrandMark({ className = "h-6 w-auto" }: { className?: string }) {
-  const { effective } = useTheme();
-  const src = effective === "dark" ? BRAND.dark : BRAND.light;
-  return <img src={src} alt="Nexus" className={className} width={96} height={24} />;
+  const { theme } = useTheme();
+  const src = theme === "dark" ? BRAND.dark : BRAND.light;
+  return <img src={src} alt="Zora" className={className} width={160} height={48} />;
 }
