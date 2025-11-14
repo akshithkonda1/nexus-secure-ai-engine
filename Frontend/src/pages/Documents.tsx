@@ -2,20 +2,15 @@ import React, { useMemo, useRef, useState } from "react";
 import { FolderPlus, Loader2, RefreshCcw, Search, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import googleDriveLogo from "@/assets/logos/google-drive.svg";
+import dropboxLogo from "@/assets/logos/dropbox.svg";
+
 import { useDocuments, useUploadDocument } from "@/queries/documents";
 import type { DocumentItem } from "@/types/models";
 import { formatFileSize, formatRelativeTime } from "@/lib/formatters";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 const EMPTY_ITEMS: DocumentItem[] = [];
-
-/**
- * NOTE: Put the OFFICIAL vendor SVGs at these paths, unmodified:
- *  - /public/assets/logos/google-drive.svg
- *  - /public/assets/logos/dropbox.svg
- */
-const GOOGLE_DRIVE_ICON_SRC = "/assets/logos/google-drive.svg";
-const DROPBOX_ICON_SRC = "/assets/logos/dropbox.svg";
 
 export function Documents() {
   const [query, setQuery] = useState("");
@@ -120,7 +115,7 @@ export function Documents() {
             Cloud drives
           </span>
 
-          {/* Google Drive (official SVG, unmodified) */}
+          {/* Google Drive – official SVG file, unmodified */}
           <button
             type="button"
             onClick={() =>
@@ -132,7 +127,7 @@ export function Documents() {
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
               <img
-                src={GOOGLE_DRIVE_ICON_SRC}
+                src={googleDriveLogo as string}
                 alt="Google Drive"
                 className="h-4 w-4 object-contain"
                 loading="lazy"
@@ -141,7 +136,7 @@ export function Documents() {
             <span>Google Drive</span>
           </button>
 
-          {/* Dropbox (official SVG, unmodified) */}
+          {/* Dropbox – official SVG file, unmodified */}
           <button
             type="button"
             onClick={() =>
@@ -153,7 +148,7 @@ export function Documents() {
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
               <img
-                src={DROPBOX_ICON_SRC}
+                src={dropboxLogo as string}
                 alt="Dropbox"
                 className="h-4 w-4 object-contain"
                 loading="lazy"
