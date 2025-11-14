@@ -19,7 +19,7 @@ const quickStarts = [
     label: "Write copy",
     description: "Launch marketing-ready narratives",
     icon: PenSquare,
-    hue: "from-[#009EFF] to-[#0085FF]",
+    hue: "from-[#3EE4FF] to-[#8B5CF6]",
     to: "/templates",
   },
   {
@@ -33,7 +33,7 @@ const quickStarts = [
     label: "Create avatar",
     description: "Train a spokesperson persona",
     icon: Bot,
-    hue: "from-[#0085FF] to-[#00B2FF]",
+    hue: "from-[#8B5CF6] to-[#34D399]",
     to: "/settings",
   },
   {
@@ -101,7 +101,7 @@ export function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Nexus • Welcome back, {who}
+              Zora • Welcome back, {who}
             </div>
             <h1 className="accent-ink text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.
@@ -114,7 +114,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-full px-6 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
+                className="inline-flex items-center gap-2 rounded-full bg-zora-aurora px-6 py-2.5 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
               >
                 <ShieldCheck className="size-4" /> Launch Chat
               </button>
@@ -186,7 +186,7 @@ export function Home() {
               <button
                 type="button"
                 onClick={() => navigate("/chat")}
-                className="btn btn-primary btn-neo ripple rounded-2xl px-4 bg-[#0085FF] text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF]"
+                className="inline-flex items-center gap-2 rounded-zora-lg bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
               >
                 <Wand2 className="size-4" /> Generate brief
               </button>

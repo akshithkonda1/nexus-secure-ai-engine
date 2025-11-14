@@ -109,7 +109,7 @@ export function Templates() {
             </div>
             <button
               type="button"
-              className="btn btn-primary btn-neo ripple rounded-full"
+              className="inline-flex items-center justify-center rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               onClick={() =>
                 toast.info(
                   "Template builder connects to the backend in the next sprint.",
@@ -191,7 +191,7 @@ export function Templates() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="btn btn-primary btn-neo ripple rounded-full px-3 py-1.5 text-xs"
+                      className="inline-flex items-center justify-center rounded-zora-lg border border-zora-border bg-zora-space/80 px-3 py-1.5 text-xs font-semibold text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:scale-[1.01] active:scale-[0.99]"
                       onClick={() =>
                         toast.info(`Previewing ${template.name} coming soon`)
                       }
@@ -202,7 +202,7 @@ export function Templates() {
                       type="button"
                       onClick={() => handleLaunch(template)}
                       disabled={launchTemplate.isPending}
-                      className="btn btn-primary btn-neo ripple rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.18em] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center justify-center rounded-zora-lg bg-zora-aurora px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {launchTemplate.isPending ? (
                         <Loader2 className="size-3 animate-spin" />

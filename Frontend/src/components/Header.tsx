@@ -75,7 +75,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               requestNewPrompt();
               navigate("/chat");
             }}
-            className="btn btn-primary btn-neo ripple rounded-2xl"
+            className="inline-flex items-center justify-center rounded-zora-lg px-4 py-2.5 bg-zora-aurora text-zora-night font-semibold shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
           >
             <Sparkles className="size-4" /> New prompt
           </button>
@@ -93,7 +93,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             onClick={() => requestNotifications()}
-            className="relative flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.92)] text-[rgb(var(--subtle))] shadow-sm transition hover:text-brand dark:bg-[rgba(var(--panel),0.6)]"
+            className="relative inline-flex size-10 items-center justify-center rounded-full border border-zora-border bg-zora-space/80 text-zora-muted shadow-zora-soft/40 transition hover:bg-zora-deep hover:shadow-zora-glow hover:scale-[1.01] active:scale-[0.99]"
             aria-label="Notifications"
           >
             <Bell className="size-4" />
@@ -111,7 +111,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-3 py-2 text-left text-sm font-medium text-[rgb(var(--text))] shadow-sm transition hover:border-brand hover:text-brand dark:bg-[rgba(var(--panel),0.7)]",
+              "hidden items-center gap-3 rounded-zora-lg border border-zora-border bg-zora-space/80 px-3 py-2.5 text-left text-sm font-medium text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:text-zora-glow-1",
               "lg:flex",
             )}
             onClick={() => {

@@ -181,7 +181,15 @@ export default function ChatPage() {
               </div>
             </div>
 
-            <motion.button type="button" onClick={handleSend} disabled={!canSend} whileHover={canSend ? { scale: 1.05 } : {}} whileTap={canSend ? { scale: 0.95 } : {}} className="btn btn-primary grid h-10 w-10 place-items-center rounded-full bg-trustBlue text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50" aria-label="Send message">
+            <motion.button
+              type="button"
+              onClick={handleSend}
+              disabled={!canSend}
+              whileHover={canSend ? { scale: 1.05 } : {}}
+              whileTap={canSend ? { scale: 0.95 } : {}}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-zora-aurora text-zora-night font-semibold shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Send message"
+            >
               <Send className="h-5 w-5" />
             </motion.button>
           </div>

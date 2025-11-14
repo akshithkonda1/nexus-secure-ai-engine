@@ -14,6 +14,8 @@ import NavItem from "@/components/nav/NavItem";
 import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
 import { cn } from "@/shared/lib/cn";
 import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
+import zoraLogo from "@/assets/zora-logo.svg";
+import zoraMark from "@/assets/zora-mark.svg";
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -42,7 +44,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     <>
       <div
         className={cn(
-          "fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm transition-opacity lg:hidden",
+          "fixed inset-0 z-30 bg-zora-night/80 backdrop-blur-sm transition-opacity lg:hidden",
           isOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={onClose}
@@ -50,16 +52,16 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <aside
         data-collapsed={collapsed ? "true" : "false"}
         className={cn(
-          "glass-surface fixed left-0 top-0 z-40 flex h-full flex-col overflow-visible px-3 py-4 transition-[transform,width] duration-200 ease-out",
+          "fixed left-0 top-0 z-40 flex h-full flex-col overflow-visible border-r border-zora-border bg-zora-space/70 px-3 py-4 backdrop-blur-xl transition-[transform,width] duration-200 ease-out",
           collapsed ? "w-[72px]" : "w-72",
           "lg:static lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         <div className="flex h-full flex-col overflow-y-auto">
-          <div className="mb-4 flex items-center gap-2 px-1">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#009EFF] to-[#9360FF]" />
-            {!collapsed && <div className="text-sm font-semibold tracking-wide">NEXUS</div>}
+          <div className="mb-4 flex items-center gap-2 px-1 text-zora-white">
+            <img src={zoraMark} alt="Zora" className="h-9 w-9" />
+            {!collapsed && <img src={zoraLogo} alt="Zora" className="h-5" />}
             <button
               type="button"
               className={cn(
@@ -100,7 +102,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             ))}
 
             {!collapsed && (
-              <div className="pt-4 pb-1 text-[11px] tracking-[0.14em] uppercase text-slate-500 dark:text-slate-400">
+              <div className="pt-4 pb-1 text-[11px] uppercase tracking-[0.14em] text-zora-muted">
                 Workspace
               </div>
             )}
@@ -118,29 +120,29 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
           {!collapsed && (
             <div className="mt-auto space-y-4 pt-6">
-              <div className="rounded-3xl bg-[linear-gradient(140deg,rgba(var(--glow-blue),0.55)_0%,rgba(var(--glow-purple),0.45)_100%)] p-5 text-[rgb(var(--surface))] shadow-[0_20px_45px_rgba(2,6,23,0.25)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/70">Plan</p>
-                <h3 className="mt-2 text-lg font-semibold">Professional</h3>
-                <p className="mt-1 text-sm text-white/85">
+              <div className="rounded-zora-xl border border-zora-border bg-zora-space/80 p-5 text-zora-white shadow-zora-soft">
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-zora-muted">Plan</p>
+                <h3 className="mt-2 text-lg font-semibold text-zora-white">Professional</h3>
+                <p className="mt-1 text-sm text-zora-muted">
                   Unlock orchestration across teams with unlimited workspaces.
                 </p>
                 <button
                   type="button"
-                  className="mt-4 btn btn-primary btn-neo ripple rounded-2xl"
+                  className="mt-4 inline-flex items-center justify-center rounded-zora-lg px-4 py-2.5 bg-zora-aurora text-zora-night font-semibold shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
                   onClick={() => requestBillingUpgrade()}
                 >
                   Upgrade
                 </button>
               </div>
-              <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.9)] p-4 text-xs text-[rgb(var(--muted))] dark:bg-[rgba(var(--surface),0.3)]">
-                <p className="font-semibold text-[rgb(var(--text))]">Nexus HQ</p>
-                <p className="mt-1 leading-relaxed text-[rgb(var(--muted))]">
+              <div className="rounded-zora-lg border border-zora-border bg-zora-space/60 p-4 text-xs text-zora-muted">
+                <p className="font-semibold text-zora-white">Zora HQ</p>
+                <p className="mt-1 leading-relaxed">
                   Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
                 </p>
                 <button
                   type="button"
                   onClick={() => requestProjectCreation()}
-                  className="mt-3 btn btn-primary btn-neo ripple text-xs uppercase tracking-[0.2em]"
+                  className="mt-3 inline-flex items-center justify-center rounded-zora-lg px-4 py-2.5 bg-zora-aurora text-zora-night font-semibold shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] text-xs uppercase tracking-[0.2em]"
                 >
                   New project
                 </button>
