@@ -24,22 +24,14 @@ const GoogleDriveLogo: React.FC<{ className?: string }> = ({ className }) => (
     viewBox="0 0 24 24"
     className={className}
     aria-hidden="true"
+    focusable="false"
   >
-    {/* Top (yellow) */}
-    <path
-      d="M9 3h6l4 7-3 1-4-7z"
-      fill="#F4B400"
-    />
-    {/* Left (green) */}
-    <path
-      d="M4 17 9 3l3 5-5 9z"
-      fill="#0F9D58"
-    />
-    {/* Right (blue) */}
-    <path
-      d="M20 17 15 3l-3 5 5 9z"
-      fill="#4285F4"
-    />
+    {/* top (yellow) */}
+    <path d="M9.2 3h5.6L19 8.7l-2.7 4.7L11.9 8z" fill="#F4B400" />
+    {/* left (green) */}
+    <path d="M5 17.5 9.2 3 12 7.9 7 17.5z" fill="#0F9D58" />
+    {/* right (blue) */}
+    <path d="M19 17.5 14.8 3 12 7.9l5 9.6z" fill="#4285F4" />
   </svg>
 );
 
@@ -48,27 +40,15 @@ const DropboxLogo: React.FC<{ className?: string }> = ({ className }) => (
     viewBox="0 0 24 24"
     className={className}
     aria-hidden="true"
+    focusable="false"
   >
-    {/* Top left diamond */}
-    <path
-      d="M4 7.5 8 5l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-    />
-    {/* Top right diamond */}
-    <path
-      d="M12 7.5 16 5l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-    />
-    {/* Bottom left diamond */}
-    <path
-      d="M4 12.5 8 10l4 2.5-4 2.5z"
-      fill="#E3F0FF"
-    />
-    {/* Bottom right diamond */}
-    <path
-      d="M12 12.5 16 10l4 2.5-4 2.5z"
-      fill="#E3F0FF"
-    />
+    {/* use currentColor so it always matches the label */}
+    <g fill="currentColor">
+      <path d="M4 7.5 8 5l4 2.5-4 2.5z" />
+      <path d="M12 7.5 16 5l4 2.5-4 2.5z" />
+      <path d="M4 12.5 8 10l4 2.5-4 2.5z" />
+      <path d="M12 12.5 16 10l4 2.5-4 2.5z" />
+    </g>
   </svg>
 );
 
@@ -79,6 +59,7 @@ const DropboxLogo: React.FC<{ className?: string }> = ({ className }) => (
 export function Documents() {
   const [query, setQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { data, isLoading, isError, refetch, isRefetching } = useDocuments();
   const uploadDocument = useUploadDocument();
 
@@ -121,7 +102,7 @@ export function Documents() {
 
   return (
     <div className="px-[var(--page-padding)] py-6">
-      <div className="card p-5">
+      <div className="card rounded-3xl border border-[rgba(var(--border),0.25)] bg-[rgb(var(--surface))] p-5 shadow-sm dark:bg-[rgba(var(--panel),0.96)]">
         {/* Hidden input for local uploads */}
         <input
           ref={fileInputRef}
@@ -130,7 +111,7 @@ export function Documents() {
           onChange={() => handleUpload()}
         />
 
-        {/* HEADER ROW -------------------------------------------------- */}
+        {/* HEADER ------------------------------------------------------ */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
@@ -138,7 +119,7 @@ export function Documents() {
             </h2>
             <p className="text-sm text-[rgba(var(--subtle),0.82)]">
               Connect cloud drives or upload transcripts, evidence, and
-              knowledge packs.
+              knowledge packs to keep Nexus grounded.
             </p>
           </div>
 
@@ -151,7 +132,7 @@ export function Documents() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search documents"
-                className="input w-64 pl-10 pr-4"
+                className="input w-64 rounded-full pl-10 pr-4"
               />
             </div>
 
@@ -159,7 +140,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn btn-primary rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
+              className="inline-flex items-center rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#0074e0] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085FF] focus-visible:ring-offset-[rgb(var(--surface))] disabled:cursor-not-allowed disabled:opacity-70"
               disabled={uploadDocument.isPending}
             >
               {uploadDocument.isPending ? (
@@ -173,36 +154,48 @@ export function Documents() {
         </div>
 
         {/* DRIVE CONNECTORS -------------------------------------------- */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
-            Cloud drives
-          </span>
+        <div className="mt-5 rounded-2xl bg-[rgba(var(--panel),0.35)] px-4 py-3 dark:bg-[rgba(var(--panel),0.7)]">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.8)]">
+              Cloud drives
+            </span>
+            <span className="text-[11px] text-[rgba(var(--subtle),0.75)]">
+              OAuth is stubbed — these are safe, non-destructive preview
+              connectors.
+            </span>
+          </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              toast.info(
-                "Google Drive connector will activate once OAuth credentials are configured.",
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
-          >
-            <GoogleDriveLogo className="h-4 w-4" />
-            <span>Google Drive</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                toast.info(
+                  "Google Drive connector will activate once OAuth credentials are configured.",
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#0074e0] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085FF] focus-visible:ring-offset-[rgb(var(--surface))]"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10">
+                <GoogleDriveLogo className="h-4 w-4" />
+              </span>
+              <span>Google Drive</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              toast.info(
-                "Dropbox connector will activate once OAuth credentials are configured.",
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
-          >
-            <DropboxLogo className="h-4 w-4" />
-            <span>Dropbox</span>
-          </button>
+            <button
+              type="button"
+              onClick={() =>
+                toast.info(
+                  "Dropbox connector will activate once OAuth credentials are configured.",
+                )
+              }
+              className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#0074e0] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085FF] focus-visible:ring-offset-[rgb(var(--surface))]"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10">
+                <DropboxLogo className="h-3.5 w-3.5" />
+              </span>
+              <span>Dropbox</span>
+            </button>
+          </div>
         </div>
 
         {/* BODY STATES ------------------------------------------------- */}
@@ -221,7 +214,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="btn btn-ghost rounded-full text-[#0085FF]"
+              className="inline-flex items-center rounded-full border border-[#0085FF]/50 px-3 py-1.5 text-sm font-semibold text-[#0085FF] hover:bg-[#0085FF]/5"
             >
               <RefreshCcw
                 className={`mr-2 size-4 ${
@@ -260,12 +253,13 @@ export function Documents() {
                     {formatFileSize(item.size)}
                   </span>
                 </div>
+
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[rgba(var(--subtle),0.75)]">
                   <span>Updated {formatRelativeTime(item.updatedAt)}</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="btn btn-ghost btn-quiet rounded-full border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.85)] hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
+                      className="btn btn-ghost btn-quiet rounded-full border-[rgba(var(--border),0.3)] px-3 py-1.5 font-semibold text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.35)] hover:text-brand"
                       onClick={() =>
                         toast.info(`Opening ${item.name} from storage soon`)
                       }
