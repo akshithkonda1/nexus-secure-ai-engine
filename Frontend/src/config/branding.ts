@@ -1,4 +1,8 @@
+import zoraLogo from "@/assets/zora-logo.svg";
+import zoraMark from "@/assets/zora-mark.svg";
+
 export const BRAND = {
-  dark:  "/brand/nexus-logo.png",
-  light: "/brand/nexus-logo-inverted.png"
+  dark: zoraLogo,
+  light: zoraLogo,
+  mark: zoraMark,
 } as const;

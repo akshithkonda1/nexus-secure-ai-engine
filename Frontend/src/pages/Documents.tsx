@@ -109,7 +109,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn btn-primary rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
+              className="inline-flex items-center justify-center rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-75"
               disabled={uploadDocument.isPending}
             >
               {uploadDocument.isPending ? (
@@ -128,16 +128,16 @@ export function Documents() {
             Cloud drives
           </span>
 
-          {/* Google Drive */}
-          <button
-            type="button"
-            onClick={() =>
-              toast.info(
-                "Google Drive connector will activate once OAuth credentials are configured.",
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
-          >
+        {/* Google Drive */}
+        <button
+          type="button"
+          onClick={() =>
+            toast.info(
+              "Google Drive connector will activate once OAuth credentials are configured.",
+            )
+          }
+          className="inline-flex items-center gap-2 rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
+        >
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
               <img
                 src={googleDriveLogoUrl}
@@ -149,16 +149,16 @@ export function Documents() {
             <span>Google Drive</span>
           </button>
 
-          {/* Dropbox */}
-          <button
-            type="button"
-            onClick={() =>
-              toast.info(
-                "Dropbox connector will activate once OAuth credentials are configured.",
-              )
-            }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
-          >
+        {/* Dropbox */}
+        <button
+          type="button"
+          onClick={() =>
+            toast.info(
+              "Dropbox connector will activate once OAuth credentials are configured.",
+            )
+          }
+          className="inline-flex items-center gap-2 rounded-full bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
+        >
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
               <img
                 src={dropboxLogoUrl}
@@ -187,7 +187,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="btn btn-ghost rounded-full text-[#0085FF]"
+              className="btn btn-ghost rounded-full text-brand"
             >
               <RefreshCcw
                 className={`mr-2 size-4 ${

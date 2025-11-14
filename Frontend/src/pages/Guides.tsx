@@ -41,13 +41,13 @@ export function Guides() {
             {who}, chart the secure way to ship AI.
           </h1>
           <p className="max-w-3xl text-sm text-[rgba(var(--subtle),0.8)]">
-            Follow the recommended playbooks from Nexus so launches feel
+            Follow the recommended playbooks from Zora so launches feel
             predictable. Browse setup recipes, governance checklists, and
             troubleshooting primers built for regulated teams.
           </p>
           <button
             type="button"
-            className="inline-flex w-fit items-center gap-2 rounded-2xl bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition hover:bg-[#009EFF] hover:shadow-[var(--shadow-lift)]"
+            className="inline-flex w-fit items-center gap-2 rounded-zora-lg bg-zora-aurora px-4 py-2 text-sm font-semibold text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow"
           >
             <PlayCircle className="size-4" /> Start walkthrough
           </button>

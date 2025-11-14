@@ -21,10 +21,7 @@ export function PanelToggle({ side, open, onClick, className }: Props) {
       aria-expanded={open}
       aria-label={isLeft ? "Toggle left sidebar" : "Toggle right rail"}
       className={[
-        "group absolute top-3 z-40 h-9 w-9 rounded-full border",
-        "border-black/10 bg-white/85 text-slate-600 shadow backdrop-blur",
-        "dark:border-white/10 dark:bg-white/10 dark:text-slate-200",
-        "transition hover:scale-[1.03] hover:shadow-md",
+        "group absolute top-3 z-40 inline-flex h-9 w-9 items-center justify-center rounded-full border border-zora-border bg-zora-space/80 text-zora-muted shadow-zora-soft/40 backdrop-blur-xl transition hover:bg-zora-deep hover:shadow-zora-glow hover:scale-[1.01] active:scale-[0.99]",
         isLeft ? "-right-4" : "-left-4",
         className ?? ""
       ].join(" ")}

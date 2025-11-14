@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@/styles/tokens.css";
 import "@/styles/glass.css";
 import "@/styles/globals.css";
+import "@/styles/zora-theme.css";
 import RootLayout from "@/layouts/RootLayout";
 import { Home } from "@/pages/Home";
 import { Chat } from "@/pages/Chat";

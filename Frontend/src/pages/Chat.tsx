@@ -233,7 +233,7 @@ const IOSSwitch = React.forwardRef<
       "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
       checked
         ? "bg-[rgb(var(--brand))]"
-        : "bg-[rgba(var(--border),0.9)] dark:bg-slate-600",
+        : "bg-[rgba(var(--border),0.9)] dark:bg-zora-space/70",
     ].join(" ")}
   >
     <span

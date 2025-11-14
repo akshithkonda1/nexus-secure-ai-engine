@@ -324,7 +324,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
               <button
                 disabled={roles.length === 0}
                 onClick={() => setStep(2)}
-                className="btn btn-primary px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center rounded-zora-lg px-8 py-3 text-lg font-semibold bg-zora-aurora text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>
@@ -374,13 +374,13 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="btn btn-ghost px-6 py-3 text-base"
+                className="inline-flex items-center justify-center rounded-zora-lg border border-zora-border bg-zora-space px-6 py-3 text-base font-semibold text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:scale-[1.01] active:scale-[0.99]"
               >
                 Back
               </button>
               <button
                 onClick={() => setStep(3)}
-                className="btn btn-primary px-8 py-3 text-lg"
+                className="inline-flex items-center justify-center rounded-zora-lg px-8 py-3 text-lg font-semibold bg-zora-aurora text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 Next
               </button>
@@ -404,13 +404,13 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(2)}
-                className="btn btn-ghost px-6 py-3 text-base"
+                className="inline-flex items-center justify-center rounded-zora-lg border border-zora-border bg-zora-space px-6 py-3 text-base font-semibold text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:scale-[1.01] active:scale-[0.99]"
               >
                 Back
               </button>
               <button
                 onClick={finish}
-                className="btn btn-primary px-8 py-3 text-lg"
+                className="inline-flex items-center justify-center rounded-zora-lg px-8 py-3 text-lg font-semibold bg-zora-aurora text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 Finish
               </button>
@@ -573,24 +573,24 @@ export const Outbox: React.FC = () => {
             <nav className="flex items-center gap-4">
               <button
                 onClick={() => setShowSetup(true)}
-                className="p-3 rounded-full hover:bg-[rgba(var(--panel),0.9)] transition-all hover:scale-110"
+                className="inline-flex items-center justify-center rounded-full border border-zora-border bg-zora-space/80 p-3 text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:shadow-zora-glow hover:scale-[1.01] active:scale-[0.99]"
                 title="Configure Workspace"
                 aria-label="Configure"
               >
-                <Settings className="size-6 text-[rgb(var(--text))]" />
+                <Settings className="size-6" />
               </button>
               <button
                 onClick={() => {
                   requestNewPrompt();
                   navigate("/chat");
                 }}
-                className="btn btn-primary flex items-center gap-3 px-6 py-3 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="inline-flex items-center gap-3 rounded-zora-lg px-6 py-3 text-lg font-semibold bg-zora-aurora text-zora-night shadow-zora-glow transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-zora-glow hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
               >
                 <Sparkles className="size-5" /> Compose New
               </button>
               <button
                 onClick={() => navigate("/templates")}
-                className="btn btn-ghost px-6 py-3 text-lg rounded-2xl hover:bg-[rgba(var(--panel),0.9)] transition-all"
+                className="inline-flex items-center justify-center rounded-zora-lg border border-zora-border bg-zora-space px-6 py-3 text-lg font-semibold text-zora-white shadow-zora-soft/40 transition hover:bg-zora-deep hover:border-white/15 hover:scale-[1.01] active:scale-[0.99]"
               >
                 Browse Templates
               </button>

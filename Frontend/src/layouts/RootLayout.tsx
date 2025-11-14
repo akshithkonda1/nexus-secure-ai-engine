@@ -40,7 +40,7 @@ export default function RootLayout() {
         left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}
         right={<RightRail />}
       >
-        <div className="flex min-h-full flex-col bg-transparent text-[rgb(var(--text))]">
+        <div className="flex min-h-full flex-col bg-transparent text-zora-white">
           <Header
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
             onOpenProfile={() => setProfileOpen(true)}
