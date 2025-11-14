@@ -2,8 +2,8 @@ import React, { useMemo, useRef, useState } from "react";
 import { FolderPlus, Loader2, RefreshCcw, Search, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-import googleDriveLogo from "@/assets/logos/google-drive.svg";
-import dropboxLogo from "@/assets/logos/dropbox.svg";
+import googleDriveLogo from "@/assets/google-drive.svg";
+import dropboxLogo from "@/assets/dropbox.svg";
 
 import { useDocuments, useUploadDocument } from "@/queries/documents";
 import type { DocumentItem } from "@/types/models";
@@ -123,13 +123,13 @@ export function Documents() {
                 "Google Drive connector will activate once OAuth credentials are configured.",
               )
             }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
               <img
-                src={googleDriveLogo as string}
+                src={googleDriveLogo}
                 alt="Google Drive"
-                className="h-4 w-4 object-contain"
+                className="h-4 w-4"
                 loading="lazy"
               />
             </span>
@@ -144,13 +144,13 @@ export function Documents() {
                 "Dropbox connector will activate once OAuth credentials are configured.",
               )
             }
-            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
               <img
-                src={dropboxLogo as string}
+                src={dropboxLogo}
                 alt="Dropbox"
-                className="h-4 w-4 object-contain"
+                className="h-4 w-4"
                 loading="lazy"
               />
             </span>
