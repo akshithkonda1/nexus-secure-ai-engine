@@ -307,7 +307,7 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
                 />
                 <span>Custom…</span>
                 {roles.includes("custom") && (
-                  <Check className="size-6 ml-auto text-[rgb(var(--brand))]" />
+                  <Check className="size-6 ml-auto text-[color:var(--zora-glow-1)]" />
                 )}
               </label>
             </div>
@@ -317,14 +317,14 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
                 placeholder="e.g. Freelance Designer"
                 value={customRoleLabel}
                 onChange={(e) => setCustomRoleLabel(e.target.value)}
-                className="input w-full text-lg p-4 rounded-2xl border border-[rgba(var(--border),0.9)] focus:border-[rgb(var(--brand))] focus:ring-2 focus:ring-[rgb(var(--brand))]/20 bg-[rgb(var(--bg))]"
+                className="input w-full rounded-[18px] bg-[color:color-mix(in_srgb,var(--zora-space)_70%,transparent)] p-4 text-lg text-zora-white placeholder:text-zora-muted"
               />
             )}
             <div className="flex justify-end">
               <button
                 disabled={roles.length === 0}
                 onClick={() => setStep(2)}
-                className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-8 py-3 text-lg font-semibold bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-[0_0_36px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_42px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                className="btn btn-primary px-8 py-3 text-lg shadow-zora-glow disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>
@@ -345,11 +345,11 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
                 return (
                   <label
                     key={key}
-                    className={`flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all
+                    className={`flex items-center gap-4 rounded-3xl border-2 p-5 transition-all
                       ${
                         checked
-                          ? "border-[rgb(var(--brand))] bg-[rgba(var(--brand),0.06)] shadow-md"
-                          : "border-[rgba(var(--border),0.9)] hover:border-[rgb(var(--brand))]/60"
+                          ? "border-[color:var(--zora-glow-1)] bg-[color:color-mix(in_srgb,var(--zora-soft)_80%,transparent)] shadow-[0_0_40px_rgba(62,228,255,0.24)]"
+                          : "border-zora-border hover:border-[color:rgba(62,228,255,0.45)]"
                       }`}
                   >
                     <input
@@ -364,9 +364,9 @@ const SetupModal: React.FC<{ onClose: (cfg?: WorkflowConfig) => void }> = ({ onC
                     />
                     <div className="p-3 rounded-2xl bg-[rgb(var(--panel))]">{icon}</div>
                     <span className="text-base font-medium">{label}</span>
-                    {checked && (
-                      <Check className="size-6 ml-auto text-[rgb(var(--brand))]" />
-                    )}
+                      {checked && (
+                        <Check className="size-6 ml-auto text-[color:var(--zora-glow-1)]" />
+                      )}
                   </label>
                 );
               })}
