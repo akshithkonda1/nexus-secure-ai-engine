@@ -8,86 +8,19 @@ import { formatFileSize, formatRelativeTime } from "@/lib/formatters";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 const EMPTY_ITEMS: DocumentItem[] = [];
-const AZURE_RADIANCE = "#0085FF";
 
-/* ------------------------------------------------------------------ */
-/* Brand-style SVG logos (approximations for UI only)                  */
-/* ------------------------------------------------------------------ */
-
-const GoogleDriveLogo: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    aria-hidden="true"
-    focusable="false"
-  >
-    {/* Left – green arm */}
-    <path
-      d="M5 17 10.5 7.2 8 3 3 12z"
-      fill="#0F9D58"
-    />
-    {/* Right – yellow arm */}
-    <path
-      d="M19 17 21 13 16 3 13.5 7.2z"
-      fill="#F4B400"
-    />
-    {/* Bottom – blue + red base */}
-    <path
-      d="M5 17 8 21h8l3-4-5.5-9.8h-3L5 17z"
-      fill="#4285F4"
-    />
-    <path
-      d="M16 21h0.2c1.2 0 2.1-.5 2.8-1.7L19 17l-3 4z"
-      fill="#DB4437"
-    />
-  </svg>
-);
-
-const DropboxLogo: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    viewBox="0 0 24 24"
-    className={className}
-    aria-hidden="true"
-    focusable="false"
-  >
-    {/* Top left diamond */}
-    <path
-      d="M4 7.5 8 5l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-    />
-    {/* Top right diamond */}
-    <path
-      d="M12 7.5 16 5l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-    />
-    {/* Bottom left diamond */}
-    <path
-      d="M4 12.5 8 10l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-      opacity={0.9}
-    />
-    {/* Bottom right diamond */}
-    <path
-      d="M12 12.5 16 10l4 2.5-4 2.5z"
-      fill="#FFFFFF"
-      opacity={0.9}
-    />
-    {/* Bottom flap */}
-    <path
-      d="M8 15.2 12 17.7 16 15.2 12 12.8z"
-      fill="#FFFFFF"
-      opacity={0.95}
-    />
-  </svg>
-);
-
-/* ------------------------------------------------------------------ */
-/* MAIN COMPONENT                                                     */
-/* ------------------------------------------------------------------ */
+/**
+ * NOTE: Put the OFFICIAL vendor SVGs at these paths, unmodified:
+ *  - /public/assets/logos/google-drive.svg
+ *  - /public/assets/logos/dropbox.svg
+ */
+const GOOGLE_DRIVE_ICON_SRC = "/assets/logos/google-drive.svg";
+const DROPBOX_ICON_SRC = "/assets/logos/dropbox.svg";
 
 export function Documents() {
   const [query, setQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { data, isLoading, isError, refetch, isRefetching } = useDocuments();
   const uploadDocument = useUploadDocument();
 
@@ -152,7 +85,7 @@ export function Documents() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {/* Search box */}
+            {/* Search */}
             <div className="relative sm:mr-2">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[rgba(var(--subtle),0.7)]" />
               <input
@@ -164,11 +97,11 @@ export function Documents() {
               />
             </div>
 
-            {/* Primary Upload */}
+            {/* Primary upload */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn rounded-full bg-[color:var(--azure-radiance,_#0085FF)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
+              className="btn rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
               disabled={uploadDocument.isPending}
             >
               {uploadDocument.isPending ? (
@@ -182,12 +115,12 @@ export function Documents() {
         </div>
 
         {/* CLOUD DRIVES ------------------------------------------------ */}
-        <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
             Cloud drives
           </span>
 
-          {/* Google Drive */}
+          {/* Google Drive (official SVG, unmodified) */}
           <button
             type="button"
             onClick={() =>
@@ -195,15 +128,20 @@ export function Documents() {
                 "Google Drive connector will activate once OAuth credentials are configured.",
               )
             }
-            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--azure-radiance,_#0085FF)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#0070d9]">
-              <GoogleDriveLogo className="h-4 w-4" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
+              <img
+                src={GOOGLE_DRIVE_ICON_SRC}
+                alt="Google Drive"
+                className="h-4 w-4 object-contain"
+                loading="lazy"
+              />
             </span>
             <span>Google Drive</span>
           </button>
 
-          {/* Dropbox */}
+          {/* Dropbox (official SVG, unmodified) */}
           <button
             type="button"
             onClick={() =>
@@ -211,10 +149,15 @@ export function Documents() {
                 "Dropbox connector will activate once OAuth credentials are configured.",
               )
             }
-            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--azure-radiance,_#0085FF)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#0070d9]">
-              <DropboxLogo className="h-4 w-4" />
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
+              <img
+                src={DROPBOX_ICON_SRC}
+                alt="Dropbox"
+                className="h-4 w-4 object-contain"
+                loading="lazy"
+              />
             </span>
             <span>Dropbox</span>
           </button>
@@ -236,7 +179,7 @@ export function Documents() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="btn btn-ghost rounded-full text-[color:var(--azure-radiance,_#0085FF)]"
+              className="btn btn-ghost rounded-full text-[#0085FF]"
             >
               <RefreshCcw
                 className={`mr-2 size-4 ${
