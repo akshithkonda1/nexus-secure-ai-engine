@@ -366,34 +366,47 @@ body::before{
     padding: 16px;
   }
 
-  .btn{ @apply inline-flex items-center justify-center gap-2 font-semibold rounded-[var(--radius-button)] transition; padding: 0.6rem 1rem; letter-spacing: -0.01em; }
+  .btn{ @apply inline-flex items-center justify-center gap-2 font-semibold transition duration-200 ease-out; border-radius: 18px; padding: 0.625rem 1.125rem; letter-spacing: -0.01em; }
   .btn-primary{
-    background: var(--aurora-gradient);
-    color: rgb(var(--on-accent));
+    background-image: var(--zora-gradient);
+    color: var(--zora-night);
     border: none;
-    box-shadow: 0 0 30px rgba(0, 133, 255, 0.25);
+    box-shadow: 0 0 40px rgba(62, 228, 255, 0.23);
     transition: transform .2s ease, box-shadow .2s ease;
   }
-  .btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 0 36px rgba(0, 133, 255, 0.32); }
-  .btn-primary:active{ transform: translateY(0); box-shadow: 0 0 22px rgba(0, 133, 255, 0.24); }
+  .btn-primary:hover{ transform: translateY(-1px) scale(1.01); box-shadow: 0 0 40px rgba(62, 228, 255, 0.35); }
+  .btn-primary:active{ transform: translateY(0) scale(0.99); box-shadow: 0 0 28px rgba(62, 228, 255, 0.2); }
   .btn-ghost{
-    background: rgba(var(--panel), .65);
-    border: 1px solid rgba(var(--border), .4);
-    color: rgb(var(--text));
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
-    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+    background: color-mix(in srgb, var(--zora-space) 70%, transparent);
+    border: 1px solid var(--zora-border);
+    color: var(--zora-white);
+    box-shadow: 0 14px 40px rgba(6, 9, 20, 0.55);
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease;
   }
-  .btn-ghost:hover{ background: rgba(var(--panel), .82); border-color: rgba(var(--brand), 0.4); transform: translateY(-1px); box-shadow: 0 0 28px rgba(0, 133, 255, 0.22); }
-  .btn-ghost:active{ transform: translateY(0); box-shadow: 0 14px 32px rgba(15, 23, 42, 0.32); }
+  .btn-ghost:hover{ background: color-mix(in srgb, var(--zora-deep) 85%, transparent); border-color: rgba(255,255,255,0.14); transform: translateY(-1px) scale(1.01); box-shadow: 0 0 36px rgba(62, 228, 255, 0.18); }
+  .btn-ghost:active{ transform: translateY(0) scale(0.99); box-shadow: 0 14px 32px rgba(6, 9, 20, 0.55); }
   .btn-quiet{
-    background: rgba(var(--panel), .45);
-    border: 1px solid rgba(var(--border), .35);
-    color: rgb(var(--subtle));
+    background: color-mix(in srgb, var(--zora-soft) 60%, transparent);
+    border: 1px solid var(--zora-border);
+    color: rgba(var(--subtle), .85);
     box-shadow: none;
-    transition: transform .2s ease, background-color .2s ease, border-color .2s ease;
+    transition: transform .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease;
   }
-  .btn-quiet:hover{ border-color: rgba(var(--brand), .35); background: rgba(var(--panel), .62); color: rgb(var(--text)); transform: translateY(-1px); }
-  [data-theme="dark"] .btn-quiet{ background: rgba(var(--surface), .2); border-color: rgba(var(--border), .4); }
+  .btn-quiet:hover{ border-color: rgba(255,255,255,0.12); background: color-mix(in srgb, var(--zora-space) 80%, transparent); color: rgb(var(--text)); transform: translateY(-1px) scale(1.01); }
+  [data-theme="dark"] .btn-quiet{ background: color-mix(in srgb, var(--zora-space) 62%, transparent); border-color: rgba(148, 163, 184, 0.28); }
+  .input{
+    border: 1px solid var(--zora-border);
+    background-color: transparent;
+    border-radius: var(--radius-input);
+    color: inherit;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+  }
+  .input:focus{
+    outline: none;
+    border-color: color-mix(in srgb, var(--zora-glow-1) 70%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zora-glow-1) 35%, transparent);
+  }
+  .input::placeholder{ color: var(--zora-muted); }
   .btn-neo{
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 20px rgba(6, 9, 20, .35);
     transition: transform .18s ease, box-shadow .18s ease;

@@ -39,11 +39,11 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   }, [profile?.fullName]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.82)] backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-[color:rgba(148,163,184,0.28)] bg-[color:color-mix(in_srgb,var(--zora-space)_84%,transparent)] backdrop-blur-2xl shadow-zora-soft">
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
-          className="flex size-10 items-center justify-center rounded-xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] text-[rgba(var(--subtle),0.85)] shadow-sm transition hover:border-[rgba(var(--brand),0.5)] hover:text-[rgb(var(--text))] lg:hidden"
+          className="inline-flex size-10 items-center justify-center rounded-full border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white hover:scale-[1.01] active:scale-[0.99] lg:hidden"
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
@@ -54,17 +54,17 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
          </div>
 
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.9)] px-4 py-2 shadow-sm sm:flex">
+          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_78%,transparent)] px-4 py-2 shadow-zora-soft backdrop-blur-xl sm:flex">
             <Search
-              className="mr-3 size-4 text-[rgba(var(--subtle),0.8)]"
+              className="mr-3 size-4 text-zora-muted"
               aria-hidden="true"
             />
             <input
               type="search"
               placeholder="Search sessions, documents, or commands"
-              className="input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)]"
+              className="input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-zora-white placeholder:text-zora-muted"
             />
-            <span className="hidden items-center gap-1 rounded-full bg-[rgba(var(--panel),0.65)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.8)] sm:inline-flex">
+            <span className="hidden items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zora-muted sm:inline-flex">
               <Command className="size-3" /> K
             </span>
           </div>
@@ -75,7 +75,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               requestNewPrompt();
               navigate("/chat");
             }}
-            className="inline-flex items-center justify-center rounded-[var(--radius-button)] px-4 py-2.5 bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] font-semibold shadow-[0_0_34px_rgba(0,133,255,0.28)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:translate-y-[0px] active:scale-[0.99]"
+            className="btn btn-primary shadow-zora-glow"
           >
             <Sparkles className="size-4" /> New prompt
           </button>
@@ -93,7 +93,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             onClick={() => requestNotifications()}
-            className="relative inline-flex size-10 items-center justify-center rounded-full border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.72)] text-[rgba(var(--subtle),0.85)] shadow-[0_18px_40px_rgba(15,23,42,0.25)] transition hover:bg-[rgba(var(--panel),0.85)] hover:shadow-[0_0_32px_rgba(0,133,255,0.35)] hover:scale-[1.01] active:scale-[0.99]"
+            className="relative inline-flex size-10 items-center justify-center rounded-full border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white hover:scale-[1.01] active:scale-[0.99]"
             aria-label="Notifications"
           >
             <Bell className="size-4" />
@@ -105,13 +105,13 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           </button>
           <ThemeToggle className="hidden lg:inline-flex" />
           <div
-            className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.7)] lg:block"
+            className="hidden h-12 w-px rounded-full bg-[color:rgba(148,163,184,0.28)] lg:block"
             aria-hidden="true"
           />
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-[var(--radius-button)] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.68)] px-3 py-2.5 text-left text-sm font-medium text-[rgb(var(--text))] shadow-[var(--shadow-soft)] transition hover:bg-[rgba(var(--panel),0.8)] hover:border-[rgba(var(--brand),0.5)] hover:text-[rgb(var(--text))]",
+              "hidden items-center gap-3 rounded-[18px] border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_75%,transparent)] px-3 py-2.5 text-left text-sm font-medium text-zora-white shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white",
               "lg:flex",
             )}
             onClick={() => {
@@ -120,7 +120,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             }}
             disabled={loading}
           >
-            <span className="inline-flex size-9 items-center justify-center overflow-hidden rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
+            <span className="inline-flex size-9 items-center justify-center overflow-hidden rounded-xl bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-white shadow-zora-soft">
               {profile?.avatarUrl ? (
                 <img
                   src={profile.avatarUrl}
@@ -134,7 +134,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             <span className="leading-tight">
               {profile?.fullName ?? "Workspace admin"}
               <br />
-              <span className="text-xs font-normal text-[rgba(var(--subtle),0.7)]">
+              <span className="text-xs font-normal text-zora-muted">
                 {profile?.role ?? "Secure workspace"}
               </span>
             </span>

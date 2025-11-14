@@ -16,18 +16,19 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 1rem;
-  border: 1px solid rgba(var(--border), .7);
-  background: rgba(var(--surface), .78);
-  color: rgb(var(--text));
-  transition: background-color .2s ease, border-color .2s ease;
+  border: 1px solid var(--zora-border);
+  background: color-mix(in srgb, var(--zora-space) 70%, transparent);
+  color: var(--zora-white);
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
   outline: none;
 }
 :root[data-theme="dark"] .nav-pill {
-  background: rgba(var(--surface), .55);
+  background: color-mix(in srgb, var(--zora-space) 60%, transparent);
 }
 
 .nav-pill:hover {
-  background: rgba(var(--surface), .88);
+  background: color-mix(in srgb, var(--zora-deep) 85%, transparent);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .nav-pill::after {
@@ -42,8 +43,8 @@
   filter: blur(10px);
   background:
     radial-gradient(60% 220% at 50% 0%,
-      rgba(var(--glow-blue), .48) 0%,
-      rgba(var(--glow-purple), .30) 38%,
+      rgba(62, 228, 255, .48) 0%,
+      rgba(139, 92, 246, .30) 38%,
       transparent 76%);
   opacity: 0;
   transition: opacity .18s ease;
@@ -65,6 +66,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(var(--border), .65);
-  background: rgba(var(--surface), .7);
+  border: 1px solid var(--zora-border);
+  background: color-mix(in srgb, var(--zora-soft) 65%, transparent);
+  color: var(--zora-muted);
+  transition: transform .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.nav-pill:hover .nav-icon,
+.nav-pill[aria-current="page"] .nav-icon,
+.nav-pill.is-active .nav-icon {
+  background: color-mix(in srgb, var(--zora-deep) 85%, transparent);
+  border-color: rgba(255,255,255,0.12);
+  color: var(--zora-white);
 }

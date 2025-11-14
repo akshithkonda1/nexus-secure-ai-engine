@@ -1,15 +1,15 @@
 :root {
-  --zora-night: 6 9 20; /* #060914 */
-  --zora-deep: 11 16 32; /* #0B1020 */
-  --zora-space: 16 24 38; /* #101826 */
-  --zora-soft: 27 36 53; /* #1B2435 */
-  --zora-white: #F7F9FC;
-  --zora-muted: #9CA3AF;
+  --zora-night:  #060914;
+  --zora-deep:   #0B1020;
+  --zora-space:  #101826;
+  --zora-soft:   #1B2435;
+  --zora-white:  #F7F9FC;
+  --zora-muted:  #9CA3AF;
   --zora-border: rgba(148, 163, 184, 0.18);
 
-  --zora-glow-1: #3EE4FF;
-  --zora-glow-2: #8B5CF6;
-  --zora-glow-3: #34D399;
+  --zora-glow-1: #3EE4FF;   /* aurora blue */
+  --zora-glow-2: #8B5CF6;   /* cosmic violet */
+  --zora-glow-3: #34D399;   /* teal accent */
 
   --zora-gradient: linear-gradient(
     135deg,
