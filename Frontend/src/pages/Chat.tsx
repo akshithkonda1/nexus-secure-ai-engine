@@ -2,7 +2,6 @@
 
 import React, {
   FormEvent,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -117,7 +116,7 @@ const IOSSwitch: React.FC<{
         "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
         checked ? "translate-x-5" : "translate-x-1",
       ].join(" ")}
-  />
+    />
   </button>
 );
 
@@ -249,7 +248,6 @@ export function Chat() {
 
   const handleDeleteSession = (id: string) => {
     if (sessions.length === 1) {
-      // Don’t let them delete the only session; just reset it.
       const fresh = createFreshSession();
       setSessions([fresh]);
       setActiveSessionId(fresh.id);
@@ -277,7 +275,7 @@ export function Chat() {
 
   const handleClearAllSessions = () => {
     const confirmed = window.confirm(
-      "Clear all chat sessions and start fresh? This cannot be undone."
+      "Clear all chat sessions and start from a clean slate? This cannot be undone."
     );
     if (!confirmed) return;
 
@@ -334,10 +332,8 @@ export function Chat() {
     setPendingAttachments([]);
     setIsThinking(true);
 
-    // Update title after user message
     setTimeout(updateActiveSessionTitleIfNeeded, 0);
 
-    // Fake Nexus reply (replace with real API)
     const delay = RESPONSE_DELAY_MS[speed];
 
     setTimeout(() => {
@@ -540,11 +536,12 @@ export function Chat() {
               />
             </div>
 
-            <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/80 px-3 py-2 text-[11px] dark:border-red-900/70 dark:bg-red-950/40">
-              <p className="mb-2 font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
+            {/* DANGER ZONE – improved contrast */}
+            <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-3 py-3 text-[11px] dark:border-red-800 dark:bg-red-950">
+              <p className="mb-2 font-semibold uppercase tracking-wide text-red-700 dark:text-red-100">
                 Danger zone
               </p>
-              <p className="mb-2 text-[11px] text-red-700 dark:text-red-300">
+              <p className="mb-2 text-[11px] text-red-700 dark:text-red-100/90">
                 Clear every chat session and start from a clean slate. This
                 cannot be undone.
               </p>
@@ -561,7 +558,6 @@ export function Chat() {
         </div>
       )}
 
-      {/* Collapsed state just stops here */}
       {isCollapsed ? null : (
         <>
           {/* Messages */}
@@ -589,9 +585,7 @@ export function Chat() {
                           {formatTime(message.createdAt)}
                         </span>
                       </header>
-                      <p className="whitespace-pre-wrap">
-                        {message.content}
-                      </p>
+                      <p className="whitespace-pre-wrap">{message.content}</p>
                       {message.attachments &&
                         message.attachments.length > 0 && (
                           <ul className="mt-2 flex flex-wrap gap-2 text-[10px]">
