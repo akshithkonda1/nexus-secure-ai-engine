@@ -1,16 +1,27 @@
 import React, { useMemo, useRef, useState } from "react";
-import { FolderPlus, Loader2, RefreshCcw, Search, Upload } from "lucide-react";
+import {
+  FolderPlus,
+  Loader2,
+  RefreshCcw,
+  Search,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
-
-import googleDriveLogo from "@/assets/google-drive.svg";
-import dropboxLogo from "@/assets/dropbox.svg";
 
 import { useDocuments, useUploadDocument } from "@/queries/documents";
 import type { DocumentItem } from "@/types/models";
 import { formatFileSize, formatRelativeTime } from "@/lib/formatters";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
+// Official SVG assets (must live in Frontend/src/assets/)
+import googleDriveLogoUrl from "../assets/google-drive.svg";
+import dropboxLogoUrl from "../assets/dropbox.svg";
+
 const EMPTY_ITEMS: DocumentItem[] = [];
+
+/* ------------------------------------------------------------------ */
+/* MAIN COMPONENT                                                     */
+/* ------------------------------------------------------------------ */
 
 export function Documents() {
   const [query, setQuery] = useState("");
@@ -24,6 +35,7 @@ export function Documents() {
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return items;
+
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(needle) ||
@@ -33,6 +45,7 @@ export function Documents() {
 
   const handleUpload = async (file?: File) => {
     const source = file ?? fileInputRef.current?.files?.[0];
+
     if (!source) {
       toast.info("Select a file to upload to Nexus.");
       fileInputRef.current?.click();
@@ -67,7 +80,7 @@ export function Documents() {
           onChange={() => handleUpload()}
         />
 
-        {/* HEADER ------------------------------------------------------ */}
+        {/* HEADER ----------------------------------------------------- */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
@@ -92,11 +105,11 @@ export function Documents() {
               />
             </div>
 
-            {/* Primary upload */}
+            {/* Upload */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="btn rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
+              className="btn btn-primary rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0] disabled:cursor-not-allowed disabled:opacity-75"
               disabled={uploadDocument.isPending}
             >
               {uploadDocument.isPending ? (
@@ -109,13 +122,13 @@ export function Documents() {
           </div>
         </div>
 
-        {/* CLOUD DRIVES ------------------------------------------------ */}
+        {/* CLOUD DRIVES ---------------------------------------------- */}
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
             Cloud drives
           </span>
 
-          {/* Google Drive – official SVG file, unmodified */}
+          {/* Google Drive */}
           <button
             type="button"
             onClick={() =>
@@ -125,9 +138,9 @@ export function Documents() {
             }
             className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
               <img
-                src={googleDriveLogo}
+                src={googleDriveLogoUrl}
                 alt="Google Drive"
                 className="h-4 w-4"
                 loading="lazy"
@@ -136,7 +149,7 @@ export function Documents() {
             <span>Google Drive</span>
           </button>
 
-          {/* Dropbox – official SVG file, unmodified */}
+          {/* Dropbox */}
           <button
             type="button"
             onClick={() =>
@@ -146,9 +159,9 @@ export function Documents() {
             }
             className="inline-flex items-center gap-2 rounded-full bg-[#0085FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0074e0]"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.08)]">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[rgba(0,0,0,0.12)]">
               <img
-                src={dropboxLogo}
+                src={dropboxLogoUrl}
                 alt="Dropbox"
                 className="h-4 w-4"
                 loading="lazy"
@@ -158,7 +171,7 @@ export function Documents() {
           </button>
         </div>
 
-        {/* BODY STATES ------------------------------------------------- */}
+        {/* STATES ----------------------------------------------------- */}
         {isLoading ? (
           <div className="mt-6 space-y-3" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, index) => (
@@ -213,6 +226,7 @@ export function Documents() {
                     {formatFileSize(item.size)}
                   </span>
                 </div>
+
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[rgba(var(--subtle),0.75)]">
                   <span>Updated {formatRelativeTime(item.updatedAt)}</span>
                   <div className="flex items-center gap-2">
