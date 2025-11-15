@@ -57,7 +57,7 @@ export default function AppShell({ left, right, children }: Props) {
     <div className="relative min-h-screen h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))] antialiased">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(148,163,184,0.22),transparent_55%),radial-gradient(circle_at_80%_120%,rgba(62,228,255,0.35),transparent_60%),radial-gradient(circle_at_10%_120%,rgba(139,92,246,0.4),transparent_65%)]"
+        className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_18%_115%,rgba(59,130,246,0.32),transparent_68%),radial-gradient(circle_at_82%_-10%,rgba(196,181,253,0.28),transparent_62%),radial-gradient(circle_at_50%_18%,rgba(56,189,248,0.22),transparent_58%),radial-gradient(circle_at_48%_82%,rgba(34,197,94,0.18),transparent_70%),linear-gradient(120deg,rgba(6,10,24,0.92)0%,rgba(9,14,30,0.88)38%,rgba(12,18,36,0.86)62%,rgba(8,11,22,0.92)100%)]"
       />
       <div className="relative z-10 flex h-full w-full items-stretch justify-stretch">
         <div
