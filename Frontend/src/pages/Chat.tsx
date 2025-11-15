@@ -7,8 +7,8 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   AlertCircle,
   ArrowDown,
@@ -28,175 +28,43 @@ import {
   Zap,
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/* Types                                                              */
-/* ------------------------------------------------------------------ */
+import {
+  ChatMessage,
+  ChatProvider,
+  ChatSession,
+  MessageStatus,
+  Speed,
+  RESPONSE_DELAY_MS,
+  autoTitleFromMessages,
+  createFreshSession,
+  createId,
+  safeNow,
+  useChatDispatch,
+  useChatState,
+} from "@/features/chat/context/ChatContext";
 
-type ChatRole = "user" | "assistant";
+const DEFAULT_VIRTUAL_ROW_HEIGHT = 96;
 
-type MessageStatus = "pending" | "sent" | "error";
-
-type ChatMessage = {
-  id: string;
-  role: ChatRole;
-  content: string;
-  attachments?: string[];
-  createdAt: string;
-  status?: MessageStatus;
-  replyTo?: string;
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: any) => void) | null;
+  onerror: ((event: any) => void) | null;
+  onend: (() => void) | null;
 };
 
-type ChatSession = {
-  id: string;
-  title: string;
-  createdAt: string;
-  messages: ChatMessage[];
-  pinned?: boolean;
-};
+type SpeechRecognitionConstructorLike = new () => SpeechRecognitionLike;
 
-type Speed = "slow" | "normal" | "fast";
-
-type SettingsState = {
-  nsfwEnabled: boolean;
-  jokesEnabled: boolean;
-  technicalMode: boolean;
-  connectedApps: boolean;
-};
-
-/* ------------------------------------------------------------------ */
-/* Storage & helpers                                                   */
-/* ------------------------------------------------------------------ */
-
-const STORAGE_KEYS = {
-  sessions: "nexus.chat.sessions.v1",
-  activeSessionId: "nexus.chat.activeSessionId.v1",
-  settings: "nexus.chat.settings.v1",
-} as const;
-
-const RESPONSE_DELAY_MS: Record<Speed, number> = {
-  slow: 1800,
-  normal: 900,
-  fast: 400,
-};
-
-const defaultSettings: SettingsState = {
-  nsfwEnabled: false,
-  jokesEnabled: true,
-  technicalMode: true,
-  connectedApps: false,
-};
-
-const safeNow = () => new Date().toISOString();
-
-const createId = () =>
-  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-
-const initialWelcome: ChatMessage = {
-  id: "welcome",
-  role: "assistant",
-  content:
-    "Welcome to Zora, an AI Debate Engine.\n\nAsk anything about your projects, documents, or life logistics — I’ll help you reason it out.",
-  attachments: [],
-  createdAt: safeNow(),
-  status: "sent",
-};
-
-const createFreshSession = (): ChatSession => ({
-  id: createId(),
-  title: "New chat",
-  createdAt: safeNow(),
-  messages: [initialWelcome],
-  pinned: false,
-});
-
-const isMessageStatus = (value: unknown): value is MessageStatus =>
-  value === "pending" || value === "sent" || value === "error";
-
-const sanitizeMessages = (value: unknown): ChatMessage[] => {
-  if (!Array.isArray(value)) return [initialWelcome];
-  return value
-    .map((msg) => {
-      if (!msg || typeof msg !== "object") return null;
-      const { id, role, content, attachments, createdAt, status, replyTo } =
-        msg as Partial<ChatMessage>;
-      if (role !== "user" && role !== "assistant") return null;
-      if (typeof id !== "string" || typeof content !== "string") return null;
-      return {
-        id,
-        role,
-        content,
-        attachments: Array.isArray(attachments)
-          ? attachments.filter((att): att is string => typeof att === "string")
-          : undefined,
-        createdAt: typeof createdAt === "string" ? createdAt : safeNow(),
-        status: isMessageStatus(status) ? status : undefined,
-        replyTo: typeof replyTo === "string" ? replyTo : undefined,
-      } satisfies ChatMessage;
-    })
-    .filter(Boolean) as ChatMessage[];
-};
-
-const sanitizeSessions = (value: unknown): ChatSession[] => {
-  if (!Array.isArray(value)) return [createFreshSession()];
-  const parsed = value
-    .map((session) => {
-      if (!session || typeof session !== "object") return null;
-      const { id, title, createdAt, messages, pinned } =
-        session as Partial<ChatSession>;
-      if (typeof id !== "string") return null;
-      return {
-        id,
-        title: typeof title === "string" && title.trim() ? title : "New chat",
-        createdAt: typeof createdAt === "string" ? createdAt : safeNow(),
-        messages: sanitizeMessages(messages),
-        pinned: Boolean(pinned),
-      } satisfies ChatSession;
-    })
-    .filter(Boolean) as ChatSession[];
-  return parsed.length ? parsed : [createFreshSession()];
-};
-
-const sanitizeSettings = (value: unknown): SettingsState => {
-  if (!value || typeof value !== "object") return { ...defaultSettings };
-  const data = value as Partial<SettingsState>;
-  return {
-    nsfwEnabled: Boolean(data.nsfwEnabled),
-    jokesEnabled: data.jokesEnabled === undefined ? true : Boolean(data.jokesEnabled),
-    technicalMode:
-      data.technicalMode === undefined ? true : Boolean(data.technicalMode),
-    connectedApps:
-      data.connectedApps === undefined ? false : Boolean(data.connectedApps),
-  } satisfies SettingsState;
-};
-
-const safeReadStorage = (key: string) => {
+const getSpeechRecognitionConstructor = () => {
   if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-};
-
-const safeWriteStorage = (key: string, value: unknown) => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* no-op */
-  }
-};
-
-const autoTitleFromMessages = (messages: ChatMessage[]): string => {
-  const firstUser = messages.find((m) => m.role === "user" && m.content.trim());
-  if (!firstUser) return "New chat";
-  const trimmed = firstUser.content.replace(/\s+/g, " ").trim();
-  if (trimmed.length <= 42) return trimmed;
-  return `${trimmed.slice(0, 39)}…`;
+  const win = window as typeof window & {
+    SpeechRecognition?: SpeechRecognitionConstructorLike;
+    webkitSpeechRecognition?: SpeechRecognitionConstructorLike;
+  };
+  return win.SpeechRecognition ?? win.webkitSpeechRecognition ?? null;
 };
 
 const formatTime = (iso: string) =>
@@ -275,44 +143,118 @@ const Waveform: React.FC<{ active: boolean }> = ({ active }) => {
 /* MAIN COMPONENT                                                     */
 /* ------------------------------------------------------------------ */
 
-export function Chat() {
-  const [sessions, setSessions] = useState<ChatSession[]>(() => {
-    const stored = safeReadStorage(STORAGE_KEYS.sessions);
-    return sanitizeSessions(stored);
-  });
-  const [activeSessionId, setActiveSessionId] = useState<string>(() => {
-    const stored = safeReadStorage(STORAGE_KEYS.activeSessionId);
-    return typeof stored === "string" ? stored : "";
-  });
-  const [settings, setSettings] = useState<SettingsState>(() => {
-    const stored = safeReadStorage(STORAGE_KEYS.settings);
-    return sanitizeSettings(stored);
-  });
+function ChatInner() {
+  const {
+    sessions,
+    activeSessionId,
+    settings,
+    inputValue,
+    pendingAttachments,
+    isCollapsed,
+    speed,
+    isThinking,
+    settingsOpen,
+    isRecording,
+    voiceSupported,
+    voiceWarning,
+    searchQuery,
+    renamingSessionId,
+    renameDraft,
+    followMessages,
+  } = useChatState();
+  const dispatch = useChatDispatch();
 
-  const [inputValue, setInputValue] = useState("");
-  const [pendingAttachments, setPendingAttachments] = useState<string[]>([]);
+  const setInputValue = useCallback(
+    (value: string) => dispatch({ type: "setInput", payload: value }),
+    [dispatch],
+  );
+
+  const setPendingAttachments = useCallback(
+    (value: string[]) =>
+      dispatch({ type: "setAttachments", payload: value }),
+    [dispatch],
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [speed, setSpeed] = useState<Speed>("normal");
-  const [isThinking, setIsThinking] = useState(false);
-
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement | null>(null);
   const firstSettingsSwitchRef = useRef<HTMLButtonElement | null>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState<boolean | null>(null);
-  const [voiceWarning, setVoiceWarning] = useState<string>("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
-  const [renameDraft, setRenameDraft] = useState("");
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const followMessagesRef = useRef(true);
+  const followMessagesRef = useRef(followMessages);
+  const rowSizeMapRef = useRef(new Map<string, number>());
+
+  const setActiveSessionId = useCallback(
+    (value: string) => dispatch({ type: "setActiveSession", payload: value }),
+    [dispatch],
+  );
+
+  const updateSettings = useCallback(
+    (partial: Partial<typeof settings>) =>
+      dispatch({ type: "setSettings", payload: partial }),
+    [dispatch],
+  );
+
+  const setIsCollapsed = useCallback(
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof value === "function" ? value(isCollapsed) : value;
+      dispatch({ type: "setCollapsed", payload: next });
+    },
+    [dispatch, isCollapsed],
+  );
+
+  const setSpeed = useCallback(
+    (value: Speed | ((prev: Speed) => Speed)) => {
+      const next = typeof value === "function" ? value(speed) : value;
+      dispatch({ type: "setSpeed", payload: next });
+    },
+    [dispatch, speed],
+  );
+
+  const setIsThinking = useCallback(
+    (value: boolean) => dispatch({ type: "setThinking", payload: value }),
+    [dispatch],
+  );
+
+  const setSettingsOpen = useCallback(
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof value === "function" ? value(settingsOpen) : value;
+      dispatch({ type: "setSettingsOpen", payload: next });
+    },
+    [dispatch, settingsOpen],
+  );
+
+  const setIsRecording = useCallback(
+    (value: boolean) => dispatch({ type: "setRecording", payload: value }),
+    [dispatch],
+  );
+
+  const setVoiceSupported = useCallback(
+    (value: boolean | null) =>
+      dispatch({ type: "setVoiceSupported", payload: value }),
+    [dispatch],
+  );
+
+  const setVoiceWarning = useCallback(
+    (value: string) => dispatch({ type: "setVoiceWarning", payload: value }),
+    [dispatch],
+  );
+
+  const setSearchQuery = useCallback(
+    (value: string) => dispatch({ type: "setSearchQuery", payload: value }),
+    [dispatch],
+  );
+
+  const setFollowMessages = useCallback(
+    (value: boolean) => dispatch({ type: "setFollow", payload: value }),
+    [dispatch],
+  );
+
+  const setRenameDraft = useCallback(
+    (value: string) => dispatch({ type: "setRenameDraft", payload: value }),
+    [dispatch],
+  );
 
   const pendingReplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -326,6 +268,27 @@ export function Chat() {
   }, [sessions, activeSessionId]);
 
   const messages = activeSession?.messages ?? [];
+
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => messagesContainerRef.current,
+    estimateSize: (index) => {
+      const message = messages[index];
+      if (!message) return DEFAULT_VIRTUAL_ROW_HEIGHT;
+      return rowSizeMapRef.current.get(message.id) ?? DEFAULT_VIRTUAL_ROW_HEIGHT;
+    },
+    getItemKey: (index) => messages[index]?.id ?? index,
+    overscan: 8,
+  });
+
+  useEffect(() => {
+    const existingIds = new Set(messages.map((message) => message.id));
+    for (const key of rowSizeMapRef.current.keys()) {
+      if (!existingIds.has(key)) {
+        rowSizeMapRef.current.delete(key);
+      }
+    }
+  }, [messages]);
 
   const timelineLabel = useMemo(() => {
     if (!messages.length) return null;
@@ -356,26 +319,11 @@ export function Chat() {
     setActiveSessionId(activeSession.id);
   }, [activeSession, activeSessionId, sessions]);
 
-  useEffect(() => {
-    safeWriteStorage(STORAGE_KEYS.sessions, sessions);
-  }, [sessions]);
-
-  useEffect(() => {
-    safeWriteStorage(STORAGE_KEYS.activeSessionId, activeSessionId);
-  }, [activeSessionId]);
-
-  useEffect(() => {
-    safeWriteStorage(STORAGE_KEYS.settings, settings);
-  }, [settings]);
-
   /* ---------------------------- Dictation --------------------------- */
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognitionImpl =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    setVoiceSupported(Boolean(SpeechRecognitionImpl));
-  }, []);
+    setVoiceSupported(Boolean(getSpeechRecognitionConstructor()));
+  }, [setVoiceSupported]);
 
   const cleanupRecognition = useCallback(() => {
     recognitionRef.current?.stop();
@@ -384,9 +332,7 @@ export function Chat() {
   }, []);
 
   const startDictation = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognitionImpl =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionImpl = getSpeechRecognitionConstructor();
     if (!SpeechRecognitionImpl) {
       setVoiceWarning("Voice not supported in this browser.");
       setVoiceSupported(false);
@@ -394,12 +340,12 @@ export function Chat() {
     }
     setVoiceWarning("");
     try {
-      const recognition: SpeechRecognition = new SpeechRecognitionImpl();
+      const recognition: SpeechRecognitionLike = new SpeechRecognitionImpl();
       recognition.lang = "en-US";
       recognition.interimResults = true;
       recognition.continuous = false;
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: any) => {
         let transcript = "";
         for (let i = 0; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
@@ -407,8 +353,8 @@ export function Chat() {
         setInputValue(transcript);
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        setVoiceWarning(event.error ? `Voice error: ${event.error}` : "Voice dictation error.");
+      recognition.onerror = (event: any) => {
+        setVoiceWarning(event?.error ? `Voice error: ${event.error}` : "Voice dictation error.");
         cleanupRecognition();
       };
 
@@ -449,8 +395,7 @@ export function Chat() {
 
   const createNewSession = () => {
     const fresh = createFreshSession();
-    setSessions((prev) => [fresh, ...prev]);
-    setActiveSessionId(fresh.id);
+    dispatch({ type: "createSession", payload: fresh });
     setTimeout(() => composerRef.current?.focus(), 0);
   };
 
@@ -460,18 +405,7 @@ export function Chat() {
     if (activeSession?.id === id) {
       stopPendingReply();
     }
-    setSessions((prev) => {
-      const filtered = prev.filter((session) => session.id !== id);
-      if (!filtered.length) {
-        const fresh = createFreshSession();
-        setActiveSessionId(fresh.id);
-        return [fresh];
-      }
-      if (activeSessionId === id) {
-        setActiveSessionId(filtered[0].id);
-      }
-      return filtered;
-    });
+    dispatch({ type: "deleteSession", payload: id });
   };
 
   const handleClearAllSessions = () => {
@@ -481,40 +415,26 @@ export function Chat() {
         : window.confirm("Clear all chat sessions and start fresh?");
     if (!confirmed) return;
     stopPendingReply();
-    const fresh = createFreshSession();
-    setSessions([fresh]);
-    setActiveSessionId(fresh.id);
+    const sessionIds = sessions.map((session) => session.id);
+    sessionIds.forEach((sessionId) => {
+      dispatch({ type: "deleteSession", payload: sessionId });
+    });
   };
 
   const togglePinSession = (id: string) => {
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === id ? { ...session, pinned: !session.pinned } : session
-      )
-    );
+    dispatch({ type: "togglePin", payload: id });
   };
 
   const beginRenameSession = (session: ChatSession) => {
-    setRenamingSessionId(session.id);
-    setRenameDraft(session.title);
+    dispatch({ type: "startRename", payload: { sessionId: session.id, draft: session.title } });
   };
 
   const saveRenameSession = (id: string, value: string) => {
-    const trimmed = value.trim();
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === id
-          ? { ...session, title: trimmed ? trimmed : "New chat" }
-          : session
-      )
-    );
-    setRenamingSessionId(null);
-    setRenameDraft("");
+    dispatch({ type: "commitRename", payload: { sessionId: id, title: value } });
   };
 
   const cancelRenameSession = () => {
-    setRenamingSessionId(null);
-    setRenameDraft("");
+    dispatch({ type: "cancelRename" });
   };
 
   const filteredSessions = useMemo(() => {
@@ -532,42 +452,39 @@ export function Chat() {
 
   /* --------------------------- Messaging ----------------------------- */
 
-  const updateSessionMessages = useCallback(
-    (sessionId: string, updater: (messages: ChatMessage[]) => ChatMessage[]) => {
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId
-            ? { ...session, messages: updater(session.messages) }
-            : session
-        )
-      );
-    },
-    []
-  );
-
   const pushMessageToSession = useCallback(
     (sessionId: string, message: ChatMessage) => {
-      updateSessionMessages(sessionId, (messages) => [...messages, message]);
+      dispatch({ type: "appendMessage", payload: { sessionId, message } });
     },
-    [updateSessionMessages]
+    [dispatch]
   );
 
   const updateMessageInSession = useCallback(
-    (sessionId: string, messageId: string, updater: (message: ChatMessage) => ChatMessage) => {
-      updateSessionMessages(sessionId, (messages) =>
-        messages.map((message) =>
-          message.id === messageId ? updater(message) : message
-        )
-      );
+    (sessionId: string, messageId: string, patch: Partial<ChatMessage>) => {
+      dispatch({
+        type: "updateMessage",
+        payload: { sessionId, messageId, patch },
+      });
     },
-    [updateSessionMessages]
+    [dispatch]
   );
 
+  const getMessageFromSession = useCallback(
+    (sessionId: string, messageId: string) => {
+      const session = sessions.find((item) => item.id === sessionId);
+      return session?.messages.find((message) => message.id === messageId);
+    },
+    [sessions]
+  );
+
+  useEffect(() => {
+    followMessagesRef.current = followMessages;
+  }, [followMessages]);
+
   const scrollToBottom = useCallback(() => {
-    const el = messagesContainerRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, []);
+    if (messages.length === 0) return;
+    virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+  }, [messages.length, virtualizer]);
 
   const scrollToTop = useCallback(() => {
     const el = messagesContainerRef.current;
@@ -579,8 +496,12 @@ export function Chat() {
     const el = messagesContainerRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    followMessagesRef.current = distanceFromBottom < 160;
-  }, []);
+    const shouldFollow = distanceFromBottom < 160;
+    if (followMessagesRef.current !== shouldFollow) {
+      followMessagesRef.current = shouldFollow;
+      setFollowMessages(shouldFollow);
+    }
+  }, [setFollowMessages]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
@@ -603,18 +524,19 @@ export function Chat() {
     if (pendingAssistantMessageIdRef.current && pendingAssistantSessionIdRef.current) {
       const assistantId = pendingAssistantMessageIdRef.current;
       const sessionId = pendingAssistantSessionIdRef.current;
-      updateMessageInSession(sessionId, assistantId, (msg) => ({
-        ...msg,
+      const existing = getMessageFromSession(sessionId, assistantId);
+      const fallbackContent = existing?.content && existing.content.trim().length
+        ? existing.content
+        : "Reply cancelled.";
+      updateMessageInSession(sessionId, assistantId, {
         status: "error",
-        content: msg.content && msg.content.trim().length
-          ? msg.content
-          : "Reply cancelled.",
-      }));
+        content: fallbackContent,
+      });
     }
     pendingAssistantMessageIdRef.current = null;
     pendingAssistantSessionIdRef.current = null;
     setIsThinking(false);
-  }, [updateMessageInSession]);
+  }, [getMessageFromSession, updateMessageInSession]);
 
   useEffect(() => () => stopPendingReply(), [stopPendingReply]);
 
@@ -629,13 +551,13 @@ export function Chat() {
       pendingAssistantSessionIdRef.current = sessionId;
       const ensurePlaceholder = () => {
         if (reuseAssistantId) {
-          updateMessageInSession(sessionId, assistantId, (message) => ({
-            ...message,
+          const existing = getMessageFromSession(sessionId, assistantId);
+          updateMessageInSession(sessionId, assistantId, {
             status: "pending",
             content: "",
-            createdAt: message.createdAt ?? safeNow(),
+            createdAt: existing?.createdAt ?? safeNow(),
             replyTo: userMessage.id,
-          }));
+          });
         } else {
           const placeholder: ChatMessage = {
             id: assistantId,
@@ -665,13 +587,12 @@ export function Chat() {
           .filter(Boolean)
           .join(" ");
 
-        updateMessageInSession(sessionId, assistantId, (message) => ({
-          ...message,
+        updateMessageInSession(sessionId, assistantId, {
           status: "sent",
           content: replyText,
           createdAt: safeNow(),
           replyTo: userMessage.id,
-        }));
+        });
         pendingReplyTimeoutRef.current = null;
         pendingAssistantMessageIdRef.current = null;
         pendingAssistantSessionIdRef.current = null;
@@ -680,21 +601,24 @@ export function Chat() {
       }, delay);
       pendingReplyTimeoutRef.current = timeoutId;
     },
-    [pushMessageToSession, settings.connectedApps, settings.jokesEnabled, speed, updateMessageInSession]
+    [
+      getMessageFromSession,
+      pushMessageToSession,
+      settings.connectedApps,
+      settings.jokesEnabled,
+      speed,
+      updateMessageInSession,
+    ]
   );
 
   const updateActiveSessionTitleIfNeeded = useCallback(
     (sessionId: string) => {
-      setSessions((prev) =>
-        prev.map((session) => {
-          if (session.id !== sessionId) return session;
-          if (session.title !== "New chat") return session;
-          const nextTitle = autoTitleFromMessages(session.messages);
-          return { ...session, title: nextTitle };
-        })
-      );
+      const session = sessions.find((item) => item.id === sessionId);
+      if (!session || session.title !== "New chat") return;
+      const nextTitle = autoTitleFromMessages(session.messages);
+      dispatch({ type: "commitRename", payload: { sessionId, title: nextTitle } });
     },
-    []
+    [dispatch, sessions]
   );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -966,9 +890,7 @@ export function Chat() {
                   <IOSSwitch
                     ref={firstSettingsSwitchRef}
                     checked={settings.nsfwEnabled}
-                    onChange={(value) =>
-                      setSettings((prev) => ({ ...prev, nsfwEnabled: value }))
-                    }
+                    onChange={(value) => updateSettings({ nsfwEnabled: value })}
                     label="Allow NSFW topics"
                   />
                 </div>
@@ -982,9 +904,7 @@ export function Chat() {
                   </div>
                   <IOSSwitch
                     checked={settings.jokesEnabled}
-                    onChange={(value) =>
-                      setSettings((prev) => ({ ...prev, jokesEnabled: value }))
-                    }
+                    onChange={(value) => updateSettings({ jokesEnabled: value })}
                     label="Enable light jokes"
                   />
                 </div>
@@ -998,9 +918,7 @@ export function Chat() {
                   </div>
                   <IOSSwitch
                     checked={settings.technicalMode}
-                    onChange={(value) =>
-                      setSettings((prev) => ({ ...prev, technicalMode: value }))
-                    }
+                    onChange={(value) => updateSettings({ technicalMode: value })}
                     label="Technical mode"
                   />
                 </div>
@@ -1014,9 +932,7 @@ export function Chat() {
                   </div>
                   <IOSSwitch
                     checked={settings.connectedApps}
-                    onChange={(value) =>
-                      setSettings((prev) => ({ ...prev, connectedApps: value }))
-                    }
+                    onChange={(value) => updateSettings({ connectedApps: value })}
                     label="Connected apps"
                   />
                 </div>
@@ -1053,85 +969,112 @@ export function Chat() {
                     {timelineLabel}
                   </span>
                 )}
-                {messages.map((message) => {
-                  const isAssistant = message.role === "assistant";
-                  const bubbleClasses = [
-                    "inline-flex max-w-[min(85%,32rem)] flex-col rounded-2xl border border-white/10 bg-white/3 px-4 py-3 text-sm leading-relaxed text-zora-white shadow-[0_18px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl",
-                    isAssistant
-                      ? ""
-                      : "bg-white/6 text-zora-white/95",
-                  ];
-
-                  const showThinking = isAssistant && message.status === "pending";
-
-                  return (
-                    <div key={message.id} className="flex flex-col">
-                      <div className={isAssistant ? "self-start" : "self-end"}>
-                        <div className={bubbleClasses.join(" ")}>
-                          {showThinking ? (
-                            <div className="flex items-center gap-2">
-                              <span className="rounded-full bg-[rgba(255,255,255,0.2)] px-3 py-1 text-xs">
-                                Nexus is thinking…
-                              </span>
-                              <div className="flex items-center gap-1">
-                                {[0, 1, 2].map((dot) => (
-                                  <span
-                                    key={dot}
-                                    className="h-2 w-2 rounded-full bg-[rgba(var(--surface),0.8)]"
-                                    style={{
-                                      animation: "nexus-dot 1.2s infinite",
-                                      animationDelay: `${dot * 0.2}s`,
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <style>{`
-                                @keyframes nexus-dot {
-                                  0%, 100% { opacity: 0.3; transform: translateY(0); }
-                                  50% { opacity: 1; transform: translateY(-2px); }
-                                }
-                              `}</style>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <p className="whitespace-pre-wrap break-words text-sm">
-                                {message.content}
-                              </p>
-                              {message.attachments && message.attachments.length > 0 && (
-                                <div className="flex flex-wrap gap-1 text-[11px] text-zora-muted">
-                                  {message.attachments.map((name) => (
+                <div
+                  style={{
+                    height: `${virtualizer.getTotalSize()}px`,
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
+                  {virtualizer.getVirtualItems().map((virtualRow) => {
+                    const message = messages[virtualRow.index];
+                    if (!message) return null;
+                    const isAssistant = message.role === "assistant";
+                    const bubbleClasses = [
+                      "inline-flex max-w-[min(85%,32rem)] flex-col rounded-2xl border border-white/10 bg-white/3 px-4 py-3 text-sm leading-relaxed text-zora-white shadow-[0_18px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl",
+                      isAssistant
+                        ? ""
+                        : "bg-white/6 text-zora-white/95",
+                    ];
+                    const showThinking = isAssistant && message.status === "pending";
+                    return (
+                      <div
+                        key={virtualRow.key}
+                        ref={(node) => {
+                          if (node && message.id) {
+                            const height = node.getBoundingClientRect().height;
+                            if (!Number.isNaN(height)) {
+                              rowSizeMapRef.current.set(message.id, height);
+                            }
+                            virtualizer.measureElement(node);
+                          }
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                        className="flex flex-col"
+                      >
+                        <div className={isAssistant ? "self-start" : "self-end"}>
+                          <div className={bubbleClasses.join(" ")}>
+                            {showThinking ? (
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full bg-[rgba(255,255,255,0.2)] px-3 py-1 text-xs">
+                                  Nexus is thinking…
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  {[0, 1, 2].map((dot) => (
                                     <span
-                                      key={name}
-                                      className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5"
-                                    >
-                                      {name}
-                                    </span>
+                                      key={dot}
+                                      className="h-2 w-2 rounded-full bg-[rgba(var(--surface),0.8)]"
+                                      style={{
+                                        animation: "nexus-dot 1.2s infinite",
+                                        animationDelay: `${dot * 0.2}s`,
+                                      }}
+                                    />
                                   ))}
                                 </div>
-                              )}
-                              {message.status === "error" && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRetry(message)}
-                                  className="text-xs font-medium text-zora-muted underline decoration-dotted transition hover:text-zora-white hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
-                                >
-                                  Retry
-                                </button>
-                              )}
-                            </div>
-                          )}
+                                <style>{`
+                                  @keyframes nexus-dot {
+                                    0%, 100% { opacity: 0.3; transform: translateY(0); }
+                                    50% { opacity: 1; transform: translateY(-2px); }
+                                  }
+                                `}</style>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <p className="whitespace-pre-wrap break-words text-sm">
+                                  {message.content}
+                                </p>
+                                {message.attachments && message.attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 text-[11px] text-zora-muted">
+                                    {message.attachments.map((name) => (
+                                      <span
+                                        key={name}
+                                        className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5"
+                                      >
+                                        {name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {message.status === "error" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRetry(message)}
+                                    className="text-xs font-medium text-zora-muted underline decoration-dotted transition hover:text-zora-white hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+                                  >
+                                    Retry
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        <span
+                          className="mt-1 text-[10px] text-zora-muted"
+                          aria-hidden="true"
+                        >
+                          {formatTime(message.createdAt)}
+                          {message.status === "error" ? " · Failed" : null}
+                        </span>
                       </div>
-                      <span
-                        className="mt-1 text-[10px] text-zora-muted"
-                        aria-hidden="true"
-                      >
-                        {formatTime(message.createdAt)}
-                        {message.status === "error" ? " · Failed" : null}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="pointer-events-none absolute inset-y-0 right-3 flex flex-col justify-between py-4">
@@ -1302,6 +1245,14 @@ export function Chat() {
         </>
       )}
     </section>
+  );
+}
+
+export function Chat() {
+  return (
+    <ChatProvider>
+      <ChatInner />
+    </ChatProvider>
   );
 }
 

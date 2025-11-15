@@ -6,7 +6,7 @@ type State = {
   isConnected: boolean;
   isTyping: boolean;
   error: string | null;
-  sendMessage: (data: { text: string; attachments?: File[] }) => Promise<void>;
+  sendMessage: (data: { text: string; attachments?: File[]; signal?: AbortSignal }) => Promise<void>;
   reconnect: () => void;
 };
 
@@ -88,19 +88,25 @@ export function useChatSession(sessionId: string): State {
     }
   }, []);
 
-  const uploadAttachments = useCallback(async (files: File[]): Promise<UploadResponseItem[]> => {
-    try {
-      const form = new FormData();
-      files.forEach((file) => form.append("files", file));
-      const res = await fetch("/api/uploads", { method: "POST", body: form });
-      if (!res.ok) throw new Error("Upload failed");
-      const json = (await res.json()) as UploadResponseItem[];
-      return json;
-    } catch {
-      // TODO: surface upload errors to the user
-      return files.map((file) => ({ name: file.name, type: file.type }));
-    }
-  }, []);
+  const uploadAttachments = useCallback(
+    async (files: File[], signal?: AbortSignal): Promise<UploadResponseItem[]> => {
+      try {
+        const form = new FormData();
+        files.forEach((file) => form.append("files", file));
+        const res = await fetch("/api/uploads", { method: "POST", body: form, signal });
+        if (!res.ok) throw new Error("Upload failed");
+        const json = (await res.json()) as UploadResponseItem[];
+        return json;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw error;
+        }
+        // TODO: surface upload errors to the user
+        return files.map((file) => ({ name: file.name, type: file.type }));
+      }
+    },
+    [],
+  );
 
   const connect = useCallback(() => {
     closedByUserRef.current = false;
@@ -207,27 +213,36 @@ export function useChatSession(sessionId: string): State {
   }, [sessionId]);
 
   const sendMessage = useCallback(
-    async ({ text, attachments }: { text: string; attachments?: File[] }) => {
+    async ({ text, attachments, signal }: { text: string; attachments?: File[]; signal?: AbortSignal }) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         throw new Error("Socket not connected");
       }
 
-      const uploaded = attachments?.length ? await uploadAttachments(attachments) : undefined;
-      const payload: OutgoingPayload = {
-        type: "user_message",
-        sessionId,
-        text,
-        attachments: uploaded,
-      };
+      try {
+        const uploaded = attachments?.length
+          ? await uploadAttachments(attachments, signal)
+          : undefined;
+        const payload: OutgoingPayload = {
+          type: "user_message",
+          sessionId,
+          text,
+          attachments: uploaded,
+        };
 
-      const localId = crypto.randomUUID();
-      pendingMessageIdsRef.current.push(localId);
-      setMessages((prev) => [
-        ...prev,
-        { id: localId, role: "user", text, createdAt: Date.now() },
-      ]);
-      setIsTyping(true);
-      wsRef.current.send(JSON.stringify(payload));
+        const localId = crypto.randomUUID();
+        pendingMessageIdsRef.current.push(localId);
+        setMessages((prev) => [
+          ...prev,
+          { id: localId, role: "user", text, createdAt: Date.now() },
+        ]);
+        setIsTyping(true);
+        wsRef.current.send(JSON.stringify(payload));
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        throw error;
+      }
     },
     [sessionId, uploadAttachments],
   );

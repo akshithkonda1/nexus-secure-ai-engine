@@ -8,18 +8,19 @@ import "@/styles/glass.css";
 import "@/styles/globals.css";
 import "@/styles/zora-theme.css";
 import RootLayout from "@/layouts/RootLayout";
-import { Home } from "@/pages/Home";
-import { Chat } from "@/pages/Chat";
-import { Outbox } from "@/pages/Outbox";
-import { Governance } from "@/pages/Governance";
-import { Guides } from "@/pages/Guides";
 import { ThemeProvider } from "@/shared/ui/theme/ThemeProvider";
 import { ProfileProvider } from "@/features/profile/ProfileProvider";
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
-import ProjectsPage from "@/features/projects/ProjectsPage";
-import ProjectsAllPage from "@/features/projects/ProjectsAllPage";
 import { ErrorBoundary } from "@/routes/ErrorBoundary";
 import { PanelProvider } from "@/panels/PanelProvider";
+
+const Home = lazy(() => import("@/pages/Home"));
+const Chat = lazy(() => import("@/pages/Chat"));
+const Outbox = lazy(() => import("@/pages/Outbox"));
+const Governance = lazy(() => import("@/pages/Governance"));
+const Guides = lazy(() => import("@/pages/Guides"));
+const ProjectsPage = lazy(() => import("@/features/projects/ProjectsPage"));
+const ProjectsAllPage = lazy(() => import("@/features/projects/ProjectsAllPage"));
 
 const Templates = lazy(() => import("@/pages/Templates"));
 const Documents = lazy(() => import("@/pages/Documents"));
@@ -32,6 +33,16 @@ const Fallback = () => (
     <div className="skeleton skeleton-line w-80" />
     <div className="skeleton skeleton-line w-64" />
   </section>
+);
+
+const withSuspense = (
+  Component: React.LazyExoticComponent<React.ComponentType>,
+): React.ReactElement => (
+  <ErrorBoundary>
+    <Suspense fallback={<Fallback />}>
+      <Component />
+    </Suspense>
+  </ErrorBoundary>
 );
 
 const queryClient = new QueryClient();
@@ -48,28 +59,16 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: (
-          <ErrorBoundary>
-            <Home />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(Home),
       },
       { path: "home", element: <Navigate to="/" replace /> },
       {
         path: "chat",
-        element: (
-          <ErrorBoundary>
-            <Chat />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(Chat),
       },
       {
         path: "outbox",
-        element: (
-          <ErrorBoundary>
-            <Outbox />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(Outbox),
       },
       {
         path: "templates",
@@ -103,35 +102,19 @@ const router = createBrowserRouter([
       },
       {
         path: "projects",
-        element: (
-          <ErrorBoundary>
-            <ProjectsPage />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(ProjectsPage),
       },
       {
         path: "projects/all",
-        element: (
-          <ErrorBoundary>
-            <ProjectsAllPage />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(ProjectsAllPage),
       },
       {
         path: "governance",
-        element: (
-          <ErrorBoundary>
-            <Governance />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(Governance),
       },
       {
         path: "guides",
-        element: (
-          <ErrorBoundary>
-            <Guides />
-          </ErrorBoundary>
-        ),
+        element: withSuspense(Guides),
       },
       {
         path: "settings",
