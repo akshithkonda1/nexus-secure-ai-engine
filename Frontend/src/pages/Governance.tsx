@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -12,6 +12,34 @@ import {
 } from "lucide-react";
 
 import { requestDocumentsView } from "@/lib/actions";
+
+type SafetyMode = "relaxed" | "balanced" | "strict";
+
+const SAFETY_MODES: {
+  id: SafetyMode;
+  label: string;
+  tagline: string;
+  barFill: number; // 0–100
+}[] = [
+  {
+    id: "relaxed",
+    label: "Relaxed",
+    tagline: "Fewer blocks, more flexibility. Great for exploration and creative play.",
+    barFill: 62,
+  },
+  {
+    id: "balanced",
+    label: "Balanced",
+    tagline: "The default: helpful AI with strong guardrails for everyday use.",
+    barFill: 78,
+  },
+  {
+    id: "strict",
+    label: "Strict",
+    tagline: "Maximum caution for sensitive work, young users, or high-risk topics.",
+    barFill: 92,
+  },
+];
 
 const checklist = [
   {
@@ -62,6 +90,18 @@ const safetyEvents = [
 ];
 
 export function Governance() {
+  const [mode, setMode] = useState<SafetyMode>("balanced");
+  const [completedChecklist, setCompletedChecklist] = useState<string[]>([]);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+
+  const activeMode =
+    SAFETY_MODES.find((m) => m.id === mode) ?? SAFETY_MODES[1];
+
+  const checklistProgress = {
+    total: checklist.length,
+    done: completedChecklist.length,
+  };
+
   return (
     <div className="space-y-8">
       {/* HERO / INTRO */}
@@ -100,20 +140,37 @@ export function Governance() {
 
       {/* SAFETY SNAPSHOT */}
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-        {/* Left: score + bar */}
+        {/* Left: score + bar + mode switch */}
         <div className="panel panel--glassy panel--immersive panel--alive panel--glow rounded-[24px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[rgba(var(--subtle),0.7)]">
                 Your safety snapshot
               </p>
               <p className="mt-1 text-lg font-semibold text-[rgb(var(--text))]">
-                You&apos;re in a good place.
+                Mode: {activeMode.label}
+              </p>
+              <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.82)]">
+                {activeMode.tagline}
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand-soft),0.25)] px-3 py-1 text-[11px] font-semibold text-brand">
-              <Sparkles className="size-3.5" /> Recommended setup
-            </span>
+            <div className="flex items-center gap-1 rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.95)] p-1 text-[10px] font-semibold text-[rgba(var(--subtle),0.9)]">
+              {SAFETY_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={`rounded-full px-2.5 py-1 transition ${
+                    m.id === mode
+                      ? "bg-[rgba(var(--brand-soft),0.28)] text-brand shadow-[0_0_0_1px_rgba(var(--brand),0.36)]"
+                      : "text-[rgba(var(--subtle),0.85)] hover:bg-[rgba(var(--panel),0.9)]"
+                  }`}
+                  aria-pressed={m.id === mode}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* pseudo score bar */}
@@ -124,11 +181,14 @@ export function Governance() {
               <span>Control</span>
             </div>
             <div className="relative h-2.5 overflow-hidden rounded-full bg-[rgba(var(--border),0.5)]">
-              <div className="absolute inset-y-0 left-0 w-[78%] bg-[linear-gradient(90deg,rgba(var(--accent-emerald),0.95),rgba(var(--brand),0.95))]" />
+              <div
+                className="absolute inset-y-0 left-0 bg-[linear-gradient(90deg,rgba(var(--accent-emerald),0.95),rgba(var(--brand),0.95))]"
+                style={{ width: `${activeMode.barFill}%` }}
+              />
             </div>
             <p className="text-[11px] text-[rgba(var(--subtle),0.85)]">
-              We apply strong defaults. You can always tighten or relax settings
-              to match how you work.
+              We tune filters, redaction, and logging to match your chosen mode.
+              You can adjust this at any time.
             </p>
           </div>
 
@@ -231,38 +291,73 @@ export function Governance() {
           </button>
         </header>
 
-        <ul className="mt-4 space-y-3">
-          {checklist.map((item) => (
-            <li
-              key={item.id}
-              className="panel panel--glassy panel--hover panel--alive flex items-start justify-between rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--panel),0.72)] px-4 py-3 text-sm text-[rgb(var(--text))]"
-            >
-              <div className="flex items-start gap-3">
-                {item.tone === "ok" ? (
-                  <CheckCircle className="mt-0.5 size-4 text-[rgb(var(--accent-emerald))]" />
-                ) : (
-                  <AlertTriangle className="mt-0.5 size-4 text-[rgb(var(--status-warning))]" />
-                )}
-                <div>
-                  <p className="font-semibold">{item.title}</p>
-                  <p className="mt-1 text-xs text-[rgba(var(--subtle),0.78)]">
-                    {item.body}
-                  </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
+          <p>
+            {checklistProgress.done} of {checklistProgress.total} steps
+            completed
+          </p>
+          {checklistProgress.done === checklistProgress.total && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--accent-emerald),0.2)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgb(var(--accent-emerald-ink))]">
+              <CheckCircle className="size-3" /> Fully secured
+            </span>
+          )}
+        </div>
+
+        <ul className="mt-3 space-y-3">
+          {checklist.map((item) => {
+            const isDone = completedChecklist.includes(item.id);
+
+            return (
+              <li
+                key={item.id}
+                className="panel panel--glassy panel--hover panel--alive flex items-start justify-between rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--panel),0.72)] px-4 py-3 text-sm text-[rgb(var(--text))]"
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCompletedChecklist((current) =>
+                        current.includes(item.id)
+                          ? current.filter((id) => id !== item.id)
+                          : [...current, item.id]
+                      )
+                    }
+                    className={`mt-0.5 flex size-4 items-center justify-center rounded-[10px] border text-[10px] transition ${
+                      isDone
+                        ? "border-[rgba(var(--accent-emerald),0.9)] bg-[rgba(var(--accent-emerald),0.25)] text-[rgb(var(--accent-emerald-ink))]"
+                        : "border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.9)] text-[rgba(var(--subtle),0.7)] hover:border-[rgba(var(--brand),0.5)]"
+                    }`}
+                    aria-pressed={isDone}
+                    aria-label={
+                      isDone
+                        ? `Mark "${item.title}" as not done`
+                        : `Mark "${item.title}" as done`
+                    }
+                  >
+                    {isDone ? "✓" : ""}
+                  </button>
+
+                  <div>
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-xs text-[rgba(var(--subtle),0.78)]">
+                      {item.body}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="ml-3 text-right text-xs">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 ${
-                    item.tone === "ok"
-                      ? "chip chip--ok"
-                      : "chip chip--warn"
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              </div>
-            </li>
-          ))}
+                <div className="ml-3 text-right text-xs">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 ${
+                      item.tone === "ok"
+                        ? "chip chip--ok"
+                        : "chip chip--warn"
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
@@ -286,41 +381,79 @@ export function Governance() {
         </header>
 
         <ul className="mt-4 space-y-3 text-sm">
-          {safetyEvents.map((event) => (
-            <li
-              key={event.id}
-              className="flex items-start justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.72)] px-4 py-3"
-            >
-              <div className="max-w-md">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                      event.level === "high"
-                        ? "bg-[rgba(var(--status-critical),0.18)] text-[rgb(var(--status-critical))]"
-                        : event.level === "med"
-                        ? "bg-[rgba(var(--status-warning),0.18)] text-[rgb(var(--status-warning))]"
-                        : "bg-[rgba(var(--border),0.5)] text-[rgba(var(--subtle),0.95)]"
-                    }`}
-                  >
-                    {event.level === "high"
-                      ? "Blocked"
-                      : event.level === "med"
-                      ? "Reviewed"
-                      : "Info"}
-                  </span>
-                  <p className="text-sm font-semibold text-[rgb(var(--text))]">
-                    {event.label}
+          {safetyEvents.map((event) => {
+            const isExpanded = expandedEventId === event.id;
+
+            return (
+              <li
+                key={event.id}
+                className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.72)]"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedEventId((current) =>
+                      current === event.id ? null : event.id
+                    )
+                  }
+                  className="flex w-full items-start justify-between px-4 py-3 text-left"
+                >
+                  <div className="max-w-md">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                          event.level === "high"
+                            ? "bg-[rgba(var(--status-critical),0.18)] text-[rgb(var(--status-critical))]"
+                            : event.level === "med"
+                            ? "bg-[rgba(var(--status-warning),0.18)] text-[rgb(var(--status-warning))]"
+                            : "bg-[rgba(var(--border),0.5)] text-[rgba(var(--subtle),0.95)]"
+                        }`}
+                      >
+                        {event.level === "high"
+                          ? "Blocked"
+                          : event.level === "med"
+                          ? "Reviewed"
+                          : "Info"}
+                      </span>
+                      <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                        {event.label}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
+                      {event.detail}
+                    </p>
+                  </div>
+                  <p className="ml-3 whitespace-nowrap text-[11px] text-[rgba(var(--subtle),0.75)]">
+                    {event.when}
                   </p>
-                </div>
-                <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
-                  {event.detail}
-                </p>
-              </div>
-              <p className="ml-3 whitespace-nowrap text-[11px] text-[rgba(var(--subtle),0.75)]">
-                {event.when}
-              </p>
-            </li>
-          ))}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-[rgba(var(--border),0.4)] px-4 pb-3 pt-2 text-[11px] text-[rgba(var(--subtle),0.9)]">
+                    <p className="font-semibold text-[rgb(var(--text))]">
+                      What this means
+                    </p>
+                    <p className="mt-1">
+                      We apply extra checks when content looks sensitive or
+                      risky. This keeps your data safer and reduces harmful or
+                      misleading outputs.
+                    </p>
+                    <p className="mt-2 font-semibold text-[rgb(var(--text))]">
+                      What you can do
+                    </p>
+                    <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                      <li>Remove any private info that isn&apos;t needed.</li>
+                      <li>Rephrase the request with more context, less detail.</li>
+                      <li>
+                        If this looks wrong, report it in settings so we can
+                        improve.
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
@@ -349,11 +482,17 @@ export function Governance() {
               While you chat
             </p>
             <ul className="mt-2 space-y-1.5 text-[11px] text-[rgba(var(--subtle),0.9)]">
-              <li>Use AI as a co-pilot, not an oracle—especially for health or money.</li>
               <li>
-                Ask, “What are the limits of this answer?” to surface uncertainty.
+                Use AI as a co-pilot, not an oracle—especially for health,
+                money, or legal decisions.
               </li>
-              <li>Pause if something feels off, biased, or unsafe and report it.</li>
+              <li>
+                Ask, &quot;What are the limits of this answer?&quot; to surface
+                uncertainty.
+              </li>
+              <li>
+                Pause if something feels off, biased, or unsafe and report it.
+              </li>
             </ul>
           </div>
           <div>
@@ -375,6 +514,103 @@ export function Governance() {
           habits are the human layer that makes the whole system feel calm,
           predictable, and yours.
         </p>
+      </section>
+
+      {/* CRISIS & HOTLINE RESOURCES */}
+      <section className="panel panel--glassy panel--alive rounded-[24px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.96)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex items-center gap-2">
+          <AlertTriangle className="size-4 text-[rgb(var(--status-critical))]" />
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.8)]">
+              If you or someone you know is in crisis
+            </p>
+            <p className="text-xs text-[rgba(var(--subtle),0.85)]">
+              Zora is not an emergency service. If you&apos;re in immediate danger
+              or thinking about harming yourself, please reach out to a real
+              human right away.
+            </p>
+          </div>
+        </header>
+        <div className="mt-3 grid gap-4 text-[11px] text-[rgba(var(--subtle),0.9)] md:grid-cols-3">
+          <div>
+            <p className="font-semibold text-[rgb(var(--text))]">
+              United States & Canada
+            </p>
+            <ul className="mt-1 space-y-1">
+              <li>
+                <span className="font-semibold">Emergency:</span> Call{" "}
+                <span className="font-semibold">911</span> for immediate help.
+              </li>
+              <li>
+                <span className="font-semibold">988 Suicide & Crisis Lifeline:</span>{" "}
+                Call or text <span className="font-semibold">988</span> or visit{" "}
+                <a
+                  href="https://988lifeline.org"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand underline underline-offset-2"
+                >
+                  988lifeline.org
+                </a>
+                .
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-[rgb(var(--text))]">
+              Domestic & relationship abuse (US)
+            </p>
+            <ul className="mt-1 space-y-1">
+              <li>
+                <span className="font-semibold">National Domestic Violence Hotline:</span>{" "}
+                Call <span className="font-semibold">1-800-799-SAFE (7233)</span>,{" "}
+                text <span className="font-semibold">START</span> to{" "}
+                <span className="font-semibold">88788</span>, or visit{" "}
+                <a
+                  href="https://www.thehotline.org"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand underline underline-offset-2"
+                >
+                  thehotline.org
+                </a>
+                .
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-[rgb(var(--text))]">
+              Outside the US
+            </p>
+            <ul className="mt-1 space-y-1">
+              <li>
+                Search for{" "}
+                <a
+                  href="https://www.google.com/search?q=suicide+prevention+hotline"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand underline underline-offset-2"
+                >
+                  suicide prevention hotline
+                </a>{" "}
+                or{" "}
+                <a
+                  href="https://www.google.com/search?q=domestic+violence+helpline"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand underline underline-offset-2"
+                >
+                  domestic violence helpline
+                </a>{" "}
+                with your country or region.
+              </li>
+              <li>
+                You can also contact local emergency services or a trusted
+                friend, family member, or professional.
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
     </div>
   );
