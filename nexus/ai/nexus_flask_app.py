@@ -56,7 +56,7 @@ from .nexus_engine import (
     WebRetriever,
     build_connectors_cloud_first,
     build_web_retriever_from_env,
-    DeadlineExceeded,
+    MAX_MODELS_PER_REQUEST,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -899,28 +899,16 @@ def debate():
     pii_override = _coerce_bool(data.get("pii_override"), default=False)
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
-    if len(prompt) > MAX_PROMPT_LENGTH:
+    if requested_models and len(requested_models) > MAX_MODELS_PER_REQUEST:
         return (
             jsonify(
                 {
-                    "error": (
-                        f"Prompt exceeds maximum length of {MAX_PROMPT_LENGTH} characters"
-                    )
+                    "error": "Too many models requested",
+                    "max_models": MAX_MODELS_PER_REQUEST,
                 }
             ),
-            413,
+            400,
         )
-    raw_deadline = data.get("deadline_ms")
-    deadline_ms: int | None = None
-    if raw_deadline is not None:
-        try:
-            deadline_ms = int(raw_deadline)
-        except (TypeError, ValueError):
-            return jsonify({"error": "deadline_ms must be an integer"}), 400
-        if deadline_ms < 0:
-            return jsonify({"error": "deadline_ms must be non-negative"}), 400
-        if deadline_ms > MAX_DEADLINE_MS:
-            deadline_ms = MAX_DEADLINE_MS
     try:
         session_id = request.headers.get("X-API-Key", "anonymous")
         log_event(

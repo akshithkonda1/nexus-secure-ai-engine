@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-backend
+  labels:
+    app: nexus-backend
+spec:
+  replicas: 3
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: nexus-backend
+  template:
+    metadata:
+      labels:
+        app: nexus-backend
+    spec:
+      containers:
+        - name: nexus-backend
+          image: ghcr.io/zora/nexus-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: AUTHORIZED_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-backend-secrets
+                  key: authorized-api-keys
+            - name: NEXUS_RATE_LIMIT_STORAGE_URL
+              value: redis://nexus-redis:6379/0
+            - name: REDIS_URL
+              value: redis://nexus-redis:6379/0
+            - name: NEXUS_RATE_LIMITS
+              value: 100/minute, 10000/day
+            - name: NEXUS_MAX_REQUEST_BYTES
+              value: "2097152"
+            - name: APP_VERSION
+              valueFrom:
+                configMapKeyRef:
+                  name: nexus-backend-config
+                  key: app-version
+            - name: AUDIT_LOG_PATH
+              value: /var/log/nexus/audit.jsonl
+          envFrom:
+            - secretRef:
+                name: nexus-backend-secrets
+                optional: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+          volumeMounts:
+            - name: audit-logs
+              mountPath: /var/log/nexus
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: audit-logs
+          emptyDir: {}
+      terminationGracePeriodSeconds: 30

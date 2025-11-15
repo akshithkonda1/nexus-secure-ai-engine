@@ -878,9 +878,26 @@ class ModelConnector:
         deadline: Optional[float] = None,
     ) -> Tuple[str, Dict[str, Any]]:
         key = self._resolve_adapter()
-        fn = self._ADAPTERS.get(key) or self._ADAPTERS.get("generic.json")
+        adapter_fn = self._ADAPTERS.get(key) or self._ADAPTERS.get("generic.json")
         bounded_history = _limit_history(history)
-        data = await self._post({"prompt": prompt, "history": bounded_history, "model": model_name or self.name}, deadline=deadline)
+        if adapter_fn:
+            try:
+                return await adapter_fn(
+                    self,
+                    prompt,
+                    bounded_history,
+                    model_name,
+                    deadline=deadline,
+                )
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                log.warning(
+                    "connector_adapter_failed",
+                    extra={"adapter": key, "connector": self.name, "error": str(exc)},
+                )
+        data = await self._post(
+            {"prompt": prompt, "history": bounded_history, "model": model_name or self.name},
+            deadline=deadline,
+        )
         text = _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
         return text, {"usage": data.get("usage")}
 # ---- utilities for adapters ----
