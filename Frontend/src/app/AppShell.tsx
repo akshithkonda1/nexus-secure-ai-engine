@@ -2,8 +2,9 @@ import { Outlet, NavLink } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
-import { useMemo } from "react";
+import { useState } from "react";
 import { useSession } from "@/shared/state/session";
+import { CommandCenter } from "@/components/shell/CommandCenter";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
@@ -17,6 +18,8 @@ export function AppShell() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -68,21 +71,24 @@ export function AppShell() {
         </div>
       </aside>
 
-      {/* Right rail */}
-      <aside className="fixed inset-y-0 right-0 w-[320px] border-l bg-card">
-        <div className="h-14 flex items-center justify-between px-4 border-b">
-          <div className="text-sm font-semibold">
-            Projects <span className="text-muted-foreground">(7)</span>
-          </div>
-          <button className="btn btn-ghost text-muted-foreground">⋯</button>
-        </div>
-        <ProjectsRail />
-      </aside>
-
       {/* Topbar + main content */}
-      <main className="pl-64 pr-[320px]">
-        <div className="h-14 sticky top-0 z-20 border-b bg-background/80 backdrop-blur flex items-center justify-between px-4">
-          <div className="text-sm font-medium">AI Chat</div>
+      <main className="pl-64">
+        <div className="h-16 sticky top-0 z-20 border-b border-border/80 bg-background/80 backdrop-blur flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setCommandCenterOpen(true)}
+              className="group relative flex items-center gap-2 rounded-full border border-[rgba(var(--accent-emerald),0.55)] bg-[rgba(15,23,42,0.78)] px-3 py-1.5 text-left shadow-[0_0_18px_rgba(var(--accent-emerald),0.35)] transition-all hover:shadow-[0_0_26px_rgba(var(--accent-emerald),0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent-emerald),0.6)] focus:ring-offset-2 focus:ring-offset-[rgba(15,23,42,0.45)]"
+            >
+              <span className="flex size-7 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(var(--accent-emerald),0.95),rgba(var(--brand-soft),0.85))] text-[rgb(var(--accent-emerald-ink))] shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">
+                ✦
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[rgba(var(--subtle),0.85)] transition group-hover:text-[rgb(var(--accent-emerald-ink))]">
+                Command Center
+              </span>
+            </button>
+            <div className="text-sm font-medium text-[rgba(var(--subtle),0.95)]">AI Chat</div>
+          </div>
           <div className="flex items-center gap-2">
             <Button className="rounded-full px-3 py-1 text-sm">
               ⚡ Upgrade
@@ -103,6 +109,8 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
+
+      <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
     </div>
   );
 }
@@ -118,29 +126,3 @@ function NavItem({ to, label, badge, end = false }: { to: string; label: string;
   );
 }
 
-function ProjectsRail() {
-  const items = useMemo(
-    () => [
-      "New Project",
-      "Learning From 100 Years of…",
-      "Research officiants",
-      "What does a senior lead de…",
-      "Write a sweet note to your…",
-      "Meet with cake bakers",
-      "Meet with cake bakers",
-    ],
-    [],
-  );
-  return (
-    <ul className="p-2 space-y-2">
-      {items.map((t, i) => (
-        <li key={i} className="rounded-xl border bg-background p-3 hover:bg-muted/50 transition">
-          <div className="text-sm font-medium truncate" title={t}>
-            {t}
-          </div>
-          <div className="text-xs text-muted-foreground">…</div>
-        </li>
-      ))}
-    </ul>
-  );
-}
