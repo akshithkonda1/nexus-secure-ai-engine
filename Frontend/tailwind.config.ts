@@ -33,7 +33,7 @@ export default {
         soft: "var(--shadow-soft)",
         lift: "var(--shadow-lift)",
         "zora-glow": "0 0 40px rgba(62, 228, 255, 0.23)",
-        "zora-soft": "0 14px 40px rgba(15, 23, 42, 0.75)",
+        "zora-soft": "0 16px 50px rgba(6, 9, 20, 0.88)",
       },
       borderRadius: {
         card: "var(--radius-card)",
