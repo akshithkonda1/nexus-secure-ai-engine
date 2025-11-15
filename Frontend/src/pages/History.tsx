@@ -34,6 +34,7 @@ const TYPE_ACCENTS: Partial<Record<AuditEvent["type"], string>> = {
 const RANGE_STORAGE_KEY = "nexus.history.range.v1";
 const TYPE_STORAGE_KEY = "nexus.history.type.v1";
 const LIVE_POLL_INTERVAL_MS = 60_000;
+const NEW_EVENT_WINDOW_MS = 5 * 60_000;
 
 function computeRange(hours: number) {
   const to = new Date();
@@ -58,9 +59,7 @@ function getDayLabel(date: Date) {
     date.getMonth() === today.getMonth() &&
     date.getDate() === today.getDate();
 
-  if (isSameDay) {
-    return "Today";
-  }
+  if (isSameDay) return "Today";
 
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
@@ -69,9 +68,7 @@ function getDayLabel(date: Date) {
     date.getMonth() === yesterday.getMonth() &&
     date.getDate() === yesterday.getDate();
 
-  if (isYesterday) {
-    return "Yesterday";
-  }
+  if (isYesterday) return "Yesterday";
 
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -124,65 +121,57 @@ export function History() {
   const [isLive, setIsLive] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsHydratedRef = useRef(false);
 
+  // Hydrate filters from localStorage once
   useEffect(() => {
-    if (typeof window === "undefined" || settingsHydratedRef.current) {
-      return;
-    }
+    if (typeof window === "undefined" || settingsHydratedRef.current) return;
 
     let storedRange: (typeof RANGE_OPTIONS)[number] | undefined;
     let storedType: AuditEvent["type"] | "all" | undefined;
 
     try {
       const rawRange = window.localStorage.getItem(RANGE_STORAGE_KEY);
-      if (rawRange) {
-        storedRange = sanitizeStoredRange(JSON.parse(rawRange));
-      }
+      if (rawRange) storedRange = sanitizeStoredRange(JSON.parse(rawRange));
     } catch (error) {
       console.error("Failed to parse stored range", error);
     }
 
     try {
       const rawType = window.localStorage.getItem(TYPE_STORAGE_KEY);
-      if (rawType) {
-        storedType = sanitizeStoredType(JSON.parse(rawType));
-      }
+      if (rawType) storedType = sanitizeStoredType(JSON.parse(rawType));
     } catch (error) {
       console.error("Failed to parse stored type", error);
     }
 
-    if (storedRange) {
-      setSelectedRange(storedRange);
-    }
-    if (storedType) {
-      setSelectedType(storedType);
-    }
+    if (storedRange) setSelectedRange(storedRange);
+    if (storedType) setSelectedType(storedType);
 
     settingsHydratedRef.current = true;
   }, []);
 
+  // Persist range
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) {
-      return;
-    }
-
+    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
     try {
       window.localStorage.setItem(
         RANGE_STORAGE_KEY,
-        JSON.stringify({ label: selectedRange.label, hours: selectedRange.hours }),
+        JSON.stringify({
+          label: selectedRange.label,
+          hours: selectedRange.hours,
+        }),
       );
     } catch (error) {
       console.error("Failed to persist range", error);
     }
   }, [selectedRange]);
 
+  // Persist type
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) {
-      return;
-    }
-
+    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
     try {
       window.localStorage.setItem(TYPE_STORAGE_KEY, JSON.stringify(selectedType));
     } catch (error) {
@@ -190,8 +179,12 @@ export function History() {
     }
   }, [selectedType]);
 
+  // Debounce search
   useEffect(() => {
-    const timeout = setTimeout(() => setSearchQuery(searchInput.trim()), 200);
+    const timeout = setTimeout(
+      () => setSearchQuery(searchInput.trim()),
+      200,
+    );
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
@@ -205,8 +198,10 @@ export function History() {
 
   const { data, isLoading, isError, refetch, isRefetching } =
     useHistory(filters);
+
   const events = data?.events ?? [];
 
+  // Live polling
   useEffect(() => {
     if (!isLive) {
       if (intervalRef.current) {
@@ -229,18 +224,18 @@ export function History() {
   }, [isLive, refetch]);
 
   const visibleEvents = useMemo(() => {
-    const filteredByType =
+    const byType =
       selectedType === "all"
         ? events
         : events.filter((event) => event.type === selectedType);
 
     if (!searchQuery) {
-      return filteredByType;
+      return byType;
     }
 
     const loweredQuery = searchQuery.toLowerCase();
 
-    return filteredByType.filter((event) => {
+    return byType.filter((event) => {
       const details = event.details ?? "";
       const actor = event.actor ?? "";
       const resource = event.sessionId ?? event.projectId ?? "";
@@ -253,21 +248,33 @@ export function History() {
   }, [events, selectedType, searchQuery]);
 
   const groupedEvents = useMemo(() => {
-    return visibleEvents.reduce<
-      Array<{ label: string; entries: AuditEvent[] }>
-    >((accumulator, event) => {
+    if (visibleEvents.length === 0) return [];
+
+    // Sort newest → oldest so groups follow that order
+    const sorted = [...visibleEvents].sort(
+      (a, b) =>
+        new Date(b.at).getTime() - new Date(a.at).getTime(),
+    );
+
+    const groupsMap = new Map<string, AuditEvent[]>();
+
+    for (const event of sorted) {
       const date = new Date(event.at);
-      const label = Number.isNaN(date.getTime()) ? "Unknown" : getDayLabel(date);
-      const existingGroup = accumulator.find((group) => group.label === label);
-
-      if (existingGroup) {
-        existingGroup.entries.push(event);
+      const label = Number.isNaN(date.getTime())
+        ? "Unknown"
+        : getDayLabel(date);
+      const existing = groupsMap.get(label);
+      if (existing) {
+        existing.push(event);
       } else {
-        accumulator.push({ label, entries: [event] });
+        groupsMap.set(label, [event]);
       }
+    }
 
-      return accumulator;
-    }, []);
+    return Array.from(groupsMap.entries()).map(([label, entries]) => ({
+      label,
+      entries,
+    }));
   }, [visibleEvents]);
 
   const resetFilters = () => {
@@ -275,7 +282,10 @@ export function History() {
     setSelectedType("all");
     setSearchInput("");
     setSearchQuery("");
+    setExpandedEventId(null);
   };
+
+  const now = Date.now();
 
   return (
     <div className="px-[var(--page-padding)] py-6">
@@ -284,10 +294,17 @@ export function History() {
         role="region"
         aria-label="Workspace activity"
       >
+        {/* Header + meta */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
-            Activity
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-[rgb(var(--text))]">
+              Activity
+            </h2>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
+              Live audit trail of model runs, workspace changes, and messages.
+            </p>
+          </div>
+
           <div className="flex flex-wrap items-center gap-3 text-xs text-[rgba(var(--subtle),0.75)]">
             <div className="flex items-center gap-2">
               <Clock className="size-4" aria-hidden="true" />
@@ -317,8 +334,9 @@ export function History() {
           </div>
         </div>
 
+        {/* Filters toolbar */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
             <Filter className="size-4" aria-hidden="true" /> Range
           </div>
           {RANGE_OPTIONS.map((option) => (
@@ -336,6 +354,7 @@ export function History() {
               {option.label}
             </button>
           ))}
+
           <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-[rgba(var(--subtle),0.7)]">
             <label htmlFor="history-type-filter" className="sr-only">
               Event type
@@ -361,10 +380,23 @@ export function History() {
               <option value="exported">Exported</option>
               <option value="modelRun">Model run</option>
             </select>
+
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="flex items-center gap-1 rounded-full border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-2.5 py-1 text-[11px] font-semibold text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))]"
+            >
+              <RefreshCcw
+                className={`size-3.5 ${isRefetching ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              Refresh
+            </button>
           </div>
         </div>
 
-        <div className="mt-3 flex items-center">
+        {/* Search */}
+        <div className="mt-3 flex items-center gap-2">
           <label htmlFor="history-search" className="sr-only">
             Search events
           </label>
@@ -392,11 +424,12 @@ export function History() {
           </div>
         </div>
 
+        {/* States */}
         {isLoading ? (
           <div className="mt-6 space-y-3" aria-hidden="true">
             {Array.from({ length: 6 }).map((_, index) => (
+              // eslint-disable-next-line react/no-array-index-key
               <div
-                // eslint-disable-next-line react/no-array-index-key
                 key={index}
                 className="h-14 rounded-2xl border border-[rgba(var(--border),0.2)] bg-[rgba(var(--panel),0.6)] animate-pulse"
               />
@@ -422,7 +455,10 @@ export function History() {
           </div>
         ) : events.length === 0 ? (
           <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.55)] p-10 text-center text-sm text-[rgba(var(--subtle),0.85)]">
-            <div className="flex size-16 items-center justify-center rounded-full bg-[rgba(var(--border),0.15)]" aria-hidden="true">
+            <div
+              className="flex size-16 items-center justify-center rounded-full bg-[rgba(var(--border),0.15)]"
+              aria-hidden="true"
+            >
               <Clock className="size-7 text-[rgba(var(--subtle),0.7)]" />
             </div>
             <div className="space-y-1 text-[rgb(var(--text))]">
@@ -431,7 +467,8 @@ export function History() {
                 Your audit trail will appear here once work starts flowing.
               </p>
               <p className="text-xs text-[rgba(var(--subtle),0.65)]">
-                Changes in Workspace, Outbox, and Chat will be logged automatically.
+                Changes in Workspace, Outbox, and Chat will be logged
+                automatically.
               </p>
             </div>
           </div>
@@ -454,7 +491,7 @@ export function History() {
         ) : (
           <div className="mt-6 overflow-x-auto">
             <table className="min-w-full divide-y divide-[rgba(var(--border),0.2)] text-left text-sm">
-              <thead className="text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.7)]">
+              <thead className="sticky top-0 z-[1] bg-[rgba(var(--surface),0.97)] text-xs font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.7)] backdrop-blur">
                 <tr>
                   <th scope="col" className="px-4 py-2.5">
                     Event
@@ -481,36 +518,91 @@ export function History() {
                         {group.label}
                       </td>
                     </tr>
-                    {group.entries.map((event) => (
-                      <tr
-                        key={event.id}
-                        className="transition hover:bg-[rgba(var(--panel),0.4)]"
-                      >
-                        <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`chip px-2 py-1 text-[11px] font-semibold ${
-                                TYPE_ACCENTS[event.type] ?? TYPE_ACCENTS.created
-                              }`}
-                            >
-                              {formatTypeLabel(event.type)}
-                            </span>
-                            <span className="text-sm font-semibold text-[rgb(var(--text))]">
-                              {event.details ?? "—"}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.85)]">
-                          {event.actor ?? "—"}
-                        </td>
-                        <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.75)]">
-                          {event.sessionId ?? event.projectId ?? "workspace"}
-                        </td>
-                        <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.7)]">
-                          {formatRelativeTime(event.at)}
-                        </td>
-                      </tr>
-                    ))}
+                    {group.entries.map((event) => {
+                      const createdAt = new Date(event.at);
+                      const isNew =
+                        now - createdAt.getTime() < NEW_EVENT_WINDOW_MS;
+
+                      const resource =
+                        event.sessionId ?? event.projectId ?? "workspace";
+
+                      const isExpanded = expandedEventId === event.id;
+
+                      return (
+                        <React.Fragment key={event.id}>
+                          <tr
+                            onClick={() =>
+                              setExpandedEventId((current) =>
+                                current === event.id ? null : event.id,
+                              )
+                            }
+                            className="cursor-pointer transition hover:bg-[rgba(var(--panel),0.4)]"
+                            aria-expanded={isExpanded}
+                          >
+                            <td className="px-4 py-2.5">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`chip px-2 py-1 text-[11px] font-semibold ${
+                                      TYPE_ACCENTS[event.type] ??
+                                      TYPE_ACCENTS.created
+                                    }`}
+                                  >
+                                    {formatTypeLabel(event.type)}
+                                  </span>
+                                  <span className="text-sm font-semibold text-[rgb(var(--text))]">
+                                    {event.details ?? "—"}
+                                  </span>
+                                  {isNew && (
+                                    <span className="rounded-full bg-[rgba(var(--accent-emerald),0.18)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--accent-emerald-ink))]">
+                                      New
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.85)]">
+                              {event.actor ?? "—"}
+                            </td>
+                            <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.75)]">
+                              {resource}
+                            </td>
+                            <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.7)]">
+                              {formatRelativeTime(event.at)}
+                            </td>
+                          </tr>
+
+                          {isExpanded && (
+                            <tr>
+                              <td
+                                colSpan={4}
+                                className="px-4 pb-3 pt-0 text-xs text-[rgba(var(--subtle),0.9)]"
+                              >
+                                <div className="mt-1 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] p-3">
+                                  <div className="mb-2 flex flex-wrap gap-4 text-[11px]">
+                                    <div>
+                                      <span className="font-semibold">
+                                        Exact time:
+                                      </span>{" "}
+                                      {createdAt.toLocaleString()}
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold">
+                                        Resource:
+                                      </span>{" "}
+                                      {resource}
+                                    </div>
+                                  </div>
+                                  <pre className="max-h-52 overflow-auto rounded-xl bg-[rgba(var(--bg),0.8)] p-2 text-[11px] font-mono leading-snug text-[rgba(var(--subtle),0.9)]">
+                                    {JSON.stringify(event, null, 2)}
+                                  </pre>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </React.Fragment>
                 ))}
               </tbody>
