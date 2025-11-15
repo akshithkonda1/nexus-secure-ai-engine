@@ -15,6 +15,7 @@ import {
   Trash2,
   Undo2,
   UploadCloud,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -35,7 +36,7 @@ const QUICK_TYPE_FILTERS: Array<{
   { label: "All events", type: "all" },
   { label: "Model runs", type: "modelRun" },
   { label: "Messages", type: "message" },
-  { label: "Workspace changes", type: "created" }, // semantic anchor, still “all” via select
+  { label: "Workspace changes", type: "created" },
 ];
 
 const TYPE_ACCENTS: Partial<Record<AuditEvent["type"], string>> = {
@@ -66,8 +67,19 @@ const TYPE_ICONS: Partial<Record<AuditEvent["type"], LucideIcon>> = {
 
 const RANGE_STORAGE_KEY = "nexus.history.range.v1";
 const TYPE_STORAGE_KEY = "nexus.history.type.v1";
+const PRESETS_STORAGE_KEY = "nexus.history.presets.v1";
+const ACTIVE_PRESET_STORAGE_KEY = "nexus.history.activePreset.v1";
+
 const LIVE_POLL_INTERVAL_MS = 60_000;
 const NEW_EVENT_WINDOW_MS = 5 * 60_000;
+
+type HistoryPreset = {
+  id: string;
+  label: string;
+  rangeLabel: (typeof RANGE_OPTIONS)[number]["label"];
+  type: AuditEvent["type"] | "all";
+  search: string;
+};
 
 function computeRange(hours: number) {
   const to = new Date();
@@ -154,17 +166,22 @@ export function History() {
   const [isLive, setIsLive] = useState(true);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [drawerEvent, setDrawerEvent] = useState<AuditEvent | null>(null);
+
+  const [presets, setPresets] = useState<HistoryPreset[]>([]);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsHydratedRef = useRef(false);
 
-  // Hydrate filters from localStorage once
+  // Hydrate from localStorage once
   useEffect(() => {
     if (typeof window === "undefined" || settingsHydratedRef.current) return;
 
     let storedRange: (typeof RANGE_OPTIONS)[number] | undefined;
     let storedType: AuditEvent["type"] | "all" | undefined;
+    let storedPresets: HistoryPreset[] | undefined;
+    let storedActivePresetId: string | null = null;
 
     try {
       const rawRange = window.localStorage.getItem(RANGE_STORAGE_KEY);
@@ -180,8 +197,42 @@ export function History() {
       console.error("Failed to parse stored type", error);
     }
 
+    try {
+      const rawPresets = window.localStorage.getItem(PRESETS_STORAGE_KEY);
+      if (rawPresets) storedPresets = JSON.parse(rawPresets) as HistoryPreset[];
+    } catch (error) {
+      console.error("Failed to parse presets", error);
+    }
+
+    try {
+      const rawActive = window.localStorage.getItem(
+        ACTIVE_PRESET_STORAGE_KEY,
+      );
+      if (rawActive) storedActivePresetId = JSON.parse(rawActive) as string;
+    } catch (error) {
+      console.error("Failed to parse active preset", error);
+    }
+
     if (storedRange) setSelectedRange(storedRange);
     if (storedType) setSelectedType(storedType);
+    if (storedPresets) {
+      setPresets(storedPresets);
+      if (storedActivePresetId) {
+        const preset = storedPresets.find(
+          (p) => p.id === storedActivePresetId,
+        );
+        if (preset) {
+          setActivePresetId(preset.id);
+          const rangeOption =
+            RANGE_OPTIONS.find((o) => o.label === preset.rangeLabel) ??
+            RANGE_OPTIONS[0];
+          setSelectedRange(rangeOption);
+          setSelectedType(preset.type);
+          setSearchInput(preset.search);
+          setSearchQuery(preset.search.trim());
+        }
+      }
+    }
 
     settingsHydratedRef.current = true;
   }, []);
@@ -212,6 +263,32 @@ export function History() {
     }
   }, [selectedType]);
 
+  // Persist presets
+  useEffect(() => {
+    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
+    try {
+      window.localStorage.setItem(
+        PRESETS_STORAGE_KEY,
+        JSON.stringify(presets),
+      );
+    } catch (error) {
+      console.error("Failed to persist presets", error);
+    }
+  }, [presets]);
+
+  // Persist active preset id
+  useEffect(() => {
+    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
+    try {
+      window.localStorage.setItem(
+        ACTIVE_PRESET_STORAGE_KEY,
+        JSON.stringify(activePresetId),
+      );
+    } catch (error) {
+      console.error("Failed to persist active preset", error);
+    }
+  }, [activePresetId]);
+
   // Debounce search
   useEffect(() => {
     const timeout = setTimeout(
@@ -220,6 +297,20 @@ export function History() {
     );
     return () => clearTimeout(timeout);
   }, [searchInput]);
+
+  // Close drawer on Escape
+  useEffect(() => {
+    if (!drawerEvent) return;
+
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawerEvent(null);
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [drawerEvent]);
 
   const filters = useMemo(() => {
     const base = computeRange(selectedRange.hours);
@@ -313,7 +404,6 @@ export function History() {
   const groupedEvents = useMemo(() => {
     if (visibleEvents.length === 0) return [];
 
-    // newest → oldest
     const sorted = [...visibleEvents].sort(
       (a, b) =>
         new Date(b.at).getTime() - new Date(a.at).getTime(),
@@ -342,11 +432,7 @@ export function History() {
     setSelectedType("all");
     setSearchInput("");
     setSearchQuery("");
-    setExpandedEventId(null);
-  };
-
-  const handleEventClick = (id: string) => {
-    setExpandedEventId((current) => (current === id ? null : id));
+    setActivePresetId(null);
   };
 
   const renderActor = (actor?: string | null) => {
@@ -392,10 +478,87 @@ export function History() {
     );
   };
 
+  const openEventDrawer = (event: AuditEvent) => {
+    setDrawerEvent(event);
+  };
+
+  const saveCurrentPreset = () => {
+    const defaultName =
+      `${selectedRange.label} • ` +
+      (selectedType === "all"
+        ? "All events"
+        : formatTypeLabel(selectedType));
+
+    // eslint-disable-next-line no-alert
+    const label = window.prompt("Name this view", defaultName);
+    if (!label) return;
+
+    const trimmed = label.trim();
+    if (!trimmed) return;
+
+    const basePreset: HistoryPreset = {
+      id: `preset-${Date.now()}`,
+      label: trimmed,
+      rangeLabel: selectedRange.label,
+      type: selectedType,
+      search: searchInput.trim(),
+    };
+
+    setPresets((current) => {
+      const existingIndex = current.findIndex(
+        (p) => p.label.toLowerCase() === trimmed.toLowerCase(),
+      );
+
+      let next: HistoryPreset[];
+      let idToUse = basePreset.id;
+
+      if (existingIndex >= 0) {
+        const existing = current[existingIndex];
+        const updated: HistoryPreset = {
+          ...existing,
+          rangeLabel: basePreset.rangeLabel,
+          type: basePreset.type,
+          search: basePreset.search,
+        };
+        idToUse = existing.id;
+        next = [
+          ...current.slice(0, existingIndex),
+          updated,
+          ...current.slice(existingIndex + 1),
+        ];
+      } else {
+        next = [...current, basePreset];
+      }
+
+      setActivePresetId(idToUse);
+      return next;
+    });
+  };
+
+  const applyPreset = (preset: HistoryPreset) => {
+    setActivePresetId(preset.id);
+    const rangeOption =
+      RANGE_OPTIONS.find((o) => o.label === preset.rangeLabel) ??
+      RANGE_OPTIONS[0];
+    setSelectedRange(rangeOption);
+    setSelectedType(preset.type);
+    setSearchInput(preset.search);
+    setSearchQuery(preset.search.trim());
+  };
+
+  const removePreset = (id: string) => {
+    setPresets((current) => current.filter((p) => p.id !== id));
+    if (activePresetId === id) {
+      setActivePresetId(null);
+    }
+  };
+
+  // === RENDER =================================================================
+
   return (
     <div className="px-[var(--page-padding)] py-6">
       <div
-        className="card p-5"
+        className="card relative p-5"
         role="region"
         aria-label="Workspace activity"
       >
@@ -486,7 +649,10 @@ export function History() {
               <button
                 key={option.label}
                 type="button"
-                onClick={() => setSelectedRange(option)}
+                onClick={() => {
+                  setSelectedRange(option);
+                  setActivePresetId(null);
+                }}
                 className={`chip border px-3 py-1 text-xs transition focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))] ${
                   selectedRange.label === option.label
                     ? "border-[rgba(var(--brand),0.4)] bg-[rgba(var(--brand),0.14)] text-brand"
@@ -508,10 +674,11 @@ export function History() {
                   type="button"
                   onClick={() => {
                     setSelectedType(filter.type);
-                    setExpandedEventId(null);
+                    setActivePresetId(null);
                   }}
                   className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                    selectedType === filter.type || (filter.type === "all" && selectedType === "all")
+                    selectedType === filter.type ||
+                    (filter.type === "all" && selectedType === "all")
                       ? "bg-[rgba(var(--brand-soft),0.24)] text-brand"
                       : "bg-[rgba(var(--panel),0.7)] text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--panel),0.9)]"
                   }`}
@@ -529,11 +696,12 @@ export function History() {
             <select
               id="history-type-filter"
               value={selectedType}
-              onChange={(event) =>
+              onChange={(event) => {
                 setSelectedType(
                   event.target.value as AuditEvent["type"] | "all",
-                )
-              }
+                );
+                setActivePresetId(null);
+              }}
               className="rounded-full border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.92)] px-3 py-1.5 text-xs font-semibold text-[rgb(var(--text))] shadow-sm transition focus:border-[rgba(var(--brand),0.35)] focus:outline-none"
             >
               <option value="all">All types</option>
@@ -574,7 +742,10 @@ export function History() {
               id="history-search"
               type="search"
               value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
+              onChange={(event) => {
+                setSearchInput(event.target.value);
+                setActivePresetId(null);
+              }}
               placeholder="Search events (details, actor, resource)…"
               className="w-full rounded-full border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.9)] px-4 py-2 text-sm text-[rgb(var(--text))] shadow-sm focus:border-[rgba(var(--brand),0.4)] focus:outline-none"
             />
@@ -584,6 +755,7 @@ export function History() {
                 onClick={() => {
                   setSearchInput("");
                   setSearchQuery("");
+                  setActivePresetId(null);
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs font-semibold text-brand focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))]"
               >
@@ -592,12 +764,64 @@ export function History() {
             ) : null}
           </div>
 
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center justify-center rounded-full border border-[rgba(var(--brand),0.4)] bg-[rgba(var(--brand),0.12)] px-4 py-1.5 text-xs font-semibold text-brand transition hover:border-[rgba(var(--brand),0.6)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))]"
+            >
+              Reset filters
+            </button>
+          </div>
+        </div>
+
+        {/* Presets */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgba(var(--subtle),0.75)]">
+            Presets
+          </span>
+          {presets.length === 0 && (
+            <span className="text-[11px] text-[rgba(var(--subtle),0.75)]">
+              Save your favorite views for one-click access.
+            </span>
+          )}
+          {presets.map((preset) => {
+            const isActive = preset.id === activePresetId;
+            return (
+              <div
+                key={preset.id}
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] ${
+                  isActive
+                    ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
+                    : "border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.7)] text-[rgba(var(--subtle),0.95)]"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className="max-w-[9rem] truncate text-left focus:outline-none"
+                  title={`${preset.label} (${preset.rangeLabel})`}
+                >
+                  {preset.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removePreset(preset.id)}
+                  className="ml-1 rounded-full p-0.5 text-[rgba(var(--subtle),0.7)] hover:bg-[rgba(var(--border),0.6)] focus:outline-none"
+                  aria-label={`Remove preset ${preset.label}`}
+                >
+                  <X className="size-3" aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
           <button
             type="button"
-            onClick={resetFilters}
-            className="mt-1 inline-flex items-center justify-center rounded-full border border-[rgba(var(--brand),0.4)] bg-[rgba(var(--brand),0.12)] px-4 py-1.5 text-xs font-semibold text-brand transition hover:border-[rgba(var(--brand),0.6)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))] sm:mt-0"
+            onClick={saveCurrentPreset}
+            className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.7)] px-3 py-1 text-[11px] font-semibold text-[rgba(var(--subtle),0.95)] hover:border-[rgba(var(--brand),0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))]"
           >
-            Reset filters
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Save current view
           </button>
         </div>
 
@@ -708,85 +932,41 @@ export function History() {
                           now - createdAt.getTime() < NEW_EVENT_WINDOW_MS;
                         const resource =
                           event.sessionId ?? event.projectId ?? "workspace";
-                        const isExpanded = expandedEventId === event.id;
 
                         return (
-                          <React.Fragment key={event.id}>
-                            <tr
-                              onClick={() => handleEventClick(event.id)}
-                              className={`cursor-pointer transition ${
-                                isExpanded
-                                  ? "bg-[rgba(var(--panel),0.55)]"
-                                  : "hover:bg-[rgba(var(--panel),0.4)]"
-                              }`}
-                              aria-expanded={isExpanded}
-                            >
-                              <td className="px-4 py-2.5">
-                                <div className="flex flex-col gap-1">
-                                  <div className="flex items-center gap-3">
-                                    {renderEventBadge(event)}
-                                    <span className="text-sm font-semibold text-[rgb(var(--text))]">
-                                      {event.details ?? "—"}
+                          <tr
+                            key={event.id}
+                            onClick={() => openEventDrawer(event)}
+                            className="cursor-pointer transition hover:bg-[rgba(var(--panel),0.4)]"
+                          >
+                            <td className="px-4 py-2.5">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-3">
+                                  {renderEventBadge(event)}
+                                  <span className="text-sm font-semibold text-[rgb(var(--text))]">
+                                    {event.details ?? "—"}
+                                  </span>
+                                  {isNew && (
+                                    <span className="rounded-full bg-[rgba(var(--accent-emerald),0.18)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--accent-emerald-ink))]">
+                                      New
                                     </span>
-                                    {isNew && (
-                                      <span className="rounded-full bg-[rgba(var(--accent-emerald),0.18)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--accent-emerald-ink))]">
-                                        New
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                                    {resource}
-                                  </p>
+                                  )}
                                 </div>
-                              </td>
-                              <td className="px-4 py-2.5">
-                                {renderActor(event.actor)}
-                              </td>
-                              <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.8)]">
-                                {event.sessionId ?? event.projectId ?? "workspace"}
-                              </td>
-                              <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.7)]">
-                                {formatRelativeTime(event.at)}
-                              </td>
-                            </tr>
-
-                            {isExpanded && (
-                              <tr>
-                                <td
-                                  colSpan={4}
-                                  className="px-4 pb-3 pt-0 text-xs text-[rgba(var(--subtle),0.9)]"
-                                >
-                                  <div className="mt-1 rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.75)] p-3">
-                                    <div className="mb-2 flex flex-wrap gap-4 text-[11px]">
-                                      <div>
-                                        <span className="font-semibold">
-                                          Exact time:
-                                        </span>{" "}
-                                        {createdAt.toLocaleString()}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Resource:
-                                        </span>{" "}
-                                        {resource}
-                                      </div>
-                                      {event.actor ? (
-                                        <div>
-                                          <span className="font-semibold">
-                                            Actor:
-                                          </span>{" "}
-                                          {event.actor}
-                                        </div>
-                                      ) : null}
-                                    </div>
-                                    <pre className="max-h-60 overflow-auto rounded-xl bg-[rgba(var(--bg),0.9)] p-2 text-[11px] font-mono leading-snug text-[rgba(var(--subtle),0.95)]">
-                                      {JSON.stringify(event, null, 2)}
-                                    </pre>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
+                                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                                  {resource}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {renderActor(event.actor)}
+                            </td>
+                            <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.8)]">
+                              {event.sessionId ?? event.projectId ?? "workspace"}
+                            </td>
+                            <td className="px-4 py-2.5 text-[rgba(var(--subtle),0.7)]">
+                              {formatRelativeTime(event.at)}
+                            </td>
+                          </tr>
                         );
                       })}
                     </React.Fragment>
@@ -809,13 +989,12 @@ export function History() {
                         now - createdAt.getTime() < NEW_EVENT_WINDOW_MS;
                       const resource =
                         event.sessionId ?? event.projectId ?? "workspace";
-                      const isExpanded = expandedEventId === event.id;
 
                       return (
                         <button
                           key={event.id}
                           type="button"
-                          onClick={() => handleEventClick(event.id)}
+                          onClick={() => openEventDrawer(event)}
                           className="w-full rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.8)] p-3 text-left transition hover:border-[rgba(var(--brand),0.45)]"
                         >
                           <div className="flex items-start gap-3">
@@ -839,16 +1018,6 @@ export function History() {
                                 <span>{renderActor(event.actor)}</span>
                                 <span>{formatRelativeTime(event.at)}</span>
                               </div>
-                              {isExpanded && (
-                                <div className="mt-2 rounded-xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.9)] p-2">
-                                  <p className="mb-1 text-[10px] font-semibold text-[rgba(var(--subtle),0.9)]">
-                                    Event payload
-                                  </p>
-                                  <pre className="max-h-52 overflow-auto rounded-lg bg-[rgba(var(--bg),0.9)] p-2 text-[10px] font-mono leading-snug text-[rgba(var(--subtle),0.95)]">
-                                    {JSON.stringify(event, null, 2)}
-                                  </pre>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </button>
@@ -859,6 +1028,149 @@ export function History() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Side drawer inspector */}
+        {drawerEvent && (
+          <div
+            className="fixed inset-0 z-40 flex items-stretch justify-end bg-black/40 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Event details"
+            onClick={() => setDrawerEvent(null)}
+          >
+            <div
+              className="h-full w-full max-w-md border-l border-[rgba(var(--border),0.45)] bg-[rgb(var(--surface))] shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-[rgba(var(--border),0.3)] px-4 py-3">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    {renderEventBadge(drawerEvent)}
+                  </div>
+                  <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                    {drawerEvent.details ?? "Event details"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDrawerEvent(null)}
+                  className="rounded-full p-1 text-[rgba(var(--subtle),0.8)] hover:bg-[rgba(var(--border),0.4)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.65)] focus:ring-offset-1 focus:ring-offset-[rgb(var(--surface))]"
+                  aria-label="Close event details"
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              <div className="flex h-full flex-col overflow-hidden">
+                <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+                  {/* Meta */}
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.85)]">
+                      Overview
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2 text-xs text-[rgba(var(--subtle),0.9)]">
+                      <div>
+                        <p className="font-semibold text-[rgb(var(--text))]">
+                          When
+                        </p>
+                        <p>{new Date(drawerEvent.at).toLocaleString()}</p>
+                        <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                          {formatRelativeTime(drawerEvent.at)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[rgb(var(--text))]">
+                          Actor
+                        </p>
+                        <p>{drawerEvent.actor ?? "—"}</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[rgb(var(--text))]">
+                          Resource
+                        </p>
+                        <p>
+                          {drawerEvent.sessionId ??
+                            drawerEvent.projectId ??
+                            "workspace"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[rgb(var(--text))]">
+                          Event ID
+                        </p>
+                        <p className="break-all text-[11px]">
+                          {drawerEvent.id}
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Raw payload */}
+                  <section className="space-y-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.85)]">
+                      Raw payload
+                    </h3>
+                    <pre className="max-h-64 overflow-auto rounded-xl bg-[rgba(var(--bg),0.96)] p-3 text-[11px] font-mono leading-snug text-[rgba(var(--subtle),0.98)]">
+                      {JSON.stringify(drawerEvent, null, 2)}
+                    </pre>
+                  </section>
+
+                  {/* Related events by session */}
+                  {drawerEvent.sessionId && (
+                    <section className="space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.85)]">
+                        Related events in session
+                      </h3>
+                      <div className="space-y-2 text-xs">
+                        {events
+                          .filter(
+                            (event) =>
+                              event.sessionId === drawerEvent.sessionId &&
+                              event.id !== drawerEvent.id,
+                          )
+                          .slice(0, 6)
+                          .map((event) => (
+                            <button
+                              key={event.id}
+                              type="button"
+                              onClick={() => openEventDrawer(event)}
+                              className="w-full rounded-xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.75)] px-3 py-2 text-left transition hover:border-[rgba(var(--brand),0.55)]"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex flex-1 flex-col gap-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full bg-[rgba(var(--panel),0.9)] px-2 py-0.5 text-[10px] font-semibold text-[rgba(var(--subtle),0.95)]">
+                                      {formatTypeLabel(event.type)}
+                                    </span>
+                                    <span className="truncate text-[11px] text-[rgb(var(--text))]">
+                                      {event.details ?? "—"}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-[rgba(var(--subtle),0.8)]">
+                                    {formatRelativeTime(event.at)}
+                                  </span>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        {events.filter(
+                          (event) =>
+                            event.sessionId === drawerEvent.sessionId &&
+                            event.id !== drawerEvent.id,
+                        ).length === 0 && (
+                          <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                            No other events from this session in the current
+                            range.
+                          </p>
+                        )}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
