@@ -22,6 +22,7 @@ import type { LucideIcon } from "lucide-react";
 import { useHistory } from "@/queries/history";
 import type { AuditEvent } from "@/types/models";
 import { formatRelativeTime } from "@/lib/formatters";
+import { getItem, setItem } from "@/lib/storage";
 
 const RANGE_OPTIONS = [
   { label: "24h", hours: 24 },
@@ -174,119 +175,89 @@ export function History() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsHydratedRef = useRef(false);
 
-  // Hydrate from localStorage once
+  // Hydrate persisted settings once
   useEffect(() => {
-    if (typeof window === "undefined" || settingsHydratedRef.current) return;
+    if (settingsHydratedRef.current) return;
+    let cancelled = false;
 
-    let storedRange: (typeof RANGE_OPTIONS)[number] | undefined;
-    let storedType: AuditEvent["type"] | "all" | undefined;
-    let storedPresets: HistoryPreset[] | undefined;
-    let storedActivePresetId: string | null = null;
+    const hydrate = async () => {
+      try {
+        const [storedRange, storedType, storedPresets, storedActivePresetId] = await Promise.all([
+          getItem<(typeof RANGE_OPTIONS)[number]>(RANGE_STORAGE_KEY),
+          getItem<AuditEvent["type"] | "all">(TYPE_STORAGE_KEY),
+          getItem<HistoryPreset[]>(PRESETS_STORAGE_KEY),
+          getItem<string | null>(ACTIVE_PRESET_STORAGE_KEY),
+        ]);
 
-    try {
-      const rawRange = window.localStorage.getItem(RANGE_STORAGE_KEY);
-      if (rawRange) storedRange = sanitizeStoredRange(JSON.parse(rawRange));
-    } catch (error) {
-      console.error("Failed to parse stored range", error);
-    }
+        if (cancelled) return;
 
-    try {
-      const rawType = window.localStorage.getItem(TYPE_STORAGE_KEY);
-      if (rawType) storedType = sanitizeStoredType(JSON.parse(rawType));
-    } catch (error) {
-      console.error("Failed to parse stored type", error);
-    }
+        if (storedRange) {
+          setSelectedRange(sanitizeStoredRange(storedRange));
+        }
 
-    try {
-      const rawPresets = window.localStorage.getItem(PRESETS_STORAGE_KEY);
-      if (rawPresets) storedPresets = JSON.parse(rawPresets) as HistoryPreset[];
-    } catch (error) {
-      console.error("Failed to parse presets", error);
-    }
+        if (storedType) {
+          setSelectedType(sanitizeStoredType(storedType));
+        }
 
-    try {
-      const rawActive = window.localStorage.getItem(
-        ACTIVE_PRESET_STORAGE_KEY,
-      );
-      if (rawActive) storedActivePresetId = JSON.parse(rawActive) as string;
-    } catch (error) {
-      console.error("Failed to parse active preset", error);
-    }
-
-    if (storedRange) setSelectedRange(storedRange);
-    if (storedType) setSelectedType(storedType);
-    if (storedPresets) {
-      setPresets(storedPresets);
-      if (storedActivePresetId) {
-        const preset = storedPresets.find(
-          (p) => p.id === storedActivePresetId,
-        );
-        if (preset) {
-          setActivePresetId(preset.id);
-          const rangeOption =
-            RANGE_OPTIONS.find((o) => o.label === preset.rangeLabel) ??
-            RANGE_OPTIONS[0];
-          setSelectedRange(rangeOption);
-          setSelectedType(preset.type);
-          setSearchInput(preset.search);
-          setSearchQuery(preset.search.trim());
+        if (storedPresets && Array.isArray(storedPresets)) {
+          setPresets(storedPresets);
+          if (storedActivePresetId) {
+            const preset = storedPresets.find(
+              (p) => p.id === storedActivePresetId,
+            );
+            if (preset) {
+              setActivePresetId(preset.id);
+              const rangeOption =
+                RANGE_OPTIONS.find((o) => o.label === preset.rangeLabel) ??
+                RANGE_OPTIONS[0];
+              setSelectedRange(rangeOption);
+              setSelectedType(preset.type);
+              setSearchInput(preset.search);
+              setSearchQuery(preset.search.trim());
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to hydrate history settings", error);
+      } finally {
+        if (!cancelled) {
+          settingsHydratedRef.current = true;
         }
       }
-    }
+    };
 
-    settingsHydratedRef.current = true;
+    void hydrate();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Persist range
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(
-        RANGE_STORAGE_KEY,
-        JSON.stringify({
-          label: selectedRange.label,
-          hours: selectedRange.hours,
-        }),
-      );
-    } catch (error) {
-      console.error("Failed to persist range", error);
-    }
+    if (!settingsHydratedRef.current) return;
+    void setItem(RANGE_STORAGE_KEY, {
+      label: selectedRange.label,
+      hours: selectedRange.hours,
+    });
   }, [selectedRange]);
 
   // Persist type
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(TYPE_STORAGE_KEY, JSON.stringify(selectedType));
-    } catch (error) {
-      console.error("Failed to persist type", error);
-    }
+    if (!settingsHydratedRef.current) return;
+    void setItem(TYPE_STORAGE_KEY, selectedType);
   }, [selectedType]);
 
   // Persist presets
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(
-        PRESETS_STORAGE_KEY,
-        JSON.stringify(presets),
-      );
-    } catch (error) {
-      console.error("Failed to persist presets", error);
-    }
+    if (!settingsHydratedRef.current) return;
+    void setItem(PRESETS_STORAGE_KEY, presets);
   }, [presets]);
 
   // Persist active preset id
   useEffect(() => {
-    if (typeof window === "undefined" || !settingsHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(
-        ACTIVE_PRESET_STORAGE_KEY,
-        JSON.stringify(activePresetId),
-      );
-    } catch (error) {
-      console.error("Failed to persist active preset", error);
-    }
+    if (!settingsHydratedRef.current) return;
+    void setItem(ACTIVE_PRESET_STORAGE_KEY, activePresetId);
   }, [activePresetId]);
 
   // Debounce search

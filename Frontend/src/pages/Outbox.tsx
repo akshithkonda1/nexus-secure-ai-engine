@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { requestDocumentsView, requestNewPrompt } from "@/lib/actions";
+import { getItem, setItem } from "@/lib/storage";
 import {
   type NotificationItem,
   useGlobalNotifications,
@@ -104,28 +105,7 @@ interface WorkflowConfig {
   customInstructions: string;
 }
 
-/* ------------------------------------------------------------------ */
-/* Local Storage (Safe, Minimal)                                      */
-/* ------------------------------------------------------------------ */
-
 const CONFIG_KEY = "nexusWorkflowConfig";
-
-const loadConfig = (): WorkflowConfig | null => {
-  try {
-    const raw = localStorage.getItem(CONFIG_KEY);
-    return raw ? (JSON.parse(raw) as WorkflowConfig) : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveConfig = (cfg: WorkflowConfig): void => {
-  try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
-  } catch {
-    // non-critical
-  }
-};
 
 /* ------------------------------------------------------------------ */
 /* Connector Metadata                                                 */
@@ -443,12 +423,44 @@ const OutboxShell = ({ children }: { children: ReactNode }) => (
 
 export const Outbox: React.FC = () => {
   const navigate = useNavigate();
-  const [config, setConfig] = useState<WorkflowConfig | null>(loadConfig);
-  const [showSetup, setShowSetup] = useState(!config);
+  const [config, setConfig] = useState<WorkflowConfig | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const { replaceBySource } = useGlobalNotifications();
 
   // Whether Nexus "balanced" the day (affects ordering + copy)
   const [isBalanced, setIsBalanced] = useState(false);
+
+  useEffect(() => {
+    if (config) {
+      void setItem(CONFIG_KEY, config);
+    }
+  }, [config]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      try {
+        const stored = await getItem<WorkflowConfig>(CONFIG_KEY);
+        if (cancelled) return;
+        if (stored) {
+          setConfig(stored);
+          setShowSetup(false);
+        } else {
+          setShowSetup(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
+      }
+    };
+
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Push workspace alerts into the global notifications panel
   useEffect(() => {
@@ -477,7 +489,9 @@ export const Outbox: React.FC = () => {
   }, [config, replaceBySource]);
 
   const handleSetupClose = (newCfg?: WorkflowConfig) => {
-    if (newCfg) setConfig(newCfg);
+    if (newCfg) {
+      setConfig(newCfg);
+    }
     setShowSetup(false);
   };
 
@@ -549,6 +563,10 @@ export const Outbox: React.FC = () => {
       }, {}),
     []
   );
+
+  if (!hydrated) {
+    return null;
+  }
 
   return (
     <>

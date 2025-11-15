@@ -26,6 +26,7 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const sendControllerRef = useRef<AbortController | null>(null);
 
   const virtualizer = useVirtualizer({
     count: messages.length,
@@ -87,14 +88,29 @@ export default function ChatPage() {
     if (!text && attachments.length === 0) return;
     if (!isConnected) return;
     try {
-      await sendMessage({ text, attachments: attachments.map(a => a.file) });
+      if (sendControllerRef.current) {
+        sendControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      sendControllerRef.current = controller;
+      await sendMessage({ text, attachments: attachments.map(a => a.file), signal: controller.signal });
       setInput("");
       setAttachments(prev => { prev.forEach(a => a.previewUrl && URL.revokeObjectURL(a.previewUrl)); return []; });
       textareaRef.current?.focus();
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      if (!(e instanceof DOMException && e.name === "AbortError")) {
+        console.error(e);
+      }
+    } finally {
+      sendControllerRef.current = null;
+    }
   };
 
   const canSend = isConnected && (input.trim().length > 0 || attachments.length > 0);
+
+  useEffect(() => () => {
+    sendControllerRef.current?.abort();
+  }, []);
 
   return (
     <div className="flex h-screen flex-col bg-app text-ink">
