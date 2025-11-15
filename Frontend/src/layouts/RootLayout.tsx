@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 
 import AppShell from "@/components/AppShell";
 import { Header } from "@/components/Header";
-import { RightRail } from "@/components/RightRail";
 import { Sidebar } from "@/components/Sidebar";
 import { ProfileModal } from "@/components/ProfileModal";
 import { NotificationsModal } from "@/components/NotificationsModal";
@@ -36,10 +35,7 @@ export default function RootLayout() {
       >
         Skip to content
       </a>
-      <AppShell
-        left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}
-        right={<RightRail />}
-      >
+      <AppShell left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}>
         <div className="flex min-h-full flex-col bg-transparent text-zora-white">
           <Header
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
