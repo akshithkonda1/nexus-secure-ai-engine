@@ -7,7 +7,6 @@ import {
   Lock,
   ShieldAlert,
   ShieldCheck,
-  Sparkles,
   UserCheck,
   Workflow,
 } from "lucide-react";
@@ -95,6 +94,7 @@ export function Governance() {
   const [completedChecklist, setCompletedChecklist] = useState<string[]>([]);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
+  const [isSafetyOpen, setIsSafetyOpen] = useState(true);
 
   const activeMode =
     SAFETY_MODES.find((m) => m.id === mode) ?? SAFETY_MODES[1];
@@ -387,100 +387,117 @@ export function Governance() {
         )}
       </section>
 
-      {/* RECENT SAFETY ACTIVITY */}
+      {/* RECENT SAFETY ACTIVITY (collapsible) */}
       <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)]">
-        <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-                Recent safety activity
-              </p>
-              <p className="text-sm font-semibold text-[rgb(var(--text))]">
-                How we&apos;ve been protecting you
-              </p>
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setIsSafetyOpen((prev) => !prev)}
+            className="flex flex-1 items-center justify-between gap-3 text-left"
+            aria-expanded={isSafetyOpen}
+          >
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="size-4 text-brand" />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
+                  Recent safety activity
+                </p>
+                <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                  How we&apos;ve been protecting you
+                </p>
+              </div>
             </div>
-          </div>
+            <span
+              className={`flex size-7 items-center justify-center rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.95)] transition-transform ${
+                isSafetyOpen ? "rotate-180" : ""
+              }`}
+            >
+              <ChevronDown className="size-4 text-[rgba(var(--subtle),0.9)]" />
+            </span>
+          </button>
+
           <span className="rounded-full border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.95)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.9)]">
             No incidents open
           </span>
         </header>
 
-        <ul className="mt-4 space-y-3 text-sm">
-          {safetyEvents.map((event) => {
-            const isExpanded = expandedEventId === event.id;
+        {isSafetyOpen && (
+          <ul className="mt-4 space-y-3 text-sm">
+            {safetyEvents.map((event) => {
+              const isExpanded = expandedEventId === event.id;
 
-            return (
-              <li
-                key={event.id}
-                className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.72)]"
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExpandedEventId((current) =>
-                      current === event.id ? null : event.id
-                    )
-                  }
-                  className="flex w-full items-start justify-between px-4 py-3 text-left"
+              return (
+                <li
+                  key={event.id}
+                  className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.72)]"
                 >
-                  <div className="max-w-md">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                          event.level === "high"
-                            ? "bg-[rgba(var(--status-critical),0.18)] text-[rgb(var(--status-critical))]"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedEventId((current) =>
+                        current === event.id ? null : event.id
+                      )
+                    }
+                    className="flex w-full items-start justify-between px-4 py-3 text-left"
+                  >
+                    <div className="max-w-md">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                            event.level === "high"
+                              ? "bg-[rgba(var(--status-critical),0.18)] text-[rgb(var(--status-critical))]"
+                              : event.level === "med"
+                              ? "bg-[rgba(var(--status-warning),0.18)] text-[rgb(var(--status-warning))]"
+                              : "bg-[rgba(var(--border),0.5)] text-[rgba(var(--subtle),0.95)]"
+                          }`}
+                        >
+                          {event.level === "high"
+                            ? "Blocked"
                             : event.level === "med"
-                            ? "bg-[rgba(var(--status-warning),0.18)] text-[rgb(var(--status-warning))]"
-                            : "bg-[rgba(var(--border),0.5)] text-[rgba(var(--subtle),0.95)]"
-                        }`}
-                      >
-                        {event.level === "high"
-                          ? "Blocked"
-                          : event.level === "med"
-                          ? "Reviewed"
-                          : "Info"}
-                      </span>
-                      <p className="text-sm font-semibold text-[rgb(var(--text))]">
-                        {event.label}
+                            ? "Reviewed"
+                            : "Info"}
+                        </span>
+                        <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                          {event.label}
+                        </p>
+                      </div>
+                      <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
+                        {event.detail}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
-                      {event.detail}
+                    <p className="ml-3 whitespace-nowrap text-[11px] text-[rgba(var(--subtle),0.75)]">
+                      {event.when}
                     </p>
-                  </div>
-                  <p className="ml-3 whitespace-nowrap text-[11px] text-[rgba(var(--subtle),0.75)]">
-                    {event.when}
-                  </p>
-                </button>
+                  </button>
 
-                {isExpanded && (
-                  <div className="border-t border-[rgba(var(--border),0.4)] px-4 pb-3 pt-2 text-[11px] text-[rgba(var(--subtle),0.9)]">
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      What this means
-                    </p>
-                    <p className="mt-1">
-                      We apply extra checks when content looks sensitive or
-                      risky. This keeps your data safer and reduces harmful or
-                      misleading outputs.
-                    </p>
-                    <p className="mt-2 font-semibold text-[rgb(var(--text))]">
-                      What you can do
-                    </p>
-                    <ul className="mt-1 ml-4 list-disc space-y-0.5">
-                      <li>Remove any private info that isn&apos;t needed.</li>
-                      <li>Rephrase the request with more context, less detail.</li>
-                      <li>
-                        If this looks wrong, report it in settings so we can
-                        improve.
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                  {isExpanded && (
+                    <div className="border-t border-[rgba(var(--border),0.4)] px-4 pb-3 pt-2 text-[11px] text-[rgba(var(--subtle),0.9)]">
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        What this means
+                      </p>
+                      <p className="mt-1">
+                        We apply extra checks when content looks sensitive or
+                        risky. This keeps your data safer and reduces harmful or
+                        misleading outputs.
+                      </p>
+                      <p className="mt-2 font-semibold text-[rgb(var(--text))]">
+                        What you can do
+                      </p>
+                      <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                        <li>Remove any private info that isn&apos;t needed.</li>
+                        <li>Rephrase the request with more context, less detail.</li>
+                        <li>
+                          If this looks wrong, report it in settings so we can
+                          improve.
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       {/* BEST PRACTICES / EDUCATION */}
