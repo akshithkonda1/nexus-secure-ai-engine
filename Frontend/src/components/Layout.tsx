@@ -54,7 +54,7 @@ function LayoutContent() {
         <Header onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto px-4 pb-10 pt-24 sm:px-6 lg:px-10"
+          className="flex-1 overflow-y-auto px-4 pb-10 pt-24 sm:px-6 lg:px-10 [direction:ltr]"
         >
           <Suspense
             fallback={
