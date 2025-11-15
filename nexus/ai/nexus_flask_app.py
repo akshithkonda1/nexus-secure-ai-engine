@@ -55,6 +55,7 @@ from .nexus_engine import (
     WebRetriever,
     build_connectors_cloud_first,
     build_web_retriever_from_env,
+    MAX_MODELS_PER_REQUEST,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -831,6 +832,16 @@ def debate():
     pii_override = _coerce_bool(data.get("pii_override"), default=False)
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
+    if requested_models and len(requested_models) > MAX_MODELS_PER_REQUEST:
+        return (
+            jsonify(
+                {
+                    "error": "Too many models requested",
+                    "max_models": MAX_MODELS_PER_REQUEST,
+                }
+            ),
+            400,
+        )
     try:
         session_id = request.headers.get("X-API-Key", "anonymous")
         log_event(

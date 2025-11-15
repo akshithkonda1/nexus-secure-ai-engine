@@ -1,0 +1,322 @@
+openapi: 3.1.0
+info:
+  title: Nexus Secure AI Engine API
+  version: 1.0.0
+  description: |
+    REST API for orchestrating multi-model debates and monitoring Nexus engine health.
+servers:
+  - url: https://api.nexus.example.com
+    description: Production
+  - url: https://staging.nexus.example.com
+    description: Staging
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    DebateRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: Natural language query to debate across models.
+          maxLength: 16384
+        context:
+          type: string
+          description: Optional routing or business context label.
+        models:
+          type: array
+          description: Explicit list of connector names to participate in the debate.
+          items:
+            type: string
+        deadline_ms:
+          type: integer
+          format: int32
+          description: Soft deadline in milliseconds for completing the debate.
+          minimum: 1000
+        pii_protection:
+          type: boolean
+          description: Enable PII filtering and blocking logic.
+          default: true
+        pii_override:
+          type: boolean
+          description: Allow PII flagged prompts to proceed if permitted by policy.
+          default: false
+        telemetry_opt_in:
+          type: boolean
+          description: Opt-in flag for anonymized telemetry capture.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional client supplied metadata echoed back in audit logs.
+    DebateResponse:
+      type: object
+      required:
+        - status
+        - answer
+        - pii_detected
+        - pii_details
+        - models_used
+        - timings
+        - meta
+      properties:
+        status:
+          type: string
+          description: Status of the debate execution (e.g., ok, error, pii_detected).
+        answer:
+          type: string
+          nullable: true
+          description: Final synthesized answer from the debate.
+        models_used:
+          type: array
+          items:
+            type: string
+          description: Ordered list of connectors that contributed responses.
+        timings:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Latency per connector in seconds.
+        pii_detected:
+          type: boolean
+        pii_details:
+          type: array
+          items:
+            type: string
+        meta:
+          type: object
+          additionalProperties: true
+          description: Structured metadata including schema version and request identifiers.
+        sources:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Optional supporting evidence or search references.
+        error_code:
+          type: string
+          description: Machine readable error classification when status != ok.
+        error_message:
+          type: string
+          description: Human readable error message when status != ok.
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+        max_models:
+          type: integer
+          description: Present when the number of requested models exceeds the plan limit.
+paths:
+  /debate:
+    post:
+      summary: Execute a multi-model debate
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebateRequest'
+            examples:
+              simple:
+                value:
+                  prompt: Explain zero trust networking.
+                  models:
+                    - openai.gpt-4o
+                    - anthropic.claude-3
+                  deadline_ms: 120000
+      responses:
+        '200':
+          description: Debate completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebateResponse'
+              examples:
+                success:
+                  value:
+                    status: ok
+                    answer: Zero trust enforces per-request verification across identity, device, and context.
+                    models_used:
+                      - openai.gpt-4o
+                      - anthropic.claude-3
+                    timings:
+                      openai.gpt-4o: 1.42
+                      anthropic.claude-3: 1.98
+                    pii_detected: false
+                    pii_details: []
+                    meta:
+                      schema_version: 1.0
+                      request_id: 6f3c2eab91cd
+                    sources:
+                      - url: https://example.com/article
+                        title: Zero Trust in Practice
+        '400':
+          description: Invalid request payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_prompt:
+                  value:
+                    error: Prompt is required
+                too_many_models:
+                  value:
+                    error: Too many models requested
+                    max_models: 5
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  value:
+                    error: Unauthorized
+        '413':
+          description: Request body exceeded the configured size limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                too_large:
+                  value:
+                    error: Request too large
+        '429':
+          description: Quality of service or rate limiting triggered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                throttled:
+                  value:
+                    error: Rate limited (rpm). Try again shortly.
+        '500':
+          description: Unexpected error while processing the debate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                internal:
+                  value:
+                    error: Internal server error
+  /healthz:
+    get:
+      summary: Health check
+      description: Lightweight health probe used by load balancers.
+      responses:
+        '200':
+          description: The service is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: string
+              example:
+                status: ok
+                uptime: 0:02:14
+  /readyz:
+    get:
+      summary: Readiness probe
+      description: Indicates whether dependencies such as model connectors and memory stores are ready.
+      responses:
+        '200':
+          description: Ready to accept traffic.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: string
+                  detail:
+                    type: object
+                    additionalProperties: true
+              example:
+                status: ok
+                uptime: 0:02:15
+        '503':
+          description: One or more dependencies are unavailable.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: string
+                  detail:
+                    type: object
+                    additionalProperties: true
+              example:
+                status: error
+                uptime: 0:02:15
+                detail:
+                  connectors:
+                    search: degraded
+  /status:
+    get:
+      summary: Report status of connectors and memory subsystems
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Current runtime status snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+                  uptime:
+                    type: string
+                  models:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  memory:
+                    type: object
+                    additionalProperties: true
+              example:
+                status: "🟢 Running"
+                version: 1.0.0
+                uptime: 0:03:01
+                models:
+                  openai.gpt-4o: Healthy
+                  anthropic.claude-3: Degraded
+                memory:
+                  redis: ok
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Unauthorized

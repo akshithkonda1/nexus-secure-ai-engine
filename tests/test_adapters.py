@@ -1,5 +1,6 @@
 # mypy: ignore-errors
 
+import asyncio
 import importlib
 import json
 import os
@@ -84,11 +85,11 @@ def test_adapters_handle_sample_payload(monkeypatch, adapter, sample, expected):
     monkeypatch.setenv("NEXUS_ALLOWED_MODEL_DOMAINS", "example.com")
     connector = ModelConnector(name="model", endpoint="https://example.com/api", adapter=adapter)
 
-    def fake_post(payload, deadline=None):
+    async def fake_post(payload, deadline=None):
         return sample
 
     connector._post = fake_post  # type: ignore[attr-defined]
-    text, meta = connector.infer("prompt")
+    text, meta = asyncio.run(connector.infer("prompt"))
     assert text == expected
     assert isinstance(meta, dict)
 
@@ -101,11 +102,11 @@ def test_adapter_fallback_serializes_payload(monkeypatch):
 
     payloads = []
 
-    def fake_post(payload, deadline=None):
+    async def fake_post(payload, deadline=None):
         payloads.append(json.dumps(payload))
         return {"unexpected": "structure"}
 
     connector._post = fake_post  # type: ignore[attr-defined]
-    text, _ = connector.infer("prompt")
+    text, _ = asyncio.run(connector.infer("prompt"))
     assert "unexpected" in text
     assert payloads, "adapter should serialize payload"
