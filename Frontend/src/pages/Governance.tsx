@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
+  ChevronDown,
   FileWarning,
   Lock,
   ShieldAlert,
@@ -93,6 +94,7 @@ export function Governance() {
   const [mode, setMode] = useState<SafetyMode>("balanced");
   const [completedChecklist, setCompletedChecklist] = useState<string[]>([]);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(true);
 
   const activeMode =
     SAFETY_MODES.find((m) => m.id === mode) ?? SAFETY_MODES[1];
@@ -266,22 +268,42 @@ export function Governance() {
         </div>
       </section>
 
-      {/* CHECKLIST */}
+      {/* CHECKLIST (collapsible) */}
       <section className="panel panel--glassy panel--immersive panel--alive panel--glow panel--gradient-border rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-6 shadow-[var(--shadow-soft)]">
         <header className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-              Next best steps
-            </p>
-            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
-              Three things you can do today
-            </h2>
-            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.82)]">
-              These aren&apos;t required—but if you complete them, you&apos;ll be
-              operating at the same safety level we recommend for journalists,
-              creators, and power users.
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsChecklistOpen((prev) => !prev)}
+            className="flex flex-1 items-center justify-between gap-3 text-left"
+            aria-expanded={isChecklistOpen}
+          >
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
+                Next best steps
+              </p>
+              <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
+                Three things you can do today
+              </h2>
+              <p className="mt-1 text-xs text-[rgba(var(--subtle),0.82)]">
+                These aren&apos;t required—but if you complete them, you&apos;ll be
+                operating at the same safety level we recommend for journalists,
+                creators, and power users.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="hidden text-[11px] text-[rgba(var(--subtle),0.78)] sm:inline">
+                {checklistProgress.done}/{checklistProgress.total} done
+              </p>
+              <span
+                className={`flex size-7 items-center justify-center rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.95)] transition-transform ${
+                  isChecklistOpen ? "rotate-180" : ""
+                }`}
+              >
+                <ChevronDown className="size-4 text-[rgba(var(--subtle),0.9)]" />
+              </span>
+            </div>
+          </button>
+
           <button
             type="button"
             onClick={() => requestDocumentsView("audit")}
@@ -291,74 +313,78 @@ export function Governance() {
           </button>
         </header>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-          <p>
-            {checklistProgress.done} of {checklistProgress.total} steps
-            completed
-          </p>
-          {checklistProgress.done === checklistProgress.total && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--accent-emerald),0.2)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgb(var(--accent-emerald-ink))]">
-              <CheckCircle className="size-3" /> Fully secured
-            </span>
-          )}
-        </div>
+        {isChecklistOpen && (
+          <>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
+              <p>
+                {checklistProgress.done} of {checklistProgress.total} steps
+                completed
+              </p>
+              {checklistProgress.done === checklistProgress.total && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--accent-emerald),0.2)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[rgb(var(--accent-emerald-ink))]">
+                  <CheckCircle className="size-3" /> Fully secured
+                </span>
+              )}
+            </div>
 
-        <ul className="mt-3 space-y-3">
-          {checklist.map((item) => {
-            const isDone = completedChecklist.includes(item.id);
+            <ul className="mt-3 space-y-3">
+              {checklist.map((item) => {
+                const isDone = completedChecklist.includes(item.id);
 
-            return (
-              <li
-                key={item.id}
-                className="panel panel--glassy panel--hover panel--alive flex items-start justify-between rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--panel),0.72)] px-4 py-3 text-sm text-[rgb(var(--text))]"
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCompletedChecklist((current) =>
-                        current.includes(item.id)
-                          ? current.filter((id) => id !== item.id)
-                          : [...current, item.id]
-                      )
-                    }
-                    className={`mt-0.5 flex size-4 items-center justify-center rounded-[10px] border text-[10px] transition ${
-                      isDone
-                        ? "border-[rgba(var(--accent-emerald),0.9)] bg-[rgba(var(--accent-emerald),0.25)] text-[rgb(var(--accent-emerald-ink))]"
-                        : "border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.9)] text-[rgba(var(--subtle),0.7)] hover:border-[rgba(var(--brand),0.5)]"
-                    }`}
-                    aria-pressed={isDone}
-                    aria-label={
-                      isDone
-                        ? `Mark "${item.title}" as not done`
-                        : `Mark "${item.title}" as done`
-                    }
+                return (
+                  <li
+                    key={item.id}
+                    className="panel panel--glassy panel--hover panel--alive flex items-start justify-between rounded-2xl border border-[rgba(var(--border),0.65)] bg-[rgba(var(--panel),0.72)] px-4 py-3 text-sm text-[rgb(var(--text))]"
                   >
-                    {isDone ? "✓" : ""}
-                  </button>
+                    <div className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCompletedChecklist((current) =>
+                            current.includes(item.id)
+                              ? current.filter((id) => id !== item.id)
+                              : [...current, item.id]
+                          )
+                        }
+                        className={`mt-0.5 flex size-4 items-center justify-center rounded-[10px] border text-[10px] transition ${
+                          isDone
+                            ? "border-[rgba(var(--accent-emerald),0.9)] bg-[rgba(var(--accent-emerald),0.25)] text-[rgb(var(--accent-emerald-ink))]"
+                            : "border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.9)] text-[rgba(var(--subtle),0.7)] hover:border-[rgba(var(--brand),0.5)]"
+                        }`}
+                        aria-pressed={isDone}
+                        aria-label={
+                          isDone
+                            ? `Mark "${item.title}" as not done`
+                            : `Mark "${item.title}" as done`
+                        }
+                      >
+                        {isDone ? "✓" : ""}
+                      </button>
 
-                  <div>
-                    <p className="font-semibold">{item.title}</p>
-                    <p className="mt-1 text-xs text-[rgba(var(--subtle),0.78)]">
-                      {item.body}
-                    </p>
-                  </div>
-                </div>
-                <div className="ml-3 text-right text-xs">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 ${
-                      item.tone === "ok"
-                        ? "chip chip--ok"
-                        : "chip chip--warn"
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                      <div>
+                        <p className="font-semibold">{item.title}</p>
+                        <p className="mt-1 text-xs text-[rgba(var(--subtle),0.78)]">
+                          {item.body}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="ml-3 text-right text-xs">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 ${
+                          item.tone === "ok"
+                            ? "chip chip--ok"
+                            : "chip chip--warn"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
       </section>
 
       {/* RECENT SAFETY ACTIVITY */}
@@ -542,7 +568,9 @@ export function Governance() {
                 <span className="font-semibold">911</span> for immediate help.
               </li>
               <li>
-                <span className="font-semibold">988 Suicide & Crisis Lifeline:</span>{" "}
+                <span className="font-semibold">
+                  988 Suicide &amp; Crisis Lifeline:
+                </span>{" "}
                 Call or text <span className="font-semibold">988</span> or visit{" "}
                 <a
                   href="https://988lifeline.org"
@@ -562,9 +590,11 @@ export function Governance() {
             </p>
             <ul className="mt-1 space-y-1">
               <li>
-                <span className="font-semibold">National Domestic Violence Hotline:</span>{" "}
-                Call <span className="font-semibold">1-800-799-SAFE (7233)</span>,{" "}
-                text <span className="font-semibold">START</span> to{" "}
+                <span className="font-semibold">
+                  National Domestic Violence Hotline:
+                </span>{" "}
+                Call <span className="font-semibold">1-800-799-SAFE (7233)</span>
+                , text <span className="font-semibold">START</span> to{" "}
                 <span className="font-semibold">88788</span>, or visit{" "}
                 <a
                   href="https://www.thehotline.org"
