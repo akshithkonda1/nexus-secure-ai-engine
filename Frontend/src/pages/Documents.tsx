@@ -14,7 +14,7 @@ import { formatFileSize, formatRelativeTime } from "@/lib/formatters";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 // Official SVG assets (must live in Frontend/src/assets/)
-import googleDriveLogoUrl from "../assets/google-drive.svg";
+import googleDriveLogoUrl from "../assets/google-drive-1.svg";
 import dropboxLogoUrl from "../assets/dropbox.svg";
 
 const EMPTY_ITEMS: DocumentItem[] = [];
