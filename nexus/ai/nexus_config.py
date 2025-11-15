@@ -19,25 +19,7 @@ __all__ = [
     "save_config",
     "validate_config",
     "SecretResolver",
-]
-
-
-class ConfigError(ValueError):
-    """Raised when configuration sources cannot be coerced to the expected types."""
-
-
-_BOOL_TRUE = {"1", "true", "yes", "y", "on"}
-_BOOL_FALSE = {"0", "false", "no", "n", "off"}
-
-
-__all__ = [
-    "ConfigError",
-    "NexusConfig",
-    "load_config",
-    "load_and_validate",
-    "save_config",
-    "validate_config",
-    "SecretResolver",
+    "_validate_cloud_credentials",
 ]
 
 
@@ -62,6 +44,93 @@ class NexusConfig:
     max_context_messages: int = 12
     alpha_semantic: float = 0.7
     encrypt: bool = True
+
+
+def _has_override(cfg: "NexusConfig", keys: Iterable[str]) -> bool:
+    for key in keys:
+        if key in cfg.secret_overrides and str(cfg.secret_overrides[key]).strip():
+            return True
+        normalized = key.upper()
+        if normalized in cfg.secret_overrides and str(cfg.secret_overrides[normalized]).strip():
+            return True
+    return False
+
+
+def _validate_cloud_credentials(cfg: NexusConfig) -> List[str]:
+    """Validate cloud credentials based on configured providers.
+
+    The checks are intentionally lightweight to surface obviously missing
+    credentials before the application attempts to interact with external
+    services. They do *not* attempt to verify the authenticity of the
+    credentials; instead, they merely confirm that the expected environment
+    variables or overrides are populated for the configured providers.
+    """
+
+    errs: List[str] = []
+    env = os.environ
+
+    def _has_any(keys: Iterable[str]) -> bool:
+        for key in keys:
+            value = env.get(key)
+            if value and value.strip():
+                return True
+        return False
+
+    # AWS requirements
+    if "aws" in (cfg.memory_providers or []):
+        if not _has_any(["AWS_REGION", "AWS_DEFAULT_REGION"]):
+            errs.append("AWS memory provider requires AWS_REGION or AWS_DEFAULT_REGION")
+        if not (
+            (
+                _has_any(["AWS_ACCESS_KEY_ID"]) and _has_any(["AWS_SECRET_ACCESS_KEY"])
+            )
+            or _has_any([
+                "AWS_PROFILE",
+                "AWS_WEB_IDENTITY_TOKEN_FILE",
+                "AWS_ROLE_ARN",
+            ])
+        ):
+            errs.append(
+                "AWS memory provider requires credentials via access keys, profile, or role configuration"
+            )
+    bedrock_flag = env.get("NEXUS_ENABLE_BEDROCK")
+    if bedrock_flag and bedrock_flag.lower() not in {"0", "false", "no"}:
+        if not _has_any(["AWS_REGION", "AWS_DEFAULT_REGION"]):
+            errs.append("Bedrock connector requires AWS_REGION or AWS_DEFAULT_REGION")
+
+    # Azure requirements
+    if "azure" in (cfg.memory_providers or []):
+        if not _has_any(["AZURE_STORAGE_CONNECTION_STRING"]):
+            errs.append(
+                "Azure memory provider requires AZURE_STORAGE_CONNECTION_STRING"
+            )
+    if env.get("AZURE_OPENAI_ENDPOINT"):
+        if not (
+            _has_any(["AZURE_OPENAI_API_KEY"]) or _has_override(cfg, ["AZURE_OPENAI_API_KEY"])
+        ):
+            errs.append("Azure OpenAI connector requires AZURE_OPENAI_API_KEY")
+
+    # GCP requirements
+    if "gcp" in (cfg.memory_providers or []):
+        if not (
+            _has_any(["GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+            or _has_override(cfg, ["GOOGLE_APPLICATION_CREDENTIALS"])
+        ):
+            errs.append(
+                "GCP memory provider requires GOOGLE_APPLICATION_CREDENTIALS or equivalent secret override"
+            )
+        if not _has_any(["GOOGLE_CLOUD_PROJECT", "GCP_PROJECT"]):
+            errs.append("GCP memory provider requires GOOGLE_CLOUD_PROJECT or GCP_PROJECT")
+    if env.get("GOOGLE_CLOUD_PROJECT") or _has_override(cfg, ["GOOGLE_PROJECT", "GOOGLE_CLOUD_PROJECT"]):
+        if not (
+            _has_any(["GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+            or _has_override(cfg, ["GOOGLE_APPLICATION_CREDENTIALS"])
+        ):
+            errs.append(
+                "Google Cloud connectors require GOOGLE_APPLICATION_CREDENTIALS or inline credentials"
+            )
+
+    return errs
 
 
 def _base_dir() -> Path:
@@ -288,6 +357,7 @@ def validate_config(cfg: NexusConfig) -> List[str]:
             "(AZURE_OPENAI_ENDPOINT+AZURE_OPENAI_DEPLOYMENT+AZURE_OPENAI_API_KEY) | "
             "(AZURE_INFERENCE_ENDPOINT+AZURE_INFERENCE_API_KEY)"
         )
+    errs.extend(_validate_cloud_credentials(cfg))
     return errs
 
 
