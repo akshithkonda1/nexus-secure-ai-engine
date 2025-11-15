@@ -53,6 +53,7 @@ import math
 import threading
 import shutil
 import asyncio
+from html import escape as _html_escape
 from collections import Counter, deque
 from dataclasses import MISSING, dataclass, fields
 from fnmatch import fnmatch
@@ -139,6 +140,10 @@ except ModuleNotFoundError as exc: # pragma: no cover - exercised only when opti
         Response=_RequestsUnavailableResponse,
         utils=SimpleNamespace(quote=lambda value, safe="": _urllib_quote(value, safe=safe)),
     )
+try:
+    import bleach  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    bleach = None  # type: ignore
 try: # pragma: no cover - optional dependency
     from bs4 import BeautifulSoup # type: ignore
 except ModuleNotFoundError as exc: # pragma: no cover - test fallback
@@ -555,21 +560,51 @@ def _download_robots_rules(
     deadline: Optional[float],
 ) -> Optional[RobotFileParser]:
     robots_url = urljoin(base_url, "/robots.txt")
+    original_host = urlparse(robots_url).netloc.lower()
+    current_url = robots_url
+    redirects = 0
+    response = None
     try:
-        timeout = _remaining_timeout(deadline, 2.0)
-        response = session.get(
-            robots_url,
-            headers={"User-Agent": user_agent},
-            timeout=max(0.1, timeout),
-            stream=True,
-        )
-    except Exception as exc:
-        log.debug(
-            "robots_fetch_failed",
-            extra={"base_url": base_url, "error": str(exc)},
-        )
-        return None
-    try:
+        while True:
+            timeout = _remaining_timeout(deadline, 2.0)
+            try:
+                response = session.get(
+                    current_url,
+                    headers={"User-Agent": user_agent},
+                    timeout=max(0.1, timeout),
+                    stream=True,
+                    allow_redirects=False,
+                )
+            except Exception as exc:
+                log.debug(
+                    "robots_fetch_failed",
+                    extra={"base_url": base_url, "error": str(exc)},
+                )
+                return None
+            if getattr(response, "is_redirect", False) or response.status_code in {301, 302, 303, 307, 308}:
+                location = response.headers.get("location")
+                if not location:
+                    return None
+                target = urljoin(current_url, location)
+                target_host = urlparse(target).netloc.lower()
+                if target_host != original_host:
+                    log.warning(
+                        "robots_redirect_blocked",
+                        extra={"base_url": base_url, "target": target},
+                    )
+                    return None
+                redirects += 1
+                if redirects > 2:
+                    log.warning(
+                        "robots_redirect_limit_exceeded",
+                        extra={"base_url": base_url, "target": target},
+                    )
+                    return None
+                if response is not None:
+                    response.close()
+                current_url = target
+                continue
+            break
         if not getattr(response, "ok", False):
             return None
         declared = response.headers.get("content-length") if hasattr(response, "headers") else None
@@ -595,7 +630,7 @@ def _download_robots_rules(
             return None
         text = body.decode(getattr(response, "encoding", None) or "utf-8", errors="ignore")
         parser = RobotFileParser()
-        parser.set_url(robots_url)
+        parser.set_url(current_url)
         parser.parse(text.splitlines())
         return parser
     except Exception as exc:
@@ -605,13 +640,14 @@ def _download_robots_rules(
         )
         return None
     finally:
-        try:
-            response.close()
-        except Exception as exc:
-            log.debug(
-                "robots_response_close_failed",
-                extra={"base_url": base_url, "error": str(exc)},
-            )
+        if response is not None:
+            try:
+                response.close()
+            except Exception as exc:
+                log.debug(
+                    "robots_response_close_failed",
+                    extra={"base_url": base_url, "error": str(exc)},
+                )
 def _get_robots_parser(
     base_url: str,
     *,
@@ -1485,8 +1521,13 @@ class HtmlScraper:
             image = src.image or image_candidate
             return WebSource(url=src.url, title=title, snippet=desc, image=image, score=src.score)
         except DeadlineExceeded:
-            return src
-        except Exception:
+            raise
+        except Exception as exc:
+            log.warning(
+                "scrape_enrich_failed",
+                exc_info=True,
+                extra={"url": src.url, "error": str(exc)},
+            )
             return src
 class WebRetriever:
     def __init__(self, providers: List[SearchProvider], scraper: Optional[HtmlScraper] = None):
@@ -1508,6 +1549,7 @@ class WebRetriever:
         max_total: int = 12,
         deadline: Optional[float] = None,
         request_id: Optional[str] = None,
+        scrape_concurrency: Optional[int] = None,
     ) -> List[WebSource]:
         results: List[WebSource] = []
         if not self.providers:
@@ -1541,17 +1583,75 @@ class WebRetriever:
             if _SCRAPE_ALLOWLIST and not _host_allowed(s.url, _SCRAPE_ALLOWLIST):
                 continue
             seen.add(s.url)
-            if self.scraper:
-                try:
-                    enriched = await self.scraper.enrich(s, deadline=deadline)
-                except Exception:
-                    enriched = s
-                uniq.append(enriched)
-            else:
-                uniq.append(s)
+            uniq.append(s)
             if len(uniq) >= max_total:
                 break
-        return uniq[:max_total]
+        if not uniq:
+            return []
+        if not self.scraper:
+            return uniq[:max_total]
+        enriched = await self.enrich_batch(
+            uniq[:max_total],
+            concurrency_limit=scrape_concurrency,
+            deadline=deadline,
+            request_id=request_id,
+        )
+        return enriched[:max_total]
+
+    async def enrich_batch(
+        self,
+        sources: List[WebSource],
+        *,
+        concurrency_limit: Optional[int] = None,
+        deadline: Optional[float] = None,
+        request_id: Optional[str] = None,
+    ) -> List[WebSource]:
+        if not sources or not self.scraper:
+            return list(sources)
+        if concurrency_limit is None:
+            try:
+                concurrency_limit = int(os.getenv("NEXUS_SCRAPE_CONCURRENCY", "5"))
+            except ValueError:
+                concurrency_limit = 5
+        limit = max(1, concurrency_limit or 1)
+        semaphore = asyncio.Semaphore(limit)
+        tasks: Dict[asyncio.Task[WebSource], int] = {}
+
+        async def _run(index: int, item: WebSource) -> WebSource:
+            if deadline and time.monotonic() >= deadline:
+                raise DeadlineExceeded("Scrape deadline exceeded")
+            async with semaphore:
+                if deadline and time.monotonic() >= deadline:
+                    raise DeadlineExceeded("Scrape deadline exceeded")
+                try:
+                    enriched = await self.scraper.enrich(item, deadline=deadline)
+                except DeadlineExceeded:
+                    raise
+                except Exception as exc:
+                    log.warning(
+                        "scrape_enrich_task_failed",
+                        exc_info=True,
+                        extra={"url": item.url, "request_id": request_id, "error": str(exc)},
+                    )
+                    return item
+                return enriched
+
+        for idx, source in enumerate(sources):
+            task = asyncio.create_task(_run(idx, source))
+            tasks[task] = idx
+
+        ordered: List[WebSource] = list(sources)
+        try:
+            for task in asyncio.as_completed(tasks):
+                idx = tasks[task]
+                ordered[idx] = await task
+        except DeadlineExceeded:
+            for task in tasks:
+                task.cancel()
+            raise
+        except asyncio.CancelledError:
+            raise
+        return ordered
 # =========================================================
 # Result policies
 # =========================================================
@@ -1663,6 +1763,7 @@ class EngineConfig:
     search_k_per_provider: int = 5
     search_max_total: int = 12
     scrape_timeout: int = 8
+    scrape_concurrency: int = 5
     default_deadline_ms: Optional[int] = (
         int(os.getenv("NEXUS_DEFAULT_DEADLINE_MS"))
         if os.getenv("NEXUS_DEFAULT_DEADLINE_MS")
@@ -1690,6 +1791,16 @@ class EngineConfig:
         for key, value in overrides.items():
             if hasattr(self, key):
                 setattr(self, key, value)
+        env_concurrency = os.getenv("NEXUS_SCRAPE_CONCURRENCY")
+        if env_concurrency is not None:
+            try:
+                self.scrape_concurrency = int(env_concurrency)
+            except ValueError:
+                pass
+        try:
+            self.scrape_concurrency = max(1, int(self.scrape_concurrency))
+        except (TypeError, ValueError):
+            self.scrape_concurrency = 5
 _CODE_RE = re.compile(
     r"```(?P<lang>[a-zA-Z0-9_\-+. ]*)\r?\n(?P<body>[\s\S]*?)```",
     re.MULTILINE,
@@ -1734,6 +1845,24 @@ def _sanitize(txt: Optional[str]) -> Optional[str]:
         pattern = "|".join(re.escape(p) for p in bad_phrases)
         return re.sub(pattern, "[redacted]", txt, flags=re.IGNORECASE)
     return txt
+
+
+_SANITIZE_ALLOWED_TAGS = {"p", "br", "code", "pre", "ul", "ol", "li", "strong", "em"}
+
+
+def _sanitize_model_output(text: Optional[str]) -> str:
+    """Sanitize model output to mitigate XSS in downstream clients."""
+
+    if text is None:
+        return ""
+    if bleach:
+        return bleach.clean(
+            text,
+            tags=_SANITIZE_ALLOWED_TAGS,
+            attributes={},
+            strip=True,
+        )
+    return _html_escape(text)
 @lru_cache(maxsize=128)
 def _bm25_scores(
     answer_text: str, docs: Tuple[str, ...], *, k1: float = 1.2, b: float = 0.75
@@ -2071,6 +2200,19 @@ class Engine:
             if isinstance(text, str) and not text.strip():
                 text = ""
             return name, text, round(time.time() - t0, 3)
+        except DeadlineExceeded:
+            raise
+        except (asyncio.TimeoutError, TimeoutError) as exc:
+            log.warning(
+                "connector_timeout",
+                extra={
+                    "request_id": request_id,
+                    "session_id": session_id,
+                    "connector": name,
+                    "error": str(exc),
+                },
+            )
+            return name, "", round(time.time() - t0, 3)
         except NexusError as exc:
             log.warning(
                 "connector_failed",
@@ -2083,9 +2225,15 @@ class Engine:
             )
             return name, "", round(time.time() - t0, 3)
         except Exception as exc:
-            log.warning(
+            log.error(
                 "connector_exception",
-                extra={"request_id": request_id, "connector": name, "error": str(exc)},
+                exc_info=True,
+                extra={
+                    "request_id": request_id,
+                    "session_id": session_id,
+                    "connector": name,
+                    "error": str(exc),
+                },
             )
             return name, "", round(time.time() - t0, 3)
     async def _collect_sources(
@@ -2104,7 +2252,7 @@ class Engine:
             if len(results) >= max_total:
                 break
             if deadline and time.monotonic() >= deadline:
-                break
+                raise DeadlineExceeded("Search deadline exceeded")
             try:
                 search_result = self.web.search_all(
                     q,
@@ -2113,6 +2261,7 @@ class Engine:
                     max_total=max_total,
                     deadline=deadline,
                     request_id=request_id,
+                    scrape_concurrency=self.config.scrape_concurrency,
                 )
                 batch = (
                     await search_result
@@ -2128,14 +2277,17 @@ class Engine:
                         continue
                     results.append(s)
                     seen.add(s.url)
+                    if deadline and time.monotonic() >= deadline:
+                        raise DeadlineExceeded("Search deadline exceeded")
                     if len(results) >= max_total:
                         break
             except DeadlineExceeded:
-                break
+                raise
             except Exception as e:
                 log.warning(
                     "web_search_failed",
                     extra={"request_id": request_id, "error": str(e)},
+                    exc_info=True,
                 )
         return results[:max_total]
     def _rank_and_verify(
@@ -2333,13 +2485,13 @@ class Engine:
             policy_name=policy_name,
             want_photos=want_photos,
             deadline_ms=deadline_ms,
-                requested_models=requested_models,
-                user=user,
-                request_id=request_id,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-                telemetry_opt_in=telemetry_opt_in,
-            )
+            requested_models=requested_models,
+            user=user,
+            request_id=request_id,
+            pii_detected=pii_detected,
+            pii_details=pii_details,
+            telemetry_opt_in=telemetry_opt_in,
+        )
 
     async def _run_internal(
         self,
@@ -2387,6 +2539,8 @@ class Engine:
             deadline = None
         log.info("engine_run_start", extra={"request_id": request_id, "session_id": session_id})
         try:
+            if deadline and time.monotonic() >= deadline:
+                raise DeadlineExceeded("Request deadline exceeded")
             self._save_mem(session_id, "user", query, {"ephemeral": False})
             history = self._history_for(session_id)
             default_tier = os.getenv("NEXUS_DEFAULT_TIER", "pro")
@@ -2431,23 +2585,36 @@ class Engine:
             )
             answers: Dict[str, str] = {}
             latencies: Dict[str, float] = {}
-            coros = [
-                self._infer_one(
-                    n,
-                    c,
-                    query,
-                    history,
-                    deadline=deadline,
-                    request_id=request_id,
-                    session_id=session_id,
+            tasks = [
+                asyncio.create_task(
+                    self._infer_one(
+                        n,
+                        c,
+                        query,
+                        history,
+                        deadline=deadline,
+                        request_id=request_id,
+                        session_id=session_id,
+                    )
                 )
                 for n, c in connectors_to_use.items()
             ]
-            for coro in asyncio.as_completed(coros):
-                name, text, dt = await coro
-                latencies[name] = dt
-                if text:
-                    answers[name] = text
+            try:
+                for task in asyncio.as_completed(tasks):
+                    if deadline and time.monotonic() >= deadline:
+                        raise DeadlineExceeded("Inference deadline exceeded")
+                    name, text, dt = await task
+                    latencies[name] = dt
+                    if text:
+                        answers[name] = text
+            except DeadlineExceeded:
+                for task in tasks:
+                    task.cancel()
+                raise
+            finally:
+                for task in tasks:
+                    if not task.done():
+                        task.cancel()
             if not answers:
                 return self._error_response(
                     message="No model produced an answer.",
@@ -2523,7 +2690,30 @@ class Engine:
                     meta_extra={"collected_sources": len(web_refs)},
                 )
             code_blocks = _extract_code_blocks(answer_text)
-            self._save_mem(session_id, "assistant", answer_text, {"ephemeral": False})
+            sanitized_answer = _sanitize_model_output(answer_text)
+            sanitized_sources = [
+                {
+                    "url": ref.get("url"),
+                    "title": _sanitize_model_output(ref.get("title")),
+                    "snippet": _sanitize_model_output(ref.get("snippet")),
+                }
+                for ref in web_refs
+            ]
+            sanitized_photos = [
+                {
+                    "url": photo.get("url"),
+                    "caption": _sanitize_model_output(photo.get("caption")),
+                }
+                for photo in photos
+            ]
+            sanitized_code_blocks = [
+                {
+                    "language": block.get("language"),
+                    "code": _sanitize_model_output(block.get("code")),
+                }
+                for block in code_blocks
+            ]
+            self._save_mem(session_id, "assistant", sanitized_answer, {"ephemeral": False})
             wconn = self.connectors.get(winner)
             winner_ref = {
                 "name": winner,
@@ -2552,7 +2742,7 @@ class Engine:
                 meta_extra["suggested"] = suggestion
             payload = self._base_response(
                 status="ok",
-                answer=answer_text,
+                answer=sanitized_answer,
                 pii_detected=pii_detected,
                 pii_details=pii_details,
                 models_used=participants,
@@ -2562,9 +2752,9 @@ class Engine:
                     "winner": winner,
                     "winner_ref": winner_ref,
                     "participants": participants,
-                    "code": code_blocks,
-                    "sources": web_refs,
-                    "photos": photos if want_photos else [],
+                    "code": sanitized_code_blocks,
+                    "sources": sanitized_sources,
+                    "photos": sanitized_photos if want_photos else [],
                 },
             )
             if pro_only:
@@ -2608,6 +2798,18 @@ class Engine:
                 except Exception:  # pragma: no cover - defensive
                     log.debug("telemetry_record_failed", exc_info=True)
             return payload
+        except DeadlineExceeded as exc:
+            log.warning(
+                "engine_run_deadline",
+                extra={"request_id": request_id, "session_id": session_id, "error": str(exc)},
+            )
+            return self._error_response(
+                message="Request deadline exceeded.",
+                error_code="deadline_exceeded",
+                request_id=request_id,
+                pii_detected=pii_detected,
+                pii_details=pii_details,
+            )
         except Exception as exc:
             log.error(
                 "engine_run_exception",

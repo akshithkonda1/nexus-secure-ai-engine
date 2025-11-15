@@ -112,7 +112,12 @@ class MemoryStore:
     """Abstract interface for chat history storage backends."""
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
         raise NotImplementedError
 
@@ -138,9 +143,14 @@ class InMemoryStore(MemoryStore):
         logger.info("InMemoryStore initialized")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
-        mid = uuid.uuid4().hex
+        mid = message_id or uuid.uuid4().hex
         ts = _now_ms()
         payload = _copy_meta(meta)
         self._data.setdefault(session_id, []).append(
@@ -186,9 +196,14 @@ class DynamoDBMemoryStore(MemoryStore):
         )
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
-        mid = uuid.uuid4().hex
+        mid = message_id or uuid.uuid4().hex
         ts = _now_ms()
         payload = _copy_meta(meta)
         item: Dict[str, Any] = {
@@ -242,9 +257,14 @@ class FirestoreMemoryStore(MemoryStore):
         logger.info(f"FirestoreMemoryStore initialized collection_prefix={self._col}")
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
-        mid = uuid.uuid4().hex
+        mid = message_id or uuid.uuid4().hex
         ts = _now_ms()
         payload: Dict[str, Any] = {
             "id": mid,
@@ -315,9 +335,14 @@ class AzureBlobMemoryStore(MemoryStore):
         return self._svc.get_blob_client(container=self._container, blob=name)
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
-        mid = uuid.uuid4().hex
+        mid = message_id or uuid.uuid4().hex
         ts = _now_ms()
         meta_payload = _copy_meta(meta)
         payload = {"id": mid, "ts": ts, "role": role, "text": text, "meta": meta_payload}
@@ -399,31 +424,85 @@ class MultiMemoryStore:
         return self.stores[0]
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Mapping[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Mapping[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
         payload = _copy_meta(meta)
-        ids: List[str] = []
-        errors: List[str] = []
-        for i, s in enumerate(self.stores):
+        shared_id = message_id or uuid.uuid4().hex
+        successful_backends: List[str] = []
+        errors: List[Dict[str, Any]] = []
+        for index, store in enumerate(self.stores):
             try:
-                mid = s.save(session_id, role, text, dict(payload))
-                ids.append(mid)
+                try:
+                    returned = store.save(
+                        session_id,
+                        role,
+                        text,
+                        dict(payload),
+                        message_id=shared_id,
+                    )
+                except TypeError as type_exc:
+                    if "message_id" in str(type_exc):
+                        returned = store.save(  # type: ignore[call-arg]
+                            session_id,
+                            role,
+                            text,
+                            dict(payload),
+                        )
+                    else:
+                        raise
+                successful_backends.append(store.__class__.__name__)
+                if returned and returned != shared_id:
+                    logger.warning(
+                        "memory_store_id_mismatch",
+                        extra={
+                            "backend": store.__class__.__name__,
+                            "session_id": session_id,
+                            "expected": shared_id,
+                            "returned": returned,
+                        },
+                    )
                 if not self.fanout:
                     break
-            except Exception as e:
-                err = f"write failed backend={s.__class__.__name__} err={e}"
-                errors.append(err)
-                logger.warning(err)
+            except Exception as exc:
+                error_info = {
+                    "backend": store.__class__.__name__,
+                    "index": index,
+                    "error": str(exc),
+                }
+                errors.append(error_info)
+                logger.warning(
+                    "memory_store_write_failed",
+                    exc_info=True,
+                    extra={
+                        "backend": store.__class__.__name__,
+                        "session_id": session_id,
+                        "role": role,
+                    },
+                )
                 continue
-        ok = bool(ids)
-        if not ok:
+        if not successful_backends:
             raise MemoryStoreError(
                 f"Failed to persist message for session {session_id}; attempted {len(self.stores)} stores",
             )
         if errors:
-            logger.debug("MultiMemoryStore.save partial failures=%s", errors)
-        logger.debug(f"MultiMemoryStore.save session={session_id} wrote={len(ids)} ok={ok}")
-        return ids[0] if ids else ""
+            logger.warning(
+                "memory_store_partial_failure",
+                extra={"session_id": session_id, "errors": errors},
+            )
+        logger.debug(
+            "MultiMemoryStore.save",
+            extra={
+                "session_id": session_id,
+                "backends": successful_backends,
+                "fanout": self.fanout,
+            },
+        )
+        return shared_id
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
         lim = _normalize_limit(limit)

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { create } from "zustand";
 
+import { getItem, setItem } from "@/lib/storage";
+
 export type DebateResponse = {
   model: string;
   text: string;
@@ -49,14 +51,13 @@ const http = axios.create({
   },
 });
 
-const resolveTelemetryOptIn = () => {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  return localStorage.getItem("nexus.telemetryOptIn") === "true";
+const resolveTelemetryOptIn = async () => {
+  const stored = await getItem<string>("nexus.telemetryOptIn");
+  return stored === "true";
 };
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+let activeQueryController: AbortController | null = null;
 
 async function postTelemetry(payload: TelemetryPayload) {
   try {
@@ -77,7 +78,7 @@ export const useDebateStore = create<DebateState>((set, get) => ({
   error: null,
   queryCount: 0,
   history: [],
-  telemetryOptIn: resolveTelemetryOptIn(),
+  telemetryOptIn: false,
   async submitQuery(value) {
     const pendingQuery = (value ?? get().query).trim();
     if (!pendingQuery) {
@@ -88,9 +89,18 @@ export const useDebateStore = create<DebateState>((set, get) => ({
     set({ loading: true, error: null, query: pendingQuery });
 
     let lastError: unknown;
+    if (activeQueryController) {
+      activeQueryController.abort();
+    }
+    const controller = new AbortController();
+    activeQueryController = controller;
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
-        const response = await http.post("/api/debate", { query: pendingQuery });
+        const response = await http.post(
+          "/api/debate",
+          { query: pendingQuery },
+          { signal: controller.signal },
+        );
         const data = response.data as {
           responses?: DebateResponse[];
           consensus?: string;
@@ -130,14 +140,21 @@ export const useDebateStore = create<DebateState>((set, get) => ({
           });
         }
 
+        activeQueryController = null;
         return;
       } catch (error) {
+        if ((error as Error)?.name === "CanceledError" || (error as DOMException)?.name === "AbortError") {
+          activeQueryController = null;
+          return;
+        }
         lastError = error;
         if (attempt < 2) {
           await delay(500 * (attempt + 1));
         }
       }
     }
+
+    activeQueryController = null;
 
     set({
       loading: false,
@@ -156,9 +173,7 @@ export const useDebateStore = create<DebateState>((set, get) => ({
   },
   async setOptIn(value) {
     set({ telemetryOptIn: value });
-    if (typeof window !== "undefined") {
-      localStorage.setItem("nexus.telemetryOptIn", value ? "true" : "false");
-    }
+    await setItem("nexus.telemetryOptIn", value ? "true" : "false");
     await postTelemetry({
       event: "telemetry_opt_in",
       data: { value },
@@ -177,3 +192,13 @@ export const useDebateStore = create<DebateState>((set, get) => ({
     set({ error: null });
   },
 }));
+
+resolveTelemetryOptIn()
+  .then((value) => {
+    useDebateStore.setState({ telemetryOptIn: value });
+  })
+  .catch((error) => {
+    if (import.meta.env.DEV) {
+      console.error("Failed to hydrate telemetry opt-in", error);
+    }
+  });

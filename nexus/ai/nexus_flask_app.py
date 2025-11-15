@@ -50,6 +50,7 @@ from .nexus_engine import (
     Crypter,
     Engine,
     EngineConfig,
+    MAX_MODELS_PER_REQUEST,
     MisconfigurationError,
     SearchProvider,
     WebRetriever,
@@ -63,6 +64,22 @@ from nexus.audit_logger import Actor, log_event
 from nexus.plan_resolver import UserTierContext, get_effective_tier
 from nexus.qos import enforce_qos
 from nexus.security import redact_and_detect
+from .migrations import AUDIT_LOG_SCHEMA_VERSION, ensure_audit_table_exists
+
+
+MAX_PROMPT_LENGTH = 32_000
+MAX_DEADLINE_MS = 60_000
+
+_startup_logger = logging.getLogger("nexus.flask.startup")
+if not _startup_logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(
+        logging.Formatter(
+            '{"ts":"%(asctime)s","lvl":"%(levelname)s","msg":"%(message)s"}'
+        )
+    )
+    _startup_logger.addHandler(_handler)
+_startup_logger.setLevel(logging.INFO)
 
 
 def node_health():
@@ -235,7 +252,11 @@ def _load_nexus_config() -> NexusConfig:
     except ConfigError as exc:
         raise AppInitializationError(f"Unable to load Nexus configuration: {exc}") from exc
     if errors:
-        raise AppInitializationError("; ".join(errors))
+        for err in errors:
+            _startup_logger.error("config_validation_error error=%s", err)
+        raise AppInitializationError(
+            "Configuration validation failed; see logs for details"
+        )
     return cfg
 
 
@@ -668,14 +689,35 @@ def _uptime() -> str:
 
 
 # Optional DynamoDB resources for audit/scope/webhooks
+ClientError = BotoCoreError = Exception  # type: ignore
 try:
     import boto3
     from boto3.dynamodb.conditions import Key
+    from botocore.exceptions import BotoCoreError, ClientError  # type: ignore
 
     ddb = boto3.resource("dynamodb", region_name=os.getenv("AWS_REGION", "us-east-1"))
-    audit_table = ddb.Table(os.getenv("DYNAMODB_AUDIT_TABLE", "NexusAuditLogs"))
+    audit_table_name = os.getenv("DYNAMODB_AUDIT_TABLE", "NexusAuditLogs")
+    try:
+        ensure_audit_table_exists(ddb, table_name=audit_table_name)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning(
+            "audit_table_initialization_failed",
+            exc_info=True,
+            extra={"error": str(exc)},
+        )
+        raise
+    audit_table = ddb.Table(audit_table_name)
     scope_table = ddb.Table(os.getenv("DYNAMODB_SCOPE_TABLE", "NexusUserScopes"))
     webhook_table = ddb.Table(os.getenv("DYNAMODB_WEBHOOK_TABLE", "NexusWebhooks"))
+except (ClientError, BotoCoreError) as exc:
+    logger.warning(
+        "dynamodb_initialization_failed",
+        exc_info=True,
+        extra={"error": str(exc)},
+    )
+    boto3 = None
+    Key = None
+    audit_table = scope_table = webhook_table = None
 except Exception:
     boto3 = None
     Key = None
@@ -685,9 +727,15 @@ except Exception:
 def _audit_put(item: dict[str, Any]) -> None:
     if audit_table:
         try:
-            audit_table.put_item(Item=item)
+            payload = dict(item)
+            payload.setdefault("schema_version", AUDIT_LOG_SCHEMA_VERSION)
+            audit_table.put_item(Item=payload)
         except Exception as e:
-            logger.warning(f"audit put failed: {e}")
+            logger.warning(
+                "audit_put_failed",
+                exc_info=True,
+                extra={"error": str(e)},
+            )
 
 
 def _scope_put(user_id: str, scope: str) -> bool:
@@ -825,9 +873,28 @@ def debate():
     data = sanitize_input(request.get_json() or {})
     prompt = (data.get("prompt") or "").strip()
     context = (data.get("context") or "overall").strip()
-    requested_models = data.get("models")
-    if not isinstance(requested_models, list):
+    raw_models = data.get("models")
+    if raw_models is None:
+        requested_models: list[str] = []
+    elif isinstance(raw_models, list):
         requested_models = []
+        for model in raw_models:
+            value = str(model).strip()
+            if value:
+                requested_models.append(value)
+    else:
+        return jsonify({"error": "models must be a list"}), 400
+    if len(requested_models) > MAX_MODELS_PER_REQUEST:
+        return (
+            jsonify(
+                {
+                    "error": (
+                        f"models cannot exceed {MAX_MODELS_PER_REQUEST} entries"
+                    )
+                }
+            ),
+            400,
+        )
     pii_protection = _coerce_bool(data.get("pii_protection"), default=True)
     pii_override = _coerce_bool(data.get("pii_override"), default=False)
     if not prompt:
@@ -856,6 +923,7 @@ def debate():
             user=_current_user(),
             pii_protection=pii_protection,
             pii_override=pii_override,
+            deadline_ms=deadline_ms,
         )
         log_event(
             "debate.end",
@@ -875,6 +943,12 @@ def debate():
             }
         )
         return jsonify(result), 200
+    except DeadlineExceeded as exc:
+        logger.warning(
+            "debate_deadline_exceeded",
+            extra={"error": str(exc)},
+        )
+        return jsonify({"error": "Request deadline exceeded"}), 504
     except Exception:
         logger.error("Error in /debate: %s", traceback.format_exc())
         return jsonify({"error": "Internal server error"}), 500
