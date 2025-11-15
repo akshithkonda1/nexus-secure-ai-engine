@@ -39,10 +39,17 @@ class RecordingStore(MemoryStore):
         self.saved: list[Dict[str, Any]] = []
 
     def save(
-        self, session_id: str, role: str, text: str, meta: Dict[str, Any] | None = None
+        self,
+        session_id: str,
+        role: str,
+        text: str,
+        meta: Dict[str, Any] | None = None,
+        message_id: str | None = None,
     ) -> str:
-        self.saved.append({"session": session_id, "role": role, "text": text, "meta": meta or {}})
-        return "ok"
+        mid = message_id or "ok"
+        payload = {"session": session_id, "role": role, "text": text, "meta": meta or {}, "mid": mid}
+        self.saved.append(payload)
+        return mid
 
     def recent(self, session_id: str, limit: int = 8):
         return [{"role": "assistant", "text": "hi", "ts": 1}]
@@ -76,8 +83,9 @@ def test_multi_memory_falls_back_to_secondary_store():
     multi = MultiMemoryStore([FailingStore(), recorder], fanout_writes=False)
 
     mid = multi.save("s", "user", "hi", {"ephemeral": True})
-    assert mid == "ok"
+    assert isinstance(mid, str) and len(mid) == 32
     assert recorder.saved[0]["session"] == "s"
+    assert recorder.saved[0]["mid"] == mid
 
     history = multi.recent("s", limit=1)
     assert history and history[0]["text"] == "hi"
