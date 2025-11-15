@@ -3,6 +3,7 @@ import { Command, Menu, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useProfile } from "@/features/profile/ProfileProvider";
+import { useUnreadNotificationsCount } from "@/features/notifications/useNotifications";
 import {
   requestNewPrompt,
   requestNotifications,
@@ -31,7 +32,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
-  const [notificationCount] = useState<number>(7); // TODO: wire to live notifications feed
+  const notificationCount = useUnreadNotificationsCount();
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
