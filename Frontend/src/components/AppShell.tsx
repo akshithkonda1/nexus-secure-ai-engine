@@ -6,7 +6,6 @@ import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
 
 type Props = {
   left: ReactNode;
-  right: ReactNode;
   children: ReactNode;
 };
 
@@ -37,20 +36,17 @@ function useIsDesktop() {
 
 const SIDEBAR_COLLAPSED_WIDTH = 72;
 const SIDEBAR_EXPANDED_WIDTH = 288;
-const RIGHT_PANEL_WIDTH = 320;
-
-export default function AppShell({ left, right, children }: Props) {
-  const { leftOpen, rightOpen, toggle } = usePanels();
+export default function AppShell({ left, children }: Props) {
+  const { leftOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
   const { collapsed } = useSidebar();
 
   const baseSidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
   const leftW = leftOpen ? baseSidebarWidth : 0;
-  const rightW = rightOpen ? RIGHT_PANEL_WIDTH : 0;
 
   const gridTemplateColumns = useMemo(
-    () => (isDesktop ? `${leftW}px 1fr ${rightW}px` : "1fr"),
-    [isDesktop, leftW, rightW]
+    () => (isDesktop ? `${leftW}px 1fr` : "1fr"),
+    [isDesktop, leftW]
   );
 
   return (
@@ -81,22 +77,6 @@ export default function AppShell({ left, right, children }: Props) {
           </aside>
 
           <main className="min-w-0 overflow-y-auto [direction:ltr]">{children}</main>
-
-          <aside
-            className="relative overflow-visible"
-            style={{ width: isDesktop ? rightW : 0 }}
-            aria-expanded={rightOpen && isDesktop}
-            aria-hidden={!isDesktop}
-          >
-            <div className="h-full w-full">{right}</div>
-            {isDesktop && (
-              <PanelToggle
-                side="right"
-                open={rightOpen}
-                onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
-              />
-            )}
-          </aside>
         </div>
       </div>
     </div>
