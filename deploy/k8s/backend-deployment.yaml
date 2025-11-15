@@ -42,7 +42,7 @@ spec:
                   name: nexus-backend-config
                   key: app-version
             - name: AUDIT_LOG_PATH
-              value: /var/log/nexus/audit.jsonl
+              value: /app/logs/audit.jsonl
           envFrom:
             - secretRef:
                 name: nexus-backend-secrets
@@ -68,7 +68,7 @@ spec:
               memory: 1Gi
           volumeMounts:
             - name: audit-logs
-              mountPath: /var/log/nexus
+              mountPath: /app/logs
       securityContext:
         runAsNonRoot: true
         seccompProfile:
