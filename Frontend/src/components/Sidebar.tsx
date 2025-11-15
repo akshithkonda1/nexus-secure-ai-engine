@@ -52,15 +52,14 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <aside
         data-collapsed={collapsed ? "true" : "false"}
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-full flex-col overflow-visible border-r border-zora-border bg-[rgba(var(--panel),0.68)] bg-[color:color-mix(in_srgb,var(--zora-space)_78%,transparent)] px-3 py-4 backdrop-blur-2xl transition-[transform,width] duration-200 ease-out",
+          "fixed left-0 top-0 z-40 flex h-full flex-col overflow-visible border-r border-zora-border bg-[rgba(var(--panel),0.68)] bg-[color:color-mix(in_srgb,var(--zora-space)_78%,transparent)] bg-zora-space/80 px-3 py-4 backdrop-blur-xl backdrop-blur-2xl transition-[transform,width] duration-200 ease-out rounded-none shadow-zora-soft transition-shadow hover:shadow-zora-glow hover:border-white/10",
           collapsed ? "w-[72px]" : "w-72",
           "lg:static lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          "shadow-zora-soft"
         )}
       >
         <div className="flex h-full flex-col overflow-y-auto">
-          <div className="mb-4 flex items-center gap-2 px-1 text-zora-white">
+          <div className="mb-4 flex items-center gap-2 px-1 text-[rgb(var(--text))] font-semibold tracking-tight">
             <img src={zoraMark} alt="Zora" className="h-9 w-9 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]" />
             {!collapsed && <img src={zoraLogo} alt="Zora" className="h-5" />}
             <button
@@ -91,7 +90,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             </button>
           </div>
 
-          <nav className="space-y-2 text-zora-muted">
+          <nav className="space-y-2 text-[rgba(var(--subtle),0.85)]">
             {primaryNav.map(({ to, label, icon: Icon }) => (
               <NavItem
                 key={to}
@@ -103,7 +102,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             ))}
 
             {!collapsed && (
-              <div className="pt-4 pb-1 text-[11px] uppercase tracking-[0.14em] text-zora-muted opacity-80">
+              <div className="pt-4 pb-1 text-[11px] uppercase tracking-[0.14em] text-[rgba(var(--subtle),0.72)]">
                 Workspace
               </div>
             )}
