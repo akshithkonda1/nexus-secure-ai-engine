@@ -80,18 +80,37 @@ def _validate_cloud_credentials(cfg: NexusConfig) -> List[str]:
     if "aws" in (cfg.memory_providers or []):
         if not _has_any(["AWS_REGION", "AWS_DEFAULT_REGION"]):
             errs.append("AWS memory provider requires AWS_REGION or AWS_DEFAULT_REGION")
-        if not (
+
+        has_static_keys = (
             (
-                _has_any(["AWS_ACCESS_KEY_ID"]) and _has_any(["AWS_SECRET_ACCESS_KEY"])
+                _has_any(["AWS_ACCESS_KEY_ID"]) or _has_override(cfg, ["AWS_ACCESS_KEY_ID"])
             )
-            or _has_any([
+            and (
+                _has_any(["AWS_SECRET_ACCESS_KEY"]) or _has_override(cfg, ["AWS_SECRET_ACCESS_KEY"])
+            )
+        )
+        has_profile_or_role = _has_any(
+            [
                 "AWS_PROFILE",
                 "AWS_WEB_IDENTITY_TOKEN_FILE",
                 "AWS_ROLE_ARN",
-            ])
-        ):
+            ]
+        )
+        # IAM roles (EC2, ECS, EKS IRSA, etc.) surface credentials through the
+        # metadata service. Unless that service is explicitly disabled, assume
+        # it is available so we do not reject valid role-based deployments.
+        metadata_disabled_flag = env.get("AWS_EC2_METADATA_DISABLED", "").strip().lower()
+        metadata_disabled = metadata_disabled_flag in _BOOL_TRUE
+        has_container_credentials = _has_any(
+            [
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+                "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+            ]
+        )
+
+        if not (has_static_keys or has_profile_or_role or has_container_credentials or not metadata_disabled):
             errs.append(
-                "AWS memory provider requires credentials via access keys, profile, or role configuration"
+                "AWS memory provider requires credentials via access keys, profile, role, or metadata service"
             )
     bedrock_flag = env.get("NEXUS_ENABLE_BEDROCK")
     if bedrock_flag and bedrock_flag.lower() not in {"0", "false", "no"}:
