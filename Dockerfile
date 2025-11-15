@@ -32,6 +32,7 @@ RUN addgroup --system nexus \
 
 COPY --from=builder /wheels /tmp/wheels
 COPY requirements.txt ./
+COPY --chown=nexus:nexus requirements/ ./requirements
 
 RUN pip install --no-index --find-links /tmp/wheels -r requirements.txt \
     && rm -rf /tmp/wheels
@@ -40,7 +41,6 @@ COPY --chown=nexus:nexus nexus ./nexus
 COPY --chown=nexus:nexus api ./api
 COPY --chown=nexus:nexus gunicorn.conf.py ./
 COPY --chown=nexus:nexus engine.py ./engine.py
-COPY --chown=nexus:nexus requirements/ ./requirements
 
 USER nexus
 
