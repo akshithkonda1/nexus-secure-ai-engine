@@ -327,6 +327,25 @@ export function Chat() {
 
   const messages = activeSession?.messages ?? [];
 
+  const timelineLabel = useMemo(() => {
+    if (!messages.length) return null;
+    const firstTimestamp = messages[0]?.createdAt;
+    if (!firstTimestamp) return null;
+    const firstDate = new Date(firstTimestamp);
+    const today = new Date();
+    const isSameDay = today.toDateString() === firstDate.toDateString();
+    const dateFormatter = new Intl.DateTimeFormat("en", {
+      month: "short",
+      day: "numeric",
+    });
+    const timeFormatter = new Intl.DateTimeFormat("en", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    const prefix = isSameDay ? "Today" : dateFormatter.format(firstDate);
+    return `${prefix} at ${timeFormatter.format(firstDate)}`;
+  }, [messages]);
+
   /* -------------------------- Persistence --------------------------- */
 
   useEffect(() => {
@@ -1022,20 +1041,25 @@ export function Chat() {
 
           {/* Messages & Composer */}
           <div className="grid flex-1 grid-rows-[1fr_auto] gap-3">
-            <div className="relative overflow-hidden rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] shadow-sm">
+            <div className="relative flex flex-col overflow-hidden rounded-zora-xl border border-zora-border bg-[rgb(var(--surface))] bg-zora-space/70 backdrop-blur-2xl shadow-zora-soft transition-shadow hover:shadow-zora-glow hover:border-white/10">
               <div
                 ref={messagesContainerRef}
-                className="flex h-full flex-col gap-3 overflow-y-auto px-4 py-4"
+                className="flex h-full flex-col gap-4 overflow-y-auto px-6 py-6"
                 role="log"
                 aria-live="polite"
               >
+                {timelineLabel && (
+                  <span className="mx-auto mt-4 inline-flex items-center rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs font-medium text-zora-muted backdrop-blur-xl">
+                    {timelineLabel}
+                  </span>
+                )}
                 {messages.map((message) => {
                   const isAssistant = message.role === "assistant";
                   const bubbleClasses = [
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm", // base
+                    "inline-flex max-w-[min(85%,32rem)] flex-col rounded-2xl border border-white/10 bg-white/3 px-4 py-3 text-sm leading-relaxed text-zora-white shadow-[0_18px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl",
                     isAssistant
-                      ? "self-start bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))]"
-                      : "self-end border border-[rgba(var(--border),0.6)] bg-[rgb(var(--panel))] text-[rgb(var(--text))]",
+                      ? ""
+                      : "bg-white/6 text-zora-white/95",
                   ];
 
                   const showThinking = isAssistant && message.status === "pending";
@@ -1074,11 +1098,11 @@ export function Chat() {
                                 {message.content}
                               </p>
                               {message.attachments && message.attachments.length > 0 && (
-                                <div className="flex flex-wrap gap-1 text-[11px] opacity-90">
+                                <div className="flex flex-wrap gap-1 text-[11px] text-zora-muted">
                                   {message.attachments.map((name) => (
                                     <span
                                       key={name}
-                                      className="rounded-full bg-[rgba(var(--surface),0.2)] px-2 py-0.5"
+                                      className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5"
                                     >
                                       {name}
                                     </span>
@@ -1089,7 +1113,7 @@ export function Chat() {
                                 <button
                                   type="button"
                                   onClick={() => handleRetry(message)}
-                                  className="text-xs font-medium underline decoration-dotted hover:decoration-solid focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                                  className="text-xs font-medium text-zora-muted underline decoration-dotted transition hover:text-zora-white hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
                                 >
                                   Retry
                                 </button>
@@ -1099,7 +1123,7 @@ export function Chat() {
                         </div>
                       </div>
                       <span
-                        className="mt-1 text-[10px] text-[rgba(var(--subtle),0.8)]"
+                        className="mt-1 text-[10px] text-zora-muted"
                         aria-hidden="true"
                       >
                         {formatTime(message.createdAt)}
@@ -1158,7 +1182,7 @@ export function Chat() {
             {/* Composer */}
             <form
               onSubmit={handleSubmit}
-              className="flex flex-col gap-2 rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] p-3 shadow-sm"
+              className="flex flex-col gap-3 rounded-zora-xl border border-zora-border bg-[rgb(var(--surface))] bg-zora-space/80 p-4 shadow-zora-soft backdrop-blur-2xl transition-shadow hover:border-white/10 hover:shadow-zora-glow"
             >
               {/* Toolbar */}
               <div className="flex flex-wrap items-center justify-between gap-3 text-[11px]">
@@ -1232,7 +1256,7 @@ export function Chat() {
               />
 
               {/* Textarea */}
-              <div className="flex items-end gap-2">
+              <div className="mt-1 flex items-center gap-3 rounded-full border border-zora-border bg-zora-space/90 px-4 py-2 shadow-zora-soft backdrop-blur-2xl transition-transform transition-shadow duration-200 hover:translate-y-[-1px] hover:shadow-zora-glow focus-within:border-white/15 focus-within:shadow-zora-glow">
                 <textarea
                   ref={composerRef}
                   value={inputValue}
@@ -1240,17 +1264,17 @@ export function Chat() {
                   onKeyDown={handleTextareaKeyDown}
                   rows={2}
                   placeholder="Ask me anything…"
-                  className="input w-full resize-none rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] px-3 py-2 text-sm text-[rgb(var(--text))] outline-none focus:border-[rgb(var(--brand))] focus:ring-1 focus:ring-[rgb(var(--brand))]"
+                  className="flex-1 resize-none bg-transparent text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.85)] outline-none focus:border-none focus:outline-none focus:ring-0"
                   aria-label="Chat composer"
                 />
 
                 <button
                   type="submit"
-                  className="group inline-flex h-9 w-9 items-center justify-center rounded-full bg-[rgb(var(--brand))] text-[rgb(var(--on-accent))] shadow-sm transition hover:bg-[rgba(var(--brand),0.9)] hover:shadow-md disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_0%,#3EE4FF,rgba(62,228,255,0.2))] text-zora-night shadow-zora-glow transition-transform transition-shadow duration-200 hover:scale-[1.03] hover:shadow-zora-glow active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-60"
                   disabled={!inputValue.trim() && pendingAttachments.length === 0}
                   aria-label="Send message"
                 >
-                  <ArrowUpRight className="h-4 w-4 transform transition-transform group-active:translate-x-0.5 group-active:-translate-y-0.5" />
+                  <ArrowUpRight className="h-4 w-4" />
                 </button>
               </div>
 
@@ -1259,7 +1283,7 @@ export function Chat() {
                   {pendingAttachments.map((name) => (
                     <span
                       key={name}
-                      className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgb(var(--panel))] px-2 py-0.5 text-[rgb(var(--subtle))]"
+                      className="rounded-full border border-white/10 bg-white/8 px-2 py-0.5 text-zora-muted"
                     >
                       {name}
                     </span>
@@ -1267,7 +1291,7 @@ export function Chat() {
                   <button
                     type="button"
                     onClick={() => handleFileChange(null)}
-                    className="ml-1 text-[10px] text-[rgb(var(--subtle))] underline hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                    className="ml-1 text-[10px] text-zora-muted underline transition hover:text-zora-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
                   >
                     Clear
                   </button>
