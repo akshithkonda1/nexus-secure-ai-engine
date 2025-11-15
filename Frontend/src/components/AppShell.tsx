@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { usePanels } from "@/hooks/usePanels";
-import { PanelToggle } from "@/components/PanelToggle";
+
 import { PanelFlag } from "@/constants/panels";
-import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
+import { PanelToggle } from "@/components/PanelToggle";
+import { usePanels } from "@/hooks/usePanels";
 
 type Props = {
   left: ReactNode;
@@ -35,22 +35,17 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-const SIDEBAR_COLLAPSED_WIDTH = 72;
-const SIDEBAR_EXPANDED_WIDTH = 288;
 const RIGHT_PANEL_WIDTH = 320;
 
 export default function AppShell({ left, right, children }: Props) {
-  const { leftOpen, rightOpen, toggle } = usePanels();
+  const { rightOpen, toggle } = usePanels();
   const isDesktop = useIsDesktop();
-  const { collapsed } = useSidebar();
 
-  const baseSidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
-  const leftW = leftOpen ? baseSidebarWidth : 0;
-  const rightW = rightOpen ? RIGHT_PANEL_WIDTH : 0;
+  const rightW = rightOpen && isDesktop ? RIGHT_PANEL_WIDTH : 0;
 
   const gridTemplateColumns = useMemo(
-    () => (isDesktop ? `${leftW}px 1fr ${rightW}px` : "1fr"),
-    [isDesktop, leftW, rightW]
+    () => (isDesktop ? `1fr ${rightW}px` : "1fr"),
+    [isDesktop, rightW]
   );
 
   return (
@@ -64,22 +59,6 @@ export default function AppShell({ left, right, children }: Props) {
           className="grid h-full w-full transition-[grid-template-columns] duration-300 ease-out"
           style={{ gridTemplateColumns }}
         >
-          <aside
-            className="relative overflow-visible"
-            style={{ width: isDesktop ? leftW : 0 }}
-            aria-expanded={leftOpen && isDesktop}
-            aria-hidden={!isDesktop}
-          >
-            <div className="h-full w-full">{left}</div>
-            {isDesktop && (
-              <PanelToggle
-                side="left"
-                open={leftOpen}
-                onClick={() => toggle(PanelFlag.LEFT_OPEN)}
-              />
-            )}
-          </aside>
-
           <main className="min-w-0 overflow-y-auto [direction:ltr]">{children}</main>
 
           <aside
@@ -97,6 +76,9 @@ export default function AppShell({ left, right, children }: Props) {
               />
             )}
           </aside>
+        </div>
+        <div className="sr-only" aria-hidden>
+          {left}
         </div>
       </div>
     </div>

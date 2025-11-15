@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Bell, Command, Menu, Search, Sparkles } from "lucide-react";
+import { Bell, Command, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useUnreadNotificationsCount } from "@/features/notifications/useNotifications";
@@ -14,11 +14,11 @@ import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 
 type HeaderProps = {
-  onToggleSidebar?: () => void;
+  onOpenCommandCenter?: () => void;
   onOpenProfile?: () => void;
 };
 
-export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
+export function Header({ onOpenCommandCenter, onOpenProfile }: HeaderProps = {}) {
   const today = new Intl.DateTimeFormat("en", {
     weekday: "long",
     month: "short",
@@ -53,20 +53,23 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
+          onClick={() => onOpenCommandCenter?.()}
           className={cn(
-            "inline-flex size-10 items-center justify-center rounded-full border text-[rgba(var(--subtle),0.9)] transition hover:scale-[1.01] active:scale-[0.99] lg:hidden",
+            "group inline-flex items-center gap-3 rounded-full border px-2.5 py-2 text-[rgb(var(--text))] transition hover:-translate-y-0.5 hover:shadow-[0_18px_48px_rgba(16,185,129,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-emerald),0.6)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
             isDark
-              ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
-              : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] shadow-sm hover:bg-[rgba(var(--surface),0.85)] hover:text-[rgb(var(--text))]",
+              ? "border-[rgba(var(--accent-emerald),0.6)] bg-[color:color-mix(in_srgb,var(--zora-space)_75%,transparent)] shadow-[0_12px_40px_rgba(12,180,129,0.25)]"
+              : "border-[rgba(var(--accent-emerald),0.55)] bg-[rgba(var(--surface),0.92)] shadow-[0_12px_32px_rgba(16,185,129,0.25)]",
           )}
-          onClick={() => onToggleSidebar?.()}
-          aria-label="Toggle navigation"
+          aria-label="Open Command Center"
         >
-          <Menu className="size-4" />
+          <span className="relative grid size-10 place-items-center overflow-hidden rounded-full border border-[rgba(var(--accent-emerald),0.55)] bg-[radial-gradient(circle_at_30%_20%,rgba(var(--accent-emerald),0.9),rgba(56,189,248,0.35))] shadow-[0_0_22px_rgba(16,185,129,0.35)]">
+            <span className="absolute inset-0 animate-[pulse_3.5s_ease-in-out_infinite] bg-[radial-gradient(circle,rgba(var(--accent-emerald),0.18),transparent_68%)]" aria-hidden />
+            <span className="relative size-3 rounded-full bg-[rgba(var(--surface),0.92)] shadow-[0_0_12px_rgba(148,255,199,0.65)]" />
+          </span>
+          <span className="pr-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.85)]">
+            Command Center
+          </span>
         </button>
-
-        <div className="hidden flex-col sm:flex">
-         </div>
 
         <div className="flex flex-1 items-center gap-3">
           <div

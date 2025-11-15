@@ -11,11 +11,13 @@ import { useCommand } from "@/lib/actions";
 import { Toaster } from "@/shared/ui/components/toast";
 import AmbientFX from "@/components/AmbientFX";
 import { SidebarProvider } from "@/components/layout/sidebar/SidebarContext";
+import { CommandCenter } from "@/components/shell/CommandCenter";
 
 export default function RootLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [isCommandCenterOpen, setCommandCenterOpen] = useState(false);
 
   useCommand((command) => {
     if (command.type === "profile:open") {
@@ -42,7 +44,7 @@ export default function RootLayout() {
       >
         <div className="flex min-h-full flex-col bg-transparent text-zora-white">
           <Header
-            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onOpenCommandCenter={() => setCommandCenterOpen(true)}
             onOpenProfile={() => setProfileOpen(true)}
           />
           <div className="flex-1">
@@ -58,6 +60,10 @@ export default function RootLayout() {
           </div>
         </div>
       </AppShell>
+      <CommandCenter
+        open={isCommandCenterOpen}
+        onClose={() => setCommandCenterOpen(false)}
+      />
       <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
       <NotificationsModal
         open={isNotificationsOpen}
