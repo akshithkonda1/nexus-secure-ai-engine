@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 
 type HeaderProps = {
   onToggleSidebar?: () => void;
@@ -26,6 +27,8 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const navigate = useNavigate();
   const { profile, loading } = useProfile();
   const unreadNotifications = useUnreadNotificationsCount();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -39,11 +42,23 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   }, [profile?.fullName]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[color:rgba(148,163,184,0.28)] bg-[color:color-mix(in_srgb,var(--zora-space)_84%,transparent)] backdrop-blur-2xl shadow-zora-soft">
+    <header
+      className={cn(
+        "sticky top-0 z-30 border-b bg-[rgb(var(--surface))] text-[rgb(var(--text))] backdrop-blur-xl transition-colors duration-300",
+        isDark
+          ? "border-zora-border/80 bg-[color:color-mix(in_srgb,var(--zora-space)_84%,transparent)] shadow-zora-soft"
+          : "border-[rgba(var(--border),0.45)] shadow-[0_12px_32px_rgba(15,23,42,0.08)]",
+      )}
+    >
       <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
         <button
           type="button"
-          className="inline-flex size-10 items-center justify-center rounded-full border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white hover:scale-[1.01] active:scale-[0.99] lg:hidden"
+          className={cn(
+            "inline-flex size-10 items-center justify-center rounded-full border text-[rgba(var(--subtle),0.9)] transition hover:scale-[1.01] active:scale-[0.99] lg:hidden",
+            isDark
+              ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
+              : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] shadow-sm hover:bg-[rgba(var(--surface),0.85)] hover:text-[rgb(var(--text))]",
+          )}
           onClick={() => onToggleSidebar?.()}
           aria-label="Toggle navigation"
         >
@@ -54,17 +69,37 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
          </div>
 
         <div className="flex flex-1 items-center gap-3">
-          <div className="relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_78%,transparent)] px-4 py-2 shadow-zora-soft backdrop-blur-xl sm:flex">
+          <div
+            className={cn(
+              "relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border px-4 py-2 backdrop-blur-xl transition-colors duration-300 sm:flex",
+              isDark
+                ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_78%,transparent)] text-zora-white shadow-zora-soft"
+                : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-sm",
+            )}
+          >
             <Search
-              className="mr-3 size-4 text-zora-muted"
+              className={cn(
+                "mr-3 size-4 transition-colors duration-300",
+                isDark ? "text-zora-muted" : "text-[rgba(var(--subtle),0.7)]",
+              )}
               aria-hidden="true"
             />
             <input
               type="search"
               placeholder="Search sessions, documents, or commands"
-              className="input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-zora-white placeholder:text-zora-muted"
+              className={cn(
+                "input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.75)] focus:outline-none focus:ring-0",
+                isDark && "text-zora-white placeholder:text-zora-muted",
+              )}
             />
-            <span className="hidden items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zora-muted sm:inline-flex">
+            <span
+              className={cn(
+                "hidden items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors duration-300 sm:inline-flex",
+                isDark
+                  ? "bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-muted shadow-none"
+                  : "bg-[rgb(var(--surface))] text-[rgba(var(--subtle),0.7)] shadow-sm",
+              )}
+            >
               <Command className="size-3" /> K
             </span>
           </div>
@@ -93,7 +128,12 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           <button
             type="button"
             onClick={() => requestNotifications()}
-            className="relative inline-flex size-10 items-center justify-center rounded-full border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white hover:scale-[1.01] active:scale-[0.99]"
+            className={cn(
+              "relative inline-flex size-10 items-center justify-center rounded-full border text-[rgba(var(--subtle),0.9)] transition hover:scale-[1.01] active:scale-[0.99]",
+              isDark
+                ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
+                : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] shadow-sm hover:bg-[rgba(var(--surface),0.85)] hover:text-[rgb(var(--text))]",
+            )}
             aria-label="Notifications"
           >
             <Bell className="size-4" />
@@ -105,14 +145,16 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           </button>
           <ThemeToggle className="hidden lg:inline-flex" />
           <div
-            className="hidden h-12 w-px rounded-full bg-[color:rgba(148,163,184,0.28)] lg:block"
+            className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.4)] transition-colors duration-300 lg:block dark:bg-[color:rgba(148,163,184,0.28)]"
             aria-hidden="true"
           />
           <button
             type="button"
             className={cn(
-              "hidden items-center gap-3 rounded-[18px] border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_75%,transparent)] px-3 py-2.5 text-left text-sm font-medium text-zora-white shadow-zora-soft transition hover:bg-zora-deep hover:text-zora-white",
-              "lg:flex",
+              "hidden items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left text-sm font-medium transition lg:flex",
+              isDark
+                ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_75%,transparent)] text-zora-white shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
+                : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-sm hover:bg-[rgba(var(--surface),0.9)] hover:text-[rgb(var(--text))]",
             )}
             onClick={() => {
               requestProfileOpen();
@@ -120,7 +162,14 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             }}
             disabled={loading}
           >
-            <span className="inline-flex size-9 items-center justify-center overflow-hidden rounded-xl bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-white shadow-zora-soft">
+            <span
+              className={cn(
+                "inline-flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-zora-soft",
+                isDark
+                  ? "bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-white"
+                  : "bg-[rgba(var(--surface),0.85)] text-[rgb(var(--text))] shadow-sm",
+              )}
+            >
               {profile?.avatarUrl ? (
                 <img
                   src={profile.avatarUrl}
@@ -134,7 +183,12 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
             <span className="leading-tight">
               {profile?.fullName ?? "Workspace admin"}
               <br />
-              <span className="text-xs font-normal text-zora-muted">
+              <span
+                className={cn(
+                  "text-xs font-normal",
+                  isDark ? "text-zora-muted" : "text-[rgba(var(--subtle),0.75)]",
+                )}
+              >
                 {profile?.role ?? "Secure workspace"}
               </span>
             </span>

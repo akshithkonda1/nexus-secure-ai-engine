@@ -54,44 +54,50 @@ export default function AppShell({ left, right, children }: Props) {
   );
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))] antialiased">
+    <div className="relative min-h-screen h-screen w-full overflow-hidden bg-[rgb(var(--bg))] text-[rgb(var(--text))] antialiased">
       <div
-        className="grid h-full transition-[grid-template-columns] duration-300 ease-out"
-        style={{ gridTemplateColumns }}
-      >
-        <aside
-          className="relative overflow-visible"
-          style={{ width: isDesktop ? leftW : 0 }}
-          aria-expanded={leftOpen && isDesktop}
-          aria-hidden={!isDesktop}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(148,163,184,0.22),transparent_55%),radial-gradient(circle_at_80%_120%,rgba(62,228,255,0.35),transparent_60%),radial-gradient(circle_at_10%_120%,rgba(139,92,246,0.4),transparent_65%)]"
+      />
+      <div className="relative z-10 flex h-full w-full items-stretch justify-stretch">
+        <div
+          className="grid h-full w-full transition-[grid-template-columns] duration-300 ease-out"
+          style={{ gridTemplateColumns }}
         >
-          <div className="h-full w-full">{left}</div>
-          {isDesktop && (
-            <PanelToggle
-              side="left"
-              open={leftOpen}
-              onClick={() => toggle(PanelFlag.LEFT_OPEN)}
-            />
-          )}
-        </aside>
+          <aside
+            className="relative overflow-visible"
+            style={{ width: isDesktop ? leftW : 0 }}
+            aria-expanded={leftOpen && isDesktop}
+            aria-hidden={!isDesktop}
+          >
+            <div className="h-full w-full">{left}</div>
+            {isDesktop && (
+              <PanelToggle
+                side="left"
+                open={leftOpen}
+                onClick={() => toggle(PanelFlag.LEFT_OPEN)}
+              />
+            )}
+          </aside>
 
-        <main className="min-w-0 overflow-y-auto">{children}</main>
+          <main className="min-w-0 overflow-y-auto">{children}</main>
 
-        <aside
-          className="relative overflow-visible"
-          style={{ width: isDesktop ? rightW : 0 }}
-          aria-expanded={rightOpen && isDesktop}
-          aria-hidden={!isDesktop}
-        >
-          <div className="h-full w-full">{right}</div>
-          {isDesktop && (
-            <PanelToggle
-              side="right"
-              open={rightOpen}
-              onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
-            />
-          )}
-        </aside>
+          <aside
+            className="relative overflow-visible"
+            style={{ width: isDesktop ? rightW : 0 }}
+            aria-expanded={rightOpen && isDesktop}
+            aria-hidden={!isDesktop}
+          >
+            <div className="h-full w-full">{right}</div>
+            {isDesktop && (
+              <PanelToggle
+                side="right"
+                open={rightOpen}
+                onClick={() => toggle(PanelFlag.RIGHT_OPEN)}
+              />
+            )}
+          </aside>
+        </div>
       </div>
     </div>
   );
