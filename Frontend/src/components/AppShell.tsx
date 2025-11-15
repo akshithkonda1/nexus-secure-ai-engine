@@ -80,7 +80,7 @@ export default function AppShell({ left, right, children }: Props) {
             )}
           </aside>
 
-          <main className="min-w-0 overflow-y-auto">{children}</main>
+          <main className="min-w-0 overflow-y-auto [direction:ltr]">{children}</main>
 
           <aside
             className="relative overflow-visible"
