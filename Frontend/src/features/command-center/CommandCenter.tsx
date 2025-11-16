@@ -130,7 +130,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] bg-[rgba(3,7,18,0.45)] backdrop-blur-xl"
+      className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-md"
       onClick={handleBackdropClick}
     >
       <div className="flex h-full w-full justify-end">
@@ -138,7 +138,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
           role="dialog"
           aria-modal="true"
           aria-label="Command Center"
-          className={`relative flex h-full w-full max-w-5xl flex-col border-l border-[rgba(var(--border),0.6)] bg-[radial-gradient(circle_at_top,_rgba(var(--brand-soft),0.22),_transparent)_0_0/100%_40%_no-repeat,_rgba(var(--surface),0.96)] shadow-[0_0_60px_rgba(0,0,0,0.65)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${drawerVisible ? "translate-x-0" : "translate-x-full"}`}
+          className={`relative flex h-full w-full max-w-5xl flex-col border-l border-white/10 bg-[radial-gradient(circle_at_top,_rgba(var(--brand-soft),0.22),_transparent)_0_0/100%_40%_no-repeat,_rgba(3,7,18,0.95)] shadow-[0_0_60px_rgba(0,0,0,0.65)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${drawerVisible ? "translate-x-0" : "translate-x-full"}`}
           onClick={(event) => event.stopPropagation()}
         >
           <header className="flex items-center justify-between gap-4 border-b border-[rgba(var(--border),0.35)] px-6 py-4">
@@ -178,7 +178,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
               <div className="space-y-4">
                 {focusProject ? (
-                  <article className="panel panel--glassy panel--alive panel--glow relative overflow-hidden rounded-3xl border border-[rgba(var(--border),0.45)] bg-[rgba(var(--panel),0.95)] p-5 text-[rgb(var(--text))]">
+                  <article className="panel panel--glassy panel--alive panel--glow relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/90 p-5 text-[rgb(var(--text))]">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-[rgba(var(--subtle),0.7)]">
@@ -208,7 +208,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                   </article>
                 ) : null}
 
-                <section className="panel panel--glassy rounded-3xl border border-[rgba(var(--border),0.45)] bg-[rgba(var(--panel),0.9)] p-4">
+                <section className="panel panel--glassy rounded-3xl border border-white/10 bg-slate-900/85 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[rgba(var(--subtle),0.65)]">Projects</p>
@@ -225,7 +225,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                     {otherProjects.map((project) => (
                       <article
                         key={project.id}
-                        className="panel panel--hover flex flex-col gap-3 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.85)] p-4 transition"
+                        className="panel panel--hover flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/80 p-4 transition"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -260,7 +260,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
               </div>
 
               <div className="space-y-4">
-                <section className="panel panel--glassy rounded-3xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.92)] p-4">
+                <section className="panel panel--glassy rounded-3xl border border-white/10 bg-slate-900/85 p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-[rgba(var(--subtle),0.65)]">
@@ -279,7 +279,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                     {mockUpcoming.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.85)] px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2"
                       >
                         <div>
                           <p className="text-sm font-medium text-[rgb(var(--text))]">{item.title}</p>
@@ -291,7 +291,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                   </ul>
                 </section>
 
-                <section className="panel panel--glassy rounded-3xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.9)] p-4">
+                <section className="panel panel--glassy rounded-3xl border border-white/10 bg-slate-900/85 p-4">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-[rgba(var(--subtle),0.65)]">
                     <Activity className="size-3" /> Signals
                   </div>
@@ -299,7 +299,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                     {mockSignals.map((signal) => (
                       <article
                         key={signal.id}
-                        className="rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--surface),0.85)] p-3"
+                        className="rounded-2xl border border-white/10 bg-slate-900/80 p-3"
                       >
                         <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[rgba(var(--subtle),0.65)]">
                           {signal.type}
@@ -311,7 +311,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                   </div>
                 </section>
 
-                <section className="panel panel--glassy rounded-3xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.92)] p-4">
+                <section className="panel panel--glassy rounded-3xl border border-white/10 bg-slate-900/85 p-4">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.32em] text-[rgba(var(--subtle),0.65)]">
                     <Network className="size-3" /> Connectors
                   </div>
@@ -319,10 +319,10 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
                     {mockConnectors.map((connector) => (
                       <li
                         key={connector.id}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--surface),0.85)] px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-3 py-2"
                       >
                         <div className="flex items-center gap-2 text-sm font-medium text-[rgb(var(--text))]">
-                          <span className="flex size-8 items-center justify-center rounded-2xl bg-[rgba(var(--panel),0.75)]">
+                          <span className="flex size-8 items-center justify-center rounded-2xl bg-slate-900/70">
                             <Link2 className="size-4 text-brand" />
                           </span>
                           <div>
