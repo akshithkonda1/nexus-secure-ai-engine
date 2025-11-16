@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import {
   Activity,
-  AlertTriangle,
   ArrowDown,
   ArrowUp,
-  Bell,
-  CheckCircle2,
   ClipboardList,
   Database,
   GripVertical,
@@ -21,7 +18,6 @@ import {
   SlidersHorizontal,
   Star,
   Terminal,
-  Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,7 +28,7 @@ import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 /* -------------------------------------------------------------------------- */
-/* Extended types – add the four sections we need                             */
+/* Local section types – extend your SettingsData backend to match            */
 /* -------------------------------------------------------------------------- */
 
 type ZoraEnginePref = {
@@ -114,7 +110,6 @@ type PrivacySettingsSection = {
 };
 
 type ExtendedSettingsData = SettingsData & {
-  // Wire these to your backend SettingsData type
   zora?: ZoraSettingsSection;
   workspaceSettings?: WorkspaceSettingsSection;
   commandCenter?: CommandCenterSettingsSection;
@@ -122,7 +117,7 @@ type ExtendedSettingsData = SettingsData & {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Defaults                                                                   */
+/* Defaults (used if backend doesn’t send a section yet)                      */
 /* -------------------------------------------------------------------------- */
 
 const DEFAULT_ZORA_ENGINES: ZoraEnginePref[] = [
@@ -275,9 +270,7 @@ export function Settings() {
   const [dragEngineIndex, setDragEngineIndex] = useState<number | null>(null);
   const [dragWidgetIndex, setDragWidgetIndex] = useState<number | null>(null);
 
-  /* ---------------------------------------------------------------------- */
-  /* Loading / error states                                                 */
-  /* ---------------------------------------------------------------------- */
+  /* ------------------------------ Load states ----------------------------- */
 
   if (isLoading) {
     return (
@@ -330,9 +323,7 @@ export function Settings() {
     (a, b) => a.rank - b.rank,
   );
 
-  /* ---------------------------------------------------------------------- */
-  /* Update helper                                                          */
-  /* ---------------------------------------------------------------------- */
+  /* --------------------------- Update helper ------------------------------ */
 
   const updateSettings = (
     update: Partial<ExtendedSettingsData>,
@@ -346,14 +337,12 @@ export function Settings() {
     return saveSettings
       .mutateAsync(next as SettingsData)
       .then(() => toast.success(successMessage))
-      .catch(() =>
-        toast.error("We couldn’t save that change. Please try again."),
-      );
+      .catch(() => {
+        toast.error("We couldn’t save that change. Please try again.");
+      });
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* Zora handlers                                                          */
-  /* ---------------------------------------------------------------------- */
+  /* ---------------------------- Zora handlers ----------------------------- */
 
   const handleZoraEngineToggle = (id: string, enabled: boolean) => {
     const nextEngines = rankedEngines.map((engine) =>
@@ -380,31 +369,15 @@ export function Settings() {
     );
   };
 
-  const handleEngineDragStart = (index: number) => {
-    setDragEngineIndex(index);
-  };
-
-  const handleEngineDrop = (index: number) => {
-    if (dragEngineIndex === null) return;
-    reorderEngines(dragEngineIndex, index);
-    setDragEngineIndex(null);
-  };
-
   const setZoraMode = (mode: ZoraSettingsSection["defaultMode"]) => {
-    updateSettings(
-      { zora: { ...zora, defaultMode: mode } },
-      "Default mode updated.",
-    );
+    updateSettings({ zora: { ...zora, defaultMode: mode } }, "Default mode set.");
   };
 
   const setZoraToggle = <K extends keyof ZoraSettingsSection>(
     key: K,
     value: ZoraSettingsSection[K],
   ) => {
-    updateSettings(
-      { zora: { ...zora, [key]: value } },
-      "Zora settings updated.",
-    );
+    updateSettings({ zora: { ...zora, [key]: value } }, "Zora settings updated.");
   };
 
   const handleZoraCustomInstructionsSave = (value: string) => {
@@ -414,22 +387,25 @@ export function Settings() {
     );
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* Workspace handlers                                                     */
-  /* ---------------------------------------------------------------------- */
+  /* -------------------------- Workspace handlers ------------------------- */
 
   const handleConnectorToggle = (id: string, connected: boolean) => {
     const nextConnectors = workspace.connectors.map((c) =>
       c.id === id ? { ...c, connected } : c,
     );
     updateSettings(
-      {
-        workspaceSettings: {
-          ...workspace,
-          connectors: nextConnectors,
-        },
-      },
+      { workspaceSettings: { ...workspace, connectors: nextConnectors } },
       "Workspace connectors updated.",
+    );
+  };
+
+  const setWorkspaceToggle = <K extends keyof WorkspaceSettingsSection>(
+    key: K,
+    value: WorkspaceSettingsSection[K],
+  ) => {
+    updateSettings(
+      { workspaceSettings: { ...workspace, [key]: value } },
+      "Workspace settings updated.",
     );
   };
 
@@ -439,25 +415,9 @@ export function Settings() {
     );
   };
 
-  const setWorkspaceToggle = <K extends keyof WorkspaceSettingsSection>(
-    key: K,
-    value: WorkspaceSettingsSection[K],
-  ) => {
-    updateSettings(
-      {
-        workspaceSettings: {
-          ...workspace,
-          [key]: value,
-        },
-      },
-      "Workspace settings updated.",
-    );
-  };
-
   const handleGenerateWorkspaceDigest = () => {
-    // Later: call backend to generate ≤1000-word digest report
     toast.info(
-      "Daily digest generation will be wired to the Workspace reporting endpoint.",
+      "Daily digest generation will call the reporting endpoint once it’s wired.",
     );
   };
 
@@ -466,21 +426,14 @@ export function Settings() {
     toast.success("Workspace custom instructions saved.");
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* Command Center handlers                                                */
-  /* ---------------------------------------------------------------------- */
+  /* ------------------------ Command Center handlers ---------------------- */
 
   const handleWidgetToggle = (id: string, enabled: boolean) => {
     const nextWidgets = rankedWidgets.map((w) =>
       w.id === id ? { ...w, enabled } : w,
     );
     updateSettings(
-      {
-        commandCenter: {
-          ...commandCenter,
-          widgets: nextWidgets,
-        },
-      },
+      { commandCenter: { ...commandCenter, widgets: nextWidgets } },
       "Command Center widgets updated.",
     );
   };
@@ -495,24 +448,9 @@ export function Settings() {
       rank: idx + 1,
     }));
     updateSettings(
-      {
-        commandCenter: {
-          ...commandCenter,
-          widgets: reRanked,
-        },
-      },
+      { commandCenter: { ...commandCenter, widgets: reRanked } },
       "Command Center layout saved.",
     );
-  };
-
-  const handleWidgetDragStart = (index: number) => {
-    setDragWidgetIndex(index);
-  };
-
-  const handleWidgetDrop = (index: number) => {
-    if (dragWidgetIndex === null) return;
-    reorderWidgets(dragWidgetIndex, index);
-    setDragWidgetIndex(null);
   };
 
   const setCommandCenterToggle = <
@@ -527,24 +465,34 @@ export function Settings() {
     );
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* Privacy & Security handlers                                            */
-  /* ---------------------------------------------------------------------- */
+  /* ------------------------- Privacy handlers ---------------------------- */
+
+  const setPrivacyToggle = <K extends keyof PrivacySettingsSection>(
+    key: K,
+    value: PrivacySettingsSection[K],
+  ) => {
+    const nextPrivacy: PrivacySettingsSection = { ...privacy, [key]: value };
+    updateSettings({ privacy: nextPrivacy }, "Privacy settings updated.");
+  };
+
+  const setPrivacySourceToggle = <K extends keyof PrivacySources>(
+    key: K,
+    value: PrivacySources[K],
+  ) => {
+    const nextPrivacy: PrivacySettingsSection = {
+      ...privacy,
+      sources: { ...privacy.sources, [key]: value },
+    };
+    updateSettings({ privacy: nextPrivacy }, "Telemetry sources updated.");
+  };
 
   const handleTelemetryToggle = (enabled: boolean) => {
     if (!enabled) {
-      const nextPrivacy: PrivacySettingsSection = {
-        ...privacy,
-        telemetryEnabled: false,
-      };
-      updateSettings(
-        { privacy: nextPrivacy },
-        "Telemetry disabled. Zora will stop sending usage signals.",
-      );
-      return;
+      setPrivacyToggle("telemetryEnabled", false);
+      toast.success("Telemetry disabled.");
+    } else {
+      setShowTelemetryConsent(true);
     }
-
-    setShowTelemetryConsent(true);
   };
 
   const acceptTelemetryConsent = () => {
@@ -564,37 +512,6 @@ export function Settings() {
 
   const cancelTelemetryConsent = () => {
     setShowTelemetryConsent(false);
-  };
-
-  const setPrivacySourceToggle = <K extends keyof PrivacySources>(
-    key: K,
-    value: PrivacySources[K],
-  ) => {
-    const nextPrivacy: PrivacySettingsSection = {
-      ...privacy,
-      sources: {
-        ...privacy.sources,
-        [key]: value,
-      },
-    };
-    updateSettings(
-      { privacy: nextPrivacy },
-      "Telemetry sources updated.",
-    );
-  };
-
-  const setPrivacyToggle = <K extends keyof PrivacySettingsSection>(
-    key: K,
-    value: PrivacySettingsSection[K],
-  ) => {
-    const nextPrivacy: PrivacySettingsSection = {
-      ...privacy,
-      [key]: value,
-    };
-    updateSettings(
-      { privacy: nextPrivacy },
-      "Privacy settings updated.",
-    );
   };
 
   const handleStrictModeToggle = (enabled: boolean) => {
@@ -625,30 +542,22 @@ export function Settings() {
 
   const handleDownloadData = () => {
     toast.info(
-      "Your data export will be prepared once the export endpoint is connected.",
+      "Data export will be wired to your export endpoint. For now this is a stub.",
     );
   };
+
+  /* ------------------------- Appearance helper --------------------------- */
 
   const handleApplyTheme = () => {
     setTheme(settings.appearance.theme);
     toast.success(`Applied ${settings.appearance.theme} theme for this device.`);
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* UI – Header + Tabs                                                     */
-  /* ---------------------------------------------------------------------- */
+  /* ------------------------------ UI pieces ------------------------------ */
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    {
-      id: "zora",
-      label: "Zora",
-      icon: <Terminal className="size-4" />,
-    },
-    {
-      id: "workspace",
-      label: "Workspace",
-      icon: <Database className="size-4" />,
-    },
+    { id: "zora", label: "Zora", icon: <Terminal className="size-4" /> },
+    { id: "workspace", label: "Workspace", icon: <Database className="size-4" /> },
     {
       id: "command-center",
       label: "Command Center",
@@ -661,10 +570,14 @@ export function Settings() {
     },
   ];
 
+  /* ---------------------------------------------------------------------- */
+  /* RENDER                                                                 */
+  /* ---------------------------------------------------------------------- */
+
   return (
     <>
       <div className="px-[var(--page-padding)] py-6">
-        {/* Header / tab bar */}
+        {/* Header / tabs */}
         <section className="panel panel--glassy panel--immersive panel--alive panel--halo rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -675,9 +588,8 @@ export function Settings() {
                 Shape how Zora behaves, remembers, and protects you.
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-[rgba(var(--subtle),0.8)]">
-                Each section keeps related controls together: Zora for engine
-                behavior, Workspace for your study & work hub, Command Center
-                for orchestration, and Privacy for how data moves.
+                Zora, Workspace, Command Center, and Privacy each keep their own
+                controls so you can tune the system without getting lost.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -700,14 +612,13 @@ export function Settings() {
           </div>
         </section>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* ZORA TAB                                                           */}
-        {/* ------------------------------------------------------------------ */}
+        {/* -------------------------- ZORA TAB -------------------------- */}
         {activeTab === "zora" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             {/* Engine ranking */}
             <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Terminal className="size-4 text-brand" />
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
                     Zora engine
@@ -715,13 +626,13 @@ export function Settings() {
                   <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
                     Rank your models
                   </h2>
-                  <p className="mt-1 text-sm text-[rgba(var(--subtle),0.8)]">
-                    Drag with the grip or nudge with arrows to tell Zora which
-                    model to try first. For Analyze and long-form tasks, we’ll
-                    walk this list from top to bottom until an engine fits.
-                  </p>
                 </div>
               </div>
+              <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
+                Drag with the grip or nudge with arrows to tell Zora which
+                engine to try first. For Analyze and long-form tasks, Zora walks
+                this list from top to bottom.
+              </p>
 
               <ul className="mt-4 space-y-3">
                 {rankedEngines.map((engine, index) => {
@@ -732,9 +643,14 @@ export function Settings() {
                     <li
                       key={engine.id}
                       draggable
-                      onDragStart={() => handleEngineDragStart(index)}
+                      onDragStart={() => setDragEngineIndex(index)}
                       onDragOver={(event) => event.preventDefault()}
-                      onDrop={() => handleEngineDrop(index)}
+                      onDrop={() => {
+                        if (dragEngineIndex !== null) {
+                          reorderEngines(dragEngineIndex, index);
+                          setDragEngineIndex(null);
+                        }
+                      }}
                       className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.32)] bg-[rgba(var(--panel),0.6)] px-3 py-3 text-sm"
                     >
                       <div className="flex items-center gap-3">
@@ -762,7 +678,7 @@ export function Settings() {
                           <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
                             {engine.enabled
                               ? isFirst
-                                ? "Primary engine for general tasks."
+                                ? "Primary engine for most tasks."
                                 : "Used as a fallback when higher engines are busy or restricted."
                               : "Currently disabled for routing."}
                           </p>
@@ -779,7 +695,6 @@ export function Settings() {
                                 ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
                                 : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
                             }`}
-                            aria-label="Move engine up"
                           >
                             <ArrowUp className="mr-1 size-3" />
                             Up
@@ -793,7 +708,6 @@ export function Settings() {
                                 ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
                                 : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
                             }`}
-                            aria-label="Move engine down"
                           >
                             <ArrowDown className="mr-1 size-3" />
                             Down
@@ -831,12 +745,8 @@ export function Settings() {
                 </div>
                 <div className="mt-4 space-y-4 text-sm">
                   <div>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-[rgba(var(--subtle),0.78)]">
-                        Default mode
-                      </span>
-                    </div>
-                    <div className="inline-flex gap-2">
+                    <p className="text-[rgba(var(--subtle),0.78)]">Default mode</p>
+                    <div className="mt-1 inline-flex gap-2">
                       {[
                         { id: "balanced", label: "Balanced" },
                         { id: "deep", label: "Deep" },
@@ -846,9 +756,7 @@ export function Settings() {
                           key={mode.id}
                           type="button"
                           onClick={() =>
-                            setZoraMode(
-                              mode.id as ZoraSettingsSection["defaultMode"],
-                            )
+                            setZoraMode(mode.id as ZoraSettingsSection["defaultMode"])
                           }
                           className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
                             zora.defaultMode === mode.id
@@ -861,8 +769,8 @@ export function Settings() {
                       ))}
                     </div>
                     <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
-                      Balanced is recommended for most users. Deep favors
-                      reasoning; Fast favors latency.
+                      Balanced is recommended. Deep favors reasoning; Fast favors
+                      latency.
                     </p>
                   </div>
 
@@ -926,8 +834,8 @@ export function Settings() {
                         Safe mode on high-risk queries
                       </p>
                       <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                        When prompts look health, legal, or safety-critical,
-                        Zora will favor slower but safer engines.
+                        When prompts look health / legal / safety-critical, Zora
+                        will favor slower but safer engines.
                       </p>
                     </div>
                     <Switch
@@ -949,8 +857,8 @@ export function Settings() {
                     </div>
                     <select
                       value={zora.maxContextTokens}
-                      onChange={(event) =>
-                        setZoraToggle("maxContextTokens", Number(event.target.value))
+                      onChange={(e) =>
+                        setZoraToggle("maxContextTokens", Number(e.target.value))
                       }
                       className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
                     >
@@ -966,8 +874,8 @@ export function Settings() {
                         Advanced debug panel
                       </p>
                       <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                        Show routing decisions, engine scores, and internal
-                        metadata in a side drawer.
+                        Show routing decisions, scores, and metadata in a side
+                        drawer.
                       </p>
                     </div>
                     <Switch
@@ -994,40 +902,23 @@ export function Settings() {
                   </div>
                 </div>
                 <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Describe your preferences in natural language: tone, level of
-                  detail, topics to avoid, how to handle uncertainty, study
-                  goals—anything. Zora will treat this as a standing instruction
-                  until you change it.
+                  Tone, level of detail, topics to avoid, how to handle
+                  uncertainty—whatever helps. Zora will treat this as a standing
+                  instruction.
                 </p>
                 <textarea
                   defaultValue={zora.customInstructions}
-                  onBlur={(event) =>
-                    handleZoraCustomInstructionsSave(event.target.value)
-                  }
+                  onBlur={(e) => handleZoraCustomInstructionsSave(e.target.value)}
                   rows={6}
                   className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
-                  placeholder="Example: &quot;Explain things like you would to a busy grad student. Prefer citations, always show trade-offs, and flag anything that sounds speculative.&quot;"
+                  placeholder='Example: "Explain like I am a busy grad student. Prefer citations, always show trade-offs, and flag speculation."'
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleZoraCustomInstructionsSave(
-                      (document.activeElement as HTMLTextAreaElement)?.value ??
-                        zora.customInstructions,
-                    )
-                  }
-                  className="mt-3 btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
-                >
-                  <CheckCircle2 className="size-4" /> Save instructions
-                </button>
               </div>
             </div>
           </section>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* WORKSPACE TAB                                                      */}
-        {/* ------------------------------------------------------------------ */}
+        {/* ----------------------- WORKSPACE TAB ----------------------- */}
         {activeTab === "workspace" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Connectors */}
@@ -1055,8 +946,7 @@ export function Settings() {
               </div>
               <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
                 Turn connections on or off without breaking your notes. Zora
-                pulls data in read-only mode unless you explicitly allow
-                write-back.
+                pulls in read-only mode unless you explicitly allow write-back.
               </p>
 
               <ul className="mt-4 space-y-3 text-sm">
@@ -1085,7 +975,7 @@ export function Settings() {
               </ul>
             </div>
 
-            {/* Workspace behaviors + custom instructions */}
+            {/* Workspace behaviours + custom instructions */}
             <div className="flex flex-col gap-4">
               <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
                 <div className="flex items-center gap-2">
@@ -1190,10 +1080,10 @@ export function Settings() {
                     </div>
                     <select
                       value={workspace.defaultView}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         setWorkspaceToggle(
                           "defaultView",
-                          event.target.value as WorkspaceSettingsSection["defaultView"],
+                          e.target.value as WorkspaceSettingsSection["defaultView"],
                         )
                       }
                       className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
@@ -1214,10 +1104,7 @@ export function Settings() {
                         <Switch
                           checked={workspace.autoArchiveCompleted}
                           onCheckedChange={(checked) =>
-                            setWorkspaceToggle(
-                              "autoArchiveCompleted",
-                              checked,
-                            )
+                            setWorkspaceToggle("autoArchiveCompleted", checked)
                           }
                         />
                       </label>
@@ -1234,16 +1121,6 @@ export function Settings() {
                     <p className="mt-1 text-[10px] text-[rgba(var(--subtle),0.75)]">
                       Auto-archive never deletes content; it just moves older
                       work out of your way.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5 text-[11px] text-[rgba(var(--subtle),0.85)]">
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Max active workspaces
-                    </p>
-                    <p className="mt-1">
-                      {workspace.maxActiveWorkspaces} workspaces can stay “hot”
-                      for fast switching. Older ones are archived, not deleted.
                     </p>
                   </div>
                 </div>
@@ -1263,28 +1140,24 @@ export function Settings() {
                   </div>
                 </div>
                 <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Explain how you want notes grouped, how aggressive you want
-                  flashcards to be, and what &quot;done&quot; looks like for a
-                  project. Workspace will use this when creating study plans and
-                  organizing content.
+                  Explain how you want notes grouped, how aggressive study mode
+                  should be, and what &quot;done&quot; looks like for a project.
                 </p>
                 <textarea
                   defaultValue={workspace.customInstructions}
-                  onBlur={(event) =>
-                    handleWorkspaceCustomInstructionsSave(event.target.value)
+                  onBlur={(e) =>
+                    handleWorkspaceCustomInstructionsSave(e.target.value)
                   }
                   rows={5}
                   className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
-                  placeholder="Example: &quot;Group notes by class, highlight anything tagged ‘exam’, and build short nightly review sets.&quot;"
+                  placeholder='Example: "Group notes by class, highlight anything tagged ‘exam’, and build short nightly review sets."'
                 />
               </div>
             </div>
           </section>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* COMMAND CENTER TAB                                                 */}
-        {/* ------------------------------------------------------------------ */}
+        {/* -------------------- COMMAND CENTER TAB --------------------- */}
         {activeTab === "command-center" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Widget layout */}
@@ -1302,7 +1175,7 @@ export function Settings() {
               </div>
               <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
                 Decide what shows up in Command Center and in which order.
-                Projects always live here; everything else is up to you.
+                Projects is permanent; everything else is up to you.
               </p>
 
               <div className="mt-4 mb-4 flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.65)] px-3 py-2.5 text-sm">
@@ -1331,9 +1204,14 @@ export function Settings() {
                     <li
                       key={widget.id}
                       draggable
-                      onDragStart={() => handleWidgetDragStart(index)}
+                      onDragStart={() => setDragWidgetIndex(index)}
                       onDragOver={(event) => event.preventDefault()}
-                      onDrop={() => handleWidgetDrop(index)}
+                      onDrop={() => {
+                        if (dragWidgetIndex !== null) {
+                          reorderWidgets(dragWidgetIndex, index);
+                          setDragWidgetIndex(null);
+                        }
+                      }}
                       className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.6)] px-3 py-3"
                     >
                       <div className="flex items-center gap-3">
@@ -1408,10 +1286,10 @@ export function Settings() {
               </ul>
             </div>
 
-            {/* Command Center behavior */}
+            {/* Behaviour switches */}
             <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
               <div className="flex items-center gap-2">
-                <Wifi className="size-4 text-brand" />
+                <Activity className="size-4 text-brand" />
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
                     Behavior
@@ -1548,9 +1426,7 @@ export function Settings() {
           </section>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* PRIVACY TAB                                                        */}
-        {/* ------------------------------------------------------------------ */}
+        {/* ---------------------- PRIVACY TAB -------------------------- */}
         {activeTab === "privacy" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             {/* Telemetry & sources */}
@@ -1567,9 +1443,9 @@ export function Settings() {
                 </div>
               </div>
               <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-                Zora is private by default. Opt-in telemetry lets you share
-                anonymized patterns to improve the engine and, with your
-                permission, help model providers reduce hallucinations.
+                Zora is private by default. Opt-in telemetry shares anonymized
+                patterns so we can make the system smarter without leaking your
+                documents.
               </p>
 
               <div className="mt-4 space-y-4 text-sm">
@@ -1580,8 +1456,8 @@ export function Settings() {
                     </p>
                     <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
                       Share anonymized usage patterns to help Zora get more
-                      accurate over time. Turning this on never grants access to
-                      your raw documents.
+                      accurate over time. Raw documents and full messages stay
+                      encrypted and are never sold.
                     </p>
                   </div>
                   <Switch
@@ -1593,12 +1469,12 @@ export function Settings() {
                 <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-3">
                   <div className="max-w-md">
                     <p className="font-semibold text-[rgb(var(--text))]">
-                      Share anonymous telemetry with model providers
+                      Share telemetry with model providers
                     </p>
                     <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      When enabled, Zora can bundle hallucination and API
-                      metrics and sell them as aggregated insight. No personal
-                      identifiers or raw text leave your account.
+                      Allow Zora to sell aggregated hallucination and latency
+                      statistics to model vendors. No personal identifiers or raw
+                      content are included.
                     </p>
                   </div>
                   <Switch
@@ -1695,6 +1571,7 @@ export function Settings() {
                   </h2>
                 </div>
               </div>
+
               <div className="mt-4 space-y-4 text-sm">
                 <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
                   <div>
@@ -1724,11 +1601,8 @@ export function Settings() {
                   </div>
                   <select
                     value={privacy.retentionDays}
-                    onChange={(event) =>
-                      setPrivacyToggle(
-                        "retentionDays",
-                        Number(event.target.value),
-                      )
+                    onChange={(e) =>
+                      setPrivacyToggle("retentionDays", Number(e.target.value))
                     }
                     className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
                   >
@@ -1750,10 +1624,10 @@ export function Settings() {
                   <div className="flex items-center gap-3">
                     <select
                       value={privacy.idleLockMinutes}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         setPrivacyToggle(
                           "idleLockMinutes",
-                          Number(event.target.value),
+                          Number(e.target.value),
                         )
                       }
                       disabled={!privacy.idleLockEnabled}
@@ -1794,9 +1668,8 @@ export function Settings() {
                     Download your data
                   </p>
                   <p className="mt-1">
-                    Export a copy of your chats, notes, and telemetry logs
-                    (where applicable). You can also request deletion at any
-                    time.
+                    Export a copy of your chats, notes, and telemetry logs (where
+                    applicable). You can also request deletion at any time.
                   </p>
                   <button
                     type="button"
@@ -1811,7 +1684,7 @@ export function Settings() {
           </section>
         )}
 
-        {/* Appearance helper */}
+        {/* -------------------- Appearance helper ---------------------- */}
         <section className="mt-6 grid gap-5 lg:grid-cols-3">
           <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
             <div className="flex items-center justify-between">
@@ -1826,7 +1699,9 @@ export function Settings() {
                   </h3>
                 </div>
               </div>
-              <ShieldCheck className="size-4 text-[rgba(var(--subtle),0.7)]" />
+              {saveSettings.isPending && (
+                <Loader2 className="size-4 animate-spin text-brand" />
+              )}
             </div>
             <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
               Your current theme is{" "}
@@ -1840,16 +1715,16 @@ export function Settings() {
               onClick={handleApplyTheme}
               className="mt-4 btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
             >
-              <CheckCircle2 className="size-4" /> Apply theme on this device
+              Apply theme on this device
             </button>
           </div>
         </section>
       </div>
 
-      {/* Telemetry consent sheet */}
+      {/* --------------------- Telemetry consent modal ---------------------- */}
       {showTelemetryConsent && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(0,0,0,0.6)]">
-          <div className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.9)] bg-[rgba(var(--surface),0.98)] p-6 text-sm shadow-[var(--shadow-soft)] max-w-lg w-full mx-4">
+          <div className="panel panel--glassy panel--immersive panel--alive mx-4 w-full max-w-lg rounded-[24px] border border-[rgba(var(--border),0.9)] bg-[rgba(var(--surface),0.98)] p-6 text-sm shadow-[var(--shadow-soft)]">
             <div className="flex items-center gap-2">
               <Activity className="size-5 text-brand" />
               <h2 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
@@ -1864,7 +1739,7 @@ export function Settings() {
             <ul className="mt-3 list-disc space-y-1 pl-5 text-[12px] text-[rgba(var(--subtle),0.85)]">
               <li>No raw documents or full chat transcripts leave your account.</li>
               <li>
-                We aggregate hallucination rates, latency, and engine behavior to
+                We aggregate hallucination rates, latency, and engine behaviour to
                 improve Zora’s routing.
               </li>
               <li>
@@ -1891,7 +1766,7 @@ export function Settings() {
                 onClick={acceptTelemetryConsent}
                 className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
               >
-                <CheckCircle2 className="size-4" /> Agree &amp; Enable telemetry
+                Agree &amp; enable telemetry
               </button>
             </div>
           </div>
