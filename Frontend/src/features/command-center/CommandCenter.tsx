@@ -1,16 +1,4 @@
 import React, { useEffect } from "react";
-import {
-  Activity,
-  ArrowRight,
-  Brain,
-  Clock,
-  GitBranch,
-  Link2,
-  ListChecks,
-  Network,
-  Sparkles,
-  X,
-} from "lucide-react";
 
 import { CommandCenterHero } from "@/components/command-center/CommandCenterHero";
 import { Switch } from "@/shared/ui/components/switch";
