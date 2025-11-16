@@ -6,97 +6,76 @@ interface CommandCenterHeroProps {
   onClose: () => void;
 }
 
-const sectionCopy = [
-  {
-    title: "Projects",
-    body: "Live initiatives across Atlas, Risk, Signals, and Audit streams with real-time completion telemetry.",
-    stats: ["4 in-flight", "23% avg progress"],
-  },
-  {
-    title: "Milestones",
-    body: "Critical gates, drafts, and reviews Zora is lining up so nothing slips through sequencing.",
-    stats: ["5 due this week", "2 blocked"],
-  },
-  {
-    title: "Chats",
-    body: "Transcript summaries and threaded follow-ups from your Workspace conversations and standups.",
-    stats: ["3 threads heating up"],
-  },
-  {
-    title: "Connectors",
-    body: "Pipelines to Slack, Notion, GitHub, and Drive that keep Command Center continuously updated.",
-    stats: ["4 live", "1 healing"],
-  },
-  {
-    title: "Workspace Tasks",
-    body: "Priority actions Zora is queuing for you—auto-routed, scheduled, and ready to approve.",
-    stats: ["7 queued", "Auto-ranked"],
-  },
-];
-
 export function CommandCenterHero({ open, onClose }: CommandCenterHeroProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-[6px]">
-      <div className="flex h-full w-full items-center justify-center px-4 py-10">
-        <div className="relative flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/95 shadow-[0_30px_120px_rgba(0,0,0,0.85)]">
-          <div className="flex flex-col gap-3 border-b border-white/10 px-10 py-8 text-slate-100">
-            <div className="flex flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-400/80 sm:flex-row sm:items-center sm:justify-between">
-              <span>Command Center</span>
-              <span className="rounded-full border border-white/15 px-4 py-1 text-[10px] tracking-[0.4em] text-slate-200/90">
-                Signals
-              </span>
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-center text-2xl font-semibold text-slate-50 sm:text-left md:text-3xl">
+    <div className="fixed inset-0 z-40 flex items-start justify-center bg-slate-950/60 backdrop-blur-sm">
+      <div className="pointer-events-none flex w-full justify-center pt-16">
+        <div className="pointer-events-auto w-full max-w-5xl rounded-3xl border border-white/10 bg-slate-950/95 px-8 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] text-slate-300/80 uppercase">
+                Command Center
+              </p>
+              <h1 className="mt-1 text-xl md:text-2xl font-semibold text-slate-50">
                 One place to see what Zora is doing for you.
               </h1>
-              <p className="text-center text-sm text-slate-300 sm:text-left">
+              <p className="mt-2 text-sm text-slate-300">
                 Overview of projects, upcoming work, signals, and connectors powering your Workspace.
               </p>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-8 sm:px-10">
-            <div className="grid gap-5 md:grid-cols-2">
-              {sectionCopy.map((section) => (
-                <section
-                  key={section.title}
-                  className="rounded-3xl border border-white/10 bg-slate-900/60 px-6 py-5 text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400/80">
-                    {section.title}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-200">{section.body}</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {section.stats.map((stat) => (
-                      <span
-                        key={stat}
-                        className="rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-200"
-                      >
-                        {stat}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              ))}
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-3 text-[11px] tracking-[0.25em] text-slate-300/80 uppercase">
+                <span className="rounded-full border border-white/10 px-3 py-1 text-[10px]">
+                  Signals
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-slate-200 hover:bg-slate-800 hover:text-white transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3 border-t border-white/10 px-6 pb-8 pt-4 text-center text-[11px] text-slate-400">
-            <p>Zora uses your settings, connectors, and engine ranking to keep this view relevant.</p>
+          {/* Pills / stats row – you can reuse existing stats here */}
+          <div className="mt-6 flex flex-wrap items-stretch gap-3">
+            <div className="flex flex-1 flex-wrap gap-3">
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-900/90 px-4 py-2 text-xs text-slate-100">
+                <span className="text-slate-300">📈</span>
+                <span className="font-medium">23% progress</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-900/90 px-4 py-2 text-xs text-slate-100">
+                <span className="text-slate-300">📝</span>
+                <span className="font-medium">Draft ready</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl bg-slate-900/90 px-4 py-2 text-xs text-slate-100">
+                <span className="text-slate-300">⭐</span>
+                <span className="font-medium">5 milestones</span>
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={onClose}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-slate-900/90 text-slate-200 transition hover:border-white/40 hover:text-white"
-              aria-label="Close Command Center intro"
+              className="rounded-2xl bg-fuchsia-500/90 px-5 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-[0_0_20px_rgba(217,70,239,0.6)] hover:bg-fuchsia-500 transition"
             >
-              <X className="h-4 w-4" />
+              Quick Start
             </button>
+          </div>
+
+          {/* Footer note */}
+          <div className="mt-5 border-t border-white/5 pt-3 text-[11px] text-slate-400">
+            Zora uses your settings, connectors, and engine ranking to keep this view relevant.
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+export default CommandCenterHero;
