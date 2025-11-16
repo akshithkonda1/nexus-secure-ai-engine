@@ -1,23 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Activity,
   ArrowDown,
   ArrowUp,
-  ClipboardList,
-  Database,
-  GripVertical,
-  LayoutGrid,
-  Link2,
+  CheckCircle2,
+  Globe2,
   Loader2,
   Lock,
-  Plus,
+  PlugZap,
   RefreshCcw,
   Save,
+  Settings2,
   Shield,
   ShieldCheck,
+  Sparkles,
   SlidersHorizontal,
-  Star,
-  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,252 +23,445 @@ import type { SettingsData } from "@/types/models";
 import { Switch } from "@/shared/ui/components/switch";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import SkeletonBlock from "@/components/SkeletonBlock";
+import { requestDocumentsView } from "@/lib/actions";
 
-/* -------------------------------------------------------------------------- */
-/* Extended settings types – backend should be updated to match               */
-/* -------------------------------------------------------------------------- */
+type TabId = "zora" | "workspace" | "commandCenter" | "privacy";
 
-type ZoraEnginePref = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  rank: number;
-};
-
-type ZoraSettingsSection = {
-  enginePreferences: ZoraEnginePref[];
-  defaultMode: "balanced" | "deep" | "fast";
-  multiModelDebate: boolean;
-  autoWebVerify: boolean;
-  saveDebatesToWorkspace: boolean;
-  showAdvancedDebugPanel: boolean;
-  safeModeOnHighRisk: boolean;
-  maxContextTokens: number;
-  customInstructions: string;
-};
-
-type WorkspaceConnector = {
-  id: string;
-  name: string;
-  category: string;
-  connected: boolean;
-};
-
-type WorkspaceSettingsSection = {
-  connectors: WorkspaceConnector[];
-  autoOrganize: boolean;
-  studyMode: boolean;
-  allowWriteBack: boolean;
-  dailyDigestEnabled: boolean;
-  defaultView: "timeline" | "grid" | "list";
-  maxActiveWorkspaces: number;
-  autoArchiveCompleted: boolean;
-  keepOriginalFiles: boolean;
-  customInstructions: string;
-};
-
-type CommandCenterWidgetPref = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  rank: number;
-  description: string;
-};
-
-type CommandCenterSettingsSection = {
-  enabled: boolean;
-  widgets: CommandCenterWidgetPref[];
-  openOnLaunch: boolean;
-  showHotkeysOverlay: boolean;
-  syncWorkspaceTasks: boolean;
-  keepCommandHistory: boolean;
-  showExperimentalWidgets: boolean;
-  defaultLayout: "compact" | "wide";
-};
-
-type PrivacySources = {
-  includePrompts: boolean;
-  includeOutputs: boolean;
-  includeFileNames: boolean;
-  includeErrorTraces: boolean;
-};
-
-type PrivacySettingsSection = {
-  telemetryEnabled: boolean;
-  telemetryConsentVersion: string | null;
-  telemetryLastAnsweredAt: string | null;
-  shareWithModelProviders: boolean;
-  sources: PrivacySources;
-  retentionDays: number;
-  idleLockEnabled: boolean;
-  idleLockMinutes: number;
-  requireTwoFactor: boolean;
-  strictMode: boolean;
-};
-
-type ExtendedSettingsData = SettingsData & {
-  zora?: ZoraSettingsSection;
-  workspaceSettings?: WorkspaceSettingsSection;
-  commandCenter?: CommandCenterSettingsSection;
-  privacy?: PrivacySettingsSection;
-};
-
-/* -------------------------------------------------------------------------- */
-/* Defaults (used until backend sends full structure)                         */
-/* -------------------------------------------------------------------------- */
-
-const DEFAULT_ZORA_ENGINES: ZoraEnginePref[] = [
-  { id: "openai-gpt-4o", name: "OpenAI GPT-4o", enabled: true, rank: 1 },
+const TABS: { id: TabId; label: string; description: string }[] = [
   {
-    id: "anthropic-claude-3-5-sonnet",
-    name: "Anthropic Claude 3.5 Sonnet",
-    enabled: true,
-    rank: 2,
-  },
-  { id: "mistral-large", name: "Mistral Large", enabled: true, rank: 3 },
-  {
-    id: "meta-llama-3-1-405b",
-    name: "Meta Llama 3.1 405B",
-    enabled: true,
-    rank: 4,
+    id: "zora",
+    label: "Zora",
+    description: "How the AI thinks, responds, and which engines it prefers.",
   },
   {
-    id: "cohere-command-r-plus",
-    name: "Cohere Command R+",
-    enabled: true,
-    rank: 5,
+    id: "workspace",
+    label: "Workspace",
+    description: "Docs, study tools, connectors, and daily digests.",
   },
   {
-    id: "amazon-titan-text-premier",
-    name: "Amazon Titan Text Premier",
-    enabled: true,
-    rank: 6,
+    id: "commandCenter",
+    label: "Command Center",
+    description: "Projects, widgets, and layout behavior.",
   },
-  { id: "grok-3", name: "Grok 3", enabled: true, rank: 7 },
-  { id: "qwen-2-5-72b", name: "Qwen 2.5 72B", enabled: true, rank: 8 },
-  { id: "gemini-1-5-pro", name: "Gemini 1.5 Pro", enabled: false, rank: 9 },
-  { id: "dbrx", name: "Databricks DBRX", enabled: false, rank: 10 },
+  {
+    id: "privacy",
+    label: "Privacy & security",
+    description: "Telemetry, safe search, and data sources.",
+  },
 ];
 
-const DEFAULT_ZORA_SETTINGS: ZoraSettingsSection = {
-  enginePreferences: DEFAULT_ZORA_ENGINES,
-  defaultMode: "balanced",
-  multiModelDebate: true,
-  autoWebVerify: true,
-  saveDebatesToWorkspace: true,
-  showAdvancedDebugPanel: false,
-  safeModeOnHighRisk: true,
-  maxContextTokens: 16000,
-  customInstructions: "",
-};
+const ENGINE_OPTIONS = [
+  {
+    id: "gpt-4o",
+    label: "OpenAI GPT-4o",
+    description: "Balanced reasoning, creativity, and speed.",
+  },
+  {
+    id: "gpt-4.1-mini",
+    label: "OpenAI GPT-4.1 mini",
+    description: "Fast and efficient for everyday prompts.",
+  },
+  {
+    id: "claude-3.5-sonnet",
+    label: "Anthropic Claude 3.5 Sonnet",
+    description: "Great for deep analysis and longform content.",
+  },
+  {
+    id: "claude-3-haiku",
+    label: "Anthropic Claude 3 Haiku",
+    description: "Lightweight and snappy for quick tasks.",
+  },
+  {
+    id: "mistral-large",
+    label: "Mistral Large",
+    description: "Strong multilingual reasoning and code.",
+  },
+  {
+    id: "grok-2",
+    label: "xAI Grok-2",
+    description: "Web-aware, spicy, and exploratory.",
+  },
+  {
+    id: "qwen-2.5",
+    label: "Qwen 2.5",
+    description: "Open model tuned for dev and data workflows.",
+  },
+  {
+    id: "bedrock-claude",
+    label: "Bedrock · Claude",
+    description: "Enterprise Anthropic via AWS Bedrock.",
+  },
+  {
+    id: "bedrock-llama",
+    label: "Bedrock · Llama",
+    description: "Meta Llama models served through Bedrock.",
+  },
+  {
+    id: "bedrock-titan",
+    label: "Bedrock · Titan",
+    description: "First-party AWS Titan models for internal use.",
+  },
+] as const;
 
-const DEFAULT_WORKSPACE_CONNECTORS: WorkspaceConnector[] = [
-  { id: "google-drive", name: "Google Drive", category: "Storage", connected: true },
-  { id: "onedrive", name: "OneDrive", category: "Storage", connected: true },
-  { id: "notion", name: "Notion", category: "Notes", connected: false },
-  { id: "github", name: "GitHub", category: "Code", connected: false },
-  { id: "canvas", name: "Canvas LMS", category: "Learning", connected: false },
-];
-
-const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettingsSection = {
-  connectors: DEFAULT_WORKSPACE_CONNECTORS,
-  autoOrganize: true,
-  studyMode: true,
-  allowWriteBack: false,
-  dailyDigestEnabled: false,
-  defaultView: "timeline",
-  maxActiveWorkspaces: 5,
-  autoArchiveCompleted: true,
-  keepOriginalFiles: true,
-  customInstructions: "",
-};
-
-const DEFAULT_COMMAND_CENTER_WIDGETS: CommandCenterWidgetPref[] = [
+const DEFAULT_WIDGETS = [
   {
     id: "projects",
-    name: "Projects",
-    enabled: true,
-    rank: 1,
-    description: "Pinned work in motion across Zora.",
+    label: "Projects",
+    description: "Pinned, active work across Zora.",
   },
   {
     id: "upcoming",
-    name: "Upcoming",
-    enabled: true,
-    rank: 2,
-    description: "Next meetings, reviews, and deadlines.",
+    label: "Upcoming",
+    description: "Next sessions and important dates.",
   },
   {
-    id: "research-signals",
-    name: "Research signals",
-    enabled: true,
-    rank: 3,
-    description: "Live updates from your connected sources.",
+    id: "signals",
+    label: "Research signals",
+    description: "Saved links, feeds, and monitoring.",
   },
   {
-    id: "notifications",
-    name: "Notifications",
-    enabled: true,
-    rank: 4,
-    description: "Mentions, comments, and alerts.",
-  },
-  {
-    id: "quick-commands",
-    name: "Quick commands",
-    enabled: true,
-    rank: 5,
-    description: "Recent prompts and saved command snippets.",
+    id: "inbox",
+    label: "Workspace inbox",
+    description: "New docs, uploads, and chat sessions.",
   },
 ];
 
-const DEFAULT_COMMAND_CENTER_SETTINGS: CommandCenterSettingsSection = {
-  enabled: true,
-  widgets: DEFAULT_COMMAND_CENTER_WIDGETS,
-  openOnLaunch: false,
-  showHotkeysOverlay: true,
-  syncWorkspaceTasks: true,
-  keepCommandHistory: true,
-  showExperimentalWidgets: false,
-  defaultLayout: "compact",
-};
-
-const DEFAULT_PRIVACY_SETTINGS: PrivacySettingsSection = {
-  telemetryEnabled: false,
-  telemetryConsentVersion: null,
-  telemetryLastAnsweredAt: null,
-  shareWithModelProviders: false,
-  sources: {
-    includePrompts: true,
-    includeOutputs: true,
-    includeFileNames: false,
-    includeErrorTraces: false,
+const DEFAULT_CONNECTORS = [
+  {
+    id: "google-drive",
+    label: "Google Drive",
+    description: "Docs, Sheets, Slides, and more.",
   },
-  retentionDays: 90,
-  idleLockEnabled: false,
-  idleLockMinutes: 20,
-  requireTwoFactor: false,
-  strictMode: false,
-};
+  {
+    id: "dropbox",
+    label: "Dropbox",
+    description: "Shared folders and archived files.",
+  },
+  {
+    id: "onedrive",
+    label: "OneDrive",
+    description: "Microsoft 365 files and class material.",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    description: "Repositories, issues, and PR discussions.",
+  },
+  {
+    id: "canvas",
+    label: "Canvas LMS",
+    description: "Courses, assignments, and announcements.",
+  },
+  {
+    id: "notion",
+    label: "Notion",
+    description: "Wikis, docs, and project databases.",
+  },
+];
 
-/* -------------------------------------------------------------------------- */
+const DEFAULT_SOURCES = ["Workspace", "Command Center", "Web search", "Connectors"];
 
-type SettingsTab = "zora" | "workspace" | "command-center" | "privacy";
+function createPayload(settings: SettingsData, overrides: any): SettingsData {
+  return {
+    ...(settings as any),
+    ...(overrides as any),
+  } as SettingsData;
+}
 
-/* -------------------------------------------------------------------------- */
-/* Main Settings component                                                    */
-/* -------------------------------------------------------------------------- */
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+  const copy = [...items];
+  const [item] = copy.splice(fromIndex, 1);
+  copy.splice(toIndex, 0, item);
+  return copy;
+}
+
+function getEngineMeta(id: string) {
+  return ENGINE_OPTIONS.find((e) => e.id === id) ?? {
+    id,
+    label: id,
+    description: "",
+  };
+}
 
 export function Settings() {
   const { setTheme } = useTheme();
   const { data, isLoading, isError, refetch } = useSettings();
   const saveSettings = useSaveSettings();
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>("zora");
-  const [showTelemetryConsent, setShowTelemetryConsent] = useState(false);
-  const [dragEngineIndex, setDragEngineIndex] = useState<number | null>(null);
-  const [dragWidgetIndex, setDragWidgetIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("zora");
 
-  /* ---------------------------- Load / error ---------------------------- */
+  // --- Zora state -----------------------------------------------------------
+
+  const [engineOrder, setEngineOrder] = useState<string[]>(
+    () => ENGINE_OPTIONS.map((e) => e.id),
+  );
+  const [zoraCustomInstructions, setZoraCustomInstructions] = useState("");
+  const [zoraSafeMode, setZoraSafeMode] = useState(true);
+  const [zoraAutoEngine, setZoraAutoEngine] = useState(true);
+  const [zoraExplainReasoning, setZoraExplainReasoning] = useState(true);
+  const [zoraShowBadges, setZoraShowBadges] = useState(true);
+  const [zoraDefaultTone, setZoraDefaultTone] =
+    useState<"balanced" | "precise" | "creative">("balanced");
+  const [zoraShowSystemPrompts, setZoraShowSystemPrompts] = useState(false);
+
+  // --- Workspace state ------------------------------------------------------
+
+  const [workspaceCustomInstructions, setWorkspaceCustomInstructions] =
+    useState("");
+  const [workspaceDataMode, setWorkspaceDataMode] =
+    useState<"compact" | "balanced" | "rich">("balanced");
+  const [workspaceStudyMode, setWorkspaceStudyMode] = useState(false);
+  const [workspaceDigestEnabled, setWorkspaceDigestEnabled] = useState(false);
+  const [workspaceAutoOrganize, setWorkspaceAutoOrganize] = useState(true);
+  const [workspaceSuggestFlashcards, setWorkspaceSuggestFlashcards] =
+    useState(true);
+  const [workspacePinImportant, setWorkspacePinImportant] = useState(true);
+  const [workspaceConnectors, setWorkspaceConnectors] = useState(
+    DEFAULT_CONNECTORS.map((c) => ({ ...c, enabled: true })),
+  );
+
+  // --- Command Center state -------------------------------------------------
+
+  const [commandWidgets, setCommandWidgets] = useState(
+    DEFAULT_WIDGETS.map((w) => ({ ...w, enabled: true })),
+  );
+  const [commandOpenOnLaunch, setCommandOpenOnLaunch] = useState(false);
+  const [commandCompactMode, setCommandCompactMode] = useState(false);
+  const [commandRememberLayout, setCommandRememberLayout] = useState(true);
+  const [commandGlowIntensity, setCommandGlowIntensity] =
+    useState<"soft" | "normal" | "strong">("normal");
+  const [commandKeyboardShortcut, setCommandKeyboardShortcut] = useState(
+    "Ctrl + Shift + K",
+  );
+  const [commandShowHints, setCommandShowHints] = useState(true);
+
+  // --- Privacy & security state --------------------------------------------
+
+  const [privacyTelemetryOptIn, setPrivacyTelemetryOptIn] = useState(false);
+  const [privacyShareAnonStats, setPrivacyShareAnonStats] = useState(false);
+  const [privacyAllowModelTraining, setPrivacyAllowModelTraining] =
+    useState(false);
+  const [privacyStrictSafeSearch, setPrivacyStrictSafeSearch] = useState(true);
+  const [privacyAllowExternalWeb, setPrivacyAllowExternalWeb] =
+    useState(true);
+  const [privacyAllowCommandSources, setPrivacyAllowCommandSources] =
+    useState(true);
+  const [privacyAllowedSources, setPrivacyAllowedSources] =
+    useState<string[]>(DEFAULT_SOURCES);
+
+  const [showTelemetryConsent, setShowTelemetryConsent] = useState(false);
+  const [pendingTelemetryValue, setPendingTelemetryValue] =
+    useState<boolean | null>(null);
+
+  // --- Hydrate state from backend once -------------------------------------
+
+  useEffect(() => {
+    if (!data) return;
+
+    const anySettings = data as any;
+
+    // Zora
+    const zora = anySettings.zora ?? {};
+    setEngineOrder(
+      Array.isArray(zora.engineOrder) && zora.engineOrder.length
+        ? zora.engineOrder
+        : ENGINE_OPTIONS.map((e: any) => e.id),
+    );
+    setZoraCustomInstructions(zora.customInstructions ?? "");
+    setZoraSafeMode(zora.safeMode ?? true);
+    setZoraAutoEngine(zora.autoChooseEngine ?? true);
+    setZoraExplainReasoning(zora.explainReasoning ?? true);
+    setZoraShowBadges(zora.showModelBadges ?? true);
+    setZoraDefaultTone(zora.defaultTone ?? "balanced");
+    setZoraShowSystemPrompts(zora.showSystemPrompts ?? false);
+
+    // Workspace
+    const workspace = anySettings.workspace ?? {};
+    setWorkspaceCustomInstructions(workspace.customInstructions ?? "");
+    setWorkspaceDataMode(workspace.dataManagement ?? "balanced");
+    setWorkspaceStudyMode(workspace.studyMode ?? false);
+    setWorkspaceDigestEnabled(workspace.digestEnabled ?? false);
+    setWorkspaceAutoOrganize(workspace.autoOrganizeDocs ?? true);
+    setWorkspaceSuggestFlashcards(workspace.suggestFlashcards ?? true);
+    setWorkspacePinImportant(workspace.pinImportantSessions ?? true);
+    setWorkspaceConnectors(
+      Array.isArray(workspace.connectors) && workspace.connectors.length
+        ? workspace.connectors
+        : DEFAULT_CONNECTORS.map((c) => ({ ...c, enabled: true })),
+    );
+
+    // Command Center
+    const commandCenter = anySettings.commandCenter ?? {};
+    setCommandWidgets(
+      Array.isArray(commandCenter.widgets) && commandCenter.widgets.length
+        ? commandCenter.widgets
+        : DEFAULT_WIDGETS.map((w) => ({ ...w, enabled: true })),
+    );
+    setCommandOpenOnLaunch(commandCenter.openOnLaunch ?? false);
+    setCommandCompactMode(commandCenter.compactMode ?? false);
+    setCommandRememberLayout(commandCenter.rememberLayout ?? true);
+    setCommandGlowIntensity(commandCenter.glowIntensity ?? "normal");
+    setCommandKeyboardShortcut(
+      commandCenter.keyboardShortcut ?? "Ctrl + Shift + K",
+    );
+    setCommandShowHints(commandCenter.showHints ?? true);
+
+    // Privacy
+    const privacy = anySettings.privacy ?? {};
+    setPrivacyTelemetryOptIn(privacy.telemetryOptIn ?? false);
+    setPrivacyShareAnonStats(privacy.shareAnonStats ?? false);
+    setPrivacyAllowModelTraining(privacy.allowModelTraining ?? false);
+    setPrivacyStrictSafeSearch(privacy.strictSafeSearch ?? true);
+    setPrivacyAllowExternalWeb(privacy.allowExternalWeb ?? true);
+    setPrivacyAllowCommandSources(
+      privacy.allowCommandCenterSources ?? true,
+    );
+    setPrivacyAllowedSources(
+      Array.isArray(privacy.allowedSources) &&
+        privacy.allowedSources.length > 0
+        ? privacy.allowedSources
+        : DEFAULT_SOURCES,
+    );
+  }, [data]);
+
+  // --- Existing helpers -----------------------------------------------------
+
+  const handleProviderToggle = (id: string, enabled: boolean) => {
+    if (!data) return;
+    const updatedProviders = data.providers.map((provider) =>
+      provider.id === id ? { ...provider, enabled } : provider,
+    );
+    saveSettings
+      .mutateAsync(createPayload(data, { providers: updatedProviders }))
+      .then(() => toast.success("Provider preference saved."))
+      .catch(() =>
+        toast.error("Unable to update security provider preferences."),
+      );
+  };
+
+  const handleApplyTheme = () => {
+    if (!data) return;
+    setTheme(data.appearance.theme);
+    toast.success(`Applied ${data.appearance.theme} theme on this device.`);
+  };
+
+  // --- Save handlers --------------------------------------------------------
+
+  const handleSaveZora = () => {
+    if (!data) return;
+    const anySettings = data as any;
+    const payload = createPayload(data, {
+      zora: {
+        ...(anySettings.zora ?? {}),
+        engineOrder,
+        customInstructions: zoraCustomInstructions,
+        safeMode: zoraSafeMode,
+        autoChooseEngine: zoraAutoEngine,
+        explainReasoning: zoraExplainReasoning,
+        showModelBadges: zoraShowBadges,
+        defaultTone: zoraDefaultTone,
+        showSystemPrompts: zoraShowSystemPrompts,
+      },
+    });
+    saveSettings
+      .mutateAsync(payload)
+      .then(() => toast.success("Zora preferences saved."))
+      .catch(() => toast.error("Could not save Zora preferences."));
+  };
+
+  const handleSaveWorkspace = () => {
+    if (!data) return;
+    const anySettings = data as any;
+    const payload = createPayload(data, {
+      workspace: {
+        ...(anySettings.workspace ?? {}),
+        customInstructions: workspaceCustomInstructions,
+        dataManagement: workspaceDataMode,
+        studyMode: workspaceStudyMode,
+        digestEnabled: workspaceDigestEnabled,
+        autoOrganizeDocs: workspaceAutoOrganize,
+        suggestFlashcards: workspaceSuggestFlashcards,
+        pinImportantSessions: workspacePinImportant,
+        connectors: workspaceConnectors,
+      },
+    });
+    saveSettings
+      .mutateAsync(payload)
+      .then(() => toast.success("Workspace settings saved."))
+      .catch(() => toast.error("Could not save Workspace settings."));
+  };
+
+  const handleSaveCommandCenter = () => {
+    if (!data) return;
+    const anySettings = data as any;
+    const payload = createPayload(data, {
+      commandCenter: {
+        ...(anySettings.commandCenter ?? {}),
+        widgets: commandWidgets,
+        openOnLaunch: commandOpenOnLaunch,
+        compactMode: commandCompactMode,
+        rememberLayout: commandRememberLayout,
+        glowIntensity: commandGlowIntensity,
+        keyboardShortcut: commandKeyboardShortcut,
+        showHints: commandShowHints,
+      },
+    });
+    saveSettings
+      .mutateAsync(payload)
+      .then(() => toast.success("Command Center saved."))
+      .catch(() => toast.error("Could not save Command Center settings."));
+  };
+
+  const handleSavePrivacy = () => {
+    if (!data) return;
+    const anySettings = data as any;
+    const payload = createPayload(data, {
+      privacy: {
+        ...(anySettings.privacy ?? {}),
+        telemetryOptIn: privacyTelemetryOptIn,
+        shareAnonStats: privacyShareAnonStats,
+        allowModelTraining: privacyAllowModelTraining,
+        strictSafeSearch: privacyStrictSafeSearch,
+        allowExternalWeb: privacyAllowExternalWeb,
+        allowCommandCenterSources: privacyAllowCommandSources,
+        allowedSources: privacyAllowedSources,
+        telemetryLastUpdated: new Date().toISOString(),
+      },
+    });
+    saveSettings
+      .mutateAsync(payload)
+      .then(() => toast.success("Privacy & security settings saved."))
+      .catch(() =>
+        toast.error("Could not save Privacy & security preferences."),
+      );
+  };
+
+  // --- Telemetry consent flow ----------------------------------------------
+
+  const handleTelemetrySwitch = (checked: boolean) => {
+    if (checked) {
+      setPendingTelemetryValue(true);
+      setShowTelemetryConsent(true);
+    } else {
+      setPrivacyTelemetryOptIn(false);
+    }
+  };
+
+  const confirmTelemetryOptIn = () => {
+    if (pendingTelemetryValue) {
+      setPrivacyTelemetryOptIn(true);
+    }
+    setPendingTelemetryValue(null);
+    setShowTelemetryConsent(false);
+  };
+
+  const cancelTelemetryOptIn = () => {
+    setPendingTelemetryValue(null);
+    setShowTelemetryConsent(false);
+    setPrivacyTelemetryOptIn(false);
+  };
+
+  // --- Loading & error states ----------------------------------------------
 
   if (isLoading) {
     return (
@@ -280,7 +470,7 @@ export function Settings() {
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="panel panel--glassy panel--hover panel--immersive panel--alive"
+              className="panel panel--glassy panel--hover panel--immersive panel--alive p-5"
             >
               <SkeletonBlock />
             </div>
@@ -307,1506 +497,1452 @@ export function Settings() {
     );
   }
 
-  const settings = data as ExtendedSettingsData;
-
-  const zora = settings.zora ?? DEFAULT_ZORA_SETTINGS;
-  const workspace = settings.workspaceSettings ?? DEFAULT_WORKSPACE_SETTINGS;
-  const commandCenter =
-    settings.commandCenter ?? DEFAULT_COMMAND_CENTER_SETTINGS;
-  const privacy = settings.privacy ?? DEFAULT_PRIVACY_SETTINGS;
-
-  const rankedEngines = [...zora.enginePreferences].sort(
-    (a, b) => a.rank - b.rank,
-  );
-  const rankedWidgets = [...commandCenter.widgets].sort(
-    (a, b) => a.rank - b.rank,
-  );
-
-  /* -------------------------- Save helper ------------------------------ */
-
-  const updateSettings = (
-    update: Partial<ExtendedSettingsData>,
-    successMessage: string,
-  ) => {
-    const next: ExtendedSettingsData = {
-      ...settings,
-      ...update,
-    };
-
-    return saveSettings
-      .mutateAsync(next as SettingsData)
-      .then(() => toast.success(successMessage))
-      .catch(() =>
-        toast.error("We couldn’t save that change. Please try again."),
-      );
-  };
-
-  /* ------------------------ Zora handlers ------------------------------ */
-
-  const handleZoraEngineToggle = (id: string, enabled: boolean) => {
-    const nextEngines = rankedEngines.map((engine) =>
-      engine.id === id ? { ...engine, enabled } : engine,
-    );
-    updateSettings(
-      { zora: { ...zora, enginePreferences: nextEngines } },
-      "Engine preferences updated.",
-    );
-  };
-
-  const reorderEngines = (from: number, to: number) => {
-    if (from === to || from < 0 || to < 0) return;
-    const next = [...rankedEngines];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    const reRanked = next.map((engine, idx) => ({
-      ...engine,
-      rank: idx + 1,
-    }));
-    updateSettings(
-      { zora: { ...zora, enginePreferences: reRanked } },
-      "Engine order saved.",
-    );
-  };
-
-  const setZoraMode = (mode: ZoraSettingsSection["defaultMode"]) =>
-    updateSettings(
-      { zora: { ...zora, defaultMode: mode } },
-      "Default mode set.",
-    );
-
-  const setZoraToggle = <K extends keyof ZoraSettingsSection>(
-    key: K,
-    value: ZoraSettingsSection[K],
-  ) =>
-    updateSettings({ zora: { ...zora, [key]: value } }, "Zora settings updated.");
-
-  const handleZoraCustomInstructionsSave = (value: string) =>
-    updateSettings(
-      { zora: { ...zora, customInstructions: value } },
-      "Custom instructions saved.",
-    );
-
-  /* --------------------- Workspace handlers ---------------------------- */
-
-  const handleConnectorToggle = (id: string, connected: boolean) => {
-    const nextConnectors = workspace.connectors.map((c) =>
-      c.id === id ? { ...c, connected } : c,
-    );
-    updateSettings(
-      { workspaceSettings: { ...workspace, connectors: nextConnectors } },
-      "Workspace connectors updated.",
-    );
-  };
-
-  const setWorkspaceToggle = <K extends keyof WorkspaceSettingsSection>(
-    key: K,
-    value: WorkspaceSettingsSection[K],
-  ) =>
-    updateSettings(
-      { workspaceSettings: { ...workspace, [key]: value } },
-      "Workspace settings updated.",
-    );
-
-  const handleAddConnector = () => {
-    toast.info(
-      "The connector gallery will open here once the backend endpoint is wired.",
-    );
-  };
-
-  const handleGenerateWorkspaceDigest = () => {
-    toast.info(
-      "Daily digest generation will call the reporting endpoint once it’s wired.",
-    );
-  };
-
-  const handleWorkspaceCustomInstructionsSave = (value: string) => {
-    setWorkspaceToggle("customInstructions", value);
-    toast.success("Workspace custom instructions saved.");
-  };
-
-  /* ------------------- Command Center handlers ------------------------ */
-
-  const handleWidgetToggle = (id: string, enabled: boolean) => {
-    const nextWidgets = rankedWidgets.map((w) =>
-      w.id === id ? { ...w, enabled } : w,
-    );
-    updateSettings(
-      { commandCenter: { ...commandCenter, widgets: nextWidgets } },
-      "Command Center widgets updated.",
-    );
-  };
-
-  const reorderWidgets = (from: number, to: number) => {
-    if (from === to || from < 0 || to < 0) return;
-    const next = [...rankedWidgets];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    const reRanked = next.map((widget, idx) => ({
-      ...widget,
-      rank: idx + 1,
-    }));
-    updateSettings(
-      { commandCenter: { ...commandCenter, widgets: reRanked } },
-      "Command Center layout saved.",
-    );
-  };
-
-  const setCommandCenterToggle = <
-    K extends keyof CommandCenterSettingsSection,
-  >(
-    key: K,
-    value: CommandCenterSettingsSection[K],
-  ) =>
-    updateSettings(
-      { commandCenter: { ...commandCenter, [key]: value } },
-      "Command Center settings updated.",
-    );
-
-  /* ------------------------ Privacy handlers -------------------------- */
-
-  const setPrivacyToggle = <K extends keyof PrivacySettingsSection>(
-    key: K,
-    value: PrivacySettingsSection[K],
-  ) =>
-    updateSettings(
-      { privacy: { ...(privacy ?? DEFAULT_PRIVACY_SETTINGS), [key]: value } },
-      "Privacy settings updated.",
-    );
-
-  const setPrivacySourceToggle = <K extends keyof PrivacySources>(
-    key: K,
-    value: PrivacySources[K],
-  ) => {
-    const base = privacy ?? DEFAULT_PRIVACY_SETTINGS;
-    const nextPrivacy: PrivacySettingsSection = {
-      ...base,
-      sources: { ...base.sources, [key]: value },
-    };
-    updateSettings({ privacy: nextPrivacy }, "Telemetry sources updated.");
-  };
-
-  const handleTelemetryToggle = (enabled: boolean) => {
-    if (!enabled) {
-      setPrivacyToggle("telemetryEnabled", false);
-      toast.success("Telemetry disabled.");
-    } else {
-      setShowTelemetryConsent(true);
-    }
-  };
-
-  const acceptTelemetryConsent = () => {
-    const now = new Date().toISOString();
-    const base = privacy ?? DEFAULT_PRIVACY_SETTINGS;
-    const nextPrivacy: PrivacySettingsSection = {
-      ...base,
-      telemetryEnabled: true,
-      telemetryConsentVersion: "v1",
-      telemetryLastAnsweredAt: now,
-    };
-    updateSettings(
-      { privacy: nextPrivacy },
-      "Telemetry enabled. Thanks for helping improve Zora.",
-    );
-    setShowTelemetryConsent(false);
-  };
-
-  const cancelTelemetryConsent = () => {
-    setShowTelemetryConsent(false);
-  };
-
-  const handleStrictModeToggle = (enabled: boolean) => {
-    let base = privacy ?? DEFAULT_PRIVACY_SETTINGS;
-    let nextPrivacy: PrivacySettingsSection = {
-      ...base,
-      strictMode: enabled,
-    };
-
-    if (enabled) {
-      nextPrivacy = {
-        ...nextPrivacy,
-        retentionDays: 30,
-        idleLockEnabled: true,
-        idleLockMinutes: 5,
-        requireTwoFactor: true,
-        telemetryEnabled: false,
-        shareWithModelProviders: false,
-      };
-    }
-
-    updateSettings(
-      { privacy: nextPrivacy },
-      enabled
-        ? "Strict privacy mode enabled."
-        : "Strict privacy mode disabled. You can now tune each control separately.",
-    );
-  };
-
-  const handleDownloadData = () => {
-    toast.info(
-      "Data export will be wired to your export endpoint. For now this is a stub.",
-    );
-  };
-
-  /* -------------------------- Appearance helper ------------------------ */
-
-  const handleApplyTheme = () => {
-    setTheme(settings.appearance.theme);
-    toast.success(`Applied ${settings.appearance.theme} theme for this device.`);
-  };
-
-  /* --------------------------- Tabs metadata --------------------------- */
-
-  const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "zora", label: "Zora", icon: <Terminal className="size-4" /> },
-    {
-      id: "workspace",
-      label: "Workspace",
-      icon: <Database className="size-4" />,
-    },
-    {
-      id: "command-center",
-      label: "Command Center",
-      icon: <LayoutGrid className="size-4" />,
-    },
-    {
-      id: "privacy",
-      label: "Privacy & Security",
-      icon: <Shield className="size-4" />,
-    },
-  ];
-
-  /* ------------------------------- Render ------------------------------ */
+  // --- Main layout ----------------------------------------------------------
 
   return (
     <>
       <div className="px-[var(--page-padding)] py-6">
-        {/* Header & tabs */}
-        <section className="panel panel--glassy panel--immersive panel--alive panel--halo rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Page header ------------------------------------------------------- */}
+        <header className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.75)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.72)]">
                 Settings
               </p>
-              <h1 className="mt-1 text-xl font-semibold text-[rgb(var(--text))] sm:text-2xl">
-                Shape how Zora behaves, remembers, and protects you.
+              <h1 className="mt-1 text-xl font-semibold text-[rgb(var(--text))]">
+                Tune how Zora behaves, learns, and protects you.
               </h1>
-              <p className="mt-2 max-w-2xl text-sm text-[rgba(var(--subtle),0.8)]">
-                Zora, Workspace, Command Center, and Privacy each keep their own
-                controls so you can tune the system without getting lost.
+              <p className="mt-1 max-w-2xl text-sm text-[rgba(var(--subtle),0.82)]">
+                Adjust preferences across the AI engine, your Workspace, the
+                Command Center, and privacy. Most changes apply instantly;
+                anything sensitive will always ask for your consent.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${
-                    activeTab === tab.id
-                      ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
-                      : "border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.9)] text-[rgba(var(--subtle),0.85)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
+            <div className="flex flex-col items-end gap-2 text-right">
+              <div className="rounded-2xl border border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.9)] px-4 py-2 text-xs text-[rgba(var(--subtle),0.8)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.75)]">
+                  Workspace identity
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[rgb(var(--text))]">
+                  {data.profile.displayName}
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  {data.profile.email}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleApplyTheme}
+                className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+              >
+                <CheckCircle2 className="size-4" /> Apply {data.appearance.theme}{" "}
+                theme
+              </button>
             </div>
           </div>
-        </section>
+        </header>
 
-        {activeTab === "zora" && (
-          <ZoraTab
-            zora={zora}
-            rankedEngines={rankedEngines}
-            dragEngineIndex={dragEngineIndex}
-            setDragEngineIndex={setDragEngineIndex}
-            onReorderEngines={reorderEngines}
-            onEngineToggle={handleZoraEngineToggle}
-            onModeChange={setZoraMode}
-            onToggle={setZoraToggle}
-            onSaveCustomInstructions={handleZoraCustomInstructionsSave}
-          />
-        )}
+        {/* Tabs + content ---------------------------------------------------- */}
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+          {/* Left: tab list */}
+          <aside className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.95)] p-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Settings2 className="size-4 text-brand" />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[rgba(var(--subtle),0.8)]">
+                Sections
+              </p>
+            </div>
+            <ul className="mt-4 space-y-1">
+              {TABS.map((tab) => (
+                <li key={tab.id}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex w-full flex-col rounded-2xl px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-[rgba(var(--brand),0.6)] focus:ring-offset-2 focus:ring-offset-[rgb(var(--surface))] ${
+                      activeTab === tab.id
+                        ? "bg-[rgba(var(--brand),0.16)] text-[rgb(var(--text))]"
+                        : "bg-transparent text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--panel),0.9)]"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-[0.22em]">
+                      {tab.label}
+                    </span>
+                    <span className="mt-0.5 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                      {tab.description}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </aside>
 
-        {activeTab === "workspace" && (
-          <WorkspaceTab
-            workspace={workspace}
-            onConnectorToggle={handleConnectorToggle}
-            onToggle={setWorkspaceToggle}
-            onAddConnector={handleAddConnector}
-            onGenerateDigest={handleGenerateWorkspaceDigest}
-            onSaveCustomInstructions={handleWorkspaceCustomInstructionsSave}
-          />
-        )}
+          {/* Right: active tab content */}
+          <section className="space-y-5">
+            {activeTab === "zora" && (
+              <ZoraTab
+                engineOrder={engineOrder}
+                onChangeEngineOrder={setEngineOrder}
+                customInstructions={zoraCustomInstructions}
+                onChangeCustomInstructions={setZoraCustomInstructions}
+                safeMode={zoraSafeMode}
+                onChangeSafeMode={setZoraSafeMode}
+                autoEngine={zoraAutoEngine}
+                onChangeAutoEngine={setZoraAutoEngine}
+                explainReasoning={zoraExplainReasoning}
+                onChangeExplainReasoning={setZoraExplainReasoning}
+                showBadges={zoraShowBadges}
+                onChangeShowBadges={setZoraShowBadges}
+                defaultTone={zoraDefaultTone}
+                onChangeDefaultTone={setZoraDefaultTone}
+                showSystemPrompts={zoraShowSystemPrompts}
+                onChangeShowSystemPrompts={setZoraShowSystemPrompts}
+                providers={data.providers}
+                onToggleProvider={handleProviderToggle}
+                onSave={handleSaveZora}
+                isSaving={saveSettings.isPending}
+              />
+            )}
 
-        {activeTab === "command-center" && (
-          <CommandCenterTab
-            commandCenter={commandCenter}
-            rankedWidgets={rankedWidgets}
-            dragWidgetIndex={dragWidgetIndex}
-            setDragWidgetIndex={setDragWidgetIndex}
-            onReorderWidgets={reorderWidgets}
-            onWidgetToggle={handleWidgetToggle}
-            onToggle={setCommandCenterToggle}
-          />
-        )}
+            {activeTab === "workspace" && (
+              <WorkspaceTab
+                customInstructions={workspaceCustomInstructions}
+                onChangeCustomInstructions={setWorkspaceCustomInstructions}
+                dataMode={workspaceDataMode}
+                onChangeDataMode={setWorkspaceDataMode}
+                studyMode={workspaceStudyMode}
+                onChangeStudyMode={setWorkspaceStudyMode}
+                digestEnabled={workspaceDigestEnabled}
+                onChangeDigestEnabled={setWorkspaceDigestEnabled}
+                autoOrganize={workspaceAutoOrganize}
+                onChangeAutoOrganize={setWorkspaceAutoOrganize}
+                suggestFlashcards={workspaceSuggestFlashcards}
+                onChangeSuggestFlashcards={setWorkspaceSuggestFlashcards}
+                pinImportant={workspacePinImportant}
+                onChangePinImportant={setWorkspacePinImportant}
+                connectors={workspaceConnectors}
+                onChangeConnectors={setWorkspaceConnectors}
+                onRequestDigest={() => {
+                  requestDocumentsView("workspace-daily-digest");
+                  toast.success(
+                    "Daily Workspace digest requested. It will open in a new view when ready.",
+                  );
+                }}
+                onSave={handleSaveWorkspace}
+                isSaving={saveSettings.isPending}
+              />
+            )}
 
-        {activeTab === "privacy" && (
-          <PrivacyTab
-            privacy={privacy}
-            onTelemetryToggle={handleTelemetryToggle}
-            onStrictModeToggle={handleStrictModeToggle}
-            onToggle={setPrivacyToggle}
-            onSourceToggle={setPrivacySourceToggle}
-            onDownloadData={handleDownloadData}
-          />
-        )}
+            {activeTab === "commandCenter" && (
+              <CommandCenterTab
+                widgets={commandWidgets}
+                onChangeWidgets={setCommandWidgets}
+                openOnLaunch={commandOpenOnLaunch}
+                onChangeOpenOnLaunch={setCommandOpenOnLaunch}
+                compactMode={commandCompactMode}
+                onChangeCompactMode={setCommandCompactMode}
+                rememberLayout={commandRememberLayout}
+                onChangeRememberLayout={setCommandRememberLayout}
+                glowIntensity={commandGlowIntensity}
+                onChangeGlowIntensity={setCommandGlowIntensity}
+                keyboardShortcut={commandKeyboardShortcut}
+                onChangeKeyboardShortcut={setCommandKeyboardShortcut}
+                showHints={commandShowHints}
+                onChangeShowHints={setCommandShowHints}
+                onSave={handleSaveCommandCenter}
+                isSaving={saveSettings.isPending}
+              />
+            )}
 
-        <AppearanceSection
-          theme={settings.appearance.theme}
-          isSaving={saveSettings.isPending}
-          onApplyTheme={handleApplyTheme}
-        />
+            {activeTab === "privacy" && (
+              <PrivacyTab
+                telemetryOptIn={privacyTelemetryOptIn}
+                onTelemetryToggle={handleTelemetrySwitch}
+                shareAnonStats={privacyShareAnonStats}
+                onChangeShareAnonStats={setPrivacyShareAnonStats}
+                allowModelTraining={privacyAllowModelTraining}
+                onChangeAllowModelTraining={setPrivacyAllowModelTraining}
+                strictSafeSearch={privacyStrictSafeSearch}
+                onChangeStrictSafeSearch={setPrivacyStrictSafeSearch}
+                allowExternalWeb={privacyAllowExternalWeb}
+                onChangeAllowExternalWeb={setPrivacyAllowExternalWeb}
+                allowCommandSources={privacyAllowCommandSources}
+                onChangeAllowCommandSources={setPrivacyAllowCommandSources}
+                allowedSources={privacyAllowedSources}
+                onChangeAllowedSources={setPrivacyAllowedSources}
+                onSave={handleSavePrivacy}
+                isSaving={saveSettings.isPending}
+              />
+            )}
+          </section>
+        </div>
       </div>
 
-      <TelemetryConsentModal
-        open={showTelemetryConsent}
-        onAccept={acceptTelemetryConsent}
-        onCancel={cancelTelemetryConsent}
-      />
+      {showTelemetryConsent && (
+        <TelemetryConsentModal
+          onConfirm={confirmTelemetryOptIn}
+          onCancel={cancelTelemetryOptIn}
+        />
+      )}
     </>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Zora tab                                                                   */
-/* -------------------------------------------------------------------------- */
+export default Settings;
+
+// ==========================================================================
+// Sub-components
+// ==========================================================================
 
 type ZoraTabProps = {
-  zora: ZoraSettingsSection;
-  rankedEngines: ZoraEnginePref[];
-  dragEngineIndex: number | null;
-  setDragEngineIndex: (index: number | null) => void;
-  onReorderEngines: (from: number, to: number) => void;
-  onEngineToggle: (id: string, enabled: boolean) => void;
-  onModeChange: (mode: ZoraSettingsSection["defaultMode"]) => void;
-  onToggle: <K extends keyof ZoraSettingsSection>(
-    key: K,
-    value: ZoraSettingsSection[K],
-  ) => void;
-  onSaveCustomInstructions: (value: string) => void;
+  engineOrder: string[];
+  onChangeEngineOrder: (order: string[]) => void;
+  customInstructions: string;
+  onChangeCustomInstructions: (v: string) => void;
+  safeMode: boolean;
+  onChangeSafeMode: (v: boolean) => void;
+  autoEngine: boolean;
+  onChangeAutoEngine: (v: boolean) => void;
+  explainReasoning: boolean;
+  onChangeExplainReasoning: (v: boolean) => void;
+  showBadges: boolean;
+  onChangeShowBadges: (v: boolean) => void;
+  defaultTone: "balanced" | "precise" | "creative";
+  onChangeDefaultTone: (v: "balanced" | "precise" | "creative") => void;
+  showSystemPrompts: boolean;
+  onChangeShowSystemPrompts: (v: boolean) => void;
+  providers: SettingsData["providers"];
+  onToggleProvider: (id: string, enabled: boolean) => void;
+  onSave: () => void;
+  isSaving: boolean;
 };
 
 function ZoraTab({
-  zora,
-  rankedEngines,
-  dragEngineIndex,
-  setDragEngineIndex,
-  onReorderEngines,
-  onEngineToggle,
-  onModeChange,
-  onToggle,
-  onSaveCustomInstructions,
+  engineOrder,
+  onChangeEngineOrder,
+  customInstructions,
+  onChangeCustomInstructions,
+  safeMode,
+  onChangeSafeMode,
+  autoEngine,
+  onChangeAutoEngine,
+  explainReasoning,
+  onChangeExplainReasoning,
+  showBadges,
+  onChangeShowBadges,
+  defaultTone,
+  onChangeDefaultTone,
+  showSystemPrompts,
+  onChangeShowSystemPrompts,
+  providers,
+  onToggleProvider,
+  onSave,
+  isSaving,
 }: ZoraTabProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const handleReorder = (from: number, to: number) => {
+    if (from === to) return;
+    onChangeEngineOrder(moveItem(engineOrder, from, to));
+  };
+
   return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <>
       {/* Engine ranking */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center gap-2">
-          <Terminal className="size-4 text-brand" />
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
               Zora engine
             </p>
-            <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-              Rank your models
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
+              Rank your engines
             </h2>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.85)]">
+              Drag to reorder or use the arrows. Zora will prefer engines at the
+              top for Analyze-style tasks, then fall back to the rest as needed.
+            </p>
           </div>
-        </div>
-        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-          Drag with the grip or nudge with arrows to tell Zora which engine to
-          try first. For Analyze and long-form tasks, Zora walks this list from
-          top to bottom.
-        </p>
+          <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand-soft),0.2)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">
+            <Sparkles className="size-3.5" /> Smart routing on
+          </span>
+        </header>
 
-        <ul className="mt-4 space-y-3">
-          {rankedEngines.map((engine, index) => {
-            const isFirst = index === 0;
-            const isLast = index === rankedEngines.length - 1;
+        <ol className="mt-4 space-y-2 text-sm">
+          {engineOrder.map((id, index) => {
+            const meta = getEngineMeta(id);
+            const position = index + 1;
 
             return (
               <li
-                key={engine.id}
+                key={id}
                 draggable
-                onDragStart={() => setDragEngineIndex(index)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (dragEngineIndex !== null) {
-                    onReorderEngines(dragEngineIndex, index);
-                    setDragEngineIndex(null);
+                onDragStart={(event) => {
+                  setDragIndex(index);
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", id);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (dragIndex !== null) {
+                    handleReorder(dragIndex, index);
+                    setDragIndex(null);
                   }
                 }}
                 className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.32)] bg-[rgba(var(--panel),0.6)] px-3 py-3 text-sm"
               >
                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)]"
-                    aria-label="Reorder engine"
-                  >
-                    <GripVertical className="size-4" />
-                  </button>
+                  <span className="flex size-6 items-center justify-center rounded-full bg-[rgba(var(--border),0.3)] text-[11px] font-semibold text-[rgb(var(--text))]">
+                    {position}
+                  </span>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex size-6 items-center justify-center rounded-full bg-[rgba(var(--panel),0.9)] text-[11px] font-semibold text-[rgba(var(--subtle),0.9)]">
-                        {index + 1}
-                      </span>
-                      <p className="font-semibold text-[rgb(var(--text))]">
-                        {engine.name}
-                      </p>
-                      {isFirst && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand),0.14)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand">
-                          <Star className="size-3" /> Default
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
-                      {engine.enabled
-                        ? isFirst
-                          ? "Primary engine for most tasks."
-                          : "Used as a fallback when higher engines are busy or restricted."
-                        : "Currently disabled for routing."}
+                    <p className="font-semibold text-[rgb(var(--text))]">
+                      {meta.label}
+                    </p>
+                    <p className="text-[11px] text-[rgba(var(--subtle),0.82)]">
+                      {meta.description}
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="inline-flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => onReorderEngines(index, index - 1)}
-                      disabled={isFirst}
-                      className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
-                        isFirst
-                          ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
-                          : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
-                      }`}
-                    >
-                      <ArrowUp className="mr-1 size-3" />
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onReorderEngines(index, index + 1)}
-                      disabled={isLast}
-                      className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
-                        isLast
-                          ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
-                          : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
-                      }`}
-                    >
-                      <ArrowDown className="mr-1 size-3" />
-                      Down
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-                    <span>{engine.enabled ? "Enabled" : "Disabled"}</span>
-                    <Switch
-                      checked={engine.enabled}
-                      onCheckedChange={(checked) =>
-                        onEngineToggle(engine.id, checked)
-                      }
-                    />
-                  </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="rounded-full bg-[rgba(var(--surface),0.96)] p-1 text-[rgba(var(--subtle),0.8)] hover:text-brand"
+                    disabled={index === 0}
+                    onClick={() => handleReorder(index, index - 1)}
+                  >
+                    <ArrowUp className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full bg-[rgba(var(--surface),0.96)] p-1 text-[rgba(var(--subtle),0.8)] hover:text-brand"
+                    disabled={index === engineOrder.length - 1}
+                    onClick={() => handleReorder(index, index + 1)}
+                  >
+                    <ArrowDown className="size-4" />
+                  </button>
                 </div>
               </li>
             );
           })}
-        </ul>
-      </div>
+        </ol>
+      </section>
 
-      {/* Behaviour + custom instructions */}
-      <div className="flex flex-col gap-4">
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-          <div className="flex items-center gap-2">
-            <Activity className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Behavior
+      {/* Behaviour toggles + custom instructions */}
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          {/* Behaviour toggles */}
+          <div>
+            <header>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+                Behaviour
               </p>
-              <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                How Zora thinks and responds
-              </h2>
-            </div>
+              <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+                How Zora behaves by default
+              </h3>
+              <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+                These switches affect Zora everywhere: Workspace, Command
+                Center, and standalone chat.
+              </p>
+            </header>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <div>
+                  <dt className="font-semibold text-[rgb(var(--text))]">
+                    Safe mode
+                  </dt>
+                  <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Extra-strict filters on sensitive topics and risky
+                    suggestions.
+                  </dd>
+                </div>
+                <Switch
+                  checked={safeMode}
+                  onCheckedChange={onChangeSafeMode}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <div>
+                  <dt className="font-semibold text-[rgb(var(--text))]">
+                    Auto-choose engine
+                  </dt>
+                  <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Let Zora pick the best model for each request using your
+                    ranking as a bias.
+                  </dd>
+                </div>
+                <Switch
+                  checked={autoEngine}
+                  onCheckedChange={onChangeAutoEngine}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <div>
+                  <dt className="font-semibold text-[rgb(var(--text))]">
+                    Explain reasoning
+                  </dt>
+                  <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Ask Zora to briefly explain why it chose a model or answer
+                    path.
+                  </dd>
+                </div>
+                <Switch
+                  checked={explainReasoning}
+                  onCheckedChange={onChangeExplainReasoning}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <div>
+                  <dt className="font-semibold text-[rgb(var(--text))]">
+                    Show model badges
+                  </dt>
+                  <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Display which engine answered each message in the UI.
+                  </dd>
+                </div>
+                <Switch
+                  checked={showBadges}
+                  onCheckedChange={onChangeShowBadges}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <div>
+                  <dt className="font-semibold text-[rgb(var(--text))]">
+                    Show system prompts
+                  </dt>
+                  <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Allow advanced users to reveal the underlying system
+                    messages used for each run.
+                  </dd>
+                </div>
+                <Switch
+                  checked={showSystemPrompts}
+                  onCheckedChange={onChangeShowSystemPrompts}
+                />
+              </div>
+
+              <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+                <dt className="mb-1 text-sm font-semibold text-[rgb(var(--text))]">
+                  Default tone
+                </dt>
+                <dd className="flex flex-wrap gap-2 text-[11px]">
+                  {[
+                    { id: "balanced", label: "Balanced" },
+                    { id: "precise", label: "Precise" },
+                    { id: "creative", label: "Creative" },
+                  ].map((tone) => (
+                    <button
+                      key={tone.id}
+                      type="button"
+                      onClick={() =>
+                        onChangeDefaultTone(
+                          tone.id as "balanced" | "precise" | "creative",
+                        )
+                      }
+                      className={`rounded-full px-3 py-1 font-semibold transition ${
+                        defaultTone === tone.id
+                          ? "bg-[rgba(var(--brand),0.2)] text-brand"
+                          : "bg-[rgba(var(--surface),0.96)] text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--border),0.5)]"
+                      }`}
+                    >
+                      {tone.label}
+                    </button>
+                  ))}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <div className="mt-4 space-y-4 text-sm">
-            <div>
-              <p className="text-[rgba(var(--subtle),0.78)]">Default mode</p>
-              <div className="mt-1 inline-flex gap-2">
+
+          {/* Custom instructions */}
+          <div className="flex flex-col rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.82)] p-4">
+            <header className="flex items-center gap-2">
+              <SlidersHorizontal className="size-4 text-brand" />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.76)]">
+                  Custom instructions
+                </p>
+                <p className="text-xs text-[rgba(var(--subtle),0.84)]">
+                  Tell Zora how you like answers to look, what matters to you,
+                  and anything it should always keep in mind.
+                </p>
+              </div>
+            </header>
+            <textarea
+              value={customInstructions}
+              onChange={(event) => onChangeCustomInstructions(event.target.value)}
+              placeholder="Example: “Always prioritise reliability over speed. I’m preparing for long-form study, so keep a calm, encouraging tone and call out key risks clearly.”"
+              className="mt-3 min-h-[180px] flex-1 resize-none rounded-2xl border border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] outline-none focus:border-[rgba(var(--brand),0.7)]"
+            />
+            <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
+              There&apos;s no character limit here. Zora will summarise and
+              compress this behind the scenes so it can travel with you across
+              Workspace and Command Center.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onSave}
+            className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            <span className="ml-2">Save Zora settings</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Security providers */}
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+              Engine guardrails
+            </p>
+            <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
+              Security providers
+            </h3>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+              Toggle integrations as you wire Zora to production-grade safety
+              systems. These sit underneath the engine ranking.
+            </p>
+          </div>
+          <Shield className="size-6 text-brand" />
+        </header>
+        <ul className="mt-4 space-y-2 text-sm">
+          {providers.map((provider) => (
+            <li
+              key={provider.id}
+              className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5"
+            >
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  {provider.name}
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  {provider.enabled ? "Enabled" : "Disabled"}
+                </p>
+              </div>
+              <Switch
+                checked={provider.enabled}
+                onCheckedChange={(checked) =>
+                  onToggleProvider(provider.id, checked)
+                }
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Workspace tab
+// --------------------------------------------------------------------------
+
+type WorkspaceTabProps = {
+  customInstructions: string;
+  onChangeCustomInstructions: (v: string) => void;
+  dataMode: "compact" | "balanced" | "rich";
+  onChangeDataMode: (v: "compact" | "balanced" | "rich") => void;
+  studyMode: boolean;
+  onChangeStudyMode: (v: boolean) => void;
+  digestEnabled: boolean;
+  onChangeDigestEnabled: (v: boolean) => void;
+  autoOrganize: boolean;
+  onChangeAutoOrganize: (v: boolean) => void;
+  suggestFlashcards: boolean;
+  onChangeSuggestFlashcards: (v: boolean) => void;
+  pinImportant: boolean;
+  onChangePinImportant: (v: boolean) => void;
+  connectors: Array<{ id: string; label: string; description: string; enabled: boolean }>;
+  onChangeConnectors: (
+    connectors: Array<{
+      id: string;
+      label: string;
+      description: string;
+      enabled: boolean;
+    }>,
+  ) => void;
+  onRequestDigest: () => void;
+  onSave: () => void;
+  isSaving: boolean;
+};
+
+function WorkspaceTab({
+  customInstructions,
+  onChangeCustomInstructions,
+  dataMode,
+  onChangeDataMode,
+  studyMode,
+  onChangeStudyMode,
+  digestEnabled,
+  onChangeDigestEnabled,
+  autoOrganize,
+  onChangeAutoOrganize,
+  suggestFlashcards,
+  onChangeSuggestFlashcards,
+  pinImportant,
+  onChangePinImportant,
+  connectors,
+  onChangeConnectors,
+  onRequestDigest,
+  onSave,
+  isSaving,
+}: WorkspaceTabProps) {
+  const handleConnectorToggle = (id: string, enabled: boolean) => {
+    onChangeConnectors(
+      connectors.map((c) =>
+        c.id === id ? { ...c, enabled } : c,
+      ),
+    );
+  };
+
+  return (
+    <>
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+              Workspace
+            </p>
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
+              Study, organising, and daily rhythm
+            </h2>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+              These controls define how Workspace behaves as your study / work
+              hub: how aggressively it organises, what it saves, and how it
+              reports back.
+            </p>
+          </div>
+          <PlugZap className="size-6 text-brand" />
+        </header>
+
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Study mode
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Turn on spaced repetition, flashcard suggestions, and calmer
+                  answer styles.
+                </p>
+              </div>
+              <Switch
+                checked={studyMode}
+                onCheckedChange={onChangeStudyMode}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Auto-organise documents
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Workspace will create folders, tags, and bundles from your
+                  uploads automatically.
+                </p>
+              </div>
+              <Switch
+                checked={autoOrganize}
+                onCheckedChange={onChangeAutoOrganize}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Suggest flashcards
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Zora turns highlights and answers into structured practice
+                  questions.
+                </p>
+              </div>
+              <Switch
+                checked={suggestFlashcards}
+                onCheckedChange={onChangeSuggestFlashcards}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Pin important sessions
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Workspace keeps high-signal chats and docs at the top for
+                  quick access.
+                </p>
+              </div>
+              <Switch
+                checked={pinImportant}
+                onCheckedChange={onChangePinImportant}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                Data management style
+              </p>
+              <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Balance how aggressively Workspace stores, tags, and cleans up
+                your data.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
                 {[
+                  { id: "compact", label: "Compact" },
                   { id: "balanced", label: "Balanced" },
-                  { id: "deep", label: "Deep" },
-                  { id: "fast", label: "Fast" },
+                  { id: "rich", label: "Rich history" },
                 ].map((mode) => (
                   <button
                     key={mode.id}
                     type="button"
                     onClick={() =>
-                      onModeChange(mode.id as ZoraSettingsSection["defaultMode"])
+                      onChangeDataMode(
+                        mode.id as "compact" | "balanced" | "rich",
+                      )
                     }
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
-                      zora.defaultMode === mode.id
-                        ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
-                        : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
+                    className={`rounded-full px-3 py-1 font-semibold transition ${
+                      dataMode === mode.id
+                        ? "bg-[rgba(var(--brand),0.2)] text-brand"
+                        : "bg-[rgba(var(--surface),0.96)] text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--border),0.5)]"
                     }`}
                   >
                     {mode.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
-                Balanced is recommended. Deep favors reasoning; Fast favors
-                latency.
-              </p>
             </div>
 
-            <BehaviorToggle
-              title="Multi-model debate"
-              description="Let multiple engines critique each other before Zora answers."
-              checked={zora.multiModelDebate}
-              onChange={(v) => onToggle("multiModelDebate", v)}
-            />
-            <BehaviorToggle
-              title="Auto-verify with the web"
-              description="For factual queries, Zora can cross-check answers with trusted sources."
-              checked={zora.autoWebVerify}
-              onChange={(v) => onToggle("autoWebVerify", v)}
-            />
-            <BehaviorToggle
-              title="Save debates into Workspace"
-              description="Keep transcripts so you can audit how Zora arrived at an answer."
-              checked={zora.saveDebatesToWorkspace}
-              onChange={(v) => onToggle("saveDebatesToWorkspace", v)}
-            />
-            <BehaviorToggle
-              title="Safe mode on high-risk queries"
-              description="When prompts look health / legal / safety-critical, Zora will favor slower but safer engines."
-              checked={zora.safeModeOnHighRisk}
-              onChange={(v) => onToggle("safeModeOnHighRisk", v)}
-            />
-
-            <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-              <div>
-                <p className="font-semibold text-[rgb(var(--text))]">
-                  Max context per chat
-                </p>
-                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Higher limits remember more, but can be slower.
-                </p>
-              </div>
-              <select
-                value={zora.maxContextTokens}
-                onChange={(e) =>
-                  onToggle("maxContextTokens", Number(e.target.value))
-                }
-                className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-              >
-                <option value={8000}>8K tokens</option>
-                <option value={16000}>16K tokens</option>
-                <option value={32000}>32K tokens</option>
-              </select>
-            </div>
-
-            <BehaviorToggle
-              title="Advanced debug panel"
-              description="Show routing decisions, scores, and metadata in a side drawer."
-              checked={zora.showAdvancedDebugPanel}
-              onChange={(v) => onToggle("showAdvancedDebugPanel", v)}
-            />
-          </div>
-        </div>
-
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Custom instructions
-              </p>
-              <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                Tell Zora how to show up for you
-              </h3>
-            </div>
-          </div>
-          <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-            Tone, level of detail, topics to avoid, how to handle
-            uncertainty—whatever helps. Zora will treat this as a standing
-            instruction.
-          </p>
-          <textarea
-            defaultValue={zora.customInstructions}
-            onBlur={(e) => onSaveCustomInstructions(e.target.value)}
-            rows={6}
-            className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
-            placeholder='Example: "Explain like I am a busy grad student. Prefer citations, always show trade-offs, and flag speculation."'
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Workspace tab                                                              */
-/* -------------------------------------------------------------------------- */
-
-type WorkspaceTabProps = {
-  workspace: WorkspaceSettingsSection;
-  onConnectorToggle: (id: string, connected: boolean) => void;
-  onToggle: <K extends keyof WorkspaceSettingsSection>(
-    key: K,
-    value: WorkspaceSettingsSection[K],
-  ) => void;
-  onAddConnector: () => void;
-  onGenerateDigest: () => void;
-  onSaveCustomInstructions: (value: string) => void;
-};
-
-function WorkspaceTab({
-  workspace,
-  onConnectorToggle,
-  onToggle,
-  onAddConnector,
-  onGenerateDigest,
-  onSaveCustomInstructions,
-}: WorkspaceTabProps) {
-  return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-      {/* Connectors */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Link2 className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Workspace
-              </p>
-              <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                Connectors & sources
-              </h2>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onAddConnector}
-            className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--brand),0.65)] bg-[rgba(var(--brand-soft),0.2)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand"
-          >
-            <Plus className="size-3" />
-            Add connector
-          </button>
-        </div>
-        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-          Turn connections on or off without breaking your notes. Zora pulls in
-          read-only mode unless you explicitly allow write-back.
-        </p>
-
-        <ul className="mt-4 space-y-3 text-sm">
-          {workspace.connectors.map((connector) => (
-            <li
-              key={connector.id}
-              className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.6)] px-3 py-3"
-            >
-              <div>
-                <p className="font-semibold text-[rgb(var(--text))]">
-                  {connector.name}
-                </p>
-                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  {connector.category} •{" "}
-                  {connector.connected ? "Connected" : "Not connected"}
-                </p>
-              </div>
-              <Switch
-                checked={connector.connected}
-                onCheckedChange={(checked) =>
-                  onConnectorToggle(connector.id, checked)
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Workspace behaviour + instructions */}
-      <div className="flex flex-col gap-4">
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-          <div className="flex items-center gap-2">
-            <Database className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Workflow
-              </p>
-              <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                How Workspace organizes things
-              </h2>
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-4 text-sm">
-            <BehaviorToggle
-              title="Auto-organize sessions"
-              description="Group sessions into projects and topics automatically."
-              checked={workspace.autoOrganize}
-              onChange={(v) => onToggle("autoOrganize", v)}
-            />
-            <BehaviorToggle
-              title="Study mode"
-              description="Turn long notes into flashcards and quick drills."
-              checked={workspace.studyMode}
-              onChange={(v) => onToggle("studyMode", v)}
-            />
-            <BehaviorToggle
-              title="Allow write-back to connectors"
-              description="Let Zora push cleaned-up notes and summaries back into tools like Notion or Drive."
-              checked={workspace.allowWriteBack}
-              onChange={(v) => onToggle("allowWriteBack", v)}
-            />
-
-            <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
               <div>
                 <p className="font-semibold text-[rgb(var(--text))]">
                   Daily Workspace digest
                 </p>
                 <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Summarize what you searched, what you ignored, and how to make
-                  tomorrow better. Each report is capped at 1,000 words.
+                  Receive a short summary of what you searched, ignored, and how
+                  to make tomorrow smoother. Each report is capped at 1,000
+                  words.
                 </p>
                 <button
                   type="button"
-                  onClick={onGenerateDigest}
-                  className="mt-1 text-[11px] font-semibold text-brand underline underline-offset-2 hover:text-[rgba(var(--brand-ink),1)]"
+                  onClick={onRequestDigest}
+                  className="mt-1 text-[11px] font-semibold text-brand underline-offset-2 hover:underline"
                 >
-                  Generate today&apos;s digest →
+                  Generate today&apos;s digest
                 </button>
               </div>
               <Switch
-                checked={workspace.dailyDigestEnabled}
-                onCheckedChange={(v) => onToggle("dailyDigestEnabled", v)}
+                checked={digestEnabled}
+                onCheckedChange={onChangeDigestEnabled}
               />
             </div>
+          </div>
 
-            <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+          {/* Custom instructions */}
+          <div className="flex flex-col rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.82)] p-4">
+            <header className="flex items-center gap-2">
+              <Activity className="size-4 text-brand" />
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.76)]">
+                  Workspace instructions
+                </p>
+                <p className="text-xs text-[rgba(var(--subtle),0.84)]">
+                  Describe how Workspace should handle docs, flashcards, and
+                  study sessions for you.
+                </p>
+              </div>
+            </header>
+            <textarea
+              value={customInstructions}
+              onChange={(event) =>
+                onChangeCustomInstructions(event.target.value)
+              }
+              placeholder="Example: “Group everything for my LMSW prep into one folder, prioritise practice questions over summaries, and highlight any policy-heavy content I should revisit.”"
+              className="mt-3 min-h-[180px] flex-1 resize-none rounded-2xl border border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] outline-none focus:border-[rgba(var(--brand),0.7)]"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onSave}
+            className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            <span className="ml-2">Save Workspace settings</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Connectors */}
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+              Connectors
+            </p>
+            <h3 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
+              What Workspace can see
+            </h3>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+              Turn sources on or off. When you&apos;re ready for more, add new
+              connectors from here.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              toast.info("Connection catalog will open in a future release.")
+            }
+            className="btn btn-ghost btn-neo btn-quiet rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand"
+          >
+            + Add connection
+          </button>
+        </header>
+
+        <ul className="mt-4 space-y-2 text-sm">
+          {connectors.map((connector) => (
+            <li
+              key={connector.id}
+              className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5"
+            >
               <div>
                 <p className="font-semibold text-[rgb(var(--text))]">
-                  Default view
+                  {connector.label}
                 </p>
                 <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Choose how Workspace opens by default.
+                  {connector.description}
                 </p>
               </div>
-              <select
-                value={workspace.defaultView}
-                onChange={(e) =>
-                  onToggle(
-                    "defaultView",
-                    e.target.value as WorkspaceSettingsSection["defaultView"],
-                  )
+              <Switch
+                checked={connector.enabled}
+                onCheckedChange={(checked) =>
+                  handleConnectorToggle(connector.id, checked)
                 }
-                className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-              >
-                <option value="timeline">Timeline</option>
-                <option value="grid">Grid</option>
-                <option value="list">List</option>
-              </select>
-            </div>
-
-            <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] p-3 text-[11px] text-[rgba(var(--subtle),0.85)]">
-              <p className="font-semibold text-[rgb(var(--text))]">
-                Data management
-              </p>
-              <div className="mt-2 space-y-2">
-                <label className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2">
-                  <span>Auto-archive completed workspaces</span>
-                  <Switch
-                    checked={workspace.autoArchiveCompleted}
-                    onCheckedChange={(v) =>
-                      onToggle("autoArchiveCompleted", v)
-                    }
-                  />
-                </label>
-                <label className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2">
-                  <span>Keep original files in storage</span>
-                  <Switch
-                    checked={workspace.keepOriginalFiles}
-                    onCheckedChange={(v) =>
-                      onToggle("keepOriginalFiles", v)
-                    }
-                  />
-                </label>
-              </div>
-              <p className="mt-1 text-[10px] text-[rgba(var(--subtle),0.75)]">
-                Auto-archive never deletes content; it just moves older work out
-                of your way.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Custom instructions
-              </p>
-              <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                Tell Workspace how to help
-              </h3>
-            </div>
-          </div>
-          <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-            Explain how you want notes grouped, how aggressive study mode
-            should be, and what &quot;done&quot; looks like for a project.
-          </p>
-          <textarea
-            defaultValue={workspace.customInstructions}
-            onBlur={(e) => onSaveCustomInstructions(e.target.value)}
-            rows={5}
-            className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
-            placeholder='Example: "Group notes by class, highlight anything tagged ‘exam’, and build short nightly review sets."'
-          />
-        </div>
-      </div>
-    </section>
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Command Center tab                                                         */
-/* -------------------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Command Center tab
+// --------------------------------------------------------------------------
 
 type CommandCenterTabProps = {
-  commandCenter: CommandCenterSettingsSection;
-  rankedWidgets: CommandCenterWidgetPref[];
-  dragWidgetIndex: number | null;
-  setDragWidgetIndex: (index: number | null) => void;
-  onReorderWidgets: (from: number, to: number) => void;
-  onWidgetToggle: (id: string, enabled: boolean) => void;
-  onToggle: <K extends keyof CommandCenterSettingsSection>(
-    key: K,
-    value: CommandCenterSettingsSection[K],
+  widgets: Array<{ id: string; label: string; description: string; enabled: boolean }>;
+  onChangeWidgets: (
+    widgets: Array<{
+      id: string;
+      label: string;
+      description: string;
+      enabled: boolean;
+    }>,
   ) => void;
+  openOnLaunch: boolean;
+  onChangeOpenOnLaunch: (v: boolean) => void;
+  compactMode: boolean;
+  onChangeCompactMode: (v: boolean) => void;
+  rememberLayout: boolean;
+  onChangeRememberLayout: (v: boolean) => void;
+  glowIntensity: "soft" | "normal" | "strong";
+  onChangeGlowIntensity: (v: "soft" | "normal" | "strong") => void;
+  keyboardShortcut: string;
+  onChangeKeyboardShortcut: (v: string) => void;
+  showHints: boolean;
+  onChangeShowHints: (v: boolean) => void;
+  onSave: () => void;
+  isSaving: boolean;
 };
 
 function CommandCenterTab({
-  commandCenter,
-  rankedWidgets,
-  dragWidgetIndex,
-  setDragWidgetIndex,
-  onReorderWidgets,
-  onWidgetToggle,
-  onToggle,
+  widgets,
+  onChangeWidgets,
+  openOnLaunch,
+  onChangeOpenOnLaunch,
+  compactMode,
+  onChangeCompactMode,
+  rememberLayout,
+  onChangeRememberLayout,
+  glowIntensity,
+  onChangeGlowIntensity,
+  keyboardShortcut,
+  onChangeKeyboardShortcut,
+  showHints,
+  onChangeShowHints,
+  onSave,
+  isSaving,
 }: CommandCenterTabProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const handleReorder = (from: number, to: number) => {
+    if (from === to) return;
+    onChangeWidgets(moveItem(widgets, from, to));
+  };
+
+  const handleWidgetToggle = (id: string, enabled: boolean) => {
+    onChangeWidgets(
+      widgets.map((w) => (w.id === id ? { ...w, enabled } : w)),
+    );
+  };
+
   return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-      {/* Widget layout */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center gap-2">
-          <LayoutGrid className="size-4 text-brand" />
+    <>
+      <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
               Command Center
             </p>
-            <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+            <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
               Layout & widgets
             </h2>
+            <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+              Command Center turns Zora from “chat” into “application”. Choose
+              which widgets are visible and how they behave when you open it.
+            </p>
           </div>
-        </div>
-        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-          Decide what shows up in Command Center and in which order. Projects is
-          permanent; everything else is up to you.
-        </p>
+          <Globe2 className="size-6 text-brand" />
+        </header>
 
-        <div className="mt-4 mb-4 flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.65)] px-3 py-2.5 text-sm">
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          {/* Widgets */}
           <div>
-            <p className="font-semibold text-[rgb(var(--text))]">
-              Enable Command Center
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[rgba(var(--subtle),0.78)]">
+              Widgets
             </p>
-            <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-              Turn the Command Center drawer on or off for your account.
+            <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.84)]">
+              Drag to reorder. Zora will reserve more space for widgets at the
+              top of the list.
             </p>
-          </div>
-          <Switch
-            checked={commandCenter.enabled}
-            onCheckedChange={(checked) => onToggle("enabled", checked)}
-          />
-        </div>
-
-        <ul className="mt-2 space-y-3 text-sm">
-          {rankedWidgets.map((widget, index) => {
-            const isFirst = index === 0;
-            const isLast = index === rankedWidgets.length - 1;
-
-            return (
-              <li
-                key={widget.id}
-                draggable
-                onDragStart={() => setDragWidgetIndex(index)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (dragWidgetIndex !== null) {
-                    onReorderWidgets(dragWidgetIndex, index);
-                    setDragWidgetIndex(null);
-                  }
-                }}
-                className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.6)] px-3 py-3"
-              >
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)]"
-                    aria-label="Reorder widget"
-                  >
-                    <GripVertical className="size-4" />
-                  </button>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex size-6 items-center justify-center rounded-full bg-[rgba(var(--panel),0.9)] text-[11px] font-semibold text-[rgba(var(--subtle),0.9)]">
-                        {index + 1}
-                      </span>
+            <ul className="mt-3 space-y-2 text-sm">
+              {widgets.map((widget, index) => (
+                <li
+                  key={widget.id}
+                  draggable
+                  onDragStart={(event) => {
+                    setDragIndex(index);
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", widget.id);
+                  }}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    if (dragIndex !== null) {
+                      handleReorder(dragIndex, index);
+                      setDragIndex(null);
+                    }
+                  }}
+                  className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-[rgba(var(--border),0.3)] text-[11px] font-semibold text-[rgb(var(--text))]">
+                      {index + 1}
+                    </span>
+                    <div>
                       <p className="font-semibold text-[rgb(var(--text))]">
-                        {widget.name}
+                        {widget.label}
                       </p>
-                      {widget.id === "projects" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(var(--brand),0.14)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand">
-                          Pinned
-                        </span>
-                      )}
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        {widget.description}
+                      </p>
                     </div>
-                    <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      {widget.description}
-                    </p>
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="inline-flex gap-1">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onReorderWidgets(index, index - 1)}
-                      disabled={isFirst}
-                      className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
-                        isFirst
-                          ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
-                          : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
-                      }`}
+                      className="rounded-full bg-[rgba(var(--surface),0.96)] p-1 text-[rgba(var(--subtle),0.8)] hover:text-brand"
+                      disabled={index === 0}
+                      onClick={() => handleReorder(index, index - 1)}
                     >
-                      <ArrowUp className="mr-1 size-3" />
-                      Up
+                      <ArrowUp className="size-4" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => onReorderWidgets(index, index + 1)}
-                      disabled={isLast}
-                      className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
-                        isLast
-                          ? "cursor-default border-[rgba(var(--border),0.4)] text-[rgba(var(--subtle),0.6)]"
-                          : "border-[rgba(var(--border),0.6)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.6)] hover:text-brand"
-                      }`}
+                      className="rounded-full bg-[rgba(var(--surface),0.96)] p-1 text-[rgba(var(--subtle),0.8)] hover:text-brand"
+                      disabled={index === widgets.length - 1}
+                      onClick={() => handleReorder(index, index + 1)}
                     >
-                      <ArrowDown className="mr-1 size-3" />
-                      Down
+                      <ArrowDown className="size-4" />
                     </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-                    <span>{widget.enabled ? "Visible" : "Hidden"}</span>
                     <Switch
                       checked={widget.enabled}
-                      onCheckedChange={(v) => onWidgetToggle(widget.id, v)}
+                      onCheckedChange={(checked) =>
+                        handleWidgetToggle(widget.id, checked)
+                      }
                     />
                   </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* Behaviour switches */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center gap-2">
-          <Activity className="size-4 text-brand" />
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-              Behavior
-            </p>
-            <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-              How Command Center behaves
-            </h2>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-4 text-sm">
-          <BehaviorToggle
-            title="Open Command Center at launch"
-            description="Start every session from your projects and upcoming work."
-            checked={commandCenter.openOnLaunch}
-            onChange={(v) => onToggle("openOnLaunch", v)}
-          />
-          <BehaviorToggle
-            title="Hotkey overlay"
-            description="Show keyboard hints when Command Center is open."
-            checked={commandCenter.showHotkeysOverlay}
-            onChange={(v) => onToggle("showHotkeysOverlay", v)}
-          />
-          <BehaviorToggle
-            title="Sync tasks with Workspace"
-            description="Show Workspace tasks and deadlines in Upcoming."
-            checked={commandCenter.syncWorkspaceTasks}
-            onChange={(v) => onToggle("syncWorkspaceTasks", v)}
-          />
-          <BehaviorToggle
-            title="Keep command history"
-            description="Remember your recent commands for quick reuse."
-            checked={commandCenter.keepCommandHistory}
-            onChange={(v) => onToggle("keepCommandHistory", v)}
-          />
-          <BehaviorToggle
-            title="Experimental widgets"
-            description="Show early-stage widgets that may change or break."
-            checked={commandCenter.showExperimentalWidgets}
-            onChange={(v) => onToggle("showExperimentalWidgets", v)}
-          />
-
-          <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-            <div>
-              <p className="font-semibold text-[rgb(var(--text))]">Layout</p>
-              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                Compact squeezes more widgets into view; Wide gives each more
-                breathing room.
-              </p>
-            </div>
-            <div className="inline-flex gap-2">
-              {[
-                { id: "compact", label: "Compact" },
-                { id: "wide", label: "Wide" },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() =>
-                    onToggle(
-                      "defaultLayout",
-                      option.id as CommandCenterSettingsSection["defaultLayout"],
-                    )
-                  }
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
-                    commandCenter.defaultLayout === option.id
-                      ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
-                      : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
-                  }`}
-                >
-                  {option.label}
-                </button>
+                </li>
               ))}
+            </ul>
+          </div>
+
+          {/* Behaviour switches */}
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Open Command Center on launch
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  When enabled, Zora opens straight into the Command Center
+                  instead of chat.
+                </p>
+              </div>
+              <Switch
+                checked={openOnLaunch}
+                onCheckedChange={onChangeOpenOnLaunch}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Compact layout
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Tighter spacing and smaller cards when screen real-estate is
+                  precious.
+                </p>
+              </div>
+              <Switch
+                checked={compactMode}
+                onCheckedChange={onChangeCompactMode}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Remember layout
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Keep your widget order, collapsed panels, and filters from the
+                  last session.
+                </p>
+              </div>
+              <Switch
+                checked={rememberLayout}
+                onCheckedChange={onChangeRememberLayout}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                Command Center glow
+              </p>
+              <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Subtle visual “life” around the Command Center button in the
+                header.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                {[
+                  { id: "soft", label: "Soft" },
+                  { id: "normal", label: "Normal" },
+                  { id: "strong", label: "Strong" },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() =>
+                      onChangeGlowIntensity(
+                        option.id as "soft" | "normal" | "strong",
+                      )
+                    }
+                    className={`rounded-full px-3 py-1 font-semibold transition ${
+                      glowIntensity === option.id
+                        ? "bg-[rgba(var(--brand),0.2)] text-brand"
+                        : "bg-[rgba(var(--surface),0.96)] text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--border),0.5)]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <p className="text-sm font-semibold text-[rgb(var(--text))]">
+                Keyboard shortcut
+              </p>
+              <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Choose how you want to summon the Command Center from anywhere
+                in Zora.
+              </p>
+              <input
+                type="text"
+                value={keyboardShortcut}
+                onChange={(event) =>
+                  onChangeKeyboardShortcut(event.target.value)
+                }
+                className="mt-2 w-full rounded-full border border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] outline-none focus:border-[rgba(var(--brand),0.7)]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+              <div>
+                <p className="font-semibold text-[rgb(var(--text))]">
+                  Show inline hints
+                </p>
+                <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Tiny helper text underneath widgets for new users. Good for
+                  onboarding, easy to turn off later.
+                </p>
+              </div>
+              <Switch
+                checked={showHints}
+                onCheckedChange={onChangeShowHints}
+              />
             </div>
           </div>
         </div>
-      </div>
-    </section>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onSave}
+            className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            <span className="ml-2">Save Command Center</span>
+          </button>
+        </div>
+      </section>
+    </>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Privacy tab                                                                */
-/* -------------------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Privacy & security tab
+// --------------------------------------------------------------------------
 
 type PrivacyTabProps = {
-  privacy: PrivacySettingsSection;
-  onTelemetryToggle: (enabled: boolean) => void;
-  onStrictModeToggle: (enabled: boolean) => void;
-  onToggle: <K extends keyof PrivacySettingsSection>(
-    key: K,
-    value: PrivacySettingsSection[K],
-  ) => void;
-  onSourceToggle: <K extends keyof PrivacySources>(
-    key: K,
-    value: PrivacySources[K],
-  ) => void;
-  onDownloadData: () => void;
+  telemetryOptIn: boolean;
+  onTelemetryToggle: (v: boolean) => void;
+  shareAnonStats: boolean;
+  onChangeShareAnonStats: (v: boolean) => void;
+  allowModelTraining: boolean;
+  onChangeAllowModelTraining: (v: boolean) => void;
+  strictSafeSearch: boolean;
+  onChangeStrictSafeSearch: (v: boolean) => void;
+  allowExternalWeb: boolean;
+  onChangeAllowExternalWeb: (v: boolean) => void;
+  allowCommandSources: boolean;
+  onChangeAllowCommandSources: (v: boolean) => void;
+  allowedSources: string[];
+  onChangeAllowedSources: (v: string[]) => void;
+  onSave: () => void;
+  isSaving: boolean;
 };
 
 function PrivacyTab({
-  privacy,
+  telemetryOptIn,
   onTelemetryToggle,
-  onStrictModeToggle,
-  onToggle,
-  onSourceToggle,
-  onDownloadData,
-}: PrivacyTabProps) {
-  return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-      {/* Telemetry & sources */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="size-4 text-brand" />
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-              Privacy & security
-            </p>
-            <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-              Telemetry & data sources
-            </h2>
-          </div>
-        </div>
-        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-          Zora is private by default. Opt-in telemetry shares anonymized patterns
-          so we can make the system smarter without leaking your documents.
-        </p>
-
-        <div className="mt-4 space-y-4 text-sm">
-          <BehaviorToggle
-            title="Opt-in telemetry"
-            description="Share anonymized usage patterns to help Zora get more accurate over time. Raw documents and full messages stay encrypted and are never sold."
-            checked={privacy.telemetryEnabled}
-            onChange={onTelemetryToggle}
-          />
-
-          <BehaviorToggle
-            title="Share telemetry with model providers"
-            description="Allow Zora to sell aggregated hallucination and latency statistics to model vendors. No personal identifiers or raw content are included."
-            checked={privacy.shareWithModelProviders}
-            onChange={(v) => onToggle("shareWithModelProviders", v)}
-          />
-
-          <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] p-3">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="size-4 text-brand" />
-              <p className="font-semibold text-[rgb(var(--text))]">
-                Telemetry sources
-              </p>
-            </div>
-            <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.8)]">
-              Choose what can be included when telemetry is enabled.
-            </p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <TelemetrySourceToggle
-                label="Prompt patterns (no raw text)"
-                checked={privacy.sources.includePrompts}
-                disabled={!privacy.telemetryEnabled}
-                onChange={(v) => onSourceToggle("includePrompts", v)}
-              />
-              <TelemetrySourceToggle
-                label="Model responses (summarized)"
-                checked={privacy.sources.includeOutputs}
-                disabled={!privacy.telemetryEnabled}
-                onChange={(v) => onSourceToggle("includeOutputs", v)}
-              />
-              <TelemetrySourceToggle
-                label="File names only"
-                checked={privacy.sources.includeFileNames}
-                disabled={!privacy.telemetryEnabled}
-                onChange={(v) => onSourceToggle("includeFileNames", v)}
-              />
-              <TelemetrySourceToggle
-                label="Error traces (stack + status)"
-                checked={privacy.sources.includeErrorTraces}
-                disabled={!privacy.telemetryEnabled}
-                onChange={(v) => onSourceToggle("includeErrorTraces", v)}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] p-3 text-[11px] text-[rgba(var(--subtle),0.85)]">
-            <p className="font-semibold text-[rgb(var(--text))]">
-              Telemetry consent
-            </p>
-            <p className="mt-1">
-              {privacy.telemetryConsentVersion
-                ? `You last accepted telemetry terms on ${
-                    privacy.telemetryLastAnsweredAt
-                      ? new Date(
-                          privacy.telemetryLastAnsweredAt,
-                        ).toLocaleString()
-                      : "an earlier date"
-                  } (version ${privacy.telemetryConsentVersion}).`
-                : "You haven’t accepted telemetry terms yet. Turning telemetry on will show a short consent screen first."}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Retention & security */}
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-        <div className="flex items-center gap-2">
-          <Lock className="size-4 text-brand" />
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-              Safeguards
-            </p>
-            <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-              Retention, strict mode, and export
-            </h2>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-4 text-sm">
-          <BehaviorToggle
-            title="Strict privacy mode"
-            description="One switch that moves Zora into a high-privacy posture: short retention, idle lock on, 2FA recommended, and no outbound telemetry."
-            checked={privacy.strictMode}
-            onChange={onStrictModeToggle}
-          />
-
-          <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-            <div>
-              <p className="font-semibold text-[rgb(var(--text))]">
-                Data retention
-              </p>
-              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                Chats and logs older than this are auto-deleted.
-              </p>
-            </div>
-            <select
-              value={privacy.retentionDays}
-              onChange={(e) =>
-                onToggle("retentionDays", Number(e.target.value))
-              }
-              className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-            >
-              <option value={30}>30 days</option>
-              <option value={90}>90 days</option>
-              <option value={365}>1 year</option>
-            </select>
-          </div>
-
-          <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-            <div>
-              <p className="font-semibold text-[rgb(var(--text))]">
-                Idle lock
-              </p>
-              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                Lock Zora when you step away for a bit.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <select
-                value={privacy.idleLockMinutes}
-                onChange={(e) =>
-                  onToggle("idleLockMinutes", Number(e.target.value))
-                }
-                disabled={!privacy.idleLockEnabled}
-                className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-              >
-                <option value={5}>5 min</option>
-                <option value={15}>15 min</option>
-                <option value={30}>30 min</option>
-              </select>
-              <Switch
-                checked={privacy.idleLockEnabled}
-                onCheckedChange={(v) => onToggle("idleLockEnabled", v)}
-              />
-            </div>
-          </div>
-
-          <BehaviorToggle
-            title="Require two-factor authentication"
-            description="Strongly recommended if you store sensitive data here."
-            checked={privacy.requireTwoFactor}
-            onChange={(v) => onToggle("requireTwoFactor", v)}
-          />
-
-          <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] p-3 text-[11px] text-[rgba(var(--subtle),0.85)]">
-            <p className="font-semibold text-[rgb(var(--text))]">
-              Download your data
-            </p>
-            <p className="mt-1">
-              Export a copy of your chats, notes, and telemetry logs (where
-              applicable). You can also request deletion at any time.
-            </p>
-            <button
-              type="button"
-              onClick={onDownloadData}
-              className="mt-3 inline-flex items-center gap-1 rounded-full border border-[rgba(var(--brand),0.65)] bg-[rgba(var(--brand-soft),0.2)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand"
-            >
-              <Save className="size-3" />
-              Request export
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Appearance section                                                         */
-/* -------------------------------------------------------------------------- */
-
-type AppearanceSectionProps = {
-  theme: string;
-  isSaving: boolean;
-  onApplyTheme: () => void;
-};
-
-function AppearanceSection({
-  theme,
+  shareAnonStats,
+  onChangeShareAnonStats,
+  allowModelTraining,
+  onChangeAllowModelTraining,
+  strictSafeSearch,
+  onChangeStrictSafeSearch,
+  allowExternalWeb,
+  onChangeAllowExternalWeb,
+  allowCommandSources,
+  onChangeAllowCommandSources,
+  allowedSources,
+  onChangeAllowedSources,
+  onSave,
   isSaving,
-  onApplyTheme,
-}: AppearanceSectionProps) {
+}: PrivacyTabProps) {
+  const toggleSource = (source: string) => {
+    if (allowedSources.includes(source)) {
+      onChangeAllowedSources(
+        allowedSources.filter((s) => s !== source),
+      );
+    } else {
+      onChangeAllowedSources([...allowedSources, source]);
+    }
+  };
+
   return (
-    <section className="mt-6 grid gap-5 lg:grid-cols-3">
-      <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="size-4 text-brand" />
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                Appearance
-              </p>
-              <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                Theme
-              </h3>
-            </div>
-          </div>
-          {isSaving && <Loader2 className="size-4 animate-spin text-brand" />}
+    <section className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.65)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+            Privacy & security
+          </p>
+          <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
+            You stay in control
+          </h2>
+          <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
+            Zora is designed to feel powerful without feeling invasive. These
+            settings let you decide what&apos;s logged, what leaves your
+            account, and which sources can be used.
+          </p>
         </div>
-        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-          Your current theme is <span className="font-semibold">{theme}</span>.
-          Apply it to this device if things look out of sync.
-        </p>
+        <Lock className="size-6 text-brand" />
+      </header>
+
+      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+        {/* Left side */}
+        <div className="space-y-3 text-sm">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Opt-in telemetry
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                When enabled, we collect anonymised telemetry on hallucinations,
+                API behaviour, and usage patterns to make Zora more accurate.
+                Aggregated trends may be shared with model providers to improve
+                their systems.
+              </p>
+            </div>
+            <Switch
+              checked={telemetryOptIn}
+              onCheckedChange={onTelemetryToggle}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Share anonymous statistics
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Allow us to use aggregated metrics (not raw content) to
+                understand feature usage and reliability.
+              </p>
+            </div>
+            <Switch
+              checked={shareAnonStats}
+              onCheckedChange={onChangeShareAnonStats}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Allow model providers to learn from my data
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                When off, we only use your data to operate Zora. When on,
+                anonymised patterns may help train and evaluate third-party
+                models.
+              </p>
+            </div>
+            <Switch
+              checked={allowModelTraining}
+              onCheckedChange={onChangeAllowModelTraining}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Strict SafeSearch
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Extra filtering for violent, explicit, or abusive material when
+                Zora uses web results.
+              </p>
+            </div>
+            <Switch
+              checked={strictSafeSearch}
+              onCheckedChange={onChangeStrictSafeSearch}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Allow external web access
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                When disabled, Zora stays fully local to your Workspace,
+                Command Center, and connectors only.
+              </p>
+            </div>
+            <Switch
+              checked={allowExternalWeb}
+              onCheckedChange={onChangeAllowExternalWeb}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.7)] px-3 py-2.5">
+            <div>
+              <p className="font-semibold text-[rgb(var(--text))]">
+                Allow Command Center as a data source
+              </p>
+              <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                Use projects and research signals from Command Center when
+                answering related prompts.
+              </p>
+            </div>
+            <Switch
+              checked={allowCommandSources}
+              onCheckedChange={onChangeAllowCommandSources}
+            />
+          </div>
+        </div>
+
+        {/* Right side: sources list */}
+        <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.8)] px-4 py-4 text-sm">
+          <header className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-brand" />
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.78)]">
+                Sources
+              </p>
+              <p className="text-xs text-[rgba(var(--subtle),0.84)]">
+                Choose which buckets of data Zora is allowed to pull from when
+                answering.
+              </p>
+            </div>
+          </header>
+          <ul className="mt-3 space-y-2 text-[11px]">
+            {DEFAULT_SOURCES.map((source) => {
+              const active = allowedSources.includes(source);
+              return (
+                <li key={source}>
+                  <button
+                    type="button"
+                    onClick={() => toggleSource(source)}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left font-semibold transition ${
+                      active
+                        ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.2)] text-brand"
+                        : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--surface),0.96)] text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--border),0.45)]"
+                    }`}
+                  >
+                    <span>{source}</span>
+                    <span className="text-[10px]">
+                      {active ? "Allowed" : "Blocked"}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-[10px] text-[rgba(var(--subtle),0.75)]">
+            Changing these settings only affects how Zora answers. It does not
+            retroactively delete any content; use Workspace tools when you want
+            to fully remove data.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex justify-end">
         <button
           type="button"
-          onClick={onApplyTheme}
-          className="mt-4 btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+          onClick={onSave}
+          className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+          disabled={isSaving}
         >
-          Apply theme on this device
+          {isSaving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          <span className="ml-2">Save Privacy & security</span>
         </button>
       </div>
     </section>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Telemetry consent modal                                                    */
-/* -------------------------------------------------------------------------- */
+// --------------------------------------------------------------------------
+// Telemetry consent modal
+// --------------------------------------------------------------------------
 
 type TelemetryConsentModalProps = {
-  open: boolean;
-  onAccept: () => void;
+  onConfirm: () => void;
   onCancel: () => void;
 };
 
 function TelemetryConsentModal({
-  open,
-  onAccept,
+  onConfirm,
   onCancel,
 }: TelemetryConsentModalProps) {
-  if (!open) return null;
-
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(0,0,0,0.6)]">
-      <div className="panel panel--glassy panel--immersive panel--alive mx-4 w-full max-w-lg rounded-[24px] border border-[rgba(var(--border),0.9)] bg-[rgba(var(--surface),0.98)] p-6 text-sm shadow-[var(--shadow-soft)]">
-        <div className="flex items-center gap-2">
-          <Activity className="size-5 text-brand" />
-          <h2 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
-            Help Zora learn from patterns, not from you.
-          </h2>
-        </div>
-        <p className="mt-3 text-[13px] text-[rgba(var(--subtle),0.85)]">
-          If you turn on telemetry, Zora will send anonymized usage statistics
-          and error patterns. Your raw prompts, files, and account details stay
-          encrypted and are never sold.
-        </p>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-[12px] text-[rgba(var(--subtle),0.85)]">
-          <li>No raw documents or full chat transcripts leave your account.</li>
-          <li>
-            We aggregate hallucination rates, latency, and engine behaviour to
-            improve Zora’s routing.
-          </li>
-          <li>
-            With your separate toggle, we may sell aggregated insights to model
-            providers to fund development.
-          </li>
-        </ul>
-        <p className="mt-3 text-[11px] text-[rgba(var(--subtle),0.75)]">
-          You can turn telemetry off at any time from{" "}
-          <strong>Settings → Privacy &amp; Security</strong>. Turning it off
-          stops future collection but does not retroactively delete data already
-          sent.
-        </p>
-        <div className="mt-4 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn btn-ghost btn-neo btn-quiet rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.9)]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onAccept}
-            className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
-          >
-            Agree &amp; enable telemetry
-          </button>
+      <div className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.98)] p-5 shadow-[var(--shadow-soft)] max-w-lg w-[90%]">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 flex size-8 items-center justify-center rounded-full bg-[rgba(var(--brand-soft),0.25)]">
+            <Activity className="size-4 text-brand" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-[rgb(var(--text))]">
+              Turn on opt-in telemetry?
+            </h2>
+            <p className="mt-2 text-sm text-[rgba(var(--subtle),0.88)]">
+              Telemetry helps us understand how Zora behaves in the wild so we
+              can make it more accurate and reliable. When enabled, we collect
+              anonymised information about hallucinations, API errors, and model
+              choices—but not the raw content of your conversations.
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-[rgba(var(--subtle),0.9)]">
+              <li>You can turn telemetry off again at any time in Settings.</li>
+              <li>
+                Data is aggregated and may be shared with model providers to
+                improve their systems.
+              </li>
+              <li>We never sell personally identifiable information.</li>
+            </ul>
+            <div className="mt-4 flex flex-wrap justify-end gap-2 text-sm">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="btn btn-ghost btn-neo btn-quiet rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.9)]"
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={onConfirm}
+                className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
+              >
+                <ShieldCheck className="size-4" />
+                <span className="ml-2">Agree & turn on telemetry</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Small shared pieces                                                        */
-/* -------------------------------------------------------------------------- */
-
-type BehaviorToggleProps = {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-};
-
-function BehaviorToggle({
-  title,
-  description,
-  checked,
-  onChange,
-}: BehaviorToggleProps) {
-  return (
-    <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-      <div>
-        <p className="font-semibold text-[rgb(var(--text))]">{title}</p>
-        <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-          {description}
-        </p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
-    </div>
-  );
-}
-
-type TelemetrySourceToggleProps = {
-  label: string;
-  checked: boolean;
-  disabled: boolean;
-  onChange: (value: boolean) => void;
-};
-
-function TelemetrySourceToggle({
-  label,
-  checked,
-  disabled,
-  onChange,
-}: TelemetrySourceToggleProps) {
-  return (
-    <label className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.65)] px-3 py-2 text-[11px]">
-      <span>{label}</span>
-      <Switch
-        checked={checked}
-        onCheckedChange={onChange}
-        disabled={disabled}
-      />
-    </label>
-  );
-}
-
-export default Settings;
