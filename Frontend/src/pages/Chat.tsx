@@ -9,6 +9,7 @@ import React, {
   useRef,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useStreamingDebate } from "@/hooks/useStreamingDebate";
 import {
   AlertCircle,
   ArrowDown,
@@ -184,6 +185,20 @@ function ChatInner() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const followMessagesRef = useRef(followMessages);
   const rowSizeMapRef = useRef(new Map<string, number>());
+
+  const {
+    start: startStreamingDebate,
+    firstAnswer,
+    partialAnswer,
+    finalAnswer,
+    progress: streamProgress,
+    error: streamError,
+    isStreaming: isStreamingDebate,
+  } = useStreamingDebate();
+  const hasStreamingDebate = Boolean(
+    firstAnswer || partialAnswer || finalAnswer || streamError || isStreamingDebate,
+  );
+  const streamProgressPercent = Math.max(0, Math.min(100, Math.round(streamProgress * 100)));
 
   const setActiveSessionId = useCallback(
     (value: string) => dispatch({ type: "setActiveSession", payload: value }),
@@ -650,6 +665,7 @@ function ChatInner() {
     setTimeout(() => updateActiveSessionTitleIfNeeded(activeSession.id), 0);
 
     scheduleAssistantReply(activeSession.id, userMessage);
+    void startStreamingDebate({ prompt: trimmed });
   };
 
   const handleRetry = (assistantMessage: ChatMessage) => {
@@ -968,6 +984,67 @@ function ChatInner() {
                   <span className="mx-auto mt-4 inline-flex items-center rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs font-medium text-zora-muted backdrop-blur-xl">
                     {timelineLabel}
                   </span>
+                )}
+                {hasStreamingDebate && (
+                  <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zora-white shadow-zora-soft backdrop-blur-xl">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">Streaming debate</p>
+                        <p className="text-xs text-zora-muted">Live responses with verification.</p>
+                      </div>
+                      <div className="text-right text-xs font-semibold text-zora-muted">
+                        {isStreamingDebate ? "Streaming" : "Complete"} · {streamProgressPercent}%
+                      </div>
+                    </div>
+                    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-[rgb(var(--brand))] transition-all duration-200"
+                        style={{ width: `${streamProgressPercent}%` }}
+                      />
+                    </div>
+                    {streamError && (
+                      <p className="mt-3 text-xs text-red-400">{streamError}</p>
+                    )}
+                    {firstAnswer && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Quick answer</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{firstAnswer.text}</p>
+                        {firstAnswer.model && (
+                          <p className="mt-1 text-[11px] text-zora-muted">via {firstAnswer.model}</p>
+                        )}
+                      </div>
+                    )}
+                    {partialAnswer && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Consensus</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{partialAnswer.text}</p>
+                      </div>
+                    )}
+                    {finalAnswer && (
+                      <div className="mt-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Verified</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{finalAnswer.text}</p>
+                        {finalAnswer.sources && finalAnswer.sources.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-xs font-medium text-gray-600 mb-2">Sources:</p>
+                            <div className="space-y-1">
+                              {finalAnswer.sources.map((source: any, i: number) => (
+                                <a
+                                  key={i}
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block text-xs text-blue-600 hover:underline"
+                                >
+                                  {source.title || source.url}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div
                   style={{
