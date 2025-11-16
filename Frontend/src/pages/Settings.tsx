@@ -21,6 +21,10 @@ import { Switch } from "@/shared/ui/components/switch";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
+/* -------------------------------------------------------------------------- */
+/* HELPERS & TYPES                                                            */
+/* -------------------------------------------------------------------------- */
+
 function createPayload(
   settings: SettingsData,
   overrides: Partial<SettingsData>,
@@ -94,6 +98,69 @@ function SettingRow({
 }
 
 /* -------------------------------------------------------------------------- */
+/* TELEMETRY CONSENT MODAL                                                    */
+/* -------------------------------------------------------------------------- */
+
+function TelemetryConsentModal({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(0,0,0,0.55)] backdrop-blur-sm">
+      <div className="panel panel--glassy panel--alive max-w-lg rounded-[26px] border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.98)] p-6 shadow-[var(--shadow-soft)]">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="size-5 text-brand" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.75)]">
+            Telemetry consent
+          </p>
+        </div>
+        <h2 className="mt-2 text-lg font-semibold text-[rgb(var(--text))]">
+          Share anonymized telemetry with Zora?
+        </h2>
+        <p className="mt-2 text-sm text-[rgba(var(--subtle),0.85)]">
+          Opting in lets Zora learn from patterns, not from the raw content of your
+          chats. We use these signals to make model debate more accurate, improve
+          Workspace intelligence, and tune Command Center signals.
+        </p>
+        <ul className="mt-3 space-y-1.5 text-xs text-[rgba(var(--subtle),0.85)]">
+          <li>• We record model performance, error types, and latency.</li>
+          <li>• We do not store full prompts or documents as telemetry.</li>
+          <li>• We may share anonymized performance stats with model providers.</li>
+          <li>• You can turn this off anytime from Settings.</li>
+        </ul>
+        <p className="mt-3 text-[11px] text-[rgba(var(--subtle),0.75)]">
+          This is optional. Zora works fine with telemetry off—opt in if you want to
+          help improve accuracy and reliability over time.
+        </p>
+        <div className="mt-5 flex flex-wrap justify-end gap-2 text-xs">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn btn-ghost btn-neo btn-quiet rounded-full px-4 py-2 uppercase tracking-[0.2em] text-[rgba(var(--subtle),0.85)] hover:text-brand"
+          >
+            Not now
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 uppercase tracking-[0.2em]"
+          >
+            Enable telemetry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* TAB PANELS                                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -108,6 +175,18 @@ function ZoraSettingsPanel({
   onProviderToggle: (id: string, enabled: boolean) => void;
   isSaving: boolean;
 }) {
+  const [explanationStyle, setExplanationStyle] = useState<"brief" | "standard" | "detailed">(
+    "standard",
+  );
+  const [safetyMode, setSafetyMode] = useState<"relaxed" | "balanced" | "strict">("balanced");
+  const [notificationLevel, setNotificationLevel] = useState<"all" | "important" | "minimal">(
+    "important",
+  );
+  const [commandHints, setCommandHints] = useState(true);
+  const [autoContinue, setAutoContinue] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(false);
+  const [interfaceLanguage, setInterfaceLanguage] = useState("System default");
+
   return (
     <div className="space-y-5">
       {/* Account & appearance */}
@@ -170,7 +249,162 @@ function ZoraSettingsPanel({
         </div>
       </section>
 
-      {/* Security providers */}
+      {/* Zora behavior: 6 settings */}
+      <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)] space-y-3">
+        <SectionHeader
+          title="Zora behavior"
+          description="Tune how Zora talks, explains, and reacts across the entire app."
+        />
+
+        <SettingRow
+          title="Explanation style"
+          description="Choose how deep Zora goes when it explains reasoning and model debates."
+        >
+          <div className="inline-flex gap-2 rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.9)] p-1 text-[11px]">
+            {["brief", "standard", "detailed"].map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => {
+                  setExplanationStyle(mode as typeof explanationStyle);
+                  toast.success("Explanation style updated (wired soon).");
+                }}
+                className={`rounded-full px-3 py-1 font-semibold capitalize ${
+                  explanationStyle === mode
+                    ? "bg-[rgba(var(--brand),0.12)] text-brand"
+                    : "text-[rgba(var(--subtle),0.9)] hover:bg-[rgba(var(--panel),0.9)]"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          title="Safety strictness"
+          description="Control how cautious Zora should be with harmful, sensitive, or ambiguous content."
+        >
+          <div className="inline-flex gap-2 text-[11px]">
+            {[
+              { label: "Relaxed", value: "relaxed" },
+              { label: "Balanced", value: "balanced" },
+              { label: "Strict", value: "strict" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  setSafetyMode(option.value as typeof safetyMode);
+                  toast.success("Safety strictness updated (wired soon).");
+                }}
+                className={`rounded-full border px-3 py-1 font-semibold ${
+                  safetyMode === option.value
+                    ? "border-[rgba(var(--brand),0.6)] bg-[rgba(var(--brand),0.12)] text-brand"
+                    : "border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)]"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          title="Notification level"
+          description="Tell Zora how noisy it’s allowed to be with tips, alerts, and system messages."
+        >
+          <div className="inline-flex gap-2 text-[11px]">
+            {[
+              { label: "All activity", value: "all" },
+              { label: "Important only", value: "important" },
+              { label: "Minimal", value: "minimal" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  setNotificationLevel(option.value as typeof notificationLevel);
+                  toast.success("Notification level updated (wired soon).");
+                }}
+                className={`rounded-full border px-3 py-1 font-semibold ${
+                  notificationLevel === option.value
+                    ? "border-[rgba(var(--brand),0.6)] bg-[rgba(var(--brand),0.12)] text-brand"
+                    : "border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)]"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          title="Command hints & shortcuts"
+          description="Let Zora surface hints and quick-actions based on what you’re doing."
+        >
+          <div className="flex flex-col items-end gap-1">
+            <Switch
+              checked={commandHints}
+              onCheckedChange={(checked) => {
+                setCommandHints(checked);
+                toast.success("Command hints preference saved locally (wiring next).");
+              }}
+            />
+            <p className="text-[10px] text-[rgba(var(--subtle),0.7)]">
+              Will connect to the recommendation system as Command Center matures.
+            </p>
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          title="Auto-continue long tasks"
+          description="Allow Zora to keep running long operations (like research or summarization) without asking every time."
+        >
+          <Switch
+            checked={autoContinue}
+            onCheckedChange={(checked) => {
+              setAutoContinue(checked);
+              toast.success("Auto-continue preference updated (wired soon).");
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Show advanced debug details"
+          description="Expose extra technical details (model names, tokens, latency) for advanced users."
+        >
+          <Switch
+            checked={debugInfo}
+            onCheckedChange={(checked) => {
+              setDebugInfo(checked);
+              toast.success("Debug visibility updated (wired soon).");
+            }}
+          />
+        </SettingRow>
+
+        <SettingRow
+          title="Interface language"
+          description="Choose the language Zora uses for UI copy. Responses can still be in any language."
+        >
+          <select
+            className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+            value={interfaceLanguage}
+            onChange={(event) => {
+              setInterfaceLanguage(event.target.value);
+              toast.success("Language preference saved locally (wiring next).");
+            }}
+          >
+            <option>System default</option>
+            <option>English</option>
+            <option>Spanish</option>
+            <option>French</option>
+            <option>German</option>
+          </select>
+        </SettingRow>
+      </section>
+
+      {/* Security providers (existing wiring) */}
       <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -181,8 +415,7 @@ function ZoraSettingsPanel({
               Security providers
             </h3>
             <p className="mt-1 text-sm text-[rgba(var(--subtle),0.78)]">
-              Toggle integrations as you wire Zora to production-grade safety
-              systems.
+              Toggle integrations as you wire Zora to production-grade safety systems.
             </p>
           </div>
           {isSaving && (
@@ -209,9 +442,7 @@ function ZoraSettingsPanel({
               </div>
               <Switch
                 checked={provider.enabled}
-                onCheckedChange={(checked) =>
-                  onProviderToggle(provider.id, checked)
-                }
+                onCheckedChange={(checked) => onProviderToggle(provider.id, checked)}
                 disabled={isSaving}
               />
             </li>
@@ -231,97 +462,313 @@ function WorkspaceSettingsPanel({
   onSaveLimits: () => void;
   isSaving: boolean;
 }) {
+  const [defaultView, setDefaultView] = useState("Recent items");
+  const [autoFlashcards, setAutoFlashcards] = useState(true);
+  const [smartOrg, setSmartOrg] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(true);
+  const [workspaceHints, setWorkspaceHints] = useState(true);
+
   return (
-    <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
-      <SectionHeader
-        title="Workspace usage & limits"
-        description="Align Workspace rate limits with your compliance requirements before go-live."
-      />
+    <div className="space-y-5">
+      {/* Workspace behavior: 5 settings */}
+      <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
+        <SectionHeader
+          title="Workspace behavior"
+          description="Control how Workspace organizes your notes, documents, and study material."
+        />
 
-      <dl className="mt-2 space-y-3 text-sm">
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
-          <dt className="text-[rgba(var(--subtle),0.7)]">Daily requests</dt>
-          <dd className="text-[rgb(var(--text))]">
-            {data.limits.dailyRequests.toLocaleString()}
-          </dd>
-        </div>
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
-          <dt className="text-[rgba(var(--subtle),0.7)]">Max tokens</dt>
-          <dd className="text-[rgb(var(--text))]">
-            {data.limits.maxTokens.toLocaleString()}
-          </dd>
-        </div>
-      </dl>
+        <div className="space-y-3 text-sm">
+          <SettingRow
+            title="Default Workspace view"
+            description="Choose what you see first when you open Workspace."
+          >
+            <select
+              className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+              value={defaultView}
+              onChange={(event) => {
+                setDefaultView(event.target.value);
+                toast.success("Default view updated (wiring next).");
+              }}
+            >
+              <option>Recent items</option>
+              <option>Projects</option>
+              <option>Flashcards</option>
+              <option>All documents</option>
+            </select>
+          </SettingRow>
 
-      <button
-        type="button"
-        onClick={onSaveLimits}
-        className="mt-5 btn btn-ghost btn-neo btn-quiet text-brand text-xs uppercase tracking-[0.2em]"
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Save className="size-4" />
-        )}{" "}
-        Save limits
-      </button>
-    </section>
+          <SettingRow
+            title="Auto-generate flashcards"
+            description="Let Workspace quietly turn long documents and chats into verified flashcard decks."
+          >
+            <Switch
+              checked={autoFlashcards}
+              onCheckedChange={(checked) => {
+                setAutoFlashcards(checked);
+                toast.success("Flashcard automation preference updated (wiring next).");
+              }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Smart organization"
+            description="Allow Workspace to auto-tag and group content by topic, course, or project."
+          >
+            <Switch
+              checked={smartOrg}
+              onCheckedChange={(checked) => {
+                setSmartOrg(checked);
+                toast.success("Smart organization preference updated (wiring next).");
+              }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Show completed items"
+            description="Keep completed tasks and archived items visible in context instead of hiding them."
+          >
+            <Switch
+              checked={showCompleted}
+              onCheckedChange={(checked) => {
+                setShowCompleted(checked);
+                toast.success("Visibility preference updated (wiring next).");
+              }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Workspace hints"
+            description="Surface subtle hints for organizing, summarizing, or turning content into study material."
+          >
+            <Switch
+              checked={workspaceHints}
+              onCheckedChange={(checked) => {
+                setWorkspaceHints(checked);
+                toast.success("Workspace hints preference updated (wiring next).");
+              }}
+            />
+          </SettingRow>
+        </div>
+      </section>
+
+      {/* Usage & limits (existing wiring, 2 settings) */}
+      <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
+        <SectionHeader
+          title="Workspace usage & limits"
+          description="Align Workspace rate limits with your compliance requirements before go-live."
+        />
+
+        <dl className="mt-2 space-y-3 text-sm">
+          <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <dt className="text-[rgba(var(--subtle),0.7)]">Daily requests</dt>
+            <dd className="text-[rgb(var(--text))]">
+              {data.limits.dailyRequests.toLocaleString()}
+            </dd>
+          </div>
+          <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.25)] bg-[rgba(var(--panel),0.5)] p-3">
+            <dt className="text-[rgba(var(--subtle),0.7)]">Max tokens</dt>
+            <dd className="text-[rgb(var(--text))]">
+              {data.limits.maxTokens.toLocaleString()}
+            </dd>
+          </div>
+        </dl>
+
+        <button
+          type="button"
+          onClick={onSaveLimits}
+          className="mt-5 btn btn-ghost btn-neo btn-quiet text-brand text-xs uppercase tracking-[0.2em]"
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}{" "}
+          Save limits
+        </button>
+      </section>
+    </div>
   );
 }
 
 function CommandCenterSettingsPanel() {
+  const [layout, setLayout] = useState("Projects · Upcoming · Signals");
+  const [pinnedProjects, setPinnedProjects] = useState(true);
+  const [pinnedUpcoming, setPinnedUpcoming] = useState(true);
+  const [pinnedSignals, setPinnedSignals] = useState(false);
+  const [pinnedConnectors, setPinnedConnectors] = useState(false);
+  const [projectSort, setProjectSort] = useState("Recent activity");
+  const [lookaheadDays, setLookaheadDays] = useState(7);
+  const [commandPalette, setCommandPalette] = useState(true);
+
   return (
-    <section className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
-      <SectionHeader
-        title="Command Center layout"
-        description="Shape your Command Center so it feels like a cockpit, not clutter. These options will plug into the Command Center drawer as it evolves."
-      />
+    <section className="space-y-5">
+      <div className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
+        <SectionHeader
+          title="Command Center layout"
+          description="Shape your Command Center so it feels like a cockpit, not clutter."
+        />
 
-      <div className="space-y-3 text-sm">
-        <SettingRow
-          title="Default layout"
-          description="Choose how the Command Center arranges projects, upcoming items, and signals."
-        >
-          <select className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none">
-            <option>Projects · Upcoming · Signals</option>
-            <option>Signals · Projects · Connectors</option>
-            <option>Minimal (projects only)</option>
-          </select>
-        </SettingRow>
-
-        <SettingRow
-          title="Pinned widgets"
-          description="Widgets that always appear in the Command Center drawer. Configurable in a future release."
-        >
-          <div className="flex flex-wrap gap-1.5 justify-end text-[11px]">
-            <span className="rounded-full bg-[rgba(var(--brand),0.16)] px-3 py-1 font-semibold text-brand">
-              Projects
-            </span>
-            <span className="rounded-full bg-[rgba(var(--border),0.9)] px-3 py-1 font-semibold text-[rgba(var(--subtle),0.9)]">
-              Upcoming
-            </span>
-            <span className="rounded-full bg-[rgba(var(--border),0.9)] px-3 py-1 font-semibold text-[rgba(var(--subtle),0.9)]">
-              Signals
-            </span>
-            <span className="rounded-full bg-[rgba(var(--border),0.9)] px-3 py-1 font-semibold text-[rgba(var(--subtle),0.9)]">
-              Connectors
-            </span>
-          </div>
-        </SettingRow>
-
-        <SettingRow
-          title="Connectors & integrations"
-          description="Control which tools can feed data into Zora and how they sync. This will link into the Command Center connectors view."
-        >
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)]"
+        <div className="space-y-3 text-sm">
+          <SettingRow
+            title="Default layout"
+            description="Choose how the Command Center arranges projects, upcoming items, and signals."
           >
-            Manage connectors
-            <ChevronRight className="size-3.5" />
-          </button>
-        </SettingRow>
+            <select
+              className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+              value={layout}
+              onChange={(event) => {
+                setLayout(event.target.value);
+                toast.success("Command Center layout saved locally (wiring next).");
+              }}
+            >
+              <option>Projects · Upcoming · Signals</option>
+              <option>Signals · Projects · Connectors</option>
+              <option>Minimal (projects only)</option>
+            </select>
+          </SettingRow>
+
+          <SettingRow
+            title="Pinned widgets"
+            description="Widgets that always appear in the Command Center drawer."
+          >
+            <div className="flex flex-wrap gap-1.5 justify-end text-[11px]">
+              <button
+                type="button"
+                onClick={() => setPinnedProjects((v) => !v)}
+                className={`rounded-full px-3 py-1 font-semibold ${
+                  pinnedProjects
+                    ? "bg-[rgba(var(--brand),0.16)] text-brand"
+                    : "bg-[rgba(var(--border),0.9)] text-[rgba(var(--subtle),0.9)]"
+                }`}
+              >
+                Projects
+              </button>
+              <button
+                type="button"
+                onClick={() => setPinnedUpcoming((v) => !v)}
+                className={`rounded-full px-3 py-1 font-semibold ${
+                  pinnedUpcoming
+                    ? "bg-[rgba(var(--brand),0.16)] text-brand"
+                    : "bg-[rgba(var(--border),0.9)] text-[rgba(var(--subtle),0.9)]"
+                }`}
+              >
+                Upcoming
+              </button>
+              <button
+                type="button"
+                onClick={() => setPinnedSignals((v) => !v)}
+                className={`rounded-full px-3 py-1 font-semibold ${
+                  pinnedSignals
+                    ? "bg-[rgba(var(--brand),0.16)] text-brand"
+                    : "bg-[rgba(var(--border),0.9)] text-[rgba(var(--subtle),0.9)]"
+                }`}
+              >
+                Signals
+              </button>
+              <button
+                type="button"
+                onClick={() => setPinnedConnectors((v) => !v)}
+                className={`rounded-full px-3 py-1 font-semibold ${
+                  pinnedConnectors
+                    ? "bg-[rgba(var(--brand),0.16)] text-brand"
+                    : "bg-[rgba(var(--border),0.9)] text-[rgba(var(--subtle),0.9)]"
+                }`}
+              >
+                Connectors
+              </button>
+            </div>
+          </SettingRow>
+
+          <SettingRow
+            title="Project sort order"
+            description="Pick how projects are ordered by default inside Command Center."
+          >
+            <select
+              className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+              value={projectSort}
+              onChange={(event) => {
+                setProjectSort(event.target.value);
+                toast.success("Project sort order saved locally (wiring next).");
+              }}
+            >
+              <option>Recent activity</option>
+              <option>Nearest deadlines</option>
+              <option>Manual priority</option>
+            </select>
+          </SettingRow>
+
+          <SettingRow
+            title="Upcoming lookahead window"
+            description="How far into the future Command Center should scan for upcoming tasks."
+          >
+            <select
+              className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+              value={lookaheadDays}
+              onChange={(event) => {
+                const val = Number(event.target.value);
+                setLookaheadDays(val);
+                toast.success("Lookahead window updated (wiring next).");
+              }}
+            >
+              <option value={3}>Next 3 days</option>
+              <option value={7}>Next 7 days</option>
+              <option value={14}>Next 14 days</option>
+              <option value={30}>Next 30 days</option>
+            </select>
+          </SettingRow>
+
+          <SettingRow
+            title="Command palette access"
+            description="Enable a keyboard shortcut for Command Center (like Ctrl/Cmd + K)."
+          >
+            <Switch
+              checked={commandPalette}
+              onCheckedChange={(checked) => {
+                setCommandPalette(checked);
+                toast.success("Command palette preference updated (wiring next).");
+              }}
+            />
+          </SettingRow>
+
+          <SettingRow
+            title="Connectors & integrations"
+            description="Control which tools can feed data into Zora and how they sync."
+          >
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)]"
+              onClick={() =>
+                toast.info("Connectors management will link into Command Center soon.")
+              }
+            >
+              Manage connectors
+              <ChevronRight className="size-3.5" />
+            </button>
+          </SettingRow>
+
+          <SettingRow
+            title="Signals aggressiveness"
+            description="Decide how proactive Command Center should be about surfacing signals and suggestions."
+          >
+            <div className="inline-flex gap-2 text-[11px]">
+              {["Low", "Medium", "High"].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() =>
+                    toast.success(
+                      `Signals aggressiveness set to ${level} (wiring next).`,
+                    )
+                  }
+                  className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1 font-semibold text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)]"
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </SettingRow>
+        </div>
       </div>
     </section>
   );
@@ -329,20 +776,24 @@ function CommandCenterSettingsPanel() {
 
 function PrivacySettingsPanel({
   data,
-  onTelemetryToggle,
-  onRetentionChange,
+  telemetryOptIn,
   isSaving,
+  onTelemetrySwitchRequested,
+  onRetentionChange,
+  onOpenTelemetryModal,
 }: {
   data: SettingsData;
-  onTelemetryToggle: (enabled: boolean) => void;
-  onRetentionChange: (days: number) => void;
+  telemetryOptIn: boolean;
   isSaving: boolean;
+  onTelemetrySwitchRequested: (enabled: boolean) => void;
+  onRetentionChange: (days: number) => void;
+  onOpenTelemetryModal: () => void;
 }) {
-  const telemetryOptIn = data.privacy?.telemetryOptIn ?? false;
   const retentionDays = data.privacy?.retentionDays ?? 90;
 
   return (
     <section className="space-y-5">
+      {/* Privacy & telemetry (2 settings) */}
       <div className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
         <SectionHeader
           title="Privacy & telemetry"
@@ -357,9 +808,7 @@ function PrivacySettingsPanel({
             <select
               className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
               value={retentionDays}
-              onChange={(event) =>
-                onRetentionChange(Number(event.target.value))
-              }
+              onChange={(event) => onRetentionChange(Number(event.target.value))}
               disabled={isSaving}
             >
               {RETENTION_OPTIONS.map((option) => (
@@ -377,21 +826,26 @@ function PrivacySettingsPanel({
             <div className="flex flex-col items-end gap-1">
               <Switch
                 checked={telemetryOptIn}
-                onCheckedChange={onTelemetryToggle}
+                onCheckedChange={(enabled) => onTelemetrySwitchRequested(enabled)}
                 disabled={isSaving}
               />
-              <p className="text-[10px] text-[rgba(var(--subtle),0.7)]">
-                Details live in the Zora Handbook → Telemetry section.
-              </p>
+              <button
+                type="button"
+                onClick={onOpenTelemetryModal}
+                className="text-[10px] font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                View telemetry details
+              </button>
             </div>
           </SettingRow>
         </div>
       </div>
 
+      {/* Data control (3 settings) */}
       <div className="panel panel--glassy panel--alive rounded-[26px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] p-6 shadow-[var(--shadow-soft)]">
         <SectionHeader
           title="Your data, your exit plan"
-          description="Export or delete everything tied to your account. These actions will eventually become one-click once wired to the backend."
+          description="Export or delete everything tied to your account. These actions will be wired to backend flows before launch."
         />
 
         <div className="space-y-3 text-sm">
@@ -411,6 +865,37 @@ function PrivacySettingsPanel({
               <ShieldCheck className="size-3.5" />
               Request export
             </button>
+          </SettingRow>
+
+          <SettingRow
+            title="Session timeout"
+            description="Set how long Zora can stay signed in on this device before requiring you to log in again."
+          >
+            <select
+              className="rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.45)] focus:outline-none"
+              onChange={(event) =>
+                toast.success(
+                  `Session timeout updated to ${event.target.value} (wiring next).`,
+                )
+              }
+            >
+              <option>1 hour</option>
+              <option>8 hours</option>
+              <option>24 hours</option>
+              <option>7 days</option>
+            </select>
+          </SettingRow>
+
+          <SettingRow
+            title="Mask personal info in logs"
+            description="Automatically mask names, emails, and IDs from diagnostic logs where possible."
+          >
+            <Switch
+              checked
+              onCheckedChange={() =>
+                toast.success("Log masking preference updated (wiring next).")
+              }
+            />
           </SettingRow>
 
           <SettingRow
@@ -434,9 +919,9 @@ function PrivacySettingsPanel({
         <div className="mt-3 flex items-start gap-2 rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--panel),0.85)] px-4 py-3 text-[11px] text-[rgba(var(--subtle),0.85)]">
           <Info className="mt-0.5 size-3.5 text-brand" />
           <p>
-            Zora never sells your personal data. If you enable opt-in telemetry,
-            Zora may share anonymized model performance analytics with providers
-            to improve reliability—never your actual content.
+            Zora never sells your personal data. If you enable opt-in telemetry, Zora
+            may share anonymized model performance analytics with providers to improve
+            reliability—never your actual content.
           </p>
         </div>
       </div>
@@ -445,7 +930,7 @@ function PrivacySettingsPanel({
 }
 
 /* -------------------------------------------------------------------------- */
-/* MAIN SETTINGS                                                              */
+/* MAIN SETTINGS COMPONENT                                                    */
 /* -------------------------------------------------------------------------- */
 
 export function Settings() {
@@ -453,6 +938,7 @@ export function Settings() {
   const { data, isLoading, isError, refetch } = useSettings();
   const saveSettings = useSaveSettings();
   const [activeTab, setActiveTab] = useState<SettingsTabId>("zora");
+  const [showTelemetryConsent, setShowTelemetryConsent] = useState(false);
 
   if (isLoading) {
     return (
@@ -488,9 +974,9 @@ export function Settings() {
     );
   }
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
+
+  const telemetryOptIn = data.privacy?.telemetryOptIn ?? false;
 
   const updateSettings = (
     overrides: Partial<SettingsData>,
@@ -526,20 +1012,8 @@ export function Settings() {
   const handleLimitsSave = () => {
     updateSettings(
       { limits: data.limits },
-      "Usage limits saved.",
+      "Workspace usage limits saved.",
       "Could not save usage limits.",
-    );
-  };
-
-  const handleTelemetryToggle = (enabled: boolean) => {
-    const nextPrivacy = {
-      ...(data.privacy ?? {}),
-      telemetryOptIn: enabled,
-    };
-    updateSettings(
-      { privacy: nextPrivacy },
-      enabled ? "Opt-in telemetry enabled." : "Opt-in telemetry disabled.",
-      "Unable to update telemetry preferences.",
     );
   };
 
@@ -553,6 +1027,41 @@ export function Settings() {
       "Retention preference saved.",
       "Unable to update retention preferences.",
     );
+  };
+
+  // When user flips the telemetry switch:
+  // - turning ON -> show consent modal
+  // - turning OFF -> immediately disable
+  const handleTelemetrySwitchRequested = (enabled: boolean) => {
+    if (enabled && !telemetryOptIn) {
+      setShowTelemetryConsent(true);
+      return;
+    }
+    if (!enabled && telemetryOptIn) {
+      const nextPrivacy = {
+        ...(data.privacy ?? {}),
+        telemetryOptIn: false,
+      };
+      updateSettings(
+        { privacy: nextPrivacy },
+        "Opt-in telemetry disabled.",
+        "Unable to update telemetry preferences.",
+      );
+    }
+  };
+
+  const handleConfirmTelemetryEnable = () => {
+    const nextPrivacy = {
+      ...(data.privacy ?? {}),
+      telemetryOptIn: true,
+    };
+    updateSettings(
+      { privacy: nextPrivacy },
+      "Opt-in telemetry enabled.",
+      "Unable to update telemetry preferences.",
+    ).finally(() => {
+      setShowTelemetryConsent(false);
+    });
   };
 
   const ActivePanel = (() => {
@@ -569,12 +1078,21 @@ export function Settings() {
         return <CommandCenterSettingsPanel />;
       case "privacy":
         return (
-          <PrivacySettingsPanel
-            data={data}
-            onTelemetryToggle={handleTelemetryToggle}
-            onRetentionChange={handleRetentionChange}
-            isSaving={saveSettings.isPending}
-          />
+          <>
+            <PrivacySettingsPanel
+              data={data}
+              telemetryOptIn={telemetryOptIn}
+              isSaving={saveSettings.isPending}
+              onTelemetrySwitchRequested={handleTelemetrySwitchRequested}
+              onRetentionChange={handleRetentionChange}
+              onOpenTelemetryModal={() => setShowTelemetryConsent(true)}
+            />
+            <TelemetryConsentModal
+              open={showTelemetryConsent}
+              onCancel={() => setShowTelemetryConsent(false)}
+              onConfirm={handleConfirmTelemetryEnable}
+            />
+          </>
         );
       case "zora":
       default:
@@ -600,9 +1118,8 @@ export function Settings() {
           Shape how Zora works for you.
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-[rgba(var(--subtle),0.8)]">
-          Global Zora behavior, Workspace usage, Command Center layout, and
-          privacy controls are all grouped into simple sections. No hunting
-          through pages of toggles.
+          Zora, Workspace, Command Center, and privacy controls are grouped into
+          simple sections. You get a clear mental model instead of a maze of toggles.
         </p>
       </section>
 
