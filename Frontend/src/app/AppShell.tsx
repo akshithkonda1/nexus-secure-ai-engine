@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
 import { useState } from "react";
 import { useSession } from "@/shared/state/session";
-import { CommandCenter } from "@/components/shell/CommandCenter";
+import { CommandCenter } from "@/features/command-center/CommandCenter";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
@@ -110,7 +110,7 @@ export function AppShell() {
         </div>
       </main>
 
-      <CommandCenter open={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
+      <CommandCenter isOpen={commandCenterOpen} onClose={() => setCommandCenterOpen(false)} />
     </div>
   );
 }
