@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 TELEMETRY_LEVELS = ("minimal", "standard", "full")
 CONNECTOR_TYPES = ("google_drive", "onedrive", "notion", "github", "canvas", "dropbox")
@@ -46,7 +46,7 @@ class ZoraSettings(BaseModel):
     customInstructions: str = ""
     behaviours: BehaviourSettings = Field(default_factory=BehaviourSettings)
 
-    @validator("modelRanking")
+    @field_validator("modelRanking")
     def validate_ranking(cls, value: List[str]) -> List[str]:
         if len(value) != 10:
             raise ValueError("modelRanking must contain exactly 10 models")
@@ -58,7 +58,7 @@ class ZoraSettingsUpdate(BaseModel):
     customInstructions: Optional[str] = None
     behaviours: Optional[BehaviourSettingsUpdate] = None
 
-    @validator("modelRanking")
+    @field_validator("modelRanking")
     def validate_optional_ranking(cls, value: Optional[List[str]]) -> Optional[List[str]]:
         if value is not None and len(value) != 10:
             raise ValueError("modelRanking must contain exactly 10 models")
@@ -192,7 +192,7 @@ class EngineResponse(BaseModel):
 class ModelRankingRequest(BaseModel):
     modelRanking: List[str]
 
-    @validator("modelRanking")
+    @field_validator("modelRanking")
     def validate_model_list(cls, value: List[str]) -> List[str]:
         if len(value) != 10:
             raise ValueError("modelRanking must contain exactly 10 models")

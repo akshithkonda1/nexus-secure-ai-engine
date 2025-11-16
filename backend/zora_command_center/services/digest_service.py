@@ -46,13 +46,12 @@ def trigger_digest(user_id: str) -> DigestResponse:
 
 def latest_digest(user_id: str) -> DigestResponse:
     with get_session() as session:
-        row = (
-            session.scalars(
-                select(WorkspaceDigest).where(WorkspaceDigest.user_id == user_id).order_by(WorkspaceDigest.id.desc())
-            )
+        row = session.scalars(
+            select(WorkspaceDigest)
+            .where(WorkspaceDigest.user_id == user_id)
+            .order_by(WorkspaceDigest.id.desc())
             .limit(1)
-            .first()
-        )
+        ).first()
         if not row:
             raise ValueError("No digest available")
         return DigestResponse(id=row.id, summary=row.summary, createdAt=row.created_at)
