@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Switch } from "@/shared/ui/components/switch";
+import { CommandCenterHero } from "@/components/command-center/CommandCenterHero";
 
 // TODO: Replace with data from /api/command-center/overview
 const mockProjects = [
@@ -96,6 +97,7 @@ type CommandCenterProps = {
 
 export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
   const [drawerVisible, setDrawerVisible] = React.useState(false);
+  const [heroOpen, setHeroOpen] = React.useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -115,6 +117,14 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      setHeroOpen(true);
+    } else {
+      setHeroOpen(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -129,10 +139,12 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[70] bg-slate-950/75 backdrop-blur-md"
-      onClick={handleBackdropClick}
-    >
+    <>
+      <CommandCenterHero open={isOpen && heroOpen} onClose={() => setHeroOpen(false)} />
+      <div
+        className="fixed inset-0 z-[30] bg-slate-950/75 backdrop-blur-md"
+        onClick={handleBackdropClick}
+      >
       <div className="flex h-full w-full justify-end">
         <section
           role="dialog"
@@ -141,21 +153,18 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
           className={`relative flex h-full w-full max-w-5xl flex-col border-l border-white/10 bg-[radial-gradient(circle_at_top,_rgba(var(--brand-soft),0.22),_transparent)_0_0/100%_40%_no-repeat,_rgba(3,7,18,0.95)] shadow-[0_0_60px_rgba(0,0,0,0.65)] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${drawerVisible ? "translate-x-0" : "translate-x-full"}`}
           onClick={(event) => event.stopPropagation()}
         >
-          <header className="flex items-center justify-between gap-4 border-b border-[rgba(var(--border),0.35)] px-6 py-4">
-            <div className="flex flex-1 items-center gap-4">
+          <header className="flex flex-col gap-4 border-b border-[rgba(var(--border),0.35)] px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-1 flex-wrap items-center gap-4">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(var(--brand),0.15)] shadow-[0_0_26px_rgba(0,128,255,0.45)]">
                 <span className="absolute h-11 w-11 animate-[pulse_3s_ease-in-out_infinite] rounded-2xl bg-[radial-gradient(circle,_rgba(var(--brand-soft),0.65),_transparent_70%)] opacity-80" />
                 <Brain className="relative size-5 text-brand" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[rgba(var(--subtle),0.6)]">
-                  Command Center
-                </p>
-                <p className="text-lg font-semibold text-[rgb(var(--text))]">
-                  One place to see what Zora is doing for you.
+                  Systems online
                 </p>
                 <p className="text-sm text-[rgba(var(--subtle),0.85)]">
-                  Overview of projects, upcoming work, signals, and connectors powering your Workspace.
+                  Monitoring projects, signals, and connectors in real time.
                 </p>
               </div>
             </div>
@@ -366,6 +375,7 @@ export function CommandCenter({ isOpen, onClose }: CommandCenterProps) {
         </section>
       </div>
     </div>
+    </>
   );
 }
 
