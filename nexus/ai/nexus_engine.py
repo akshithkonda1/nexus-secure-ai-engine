@@ -66,8 +66,6 @@ from nexus.entitlements import entitlement_for
 from nexus.plan_resolver import UserTierContext, get_effective_tier
 from nexus.security import redact_and_detect
 from nexus.telemetry import TelemetryRecorder
-
-
 @lru_cache(maxsize=1)
 def _allow_test_fallbacks() -> bool:
     """Return whether optional dependency fallbacks are permitted."""
@@ -100,8 +98,8 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
 else:
     yaml = yaml
 try:
-    import requests  # type: ignore
-except ModuleNotFoundError as exc:  # pragma: no cover - exercised only when optional deps missing
+    import requests # type: ignore
+except ModuleNotFoundError as exc: # pragma: no cover - exercised only when optional deps missing
     if not _allow_test_fallbacks():
         raise RuntimeError(
             "The 'requests' dependency is required. Install it or set "
@@ -109,46 +107,35 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised only when opt
         ) from exc
     from types import SimpleNamespace
     from urllib.parse import quote as _urllib_quote
-
     class _RequestsUnavailableSession:
         """Minimal stub that surfaces a clear error when HTTP features are invoked."""
-
         def __init__(self, *args, **kwargs) -> None:
             self._error = RuntimeError(
                 "The optional 'requests' dependency is required for HTTP operations."
             )
-
-        def request(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        def request(self, *args, **kwargs): # type: ignore[no-untyped-def]
             raise self._error
-
         get = post = put = delete = head = options = request
-
-        def close(self) -> None:  # pragma: no cover - nothing to clean up in stub
+        def close(self) -> None: # pragma: no cover - nothing to clean up in stub
             return None
-
     class _RequestsUnavailableResponse:
         """Placeholder response used solely for type annotations."""
-
         def __init__(self, *args, **kwargs) -> None:
             self.headers = {}
             self.status_code = 0
-
-        def iter_content(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        def iter_content(self, *args, **kwargs): # type: ignore[no-untyped-def]
             raise RuntimeError(
                 "The optional 'requests' dependency is required for HTTP operations."
             )
-
         def raise_for_status(self) -> None:
             raise RuntimeError(
                 "The optional 'requests' dependency is required for HTTP operations."
             )
-
-        def json(self):  # type: ignore[no-untyped-def]
+        def json(self): # type: ignore[no-untyped-def]
             raise RuntimeError(
                 "The optional 'requests' dependency is required for HTTP operations."
             )
-
-    requests = SimpleNamespace(  # type: ignore[assignment]
+    requests = SimpleNamespace( # type: ignore[assignment]
         Session=_RequestsUnavailableSession,
         Response=_RequestsUnavailableResponse,
         utils=SimpleNamespace(quote=lambda value, safe="": _urllib_quote(value, safe=safe)),
@@ -157,31 +144,25 @@ try:
     import bleach  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     bleach = None  # type: ignore
-try:  # pragma: no cover - optional dependency
-    from bs4 import BeautifulSoup  # type: ignore
-except ModuleNotFoundError as exc:  # pragma: no cover - test fallback
+try: # pragma: no cover - optional dependency
+    from bs4 import BeautifulSoup # type: ignore
+except ModuleNotFoundError as exc: # pragma: no cover - test fallback
     if not _allow_test_fallbacks():
         raise RuntimeError(
             "The 'beautifulsoup4' dependency is required. Install it or set "
             "NEXUS_ALLOW_TEST_FALLBACKS=1 to use the limited test stub."
         ) from exc
-
-    class BeautifulSoup:  # type: ignore[override]
+    class BeautifulSoup: # type: ignore[override]
         def __init__(self, *args, **kwargs) -> None:
             self._content = ""
-
-        def find(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        def find(self, *args, **kwargs): # type: ignore[no-untyped-def]
             return None
-
-        def find_all(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        def find_all(self, *args, **kwargs): # type: ignore[no-untyped-def]
             return []
-
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-try:  # pragma: no cover - exercised in environments without optional deps
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # type: ignore
-except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback for tests
+try: # pragma: no cover - exercised in environments without optional deps
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM # type: ignore
+except ModuleNotFoundError as exc: # pragma: no cover - lightweight fallback for tests
     if not _allow_test_fallbacks():
         raise RuntimeError(
             "The 'cryptography' dependency is required for AES-GCM support. Install it "
@@ -189,8 +170,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback fo
         ) from exc
     import hashlib
     import hmac
-
-    class AESGCM:  # type: ignore[override]
+    class AESGCM: # type: ignore[override]
         """Minimal drop-in replacement when ``cryptography`` isn't available.
         The real project mandates AES-GCM from ``cryptography``. However, our
         test environment may lack the optional dependency. To keep the engine
@@ -204,14 +184,11 @@ except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback fo
         same call signature and error semantics (raising ``ValueError`` on MAC
         mismatches).
         """
-
         _TAG_SIZE = 32
-
         def __init__(self, key: bytes):
             if len(key) not in {16, 24, 32}:
                 raise ValueError("AESGCM key must be 128, 192, or 256 bits long.")
             self._key = key
-
         def _keystream(self, nonce: bytes, aad: Optional[bytes], length: int) -> bytes:
             seed = nonce + (aad or b"")
             stream = bytearray()
@@ -225,20 +202,17 @@ except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback fo
                 stream.extend(digest)
                 counter += 1
             return bytes(stream[:length])
-
         def _mac(self, nonce: bytes, aad: Optional[bytes], ciphertext: bytes) -> bytes:
             return hmac.new(
                 self._key,
                 nonce + (aad or b"") + ciphertext,
                 digestmod=hashlib.sha256,
             ).digest()
-
         def encrypt(self, nonce: bytes, data: bytes, aad: Optional[bytes]) -> bytes:
             stream = self._keystream(nonce, aad, len(data))
             ciphertext = bytes(b ^ k for b, k in zip(data, stream))
             tag = self._mac(nonce, aad, ciphertext)
             return ciphertext + tag
-
         def decrypt(self, nonce: bytes, data: bytes, aad: Optional[bytes]) -> bytes:
             if len(data) < self._TAG_SIZE:
                 raise ValueError("Ciphertext too short")
@@ -249,22 +223,16 @@ except ModuleNotFoundError as exc:  # pragma: no cover - lightweight fallback fo
             stream = self._keystream(nonce, aad, len(ciphertext))
             plaintext = bytes(b ^ k for b, k in zip(ciphertext, stream))
             return plaintext
-
-
 import uuid
-
 ENGINE_SCHEMA_VERSION = "1.1.0"
 """Version identifier for the response contract exposed by :class:`Engine`."""
 MAX_MODELS_PER_REQUEST = max(1, int(os.getenv("NEXUS_MAX_MODELS", "5")))
-
-
 class RateLimiter:
     def __init__(self, per_minute: int, burst: int) -> None:
         self.per_minute = per_minute
         self.burst = max(burst, per_minute)
         self._hits: Dict[str, Deque[float]] = {}
         self._lock = threading.Lock()
-
     def try_acquire(self, key: str, *, now: Optional[float] = None) -> Tuple[bool, float]:
         """Attempt to consume a token for *key*.
         Returns a tuple ``(allowed, retry_after_seconds)``. ``retry_after_seconds``
@@ -284,8 +252,6 @@ class RateLimiter:
                 return False, retry
             hits.append(now)
             return True, 0.0
-
-
 # =========================================================
 # Logging
 # =========================================================
@@ -307,16 +273,12 @@ class _JsonFormatter(logging.Formatter):
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, default=str)
-
-
 def _log_level() -> int:
     explicit = os.getenv("NEXUS_LOG_LEVEL")
     if explicit:
         return getattr(logging, explicit.upper(), logging.INFO)
     env = os.getenv("NEXUS_ENV", "").lower()
     return logging.WARNING if env in {"prod", "production"} else logging.INFO
-
-
 log = logging.getLogger("nexus.engine")
 _SECURE_RANDOM = secrets.SystemRandom()
 if not log.handlers:
@@ -324,8 +286,6 @@ if not log.handlers:
     handler.setFormatter(_JsonFormatter())
     log.addHandler(handler)
 log.setLevel(_log_level())
-
-
 def _remaining_timeout(deadline: Optional[float], default: float) -> float:
     if deadline is None:
         return max(0.2, min(default, MAX_MODEL_TIMEOUT))
@@ -333,34 +293,26 @@ def _remaining_timeout(deadline: Optional[float], default: float) -> float:
     if remaining <= 0:
         raise DeadlineExceeded("No time remaining for request")
     return max(0.2, min(remaining, MAX_MODEL_TIMEOUT))
-
-
 class Crypter:
     """
     AES-256-GCM encrypt/decrypt with per-message nonce and AAD bound to tenant/instance/user/session.
     No plaintext path. No ephemeral keys. Key must come from a secret resolver.
     """
-
     def encrypt(self, plaintext: str, *, aad: bytes) -> str:
         import base64, os
-
         nonce = os.urandom(12)
         ct = self._aes.encrypt(nonce, plaintext.encode("utf-8"), aad)
         return base64.b64encode(nonce + ct).decode("ascii")
-
     def decrypt(self, token: str, *, aad: bytes) -> str:
         import base64
-
         raw = base64.b64decode(token.encode("ascii"))
         nonce, ct = raw[:12], raw[12:]
         pt = self._aes.decrypt(nonce, ct, aad)
         return pt.decode("utf-8")
-
     def __init__(self, key_bytes: bytes):
         if len(key_bytes) != 32:
             raise ValueError("AES-256 requires a 32-byte key.")
         self._aes = AESGCM(key_bytes)
-
     @staticmethod
     def from_resolver(resolver: "SecretResolver") -> "Crypter":
         # Mandatory key in secrets manager; no env/dev fallback; no ephemeral generation.
@@ -370,23 +322,17 @@ class Crypter:
                 "NEXUS_DATA_KEY_B64 not found in secrets manager (encryption is mandatory)."
             )
         import base64
-
         key = base64.b64decode(b64)
         return Crypter(key)
-
-
 class NexusError(Exception):
     """Base exception for Nexus engine errors with structured metadata."""
-
     code = "internal_error"
     http_status = 500
     default_message = "Internal engine error"
-
     def __init__(self, message: Optional[str] = None, *, details: Optional[Dict[str, Any]] = None):
         self.message = message or self.default_message
         self.details = details or {}
         super().__init__(self.message)
-
     def to_dict(self) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "code": self.code,
@@ -396,58 +342,40 @@ class NexusError(Exception):
         if self.details:
             payload["details"] = self.details
         return payload
-
-
 class MisconfigurationError(NexusError):
     code = "misconfiguration"
     http_status = 500
     default_message = "Engine misconfiguration detected"
-
-
 class RateLimitExceeded(NexusError):
     code = "rate_limit_exceeded"
     http_status = 429
     default_message = "Rate limit exceeded"
-
-
 class VerificationError(NexusError):
     code = "verification_failed"
     http_status = 502
     default_message = "Unable to verify model answer"
-
-
 class DeadlineExceeded(NexusError):
     code = "deadline_exceeded"
     http_status = 504
     default_message = "Deadline exceeded before completion"
-
-
 class CircuitOpenError(NexusError):
     code = "circuit_open"
     http_status = 503
     default_message = "Circuit breaker open"
-
-
 class PayloadTooLargeError(NexusError):
     code = "payload_too_large"
     http_status = 413
     default_message = "Payload exceeds configured limits"
-
-
 class ConnectorError(NexusError):
     code = "connector_error"
     http_status = 502
     default_message = "Connector invocation failed"
-
-
 def _is_https(url: str) -> bool:
     try:
         p = urlparse(url)
         return p.scheme == "https" and bool(p.netloc)
     except Exception:
         return False
-
-
 def _is_https_or_local(url: str) -> bool:
     try:
         parsed = urlparse(url)
@@ -461,8 +389,6 @@ def _is_https_or_local(url: str) -> bool:
         if host in {"127.0.0.1", "localhost"}:
             return True
     return False
-
-
 def _host_allowed(url: str, patterns: Optional[List[str]]) -> bool:
     if not patterns:
         return True
@@ -475,13 +401,11 @@ def _host_allowed(url: str, patterns: Optional[List[str]]) -> bool:
         if not pat:
             continue
         if pat.startswith("*."):
-            if host.endswith(pat[1:]):  # ".example.com"
+            if host.endswith(pat[1:]): # ".example.com"
                 return True
         elif host == pat:
             return True
     return False
-
-
 def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
     if not patterns:
         return False
@@ -498,8 +422,6 @@ def _host_blocked(url: str, patterns: Optional[List[str]]) -> bool:
         if host == pat:
             return True
     return False
-
-
 # =========================================================
 # Retry helper (used by search providers and scraper)
 # =========================================================
@@ -524,9 +446,7 @@ async def _retry_call_async(
             sleep_window = max(0.0, capped + jitter)
             sleep_s = _SECURE_RANDOM.uniform(0, sleep_window)
             await asyncio.sleep(sleep_s)
-    raise last  # pragma: no cover
-
-
+    raise last # pragma: no cover
 def _retry_call(
     fn: Callable[[], Any],
     *,
@@ -548,16 +468,12 @@ def _retry_call(
             sleep_window = max(0.0, capped + jitter)
             sleep_s = _SECURE_RANDOM.uniform(0, sleep_window)
             time.sleep(sleep_s)
-    raise last  # pragma: no cover
-
-
+    raise last # pragma: no cover
 MAX_MODEL_RESPONSE_BYTES = int(os.getenv("NEXUS_MAX_MODEL_RESPONSE_BYTES", str(2 * 1024 * 1024)))
 MAX_MODEL_REQUEST_BYTES = int(os.getenv("NEXUS_MAX_MODEL_REQUEST_BYTES", str(512 * 1024)))
 MAX_MODEL_TIMEOUT = float(os.getenv("NEXUS_MAX_MODEL_TIMEOUT", "10.0"))
 MAX_SCRAPE_BYTES = int(os.getenv("NEXUS_MAX_SCRAPE_BYTES", str(40 * 1024)))
 MAX_DEADLINE_SECONDS = int(os.getenv("NEXUS_MAX_REQUEST_DEADLINE_SECONDS", "60"))
-
-
 def _load_scrape_denylist() -> List[str]:
     defaults = ["doubleclick.net", "googletagmanager.com", "google-analytics.com"]
     raw = os.getenv("NEXUS_DENY_WEB_DOMAINS", "").strip()
@@ -565,8 +481,6 @@ def _load_scrape_denylist() -> List[str]:
         return defaults
     items = [p.strip() for p in raw.split(",") if p.strip()]
     return items or defaults
-
-
 _SCRAPE_DENYLIST = _load_scrape_denylist()
 _SCRAPE_ALLOWLIST = [
     p.strip().lower() for p in os.getenv("NEXUS_SCRAPE_ALLOW_DOMAINS", "").split(",") if p.strip()
@@ -583,26 +497,21 @@ RATE_LIMIT_PER_MIN = max(1, int(os.getenv("NEXUS_RATE_LIMIT_PER_MIN", "60")))
 RATE_LIMIT_BURST = max(1, int(os.getenv("NEXUS_RATE_LIMIT_BURST", str(RATE_LIMIT_PER_MIN))))
 MAX_CONCURRENT_REQUESTS = max(1, int(os.getenv("NEXUS_MAX_CONCURRENT_REQUESTS", "32")))
 CONCURRENCY_WAIT_SECONDS = float(os.getenv("NEXUS_CONCURRENCY_WAIT_SECONDS", "5"))
-
-
 class _CircuitBreaker:
     def __init__(self) -> None:
         self.failures = 0
         self.open_until = 0.0
         self._lock = threading.Lock()
-
     def allow(self) -> Tuple[bool, float]:
         with self._lock:
             now = time.monotonic()
             if now < self.open_until:
                 return False, max(0.0, self.open_until - now)
             return True, 0.0
-
     def record_success(self) -> None:
         with self._lock:
             self.failures = 0
             self.open_until = 0.0
-
     def record_failure(self) -> float:
         with self._lock:
             self.failures += 1
@@ -613,12 +522,8 @@ class _CircuitBreaker:
             )
             self.open_until = time.monotonic() + cool
             return cool
-
-
 _GLOBAL_RATE_LIMITER = RateLimiter(RATE_LIMIT_PER_MIN, RATE_LIMIT_BURST)
 _GLOBAL_CONCURRENCY_SEMAPHORE = threading.BoundedSemaphore(MAX_CONCURRENT_REQUESTS)
-
-
 def _check_payload_size(payload: Dict[str, Any]) -> None:
     try:
         raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -629,8 +534,6 @@ def _check_payload_size(payload: Dict[str, Any]) -> None:
             f"Payload exceeds {MAX_MODEL_REQUEST_BYTES} bytes limit",
             details={"max_bytes": MAX_MODEL_REQUEST_BYTES, "observed_bytes": len(raw)},
         )
-
-
 def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
     total = 0
     chunks: List[bytes] = []
@@ -646,13 +549,9 @@ def _limit_body(stream: requests.Response, *, max_bytes: int) -> bytes:
             )
         chunks.append(chunk)
     return b"".join(chunks)
-
-
 def _reset_robots_cache() -> None:
     with _ROBOTS_CACHE_LOCK:
         _ROBOTS_CACHE.clear()
-
-
 def _download_robots_rules(
     base_url: str,
     *,
@@ -682,13 +581,7 @@ def _download_robots_rules(
                     extra={"base_url": base_url, "error": str(exc)},
                 )
                 return None
-            if getattr(response, "is_redirect", False) or response.status_code in {
-                301,
-                302,
-                303,
-                307,
-                308,
-            }:
+            if getattr(response, "is_redirect", False) or response.status_code in {301, 302, 303, 307, 308}:
                 location = response.headers.get("location")
                 if not location:
                     return None
@@ -755,8 +648,6 @@ def _download_robots_rules(
                     "robots_response_close_failed",
                     extra={"base_url": base_url, "error": str(exc)},
                 )
-
-
 def _get_robots_parser(
     base_url: str,
     *,
@@ -778,8 +669,6 @@ def _get_robots_parser(
     with _ROBOTS_CACHE_LOCK:
         _ROBOTS_CACHE[base_url] = (time.monotonic(), parser)
     return parser
-
-
 def _robots_can_fetch(
     target_url: str,
     *,
@@ -807,21 +696,16 @@ def _robots_can_fetch(
             extra={"base_url": base, "error": str(exc)},
         )
         return True
-
-
 @dataclass
 class AccessContext:
     tenant_id: str
     instance_id: str
     user_id: str
-
-
 # =========================================================
 # ModelConnector + Adapters
 # =========================================================
 class ModelConnector:
     """HTTP connector with pluggable adapters to normalize request/response shapes."""
-
     _ADAPTERS: Dict[
         str,
         Callable[
@@ -840,7 +724,6 @@ class ModelConnector:
         "azure.openai.chat": "openai.chat",
         "github.models": "openai.chat",
     }
-
     def __init__(
         self,
         name: str,
@@ -884,7 +767,6 @@ class ModelConnector:
             raise MisconfigurationError(
                 f"Endpoint host not allowed by NEXUS_ALLOWED_MODEL_DOMAINS: {self.endpoint}"
             )
-
     @classmethod
     def register_adapter(
         cls,
@@ -895,18 +777,13 @@ class ModelConnector:
         ],
     ) -> None:
         cls._ADAPTERS[key.lower()] = fn
-
     @classmethod
     def register_alias(cls, alias: str, target: str) -> None:
         cls._ALIASES[alias.lower()] = target.lower()
-
     def _resolve_adapter(self) -> str:
         a = (self.adapter or "").lower()
         return self._ALIASES.get(a, a)
-
-    async def _post(
-        self, payload: Dict[str, Any], *, deadline: Optional[float] = None
-    ) -> Dict[str, Any]:
+    async def _post(self, payload: Dict[str, Any], *, deadline: Optional[float] = None) -> Dict[str, Any]:
         allowed, wait_for = self._circuit.allow()
         if not allowed:
             raise CircuitOpenError(
@@ -926,7 +803,7 @@ class ModelConnector:
                         headers=self.headers,
                         stream=True,
                     ),
-                    timeout=max(0.1, timeout),
+                    timeout=max(0.1, timeout)
                 )
                 if resp.status_code >= 400:
                     raise ConnectorError(
@@ -983,7 +860,6 @@ class ModelConnector:
                 "last_error": str(last_err) if last_err else None,
             },
         ) from last_err
-
     def health_check(self) -> bool:
         """Return True if degraded/unhealthy, False if healthy."""
         try:
@@ -993,7 +869,6 @@ class ModelConnector:
             return r.status_code >= 400
         except Exception:
             return True
-
     async def infer(
         self,
         prompt: str,
@@ -1023,16 +898,10 @@ class ModelConnector:
             {"prompt": prompt, "history": bounded_history, "model": model_name or self.name},
             deadline=deadline,
         )
-        text = (
-            _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
-        )
+        text = _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
         return text, {"usage": data.get("usage")}
-
-
 # ---- utilities for adapters ----
 _ADAPTER_HISTORY_LIMIT = max(0, int(os.getenv("NEXUS_ADAPTER_HISTORY_LIMIT", "16")))
-
-
 def _limit_history(history: Optional[List[Dict[str, str]]]) -> List[Dict[str, str]]:
     if not history:
         return []
@@ -1049,8 +918,6 @@ def _limit_history(history: Optional[List[Dict[str, str]]]) -> List[Dict[str, st
         if isinstance(role, str) and isinstance(content, str):
             pruned.append({"role": role, "content": content})
     return pruned
-
-
 def _first_str(d: Any, keys: Tuple[str, ...]) -> Optional[str]:
     if isinstance(d, dict):
         for k in keys:
@@ -1058,8 +925,6 @@ def _first_str(d: Any, keys: Tuple[str, ...]) -> Optional[str]:
             if isinstance(v, str) and v.strip():
                 return v
     return None
-
-
 # ---- adapters ----
 async def _adapt_openai_chat(self: ModelConnector, prompt, history, model_name, deadline=None):
     msgs = [
@@ -1078,8 +943,6 @@ async def _adapt_openai_chat(self: ModelConnector, prompt, history, model_name, 
             _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
         )
     return text, {"usage": data.get("usage")}
-
-
 async def _adapt_openai_responses(self: ModelConnector, prompt, history, model_name, deadline=None):
     payload = {
         "model": model_name or self.name,
@@ -1092,11 +955,7 @@ async def _adapt_openai_responses(self: ModelConnector, prompt, history, model_n
         or json.dumps(data)[:1000]
     )
     return text, {"usage": data.get("usage")}
-
-
-async def _adapt_anthropic_messages(
-    self: ModelConnector, prompt, history, model_name, deadline=None
-):
+async def _adapt_anthropic_messages(self: ModelConnector, prompt, history, model_name, deadline=None):
     msgs = [
         {"role": m["role"], "content": m["content"]}
         for m in (history or [])
@@ -1121,8 +980,6 @@ async def _adapt_anthropic_messages(
             or json.dumps(data)[:1000]
         )
     return text, {"usage": data.get("usage")}
-
-
 async def _adapt_gemini_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
     contents = [{"role": "user", "parts": [{"text": prompt}]}]
     payload = {
@@ -1138,8 +995,6 @@ async def _adapt_gemini_generate(self: ModelConnector, prompt, history, model_na
             _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
         )
     return text, {"usage": data.get("usage")}
-
-
 async def _adapt_cohere_chat(self: ModelConnector, prompt, history, model_name, deadline=None):
     chat_hist = []
     for m in history or []:
@@ -1152,8 +1007,6 @@ async def _adapt_cohere_chat(self: ModelConnector, prompt, history, model_name, 
     data = await self._post(payload, deadline=deadline)
     text = data.get("text") or data.get("reply") or data.get("answer") or json.dumps(data)[:1000]
     return text, {"usage": data.get("meta") or data.get("usage")}
-
-
 async def _adapt_cohere_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
     payload = {"model": model_name or self.name, "prompt": prompt}
     data = await self._post(payload, deadline=deadline)
@@ -1164,8 +1017,6 @@ async def _adapt_cohere_generate(self: ModelConnector, prompt, history, model_na
             _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
         )
     return text, {"usage": data.get("meta") or data.get("usage")}
-
-
 async def _adapt_tgi_generate(self: ModelConnector, prompt, history, model_name, deadline=None):
     payload = {"inputs": prompt, "parameters": {"temperature": 0.2}}
     data = await self._post(payload, deadline=deadline)
@@ -1180,15 +1031,11 @@ async def _adapt_tgi_generate(self: ModelConnector, prompt, history, model_name,
     else:
         text = json.dumps(data)[:1000]
     return text, {"usage": data.get("usage")}
-
-
 async def _adapt_generic_json(self: ModelConnector, prompt, history, model_name, deadline=None):
     payload = {"model": model_name or self.name, "prompt": prompt, "history": history or []}
     data = await self._post(payload, deadline=deadline)
     text = _first_str(data, ("text", "output", "answer", "completion")) or json.dumps(data)[:1000]
     return text, {"usage": data.get("usage")}
-
-
 ModelConnector.register_adapter("openai.chat", _adapt_openai_chat)
 ModelConnector.register_adapter("openai.responses", _adapt_openai_responses)
 ModelConnector.register_adapter("anthropic.messages", _adapt_anthropic_messages)
@@ -1197,35 +1044,26 @@ ModelConnector.register_adapter("cohere.chat", _adapt_cohere_chat)
 ModelConnector.register_adapter("cohere.generate", _adapt_cohere_generate)
 ModelConnector.register_adapter("tgi.generate", _adapt_tgi_generate)
 ModelConnector.register_adapter("generic.json", _adapt_generic_json)
-
-
 # ---- SDK connectors (cloud-native, identity-based) ----
 class BedrockSDKConnector:
     """AWS Bedrock (Claude, etc.) via boto3. Identity-based (IAM), no vendor keys."""
-
     adapter = "aws.bedrock"
-
     def __init__(self, model_id: str, region: str | None = None):
         import os as _os
-
         self.name = f"aws:bedrock:{model_id}"
         self.endpoint = f"bedrock-runtime:{region or _os.getenv('AWS_REGION','us-east-1')}"
         self.model_id = model_id
         self.region = region or _os.getenv("AWS_REGION", "us-east-1")
         self.route = "cloud_native"
         self._client = None
-
     def _cli(self):
         if self._client is None:
             import boto3
-
             self._client = boto3.client("bedrock-runtime", region_name=self.region)
         return self._client
-
     async def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
         import json as _json
         import time as _time
-
         t0 = _time.time()
         # Bedrock Anthropic messages
         system = None
@@ -1237,7 +1075,9 @@ class BedrockSDKConnector:
                 msgs.append(
                     {
                         "role": m.get("role", "user"),
-                        "content": [{"type": "text", "text": m.get("content", "")}],
+                        "content": [
+                            {"type": "text", "text": m.get("content", "")}
+                        ],
                     }
                 )
         msgs.append({"role": "user", "content": [{"type": "text", "text": prompt}]})
@@ -1248,8 +1088,7 @@ class BedrockSDKConnector:
             "max_tokens": 512,
             "temperature": 0.2,
         }
-        resp = await asyncio.to_thread(
-            self._cli().invoke_model,
+        resp = await asyncio.to_thread(self._cli().invoke_model,
             modelId=self.model_id,
             accept="application/json",
             contentType="application/json",
@@ -1262,13 +1101,9 @@ class BedrockSDKConnector:
             else out.get("output_text", "")
         )
         return text or "", {"latency_ms": int((_time.time() - t0) * 1000)}
-
-
 class AzureOpenAIChatSDKConnector:
     """Azure OpenAI with Managed Identity (Entra ID) or key if present."""
-
     adapter = "azure.openai"
-
     def __init__(self, endpoint: str, deployment: str, api_version: str = "2024-08-01-preview"):
         self.name = f"azure:openai:{deployment}"
         self.endpoint = endpoint.rstrip("/")
@@ -1276,13 +1111,11 @@ class AzureOpenAIChatSDKConnector:
         self.api_version = api_version
         self.route = "cloud_native"
         self._client = None
-
     def _cli(self):
         if self._client is None:
             try:
                 from azure.identity import DefaultAzureCredential
                 from azure.ai.openai import AzureOpenAI
-
                 self._client = AzureOpenAI(
                     azure_endpoint=self.endpoint,
                     api_version=self.api_version,
@@ -1292,22 +1125,22 @@ class AzureOpenAIChatSDKConnector:
                 # Dev fallback: AZURE_OPENAI_API_KEY
                 from azure.ai.openai import AzureOpenAI
                 import os as _os
-
                 self._client = AzureOpenAI(
                     azure_endpoint=self.endpoint,
                     api_version=self.api_version,
                     api_key=_os.getenv("AZURE_OPENAI_API_KEY"),
                 )
         return self._client
-
     async def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
         import time as _time
-
-        msgs = [m for m in (history or []) if m.get("role") in {"system", "user", "assistant"}]
+        msgs = [
+            m
+            for m in (history or [])
+            if m.get("role") in {"system", "user", "assistant"}
+        ]
         msgs.append({"role": "user", "content": prompt})
         t0 = _time.time()
-        r = await asyncio.to_thread(
-            self._cli().chat.completions.create,
+        r = await asyncio.to_thread(self._cli().chat.completions.create,
             model=self.deployment,
             messages=msgs,
             temperature=0.2,
@@ -1315,13 +1148,9 @@ class AzureOpenAIChatSDKConnector:
         )
         txt = r.choices[0].message.content if getattr(r, "choices", None) else ""
         return txt or "", {"latency_ms": int((_time.time() - t0) * 1000)}
-
-
 class VertexGeminiSDKConnector:
     """GCP Vertex AI Gemini via service account (Application Default Credentials)."""
-
     adapter = "gemini.generate"
-
     def __init__(
         self,
         model: str = "gemini-1.5-pro",
@@ -1329,7 +1158,6 @@ class VertexGeminiSDKConnector:
         location: str | None = None,
     ):
         import os as _os
-
         self.name = f"gcp:vertex:{model}"
         self.endpoint = f"vertex:{location or _os.getenv('GOOGLE_CLOUD_REGION','us-central1')}"
         self.model = model
@@ -1337,32 +1165,27 @@ class VertexGeminiSDKConnector:
         self.location = location or _os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
         self.route = "cloud_native"
         self._ready = False
-
     def _ensure(self):
         if not self._ready:
             from vertexai import init
             from vertexai.generative_models import GenerativeModel
-
             init(project=self.project, location=self.location)
             self._gen = GenerativeModel(self.model)
             self._ready = True
-
     async def infer(self, prompt: str, *, history=None, model_name=None, deadline=None):
         import time as _time
-
         self._ensure()
         t0 = _time.time()
-        r = await asyncio.to_thread(
-            self._gen.generate_content,
+        r = await asyncio.to_thread(self._gen.generate_content,
             prompt,
             generation_config={"temperature": 0.2, "max_output_tokens": 512},
         )
         text = getattr(r, "text", None) or (
-            r.candidates[0].content.parts[0].text if getattr(r, "candidates", None) else ""
+            r.candidates[0].content.parts[0].text
+            if getattr(r, "candidates", None)
+            else ""
         )
         return text or "", {"latency_ms": int((_time.time() - t0) * 1000)}
-
-
 # =========================================================
 # Web retrieval (+ BeautifulSoup enrichment with retries)
 # =========================================================
@@ -1373,26 +1196,18 @@ class WebSource:
     snippet: Optional[str] = None
     image: Optional[str] = None
     score: Optional[float] = None
-
-
 class SearchProvider:
     name: str = "base"
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
         raise NotImplementedError
-
-
 class _BaseHTTPProvider(SearchProvider):
     def __init__(self, timeout: int = 10, session: Optional[requests.Session] = None):
         self.timeout = int(timeout)
         self._session = session or requests.Session()
-
-
 class GenericJSONSearch(_BaseHTTPProvider):
     name = "generic.json"
-
     def __init__(
         self,
         endpoint: str,
@@ -1416,7 +1231,6 @@ class GenericJSONSearch(_BaseHTTPProvider):
                 "search_localhost_enabled",
                 extra={"endpoint": endpoint, "env": os.getenv("NEXUS_ENV", "")},
             )
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
@@ -1430,7 +1244,6 @@ class GenericJSONSearch(_BaseHTTPProvider):
             )
             r.raise_for_status()
             return r
-
         try:
             r = await _retry_call_async(_do)
         except DeadlineExceeded:
@@ -1450,15 +1263,11 @@ class GenericJSONSearch(_BaseHTTPProvider):
                     )
                 )
         return out[:k]
-
-
 class TavilySearch(_BaseHTTPProvider):
     name = "tavily"
-
     def __init__(self, api_key: str, timeout: int = 10, session: Optional[requests.Session] = None):
         super().__init__(timeout=timeout, session=session)
         self.api_key = api_key
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
@@ -1469,13 +1278,11 @@ class TavilySearch(_BaseHTTPProvider):
             "max_results": int(k),
             "include_images": bool(images),
         }
-
         async def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
             r = await self._session.post(url, json=payload, timeout=max(0.1, timeout))
             r.raise_for_status()
             return r
-
         try:
             r = await _retry_call_async(_do)
         except DeadlineExceeded:
@@ -1494,15 +1301,11 @@ class TavilySearch(_BaseHTTPProvider):
                     )
                 )
         return out[:k]
-
-
 class BingWebSearch(_BaseHTTPProvider):
     name = "bing"
-
     def __init__(self, api_key: str, timeout: int = 10, session: Optional[requests.Session] = None):
         super().__init__(timeout=timeout, session=session)
         self.api_key = api_key
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
@@ -1516,7 +1319,6 @@ class BingWebSearch(_BaseHTTPProvider):
             )
             r.raise_for_status()
             return r
-
         try:
             r = await _retry_call_async(_do_web)
         except DeadlineExceeded:
@@ -1529,7 +1331,6 @@ class BingWebSearch(_BaseHTTPProvider):
             if isinstance(u, str) and _is_https(u):
                 out.append(WebSource(url=u, title=it.get("name"), snippet=it.get("snippet")))
         if images:
-
             async def _do_img():
                 timeout = _remaining_timeout(deadline, self.timeout)
                 iu = f"https://api.bing.microsoft.com/v7.0/images/search?q={requests.utils.quote(query)}&count={int(k)}"
@@ -1540,7 +1341,6 @@ class BingWebSearch(_BaseHTTPProvider):
                 )
                 ir.raise_for_status()
                 return ir
-
             try:
                 ir = await _retry_call_async(_do_img)
             except DeadlineExceeded:
@@ -1552,29 +1352,23 @@ class BingWebSearch(_BaseHTTPProvider):
                 if isinstance(cu, str) and _is_https(cu) and isinstance(hp, str) and _is_https(hp):
                     out.append(WebSource(url=hp, title=i.get("name"), image=cu))
         return out[: max(k, len(out))]
-
-
 class GoogleCSESearch(_BaseHTTPProvider):
     name = "google.cse"
-
     def __init__(
         self, api_key: str, cx: str, timeout: int = 10, session: Optional[requests.Session] = None
     ):
         super().__init__(timeout=timeout, session=session)
         self.key, self.cx = api_key, cx
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
         base = "https://www.googleapis.com/customsearch/v1"
-
         async def _do_search():
             timeout = _remaining_timeout(deadline, self.timeout)
             params = {"key": self.key, "cx": self.cx, "q": query, "num": int(min(10, k))}
             r = await self._session.get(base, params=params, timeout=max(0.1, timeout))
             r.raise_for_status()
             return r
-
         try:
             r = await _retry_call_async(_do_search)
         except DeadlineExceeded:
@@ -1586,7 +1380,6 @@ class GoogleCSESearch(_BaseHTTPProvider):
             if isinstance(link, str) and _is_https(link):
                 out.append(WebSource(url=link, title=it.get("title"), snippet=it.get("snippet")))
         if images:
-
             async def _do_img():
                 timeout = _remaining_timeout(deadline, self.timeout)
                 params_img = {
@@ -1599,7 +1392,6 @@ class GoogleCSESearch(_BaseHTTPProvider):
                 ir = await self._session.get(base, params=params_img, timeout=max(0.1, timeout))
                 ir.raise_for_status()
                 return ir
-
             try:
                 ir = await _retry_call_async(_do_img)
             except DeadlineExceeded:
@@ -1610,12 +1402,9 @@ class GoogleCSESearch(_BaseHTTPProvider):
                 if isinstance(link, str) and _is_https(link):
                     out.append(WebSource(url=link, title=i.get("title"), image=i.get("link")))
         return out[: max(k, len(out))]
-
-
 class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
     name = "duckduckgo.html"
     UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
-
     async def search(
         self, query: str, *, k: int = 5, images: bool = False, deadline: Optional[float] = None
     ) -> List[WebSource]:
@@ -1630,7 +1419,6 @@ class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
             )
             r.raise_for_status()
             return r
-
         try:
             r = await _retry_call_async(_do)
         except DeadlineExceeded:
@@ -1656,15 +1444,11 @@ class DuckDuckGoHTMLSearch(_BaseHTTPProvider):
             if len(out) >= k:
                 break
         return out
-
-
 class HtmlScraper:
     UA = "Mozilla/5.0 (X11; Linux x86_64) NexusEngine/1.0"
-
     def __init__(self, timeout: int = 8, session: Optional[requests.Session] = None):
         self.timeout = min(float(timeout), MAX_MODEL_TIMEOUT)
         self._session = session or requests.Session()
-
     async def enrich(self, src: WebSource, *, deadline: Optional[float] = None) -> WebSource:
         if _host_blocked(src.url, _SCRAPE_DENYLIST):
             return src
@@ -1681,7 +1465,6 @@ class HtmlScraper:
                 extra={"url": src.url},
             )
             return src
-
         async def _do():
             timeout = _remaining_timeout(deadline, self.timeout)
             resp = self._session.get(
@@ -1691,7 +1474,6 @@ class HtmlScraper:
                 stream=True,
             )
             return await resp if inspect.isawaitable(resp) else resp
-
         try:
             r = await _retry_call_async(_do)
             if not r.ok:
@@ -1747,8 +1529,6 @@ class HtmlScraper:
                 extra={"url": src.url, "error": str(exc)},
             )
             return src
-
-
 class WebRetriever:
     def __init__(self, providers: List[SearchProvider], scraper: Optional[HtmlScraper] = None):
         if not providers:
@@ -1760,7 +1540,6 @@ class WebRetriever:
             )
         self.providers = providers
         self.scraper = scraper
-
     async def search_all(
         self,
         query: str,
@@ -1873,14 +1652,11 @@ class WebRetriever:
         except asyncio.CancelledError:
             raise
         return ordered
-
-
 # =========================================================
 # Result policies
 # =========================================================
 class ResultPolicy:
     name: str = "base"
-
     def aggregate(
         self,
         prompt: str,
@@ -1893,31 +1669,23 @@ class ResultPolicy:
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         raise NotImplementedError
-
-
 class FastestPolicy(ResultPolicy):
     name = "fastest"
-
     def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
         if not answers:
             return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
         winner = min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
         return {"result": answers[winner], "winner": winner, "policy": self.name}
-
-
 class ConsensusSimplePolicy(ResultPolicy):
     name = "consensus.simple"
-
     @staticmethod
     def _tokset(s: str) -> set:
         return set((s or "").lower().split())
-
     @staticmethod
     def _jac(a: set, b: set) -> float:
         if not a and not b:
             return 0.0
         return len(a & b) / float(len(a | b) or 1)
-
     def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
         if not answers:
             return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
@@ -1936,17 +1704,12 @@ class ConsensusSimplePolicy(ResultPolicy):
             scores[k] = 0.6 * jac_score + 0.4 * bm25_score
         winner = max(scores, key=scores.get)
         return {"result": answers[winner], "winner": winner, "policy": self.name}
-
-
 class ConsensusWeightedPolicy(ResultPolicy):
     """Consensus policy that blends similarity, verbosity, and latency heuristics."""
-
     name = "consensus.weighted"
-
     @staticmethod
     def _tokens(text: str) -> List[str]:
         return [t for t in re.findall(r"[A-Za-z0-9_]+", (text or "").lower()) if t not in _STOP]
-
     @staticmethod
     def _similarity(a: List[str], b: List[str]) -> float:
         if not a or not b:
@@ -1957,7 +1720,6 @@ class ConsensusWeightedPolicy(ResultPolicy):
         jaccard = inter / union
         len_ratio = 1.0 - abs(len(a) - len(b)) / float(max(len(a), len(b)) or 1)
         return 0.85 * jaccard + 0.15 * max(0.0, len_ratio)
-
     def aggregate(self, prompt, *, answers, latencies, errors, metas, context=None, params=None):
         if not answers:
             return {"result": "", "winner": None, "policy": self.name, "reason": "no answer"}
@@ -1974,23 +1736,15 @@ class ConsensusWeightedPolicy(ResultPolicy):
             scores[name] = consensus + length_bonus + latency_bonus
         winner = max(scores, key=scores.get)
         return {"result": answers[winner], "winner": winner, "policy": self.name, "scores": scores}
-
-
 _POLICIES: Dict[str, ResultPolicy] = {
     FastestPolicy.name: FastestPolicy(),
     ConsensusSimplePolicy.name: ConsensusSimplePolicy(),
     ConsensusWeightedPolicy.name: ConsensusWeightedPolicy(),
 }
-
-
 def register_policy(key: str, policy: ResultPolicy) -> None:
     _POLICIES[key.lower()] = policy
-
-
 def get_policy(name: Optional[str]) -> ResultPolicy:
     return _POLICIES.get((name or "").lower(), _POLICIES["consensus.simple"])
-
-
 # =========================================================
 # Config + helpers (IR scoring, domain boosts)
 # =========================================================
@@ -2002,7 +1756,6 @@ class EngineConfig:
     accidental second/millisecond mixups when callers propagate request
     deadlines through the system.
     """
-
     max_context_messages: int = 8
     max_parallel: Optional[int] = None
     default_policy: str = os.getenv("NEXUS_RESULT_POLICY", "consensus.simple")
@@ -2016,8 +1769,7 @@ class EngineConfig:
         if os.getenv("NEXUS_DEFAULT_DEADLINE_MS")
         else None
     )
-
-    def __init__(self, config_path: str = "nexus.yaml", **overrides: Any):
+    def __init__(self, config_path: str = 'nexus.yaml', **overrides: Any):
         for field_def in fields(self):
             if field_def.init is False:
                 continue
@@ -2028,9 +1780,9 @@ class EngineConfig:
             else:
                 value = None
             setattr(self, field_def.name, value)
-        path = overrides.pop("config_path", None) or config_path
+        path = overrides.pop('config_path', None) or config_path
         if os.path.exists(path):
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 yaml_config = yaml.safe_load(f) or {}
                 if isinstance(yaml_config, dict):
                     for key, value in yaml_config.items():
@@ -2049,14 +1801,10 @@ class EngineConfig:
             self.scrape_concurrency = max(1, int(self.scrape_concurrency))
         except (TypeError, ValueError):
             self.scrape_concurrency = 5
-
-
 _CODE_RE = re.compile(
     r"```(?P<lang>[a-zA-Z0-9_\-+. ]*)\r?\n(?P<body>[\s\S]*?)```",
     re.MULTILINE,
 )
-
-
 def _extract_code_blocks(text: str) -> List[Dict[str, str]]:
     blocks: List[Dict[str, str]] = []
     for m in _CODE_RE.finditer(text or ""):
@@ -2065,23 +1813,13 @@ def _extract_code_blocks(text: str) -> List[Dict[str, str]]:
         if body:
             blocks.append({"language": lang, "code": body})
     return blocks
-
-
-_STOP = set(
-    os.getenv(
-        "NEXUS_STOP_WORDS",
-        """
+_STOP = set(os.getenv("NEXUS_STOP_WORDS", 
+    """
 a an the and or but if while then of in on for with without about across against between into through during before after above below to from up down under over again further
 is are was were be been being do does did doing have has had having i you he she it we they them me my your our their this that these those as at by can could should would will may might
-""",
-    ).split()
-)
-
-
+""").split())
 def _tokenize(s: str) -> List[str]:
     return re.findall(r"[A-Za-z0-9_]{3,}", (s or "").lower())
-
-
 def _keywords(s: str, k: int = 24) -> List[str]:
     toks = [t for t in _tokenize(s) if t not in _STOP]
     seen, out = set(), []
@@ -2092,8 +1830,6 @@ def _keywords(s: str, k: int = 24) -> List[str]:
         if len(out) >= k:
             break
     return out
-
-
 def _sanitize(txt: Optional[str]) -> Optional[str]:
     if not txt:
         return txt
@@ -2127,8 +1863,6 @@ def _sanitize_model_output(text: Optional[str]) -> str:
             strip=True,
         )
     return _html_escape(text)
-
-
 @lru_cache(maxsize=128)
 def _bm25_scores(
     answer_text: str, docs: Tuple[str, ...], *, k1: float = 1.2, b: float = 0.75
@@ -2163,8 +1897,6 @@ def _bm25_scores(
             s += idf[t] * ((f * (k1 + 1)) / (denom or 1.0))
         scores.append(s)
     return scores
-
-
 def _load_domain_boosts() -> Dict[str, float]:
     raw = os.getenv("NEXUS_DOMAIN_BOOSTS", "").strip()
     if not raw:
@@ -2193,23 +1925,15 @@ def _load_domain_boosts() -> Dict[str, float]:
         return out
     except Exception:
         return {}
-
-
 _DOMAIN_BOOSTS = _load_domain_boosts()
-
-
 def _host_of(url: str) -> Optional[str]:
     try:
         return urlparse(url).netloc.lower()
     except Exception:
         return None
-
-
 def _base_domain(host: str) -> str:
     parts = host.split(".")
     return ".".join(parts[-2:]) if len(parts) >= 2 else host
-
-
 def _boost_for(url: str) -> float:
     h = _host_of(url) or ""
     base = _base_domain(h) if h else ""
@@ -2218,8 +1942,6 @@ def _boost_for(url: str) -> float:
     if h in _DOMAIN_BOOSTS:
         return _DOMAIN_BOOSTS[h]
     return 1.0
-
-
 def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[str]) -> float:
     doc = f"{title or ''} {snippet or ''}".strip()
     if not doc:
@@ -2229,8 +1951,6 @@ def _evidence_score(answer_text: str, title: Optional[str], snippet: Optional[st
     hay = doc.lower()
     overlap = sum(1 for k in keys if k in hay) / float(max(1, len(keys)))
     return bm25 + 0.1 * overlap
-
-
 def _allowed_models(available: Iterable[str], tier: str) -> List[str]:
     ent = entitlement_for(tier)
     patterns = [str(p).strip().lower() for p in ent.get("models_allow", []) if str(p).strip()]
@@ -2242,13 +1962,9 @@ def _allowed_models(available: Iterable[str], tier: str) -> List[str]:
         if any(fnmatch(lowered, pattern) for pattern in patterns):
             allowed.append(name)
     return allowed
-
-
 def _best_default_from(allowed: Iterable[str], available: Iterable[str]) -> Optional[str]:
     pool = [*allowed] or [*available]
     return pool[0] if pool else None
-
-
 def _choose_models(
     available: Iterable[str],
     requested: Optional[Iterable[str]],
@@ -2266,9 +1982,7 @@ def _choose_models(
     if requested_exact:
         chosen = [name for name in requested_exact if name in allowed]
         if not chosen:
-            pro_only = any(
-                name in ordered_available and name not in allowed for name in requested_exact
-            )
+            pro_only = any(name in ordered_available and name not in allowed for name in requested_exact)
             chosen = allowed
             suggestion = _best_default_from(allowed, ordered_available)
     else:
@@ -2276,40 +1990,6 @@ def _choose_models(
     if not chosen:
         chosen = ordered_available
     return chosen, pro_only, suggestion
-
-
-class QueryComplexityAnalyzer:
-    """Extremely lightweight heuristic for routing/telemetry."""
-
-    def analyze(self, query: str) -> Dict[str, Any]:
-        tokens = [token for token in re.findall(r"\w+", query or "") if token]
-        unique_terms = len({token.lower() for token in tokens})
-        total = len(tokens)
-        if total < 12:
-            level = "low"
-        elif total < 60:
-            level = "medium"
-        else:
-            level = "high"
-        return {
-            "level": level,
-            "tokens": total,
-            "unique_terms": unique_terms,
-        }
-
-    def requires_broad_search(self, analysis: Dict[str, Any]) -> bool:
-        return analysis.get("level") in {"medium", "high"}
-
-
-_COMPLEXITY_ANALYZER = QueryComplexityAnalyzer()
-
-
-async def _as_completed_iter(coros):
-    """Async generator over asyncio.as_completed results."""
-    for fut in asyncio.as_completed(list(coros)):
-        yield await fut
-
-
 # =========================================================
 # Engine — strict schema + verified sources + isolation/encryption (MANDATORY AES)
 # =========================================================
@@ -2327,9 +2007,7 @@ class Engine:
         "meta": { "schema_version": str, ... }
       }
     """
-
     SCHEMA_VERSION: str = ENGINE_SCHEMA_VERSION
-
     def __init__(
         self,
         connectors: Dict[str, ModelConnector],
@@ -2371,18 +2049,15 @@ class Engine:
         if auto_health and auto_health.lower() in {"1", "true", "yes"}:
             interval = int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600"))
             self.start_health_monitor(interval_seconds=interval)
-
     # ---- isolation helpers ----
     def _scoped_session(self, session_id: str) -> str:
         return (
             f"{self.access.tenant_id}:{self.access.instance_id}:{self.access.user_id}:{session_id}"
         )
-
     def _aad(self, session_id: str) -> bytes:
         return f"{self.access.tenant_id}|{self.access.instance_id}|{self.access.user_id}|{session_id}".encode(
             "utf-8"
         )
-
     def _save_mem(
         self, session_id: str, role: str, text: str, meta: Optional[Dict[str, Any]] = None
     ):
@@ -2397,7 +2072,7 @@ class Engine:
                     "instance": self.access.instance_id,
                     "user": self.access.user_id,
                 },
-                "enc": "aesgcm",  # always encrypted
+                "enc": "aesgcm", # always encrypted
             }
         )
         payload = self.crypter.encrypt(text, aad=self._aad(session_id))
@@ -2405,7 +2080,6 @@ class Engine:
             self.memory.save(sid, role, payload, meta)
         except Exception:
             log.warning("memory save failed", exc_info=True)
-
     # ---- context/history ----
     def _history_for(self, session_id: str) -> List[Dict[str, str]]:
         try:
@@ -2427,14 +2101,11 @@ class Engine:
                         "history_decrypt_failed",
                         extra={"session_id": session_id, "error": str(exc)},
                     )
-                    raise NexusError(
-                        "History decryption failed", details={"error": str(exc)}
-                    ) from exc
+                    raise NexusError("History decryption failed", details={"error": str(exc)}) from exc
                 out.append({"role": r, "content": t})
             return out
         except Exception:
             return []
-
     # ---- health monitor control ----
     def start_health_monitor(self, interval_seconds: int = 3600) -> None:
         if self._health_monitor and self._health_monitor.is_running:
@@ -2445,12 +2116,10 @@ class Engine:
             autostart=False,
         )
         self._health_monitor.start()
-
     def stop_health_monitor(self) -> None:
         if self._health_monitor:
             self._health_monitor.stop()
             self._health_monitor = None
-
     def close(self) -> None:
         """Release background resources (health monitor and HTTP sessions)."""
         self.stop_health_monitor()
@@ -2490,19 +2159,16 @@ class Engine:
                     "scraper_session_close_failed",
                     extra={"error": str(exc)},
                 )
-
     def health_snapshot(self) -> Dict[str, Any]:
         if self._health_monitor:
             return self._health_monitor.snapshot()
         mon = HealthMonitor(self, interval_seconds=10, autostart=False)
         return asyncio.run(mon.run_once())
-
     def run_health_check_once(self) -> Dict[str, Any]:
         if self._health_monitor:
             return asyncio.run(self._health_monitor.run_once())
         mon = HealthMonitor(self, interval_seconds=10, autostart=False)
         return asyncio.run(mon.run_once())
-
     # ---- core infer ----
     async def _infer_one(
         self,
@@ -2570,36 +2236,6 @@ class Engine:
                 },
             )
             return name, "", round(time.time() - t0, 3)
-
-    async def _infer_one_streaming(
-        self,
-        name: str,
-        conn: ModelConnector,
-        prompt: str,
-        history: List[Dict[str, str]],
-        *,
-        deadline: Optional[float],
-        request_id: str,
-        session_id: str,
-        emit: Optional[Callable[[str, Dict[str, Any]], Any]] = None,
-    ) -> Tuple[str, str, float]:
-        if emit is not None:
-            maybe = emit(
-                "model_start",
-                {"model": name, "request_id": request_id, "session_id": session_id},
-            )
-            if inspect.isawaitable(maybe):
-                await maybe
-        return await self._infer_one(
-            name,
-            conn,
-            prompt,
-            history,
-            deadline=deadline,
-            request_id=request_id,
-            session_id=session_id,
-        )
-
     async def _collect_sources(
         self,
         queries: List[str],
@@ -2627,7 +2263,11 @@ class Engine:
                     request_id=request_id,
                     scrape_concurrency=self.config.scrape_concurrency,
                 )
-                batch = await search_result if inspect.isawaitable(search_result) else search_result
+                batch = (
+                    await search_result
+                    if inspect.isawaitable(search_result)
+                    else search_result
+                )
                 for s in batch:
                     if s.url in seen:
                         continue
@@ -2650,45 +2290,6 @@ class Engine:
                     exc_info=True,
                 )
         return results[:max_total]
-
-    async def _collect_sources_with_progress(
-        self,
-        queries: List[str],
-        *,
-        want_images: bool,
-        k_per_provider: int,
-        max_total: int,
-        deadline: Optional[float],
-        request_id: str,
-        emit: Optional[Callable[[str, Dict[str, Any]], Any]] = None,
-        stage: str = "verification",
-    ) -> List[WebSource]:
-        async def _notify(status: str, extra: Optional[Dict[str, Any]] = None) -> None:
-            if emit is None:
-                return
-            payload = {"stage": stage, "status": status, "request_id": request_id}
-            if extra:
-                payload.update(extra)
-            maybe = emit("search_progress", payload)
-            if inspect.isawaitable(maybe):
-                await maybe
-
-        await _notify("started", {"queries": list(queries)})
-        try:
-            results = await self._collect_sources(
-                queries,
-                want_images=want_images,
-                k_per_provider=k_per_provider,
-                max_total=max_total,
-                deadline=deadline,
-                request_id=request_id,
-            )
-        except Exception as exc:
-            await _notify("failed", {"message": str(exc)})
-            raise
-        await _notify("completed", {"results": len(results)})
-        return results
-
     def _rank_and_verify(
         self, answer_text: str, sources: List[WebSource], need: int
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
@@ -2734,7 +2335,6 @@ class Engine:
                 if len(web_refs) >= need:
                     break
         return web_refs, photos
-
     def _base_response(
         self,
         *,
@@ -2893,523 +2493,6 @@ class Engine:
             telemetry_opt_in=telemetry_opt_in,
         )
 
-    async def run_async_streaming(
-        self,
-        session_id: str,
-        query: str,
-        *,
-        policy_name: Optional[str] = None,
-        want_photos: bool = False,
-        deadline_ms: Optional[int] = None,
-        requested_models: Optional[List[str]] = None,
-        user: Optional[UserTierContext] = None,
-        pii_protection: bool = True,
-        pii_override: bool = False,
-        telemetry_opt_in: bool = False,
-        stream_callback: Optional[Callable[[str, Dict[str, Any]], Any]] = None,
-    ) -> Dict[str, Any]:
-        request_id = uuid.uuid4().hex[:12]
-        sanitized_query, pii_details = redact_and_detect(query or "")
-        pii_detected = bool(pii_details)
-
-        async def emit(event_type: str, payload: Optional[Dict[str, Any]] = None) -> None:
-            if not stream_callback:
-                return
-            try:
-                maybe = stream_callback(event_type, payload or {})
-                if inspect.isawaitable(maybe):
-                    await maybe
-            except Exception:
-                log.debug(
-                    "stream_emit_failed",
-                    exc_info=True,
-                    extra={"event_type": event_type, "request_id": request_id},
-                )
-
-        await emit(
-            "pii_scan",
-            {"pii_detected": pii_detected, "request_id": request_id},
-        )
-        if pii_protection and pii_detected and not pii_override:
-            await emit(
-                "error",
-                {
-                    "message": "Sensitive information was detected and removed.",
-                    "request_id": request_id,
-                },
-            )
-            return self._pii_block_response(
-                sanitized=sanitized_query,
-                pii_details=pii_details,
-                request_id=request_id,
-            )
-
-        if not _GLOBAL_CONCURRENCY_SEMAPHORE.acquire(timeout=CONCURRENCY_WAIT_SECONDS):
-            await emit(
-                "error",
-                {
-                    "message": "Engine is at capacity; please retry shortly.",
-                    "code": "capacity",
-                    "request_id": request_id,
-                },
-            )
-            return self._error_response(
-                message="Engine is at capacity; please retry shortly.",
-                error_code="capacity",
-                request_id=request_id,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-                meta_extra={"retry_after_seconds": CONCURRENCY_WAIT_SECONDS},
-            )
-
-        scope_key = f"{self.access.tenant_id}:{self.access.instance_id}:{self.access.user_id}"
-        allowed, retry_in = _GLOBAL_RATE_LIMITER.try_acquire(scope_key)
-        if not allowed:
-            _GLOBAL_CONCURRENCY_SEMAPHORE.release()
-            await emit(
-                "error",
-                {
-                    "message": f"Rate limit exceeded. Retry in {retry_in:.2f}s",
-                    "code": "rate_limited",
-                    "retry_after": round(retry_in, 3),
-                    "request_id": request_id,
-                },
-            )
-            return self._error_response(
-                message=f"Rate limit exceeded. Retry in {retry_in:.2f}s",
-                error_code="rate_limited",
-                request_id=request_id,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-                meta_extra={"retry_after_seconds": round(retry_in, 3)},
-            )
-
-        effective_deadline_ms = (
-            deadline_ms if deadline_ms is not None else self.config.default_deadline_ms
-        )
-        if effective_deadline_ms is not None:
-            effective_deadline_ms = min(effective_deadline_ms, MAX_DEADLINE_SECONDS * 1000)
-            deadline = time.monotonic() + (effective_deadline_ms / 1000.0)
-        else:
-            deadline = None
-
-        log.info(
-            "engine_run_streaming_start",
-            extra={"request_id": request_id, "session_id": session_id},
-        )
-        speculative_task: Optional[asyncio.Task[List[WebSource]]] = None
-        try:
-            await emit("progress", {"value": 0.05, "request_id": request_id})
-            if deadline and time.monotonic() >= deadline:
-                raise DeadlineExceeded("Request deadline exceeded")
-            self._save_mem(session_id, "user", sanitized_query, {"ephemeral": False})
-            history = self._history_for(session_id)
-            default_tier = os.getenv("NEXUS_DEFAULT_TIER", "pro")
-            tier_user = user or UserTierContext(
-                id=self.access.user_id,
-                billing_tier=default_tier,
-            )
-            tier_name = get_effective_tier(tier_user)
-            available_models = list(self.connectors.keys())
-            chosen_models, pro_only, suggestion = _choose_models(
-                available_models, requested_models, tier_name
-            )
-            if len(chosen_models) > MAX_MODELS_PER_REQUEST:
-                chosen_models = chosen_models[:MAX_MODELS_PER_REQUEST]
-            connectors_to_use = {
-                name: self.connectors[name] for name in chosen_models if name in self.connectors
-            }
-            if not connectors_to_use:
-                connectors_to_use = self.connectors
-                chosen_models = list(connectors_to_use.keys())[:MAX_MODELS_PER_REQUEST]
-                connectors_to_use = {name: connectors_to_use[name] for name in chosen_models}
-            participants = list(connectors_to_use.keys())
-            await emit(
-                "models",
-                {"participants": participants, "request_id": request_id},
-            )
-            log_event(
-                "model.selection",
-                Actor(user_id=tier_user.id, tier=tier_name),
-                {
-                    "requested": list(requested_models or []),
-                    "chosen": participants,
-                },
-            )
-
-            complexity = _COMPLEXITY_ANALYZER.analyze(sanitized_query)
-            await emit("analysis", {**complexity, "request_id": request_id})
-            search_k_per_provider = self.config.search_k_per_provider
-            search_max_total = self.config.search_max_total
-            if deadline:
-                remaining = deadline - time.monotonic()
-                if remaining < (MAX_MODEL_TIMEOUT * 0.5):
-                    search_k_per_provider = max(2, search_k_per_provider // 2)
-                    search_max_total = max(6, search_max_total // 2)
-            if not _COMPLEXITY_ANALYZER.requires_broad_search(complexity):
-                search_k_per_provider = max(2, search_k_per_provider // 2)
-                search_max_total = max(6, search_max_total // 2)
-            if self.web and _COMPLEXITY_ANALYZER.requires_broad_search(complexity):
-                speculative_task = asyncio.create_task(
-                    self._collect_sources_with_progress(
-                        queries=[sanitized_query],
-                        want_images=False,
-                        k_per_provider=max(2, search_k_per_provider // 2),
-                        max_total=max(4, search_max_total // 2),
-                        deadline=deadline,
-                        request_id=request_id,
-                        emit=emit,
-                        stage="speculative",
-                    )
-                )
-
-            answers: Dict[str, str] = {}
-            latencies: Dict[str, float] = {}
-            tasks = [
-                asyncio.create_task(
-                    self._infer_one_streaming(
-                        n,
-                        c,
-                        sanitized_query,
-                        history,
-                        deadline=deadline,
-                        request_id=request_id,
-                        session_id=session_id,
-                        emit=emit,
-                    )
-                )
-                for n, c in connectors_to_use.items()
-            ]
-            first_answer_sent = False
-            try:
-                async for name, text, elapsed in _as_completed_iter(tasks):
-                    latencies[name] = elapsed
-                    if not text:
-                        continue
-                    answers[name] = text
-                    sanitized_partial = _sanitize_model_output(text)
-                    await emit(
-                        "model_complete",
-                        {
-                            "model": name,
-                            "answer": sanitized_partial,
-                            "latency": elapsed,
-                            "request_id": request_id,
-                        },
-                    )
-                    if not first_answer_sent:
-                        first_answer_sent = True
-                        await emit(
-                            "first_answer",
-                            {
-                                "model": name,
-                                "answer": sanitized_partial,
-                                "latency": elapsed,
-                                "request_id": request_id,
-                            },
-                        )
-                        await emit("progress", {"value": 0.35, "request_id": request_id})
-            except DeadlineExceeded:
-                for task in tasks:
-                    task.cancel()
-                raise
-            finally:
-                for task in tasks:
-                    if not task.done():
-                        task.cancel()
-
-            if not answers:
-                await emit(
-                    "error",
-                    {
-                        "message": "No model produced an answer.",
-                        "code": "no_answers",
-                        "request_id": request_id,
-                    },
-                )
-                return self._error_response(
-                    message="No model produced an answer.",
-                    error_code="no_answers",
-                    request_id=request_id,
-                    pii_detected=pii_detected,
-                    pii_details=pii_details,
-                    models_used=participants,
-                    timings=latencies,
-                )
-
-            policy = get_policy(policy_name or self.config.default_policy)
-            agg = policy.aggregate(
-                sanitized_query,
-                answers=answers,
-                latencies=latencies,
-                errors={},
-                metas={},
-                context=history,
-                params=None,
-            )
-            winner = agg.get("winner") or min(answers.keys(), key=lambda k: latencies.get(k, 9e9))
-            answer_text = (agg.get("result") or answers[winner]).strip()
-            sanitized_answer = _sanitize_model_output(answer_text)
-            await emit(
-                "consensus",
-                {
-                    "winner": winner,
-                    "answer": sanitized_answer,
-                    "participants": participants,
-                    "request_id": request_id,
-                },
-            )
-            await emit("progress", {"value": 0.6, "request_id": request_id})
-
-            sources: List[WebSource] = []
-            speculative_results: List[WebSource] = []
-            if speculative_task:
-                try:
-                    speculative_results = await speculative_task
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    speculative_results = []
-            if speculative_results:
-                dedup: Dict[str, WebSource] = {}
-                for src in speculative_results:
-                    if src.url and src.url not in dedup:
-                        dedup[src.url] = src
-                sources.extend(dedup.values())
-
-            try:
-                verification_sources = await self._collect_sources_with_progress(
-                    queries=[sanitized_query, answer_text],
-                    want_images=want_photos,
-                    k_per_provider=search_k_per_provider,
-                    max_total=search_max_total,
-                    deadline=deadline,
-                    request_id=request_id,
-                    emit=emit,
-                    stage="verification",
-                )
-            except Exception:
-                verification_sources = []
-            if verification_sources:
-                seen_urls = {src.url for src in sources if src.url}
-                for src in verification_sources:
-                    if src.url and src.url in seen_urls:
-                        continue
-                    seen_urls.add(src.url or uuid.uuid4().hex)
-                    sources.append(src)
-            await emit("progress", {"value": 0.75, "request_id": request_id})
-
-            web_refs, photos = self._rank_and_verify(
-                sanitized_answer, sources, self.config.min_sources_required
-            )
-            if len(web_refs) < self.config.min_sources_required:
-                salient = sanitized_answer.split(".")[0].strip()
-                if salient:
-                    extra = await self._collect_sources_with_progress(
-                        queries=[f'"{salient}"'],
-                        want_images=False,
-                        k_per_provider=max(2, search_k_per_provider // 2),
-                        max_total=search_max_total,
-                        deadline=deadline,
-                        request_id=request_id,
-                        emit=emit,
-                        stage="verification",
-                    )
-                    extra_refs, _ = self._rank_and_verify(
-                        sanitized_answer,
-                        extra,
-                        self.config.min_sources_required - len(web_refs),
-                    )
-                    for ref in extra_refs:
-                        if all(ref["url"] != existing["url"] for existing in web_refs):
-                            web_refs.append(ref)
-                            if len(web_refs) >= self.config.min_sources_required:
-                                break
-            if len(web_refs) < self.config.min_sources_required:
-                await emit(
-                    "error",
-                    {
-                        "message": (
-                            f"Insufficient verification sources (need ≥ {self.config.min_sources_required})."
-                        ),
-                        "code": "verification_failed",
-                        "request_id": request_id,
-                    },
-                )
-                return self._error_response(
-                    message=(
-                        f"Insufficient verification sources (need ≥ {self.config.min_sources_required})."
-                    ),
-                    error_code="verification_failed",
-                    request_id=request_id,
-                    pii_detected=pii_detected,
-                    pii_details=pii_details,
-                    models_used=participants,
-                    timings=latencies,
-                    meta_extra={"collected_sources": len(web_refs)},
-                )
-
-            code_blocks = _extract_code_blocks(sanitized_answer)
-            sanitized_sources = [
-                {
-                    "url": ref.get("url"),
-                    "title": _sanitize_model_output(ref.get("title")),
-                    "snippet": _sanitize_model_output(ref.get("snippet")),
-                }
-                for ref in web_refs
-            ]
-            sanitized_photos = [
-                {
-                    "url": photo.get("url"),
-                    "caption": _sanitize_model_output(photo.get("caption")),
-                }
-                for photo in photos
-            ]
-            sanitized_code_blocks = [
-                {
-                    "language": block.get("language"),
-                    "code": _sanitize_model_output(block.get("code")),
-                }
-                for block in code_blocks
-            ]
-            self._save_mem(session_id, "assistant", sanitized_answer, {"ephemeral": False})
-            wconn = self.connectors.get(winner)
-            winner_ref = {
-                "name": winner,
-                "adapter": getattr(wconn, "adapter", None),
-                "endpoint": getattr(wconn, "endpoint", None),
-            }
-            routes = {n: getattr(c, "route", "vendor_direct") for n, c in connectors_to_use.items()}
-            meta_extra: Dict[str, Any] = {
-                "policy": getattr(policy, "name", None),
-                "latencies": latencies,
-                "policy_scores": agg.get("scores"),
-                "routes": routes,
-                "tier": tier_name,
-                "request_id": request_id,
-            }
-            if pro_only:
-                meta_extra["pro_only"] = True
-            if suggestion:
-                meta_extra["suggested"] = suggestion
-            payload = self._base_response(
-                status="ok",
-                answer=sanitized_answer,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-                models_used=participants,
-                timings=latencies,
-                meta_extra=meta_extra,
-                extra_fields={
-                    "winner": winner,
-                    "winner_ref": winner_ref,
-                    "participants": participants,
-                    "code": sanitized_code_blocks,
-                    "sources": sanitized_sources,
-                    "photos": sanitized_photos if want_photos else [],
-                },
-            )
-            if pro_only:
-                payload["pro_only"] = True
-                payload.setdefault("meta", {})["pro_only"] = True
-            if suggestion:
-                payload.setdefault("meta", {})["suggested"] = suggestion
-            await emit(
-                "final_answer",
-                {
-                    "answer": sanitized_answer,
-                    "winner": winner,
-                    "participants": participants,
-                    "sources": sanitized_sources,
-                    "photos": sanitized_photos if want_photos else [],
-                    "meta": meta_extra,
-                    "request_id": request_id,
-                },
-            )
-            await emit("progress", {"value": 0.98, "request_id": request_id})
-
-            if telemetry_opt_in and self.telemetry.enabled:
-                try:
-                    scores = agg.get("scores") if isinstance(agg, dict) else None
-                    disagreement = agg.get("disagreement") if isinstance(agg, dict) else None
-                    for model_name in participants:
-                        latency_val = latencies.get(model_name)
-                        latency_ms = (
-                            float(latency_val) * 1000.0
-                            if isinstance(latency_val, (int, float))
-                            else None
-                        )
-                        failure_type = None if model_name in answers else "no_output"
-                        score_val = None
-                        if isinstance(scores, Mapping):
-                            raw_score = scores.get(model_name)
-                            if isinstance(raw_score, (int, float)):
-                                score_val = float(raw_score)
-                        disagreement_val = None
-                        if isinstance(disagreement, (int, float)):
-                            disagreement_val = float(disagreement)
-                        self.telemetry.record_model_behavior(
-                            model_name=model_name,
-                            latency_ms=latency_ms,
-                            failure_type=failure_type,
-                            hallucination_score=score_val,
-                            disagreement=disagreement_val,
-                            token_usage=None,
-                            debate_metadata={
-                                "policy": meta_extra.get("policy"),
-                                "winner": model_name == winner,
-                                "route": routes.get(model_name),
-                            },
-                        )
-                except Exception:  # pragma: no cover - defensive
-                    log.debug("telemetry_record_failed", exc_info=True)
-            return payload
-        except DeadlineExceeded as exc:
-            await emit(
-                "error",
-                {
-                    "message": "Request deadline exceeded.",
-                    "code": "deadline_exceeded",
-                    "request_id": request_id,
-                },
-            )
-            log.warning(
-                "engine_run_streaming_deadline",
-                extra={"request_id": request_id, "session_id": session_id, "error": str(exc)},
-            )
-            return self._error_response(
-                message="Request deadline exceeded.",
-                error_code="deadline_exceeded",
-                request_id=request_id,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-            )
-        except Exception:
-            await emit(
-                "error",
-                {
-                    "message": "An internal error occurred. Please try again later.",
-                    "code": "internal_error",
-                    "request_id": request_id,
-                },
-            )
-            log.error(
-                "engine_run_streaming_exception",
-                exc_info=True,
-                extra={"request_id": request_id, "session_id": session_id},
-            )
-            return self._error_response(
-                message="An internal error occurred. Please try again later.",
-                error_code="internal_error",
-                request_id=request_id,
-                pii_detected=pii_detected,
-                pii_details=pii_details,
-            )
-        finally:
-            if speculative_task and not speculative_task.done():
-                speculative_task.cancel()
-            _GLOBAL_CONCURRENCY_SEMAPHORE.release()
-
     async def _run_internal(
         self,
         *,
@@ -3481,12 +2564,16 @@ class Engine:
                 )
                 chosen_models = chosen_models[:MAX_MODELS_PER_REQUEST]
             connectors_to_use = {
-                name: self.connectors[name] for name in chosen_models if name in self.connectors
+                name: self.connectors[name]
+                for name in chosen_models
+                if name in self.connectors
             }
             if not connectors_to_use:
                 connectors_to_use = self.connectors
                 chosen_models = list(connectors_to_use.keys())[:MAX_MODELS_PER_REQUEST]
-                connectors_to_use = {name: connectors_to_use[name] for name in chosen_models}
+                connectors_to_use = {
+                    name: connectors_to_use[name] for name in chosen_models
+                }
             participants = list(connectors_to_use.keys())
             log_event(
                 "model.selection",
@@ -3637,7 +2724,10 @@ class Engine:
                 "engine_run_complete",
                 extra={"request_id": request_id, "session_id": session_id, "winner": winner},
             )
-            routes = {n: getattr(c, "route", "vendor_direct") for n, c in connectors_to_use.items()}
+            routes = {
+                n: getattr(c, "route", "vendor_direct")
+                for n, c in connectors_to_use.items()
+            }
             meta_extra: Dict[str, Any] = {
                 "policy": getattr(policy, "name", None),
                 "latencies": latencies,
@@ -3735,18 +2825,14 @@ class Engine:
             )
         finally:
             _GLOBAL_CONCURRENCY_SEMAPHORE.release()
-
-
 # =========================================================
 # Health Monitor (autonomous backend checks)
 # =========================================================
 @dataclass
 class HealthConfig:
-    interval_seconds: int = int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600"))  # default: 1 hour
+    interval_seconds: int = int(os.getenv("NEXUS_HEALTH_INTERVAL_SEC", "3600")) # default: 1 hour
     search_probe: str = os.getenv("NEXUS_HEALTH_SEARCH_QUERY", "nexus health check")
     include_memory_check: bool = True
-
-
 class HealthMonitor:
     def __init__(self, engine: Engine, interval_seconds: int = 3600, autostart: bool = True):
         self.engine = engine
@@ -3758,7 +2844,6 @@ class HealthMonitor:
         self.is_running = False
         if autostart:
             self.start()
-
     def start(self) -> None:
         if self.is_running:
             return
@@ -3767,7 +2852,6 @@ class HealthMonitor:
         self._thread.start()
         self.is_running = True
         log.info("Health monitor started (interval=%ss)", self.cfg.interval_seconds)
-
     def stop(self) -> None:
         if not self.is_running:
             return
@@ -3776,17 +2860,14 @@ class HealthMonitor:
             self._thread.join(timeout=5.0)
         self.is_running = False
         log.info("Health monitor stopped")
-
     def snapshot(self) -> Dict[str, Any]:
         with self._lock:
-            return json.loads(json.dumps(self._last))  # deep copy
-
+            return json.loads(json.dumps(self._last)) # deep copy
     async def run_once(self) -> Dict[str, Any]:
         result = await self._compute()
         with self._lock:
             self._last = result
         return result
-
     def _loop(self) -> None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -3799,7 +2880,6 @@ class HealthMonitor:
             elapsed = time.time() - t0
             to_sleep = max(10.0, self.cfg.interval_seconds - elapsed)
             self._stop.wait(to_sleep)
-
     async def _compute(self) -> Dict[str, Any]:
         ts = int(time.time())
         components: Dict[str, Any] = {}
@@ -3857,23 +2937,19 @@ class HealthMonitor:
             try:
                 sid = "__health__"
                 enc = self.engine.crypter.encrypt("__ping__", aad=self.engine._aad(sid))
-                await asyncio.to_thread(
-                    self.engine.memory.save,
+                await asyncio.to_thread(self.engine.memory.save,
                     self.engine._scoped_session(sid),
                     "system",
                     enc,
                     {"ephemeral": True, "enc": "aesgcm", "ttl_seconds": 300},
                 )
-                got = await asyncio.to_thread(
-                    self.engine.memory.recent, self.engine._scoped_session(sid), limit=1
-                )
+                got = await asyncio.to_thread(self.engine.memory.recent, self.engine._scoped_session(sid), limit=1)
                 mem = {"ok": bool(got), "latency_ms": int((time.time() - t0) * 1000)}
             except Exception as e:
                 mem = {"ok": False, "error": str(e)}
         components["memory"] = mem
         ok_overall = self._overall_ok(components)
         return {"ts": ts, "ok": ok_overall, "components": components}
-
     @staticmethod
     def _overall_ok(components: Dict[str, Any]) -> bool:
         conns = components.get("connectors", {})
@@ -3883,13 +2959,11 @@ class HealthMonitor:
         any_web_ok = any(v.get("ok") for v in web.values()) if web else True
         mem_ok = bool(mem.get("ok", True))
         return all_conns_ok and any_web_ok and mem_ok
-
     @staticmethod
     def _node_health() -> Dict[str, Any]:
         info: Dict[str, Any] = {"pid": os.getpid(), "time": int(time.time())}
         try:
-            import psutil  # type: ignore
-
+            import psutil # type: ignore
             info["cpu_percent"] = psutil.cpu_percent(interval=0.0)
             vm = psutil.virtual_memory()
             info["memory"] = {
@@ -3917,17 +2991,13 @@ class HealthMonitor:
         except Exception:
             info["disk"] = {"total": None, "used": None, "free": None, "percent": None}
         return info
-
-
 # =========================================================
 # Secrets-aware web retriever builder
 # =========================================================
 try:
-    from .nexus_config import SecretResolver  # your existing resolver
+    from .nexus_config import SecretResolver # your existing resolver
 except Exception:
-    SecretResolver = None  # type: ignore
-
-
+    SecretResolver = None # type: ignore
 def _ensure_resolver(resolver: Optional["SecretResolver"]) -> "SecretResolver":
     if resolver:
         return resolver
@@ -3949,8 +3019,6 @@ def _ensure_resolver(resolver: Optional["SecretResolver"]) -> "SecretResolver":
             overrides[k] = v
     ttl = int(os.getenv("NEXUS_SECRET_TTL_SECONDS", "600"))
     return SecretResolver(providers=providers, overrides=overrides, ttl_seconds=ttl)
-
-
 def build_connectors_cloud_first(
     resolver: Optional["SecretResolver"] = None,
 ) -> Dict[str, Any]:
@@ -3964,7 +3032,9 @@ def build_connectors_cloud_first(
     cons: Dict[str, Any] = {}
     # --- Cloud-native (no vendor keys)
     if os.getenv("NEXUS_ENABLE_BEDROCK", "1").lower() not in {"0", "false", "no"}:
-        model_id = os.getenv("NEXUS_BEDROCK_MODEL", "anthropic.claude-3-5-sonnet-20241022")
+        model_id = os.getenv(
+            "NEXUS_BEDROCK_MODEL", "anthropic.claude-3-5-sonnet-20241022"
+        )
         region = os.getenv("AWS_REGION", "us-east-1")
         cons["bedrock.claude"] = BedrockSDKConnector(model_id=model_id, region=region)
     if os.getenv("AZURE_OPENAI_ENDPOINT"):
@@ -4001,10 +3071,10 @@ def build_connectors_cloud_first(
         )
         setattr(cons["anthropic.claude"], "route", "vendor_direct")
     if not cons:
-        raise MisconfigurationError("No connectors could be constructed; check env & secrets.")
+        raise MisconfigurationError(
+            "No connectors could be constructed; check env & secrets."
+        )
     return cons
-
-
 def build_web_retriever_from_env(
     headers: Optional[Dict[str, str]] = None,
     resolver: Optional["SecretResolver"] = None,
@@ -4052,8 +3122,6 @@ def build_web_retriever_from_env(
         return None
     scraper = HtmlScraper(timeout=int(os.getenv("NEXUS_SCRAPE_TIMEOUT", "8")), session=sess)
     return WebRetriever(providers, scraper=scraper)
-
-
 # End of Engine code#
 # Nexus is an advanced orchestration platform that coordinates LLMs and distributed memory stores across AWS, Azure, and GCP.
 # It emphasizes secure, scalable operations with enforced AES-256-GCM encryption, dynamic secret resolution, and multi-cloud memory hygiene.

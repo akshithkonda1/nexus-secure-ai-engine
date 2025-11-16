@@ -13,10 +13,6 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
-import boto3
-from boto3.dynamodb.conditions import Key
-from botocore.config import Config
-
 # ---------- Logging ----------
 _LOG_LEVEL = os.getenv("NEXUS_LOG_LEVEL", "INFO").upper()
 logger = logging.getLogger("nexus.memory")
@@ -179,30 +175,25 @@ class InMemoryStore(MemoryStore):
 
 # ---------- AWS DynamoDB ----------
 class DynamoDBMemoryStore(MemoryStore):
+    """Durable store on AWS DynamoDB (PK: session_id, sort: ts)."""
+
     def __init__(
-        self,
-        table_name: str,
-        index_name: Optional[str] = None,
-        region_name: Optional[str] = None,
+        self, table_name: str, index_name: Optional[str] = None, region_name: Optional[str] = None
     ):
-        super().__init__()
-        self._table_name = table_name
-        self._gsi = index_name
-        self._region = region_name or "us-east-1"
-
-        config = Config(
-            region_name=self._region,
-            max_pool_connections=50,
-            retries={"max_attempts": 3, "mode": "adaptive"},
-        )
-
-        self._resource = boto3.resource(
-            "dynamodb",
-            region_name=self._region,
-            config=config,
-        )
-        self._table = self._resource.Table(self._table_name)
+        try:
+            import boto3
+            from boto3.dynamodb.conditions import Key  # noqa: F401
+        except Exception as e:
+            logger.error("boto3 import failed for DynamoDBMemoryStore")
+            raise ImportError("boto3 is required for DynamoDBMemoryStore") from e
+        self._boto3 = boto3
         self._Key = Key
+        self._region = region_name or os.getenv("AWS_REGION", "us-east-1")
+        self._table = self._boto3.resource("dynamodb", region_name=self._region).Table(table_name)
+        self._gsi = index_name
+        logger.info(
+            f"DynamoDBMemoryStore initialized table={table_name} region={self._region} gsi={index_name or '-'}"
+        )
 
     def save(
         self,
@@ -232,43 +223,22 @@ class DynamoDBMemoryStore(MemoryStore):
         return mid
 
     def recent(self, session_id: str, limit: int = 8) -> List[Dict[str, Any]]:
-        """Retrieve recent messages (optimized query, no stale cache)."""
         lim = _normalize_limit(limit)
-
         qargs: Dict[str, Any] = {
             "KeyConditionExpression": self._Key("session_id").eq(session_id),
             "Limit": lim,
             "ScanIndexForward": False,
-            "ProjectionExpression": "session_id, #ts, #role, #text",
-            "ExpressionAttributeNames": {
-                "#ts": "ts",
-                "#role": "role",
-                "#text": "text",
-            },
         }
-
         if self._gsi:
             qargs["IndexName"] = self._gsi
-
         resp = self._table.query(**qargs)
         items = resp.get("Items", [])
-
-        items = list(reversed(items))
-
+        items.sort(key=lambda x: x.get("ts", 0))
         out = [
-            {
-                "role": it.get("role", ""),
-                "text": it.get("text", ""),
-                "ts": it.get("ts", 0),
-            }
-            for it in items
+            {"role": it.get("role", ""), "text": it.get("text", ""), "ts": it.get("ts", 0)}
+            for it in items[-lim:]
         ]
-
-        logger.debug(
-            "DynamoDB.recent fetched %d items for session=%s",
-            len(out),
-            session_id,
-        )
+        logger.debug(f"DynamoDB.recent session={session_id} count={len(out)}")
         return out
 
 

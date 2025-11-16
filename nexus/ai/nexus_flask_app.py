@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 
-import asyncio
 import atexit
 import contextvars
 import hmac
-import json
 import logging
 import os
 import socket
@@ -18,8 +16,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime as dt, timezone
 from functools import wraps
-from queue import Queue
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 try:
@@ -37,7 +34,7 @@ except ModuleNotFoundError:  # pragma: no cover - test harness path
     else:  # pragma: no cover - defensive
         raise
 from .bootstrap import BootstrapError, _build_resolver, make_connectors
-from flask import Flask, Response, g, has_request_context, jsonify, request, stream_with_context
+from flask import Flask, Response, g, has_request_context, jsonify, request
 from .memory_compute import (
     AzureBlobMemoryStore,
     DynamoDBMemoryStore,
@@ -51,7 +48,6 @@ from .nexus_config import ConfigError, NexusConfig, load_and_validate
 from .nexus_engine import (
     AccessContext,
     Crypter,
-    DeadlineExceeded,
     Engine,
     EngineConfig,
     MAX_MODELS_PER_REQUEST,
@@ -78,7 +74,9 @@ _startup_logger = logging.getLogger("nexus.flask.startup")
 if not _startup_logger.handlers:
     _handler = logging.StreamHandler()
     _handler.setFormatter(
-        logging.Formatter('{"ts":"%(asctime)s","lvl":"%(levelname)s","msg":"%(message)s"}')
+        logging.Formatter(
+            '{"ts":"%(asctime)s","lvl":"%(levelname)s","msg":"%(message)s"}'
+        )
     )
     _startup_logger.addHandler(_handler)
 _startup_logger.setLevel(logging.INFO)
@@ -193,12 +191,8 @@ def _parse_user_datetime(value: str | None) -> dt | None:
 
 
 def _user_from_headers() -> UserTierContext:
-    user_id = (
-        request.headers.get("X-User-ID") or request.headers.get("X-API-Key") or "anonymous"
-    ).strip() or "anonymous"
-    billing_tier = (
-        request.headers.get("X-Billing-Tier") or request.headers.get("X-User-Tier") or ""
-    ).strip() or None
+    user_id = (request.headers.get("X-User-ID") or request.headers.get("X-API-Key") or "anonymous").strip() or "anonymous"
+    billing_tier = (request.headers.get("X-Billing-Tier") or request.headers.get("X-User-Tier") or "").strip() or None
     verified_until = _parse_user_datetime(request.headers.get("X-Student-Verified-Until"))
     grace_until = _parse_user_datetime(request.headers.get("X-Student-Grace-Until"))
     return UserTierContext(
@@ -260,7 +254,9 @@ def _load_nexus_config() -> NexusConfig:
     if errors:
         for err in errors:
             _startup_logger.error("config_validation_error error=%s", err)
-        raise AppInitializationError("Configuration validation failed; see logs for details")
+        raise AppInitializationError(
+            "Configuration validation failed; see logs for details"
+        )
     return cfg
 
 
@@ -608,11 +604,7 @@ def _inject_request_id(response: Response):
     if rid:
         response.headers.setdefault("X-Request-ID", rid)
     user = getattr(g, "current_user", None)
-    actor = (
-        Actor(user_id=user.id, tier=get_effective_tier(user))
-        if user
-        else Actor(user_id="anonymous")
-    )
+    actor = Actor(user_id=user.id, tier=get_effective_tier(user)) if user else Actor(user_id="anonymous")
     log_event(
         "request.end",
         actor,
@@ -846,126 +838,6 @@ def readyz():
     return jsonify(payload), status
 
 
-def _sse(event: dict) -> str:
-    """Format a dict as a single Server-Sent Event."""
-    return f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-
-
-@app.route("/debate/stream", methods=["POST"])
-@require_api_key
-@limiter.limit("20 per minute")
-@enforce_qos(lambda *_args, **_kwargs: _current_user())
-def debate_stream():
-    """
-    Streaming debate endpoint using Server-Sent Events.
-    """
-    if not request.is_json:
-        return jsonify({"error": "Request must be application/json"}), 415
-
-    data = sanitize_input(request.get_json() or {})
-    prompt = (data.get("prompt") or "").strip()
-    requested_models = data.get("models", [])
-    pii_protection = _coerce_bool(data.get("pii_protection"), default=True)
-    pii_override = _coerce_bool(data.get("pii_override"), default=False)
-    raw_deadline = data.get("deadline_ms")
-    deadline_ms: Optional[int] = None
-    if raw_deadline is not None:
-        try:
-            deadline_ms = int(raw_deadline)
-        except (TypeError, ValueError):
-            return jsonify({"error": "deadline_ms must be an integer"}), 400
-        if deadline_ms <= 0:
-            deadline_ms = None
-        else:
-            deadline_ms = min(deadline_ms, MAX_DEADLINE_MS)
-
-    if not prompt:
-        return jsonify({"error": "Prompt is required"}), 415
-
-    session_id = request.headers.get("X-API-Key", "anonymous")
-    user_ctx = _current_user()
-
-    queue: "Queue[Optional[str]]" = Queue()
-
-    @stream_with_context
-    def generate():
-        start_event = {
-            "type": "start",
-            "status": "processing",
-            "timestamp": dt.utcnow().isoformat() + "Z",
-        }
-        yield _sse(start_event)
-
-        while True:
-            chunk = queue.get()
-            if chunk is None:
-                break
-            yield chunk
-
-    async def stream_callback(event_type: str, payload: dict):
-        event = {
-            "type": event_type,
-            "timestamp": dt.utcnow().isoformat() + "Z",
-            **(payload or {}),
-        }
-        try:
-            queue.put(_sse(event))
-        except Exception as exc:
-            logger.debug(
-                "stream_callback_failed",
-                extra={"error": str(exc), "event_type": event_type},
-            )
-
-    def run_engine():
-        loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(
-                engine.run_async_streaming(
-                    session_id=session_id,
-                    query=prompt,
-                    requested_models=requested_models,
-                    user=user_ctx,
-                    pii_protection=pii_protection,
-                    pii_override=pii_override,
-                    deadline_ms=deadline_ms,
-                    stream_callback=stream_callback,
-                )
-            )
-            complete_event = {
-                "type": "complete",
-                "timestamp": dt.utcnow().isoformat() + "Z",
-                "result": result,
-            }
-            queue.put(_sse(complete_event))
-        except Exception as exc:
-            logger.error("Streaming error: %s", traceback.format_exc())
-            error_event = {
-                "type": "error",
-                "timestamp": dt.utcnow().isoformat() + "Z",
-                "message": str(exc),
-            }
-            queue.put(_sse(error_event))
-        finally:
-            queue.put(None)
-            try:
-                loop.close()
-            except Exception:
-                pass
-
-    threading.Thread(target=run_engine, daemon=True).start()
-
-    return Response(
-        generate(),
-        mimetype="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        },
-    )
-
-
 @app.route("/status", methods=["GET"])
 @require_api_key
 @limiter.limit("30 per minute")
@@ -1014,22 +886,17 @@ def debate():
         return jsonify({"error": "models must be a list"}), 400
     if len(requested_models) > MAX_MODELS_PER_REQUEST:
         return (
-            jsonify({"error": (f"models cannot exceed {MAX_MODELS_PER_REQUEST} entries")}),
+            jsonify(
+                {
+                    "error": (
+                        f"models cannot exceed {MAX_MODELS_PER_REQUEST} entries"
+                    )
+                }
+            ),
             400,
         )
     pii_protection = _coerce_bool(data.get("pii_protection"), default=True)
     pii_override = _coerce_bool(data.get("pii_override"), default=False)
-    raw_deadline = data.get("deadline_ms")
-    deadline_ms: Optional[int] = None
-    if raw_deadline is not None:
-        try:
-            deadline_ms = int(raw_deadline)
-        except (TypeError, ValueError):
-            return jsonify({"error": "deadline_ms must be an integer"}), 400
-        if deadline_ms <= 0:
-            deadline_ms = None
-        else:
-            deadline_ms = min(deadline_ms, MAX_DEADLINE_MS)
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
     if requested_models and len(requested_models) > MAX_MODELS_PER_REQUEST:
