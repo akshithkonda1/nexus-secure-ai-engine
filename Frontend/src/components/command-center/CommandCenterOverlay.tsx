@@ -10,8 +10,8 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-slate-950/75 backdrop-blur-sm">
-      <div className="pointer-events-none flex w-full justify-center px-4 pt-24 md:pt-28">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm">
+      <div className="pointer-events-none flex w-full justify-center px-4">
         <div className="pointer-events-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-950 via-slate-950/95 to-slate-900 shadow-[0_32px_120px_rgba(0,0,0,0.85)] px-6 py-6 md:px-8 md:py-7">
           {/* TOP BAR: title + status + close */}
           <div className="mb-5 flex items-start justify-between gap-4">
