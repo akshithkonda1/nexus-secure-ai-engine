@@ -32,7 +32,7 @@ import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import SkeletonBlock from "@/components/SkeletonBlock";
 
 /* -------------------------------------------------------------------------- */
-/* Types – we extend SettingsData with the new sections                       */
+/* Extended types – add the four sections we need                             */
 /* -------------------------------------------------------------------------- */
 
 type ZoraEnginePref = {
@@ -51,6 +51,7 @@ type ZoraSettingsSection = {
   showAdvancedDebugPanel: boolean;
   safeModeOnHighRisk: boolean;
   maxContextTokens: number;
+  customInstructions: string;
 };
 
 type WorkspaceConnector = {
@@ -65,9 +66,12 @@ type WorkspaceSettingsSection = {
   autoOrganize: boolean;
   studyMode: boolean;
   allowWriteBack: boolean;
-  dailyDigest: boolean;
+  dailyDigestEnabled: boolean;
   defaultView: "timeline" | "grid" | "list";
   maxActiveWorkspaces: number;
+  autoArchiveCompleted: boolean;
+  keepOriginalFiles: boolean;
+  customInstructions: string;
 };
 
 type CommandCenterWidgetPref = {
@@ -79,6 +83,7 @@ type CommandCenterWidgetPref = {
 };
 
 type CommandCenterSettingsSection = {
+  enabled: boolean;
   widgets: CommandCenterWidgetPref[];
   openOnLaunch: boolean;
   showHotkeysOverlay: boolean;
@@ -105,9 +110,11 @@ type PrivacySettingsSection = {
   idleLockEnabled: boolean;
   idleLockMinutes: number;
   requireTwoFactor: boolean;
+  strictMode: boolean;
 };
 
 type ExtendedSettingsData = SettingsData & {
+  // Wire these to your backend SettingsData type
   zora?: ZoraSettingsSection;
   workspaceSettings?: WorkspaceSettingsSection;
   commandCenter?: CommandCenterSettingsSection;
@@ -160,6 +167,7 @@ const DEFAULT_ZORA_SETTINGS: ZoraSettingsSection = {
   showAdvancedDebugPanel: false,
   safeModeOnHighRisk: true,
   maxContextTokens: 16000,
+  customInstructions: "",
 };
 
 const DEFAULT_WORKSPACE_CONNECTORS: WorkspaceConnector[] = [
@@ -175,9 +183,12 @@ const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettingsSection = {
   autoOrganize: true,
   studyMode: true,
   allowWriteBack: false,
-  dailyDigest: false,
+  dailyDigestEnabled: false,
   defaultView: "timeline",
   maxActiveWorkspaces: 5,
+  autoArchiveCompleted: true,
+  keepOriginalFiles: true,
+  customInstructions: "",
 };
 
 const DEFAULT_COMMAND_CENTER_WIDGETS: CommandCenterWidgetPref[] = [
@@ -219,6 +230,7 @@ const DEFAULT_COMMAND_CENTER_WIDGETS: CommandCenterWidgetPref[] = [
 ];
 
 const DEFAULT_COMMAND_CENTER_SETTINGS: CommandCenterSettingsSection = {
+  enabled: true,
   widgets: DEFAULT_COMMAND_CENTER_WIDGETS,
   openOnLaunch: false,
   showHotkeysOverlay: true,
@@ -243,6 +255,7 @@ const DEFAULT_PRIVACY_SETTINGS: PrivacySettingsSection = {
   idleLockEnabled: false,
   idleLockMinutes: 20,
   requireTwoFactor: false,
+  strictMode: false,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -259,9 +272,8 @@ export function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("zora");
   const [showTelemetryConsent, setShowTelemetryConsent] = useState(false);
 
-  // We don't actually need the pending value separately yet, but keeping hook
-  // if we later want to support "ask again" flows.
-  const [pendingTelemetryEnable] = useState<boolean | null>(null);
+  const [dragEngineIndex, setDragEngineIndex] = useState<number | null>(null);
+  const [dragWidgetIndex, setDragWidgetIndex] = useState<number | null>(null);
 
   /* ---------------------------------------------------------------------- */
   /* Loading / error states                                                 */
@@ -353,23 +365,29 @@ export function Settings() {
     );
   };
 
-  const handleZoraEngineReorder = (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= rankedEngines.length) return;
-
+  const reorderEngines = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
     const next = [...rankedEngines];
-    const [moved] = next.splice(index, 1);
-    next.splice(targetIndex, 0, moved);
-
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     const reRanked = next.map((engine, idx) => ({
       ...engine,
       rank: idx + 1,
     }));
-
     updateSettings(
       { zora: { ...zora, enginePreferences: reRanked } },
       "Engine order saved.",
     );
+  };
+
+  const handleEngineDragStart = (index: number) => {
+    setDragEngineIndex(index);
+  };
+
+  const handleEngineDrop = (index: number) => {
+    if (dragEngineIndex === null) return;
+    reorderEngines(dragEngineIndex, index);
+    setDragEngineIndex(null);
   };
 
   const setZoraMode = (mode: ZoraSettingsSection["defaultMode"]) => {
@@ -386,6 +404,13 @@ export function Settings() {
     updateSettings(
       { zora: { ...zora, [key]: value } },
       "Zora settings updated.",
+    );
+  };
+
+  const handleZoraCustomInstructionsSave = (value: string) => {
+    updateSettings(
+      { zora: { ...zora, customInstructions: value } },
+      "Custom instructions saved.",
     );
   };
 
@@ -429,6 +454,18 @@ export function Settings() {
     );
   };
 
+  const handleGenerateWorkspaceDigest = () => {
+    // Later: call backend to generate ≤1000-word digest report
+    toast.info(
+      "Daily digest generation will be wired to the Workspace reporting endpoint.",
+    );
+  };
+
+  const handleWorkspaceCustomInstructionsSave = (value: string) => {
+    setWorkspaceToggle("customInstructions", value);
+    toast.success("Workspace custom instructions saved.");
+  };
+
   /* ---------------------------------------------------------------------- */
   /* Command Center handlers                                                */
   /* ---------------------------------------------------------------------- */
@@ -448,19 +485,15 @@ export function Settings() {
     );
   };
 
-  const handleWidgetReorder = (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= rankedWidgets.length) return;
-
+  const reorderWidgets = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
     const next = [...rankedWidgets];
-    const [moved] = next.splice(index, 1);
-    next.splice(targetIndex, 0, moved);
-
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     const reRanked = next.map((widget, idx) => ({
       ...widget,
       rank: idx + 1,
     }));
-
     updateSettings(
       {
         commandCenter: {
@@ -470,6 +503,16 @@ export function Settings() {
       },
       "Command Center layout saved.",
     );
+  };
+
+  const handleWidgetDragStart = (index: number) => {
+    setDragWidgetIndex(index);
+  };
+
+  const handleWidgetDrop = (index: number) => {
+    if (dragWidgetIndex === null) return;
+    reorderWidgets(dragWidgetIndex, index);
+    setDragWidgetIndex(null);
   };
 
   const setCommandCenterToggle = <
@@ -501,7 +544,6 @@ export function Settings() {
       return;
     }
 
-    // User is trying to turn telemetry ON – show consent sheet.
     setShowTelemetryConsent(true);
   };
 
@@ -552,6 +594,32 @@ export function Settings() {
     updateSettings(
       { privacy: nextPrivacy },
       "Privacy settings updated.",
+    );
+  };
+
+  const handleStrictModeToggle = (enabled: boolean) => {
+    let nextPrivacy: PrivacySettingsSection = {
+      ...privacy,
+      strictMode: enabled,
+    };
+
+    if (enabled) {
+      nextPrivacy = {
+        ...nextPrivacy,
+        retentionDays: 30,
+        idleLockEnabled: true,
+        idleLockMinutes: 5,
+        requireTwoFactor: true,
+        telemetryEnabled: false,
+        shareWithModelProviders: false,
+      };
+    }
+
+    updateSettings(
+      { privacy: nextPrivacy },
+      enabled
+        ? "Strict privacy mode enabled."
+        : "Strict privacy mode disabled. You can now tune each control separately.",
     );
   };
 
@@ -632,7 +700,9 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Tab bodies */}
+        {/* ------------------------------------------------------------------ */}
+        {/* ZORA TAB                                                           */}
+        {/* ------------------------------------------------------------------ */}
         {activeTab === "zora" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             {/* Engine ranking */}
@@ -661,13 +731,17 @@ export function Settings() {
                   return (
                     <li
                       key={engine.id}
+                      draggable
+                      onDragStart={() => handleEngineDragStart(index)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => handleEngineDrop(index)}
                       className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.32)] bg-[rgba(var(--panel),0.6)] px-3 py-3 text-sm"
                     >
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)]"
-                          aria-label="Reorder engine (drag handle)"
+                          aria-label="Reorder engine"
                         >
                           <GripVertical className="size-4" />
                         </button>
@@ -698,9 +772,7 @@ export function Settings() {
                         <div className="inline-flex gap-1">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleZoraEngineReorder(index, "up")
-                            }
+                            onClick={() => reorderEngines(index, index - 1)}
                             disabled={isFirst}
                             className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
                               isFirst
@@ -714,9 +786,7 @@ export function Settings() {
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
-                              handleZoraEngineReorder(index, "down")
-                            }
+                            onClick={() => reorderEngines(index, index + 1)}
                             disabled={isLast}
                             className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
                               isLast
@@ -745,172 +815,219 @@ export function Settings() {
               </ul>
             </div>
 
-            {/* Zora behavior settings */}
-            <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-              <div className="flex items-center gap-2">
-                <Activity className="size-4 text-brand" />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                    Behavior
-                  </p>
-                  <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                    How Zora thinks and responds
-                  </h2>
+            {/* Zora behavior + custom instructions */}
+            <div className="flex flex-col gap-4">
+              <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
+                <div className="flex items-center gap-2">
+                  <Activity className="size-4 text-brand" />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+                      Behavior
+                    </p>
+                    <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+                      How Zora thinks and responds
+                    </h2>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-4 text-sm">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-[rgba(var(--subtle),0.78)]">
+                        Default mode
+                      </span>
+                    </div>
+                    <div className="inline-flex gap-2">
+                      {[
+                        { id: "balanced", label: "Balanced" },
+                        { id: "deep", label: "Deep" },
+                        { id: "fast", label: "Fast" },
+                      ].map((mode) => (
+                        <button
+                          key={mode.id}
+                          type="button"
+                          onClick={() =>
+                            setZoraMode(
+                              mode.id as ZoraSettingsSection["defaultMode"],
+                            )
+                          }
+                          className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
+                            zora.defaultMode === mode.id
+                              ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
+                              : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
+                          }`}
+                        >
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
+                      Balanced is recommended for most users. Deep favors
+                      reasoning; Fast favors latency.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Multi-model debate
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Let multiple engines critique each other before Zora
+                        answers.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={zora.multiModelDebate}
+                      onCheckedChange={(checked) =>
+                        setZoraToggle("multiModelDebate", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Auto-verify with the web
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        For factual queries, Zora can cross-check answers with
+                        trusted sources.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={zora.autoWebVerify}
+                      onCheckedChange={(checked) =>
+                        setZoraToggle("autoWebVerify", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Save debates into Workspace
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Keep transcripts so you can audit how Zora arrived at an
+                        answer.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={zora.saveDebatesToWorkspace}
+                      onCheckedChange={(checked) =>
+                        setZoraToggle("saveDebatesToWorkspace", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Safe mode on high-risk queries
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        When prompts look health, legal, or safety-critical,
+                        Zora will favor slower but safer engines.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={zora.safeModeOnHighRisk}
+                      onCheckedChange={(checked) =>
+                        setZoraToggle("safeModeOnHighRisk", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Max context per chat
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Higher limits remember more, but can be slower.
+                      </p>
+                    </div>
+                    <select
+                      value={zora.maxContextTokens}
+                      onChange={(event) =>
+                        setZoraToggle("maxContextTokens", Number(event.target.value))
+                      }
+                      className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
+                    >
+                      <option value={8000}>8K tokens</option>
+                      <option value={16000}>16K tokens</option>
+                      <option value={32000}>32K tokens</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Advanced debug panel
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Show routing decisions, engine scores, and internal
+                        metadata in a side drawer.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={zora.showAdvancedDebugPanel}
+                      onCheckedChange={(checked) =>
+                        setZoraToggle("showAdvancedDebugPanel", checked)
+                      }
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 space-y-4 text-sm">
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-[rgba(var(--subtle),0.78)]">
-                      Default mode
-                    </span>
-                  </div>
-                  <div className="inline-flex gap-2">
-                    {[
-                      { id: "balanced", label: "Balanced" },
-                      { id: "deep", label: "Deep" },
-                      { id: "fast", label: "Fast" },
-                    ].map((mode) => (
-                      <button
-                        key={mode.id}
-                        type="button"
-                        onClick={() =>
-                          setZoraMode(
-                            mode.id as ZoraSettingsSection["defaultMode"],
-                          )
-                        }
-                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
-                          zora.defaultMode === mode.id
-                            ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
-                            : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
-                        }`}
-                      >
-                        {mode.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-1 text-[11px] text-[rgba(var(--subtle),0.78)]">
-                    Balanced is recommended for most users. Deep favors
-                    reasoning; Fast favors latency.
-                  </p>
-                </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+              {/* Zora custom instructions */}
+              <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="size-4 text-brand" />
                   <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Multi-model debate
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+                      Custom instructions
                     </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Let multiple engines critique each other before Zora
-                      answers.
-                    </p>
+                    <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+                      Tell Zora how to show up for you
+                    </h3>
                   </div>
-                  <Switch
-                    checked={zora.multiModelDebate}
-                    onCheckedChange={(checked) =>
-                      setZoraToggle("multiModelDebate", checked)
-                    }
-                  />
                 </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Auto-verify with the web
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      For factual queries, Zora can cross-check answers with
-                      trusted sources.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={zora.autoWebVerify}
-                    onCheckedChange={(checked) =>
-                      setZoraToggle("autoWebVerify", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Save debates into Workspace
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Keep transcripts so you can audit how Zora arrived at an
-                      answer.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={zora.saveDebatesToWorkspace}
-                    onCheckedChange={(checked) =>
-                      setZoraToggle("saveDebatesToWorkspace", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Safe mode on high-risk queries
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      When prompts look health, legal, or safety-critical, Zora
-                      will favor slower but safer engines.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={zora.safeModeOnHighRisk}
-                    onCheckedChange={(checked) =>
-                      setZoraToggle("safeModeOnHighRisk", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Max context per chat
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Higher limits remember more, but can be slower.
-                    </p>
-                  </div>
-                  <select
-                    value={zora.maxContextTokens}
-                    onChange={(event) =>
-                      setZoraToggle("maxContextTokens", Number(event.target.value))
-                    }
-                    className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-                  >
-                    <option value={8000}>8K tokens</option>
-                    <option value={16000}>16K tokens</option>
-                    <option value={32000}>32K tokens</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Advanced debug panel
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Show routing decisions, engine scores, and internal
-                      metadata in a side drawer.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={zora.showAdvancedDebugPanel}
-                    onCheckedChange={(checked) =>
-                      setZoraToggle("showAdvancedDebugPanel", checked)
-                    }
-                  />
-                </div>
+                <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Describe your preferences in natural language: tone, level of
+                  detail, topics to avoid, how to handle uncertainty, study
+                  goals—anything. Zora will treat this as a standing instruction
+                  until you change it.
+                </p>
+                <textarea
+                  defaultValue={zora.customInstructions}
+                  onBlur={(event) =>
+                    handleZoraCustomInstructionsSave(event.target.value)
+                  }
+                  rows={6}
+                  className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
+                  placeholder="Example: &quot;Explain things like you would to a busy grad student. Prefer citations, always show trade-offs, and flag anything that sounds speculative.&quot;"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleZoraCustomInstructionsSave(
+                      (document.activeElement as HTMLTextAreaElement)?.value ??
+                        zora.customInstructions,
+                    )
+                  }
+                  className="mt-3 btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                >
+                  <CheckCircle2 className="size-4" /> Save instructions
+                </button>
               </div>
             </div>
           </section>
         )}
 
+        {/* ------------------------------------------------------------------ */}
+        {/* WORKSPACE TAB                                                      */}
+        {/* ------------------------------------------------------------------ */}
         {activeTab === "workspace" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Connectors */}
@@ -968,129 +1085,206 @@ export function Settings() {
               </ul>
             </div>
 
-            {/* Workspace behaviors */}
-            <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
-              <div className="flex items-center gap-2">
-                <Database className="size-4 text-brand" />
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
-                    Workflow
-                  </p>
-                  <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                    How Workspace organizes things
-                  </h2>
+            {/* Workspace behaviors + custom instructions */}
+            <div className="flex flex-col gap-4">
+              <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
+                <div className="flex items-center gap-2">
+                  <Database className="size-4 text-brand" />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+                      Workflow
+                    </p>
+                    <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+                      How Workspace organizes things
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-4 text-sm">
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Auto-organize sessions
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Group sessions into projects and topics automatically.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={workspace.autoOrganize}
+                      onCheckedChange={(checked) =>
+                        setWorkspaceToggle("autoOrganize", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Study mode
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Turn long notes into flashcards and quick drills.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={workspace.studyMode}
+                      onCheckedChange={(checked) =>
+                        setWorkspaceToggle("studyMode", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Allow write-back to connectors
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        When enabled, Zora can push cleaned-up notes and
+                        summaries back into tools like Notion or Drive.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={workspace.allowWriteBack}
+                      onCheckedChange={(checked) =>
+                        setWorkspaceToggle("allowWriteBack", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Daily Workspace digest
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Summarize what you searched, what you ignored, and how
+                        to make tomorrow better. Each report is capped at 1,000
+                        words.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleGenerateWorkspaceDigest}
+                        className="mt-1 text-[11px] font-semibold text-brand underline underline-offset-2 hover:text-[rgba(var(--brand-ink),1)]"
+                      >
+                        Generate today&apos;s digest →
+                      </button>
+                    </div>
+                    <Switch
+                      checked={workspace.dailyDigestEnabled}
+                      onCheckedChange={(checked) =>
+                        setWorkspaceToggle("dailyDigestEnabled", checked)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                    <div>
+                      <p className="font-semibold text-[rgb(var(--text))]">
+                        Default view
+                      </p>
+                      <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                        Choose how Workspace opens by default.
+                      </p>
+                    </div>
+                    <select
+                      value={workspace.defaultView}
+                      onChange={(event) =>
+                        setWorkspaceToggle(
+                          "defaultView",
+                          event.target.value as WorkspaceSettingsSection["defaultView"],
+                        )
+                      }
+                      className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
+                    >
+                      <option value="timeline">Timeline</option>
+                      <option value="grid">Grid</option>
+                      <option value="list">List</option>
+                    </select>
+                  </div>
+
+                  <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5 text-[11px] text-[rgba(var(--subtle),0.85)]">
+                    <p className="font-semibold text-[rgb(var(--text))]">
+                      Data management
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      <label className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2">
+                        <span>Auto-archive completed workspaces</span>
+                        <Switch
+                          checked={workspace.autoArchiveCompleted}
+                          onCheckedChange={(checked) =>
+                            setWorkspaceToggle(
+                              "autoArchiveCompleted",
+                              checked,
+                            )
+                          }
+                        />
+                      </label>
+                      <label className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.7)] px-3 py-2">
+                        <span>Keep original files in storage</span>
+                        <Switch
+                          checked={workspace.keepOriginalFiles}
+                          onCheckedChange={(checked) =>
+                            setWorkspaceToggle("keepOriginalFiles", checked)
+                          }
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-1 text-[10px] text-[rgba(var(--subtle),0.75)]">
+                      Auto-archive never deletes content; it just moves older
+                      work out of your way.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5 text-[11px] text-[rgba(var(--subtle),0.85)]">
+                    <p className="font-semibold text-[rgb(var(--text))]">
+                      Max active workspaces
+                    </p>
+                    <p className="mt-1">
+                      {workspace.maxActiveWorkspaces} workspaces can stay “hot”
+                      for fast switching. Older ones are archived, not deleted.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-4 text-sm">
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+              {/* Workspace custom instructions */}
+              <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="size-4 text-brand" />
                   <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Auto-organize sessions
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[rgba(var(--subtle),0.75)]">
+                      Custom instructions
                     </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Group sessions into projects and topics automatically.
-                    </p>
+                    <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
+                      Tell Workspace how to help
+                    </h3>
                   </div>
-                  <Switch
-                    checked={workspace.autoOrganize}
-                    onCheckedChange={(checked) =>
-                      setWorkspaceToggle("autoOrganize", checked)
-                    }
-                  />
                 </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Study mode
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Turn long notes into flashcards and quick drills.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={workspace.studyMode}
-                    onCheckedChange={(checked) =>
-                      setWorkspaceToggle("studyMode", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Allow write-back to connectors
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      When enabled, Zora can push cleaned-up notes and summaries
-                      back into tools like Notion or Drive.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={workspace.allowWriteBack}
-                    onCheckedChange={(checked) =>
-                      setWorkspaceToggle("allowWriteBack", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Daily Workspace digest
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Receive a quick summary of what changed in Workspace.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={workspace.dailyDigest}
-                    onCheckedChange={(checked) =>
-                      setWorkspaceToggle("dailyDigest", checked)
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
-                  <div>
-                    <p className="font-semibold text-[rgb(var(--text))]">
-                      Default view
-                    </p>
-                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                      Choose how Workspace opens by default.
-                    </p>
-                  </div>
-                  <select
-                    value={workspace.defaultView}
-                    onChange={(event) =>
-                      setWorkspaceToggle(
-                        "defaultView",
-                        event.target.value as WorkspaceSettingsSection["defaultView"],
-                      )
-                    }
-                    className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-                  >
-                    <option value="timeline">Timeline</option>
-                    <option value="grid">Grid</option>
-                    <option value="list">List</option>
-                  </select>
-                </div>
-
-                <div className="rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5 text-[11px] text-[rgba(var(--subtle),0.85)]">
-                  <p className="font-semibold text-[rgb(var(--text))]">
-                    Max active workspaces
-                  </p>
-                  <p className="mt-1">
-                    {workspace.maxActiveWorkspaces} workspaces can stay “hot”
-                    for fast switching. Older ones are archived, not deleted.
-                  </p>
-                </div>
+                <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
+                  Explain how you want notes grouped, how aggressive you want
+                  flashcards to be, and what &quot;done&quot; looks like for a
+                  project. Workspace will use this when creating study plans and
+                  organizing content.
+                </p>
+                <textarea
+                  defaultValue={workspace.customInstructions}
+                  onBlur={(event) =>
+                    handleWorkspaceCustomInstructionsSave(event.target.value)
+                  }
+                  rows={5}
+                  className="mt-3 w-full resize-vertical rounded-[18px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-2 text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.7)] focus:border-[rgba(var(--brand),0.7)] focus:outline-none"
+                  placeholder="Example: &quot;Group notes by class, highlight anything tagged ‘exam’, and build short nightly review sets.&quot;"
+                />
               </div>
             </div>
           </section>
         )}
 
+        {/* ------------------------------------------------------------------ */}
+        {/* COMMAND CENTER TAB                                                 */}
+        {/* ------------------------------------------------------------------ */}
         {activeTab === "command-center" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             {/* Widget layout */}
@@ -1111,7 +1305,24 @@ export function Settings() {
                 Projects always live here; everything else is up to you.
               </p>
 
-              <ul className="mt-4 space-y-3 text-sm">
+              <div className="mt-4 mb-4 flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.65)] px-3 py-2.5 text-sm">
+                <div>
+                  <p className="font-semibold text-[rgb(var(--text))]">
+                    Enable Command Center
+                  </p>
+                  <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                    Turn the Command Center drawer on or off for your account.
+                  </p>
+                </div>
+                <Switch
+                  checked={commandCenter.enabled}
+                  onCheckedChange={(checked) =>
+                    setCommandCenterToggle("enabled", checked)
+                  }
+                />
+              </div>
+
+              <ul className="mt-2 space-y-3 text-sm">
                 {rankedWidgets.map((widget, index) => {
                   const isFirst = index === 0;
                   const isLast = index === rankedWidgets.length - 1;
@@ -1119,13 +1330,17 @@ export function Settings() {
                   return (
                     <li
                       key={widget.id}
+                      draggable
+                      onDragStart={() => handleWidgetDragStart(index)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => handleWidgetDrop(index)}
                       className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.3)] bg-[rgba(var(--panel),0.6)] px-3 py-3"
                     >
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           className="inline-flex size-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)]"
-                          aria-label="Reorder widget (drag handle)"
+                          aria-label="Reorder widget"
                         >
                           <GripVertical className="size-4" />
                         </button>
@@ -1152,9 +1367,7 @@ export function Settings() {
                         <div className="inline-flex gap-1">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleWidgetReorder(index, "up")
-                            }
+                            onClick={() => reorderWidgets(index, index - 1)}
                             disabled={isFirst}
                             className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
                               isFirst
@@ -1167,9 +1380,7 @@ export function Settings() {
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
-                              handleWidgetReorder(index, "down")
-                            }
+                            onClick={() => reorderWidgets(index, index + 1)}
                             disabled={isLast}
                             className={`inline-flex items-center justify-center rounded-full border px-2 py-1 text-[11px] ${
                               isLast
@@ -1307,25 +1518,39 @@ export function Settings() {
                       more breathing room.
                     </p>
                   </div>
-                  <select
-                    value={commandCenter.defaultLayout}
-                    onChange={(event) =>
-                      setCommandCenterToggle(
-                        "defaultLayout",
-                        event.target.value as CommandCenterSettingsSection["defaultLayout"],
-                      )
-                    }
-                    className="rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.96)] px-3 py-1.5 text-xs text-[rgb(var(--text))] focus:border-[rgba(var(--brand),0.6)] focus:outline-none"
-                  >
-                    <option value="compact">Compact</option>
-                    <option value="wide">Wide</option>
-                  </select>
+                  <div className="inline-flex gap-2">
+                    {[
+                      { id: "compact", label: "Compact" },
+                      { id: "wide", label: "Wide" },
+                    ].map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() =>
+                          setCommandCenterToggle(
+                            "defaultLayout",
+                            option.id as CommandCenterSettingsSection["defaultLayout"],
+                          )
+                        }
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${
+                          commandCenter.defaultLayout === option.id
+                            ? "border-[rgba(var(--brand),0.7)] bg-[rgba(var(--brand-soft),0.22)] text-brand"
+                            : "border-[rgba(var(--border),0.5)] bg-[rgba(var(--panel),0.95)] text-[rgba(var(--subtle),0.9)] hover:border-[rgba(var(--brand),0.4)] hover:text-brand"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </section>
         )}
 
+        {/* ------------------------------------------------------------------ */}
+        {/* PRIVACY TAB                                                        */}
+        {/* ------------------------------------------------------------------ */}
         {activeTab === "privacy" && (
           <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             {/* Telemetry & sources */}
@@ -1372,9 +1597,8 @@ export function Settings() {
                     </p>
                     <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
                       When enabled, Zora can bundle hallucination and API
-                      metrics and sell them back to model providers as
-                      aggregated insight. No personal identifiers or raw text
-                      leave your account.
+                      metrics and sell them as aggregated insight. No personal
+                      identifiers or raw text leave your account.
                     </p>
                   </div>
                   <Switch
@@ -1457,7 +1681,6 @@ export function Settings() {
                   </p>
                 </div>
               </div>
-            </div>
 
             {/* Retention & security */}
             <div className="panel panel--glassy panel--hover panel--immersive panel--alive card rounded-[24px] p-5">
@@ -1468,11 +1691,28 @@ export function Settings() {
                     Safeguards
                   </p>
                   <h2 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                    Retention, lock, and export
+                    Retention, strict mode, and export
                   </h2>
                 </div>
               </div>
               <div className="mt-4 space-y-4 text-sm">
+                <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
+                  <div>
+                    <p className="font-semibold text-[rgb(var(--text))]">
+                      Strict privacy mode
+                    </p>
+                    <p className="text-[11px] text-[rgba(var(--subtle),0.8)]">
+                      One switch that moves Zora into a high-privacy posture:
+                      short retention, idle lock on, 2FA recommended, and no
+                      outbound telemetry.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={privacy.strictMode}
+                    onCheckedChange={handleStrictModeToggle}
+                  />
+                </div>
+
                 <div className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.6)] px-3 py-2.5">
                   <div>
                     <p className="font-semibold text-[rgb(var(--text))]">
@@ -1568,11 +1808,10 @@ export function Settings() {
                   </button>
                 </div>
               </div>
-            </div>
           </section>
         )}
 
-        {/* Small identity / theme helper at the bottom */}
+        {/* Appearance helper */}
         <section className="mt-6 grid gap-5 lg:grid-cols-3">
           <div className="panel panel--glassy panel--hover panel--immersive panel--alive card p-5">
             <div className="flex items-center justify-between">
@@ -1612,7 +1851,7 @@ export function Settings() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(0,0,0,0.6)]">
           <div className="panel panel--glassy panel--immersive panel--alive rounded-[24px] border border-[rgba(var(--border),0.9)] bg-[rgba(var(--surface),0.98)] p-6 text-sm shadow-[var(--shadow-soft)] max-w-lg w-full mx-4">
             <div className="flex items-center gap-2">
-              <Radar className="size-5 text-brand" />
+              <Activity className="size-5 text-brand" />
               <h2 className="accent-ink text-base font-semibold text-[rgb(var(--text))]">
                 Help Zora learn from patterns, not from you.
               </h2>
@@ -1663,8 +1902,3 @@ export function Settings() {
 }
 
 export default Settings;
-
-// NOTE: Radar icon import is used in the telemetry sheet.
-function Radar(props: React.SVGProps<SVGSVGElement>) {
-  return <Activity {...props} />;
-}
