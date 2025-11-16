@@ -8,9 +8,8 @@ import {
   requestNotifications,
   requestProfileOpen,
 } from "@/lib/actions";
-import { CommandCenterButton } from "@/components/shell/CommandCenterButton";
 import { NotificationBell } from "@/components/shell/NotificationBell";
-import { CommandCenter } from "@/components/shell/CommandCenter";
+import { CommandCenterLauncher } from "@/features/command-center/CommandCenterLauncher";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
@@ -30,7 +29,6 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const { profile, loading } = useProfile();
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const [notificationCount] = useState<number>(7); // TODO: wire to live notifications feed
 
   const initials = useMemo(() => {
@@ -116,10 +114,6 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
               >
                 <Sparkles className="size-4" /> New prompt
               </button>
-              <CommandCenterButton
-                onClick={() => setIsCommandCenterOpen(true)}
-                className="hidden shrink-0 lg:inline-flex"
-              />
             </div>
 
             <div className="flex items-center gap-4">
@@ -143,6 +137,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
                     : undefined,
                 )}
               />
+              <CommandCenterLauncher />
               <ThemeToggle className="hidden lg:inline-flex" />
               <div
                 className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.4)] transition-colors duration-300 lg:block dark:bg-[color:rgba(148,163,184,0.28)]"
@@ -197,7 +192,6 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           </div>
         </div>
       </header>
-      <CommandCenter open={isCommandCenterOpen} onClose={() => setIsCommandCenterOpen(false)} />
     </>
   );
 }
