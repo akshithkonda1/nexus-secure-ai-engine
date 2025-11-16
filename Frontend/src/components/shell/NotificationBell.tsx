@@ -29,7 +29,7 @@ export function NotificationBell({ count = 0, onClick, className }: Notification
     >
       <Bell className={cn("size-4 transition", hasUnread && "text-[rgb(var(--status-critical))]")} aria-hidden="true" />
       {hasUnread ? (
-        <span className="absolute -top-1.5 -right-1.5 min-w-[1.4rem] rounded-full border border-white/20 bg-[rgb(var(--status-critical))] px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-white shadow-[0_0_0_1px_rgba(15,23,42,0.1)]">
+        <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[rgb(var(--status-critical))] px-1 text-[10px] font-semibold text-[rgb(var(--on-accent))]">
           {displayCount}
         </span>
       ) : null}
