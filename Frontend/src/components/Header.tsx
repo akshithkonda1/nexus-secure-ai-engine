@@ -32,7 +32,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
-  const notificationCount = useUnreadNotificationsCount();
+  const unreadNotificationCount = useUnreadNotificationsCount();
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -133,7 +133,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
                 </span>
               </div>
               <NotificationBell
-                count={notificationCount}
+                count={unreadNotificationCount}
                 onClick={() => {
                   requestNotifications();
                   // TODO: open notifications panel when available
