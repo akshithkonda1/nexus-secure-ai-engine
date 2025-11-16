@@ -36,6 +36,34 @@ const API_BASE_URL = (() => {
   }
 })();
 
+const resolveApiKey = (): string | undefined => {
+  try {
+    const envKey = (import.meta as unknown as { env?: { VITE_API_KEY?: string } }).env?.VITE_API_KEY;
+    if (envKey?.trim()) {
+      return envKey.trim();
+    }
+  } catch {
+    // ignore
+  }
+  if (typeof window !== "undefined") {
+    try {
+      const stored = window.localStorage?.getItem("nexus.apiKey")?.trim();
+      if (stored) {
+        return stored;
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  if (typeof document !== "undefined") {
+    const metaKey = document.querySelector('meta[name="x-api-key"]')?.getAttribute("content")?.trim();
+    if (metaKey) {
+      return metaKey;
+    }
+  }
+  return undefined;
+};
+
 const resolveUrl = (path: string) => {
   if (!API_BASE_URL || /^https?:/i.test(path)) {
     return path;
@@ -152,11 +180,16 @@ export function useStreamingDebate() {
       };
 
       try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        const apiKey = resolveApiKey();
+        if (apiKey) {
+          headers["X-API-Key"] = apiKey;
+        }
         const response = await fetch(resolveUrl("/debate/stream"), {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
           credentials: "include",
           body: JSON.stringify({
             prompt,

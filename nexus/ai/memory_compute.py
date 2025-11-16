@@ -13,9 +13,14 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
-import boto3
-from boto3.dynamodb.conditions import Key
-from botocore.config import Config
+try:
+    import boto3
+    from boto3.dynamodb.conditions import Key
+    from botocore.config import Config
+except ImportError:  # pragma: no cover - optional dependency
+    boto3 = None
+    Key = None
+    Config = None
 
 # ---------- Logging ----------
 _LOG_LEVEL = os.getenv("NEXUS_LOG_LEVEL", "INFO").upper()
@@ -185,10 +190,15 @@ class DynamoDBMemoryStore(MemoryStore):
         index_name: Optional[str] = None,
         region_name: Optional[str] = None,
     ):
+        if boto3 is None or Key is None or Config is None:
+            raise ImportError(
+                "boto3 is required for DynamoDBMemoryStore but is not installed"
+            )
         super().__init__()
         self._table_name = table_name
         self._gsi = index_name
-        self._region = region_name or "us-east-1"
+        env_region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+        self._region = region_name or env_region or "us-east-1"
 
         config = Config(
             region_name=self._region,
