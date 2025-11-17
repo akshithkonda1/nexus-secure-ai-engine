@@ -45,10 +45,9 @@ import {
 import type { SettingsState } from "@/features/chat/context/ChatContext";
 import { useStreamingDebate } from "@/hooks/useStreamingDebate";
 
-import { createZoraShareLink, copyToClipboard } from "@/api/zoraClient";
+import { copyToClipboard } from "@/api/zoraClient";
 import { ZoraMessageActions } from "./ZoraMessageActions";
 import { ZoraMessageBubble } from "./ZoraMessageBubble";
-import { ZoraShareModal } from "./ZoraShareModal";
 import { ZoraStreamingPanel } from "./ZoraStreamingPanel";
 import { useZoraFeedback } from "./useZoraFeedback";
 import { formatPreview } from "./utils";
@@ -139,11 +138,6 @@ export function ZoraChatShell() {
   const pendingAssistantMessageIdRef = useRef<string | null>(null);
   const pendingAssistantSessionIdRef = useRef<string | null>(null);
 
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [sharePreview, setSharePreview] = useState<string | null>(null);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [shareError, setShareError] = useState<string | null>(null);
-  const [shareLoading, setShareLoading] = useState(false);
   const [feedbackSelections, setFeedbackSelections] = useState<
     Record<string, "up" | "down">
   >({});
@@ -704,27 +698,6 @@ export function ZoraChatShell() {
     await copyToClipboard(text);
   };
 
-  const handleShareMessage = async (messageId: string) => {
-    if (!activeSession) return;
-    const target = activeSession.messages.find((msg) => msg.id === messageId);
-    if (!target) return;
-    setShareModalOpen(true);
-    setSharePreview(target.content);
-    setShareUrl(null);
-    setShareError(null);
-    setShareLoading(true);
-    try {
-      const { url } = await createZoraShareLink({ messageId });
-      setShareUrl(url);
-    } catch (error) {
-      setShareError(
-        error instanceof Error ? error.message : "Unable to create share link",
-      );
-    } finally {
-      setShareLoading(false);
-    }
-  };
-
   const handleFeedback = async (
     messageId: string,
     direction: "up" | "down",
@@ -1045,15 +1018,14 @@ export function ZoraChatShell() {
                           onRetry={handleRetry}
                         >
                           {isAssistant && message.status !== "pending" ? (
-                            <ZoraMessageActions
-                              messageId={message.id}
-                              messageText={message.content}
-                              onCopy={handleCopyMessage}
-                              onShare={handleShareMessage}
-                              onFeedback={handleFeedback}
-                              activeDirection={feedbackSelections[message.id]}
-                              disabled={isFeedbackSubmitting}
-                            />
+                          <ZoraMessageActions
+                            messageId={message.id}
+                            messageText={message.content}
+                            onCopy={handleCopyMessage}
+                            onFeedback={handleFeedback}
+                            activeDirection={feedbackSelections[message.id]}
+                            disabled={isFeedbackSubmitting}
+                          />
                           ) : null}
                         </ZoraMessageBubble>
                       </div>
@@ -1204,14 +1176,6 @@ export function ZoraChatShell() {
           </div>
         </div>
       </div>
-      <ZoraShareModal
-        open={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        shareUrl={shareUrl}
-        messagePreview={sharePreview}
-        loading={shareLoading}
-        error={shareError}
-      />
       <style>{`
         @keyframes aurora-dot {
           0%, 100% { opacity: 0.3; transform: translateY(0); }

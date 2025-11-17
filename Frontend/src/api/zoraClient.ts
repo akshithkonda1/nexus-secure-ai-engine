@@ -23,10 +23,6 @@ export interface ZoraFeedbackPayload {
   createdAt?: string;
 }
 
-export interface ZoraSharePayload {
-  messageId: string;
-}
-
 const ZORA_API_BASE = "/api/zora";
 
 async function handleJson<T>(res: Response): Promise<T> {
@@ -57,21 +53,6 @@ export async function sendZoraFeedback(
     body: JSON.stringify(payload),
   });
   await handleJson<{}>(res);
-}
-
-export interface ZoraShareResponse {
-  url: string;
-}
-
-export async function createZoraShareLink(
-  payload: ZoraSharePayload,
-): Promise<ZoraShareResponse> {
-  const res = await fetch(`${ZORA_API_BASE}/share`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return handleJson<ZoraShareResponse>(res);
 }
 
 export async function copyToClipboard(text: string): Promise<void> {
