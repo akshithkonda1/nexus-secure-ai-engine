@@ -25,7 +25,7 @@ const ZoraShareModal: React.FC<Props> = ({
       <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950/95 p-4 text-sm text-slate-100 shadow-xl">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Share Aurora Message
+            Share this reply
           </h2>
           <button
             type="button"
@@ -47,8 +47,8 @@ const ZoraShareModal: React.FC<Props> = ({
             </p>
           </div>
           <p className="text-[11px] text-slate-400">
-            Link is ready and already copied — paste it into TikTok, X, or
-            wherever you want to show off your debate.
+            Link is ready and already copied. Drop it into iMessages, TikTok, X, Discord,
+            or wherever you want people to see what Zora said.
           </p>
         </div>
       </div>
