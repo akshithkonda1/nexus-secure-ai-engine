@@ -88,7 +88,7 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
                 </div>
                 <div className="flex-1 space-y-1">
                   <p className="text-xs font-semibold text-slate-100">
-                    Continue working: Healthcare.Gov RDS incident recap
+                    Continue working: RDS incident recap.
                   </p>
                   <p className="text-[11px] text-slate-300">
                     Zora can summarize logs, extract root causes, and draft a clean incident note.
