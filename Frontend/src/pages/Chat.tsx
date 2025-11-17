@@ -587,44 +587,58 @@ function ChatInner() {
     }
   }, [messages.length, scrollToBottom]);
 
-  const stopPendingReply = useCallback(() => {
-    if (pendingReplyTimeoutRef.current) {
-      clearTimeout(pendingReplyTimeoutRef.current);
-      pendingReplyTimeoutRef.current = null;
-    }
-    if (
-      pendingAssistantMessageIdRef.current &&
-      pendingAssistantSessionIdRef.current
-    ) {
-      const assistantId = pendingAssistantMessageIdRef.current;
-      const sessionId = pendingAssistantSessionIdRef.current;
-      const existing = getMessageFromSession(sessionId, assistantId);
-      const fallbackContent =
-        existing?.content && existing.content.trim().length
-          ? existing.content
-          : "Aurora reply paused.";
-      updateMessageInSession(sessionId, assistantId, {
-        status: "error",
-        content: fallbackContent,
-      });
-    }
-    pendingAssistantMessageIdRef.current = null;
-    pendingAssistantSessionIdRef.current = null;
-    setIsThinking(false);
-  }, [getMessageFromSession, updateMessageInSession, setIsThinking]);
+    const stopPendingReply = useCallback(
+      (options?: { markErrored?: boolean }) => {
+        const shouldMarkErrored = options?.markErrored ?? true;
+        if (pendingReplyTimeoutRef.current) {
+          clearTimeout(pendingReplyTimeoutRef.current);
+          pendingReplyTimeoutRef.current = null;
+        }
+        if (
+          shouldMarkErrored &&
+          pendingAssistantMessageIdRef.current &&
+          pendingAssistantSessionIdRef.current
+        ) {
+          const assistantId = pendingAssistantMessageIdRef.current;
+          const sessionId = pendingAssistantSessionIdRef.current;
+          const existing = getMessageFromSession(sessionId, assistantId);
+          const fallbackContent =
+            existing?.content && existing.content.trim().length
+              ? existing.content
+              : "Aurora reply paused.";
+          updateMessageInSession(sessionId, assistantId, {
+            status: "error",
+            content: fallbackContent,
+          });
+        }
+        pendingAssistantMessageIdRef.current = null;
+        pendingAssistantSessionIdRef.current = null;
+        setIsThinking(false);
+      },
+      [getMessageFromSession, updateMessageInSession, setIsThinking],
+    );
 
   useEffect(() => () => stopPendingReply(), [stopPendingReply]);
 
-  const scheduleAssistantReply = useCallback(
-    (sessionId: string, userMessage: ChatMessage, reuseAssistantId?: string) => {
-      if (pendingReplyTimeoutRef.current) {
-        clearTimeout(pendingReplyTimeoutRef.current);
-        pendingReplyTimeoutRef.current = null;
-      }
+    const scheduleAssistantReply = useCallback(
+      (sessionId: string, userMessage: ChatMessage, reuseAssistantId?: string) => {
+        const hasPendingReply =
+          Boolean(pendingReplyTimeoutRef.current) ||
+          Boolean(
+            pendingAssistantMessageIdRef.current &&
+              pendingAssistantSessionIdRef.current,
+          );
+        if (hasPendingReply) {
+          const isReusingPendingReply =
+            Boolean(reuseAssistantId) &&
+            reuseAssistantId === pendingAssistantMessageIdRef.current &&
+            sessionId === pendingAssistantSessionIdRef.current;
+          stopPendingReply({ markErrored: !isReusingPendingReply });
+        }
 
-      const assistantId = reuseAssistantId ?? createId();
-      pendingAssistantMessageIdRef.current = assistantId;
-      pendingAssistantSessionIdRef.current = sessionId;
+        const assistantId = reuseAssistantId ?? createId();
+        pendingAssistantMessageIdRef.current = assistantId;
+        pendingAssistantSessionIdRef.current = sessionId;
 
       const ensurePlaceholder = () => {
         if (reuseAssistantId) {
@@ -681,13 +695,14 @@ function ChatInner() {
 
       pendingReplyTimeoutRef.current = timeoutId;
     },
-    [
-      getMessageFromSession,
-      pushMessageToSession,
-      settings.connectedApps,
-      settings.jokesEnabled,
-      speed,
-      updateMessageInSession,
+      [
+        getMessageFromSession,
+        stopPendingReply,
+        pushMessageToSession,
+        settings.connectedApps,
+        settings.jokesEnabled,
+        speed,
+        updateMessageInSession,
       setIsThinking,
     ],
   );
