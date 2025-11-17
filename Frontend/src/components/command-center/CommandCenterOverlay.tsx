@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 interface CommandCenterOverlayProps {
   open: boolean;
@@ -6,10 +6,33 @@ interface CommandCenterOverlayProps {
 }
 
 export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="pointer-events-none flex w-full justify-center px-4">
         <div className="pointer-events-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-950 via-slate-950/95 to-slate-900 shadow-[0_32px_120px_rgba(0,0,0,0.9)] p-6 md:p-8">
           {/* HEADER */}
