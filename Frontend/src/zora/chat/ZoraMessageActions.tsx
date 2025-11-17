@@ -2,13 +2,12 @@
 
 import clsx from "clsx";
 import React from "react";
-import { Copy, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Copy, ThumbsDown, ThumbsUp } from "lucide-react";
 
 type ZoraMessageActionsProps = {
   messageId: string;
   messageText: string;
   onCopy(text: string): void;
-  onShare(messageId: string): void;
   onFeedback(messageId: string, direction: "up" | "down"): void;
   activeDirection?: "up" | "down" | null;
   disabled?: boolean;
@@ -21,7 +20,6 @@ export function ZoraMessageActions({
   messageId,
   messageText,
   onCopy,
-  onShare,
   onFeedback,
   activeDirection,
   disabled,
@@ -53,14 +51,6 @@ export function ZoraMessageActions({
         className={iconButtonBase}
       >
         <Copy className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        title="Share"
-        onClick={() => onShare(messageId)}
-        className={iconButtonBase}
-      >
-        <Share2 className="h-4 w-4" />
       </button>
     </div>
   );
