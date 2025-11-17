@@ -328,6 +328,41 @@ function ChatInner() {
     return `${prefix} at ${timeFormatter.format(firstDate)}`;
   }, [messages]);
 
+  /* -------------------------- Zora status chip ---------------------- */
+
+  const zoraStatus = useMemo(() => {
+    if (isRecording) {
+      return {
+        label: "Listening",
+        pillClasses:
+          "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200",
+        dotClasses: "bg-emerald-500",
+      };
+    }
+    if (isStreamingDebate) {
+      return {
+        label: "Analyzing",
+        pillClasses:
+          "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-200",
+        dotClasses: "bg-sky-500",
+      };
+    }
+    if (isThinking) {
+      return {
+        label: "Thinking",
+        pillClasses:
+          "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-200",
+        dotClasses: "bg-violet-500",
+      };
+    }
+    return {
+      label: "Online",
+      pillClasses:
+        "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200",
+      dotClasses: "bg-emerald-500",
+    };
+  }, [isRecording, isStreamingDebate, isThinking]);
+
   /* -------------------------- Persistence --------------------------- */
 
   useEffect(() => {
@@ -621,12 +656,12 @@ function ChatInner() {
       const delay = RESPONSE_DELAY_MS[speed];
       const timeoutId = setTimeout(() => {
         const replyText = [
-          "Got it. I’ve logged this into your Nexus thread.",
+          "Got it — I’ve woven this into your Zora thread.",
           settings.connectedApps
-            ? "Because connected apps are enabled, I’ll pull context from Workspace, Outbox, and Documents when needed."
-            : "Enable connected apps to let me pull context from Workspace, Outbox, and Documents automatically.",
+            ? "Since connected apps are on, I’ll pull from Workspace, Outbox, and Documents whenever it helps."
+            : "Turn on connected apps so I can pull context from Workspace, Outbox, and Documents automatically.",
           settings.jokesEnabled
-            ? "\n\nSide note: even CPUs throttle sometimes. You’re allowed to as well."
+            ? "\n\nMinor aside: even star systems need cooldowns. You’re allowed breaks too."
             : "",
         ]
           .filter(Boolean)
@@ -777,14 +812,26 @@ function ChatInner() {
     <section className="flex h-full w-full flex-col">
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-3 py-4 md:px-6 md:py-6">
         {/* Single unified shell */}
-        <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-50/95 px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/95 dark:shadow-md md:px-6 md:py-5">
+        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-md md:px-6 md:py-5">
+          {/* Aurora glow behind content */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[-30%] -top-40 h-52 rounded-[999px] bg-gradient-to-r from-emerald-300/45 via-sky-400/35 to-indigo-500/40 blur-3xl opacity-80 dark:from-emerald-400/26 dark:via-sky-500/22 dark:to-indigo-700/35"
+            style={{ animation: "zora-aurora 20s ease-in-out infinite alternate" }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[-40%] bottom-[-35%] h-64 rounded-[999px] bg-gradient-to-r from-sky-300/35 via-purple-400/25 to-emerald-400/30 blur-3xl opacity-70 dark:from-sky-500/22 dark:via-purple-500/18 dark:to-emerald-500/24"
+            style={{ animation: "zora-aurora 26s ease-in-out infinite alternate-reverse" }}
+          />
+
           {/* HEADER BAR */}
-          <header className="flex items-center justify-between gap-3">
+          <header className="relative z-10 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsCollapsed((value) => !value)}
-                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100/90 px-2.5 py-1 text-[11px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800"
                 aria-pressed={!isCollapsed}
                 aria-label={isCollapsed ? "Expand chat" : "Collapse chat"}
               >
@@ -801,16 +848,38 @@ function ChatInner() {
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    Chat Console
+                    Zora Chat Console
                   </h1>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Live
+                  <span
+                    className={[
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      zoraStatus.pillClasses,
+                    ].join(" ")}
+                  >
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span
+                        className={[
+                          "absolute inset-0 rounded-full opacity-90",
+                          zoraStatus.dotClasses,
+                        ].join(" ")}
+                      />
+                      <span
+                        className={[
+                          "absolute inset-0 rounded-full opacity-70",
+                          zoraStatus.dotClasses,
+                        ].join(" ")}
+                        style={{
+                          animation:
+                            "zora-pulse 2.4s ease-out infinite",
+                        }}
+                      />
+                    </span>
+                    {zoraStatus.label}
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  Ask anything — Nexus will route to Workspace, Outbox, or
-                  Documents when needed.
+                  Ask me anything — I’ll route across Workspace, Outbox, and
+                  Documents like a guided aurora.
                 </p>
               </div>
             </div>
@@ -819,7 +888,7 @@ function ChatInner() {
               ref={settingsButtonRef}
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-50"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-100/90 text-slate-600 shadow-sm transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
               aria-label="Chat settings"
               aria-expanded={settingsOpen}
             >
@@ -830,8 +899,8 @@ function ChatInner() {
           {isCollapsed ? null : (
             <>
               {/* SEARCH + NEW CHAT */}
-              <div className="flex flex-col gap-3 border-t border-slate-200/70 pt-3 md:flex-row md:items-center dark:border-slate-800/70">
-                <div className="flex-1 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-xs text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">
+              <div className="relative z-10 mt-1 flex flex-col gap-3 border-t border-slate-200/70 pt-3 md:flex-row md:items-center dark:border-slate-800/70">
+                <div className="flex-1 rounded-full border border-slate-200 bg-white/85 px-3 py-2 text-xs text-slate-800 shadow-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-200">
                   <div className="flex items-center gap-2">
                     <Search
                       className="h-4 w-4 text-slate-400 dark:text-slate-500"
@@ -843,7 +912,7 @@ function ChatInner() {
                       onChange={(event) =>
                         setSearchQuery(event.target.value)
                       }
-                      placeholder="Search sessions…"
+                      placeholder="Search past conversations with Zora…"
                       className="h-7 flex-1 bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                       aria-label="Search chat sessions"
                     />
@@ -865,7 +934,7 @@ function ChatInner() {
               </div>
 
               {/* SESSIONS STRIP */}
-              <div className="flex items-center gap-3 overflow-x-auto pt-1 text-xs text-slate-800 dark:text-slate-200">
+              <div className="relative z-10 flex items-center gap-3 overflow-x-auto pt-1 text-xs text-slate-800 dark:text-slate-200">
                 {filteredSessions.map((session) => {
                   const isActive = session.id === activeSession?.id;
                   const tooltip = `${session.title}\n${formatPreview(
@@ -893,7 +962,7 @@ function ChatInner() {
                           "inline-flex items-center gap-2 rounded-full px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-sky-500",
                           isActive
                             ? "bg-slate-900 text-slate-50 dark:bg-slate-100 dark:text-slate-900"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
+                            : "bg-slate-100/90 text-slate-700 hover:bg-slate-200 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800",
                         ].join(" ")}
                         aria-pressed={isActive}
                         aria-label={`Open session ${session.title}`}
@@ -969,14 +1038,15 @@ function ChatInner() {
 
               {/* SETTINGS PANEL */}
               {settingsOpen && (
-                <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 text-xs text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-100">
+                <div className="relative z-10 rounded-2xl border border-slate-200 bg-white/90 p-4 text-xs text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-100">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Chat settings
                       </span>
                       <span className="text-[11px] text-slate-500 dark:text-slate-500">
-                        Tune how Nexus responds inside this console.
+                        Tune how Zora thinks, jokes, and explains inside this
+                        console.
                       </span>
                     </div>
                     <button
@@ -1014,7 +1084,7 @@ function ChatInner() {
                           Enable light jokes
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          When on, Nexus can be a little playful.
+                          When on, I’ll keep things a bit playful.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1032,7 +1102,8 @@ function ChatInner() {
                           Technical mode
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          Prioritize precise, detailed answers.
+                          Prefer precise, detailed, and highly structured
+                          answers.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1050,7 +1121,8 @@ function ChatInner() {
                           Connected apps
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          Integrate Workspace, Outbox, and Documents.
+                          Let me pull context from Workspace, Outbox, and
+                          Documents.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1069,8 +1141,7 @@ function ChatInner() {
                       <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <p className="mb-2">
-                      Remove sessions you no longer need. This action cannot be
-                      undone.
+                      Remove sessions you no longer need. This cannot be undone.
                     </p>
                     <button
                       type="button"
@@ -1084,7 +1155,7 @@ function ChatInner() {
               )}
 
               {/* MAIN PANEL: STREAMING + MESSAGES + COMPOSER */}
-              <div className="flex min-h-0 flex-1 flex-col gap-3 pt-1">
+              <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 pt-1">
                 {/* STREAMING BAR */}
                 {hasStreamingDebate && (
                   <div
@@ -1094,11 +1165,11 @@ function ChatInner() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs font-semibold">
-                          Streaming debate
+                          Aurora stream online
                         </p>
                         <p className="text-[11px] text-slate-600 dark:text-slate-200/80">
-                          Live responses with multi-model consensus and
-                          verification.
+                          Multi-model debate, verification, and synthesis in
+                          real time.
                         </p>
                       </div>
                       <div className="text-right text-[11px] text-slate-600 dark:text-slate-200/80">
@@ -1112,7 +1183,7 @@ function ChatInner() {
                     </div>
                     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-200"
+                        className="h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 transition-all duration-200"
                         style={{ width: `${streamProgressPercent}%` }}
                       />
                     </div>
@@ -1126,7 +1197,7 @@ function ChatInner() {
                     {firstAnswer && (
                       <div className="mt-3 space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
-                          Quick answer
+                          First impression
                         </p>
                         <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                           {firstAnswer.text}
@@ -1142,7 +1213,7 @@ function ChatInner() {
                     {partialAnswer && (
                       <div className="mt-3 space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
-                          Partial consensus
+                          Emerging consensus
                         </p>
                         <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                           {partialAnswer.text}
@@ -1153,7 +1224,7 @@ function ChatInner() {
                     {finalAnswer && (
                       <div className="mt-3 space-y-1">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
-                          Verified answer
+                          Verified synthesis
                         </p>
                         <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                           {finalAnswer.text}
@@ -1187,7 +1258,7 @@ function ChatInner() {
                 )}
 
                 {/* MESSAGE LIST */}
-                <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white/90 dark:border-slate-800 dark:bg-slate-900/90">
+                <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white/92 dark:border-slate-800 dark:bg-slate-900/92">
                   <div
                     ref={messagesContainerRef}
                     className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-5"
@@ -1195,7 +1266,7 @@ function ChatInner() {
                     aria-live="polite"
                   >
                     {timelineLabel && (
-                      <span className="mx-auto mb-1 inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                      <span className="mx-auto mb-1 inline-flex items-center rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300">
                         {timelineLabel}
                       </span>
                     )}
@@ -1214,7 +1285,7 @@ function ChatInner() {
                         const bubbleClasses = [
                           "inline-flex max-w-[min(82%,32rem)] flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm border",
                           isAssistant
-                            ? "bg-white text-slate-900 border-slate-200 dark:bg-slate-900 dark:text-slate-50 dark:border-slate-700"
+                            ? "bg-white/95 text-slate-900 border-slate-200 dark:bg-slate-900/95 dark:text-slate-50 dark:border-slate-700"
                             : "bg-sky-500 text-white border-transparent dark:bg-sky-500",
                         ];
                         const showThinking =
@@ -1253,7 +1324,7 @@ function ChatInner() {
                                 {showThinking ? (
                                   <div className="flex items-center gap-2">
                                     <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-100">
-                                      Nexus is thinking…
+                                      Zora is thinking…
                                     </span>
                                     <div className="flex items-center gap-1">
                                       {[0, 1, 2].map((dot) => (
@@ -1268,12 +1339,6 @@ function ChatInner() {
                                         />
                                       ))}
                                     </div>
-                                    <style>{`
-                                      @keyframes nexus-dot {
-                                        0%, 100% { opacity: 0.3; transform: translateY(0); }
-                                        50% { opacity: 1; transform: translateY(-2px); }
-                                      }
-                                    `}</style>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
@@ -1327,7 +1392,7 @@ function ChatInner() {
                     <button
                       type="button"
                       onClick={scrollToTop}
-                      className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                      className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                       aria-label="Jump to top"
                     >
                       <ArrowUp className="h-4 w-4" />
@@ -1338,7 +1403,7 @@ function ChatInner() {
                         scrollToBottom();
                         composerRef.current?.focus();
                       }}
-                      className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                      className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                       aria-label="Jump to latest"
                     >
                       <ArrowDown className="h-4 w-4" />
@@ -1347,8 +1412,8 @@ function ChatInner() {
 
                   {isThinking && (
                     <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-                      <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-1.5 text-[11px] text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:shadow-md">
-                        <span>Nexus is preparing a reply…</span>
+                      <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-[11px] text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200 dark:shadow-md">
+                        <span>Zora is preparing a reply…</span>
                         <button
                           type="button"
                           onClick={stopPendingReply}
@@ -1365,7 +1430,7 @@ function ChatInner() {
                 {/* COMPOSER */}
                 <form
                   onSubmit={handleSubmit}
-                  className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900"
+                  className="relative z-10 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/95"
                 >
                   {/* Toolbar */}
                   <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-600 dark:text-slate-300">
@@ -1373,7 +1438,7 @@ function ChatInner() {
                       <button
                         type="button"
                         onClick={triggerFilePicker}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                         title="Add attachments or tools"
                         aria-label="Add attachments or tools"
                       >
@@ -1390,7 +1455,7 @@ function ChatInner() {
                               : "slow",
                           )
                         }
-                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-[11px] text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                         aria-label="Toggle response speed"
                       >
                         <Zap className="h-3 w-3" />
@@ -1400,6 +1465,13 @@ function ChatInner() {
                           ? "Normal"
                           : "Fast"}
                       </button>
+                      <span className="hidden text-[10px] text-slate-500 md:inline dark:text-slate-400">
+                        Tip: Press{" "}
+                        <kbd className="rounded border border-slate-300 bg-white px-1 text-[9px] dark:border-slate-600 dark:bg-slate-800">
+                          ⌘ / Ctrl + K
+                        </kbd>{" "}
+                        to jump back here.
+                      </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -1412,8 +1484,8 @@ function ChatInner() {
                           className={[
                             "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500",
                             isRecording
-                              ? "border-sky-300 bg-sky-50 text-sky-600 dark:border-sky-500 dark:bg-sky-950/40 dark:text-sky-300"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : "border-slate-200 bg-white/95 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-50",
                           ].join(" ")}
                           aria-pressed={isRecording}
                           aria-label={
@@ -1437,7 +1509,7 @@ function ChatInner() {
                         </span>
                       )}
                       {voiceSupported === false && !voiceWarning && (
-                        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                        <span className="rounded-full border border-slate-200 bg-white/95 px-2 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-400">
                           Voice not supported in this browser.
                         </span>
                       )}
@@ -1456,14 +1528,14 @@ function ChatInner() {
                   />
 
                   {/* Textarea + Send */}
-                  <div className="flex items-end gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-950">
+                  <div className="flex items-end gap-3 rounded-xl border border-slate-200 bg-white/95 px-4 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-950/95">
                     <textarea
                       ref={composerRef}
                       value={inputValue}
                       onChange={(event) => setInputValue(event.target.value)}
                       onKeyDown={handleTextareaKeyDown}
                       rows={2}
-                      placeholder="Ask me anything…"
+                      placeholder="Tell me what you’re working on…"
                       className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-50 dark:placeholder:text-slate-500"
                       aria-label="Chat composer"
                     />
@@ -1485,7 +1557,7 @@ function ChatInner() {
                       {pendingAttachments.map((name) => (
                         <span
                           key={name}
-                          className="rounded-full border border-slate-200 bg-white px-2 py-0.5 dark:border-slate-700 dark:bg-slate-900"
+                          className="rounded-full border border-slate-200 bg-white/95 px-2 py-0.5 dark:border-slate-700 dark:bg-slate-950/95"
                         >
                           {name}
                         </span>
@@ -1506,11 +1578,23 @@ function ChatInner() {
         </div>
       </div>
 
-      {/* tiny animation helpers for typing/wave already inlined above */}
+      {/* animation helpers */}
       <style>{`
         @keyframes nexus-dot {
           0%, 100% { opacity: 0.3; transform: translateY(0); }
           50% { opacity: 1; transform: translateY(-2px); }
+        }
+
+        @keyframes zora-aurora {
+          0% { transform: translate3d(-6%, 4%, 0) scale(1); filter: hue-rotate(0deg); }
+          50% { transform: translate3d(4%, -4%, 0) scale(1.06); filter: hue-rotate(18deg); }
+          100% { transform: translate3d(-3%, 2%, 0) scale(1.02); filter: hue-rotate(-12deg); }
+        }
+
+        @keyframes zora-pulse {
+          0% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.8); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
         }
       `}</style>
     </section>
