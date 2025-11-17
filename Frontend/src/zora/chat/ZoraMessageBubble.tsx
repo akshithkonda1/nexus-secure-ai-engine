@@ -33,7 +33,7 @@ export function ZoraMessageBubble({
     >
       <div
         className={clsx(
-          "max-w-full rounded-3xl border px-4 py-3 text-sm shadow-sm backdrop-blur-xl md:max-w-2xl",
+          "inline-flex max-w-[96%] flex-col rounded-3xl border px-4 py-3 text-sm leading-relaxed shadow-sm backdrop-blur-xl",
           isAssistant
             ? "bg-white/10 text-slate-900 dark:text-slate-100 border-slate-200/70 dark:bg-slate-900/40 dark:border-slate-700/70"
             : "bg-sky-500 text-white border-sky-400/80 dark:bg-sky-500",

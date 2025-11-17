@@ -771,7 +771,7 @@ export function ZoraChatShell() {
 
   return (
     <section className="flex h-full w-full flex-col">
-      <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-3 py-4 md:px-6 md:py-6">
+      <div className="flex h-full w-full flex-col px-4 py-4 md:px-8 md:py-6">
         <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/10 px-4 py-4 shadow-xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/40 md:px-6 md:py-6">
           <div
             aria-hidden="true"
