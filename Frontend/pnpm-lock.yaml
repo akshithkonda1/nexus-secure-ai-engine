@@ -73,8 +73,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.1(vite@7.2.2(jiti@2.6.1)(lightningcss@1.30.2))
       '@vitest/coverage-v8':
-        specifier: ^4.0.8
-        version: 4.0.9(vitest@4.0.10(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2))
+        specifier: ^4.0.10
+        version: 4.0.10(vitest@4.0.9(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2))
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.22(postcss@8.5.6)
@@ -1033,11 +1033,11 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  '@vitest/coverage-v8@4.0.9':
-    resolution: {integrity: sha512-70oyhP+Q0HlWBIeGSP74YBw5KSjYhNgSCQjvmuQFciMqnyF36WL2cIkcT7XD85G4JPmBQitEMUsx+XMFv2AzQA==}
+  '@vitest/coverage-v8@4.0.10':
+    resolution: {integrity: sha512-g+brmtoKa/sAeIohNJnnWhnHtU6GuqqVOSQ4SxDIPcgZWZyhJs5RmF5LpqXs8Kq64lANP+vnbn5JLzhLj/G56g==}
     peerDependencies:
-      '@vitest/browser': 4.0.9
-      vitest: 4.0.9
+      '@vitest/browser': 4.0.10
+      vitest: 4.0.10
     peerDependenciesMeta:
       '@vitest/browser':
         optional: true
@@ -1070,6 +1070,9 @@ packages:
 
   '@vitest/spy@4.0.10':
     resolution: {integrity: sha512-AsY6sVS8OLb96GV5RoG8B6I35GAbNrC49AO+jNRF9YVGb/g9t+hzNm1H6kD0NDp8tt7VJLs6hb7YMkDXqu03iw==}
+
+  '@vitest/utils@4.0.10':
+    resolution: {integrity: sha512-kOuqWnEwZNtQxMKg3WmPK1vmhZu9WcoX69iwWjVz+jvKTsF1emzsv3eoPcDr6ykA3qP2bsCQE7CwqfNtAVzsmg==}
 
   '@vitest/utils@4.0.10':
     resolution: {integrity: sha512-kOuqWnEwZNtQxMKg3WmPK1vmhZu9WcoX69iwWjVz+jvKTsF1emzsv3eoPcDr6ykA3qP2bsCQE7CwqfNtAVzsmg==}
@@ -3503,10 +3506,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/coverage-v8@4.0.9(vitest@4.0.10(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2))':
+  '@vitest/coverage-v8@4.0.10(vitest@4.0.9(jiti@2.6.1)(jsdom@27.2.0)(lightningcss@1.30.2))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
-      '@vitest/utils': 4.0.9
+      '@vitest/utils': 4.0.10
       ast-v8-to-istanbul: 0.3.8
       debug: 4.4.3
       istanbul-lib-coverage: 3.2.2
@@ -3557,6 +3560,11 @@ snapshots:
       pathe: 2.0.3
 
   '@vitest/spy@4.0.10': {}
+
+  '@vitest/utils@4.0.10':
+    dependencies:
+      '@vitest/pretty-format': 4.0.10
+      tinyrainbow: 3.0.3
 
   '@vitest/utils@4.0.10':
     dependencies:
