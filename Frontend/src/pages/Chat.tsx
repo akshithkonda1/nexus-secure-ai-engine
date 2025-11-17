@@ -100,10 +100,10 @@ const IOSSwitch = React.forwardRef<
     aria-label={label}
     onClick={() => onChange(!checked)}
     className={[
-      "relative inline-flex h-6 w-11 items-center rounded-full border border-white/15 transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
+      "relative inline-flex h-6 w-11 items-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
       checked
-        ? "bg-[rgb(var(--brand))]"
-        : "bg-[rgba(15,23,42,0.85)]",
+        ? "border-sky-500 bg-[rgb(var(--brand))]"
+        : "border-slate-300 bg-slate-200 dark:border-white/15 dark:bg-[rgba(15,23,42,0.85)]",
     ].join(" ")}
   >
     <span
@@ -777,12 +777,12 @@ function ChatInner() {
     <section className="flex h-full w-full flex-col">
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-4 px-3 py-4 md:px-6 md:py-6">
         {/* HEADER BAR */}
-        <header className="flex items-center justify-between rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_55%),rgba(15,23,42,0.96)] px-4 py-3 shadow-[0_22px_70px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+        <header className="flex items-center justify-between rounded-3xl border border-slate-200/80 bg-white/95 px-4 py-3 shadow-[0_14px_40px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_55%),rgba(15,23,42,0.96)] dark:shadow-[0_22px_70px_rgba(0,0,0,0.75)]">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsCollapsed((value) => !value)}
-              className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-medium text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400"
+              className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10 dark:hover:bg-white/10"
               aria-pressed={!isCollapsed}
               aria-label={isCollapsed ? "Expand chat" : "Collapse chat"}
             >
@@ -798,15 +798,15 @@ function ChatInner() {
             </button>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-slate-50">
+                <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                   Chat Console
                 </h1>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/12 dark:text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   Live
                 </span>
               </div>
-              <p className="mt-0.5 text-[11px] text-slate-400">
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                 Ask anything — Nexus will route to Workspace, Outbox, or
                 Documents when needed.
               </p>
@@ -817,7 +817,7 @@ function ChatInner() {
             ref={settingsButtonRef}
             type="button"
             onClick={() => setSettingsOpen((value) => !value)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 ring-1 ring-white/15 transition hover:bg-white/10 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-white/5 dark:text-slate-300 dark:ring-white/15 dark:hover:bg-white/10 dark:hover:text-slate-50"
             aria-label="Chat settings"
             aria-expanded={settingsOpen}
           >
@@ -829,10 +829,10 @@ function ChatInner() {
           <>
             {/* SEARCH + NEW CHAT */}
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex-1 rounded-full bg-slate-950/80 px-3 py-2 text-xs text-slate-200 ring-1 ring-white/8 shadow-[0_18px_45px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+              <div className="flex-1 rounded-full bg-white/90 px-3 py-2 text-xs text-slate-800 ring-1 ring-slate-200 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:bg-slate-950/80 dark:text-slate-200 dark:ring-white/8 dark:shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
                 <div className="flex items-center gap-2">
                   <Search
-                    className="h-4 w-4 text-slate-500"
+                    className="h-4 w-4 text-slate-400 dark:text-slate-500"
                     aria-hidden="true"
                   />
                   <input
@@ -840,7 +840,7 @@ function ChatInner() {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="Search sessions…"
-                    className="h-7 flex-1 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                    className="h-7 flex-1 bg-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
                     aria-label="Search chat sessions"
                   />
                 </div>
@@ -849,7 +849,7 @@ function ChatInner() {
                 <button
                   type="button"
                   onClick={createNewSession}
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[0_18px_55px_rgba(56,189,248,0.6)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.9)] focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[0_16px_40px_rgba(56,189,248,0.55)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.9)] focus:outline-none focus:ring-2 focus:ring-sky-400"
                   aria-label="Create new chat session"
                 >
                   <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-900/90 text-[13px] text-sky-300">
@@ -861,7 +861,7 @@ function ChatInner() {
             </div>
 
             {/* SESSIONS STRIP */}
-            <div className="flex items-center gap-3 overflow-x-auto rounded-3xl bg-slate-950/75 px-3 py-2 text-xs text-slate-200 ring-1 ring-white/8 shadow-[0_18px_45px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+            <div className="flex items-center gap-3 overflow-x-auto rounded-3xl bg-white/90 px-3 py-2 text-xs text-slate-800 ring-1 ring-slate-200 shadow-[0_12px_32px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:bg-slate-950/75 dark:text-slate-200 dark:ring-white/8 dark:shadow-[0_18px_45px_rgba(0,0,0,0.75)]">
               {filteredSessions.map((session) => {
                 const isActive = session.id === activeSession?.id;
                 const tooltip = `${session.title}\n${formatPreview(
@@ -885,8 +885,8 @@ function ChatInner() {
                       className={[
                         "inline-flex items-center gap-2 rounded-full px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
                         isActive
-                          ? "bg-slate-800/80 text-slate-50"
-                          : "bg-slate-900/70 text-slate-300 hover:bg-slate-800/80",
+                          ? "bg-slate-200 text-slate-900 dark:bg-slate-800/80 dark:text-slate-50"
+                          : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-slate-800/80",
                       ].join(" ")}
                       aria-pressed={isActive}
                       aria-label={`Open session ${session.title}`}
@@ -910,7 +910,7 @@ function ChatInner() {
                             }
                           }}
                           autoFocus
-                          className="w-32 rounded-full bg-slate-900/90 px-2 py-0.5 text-xs text-slate-50 focus:outline-none"
+                          className="w-32 rounded-full bg-white px-2 py-0.5 text-xs text-slate-900 focus:outline-none dark:bg-slate-900/90 dark:text-slate-50"
                           aria-label="Rename session"
                         />
                       ) : (
@@ -921,7 +921,7 @@ function ChatInner() {
                           {session.title}
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
                         {formatTime(session.createdAt)}
                       </span>
                     </button>
@@ -929,10 +929,10 @@ function ChatInner() {
                       type="button"
                       onClick={() => togglePinSession(session.id)}
                       className={[
-                        "rounded-full p-1 text-slate-500 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                        "rounded-full p-1 text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-sky-400 dark:text-slate-500",
                         session.pinned
-                          ? "text-sky-400"
-                          : "group-hover:text-slate-300",
+                          ? "text-sky-500 dark:text-sky-400"
+                          : "group-hover:text-slate-700 dark:group-hover:text-slate-300",
                       ].join(" ")}
                       aria-label={
                         session.pinned ? "Unpin session" : "Pin session"
@@ -947,7 +947,7 @@ function ChatInner() {
                     <button
                       type="button"
                       onClick={() => handleDeleteSession(session.id)}
-                      className="rounded-full p-1 text-slate-500/70 opacity-0 transition hover:text-rose-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-400 group-hover:opacity-100"
+                      className="rounded-full p-1 text-slate-400 opacity-0 transition hover:text-rose-500 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-400 group-hover:opacity-100 dark:text-slate-500 dark:hover:text-rose-400"
                       aria-label="Delete session"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -959,32 +959,32 @@ function ChatInner() {
 
             {/* SETTINGS DRAWER */}
             {settingsOpen && (
-              <div className="rounded-3xl bg-slate-950/90 p-4 text-xs text-slate-100 ring-1 ring-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+              <div className="rounded-3xl bg-white/95 p-4 text-xs text-slate-900 ring-1 ring-slate-200 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:bg-slate-950/90 dark:text-slate-100 dark:ring-white/10 dark:shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Chat settings
                     </span>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-500">
                       Tune how Nexus responds inside this console.
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setSettingsOpen(false)}
-                    className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    className="rounded-full bg-slate-100 px-3 py-1 text-[11px] text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10 dark:hover:bg-white/10"
                   >
                     Close
                   </button>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10">
                     <div>
-                      <p className="text-xs font-medium text-slate-100">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
                         Allow NSFW topics
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         Disabled by default. Enables more open-ended debates.
                       </p>
                     </div>
@@ -998,12 +998,12 @@ function ChatInner() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10">
                     <div>
-                      <p className="text-xs font-medium text-slate-100">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
                         Enable light jokes
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         When on, Nexus can be a little playful.
                       </p>
                     </div>
@@ -1016,12 +1016,12 @@ function ChatInner() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10">
                     <div>
-                      <p className="text-xs font-medium text-slate-100">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
                         Technical mode
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         Prioritize precise, detailed answers.
                       </p>
                     </div>
@@ -1034,12 +1034,12 @@ function ChatInner() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10">
                     <div>
-                      <p className="text-xs font-medium text-slate-100">
+                      <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
                         Connected apps
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                         Integrate Workspace, Outbox, and Documents.
                       </p>
                     </div>
@@ -1053,7 +1053,7 @@ function ChatInner() {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-rose-400/40 bg-rose-500/10 p-3 text-[11px] text-rose-100">
+                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-[11px] text-rose-700 dark:border-rose-400/40 dark:bg-rose-500/10 dark:text-rose-100">
                   <div className="mb-1 flex items-center justify-between">
                     <span className="font-semibold">Danger zone</span>
                     <AlertCircle className="h-4 w-4" aria-hidden="true" />
@@ -1065,7 +1065,7 @@ function ChatInner() {
                   <button
                     type="button"
                     onClick={handleClearAllSessions}
-                    className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-3 py-1 text-[11px] font-semibold text-rose-100 ring-1 ring-rose-400/60 transition hover:bg-rose-500/25 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                    className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200 transition hover:bg-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:bg-rose-500/15 dark:text-rose-100 dark:ring-rose-400/60 dark:hover:bg-rose-500/25"
                   >
                     Clear all sessions
                   </button>
@@ -1074,11 +1074,11 @@ function ChatInner() {
             )}
 
             {/* MAIN PANEL: MESSAGES + COMPOSER */}
-            <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-3xl bg-slate-950/90 p-4 ring-1 ring-white/10 shadow-[0_26px_90px_rgba(0,0,0,0.85)] backdrop-blur-2xl">
+            <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-3xl bg-white/95 p-4 ring-1 ring-slate-200 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:bg-slate-950/90 dark:ring-white/10 dark:shadow-[0_26px_90px_rgba(0,0,0,0.85)]">
               {/* STREAMING BAR */}
               {hasStreamingDebate && (
                 <div
-                  className="mb-3 rounded-2xl bg-gradient-to-r from-sky-500/18 via-cyan-400/10 to-transparent p-3 text-xs text-slate-50 ring-1 ring-sky-400/30 shadow-[0_18px_50px_rgba(56,189,248,0.45)]"
+                  className="mb-3 rounded-2xl bg-gradient-to-r from-sky-100 via-cyan-50 to-transparent p-3 text-xs text-slate-900 ring-1 ring-sky-200 shadow-[0_12px_36px_rgba(56,189,248,0.32)] dark:from-sky-500/18 dark:via-cyan-400/10 dark:text-slate-50 dark:ring-sky-400/30 dark:shadow-[0_18px_50px_rgba(56,189,248,0.45)]"
                   aria-live="polite"
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -1086,12 +1086,12 @@ function ChatInner() {
                       <p className="text-xs font-semibold">
                         Streaming debate
                       </p>
-                      <p className="text-[11px] text-slate-200/80">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-200/80">
                         Live responses with multi-model consensus and
                         verification.
                       </p>
                     </div>
-                    <div className="text-right text-[11px] text-slate-200/80">
+                    <div className="text-right text-[11px] text-slate-600 dark:text-slate-200/80">
                       <span className="font-medium">
                         {isStreamingDebate ? "Streaming" : "Complete"}
                       </span>
@@ -1100,29 +1100,29 @@ function ChatInner() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-900/80">
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900/80">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-all duration-200"
+                      className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-200"
                       style={{ width: `${streamProgressPercent}%` }}
                     />
                   </div>
 
                   {streamError && (
-                    <p className="mt-2 text-[11px] text-rose-300">
+                    <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
                       {streamError}
                     </p>
                   )}
 
                   {firstAnswer && (
                     <div className="mt-3 space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
                         Quick answer
                       </p>
-                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                      <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                         {firstAnswer.text}
                       </p>
                       {firstAnswer.model && (
-                        <p className="text-[10px] text-slate-300">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-300">
                           via {firstAnswer.model}
                         </p>
                       )}
@@ -1131,10 +1131,10 @@ function ChatInner() {
 
                   {partialAnswer && (
                     <div className="mt-3 space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
                         Partial consensus
                       </p>
-                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                      <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                         {partialAnswer.text}
                       </p>
                     </div>
@@ -1142,16 +1142,16 @@ function ChatInner() {
 
                   {finalAnswer && (
                     <div className="mt-3 space-y-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-200/80">
                         Verified answer
                       </p>
-                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                      <p className="whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-50">
                         {finalAnswer.text}
                       </p>
                       {finalAnswer.sources &&
                         finalAnswer.sources.length > 0 && (
                           <div className="mt-2 space-y-1">
-                            <p className="text-[10px] font-semibold text-slate-200/80">
+                            <p className="text-[10px] font-semibold text-slate-600 dark:text-slate-200/80">
                               Sources
                             </p>
                             <div className="space-y-1">
@@ -1162,7 +1162,7 @@ function ChatInner() {
                                     href={source.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="block text-[11px] text-sky-300 hover:underline"
+                                    className="block text-[11px] text-sky-600 hover:underline dark:text-sky-300"
                                   >
                                     {source.title || source.url}
                                   </a>
@@ -1177,7 +1177,7 @@ function ChatInner() {
               )}
 
               {/* MESSAGE LIST */}
-              <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl bg-slate-900/70 ring-1 ring-white/8">
+              <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/8">
                 <div
                   ref={messagesContainerRef}
                   className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-5"
@@ -1185,7 +1185,7 @@ function ChatInner() {
                   aria-live="polite"
                 >
                   {timelineLabel && (
-                    <span className="mx-auto mb-1 inline-flex items-center rounded-full bg-slate-900/90 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-white/10 backdrop-blur">
+                    <span className="mx-auto mb-1 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/90 dark:text-slate-300 dark:ring-white/10">
                       {timelineLabel}
                     </span>
                   )}
@@ -1202,10 +1202,10 @@ function ChatInner() {
                       if (!message) return null;
                       const isAssistant = message.role === "assistant";
                       const bubbleClasses = [
-                        "inline-flex max-w-[min(82%,32rem)] flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-[0_18px_50px_rgba(0,0,0,0.7)] backdrop-blur-xl ring-1 ring-white/10",
+                        "inline-flex max-w-[min(82%,32rem)] flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-[0_12px_36px_rgba(15,23,42,0.18)] backdrop-blur-xl ring-1",
                         isAssistant
-                          ? "bg-slate-900/95 text-slate-50"
-                          : "bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950",
+                          ? "bg-slate-100 text-slate-900 ring-slate-200 dark:bg-slate-900/95 dark:text-slate-50 dark:ring-white/10"
+                          : "bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950 ring-sky-300/60 dark:ring-white/10",
                       ];
                       const showThinking =
                         isAssistant && message.status === "pending";
@@ -1239,14 +1239,14 @@ function ChatInner() {
                             <div className={bubbleClasses.join(" ")}>
                               {showThinking ? (
                                 <div className="flex items-center gap-2">
-                                  <span className="rounded-full bg-white/10 px-3 py-1 text-[11px]">
+                                  <span className="rounded-full bg-slate-200 px-3 py-1 text-[11px] text-slate-700 dark:bg-white/10 dark:text-slate-100">
                                     Nexus is thinking…
                                   </span>
                                   <div className="flex items-center gap-1">
                                     {[0, 1, 2].map((dot) => (
                                       <span
                                         key={dot}
-                                        className="h-1.5 w-1.5 rounded-full bg-white/40"
+                                        className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-white/40"
                                         style={{
                                           animation: "nexus-dot 1.2s infinite",
                                           animationDelay: `${dot * 0.2}s`,
@@ -1268,11 +1268,11 @@ function ChatInner() {
                                   </p>
                                   {message.attachments &&
                                     message.attachments.length > 0 && (
-                                      <div className="flex flex-wrap gap-1 text-[10px] text-slate-200/80">
+                                      <div className="flex flex-wrap gap-1 text-[10px] text-slate-700 dark:text-slate-200/80">
                                         {message.attachments.map((name) => (
                                           <span
                                             key={name}
-                                            className="rounded-full bg-black/20 px-2 py-0.5"
+                                            className="rounded-full bg-slate-200 px-2 py-0.5 dark:bg-black/20"
                                           >
                                             {name}
                                           </span>
@@ -1283,7 +1283,7 @@ function ChatInner() {
                                     <button
                                       type="button"
                                       onClick={() => handleRetry(message)}
-                                      className="text-[11px] font-medium text-slate-200/80 underline decoration-dotted hover:text-slate-50 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                                      className="text-[11px] font-medium text-slate-700 underline decoration-dotted hover:text-slate-900 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-200/80 dark:hover:text-slate-50"
                                     >
                                       Retry
                                     </button>
@@ -1292,7 +1292,7 @@ function ChatInner() {
                               )}
                             </div>
                           </div>
-                          <span className="mt-1 text-[10px] text-slate-400">
+                          <span className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
                             {formatTime(message.createdAt)}
                             {message.status === "error" ? " · Failed" : null}
                           </span>
@@ -1307,7 +1307,7 @@ function ChatInner() {
                   <button
                     type="button"
                     onClick={scrollToTop}
-                    className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-900/90 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                     aria-label="Jump to top"
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -1318,7 +1318,7 @@ function ChatInner() {
                       scrollToBottom();
                       composerRef.current?.focus();
                     }}
-                    className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                    className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-900/90 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                     aria-label="Jump to latest"
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -1327,7 +1327,7 @@ function ChatInner() {
 
                 {isThinking && (
                   <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-                    <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-slate-900/95 px-4 py-1.5 text-[11px] text-slate-200 ring-1 ring-white/12 shadow-[0_16px_45px_rgba(0,0,0,0.75)]">
+                    <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-[11px] text-slate-800 ring-1 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.18)] dark:bg-slate-900/95 dark:text-slate-200 dark:ring-white/12 dark:shadow-[0_16px_45px_rgba(0,0,0,0.75)]">
                       <span>Nexus is preparing a reply…</span>
                       <button
                         type="button"
@@ -1345,15 +1345,15 @@ function ChatInner() {
               {/* COMPOSER */}
               <form
                 onSubmit={handleSubmit}
-                className="mt-2 flex flex-col gap-3 rounded-2xl bg-slate-900/80 px-4 py-3 ring-1 ring-white/10 backdrop-blur-xl"
+                className="mt-2 flex flex-col gap-3 rounded-2xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200 backdrop-blur-xl dark:bg-slate-900/80 dark:ring-white/10"
               >
                 {/* Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-300">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-600 dark:text-slate-300">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={triggerFilePicker}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/80 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-950/80 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                       title="Add attachments or tools"
                       aria-label="Add attachments or tools"
                     >
@@ -1370,7 +1370,7 @@ function ChatInner() {
                             : "slow",
                         )
                       }
-                      className="inline-flex items-center gap-1 rounded-full bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-950/80 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                       aria-label="Toggle response speed"
                     >
                       <Zap className="h-3 w-3" />
@@ -1390,10 +1390,10 @@ function ChatInner() {
                           isRecording ? stopDictation() : startDictation()
                         }
                         className={[
-                          "inline-flex h-7 w-7 items-center justify-center rounded-full ring-1 ring-white/10 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                          "inline-flex h-7 w-7 items-center justify-center rounded-full ring-1 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
                           isRecording
-                            ? "bg-sky-500/15 text-sky-300"
-                            : "bg-slate-950/80 text-slate-300 hover:bg-slate-800 hover:text-slate-50",
+                            ? "bg-sky-100 text-sky-600 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-white/10"
+                            : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-950/80 dark:text-slate-300 dark:ring-white/10 dark:hover:bg-slate-800 dark:hover:text-slate-50",
                         ].join(" ")}
                         aria-pressed={isRecording}
                         aria-label={
@@ -1412,12 +1412,12 @@ function ChatInner() {
                     </div>
 
                     {voiceWarning && (
-                      <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-100 ring-1 ring-amber-400/50">
+                      <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-100 dark:ring-amber-400/50">
                         <AlertCircle className="h-3 w-3" /> {voiceWarning}
                       </span>
                     )}
                     {voiceSupported === false && !voiceWarning && (
-                      <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/10">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900/80 dark:text-slate-400 dark:ring-white/10">
                         Voice not supported in this browser.
                       </span>
                     )}
@@ -1434,7 +1434,7 @@ function ChatInner() {
                 />
 
                 {/* Textarea + Send */}
-                <div className="flex items-end gap-3 rounded-2xl bg-slate-950/85 px-4 py-2 ring-1 ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.65)]">
+                <div className="flex items-end gap-3 rounded-2xl bg-white px-4 py-2 ring-1 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.12)] dark:bg-slate-950/85 dark:ring-white/10 dark:shadow-[0_16px_45px_rgba(0,0,0,0.65)]">
                   <textarea
                     ref={composerRef}
                     value={inputValue}
@@ -1442,12 +1442,12 @@ function ChatInner() {
                     onKeyDown={handleTextareaKeyDown}
                     rows={2}
                     placeholder="Ask me anything…"
-                    className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none"
+                    className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-50 dark:placeholder:text-slate-500"
                     aria-label="Chat composer"
                   />
                   <button
                     type="submit"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950 shadow-[0_18px_55px_rgba(56,189,248,0.75)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.95)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50 disabled:shadow-none"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950 shadow-[0_16px_45px_rgba(56,189,248,0.75)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.95)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50 disabled:shadow-none"
                     disabled={
                       !inputValue.trim() && pendingAttachments.length === 0
                     }
@@ -1458,11 +1458,11 @@ function ChatInner() {
                 </div>
 
                 {pendingAttachments.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-200">
+                  <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-700 dark:text-slate-200">
                     {pendingAttachments.map((name) => (
                       <span
                         key={name}
-                        className="rounded-full bg-slate-900/70 px-2 py-0.5 ring-1 ring-white/10"
+                        className="rounded-full bg-slate-100 px-2 py-0.5 ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10"
                       >
                         {name}
                       </span>
@@ -1470,7 +1470,7 @@ function ChatInner() {
                     <button
                       type="button"
                       onClick={() => handleFileChange(null)}
-                      className="ml-1 text-[10px] text-slate-400 underline decoration-dotted hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                      className="ml-1 text-[10px] text-slate-500 underline decoration-dotted hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-400 dark:hover:text-slate-100"
                     >
                       Clear
                     </button>
