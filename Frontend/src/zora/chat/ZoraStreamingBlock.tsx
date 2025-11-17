@@ -32,14 +32,15 @@ const ZoraStreamingBlock: React.FC<Props> = ({
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">Aurora Stream</p>
+          <p className="text-xs font-semibold">Zora reasoning stream</p>
           <p className="text-[11px] text-slate-200/80">
-            Multi-model debate, verification, and synthesis in motion.
+            Zora is debating models, checking sources, and settling on the most
+          best answer it can provide.
           </p>
         </div>
         <div className="text-right text-[11px] text-slate-200/80">
           <span className="font-medium">
-            {isStreaming ? "Streaming" : "Complete"}
+            {isStreaming ? "In progress" : "Done"}
           </span>
           <span className="ml-1 text-slate-400">· {progressPercent}%</span>
         </div>
@@ -51,19 +52,21 @@ const ZoraStreamingBlock: React.FC<Props> = ({
         />
       </div>
       {streamError && (
-        <p className="mt-2 text-[11px] text-rose-300">{streamError}</p>
+        <p className="mt-2 text-[11px] text-rose-300">
+          Zora hit an error while streaming: {streamError}
+        </p>
       )}
       {firstAnswer && (
         <div className="mt-3 space-y-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
-            First Glimpse
+            First pass
           </p>
           <p className="whitespace-pre-wrap text-xs text-slate-50">
             {firstAnswer.text}
           </p>
           {firstAnswer.model && (
             <p className="text-[10px] text-slate-300">
-              via {firstAnswer.model}
+              from {firstAnswer.model}
             </p>
           )}
         </div>
@@ -71,7 +74,7 @@ const ZoraStreamingBlock: React.FC<Props> = ({
       {partialAnswer && (
         <div className="mt-3 space-y-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
-            Emerging Harmony
+            Still refining
           </p>
           <p className="whitespace-pre-wrap text-xs text-slate-50">
             {partialAnswer.text}
@@ -81,7 +84,7 @@ const ZoraStreamingBlock: React.FC<Props> = ({
       {finalAnswer && (
         <div className="mt-3 space-y-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
-            Verified Synthesis
+            Final summary
           </p>
           <p className="whitespace-pre-wrap text-xs text-slate-50">
             {finalAnswer.text}
@@ -89,7 +92,7 @@ const ZoraStreamingBlock: React.FC<Props> = ({
           {finalAnswer.sources && finalAnswer.sources.length > 0 && (
             <div className="mt-2 space-y-1">
               <p className="text-[10px] font-semibold text-slate-300">
-                Sources
+                Sources Zora leaned on
               </p>
               <div className="space-y-1">
                 {finalAnswer.sources.map((source, i) => (

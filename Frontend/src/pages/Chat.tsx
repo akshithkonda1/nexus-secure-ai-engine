@@ -334,7 +334,7 @@ function ChatInner() {
   const zoraStatus = useMemo(() => {
     if (isRecording) {
       return {
-        label: "Aurora Listening",
+        label: "Zora is listening",
         pillClasses:
           "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200 animate-pulse",
         dotClasses: "bg-emerald-500",
@@ -342,7 +342,7 @@ function ChatInner() {
     }
     if (isStreamingDebate) {
       return {
-        label: "Aurora Analyzing",
+        label: "Zora is reasoning",
         pillClasses:
           "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-200 animate-pulse",
         dotClasses: "bg-sky-500",
@@ -350,14 +350,14 @@ function ChatInner() {
     }
     if (isThinking) {
       return {
-        label: "Aurora Thinking",
+        label: "Zora is thinking",
         pillClasses:
           "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-200 animate-pulse",
         dotClasses: "bg-violet-500",
       };
     }
     return {
-      label: "Aurora Online",
+      label: "Zora is ready",
       pillClasses:
         "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200",
       dotClasses: "bg-emerald-500",
@@ -389,7 +389,7 @@ function ChatInner() {
   const startDictation = useCallback(() => {
     const SpeechRecognitionImpl = getSpeechRecognitionConstructor();
     if (!SpeechRecognitionImpl) {
-      setVoiceWarning("Aurora voice not supported in this browser.");
+      setVoiceWarning("Zora voice dictation isn’t supported in this browser yet.");
       setVoiceSupported(false);
       return;
     }
@@ -408,7 +408,7 @@ function ChatInner() {
       };
       recognition.onerror = (event: any) => {
         setVoiceWarning(
-          event?.error ? `Aurora voice error: ${event.error}` : "Aurora dictation error.",
+          event?.error ? `Zora voice error: ${event.error}` : "Zora dictation error.",
         );
         cleanupRecognition();
       };
@@ -419,7 +419,7 @@ function ChatInner() {
       recognition.start();
       setIsRecording(true);
     } catch {
-      setVoiceWarning("Aurora voice dictation could not start.");
+      setVoiceWarning("Zora voice dictation could not start.");
     }
   }, [
     cleanupRecognition,
@@ -462,7 +462,7 @@ function ChatInner() {
     const confirmed =
       typeof window === "undefined"
         ? true
-        : window.confirm("Delete this Aurora session?");
+        : window.confirm("Delete this chat?");
     if (!confirmed) return;
     if (activeSession?.id === id) {
       stopPendingReply();
@@ -474,7 +474,7 @@ function ChatInner() {
     const confirmed =
       typeof window === "undefined"
         ? true
-        : window.confirm("Clear all Aurora sessions?");
+        : window.confirm("Clear all Zora chats on this device?");
     if (!confirmed) return;
     stopPendingReply();
     const sessionIds = sessions.map((session) => session.id);
@@ -602,7 +602,7 @@ function ChatInner() {
       const fallbackContent =
         existing?.content && existing.content.trim().length
           ? existing.content
-          : "Aurora reply paused.";
+          : "Zora reply paused.";
       updateMessageInSession(sessionId, assistantId, {
         status: "error",
         content: fallbackContent,
@@ -655,12 +655,12 @@ function ChatInner() {
 
       const timeoutId = setTimeout(() => {
         const replyText = [
-          "Aurora has woven this into your thread.",
+          "Zora has pinned this to your thread.",
           settings.connectedApps
-            ? "Connected apps are on: Workspace, Outbox, and Documents are now part of the reasoning context."
-            : "Turn on connected apps to let Aurora pull from Workspace, Outbox, and Documents.",
+            ? "Connected apps are on: Workspace, Outbox, and Documents can now join the context when needed."
+            : "Turn on connected apps if you want Zora to read from Workspace, Outbox, and Documents.",
           settings.jokesEnabled
-            ? "\n\n(Soft aurora whisper: remember to breathe between fights.)"
+            ? "\n\n(Soft reminder from Zora: you’re allowed to take a break.No Need to steamroll through your work right now.)"
             : "",
         ]
           .filter(Boolean)
@@ -752,11 +752,11 @@ function ChatInner() {
 
   const handleShareSessionHeader = (session: ChatSession) => {
     if (typeof navigator === "undefined") return;
-    const shareText = `Zora Aurora chat: "${session.title}"\n\n${formatPreview(
+    const shareText = `Zora chat: "${session.title}"\n\n${formatPreview(
       session.messages,
-    )}\n\n#ZoraAurora`;
+    )}\n\n#Zora`;
     navigator.clipboard.writeText(shareText).then(() => {
-      toast.success("Session summary copied. Drop it anywhere.");
+      toast.success("Session summary copied. Paste it wherever you like.");
     });
   };
 
@@ -765,10 +765,10 @@ function ChatInner() {
       try {
         await sendFeedback(messageId, direction);
         toast.success(
-          direction === "up" ? "Feedback recorded. 👍" : "Feedback recorded. 👎",
+          direction === "up" ? "Thanks — that helped Zora learn." : "Got it — Zora will tune this.",
         );
       } catch {
-        toast.error("Unable to record feedback right now.");
+        toast.error("Couldn’t save feedback. Try again in a bit.");
       }
     },
     [],
@@ -789,9 +789,9 @@ function ChatInner() {
         const { url } = await getShareLink(message.id);
         await copyToClipboard(url);
         setShareState({ message, url });
-        toast.success("Share link generated and copied.");
+        toast.success("Share link created and copied.");
       } catch {
-        toast.error("Unable to generate share link.");
+        toast.error("Couldn’t generate a share link.");
       }
     },
     [],
@@ -849,21 +849,21 @@ function ChatInner() {
     <section className="flex h-full w-full flex-col">
       <div className="flex h-full w-full flex-col px-4 py-4 md:px-8 md:py-6">
         {/* Shell */}
-        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200 bg-slate-950/90 px-4 py-4 shadow-sm backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95 md:px-6 md:py-5">
-          {/* Aurora background */}
+        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-slate-950/90 px-4 py-4 shadow-lg backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/95 md:px-6 md:py-5">
+          {/* Soft Zora background */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-[-25%] -top-64 h-80 rounded-[999px] bg-gradient-to-r from-sky-500/30 via-cyan-400/25 to-emerald-400/35 blur-3xl opacity-80"
+            className="pointer-events-none absolute inset-x-[-25%] -top-64 h-80 rounded-[999px] bg-gradient-to-r from-sky-500/30 via-cyan-400/25 to-emerald-400/35 blur-3xl opacity-70"
             style={{ animation: "aurora-sentient 18s ease-in-out infinite alternate" }}
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-[-30%] bottom-[-50%] h-96 rounded-[999px] bg-gradient-to-r from-emerald-400/25 via-sky-500/25 to-indigo-500/30 blur-3xl opacity-80"
+            className="pointer-events-none absolute inset-x-[-30%] bottom-[-50%] h-96 rounded-[999px] bg-gradient-to-r from-emerald-400/25 via-sky-500/25 to-indigo-500/30 blur-3xl opacity-70"
             style={{ animation: "aurora-sentient 24s ease-in-out infinite alternate-reverse" }}
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-25 bg-[radial-gradient(at_50%_10%,rgba(56,189,248,0.35),transparent_55%),radial-gradient(at_10%_80%,rgba(52,211,153,0.25),transparent_55%),radial-gradient(at_90%_80%,rgba(129,140,248,0.25),transparent_55%)] animate-aurora-pulse"
+            className="pointer-events-none absolute inset-0 opacity-25 bg-[radial-gradient(at_50%_10%,rgba(56,189,248,0.30),transparent_55%),radial-gradient(at_10%_80%,rgba(52,211,153,0.20),transparent_55%),radial-gradient(at_90%_80%,rgba(129,140,248,0.20),transparent_55%)] animate-aurora-pulse"
           />
 
           {/* HEADER BAR */}
@@ -874,7 +874,7 @@ function ChatInner() {
                 onClick={() => setIsCollapsed((value) => !value)}
                 className="inline-flex items-center rounded-full border border-slate-700/70 bg-slate-900/70 px-2.5 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 aria-pressed={!isCollapsed}
-                aria-label={isCollapsed ? "Expand Aurora chat" : "Collapse Aurora chat"}
+                aria-label={isCollapsed ? "Expand Zora chat" : "Collapse Zora chat"}
               >
                 {isCollapsed ? (
                   <>
@@ -889,7 +889,7 @@ function ChatInner() {
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <h1 className="text-sm font-semibold text-slate-50">
-                    Zora Aurora Console
+                    Zora Chat
                   </h1>
                   <span
                     className={[
@@ -917,8 +917,9 @@ function ChatInner() {
                     {zoraStatus.label}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[11px] text-slate-400">
-                  Ask, argue, iterate — Aurora will route across engines and your Workspace layer.
+                <p className="mt-0.5 text-[11px] text-slate-300">
+                  Ask what you need — Zora pulls from AI Models, Command Center and your Workspace,
+                  then explains things as needed.
                 </p>
               </div>
             </div>
@@ -927,7 +928,7 @@ function ChatInner() {
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 shadow-sm transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              aria-label="Aurora chat settings"
+              aria-label="Zora chat settings"
               aria-expanded={settingsOpen}
             >
               <Settings className="h-4 w-4" />
@@ -950,9 +951,9 @@ function ChatInner() {
                       onChange={(event) =>
                         setSearchQuery(event.target.value)
                       }
-                      placeholder="Search Aurora sessions…"
+                      placeholder="Search your Zora chats…"
                       className="h-7 flex-1 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                      aria-label="Search Aurora sessions"
+                      aria-label="Search Zora chats"
                     />
                   </div>
                 </div>
@@ -961,12 +962,12 @@ function ChatInner() {
                     type="button"
                     onClick={createNewSession}
                     className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    aria-label="Create new Aurora chat"
+                    aria-label="Create new chat"
                   >
                     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-[13px]">
                       +
                     </span>
-                    New Aurora Chat
+                    New Chat
                   </button>
                 </div>
               </div>
@@ -1003,7 +1004,7 @@ function ChatInner() {
                             : "bg-slate-900/80 text-slate-100 hover:bg-slate-800",
                         ].join(" ")}
                         aria-pressed={isActive}
-                        aria-label={`Open Aurora session ${session.title}`}
+                        aria-label={`Open Zora chat ${session.title}`}
                       >
                         {renamingSessionId === session.id ? (
                           <input
@@ -1028,7 +1029,7 @@ function ChatInner() {
                             }}
                             autoFocus
                             className="w-32 rounded-full bg-white px-2 py-0.5 text-xs text-slate-900 focus:outline-none"
-                            aria-label="Rename Aurora session"
+                            aria-label="Rename Zora chat"
                           />
                         ) : (
                           <span
@@ -1052,7 +1053,7 @@ function ChatInner() {
                             : "group-hover:text-slate-200",
                         ].join(" ")}
                         aria-label={
-                          session.pinned ? "Unpin session" : "Pin session"
+                          session.pinned ? "Unpin chat" : "Pin chat"
                         }
                       >
                         {session.pinned ? (
@@ -1065,7 +1066,7 @@ function ChatInner() {
                         type="button"
                         onClick={() => handleShareSessionHeader(session)}
                         className="rounded-full p-1 text-slate-500 opacity-0 transition hover:text-sky-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
-                        aria-label="Copy session summary"
+                        aria-label="Copy chat summary"
                       >
                         <Share2 className="h-3.5 w-3.5" />
                       </button>
@@ -1073,7 +1074,7 @@ function ChatInner() {
                         type="button"
                         onClick={() => handleDeleteSession(session.id)}
                         className="rounded-full p-1 text-slate-500 opacity-0 transition hover:text-rose-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
-                        aria-label="Delete session"
+                        aria-label="Delete chat"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -1088,10 +1089,10 @@ function ChatInner() {
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                        Aurora Settings
+                        Zora settings
                       </span>
                       <span className="text-[11px] text-slate-500">
-                        Precision, glow, and humor — tune how Aurora responds.
+                        Nudge how serious, playful, or technical Zora should be.
                       </span>
                     </div>
                     <button
@@ -1106,10 +1107,10 @@ function ChatInner() {
                     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
                       <div>
                         <p className="text-xs font-medium text-slate-100">
-                          Allow NSFW Topics
+                          Allow NSFW topics
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Disabled by default. Enables spicier debate space.
+                          Off by default. Turn on only if you’re okay with it.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1124,10 +1125,10 @@ function ChatInner() {
                     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
                       <div>
                         <p className="text-xs font-medium text-slate-100">
-                          Light Jokes
+                          Light jokes
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Sprinkle gentle humor between dense reasoning.
+                          Let Zora sprinkle in gentle humor when it’s helpful.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1141,10 +1142,10 @@ function ChatInner() {
                     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
                       <div>
                         <p className="text-xs font-medium text-slate-100">
-                          Technical Mode
+                          Technical mode
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Prefer structured, low-fluff explanations.
+                          More structure, less fluff, more deep-dive.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1158,10 +1159,11 @@ function ChatInner() {
                     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
                       <div>
                         <p className="text-xs font-medium text-slate-100">
-                          Connected Apps
+                          Connected apps
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Let Aurora read from Workspace, Outbox, and Docs.
+                          Let Zora weave in context from Workspace, Outbox, and
+                          Docs (when wired).
                         </p>
                       </div>
                       <IOSSwitch
@@ -1175,18 +1177,19 @@ function ChatInner() {
                   </div>
                   <div className="mt-4 rounded-xl border border-rose-500/50 bg-rose-950/30 p-3 text-[11px] text-rose-100">
                     <div className="mb-1 flex items-center justify-between">
-                      <span className="font-semibold">Danger Zone</span>
+                      <span className="font-semibold">Danger zone</span>
                       <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <p className="mb-2">
-                      Clearing all sessions wipes the slate for this browser.
+                      Clearing chats wipes everything stored locally for Zora on
+                      this browser.
                     </p>
                     <button
                       type="button"
                       onClick={handleClearAllSessions}
                       className="inline-flex items-center gap-1 rounded-full border border-rose-400 bg-rose-700 px-3 py-1 text-[11px] font-semibold text-rose-50 transition hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-400"
                     >
-                      Clear All Sessions
+                      Clear all chats
                     </button>
                   </div>
                 </div>
@@ -1332,7 +1335,7 @@ function ChatInner() {
                   {isThinking && (
                     <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
                       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/95 px-4 py-1.5 text-[11px] text-slate-200 shadow-sm animate-aurora-pulse">
-                        <span>Aurora is composing a reply…</span>
+                        <span>Zora is composing a reply…</span>
                         <button
                           type="button"
                           onClick={stopPendingReply}
@@ -1385,7 +1388,7 @@ function ChatInner() {
                           : "Fast"}
                       </button>
                       <span className="hidden text-[10px] text-slate-500 md:inline">
-                        Tip: {" "}
+                        Tip:{" "}
                         <kbd className="rounded border border-slate-600 bg-slate-900 px-1 text-[9px]">
                           ⌘ / Ctrl + K
                         </kbd>{" "}
@@ -1427,7 +1430,7 @@ function ChatInner() {
                       )}
                       {voiceSupported === false && !voiceWarning && (
                         <span className="rounded-full border border-slate-700 bg-slate-950/95 px-2 py-0.5 text-[10px] text-slate-400">
-                          Voice not supported in this browser.
+                          Voice isn’t supported in this browser.
                         </span>
                       )}
                     </div>
@@ -1452,9 +1455,9 @@ function ChatInner() {
                       onChange={(event) => setInputValue(event.target.value)}
                       onKeyDown={handleTextareaKeyDown}
                       rows={2}
-                      placeholder="Ask Zora anything about your projects, docs, or life logistics…"
+                      placeholder="Talk to Zora about your ideas, tasks, or anything you’re figuring out…"
                       className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                      aria-label="Aurora composer"
+                      aria-label="Zora composer"
                     />
                     <button
                       type="submit"
@@ -1495,15 +1498,6 @@ function ChatInner() {
         </div>
       </div>
 
-      {shareState ? (
-        <ZoraShareModal
-          open
-          message={shareState.message}
-          url={shareState.url}
-          onClose={() => setShareState(null)}
-        />
-      ) : null}
-
       {/* animation helpers */}
       <style>{`
         @keyframes aurora-dot {
@@ -1517,7 +1511,7 @@ function ChatInner() {
         }
         @keyframes aurora-pulse {
           0% { transform: scale(1); opacity: 0.7; }
-          50% { transform: scale(1.1); opacity: 0.9; filter: brightness(1.2); }
+          50% { transform: scale(1.06); opacity: 0.95; filter: brightness(1.15); }
           100% { transform: scale(1); opacity: 0.7; }
         }
         @keyframes aurora-wave {
