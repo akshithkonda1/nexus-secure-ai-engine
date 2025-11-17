@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Command, Menu, Search, Sparkles } from "lucide-react";
+import { Command, Menu, Search, Sparkles, Network } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useProfile } from "@/features/profile/ProfileProvider";
@@ -9,7 +9,7 @@ import {
   requestProfileOpen,
 } from "@/lib/actions";
 import { NotificationBell } from "@/components/shell/NotificationBell";
-import { CommandCenterLauncher } from "@/features/command-center/CommandCenterLauncher";
+import { CommandCenterOverlay } from "@/components/command-center/CommandCenterOverlay";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
@@ -30,6 +30,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [notificationCount] = useState<number>(7); // TODO: wire to live notifications feed
+  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -137,7 +138,19 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
                     : undefined,
                 )}
               />
-              <CommandCenterLauncher />
+              <button
+                type="button"
+                onClick={() => setCommandCenterOpen(true)}
+                className="relative inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.9)] px-3 py-1.5 text-xs font-semibold text-[rgba(var(--subtle),0.9)] shadow-[0_0_22px_rgba(0,0,0,0.4)] transition hover:border-[rgba(var(--brand),0.7)] hover:text-[rgb(var(--text))]"
+              >
+                <span className="relative flex h-6 w-6 items-center justify-center">
+                  <span className="absolute h-6 w-6 animate-[pulse_3s_ease-in-out_infinite] rounded-full bg-[radial-gradient(circle,_rgba(var(--accent-emerald),0.7),_transparent_70%)] opacity-70" />
+                  <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(var(--accent-emerald),0.2)]">
+                    <Network className="size-3 text-[rgb(var(--accent-emerald))]" />
+                  </span>
+                </span>
+                <span>Command Center</span>
+              </button>
               <ThemeToggle className="hidden lg:inline-flex" />
               <div
                 className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.4)] transition-colors duration-300 lg:block dark:bg-[color:rgba(148,163,184,0.28)]"
@@ -192,6 +205,10 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           </div>
         </div>
       </header>
+      <CommandCenterOverlay
+        open={commandCenterOpen}
+        onClose={() => setCommandCenterOpen(false)}
+      />
     </>
   );
 }
