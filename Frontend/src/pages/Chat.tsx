@@ -33,7 +33,6 @@ import {
   ChatMessage,
   ChatProvider,
   ChatSession,
-  MessageStatus,
   Speed,
   RESPONSE_DELAY_MS,
   autoTitleFromMessages,
@@ -76,7 +75,9 @@ const formatTime = (iso: string) =>
 
 const formatPreview = (messages: ChatMessage[]) => {
   const firstUser = messages.find((msg) => msg.role === "user" && msg.content);
-  return firstUser ? firstUser.content.split("\n")[0].slice(0, 80) : "No user messages yet.";
+  return firstUser
+    ? firstUser.content.split("\n")[0].slice(0, 80)
+    : "No user messages yet.";
 };
 
 /* ------------------------------------------------------------------ */
@@ -99,15 +100,15 @@ const IOSSwitch = React.forwardRef<
     aria-label={label}
     onClick={() => onChange(!checked)}
     className={[
-      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
+      "relative inline-flex h-6 w-11 items-center rounded-full border border-white/15 transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
       checked
         ? "bg-[rgb(var(--brand))]"
-        : "bg-[rgba(var(--border),0.6)]",
+        : "bg-[rgba(15,23,42,0.85)]",
     ].join(" ")}
   >
     <span
       className={[
-        "inline-block h-5 w-5 transform rounded-full bg-[rgb(var(--surface))] shadow-sm transition-transform",
+        "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
         checked ? "translate-x-5" : "translate-x-1",
       ].join(" ")}
     />
@@ -198,7 +199,10 @@ function ChatInner() {
   const hasStreamingDebate = Boolean(
     firstAnswer || partialAnswer || finalAnswer || streamError || isStreamingDebate,
   );
-  const streamProgressPercent = Math.max(0, Math.min(100, Math.round(streamProgress * 100)));
+  const streamProgressPercent = Math.max(
+    0,
+    Math.min(100, Math.round(streamProgress * 100)),
+  );
 
   const setActiveSessionId = useCallback(
     (value: string) => dispatch({ type: "setActiveSession", payload: value }),
@@ -272,7 +276,7 @@ function ChatInner() {
   );
 
   const pendingReplyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
   const pendingAssistantMessageIdRef = useRef<string | null>(null);
   const pendingAssistantSessionIdRef = useRef<string | null>(null);
@@ -332,7 +336,7 @@ function ChatInner() {
       return;
     }
     setActiveSessionId(activeSession.id);
-  }, [activeSession, activeSessionId, sessions]);
+  }, [activeSession, activeSessionId, sessions, setActiveSessionId]);
 
   /* ---------------------------- Dictation --------------------------- */
 
@@ -344,7 +348,7 @@ function ChatInner() {
     recognitionRef.current?.stop();
     recognitionRef.current = null;
     setIsRecording(false);
-  }, []);
+  }, [setIsRecording]);
 
   const startDictation = useCallback(() => {
     const SpeechRecognitionImpl = getSpeechRecognitionConstructor();
@@ -369,7 +373,9 @@ function ChatInner() {
       };
 
       recognition.onerror = (event: any) => {
-        setVoiceWarning(event?.error ? `Voice error: ${event.error}` : "Voice dictation error.");
+        setVoiceWarning(
+          event?.error ? `Voice error: ${event.error}` : "Voice dictation error.",
+        );
         cleanupRecognition();
       };
 
@@ -383,7 +389,13 @@ function ChatInner() {
     } catch {
       setVoiceWarning("Voice dictation could not start.");
     }
-  }, [cleanupRecognition]);
+  }, [
+    cleanupRecognition,
+    setInputValue,
+    setIsRecording,
+    setVoiceSupported,
+    setVoiceWarning,
+  ]);
 
   const stopDictation = useCallback(() => {
     cleanupRecognition();
@@ -415,7 +427,10 @@ function ChatInner() {
   };
 
   const handleDeleteSession = (id: string) => {
-    const confirmed = typeof window === "undefined" ? true : window.confirm("Delete this chat session?");
+    const confirmed =
+      typeof window === "undefined"
+        ? true
+        : window.confirm("Delete this chat session?");
     if (!confirmed) return;
     if (activeSession?.id === id) {
       stopPendingReply();
@@ -441,11 +456,17 @@ function ChatInner() {
   };
 
   const beginRenameSession = (session: ChatSession) => {
-    dispatch({ type: "startRename", payload: { sessionId: session.id, draft: session.title } });
+    dispatch({
+      type: "startRename",
+      payload: { sessionId: session.id, draft: session.title },
+    });
   };
 
   const saveRenameSession = (id: string, value: string) => {
-    dispatch({ type: "commitRename", payload: { sessionId: id, title: value } });
+    dispatch({
+      type: "commitRename",
+      payload: { sessionId: id, title: value },
+    });
   };
 
   const cancelRenameSession = () => {
@@ -457,11 +478,13 @@ function ChatInner() {
     const byPinned = [...sessions].sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     });
     if (!query) return byPinned;
     return byPinned.filter((session) =>
-      session.title.toLowerCase().includes(query)
+      session.title.toLowerCase().includes(query),
     );
   }, [sessions, searchQuery]);
 
@@ -471,7 +494,7 @@ function ChatInner() {
     (sessionId: string, message: ChatMessage) => {
       dispatch({ type: "appendMessage", payload: { sessionId, message } });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const updateMessageInSession = useCallback(
@@ -481,7 +504,7 @@ function ChatInner() {
         payload: { sessionId, messageId, patch },
       });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const getMessageFromSession = useCallback(
@@ -489,7 +512,7 @@ function ChatInner() {
       const session = sessions.find((item) => item.id === sessionId);
       return session?.messages.find((message) => message.id === messageId);
     },
-    [sessions]
+    [sessions],
   );
 
   useEffect(() => {
@@ -510,7 +533,8 @@ function ChatInner() {
   const handleMessagesScroll = useCallback(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const distanceFromBottom =
+      el.scrollHeight - el.scrollTop - el.clientHeight;
     const shouldFollow = distanceFromBottom < 160;
     if (followMessagesRef.current !== shouldFollow) {
       followMessagesRef.current = shouldFollow;
@@ -523,7 +547,7 @@ function ChatInner() {
     if (!el) return;
     el.addEventListener("scroll", handleMessagesScroll);
     return () => el.removeEventListener("scroll", handleMessagesScroll);
-  }, [handleMessagesScroll, messagesContainerRef]);
+  }, [handleMessagesScroll]);
 
   useEffect(() => {
     if (followMessagesRef.current) {
@@ -536,13 +560,17 @@ function ChatInner() {
       clearTimeout(pendingReplyTimeoutRef.current);
       pendingReplyTimeoutRef.current = null;
     }
-    if (pendingAssistantMessageIdRef.current && pendingAssistantSessionIdRef.current) {
+    if (
+      pendingAssistantMessageIdRef.current &&
+      pendingAssistantSessionIdRef.current
+    ) {
       const assistantId = pendingAssistantMessageIdRef.current;
       const sessionId = pendingAssistantSessionIdRef.current;
       const existing = getMessageFromSession(sessionId, assistantId);
-      const fallbackContent = existing?.content && existing.content.trim().length
-        ? existing.content
-        : "Reply cancelled.";
+      const fallbackContent =
+        existing?.content && existing.content.trim().length
+          ? existing.content
+          : "Reply cancelled.";
       updateMessageInSession(sessionId, assistantId, {
         status: "error",
         content: fallbackContent,
@@ -551,7 +579,7 @@ function ChatInner() {
     pendingAssistantMessageIdRef.current = null;
     pendingAssistantSessionIdRef.current = null;
     setIsThinking(false);
-  }, [getMessageFromSession, updateMessageInSession]);
+  }, [getMessageFromSession, updateMessageInSession, setIsThinking]);
 
   useEffect(() => () => stopPendingReply(), [stopPendingReply]);
 
@@ -564,6 +592,7 @@ function ChatInner() {
       const assistantId = reuseAssistantId ?? createId();
       pendingAssistantMessageIdRef.current = assistantId;
       pendingAssistantSessionIdRef.current = sessionId;
+
       const ensurePlaceholder = () => {
         if (reuseAssistantId) {
           const existing = getMessageFromSession(sessionId, assistantId);
@@ -585,6 +614,7 @@ function ChatInner() {
           pushMessageToSession(sessionId, placeholder);
         }
       };
+
       ensurePlaceholder();
       setIsThinking(true);
 
@@ -623,7 +653,8 @@ function ChatInner() {
       settings.jokesEnabled,
       speed,
       updateMessageInSession,
-    ]
+      setIsThinking,
+    ],
   );
 
   const updateActiveSessionTitleIfNeeded = useCallback(
@@ -631,9 +662,12 @@ function ChatInner() {
       const session = sessions.find((item) => item.id === sessionId);
       if (!session || session.title !== "New chat") return;
       const nextTitle = autoTitleFromMessages(session.messages);
-      dispatch({ type: "commitRename", payload: { sessionId, title: nextTitle } });
+      dispatch({
+        type: "commitRename",
+        payload: { sessionId, title: nextTitle },
+      });
     },
-    [dispatch, sessions]
+    [dispatch, sessions],
   );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -662,7 +696,10 @@ function ChatInner() {
     setInputValue("");
     setPendingAttachments([]);
 
-    setTimeout(() => updateActiveSessionTitleIfNeeded(activeSession.id), 0);
+    setTimeout(
+      () => updateActiveSessionTitleIfNeeded(activeSession.id),
+      0,
+    );
 
     scheduleAssistantReply(activeSession.id, userMessage);
     void startStreamingDebate({ prompt: trimmed });
@@ -678,7 +715,11 @@ function ChatInner() {
           .reverse()
           .find((msg) => msg.role === "user");
     if (!sourceUserMessage) return;
-    scheduleAssistantReply(activeSession.id, sourceUserMessage, assistantMessage.id);
+    scheduleAssistantReply(
+      activeSession.id,
+      sourceUserMessage,
+      assistantMessage.id,
+    );
   };
 
   /* -------------------------- Keyboard/A11y ------------------------- */
@@ -701,11 +742,14 @@ function ChatInner() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [settingsOpen]);
+  }, [settingsOpen, setIsCollapsed, setSettingsOpen]);
 
-  const handleTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleTextareaKeyDown = (
+    event: KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
     if (event.key === "Enter" && !event.shiftKey) {
-      const hasContent = inputValue.trim().length > 0 || pendingAttachments.length > 0;
+      const hasContent =
+        inputValue.trim().length > 0 || pendingAttachments.length > 0;
       if (hasContent) {
         event.preventDefault();
         const form = event.currentTarget.form;
@@ -730,597 +774,730 @@ function ChatInner() {
   /* ------------------------------ Render ----------------------------- */
 
   return (
-    <section className="flex h-full flex-col gap-4">
-      {/* Header */}
-      <header className="flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsCollapsed((value) => !value)}
-            className="inline-flex items-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] px-3 py-1 text-xs font-medium text-[rgb(var(--subtle))] transition hover:bg-[rgba(var(--panel),0.92)] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
-            aria-pressed={!isCollapsed}
-            aria-label={isCollapsed ? "Expand chat" : "Collapse chat"}
-          >
-            {isCollapsed ? (
-              <>
-                <ChevronDown className="mr-1 h-3 w-3" /> Expand chat
-              </>
-            ) : (
-              <>
-                <ChevronUp className="mr-1 h-3 w-3" /> Collapse chat
-              </>
-            )}
-          </button>
-          <div className="flex flex-col">
-            <h1 className="text-sm font-semibold text-[rgb(var(--text))]">Chat Console</h1>
-            <p className="text-xs text-[rgb(var(--subtle))]">
-              Ask anything — Nexus will route to Workspace, Outbox, or Documents when needed.
-            </p>
+    <section className="flex h-full w-full flex-col">
+      <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-4 px-3 py-4 md:px-6 md:py-6">
+        {/* HEADER BAR */}
+        <header className="flex items-center justify-between rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_55%),rgba(15,23,42,0.96)] px-4 py-3 shadow-[0_22px_70px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsCollapsed((value) => !value)}
+              className="inline-flex items-center rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-medium text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400"
+              aria-pressed={!isCollapsed}
+              aria-label={isCollapsed ? "Expand chat" : "Collapse chat"}
+            >
+              {isCollapsed ? (
+                <>
+                  <ChevronDown className="mr-1 h-3 w-3" /> Expand
+                </>
+              ) : (
+                <>
+                  <ChevronUp className="mr-1 h-3 w-3" /> Collapse
+                </>
+              )}
+            </button>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-slate-50">
+                  Chat Console
+                </h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Live
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                Ask anything — Nexus will route to Workspace, Outbox, or
+                Documents when needed.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
           <button
             ref={settingsButtonRef}
             type="button"
             onClick={() => setSettingsOpen((value) => !value)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.8)] bg-[rgb(var(--panel))] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 ring-1 ring-white/15 transition hover:bg-white/10 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
             aria-label="Chat settings"
             aria-expanded={settingsOpen}
           >
             <Settings className="h-4 w-4" />
           </button>
-        </div>
-      </header>
+        </header>
 
-      {isCollapsed ? null : (
-        <>
-          {/* Search */}
-          <div className="flex items-center gap-2 rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] px-3 py-2 shadow-sm">
-            <Search className="h-4 w-4 text-[rgb(var(--subtle))]" aria-hidden="true" />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search sessions…"
-              className="w-full bg-transparent text-xs text-[rgb(var(--text))] outline-none placeholder:text-[rgba(var(--subtle),0.8)]"
-              aria-label="Search chat sessions"
-            />
-          </div>
-
-          {/* Sessions strip */}
-          <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] px-3 py-2 text-xs shadow-sm">
-            <button
-              type="button"
-              onClick={createNewSession}
-              className="inline-flex items-center rounded-full bg-[rgba(var(--brand),0.12)] px-3 py-1 font-medium text-[rgb(var(--brand))] transition hover:bg-[rgba(var(--brand),0.2)] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
-              aria-label="Create new chat session"
-            >
-              +<span className="ml-1">New chat</span>
-            </button>
-            {filteredSessions.map((session) => {
-              const isActive = session.id === activeSession?.id;
-              const tooltip = `${session.title}\n${formatPreview(session.messages)}\nCreated ${new Date(session.createdAt).toLocaleString()}`;
-              return (
-                <div
-                  key={session.id}
-                  className="group relative inline-flex items-center gap-1"
-                  title={tooltip}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSessionId(session.id);
-                      setTimeout(() => composerRef.current?.focus(), 0);
-                    }}
-                    onDoubleClick={() => beginRenameSession(session)}
-                    className={[
-                      "inline-flex items-center gap-2 rounded-full px-3 py-1 transition focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
-                      isActive
-                        ? "bg-[rgb(var(--panel))] text-[rgb(var(--text))]"
-                        : "bg-[rgba(var(--panel),0.85)] text-[rgb(var(--subtle))] hover:bg-[rgb(var(--panel))]",
-                    ].join(" ")}
-                    aria-pressed={isActive}
-                    aria-label={`Open session ${session.title}`}
-                  >
-                    {renamingSessionId === session.id ? (
-                      <input
-                        value={renameDraft}
-                        onChange={(event) => setRenameDraft(event.target.value)}
-                        onBlur={() => saveRenameSession(session.id, renameDraft)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            saveRenameSession(session.id, renameDraft);
-                          } else if (event.key === "Escape") {
-                            event.preventDefault();
-                            cancelRenameSession();
-                          }
-                        }}
-                        autoFocus
-                        className="w-32 rounded-full bg-[rgb(var(--panel))] px-2 py-0.5 text-xs text-[rgb(var(--text))] focus:outline-none"
-                        aria-label="Rename session"
-                      />
-                    ) : (
-                      <span
-                        className="max-w-[140px] truncate text-xs font-medium"
-                        onClick={() => beginRenameSession(session)}
-                      >
-                        {session.title}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-[rgba(var(--subtle),0.8)]">
-                      {formatTime(session.createdAt)}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => togglePinSession(session.id)}
-                    className={[
-                      "rounded-full p-1 text-[rgba(var(--subtle),0.8)] transition focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
-                      session.pinned
-                        ? "text-[rgb(var(--brand))]"
-                        : "group-hover:text-[rgb(var(--subtle))]",
-                    ].join(" ")}
-                    aria-label={session.pinned ? "Unpin session" : "Pin session"}
-                  >
-                    {session.pinned ? <Star className="h-3.5 w-3.5 fill-current" /> : <StarOff className="h-3.5 w-3.5" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSession(session.id)}
-                    className="rounded-full p-1 text-[rgba(var(--subtle),0.7)] opacity-0 transition hover:text-red-500 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))] group-hover:opacity-100"
-                    aria-label="Delete session"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+        {isCollapsed ? null : (
+          <>
+            {/* SEARCH + NEW CHAT */}
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <div className="flex-1 rounded-full bg-slate-950/80 px-3 py-2 text-xs text-slate-200 ring-1 ring-white/8 shadow-[0_18px_45px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+                <div className="flex items-center gap-2">
+                  <Search
+                    className="h-4 w-4 text-slate-500"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search sessions…"
+                    className="h-7 flex-1 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                    aria-label="Search chat sessions"
+                  />
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Settings Drawer */}
-          {settingsOpen && (
-            <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgb(var(--surface))] px-4 py-3 text-xs shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[rgb(var(--subtle))]">
-                  Chat settings
-                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 md:justify-end">
                 <button
                   type="button"
-                  onClick={() => setSettingsOpen(false)}
-                  className="text-[11px] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                  onClick={createNewSession}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-slate-950 shadow-[0_18px_55px_rgba(56,189,248,0.6)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.9)] focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  aria-label="Create new chat session"
                 >
-                  Close
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-[rgb(var(--text))]">Allow NSFW topics</p>
-                    <p className="text-[11px] text-[rgb(var(--subtle))]">
-                      Disabled by default. Enables more open-ended debates.
-                    </p>
-                  </div>
-                  <IOSSwitch
-                    ref={firstSettingsSwitchRef}
-                    checked={settings.nsfwEnabled}
-                    onChange={(value) => updateSettings({ nsfwEnabled: value })}
-                    label="Allow NSFW topics"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-[rgb(var(--text))]">Enable light jokes</p>
-                    <p className="text-[11px] text-[rgb(var(--subtle))]">
-                      When on, Nexus can be a little playful.
-                    </p>
-                  </div>
-                  <IOSSwitch
-                    checked={settings.jokesEnabled}
-                    onChange={(value) => updateSettings({ jokesEnabled: value })}
-                    label="Enable light jokes"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-[rgb(var(--text))]">Technical mode</p>
-                    <p className="text-[11px] text-[rgb(var(--subtle))]">
-                      Prioritize precise, detailed answers.
-                    </p>
-                  </div>
-                  <IOSSwitch
-                    checked={settings.technicalMode}
-                    onChange={(value) => updateSettings({ technicalMode: value })}
-                    label="Technical mode"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-[rgb(var(--text))]">Connected apps</p>
-                    <p className="text-[11px] text-[rgb(var(--subtle))]">
-                      Toggle integrations with Workspace, Outbox, and Documents.
-                    </p>
-                  </div>
-                  <IOSSwitch
-                    checked={settings.connectedApps}
-                    onChange={(value) => updateSettings({ connectedApps: value })}
-                    label="Connected apps"
-                  />
-                </div>
-              </div>
-
-                <div className="mt-4 space-y-2 rounded-xl border border-[rgba(var(--accent-rose),0.35)] bg-[rgba(var(--accent-rose),0.18)] p-3 text-[11px] text-[rgb(var(--accent-rose-ink))]">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">Danger zone</span>
-                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <p>Remove sessions you no longer need. This action cannot be undone.</p>
-                  <button
-                    type="button"
-                    onClick={handleClearAllSessions}
-                    className="inline-flex items-center gap-1 rounded-full border border-[rgba(var(--accent-rose),0.45)] px-3 py-1 text-[11px] font-semibold text-[rgb(var(--accent-rose-ink))] transition hover:bg-[rgba(var(--accent-rose),0.22)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent-rose),0.35)]"
-                  >
-                  Clear all sessions
+                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-900/90 text-[13px] text-sky-300">
+                    +
+                  </span>
+                  New chat
                 </button>
               </div>
             </div>
-          )}
 
-          {/* Messages & Composer */}
-          <div className="grid flex-1 grid-rows-[1fr_auto] gap-3">
-            <div className="relative flex flex-col overflow-hidden rounded-zora-xl border border-zora-border bg-[rgb(var(--surface))] bg-zora-space/70 backdrop-blur-2xl shadow-zora-soft transition-shadow hover:shadow-zora-glow hover:border-white/10">
-              <div
-                ref={messagesContainerRef}
-                className="flex h-full flex-col gap-4 overflow-y-auto px-6 py-6"
-                role="log"
-                aria-live="polite"
-              >
-                {timelineLabel && (
-                  <span className="mx-auto mt-4 inline-flex items-center rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs font-medium text-zora-muted backdrop-blur-xl">
-                    {timelineLabel}
-                  </span>
-                )}
-                {hasStreamingDebate && (
-                  <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-zora-white shadow-zora-soft backdrop-blur-xl">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold">Streaming debate</p>
-                        <p className="text-xs text-zora-muted">Live responses with verification.</p>
-                      </div>
-                      <div className="text-right text-xs font-semibold text-zora-muted">
-                        {isStreamingDebate ? "Streaming" : "Complete"} · {streamProgressPercent}%
-                      </div>
+            {/* SESSIONS STRIP */}
+            <div className="flex items-center gap-3 overflow-x-auto rounded-3xl bg-slate-950/75 px-3 py-2 text-xs text-slate-200 ring-1 ring-white/8 shadow-[0_18px_45px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+              {filteredSessions.map((session) => {
+                const isActive = session.id === activeSession?.id;
+                const tooltip = `${session.title}\n${formatPreview(
+                  session.messages,
+                )}\nCreated ${new Date(
+                  session.createdAt,
+                ).toLocaleString()}`;
+                return (
+                  <div
+                    key={session.id}
+                    className="group relative inline-flex items-center gap-1"
+                    title={tooltip}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSessionId(session.id);
+                        setTimeout(() => composerRef.current?.focus(), 0);
+                      }}
+                      onDoubleClick={() => beginRenameSession(session)}
+                      className={[
+                        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                        isActive
+                          ? "bg-slate-800/80 text-slate-50"
+                          : "bg-slate-900/70 text-slate-300 hover:bg-slate-800/80",
+                      ].join(" ")}
+                      aria-pressed={isActive}
+                      aria-label={`Open session ${session.title}`}
+                    >
+                      {renamingSessionId === session.id ? (
+                        <input
+                          value={renameDraft}
+                          onChange={(event) =>
+                            setRenameDraft(event.target.value)
+                          }
+                          onBlur={() =>
+                            saveRenameSession(session.id, renameDraft)
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              saveRenameSession(session.id, renameDraft);
+                            } else if (event.key === "Escape") {
+                              event.preventDefault();
+                              cancelRenameSession();
+                            }
+                          }}
+                          autoFocus
+                          className="w-32 rounded-full bg-slate-900/90 px-2 py-0.5 text-xs text-slate-50 focus:outline-none"
+                          aria-label="Rename session"
+                        />
+                      ) : (
+                        <span
+                          className="max-w-[140px] truncate text-xs font-medium"
+                          onClick={() => beginRenameSession(session)}
+                        >
+                          {session.title}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-400">
+                        {formatTime(session.createdAt)}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => togglePinSession(session.id)}
+                      className={[
+                        "rounded-full p-1 text-slate-500 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                        session.pinned
+                          ? "text-sky-400"
+                          : "group-hover:text-slate-300",
+                      ].join(" ")}
+                      aria-label={
+                        session.pinned ? "Unpin session" : "Pin session"
+                      }
+                    >
+                      {session.pinned ? (
+                        <Star className="h-3.5 w-3.5 fill-current" />
+                      ) : (
+                        <StarOff className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSession(session.id)}
+                      className="rounded-full p-1 text-slate-500/70 opacity-0 transition hover:text-rose-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-400 group-hover:opacity-100"
+                      aria-label="Delete session"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SETTINGS DRAWER */}
+            {settingsOpen && (
+              <div className="rounded-3xl bg-slate-950/90 p-4 text-xs text-slate-100 ring-1 ring-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      Chat settings
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Tune how Nexus responds inside this console.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(false)}
+                    className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                    <div>
+                      <p className="text-xs font-medium text-slate-100">
+                        Allow NSFW topics
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        Disabled by default. Enables more open-ended debates.
+                      </p>
                     </div>
-                    <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-[rgb(var(--brand))] transition-all duration-200"
-                        style={{ width: `${streamProgressPercent}%` }}
-                      />
+                    <IOSSwitch
+                      ref={firstSettingsSwitchRef}
+                      checked={settings.nsfwEnabled}
+                      onChange={(value) =>
+                        updateSettings({ nsfwEnabled: value })
+                      }
+                      label="Allow NSFW topics"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                    <div>
+                      <p className="text-xs font-medium text-slate-100">
+                        Enable light jokes
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        When on, Nexus can be a little playful.
+                      </p>
                     </div>
-                    {streamError && (
-                      <p className="mt-3 text-xs text-red-400">{streamError}</p>
-                    )}
-                    {firstAnswer && (
-                      <div className="mt-4">
-                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Quick answer</p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{firstAnswer.text}</p>
-                        {firstAnswer.model && (
-                          <p className="mt-1 text-[11px] text-zora-muted">via {firstAnswer.model}</p>
-                        )}
-                      </div>
-                    )}
-                    {partialAnswer && (
-                      <div className="mt-4">
-                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Consensus</p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{partialAnswer.text}</p>
-                      </div>
-                    )}
-                    {finalAnswer && (
-                      <div className="mt-4">
-                        <p className="text-xs font-medium uppercase tracking-wide text-zora-muted">Verified</p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-zora-white">{finalAnswer.text}</p>
-                        {finalAnswer.sources && finalAnswer.sources.length > 0 && (
-                          <div className="mt-4">
-                            <p className="text-xs font-medium text-gray-600 mb-2">Sources:</p>
+                    <IOSSwitch
+                      checked={settings.jokesEnabled}
+                      onChange={(value) =>
+                        updateSettings({ jokesEnabled: value })
+                      }
+                      label="Enable light jokes"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                    <div>
+                      <p className="text-xs font-medium text-slate-100">
+                        Technical mode
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        Prioritize precise, detailed answers.
+                      </p>
+                    </div>
+                    <IOSSwitch
+                      checked={settings.technicalMode}
+                      onChange={(value) =>
+                        updateSettings({ technicalMode: value })
+                      }
+                      label="Technical mode"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-900/70 px-3 py-3 ring-1 ring-white/10">
+                    <div>
+                      <p className="text-xs font-medium text-slate-100">
+                        Connected apps
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        Integrate Workspace, Outbox, and Documents.
+                      </p>
+                    </div>
+                    <IOSSwitch
+                      checked={settings.connectedApps}
+                      onChange={(value) =>
+                        updateSettings({ connectedApps: value })
+                      }
+                      label="Connected apps"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-rose-400/40 bg-rose-500/10 p-3 text-[11px] text-rose-100">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="font-semibold">Danger zone</span>
+                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <p className="mb-2">
+                    Remove sessions you no longer need. This action cannot be
+                    undone.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClearAllSessions}
+                    className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-3 py-1 text-[11px] font-semibold text-rose-100 ring-1 ring-rose-400/60 transition hover:bg-rose-500/25 focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  >
+                    Clear all sessions
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* MAIN PANEL: MESSAGES + COMPOSER */}
+            <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-3xl bg-slate-950/90 p-4 ring-1 ring-white/10 shadow-[0_26px_90px_rgba(0,0,0,0.85)] backdrop-blur-2xl">
+              {/* STREAMING BAR */}
+              {hasStreamingDebate && (
+                <div
+                  className="mb-3 rounded-2xl bg-gradient-to-r from-sky-500/18 via-cyan-400/10 to-transparent p-3 text-xs text-slate-50 ring-1 ring-sky-400/30 shadow-[0_18px_50px_rgba(56,189,248,0.45)]"
+                  aria-live="polite"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold">
+                        Streaming debate
+                      </p>
+                      <p className="text-[11px] text-slate-200/80">
+                        Live responses with multi-model consensus and
+                        verification.
+                      </p>
+                    </div>
+                    <div className="text-right text-[11px] text-slate-200/80">
+                      <span className="font-medium">
+                        {isStreamingDebate ? "Streaming" : "Complete"}
+                      </span>
+                      <span className="ml-1 text-slate-400">
+                        · {streamProgressPercent}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-900/80">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-all duration-200"
+                      style={{ width: `${streamProgressPercent}%` }}
+                    />
+                  </div>
+
+                  {streamError && (
+                    <p className="mt-2 text-[11px] text-rose-300">
+                      {streamError}
+                    </p>
+                  )}
+
+                  {firstAnswer && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                        Quick answer
+                      </p>
+                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                        {firstAnswer.text}
+                      </p>
+                      {firstAnswer.model && (
+                        <p className="text-[10px] text-slate-300">
+                          via {firstAnswer.model}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {partialAnswer && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                        Partial consensus
+                      </p>
+                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                        {partialAnswer.text}
+                      </p>
+                    </div>
+                  )}
+
+                  {finalAnswer && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-200/80">
+                        Verified answer
+                      </p>
+                      <p className="whitespace-pre-wrap text-xs text-slate-50">
+                        {finalAnswer.text}
+                      </p>
+                      {finalAnswer.sources &&
+                        finalAnswer.sources.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-[10px] font-semibold text-slate-200/80">
+                              Sources
+                            </p>
                             <div className="space-y-1">
-                              {finalAnswer.sources.map((source: any, i: number) => (
-                                <a
-                                  key={i}
-                                  href={source.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block text-xs text-blue-600 hover:underline"
-                                >
-                                  {source.title || source.url}
-                                </a>
-                              ))}
+                              {finalAnswer.sources.map(
+                                (source: any, i: number) => (
+                                  <a
+                                    key={i}
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block text-[11px] text-sky-300 hover:underline"
+                                  >
+                                    {source.title || source.url}
+                                  </a>
+                                ),
+                              )}
                             </div>
                           </div>
                         )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* MESSAGE LIST */}
+              <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl bg-slate-900/70 ring-1 ring-white/8">
                 <div
-                  style={{
-                    height: `${virtualizer.getTotalSize()}px`,
-                    width: "100%",
-                    position: "relative",
-                  }}
+                  ref={messagesContainerRef}
+                  className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-5"
+                  role="log"
+                  aria-live="polite"
                 >
-                  {virtualizer.getVirtualItems().map((virtualRow) => {
-                    const message = messages[virtualRow.index];
-                    if (!message) return null;
-                    const isAssistant = message.role === "assistant";
-                    const bubbleClasses = [
-                      "inline-flex max-w-[min(85%,32rem)] flex-col rounded-2xl border border-white/10 bg-white/3 px-4 py-3 text-sm leading-relaxed text-zora-white shadow-[0_18px_40px_rgba(0,0,0,0.75)] backdrop-blur-xl",
-                      isAssistant
-                        ? ""
-                        : "bg-white/6 text-zora-white/95",
-                    ];
-                    const showThinking = isAssistant && message.status === "pending";
-                    return (
-                      <div
-                        key={virtualRow.key}
-                        ref={(node) => {
-                          if (node && message.id) {
-                            const height = node.getBoundingClientRect().height;
-                            if (!Number.isNaN(height)) {
-                              rowSizeMapRef.current.set(message.id, height);
+                  {timelineLabel && (
+                    <span className="mx-auto mb-1 inline-flex items-center rounded-full bg-slate-900/90 px-3 py-1 text-[11px] font-medium text-slate-300 ring-1 ring-white/10 backdrop-blur">
+                      {timelineLabel}
+                    </span>
+                  )}
+
+                  <div
+                    style={{
+                      height: `${virtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                      const message = messages[virtualRow.index];
+                      if (!message) return null;
+                      const isAssistant = message.role === "assistant";
+                      const bubbleClasses = [
+                        "inline-flex max-w-[min(82%,32rem)] flex-col rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-[0_18px_50px_rgba(0,0,0,0.7)] backdrop-blur-xl ring-1 ring-white/10",
+                        isAssistant
+                          ? "bg-slate-900/95 text-slate-50"
+                          : "bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950",
+                      ];
+                      const showThinking =
+                        isAssistant && message.status === "pending";
+                      return (
+                        <div
+                          key={virtualRow.key}
+                          ref={(node) => {
+                            if (node && message.id) {
+                              const height =
+                                node.getBoundingClientRect().height;
+                              if (!Number.isNaN(height)) {
+                                rowSizeMapRef.current.set(message.id, height);
+                              }
+                              virtualizer.measureElement(node);
                             }
-                            virtualizer.measureElement(node);
-                          }
-                        }}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                        className="flex flex-col"
-                      >
-                        <div className={isAssistant ? "self-start" : "self-end"}>
-                          <div className={bubbleClasses.join(" ")}>
-                            {showThinking ? (
-                              <div className="flex items-center gap-2">
-                                <span className="rounded-full bg-[rgba(255,255,255,0.2)] px-3 py-1 text-xs">
-                                  Nexus is thinking…
-                                </span>
-                                <div className="flex items-center gap-1">
-                                  {[0, 1, 2].map((dot) => (
-                                    <span
-                                      key={dot}
-                                      className="h-2 w-2 rounded-full bg-[rgba(var(--surface),0.8)]"
-                                      style={{
-                                        animation: "nexus-dot 1.2s infinite",
-                                        animationDelay: `${dot * 0.2}s`,
-                                      }}
-                                    />
-                                  ))}
-                                </div>
-                                <style>{`
-                                  @keyframes nexus-dot {
-                                    0%, 100% { opacity: 0.3; transform: translateY(0); }
-                                    50% { opacity: 1; transform: translateY(-2px); }
-                                  }
-                                `}</style>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="whitespace-pre-wrap break-words text-sm">
-                                  {message.content}
-                                </p>
-                                {message.attachments && message.attachments.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 text-[11px] text-zora-muted">
-                                    {message.attachments.map((name) => (
+                          }}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                          className="flex flex-col"
+                        >
+                          <div
+                            className={
+                              isAssistant ? "self-start" : "self-end"
+                            }
+                          >
+                            <div className={bubbleClasses.join(" ")}>
+                              {showThinking ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="rounded-full bg-white/10 px-3 py-1 text-[11px]">
+                                    Nexus is thinking…
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    {[0, 1, 2].map((dot) => (
                                       <span
-                                        key={name}
-                                        className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5"
-                                      >
-                                        {name}
-                                      </span>
+                                        key={dot}
+                                        className="h-1.5 w-1.5 rounded-full bg-white/40"
+                                        style={{
+                                          animation: "nexus-dot 1.2s infinite",
+                                          animationDelay: `${dot * 0.2}s`,
+                                        }}
+                                      />
                                     ))}
                                   </div>
-                                )}
-                                {message.status === "error" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRetry(message)}
-                                    className="text-xs font-medium text-zora-muted underline decoration-dotted transition hover:text-zora-white hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
-                                  >
-                                    Retry
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                                  <style>{`
+                                    @keyframes nexus-dot {
+                                      0%, 100% { opacity: 0.3; transform: translateY(0); }
+                                      50% { opacity: 1; transform: translateY(-2px); }
+                                    }
+                                  `}</style>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <p className="whitespace-pre-wrap break-words text-[13px]">
+                                    {message.content}
+                                  </p>
+                                  {message.attachments &&
+                                    message.attachments.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 text-[10px] text-slate-200/80">
+                                        {message.attachments.map((name) => (
+                                          <span
+                                            key={name}
+                                            className="rounded-full bg-black/20 px-2 py-0.5"
+                                          >
+                                            {name}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  {message.status === "error" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRetry(message)}
+                                      className="text-[11px] font-medium text-slate-200/80 underline decoration-dotted hover:text-slate-50 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                                    >
+                                      Retry
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
+                          <span className="mt-1 text-[10px] text-slate-400">
+                            {formatTime(message.createdAt)}
+                            {message.status === "error" ? " · Failed" : null}
+                          </span>
                         </div>
-                        <span
-                          className="mt-1 text-[10px] text-zora-muted"
-                          aria-hidden="true"
-                        >
-                          {formatTime(message.createdAt)}
-                          {message.status === "error" ? " · Failed" : null}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex flex-col justify-between py-4">
-                <div className="flex justify-end">
+                {/* SCROLL CONTROLS */}
+                <div className="pointer-events-none absolute inset-y-4 right-4 flex flex-col justify-between">
                   <button
                     type="button"
                     onClick={scrollToTop}
-                    className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                    className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     aria-label="Jump to top"
-                    title="Jump to top"
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
-                </div>
-                <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={() => {
                       scrollToBottom();
                       composerRef.current?.focus();
                     }}
-                    className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
+                    className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
                     aria-label="Jump to latest"
-                    title="Jump to latest"
                   >
                     <ArrowDown className="h-4 w-4" />
                   </button>
                 </div>
+
+                {isThinking && (
+                  <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
+                    <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-slate-900/95 px-4 py-1.5 text-[11px] text-slate-200 ring-1 ring-white/12 shadow-[0_16px_45px_rgba(0,0,0,0.75)]">
+                      <span>Nexus is preparing a reply…</span>
+                      <button
+                        type="button"
+                        onClick={stopPendingReply}
+                        className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2 py-0.5 text-[11px] font-semibold text-slate-950 shadow-[0_12px_35px_rgba(56,189,248,0.65)] hover:bg-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        aria-label="Stop generating reply"
+                      >
+                        <Square className="h-3 w-3" /> Stop
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {isThinking && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                  <div className="flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.6)] bg-[rgb(var(--panel))] px-3 py-1 text-xs text-[rgb(var(--subtle))] shadow-sm">
-                    <span>Nexus is preparing a reply…</span>
-                    <button
-                      type="button"
-                      onClick={stopPendingReply}
-                      className="inline-flex items-center gap-1 rounded-full bg-[rgb(var(--brand))] px-2 py-0.5 text-[11px] text-[rgb(var(--on-accent))] transition hover:bg-[rgba(var(--brand),0.85)] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
-                      aria-label="Stop generating reply"
-                    >
-                      <Square className="h-3 w-3" /> Stop
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Composer */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col gap-3 rounded-zora-xl border border-zora-border bg-[rgb(var(--surface))] bg-zora-space/80 p-4 shadow-zora-soft backdrop-blur-2xl transition-shadow hover:border-white/10 hover:shadow-zora-glow"
-            >
-              {/* Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={triggerFilePicker}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
-                    title="Add attachments or tools"
-                    aria-label="Add attachments or tools"
-                  >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSpeed((prev) =>
-                        prev === "slow"
-                          ? "normal"
-                          : prev === "normal"
-                          ? "fast"
-                          : "slow"
-                      )
-                    }
-                    className="inline-flex items-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] px-2.5 py-1 text-[11px] text-[rgb(var(--subtle))] transition hover:text-[rgb(var(--text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]"
-                    aria-label="Toggle response speed"
-                  >
-                    <Zap className="mr-1 h-3 w-3" />
-                    {speed === "slow" ? "Slow" : speed === "normal" ? "Normal" : "Fast"}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
+              {/* COMPOSER */}
+              <form
+                onSubmit={handleSubmit}
+                className="mt-2 flex flex-col gap-3 rounded-2xl bg-slate-900/80 px-4 py-3 ring-1 ring-white/10 backdrop-blur-xl"
+              >
+                {/* Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-300">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => (isRecording ? stopDictation() : startDictation())}
-                      className={[
-                        "inline-flex h-7 w-7 items-center justify-center rounded-full border border-[rgba(var(--border),0.7)] bg-[rgb(var(--panel))] transition focus:outline-none focus:ring-2 focus:ring-[rgb(var(--brand))]",
-                        isRecording
-                          ? "text-[rgb(var(--brand))]"
-                          : "text-[rgb(var(--subtle))] hover:text-[rgb(var(--text))]",
-                      ].join(" ")}
-                      aria-pressed={isRecording}
-                      aria-label={isRecording ? "Stop voice dictation" : "Start voice dictation"}
+                      onClick={triggerFilePicker}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-950/80 text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      title="Add attachments or tools"
+                      aria-label="Add attachments or tools"
                     >
-                      {isRecording ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+                      <MoreHorizontal className="h-3.5 w-3.5" />
                     </button>
-                    <Waveform active={isRecording} />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSpeed((prev) =>
+                          prev === "slow"
+                            ? "normal"
+                            : prev === "normal"
+                            ? "fast"
+                            : "slow",
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-full bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-300 ring-1 ring-white/10 transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      aria-label="Toggle response speed"
+                    >
+                      <Zap className="h-3 w-3" />
+                      {speed === "slow"
+                        ? "Slow"
+                        : speed === "normal"
+                        ? "Normal"
+                        : "Fast"}
+                    </button>
                   </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          isRecording ? stopDictation() : startDictation()
+                        }
+                        className={[
+                          "inline-flex h-7 w-7 items-center justify-center rounded-full ring-1 ring-white/10 transition focus:outline-none focus:ring-2 focus:ring-sky-400",
+                          isRecording
+                            ? "bg-sky-500/15 text-sky-300"
+                            : "bg-slate-950/80 text-slate-300 hover:bg-slate-800 hover:text-slate-50",
+                        ].join(" ")}
+                        aria-pressed={isRecording}
+                        aria-label={
+                          isRecording
+                            ? "Stop voice dictation"
+                            : "Start voice dictation"
+                        }
+                      >
+                        {isRecording ? (
+                          <Mic className="h-3.5 w-3.5" />
+                        ) : (
+                          <MicOff className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <Waveform active={isRecording} />
+                    </div>
+
                     {voiceWarning && (
-                      <span className="flex items-center gap-1 rounded-full border border-[rgba(var(--accent-amber),0.45)] bg-[rgba(var(--accent-amber),0.2)] px-2 py-0.5 text-[10px] text-[rgb(var(--accent-amber-ink))]">
-                      <AlertCircle className="h-3 w-3" /> {voiceWarning}
-                    </span>
-                  )}
-                  {voiceSupported === false && !voiceWarning && (
-                    <span className="rounded-full bg-[rgba(var(--border),0.3)] px-2 py-0.5 text-[10px] text-[rgb(var(--subtle))]">
-                      Voice not supported in this browser.
-                    </span>
-                  )}
+                      <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-100 ring-1 ring-amber-400/50">
+                        <AlertCircle className="h-3 w-3" /> {voiceWarning}
+                      </span>
+                    )}
+                    {voiceSupported === false && !voiceWarning && (
+                      <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] text-slate-400 ring-1 ring-white/10">
+                        Voice not supported in this browser.
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                multiple
-                onChange={(event) => handleFileChange(event.target.files)}
-              />
-
-              {/* Textarea */}
-              <div className="mt-1 flex items-center gap-3 rounded-full border border-zora-border bg-zora-space/90 px-4 py-2 shadow-zora-soft backdrop-blur-2xl transition-transform transition-shadow duration-200 hover:translate-y-[-1px] hover:shadow-zora-glow focus-within:border-white/15 focus-within:shadow-zora-glow">
-                <textarea
-                  ref={composerRef}
-                  value={inputValue}
-                  onChange={(event) => setInputValue(event.target.value)}
-                  onKeyDown={handleTextareaKeyDown}
-                  rows={2}
-                  placeholder="Ask me anything…"
-                  className="flex-1 resize-none bg-transparent text-sm text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.85)] outline-none focus:border-none focus:outline-none focus:ring-0"
-                  aria-label="Chat composer"
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  multiple
+                  onChange={(event) => handleFileChange(event.target.files)}
                 />
 
-                <button
-                  type="submit"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_0%,#3EE4FF,rgba(62,228,255,0.2))] text-zora-night shadow-zora-glow transition-transform transition-shadow duration-200 hover:scale-[1.03] hover:shadow-zora-glow active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-60"
-                  disabled={!inputValue.trim() && pendingAttachments.length === 0}
-                  aria-label="Send message"
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              {pendingAttachments.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
-                  {pendingAttachments.map((name) => (
-                    <span
-                      key={name}
-                      className="rounded-full border border-white/10 bg-white/8 px-2 py-0.5 text-zora-muted"
-                    >
-                      {name}
-                    </span>
-                  ))}
+                {/* Textarea + Send */}
+                <div className="flex items-end gap-3 rounded-2xl bg-slate-950/85 px-4 py-2 ring-1 ring-white/10 shadow-[0_16px_45px_rgba(0,0,0,0.65)]">
+                  <textarea
+                    ref={composerRef}
+                    value={inputValue}
+                    onChange={(event) => setInputValue(event.target.value)}
+                    onKeyDown={handleTextareaKeyDown}
+                    rows={2}
+                    placeholder="Ask me anything…"
+                    className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none"
+                    aria-label="Chat composer"
+                  />
                   <button
-                    type="button"
-                    onClick={() => handleFileChange(null)}
-                    className="ml-1 text-[10px] text-zora-muted underline transition hover:text-zora-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+                    type="submit"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-400 text-slate-950 shadow-[0_18px_55px_rgba(56,189,248,0.75)] transition hover:shadow-[0_18px_65px_rgba(56,189,248,0.95)] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50 disabled:shadow-none"
+                    disabled={
+                      !inputValue.trim() && pendingAttachments.length === 0
+                    }
+                    aria-label="Send message"
                   >
-                    Clear
+                    <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </div>
-              )}
-            </form>
-          </div>
-        </>
-      )}
+
+                {pendingAttachments.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-200">
+                    {pendingAttachments.map((name) => (
+                      <span
+                        key={name}
+                        className="rounded-full bg-slate-900/70 px-2 py-0.5 ring-1 ring-white/10"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => handleFileChange(null)}
+                      className="ml-1 text-[10px] text-slate-400 underline decoration-dotted hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* little animation helpers */}
+      <style jsx>{`
+        .bg-zora-space {
+          background: radial-gradient(
+              circle at top left,
+              rgba(56, 189, 248, 0.16),
+              transparent 55%
+            ),
+            radial-gradient(
+              circle at bottom right,
+              rgba(129, 140, 248, 0.18),
+              transparent 55%
+            ),
+            #020617;
+        }
+      `}</style>
     </section>
   );
 }
