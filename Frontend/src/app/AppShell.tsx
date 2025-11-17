@@ -2,7 +2,7 @@ import { Outlet, NavLink } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useSession } from "@/shared/state/session";
 import { CommandCenterOverlay } from "@/components/command-center/CommandCenterOverlay";
 
