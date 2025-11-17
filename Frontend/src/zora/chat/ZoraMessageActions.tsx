@@ -1,67 +1,70 @@
-"use client";
-
-import clsx from "clsx";
 import React from "react";
-import { Copy, Share2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Copy, Share2 } from "lucide-react";
 
-type ZoraMessageActionsProps = {
-  messageId: string;
-  messageText: string;
-  onCopy(text: string): void;
-  onShare(messageId: string): void;
-  onFeedback(messageId: string, direction: "up" | "down"): void;
-  activeDirection?: "up" | "down" | null;
-  disabled?: boolean;
+type Props = {
+  onThumbsUp?: () => void;
+  onThumbsDown?: () => void;
+  onCopy?: () => void;
+  onShare?: () => void;
 };
 
-const iconButtonBase =
-  "h-8 w-8 rounded-full border border-transparent text-slate-500 transition hover:border-slate-200 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 dark:hover:text-slate-100";
+const baseButton =
+  "inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500";
 
-export function ZoraMessageActions({
-  messageId,
-  messageText,
+const ZoraMessageActions: React.FC<Props> = ({
+  onThumbsUp,
+  onThumbsDown,
   onCopy,
   onShare,
-  onFeedback,
-  activeDirection,
-  disabled,
-}: ZoraMessageActionsProps) {
+}) => {
   return (
-    <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-      <button
-        type="button"
-        title="Thumbs up"
-        onClick={() => onFeedback(messageId, "up")}
-        disabled={disabled}
-        className={clsx(iconButtonBase, activeDirection === "up" && "border-sky-500/70 bg-sky-500/10 text-sky-600 dark:text-sky-300")}
-      >
-        <ThumbsUp className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        title="Thumbs down"
-        onClick={() => onFeedback(messageId, "down")}
-        disabled={disabled}
-        className={clsx(iconButtonBase, activeDirection === "down" && "border-sky-500/70 bg-sky-500/10 text-sky-600 dark:text-sky-300")}
-      >
-        <ThumbsDown className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        title="Copy"
-        onClick={() => onCopy(messageText)}
-        className={iconButtonBase}
-      >
-        <Copy className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        title="Share"
-        onClick={() => onShare(messageId)}
-        className={iconButtonBase}
-      >
-        <Share2 className="h-4 w-4" />
-      </button>
+    <div className="flex items-center gap-1 text-slate-400">
+      {onThumbsUp && (
+        <button
+          type="button"
+          className={baseButton}
+          onClick={onThumbsUp}
+          aria-label="Thumbs up"
+          title="Helpful"
+        >
+          <ThumbsUp className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onThumbsDown && (
+        <button
+          type="button"
+          className={baseButton}
+          onClick={onThumbsDown}
+          aria-label="Thumbs down"
+          title="Not helpful"
+        >
+          <ThumbsDown className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onCopy && (
+        <button
+          type="button"
+          className={baseButton}
+          onClick={onCopy}
+          aria-label="Copy message"
+          title="Copy"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onShare && (
+        <button
+          type="button"
+          className={baseButton}
+          onClick={onShare}
+          aria-label="Share message"
+          title="Share"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
-}
+};
+
+export default ZoraMessageActions;

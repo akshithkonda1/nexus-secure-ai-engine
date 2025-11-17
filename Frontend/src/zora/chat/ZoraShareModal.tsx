@@ -1,97 +1,59 @@
-"use client";
+import React from "react";
+import type { ChatMessage } from "@/features/chat/context/ChatContext";
 
-import React, { useState } from "react";
-
-import { copyToClipboard } from "@/api/zoraClient";
-
-type ZoraShareModalProps = {
+type Props = {
   open: boolean;
-  onClose(): void;
-  shareUrl?: string | null;
-  messagePreview?: string | null;
-  loading?: boolean;
-  error?: string | null;
+  message: ChatMessage;
+  url: string;
+  onClose: () => void;
 };
 
-export function ZoraShareModal({
+const ZoraShareModal: React.FC<Props> = ({
   open,
+  message,
+  url,
   onClose,
-  shareUrl,
-  messagePreview,
-  loading,
-  error,
-}: ZoraShareModalProps) {
-  const [copied, setCopied] = useState(false);
-
+}) => {
   if (!open) return null;
-
-  const handleCopy = async () => {
-    if (!shareUrl) return;
-    await copyToClipboard(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="zora-share-title"
     >
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200/70 bg-white/10 p-6 text-slate-900 shadow-2xl backdrop-blur-2xl dark:border-slate-700/70 dark:bg-slate-900/50 dark:text-slate-50">
-        <div className="space-y-2">
-          <h2 id="zora-share-title" className="text-lg font-semibold">
-            Share this Zora insight
+      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950/95 p-4 text-sm text-slate-100 shadow-xl">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Share Aurora Message
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Generate a secure link that you can drop into Workspace, docs, or chat.
-          </p>
-        </div>
-        <div className="mt-4 space-y-3">
-          <div className="rounded-2xl border border-white/20 bg-white/30 p-4 text-sm text-slate-800 shadow-inner dark:border-slate-600/30 dark:bg-slate-900/60 dark:text-slate-100">
-            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Preview
-            </p>
-            <div className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed">
-              {messagePreview ?? "Select a message to share."}
-            </div>
-          </div>
-          <label className="block text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Share link
-            <input
-              type="text"
-              readOnly
-              value={shareUrl ?? "Generating share link…"}
-              className="mt-1 w-full rounded-2xl border border-slate-200/70 bg-white/90 px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-50"
-            />
-          </label>
-          {error ? (
-            <p className="text-sm text-rose-500">{error}</p>
-          ) : null}
-        </div>
-        <div className="mt-6 flex flex-wrap justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-200/70 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white/40 dark:border-slate-700/70 dark:text-slate-200 dark:hover:bg-slate-800/80"
+            className="text-xs text-slate-400 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-full px-2 py-1"
           >
             Close
           </button>
-          <button
-            type="button"
-            onClick={handleCopy}
-            disabled={!shareUrl || loading}
-            className="rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {copied ? "Copied" : loading ? "Generating…" : "Copy link"}
-          </button>
+        </div>
+        <div className="mb-3 max-h-40 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[13px]">
+          <p className="whitespace-pre-wrap break-words">
+            {message.content}
+          </p>
+        </div>
+        <div className="space-y-2">
+          <div className="rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-[12px]">
+            <p className="truncate text-slate-200" title={url}>
+              {url}
+            </p>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            Link is ready and already copied — paste it into TikTok, X, or
+            wherever you want to show off your debate.
+          </p>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ZoraShareModal;
