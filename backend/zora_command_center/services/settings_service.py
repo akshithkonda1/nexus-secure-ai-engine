@@ -15,7 +15,7 @@ from ..schemas import (
     UserSettingsDocument,
     UserSettingsUpdate,
     WorkspaceSettingsUpdate,
-    ZoraSettingsUpdate,
+    ToronSettingsUpdate,
 )
 
 
@@ -108,7 +108,7 @@ def update_settings(user_id: str, payload: UserSettingsUpdate) -> Dict[str, Any]
         return merged
 
 
-def update_zora_settings(user_id: str, payload: ZoraSettingsUpdate) -> Dict[str, Any]:
+def update_zora_settings(user_id: str, payload: ToronSettingsUpdate) -> Dict[str, Any]:
     return update_settings(user_id, UserSettingsUpdate(zora=payload))
 
 

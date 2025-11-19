@@ -7,10 +7,10 @@ from ..schemas import EngineRequest, EngineResponse
 from ..services import settings_service
 from ..services.model_selector import select_model_for_task
 from ..services.telemetry import telemetry_manager
-from ..services.zora_engine import ZoraEngine
+from ..services.zora_engine import RyuzenEngine
 
 router = APIRouter(prefix="/api/zora-engine", tags=["zora-engine"])
-ENGINE = ZoraEngine()
+ENGINE = RyuzenEngine()
 
 
 def _prepare_context(task_type: str, payload: dict) -> tuple[dict, str, dict, bool]:

@@ -17,7 +17,7 @@ type Props = {
   progressPercent: number;
 };
 
-const ZoraStreamingBlock: React.FC<Props> = ({
+const ToronStreamingBlock: React.FC<Props> = ({
   firstAnswer,
   partialAnswer,
   finalAnswer,
@@ -32,9 +32,9 @@ const ZoraStreamingBlock: React.FC<Props> = ({
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">Zora reasoning stream</p>
+        <p className="text-xs font-semibold">Toron reasoning stream</p>
           <p className="text-[11px] text-slate-200/80">
-            Zora is debating models, checking sources, and settling on the most
+          Toron is debating models, checking sources, and settling on the most
           best answer it can provide.
           </p>
         </div>
@@ -53,7 +53,7 @@ const ZoraStreamingBlock: React.FC<Props> = ({
       </div>
       {streamError && (
         <p className="mt-2 text-[11px] text-rose-300">
-          Zora hit an error while streaming: {streamError}
+          Toron hit an error while streaming: {streamError}
         </p>
       )}
       {firstAnswer && (
@@ -92,7 +92,7 @@ const ZoraStreamingBlock: React.FC<Props> = ({
           {finalAnswer.sources && finalAnswer.sources.length > 0 && (
             <div className="mt-2 space-y-1">
               <p className="text-[10px] font-semibold text-slate-300">
-                Sources Zora leaned on
+                Sources Toron leaned on
               </p>
               <div className="space-y-1">
                 {finalAnswer.sources.map((source, i) => (
@@ -115,4 +115,4 @@ const ZoraStreamingBlock: React.FC<Props> = ({
   );
 };
 
-export default ZoraStreamingBlock;
+export default ToronStreamingBlock;

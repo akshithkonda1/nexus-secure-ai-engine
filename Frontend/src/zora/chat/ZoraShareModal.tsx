@@ -8,7 +8,7 @@ type Props = {
   onClose: () => void;
 };
 
-const ZoraShareModal: React.FC<Props> = ({
+export const ToronShareModal: React.FC<Props> = ({
   open,
   message,
   url,
@@ -47,7 +47,7 @@ const ZoraShareModal: React.FC<Props> = ({
             </p>
           </div>
           <p className="text-[11px] text-slate-400">
-            Link is ready and already copied. Drop it into wherever you want people to see what Zora said.
+            Link is ready and already copied. Drop it into wherever you want people to see what Toron said.
           </p>
         </div>
       </div>
@@ -55,4 +55,4 @@ const ZoraShareModal: React.FC<Props> = ({
   );
 };
 
-export default ZoraShareModal;
+export default ToronShareModal;

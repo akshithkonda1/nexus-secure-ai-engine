@@ -60,8 +60,8 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       >
         <div className="flex h-full flex-col overflow-y-auto">
           <div className="mb-4 flex items-center gap-2 px-1 text-[rgb(var(--text))] font-semibold tracking-tight">
-            <img src={zoraMark} alt="Zora" className="h-9 w-9 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]" />
-            {!collapsed && <img src={zoraLogo} alt="Zora" className="h-5" />}
+            <img src={zoraMark} alt="Ryuzen" className="h-9 w-9 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]" />
+            {!collapsed && <img src={zoraLogo} alt="Ryuzen" className="h-5" />}
             <button
               type="button"
               className={cn(
@@ -135,7 +135,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 </button>
               </div>
               <div className="rounded-[24px] border border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_80%,transparent)] p-4 text-xs text-zora-muted shadow-zora-soft backdrop-blur-xl">
-                <p className="font-semibold text-zora-white">Zora HQ</p>
+                <p className="font-semibold text-zora-white">Ryuzen HQ</p>
                 <p className="mt-1 leading-relaxed">
                   Compliance-friendly workspace for secure agent collaboration. Last synced 2 mins ago.
                 </p>

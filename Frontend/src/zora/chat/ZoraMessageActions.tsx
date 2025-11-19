@@ -11,7 +11,7 @@ type Props = {
 const baseButton =
   "inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500";
 
-const ZoraMessageActions: React.FC<Props> = ({
+export const ToronMessageActions: React.FC<Props> = ({
   onThumbsUp,
   onThumbsDown,
   onCopy,
@@ -67,4 +67,4 @@ const ZoraMessageActions: React.FC<Props> = ({
   );
 };
 
-export default ZoraMessageActions;
+export default ToronMessageActions;

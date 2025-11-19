@@ -16,7 +16,7 @@ export class ErrorBoundary extends React.Component<
         <div className="panel panel--glassy panel--hover p-8 max-w-xl text-center space-y-4">
           <h1 className="text-2xl font-semibold">We hit a snag</h1>
           <p className="mt-1 text-xs text-slate-300">
-            Zora ran into an issue while loading this view. Try going back to Overview or
+            Ryuzen ran into an issue while loading this view. Try going back to Overview or
             refreshing the page.
           </p>
           <Link

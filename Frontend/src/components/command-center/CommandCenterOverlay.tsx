@@ -19,7 +19,7 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
                 Command Center
               </p>
               <h1 className="mt-1 text-xl md:text-2xl font-semibold text-slate-50">
-                One place to see what Zora is doing for you.
+                One place to see what Ryuzen is doing for you.
               </h1>
               <p className="mt-2 text-xs md:text-sm text-slate-300">
                 Lightweight overview of modes, connectors, signals and your next best action.
@@ -91,7 +91,7 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
                     Continue working: RDS incident recap.
                   </p>
                   <p className="text-[11px] text-slate-300">
-                    Zora can summarize logs, extract root causes, and draft a clean incident note.
+                    Ryuzen can summarize logs, extract root causes, and draft a clean incident note.
                   </p>
                 </div>
                 <button

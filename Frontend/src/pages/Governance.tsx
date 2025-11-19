@@ -111,7 +111,7 @@ export function Governance() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-              Zora safety center
+              Ryuzen safety center
             </p>
             <h1 className="accent-ink text-2xl font-semibold leading-snug text-[rgb(var(--text))] sm:text-3xl">
               AI that feels powerful <span className="text-brand">and</span>{" "}
@@ -553,7 +553,7 @@ export function Governance() {
           </div>
         </div>
         <p className="mt-4 text-[11px] text-[rgba(var(--subtle),0.8)]">
-          Zora handles the heavy lifting—encryption, filters, monitoring. These
+          Ryuzen handles the heavy lifting—encryption, filters, monitoring. These
           habits are the human layer that makes the whole system feel calm,
           predictable, and yours.
         </p>
@@ -568,7 +568,7 @@ export function Governance() {
               If you or someone you know is in crisis
             </p>
             <p className="text-xs text-[rgba(var(--subtle),0.85)]">
-              Zora is not an emergency service. If you&apos;re in immediate danger
+              Toron is not an emergency service. If you&apos;re in immediate danger
               or thinking about harming yourself, please reach out to a real
               human right away.
             </p>

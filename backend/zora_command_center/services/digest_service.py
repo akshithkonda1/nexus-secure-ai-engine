@@ -9,10 +9,10 @@ from ..config import settings
 from ..database import get_session
 from ..models import Project, UpcomingItem, WorkspaceDigest
 from ..schemas import DigestResponse
-from .zora_engine import ZoraEngine
+from .zora_engine import RyuzenEngine
 
 
-ENGINE = ZoraEngine()
+ENGINE = RyuzenEngine()
 
 
 def _collect_workspace_activity(session, user_id: str) -> List[str]:

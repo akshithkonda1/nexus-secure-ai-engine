@@ -8,7 +8,7 @@ from ..schemas import (
     UserSettingsDocument,
     UserSettingsUpdate,
     WorkspaceSettingsUpdate,
-    ZoraSettingsUpdate,
+    ToronSettingsUpdate,
     CommandCenterSettingsUpdate,
 )
 from ..services import settings_service
@@ -29,7 +29,7 @@ def patch_settings(payload: UserSettingsUpdate) -> UserSettingsDocument:
 
 
 @router.patch("/zora", response_model=UserSettingsDocument)
-def patch_zora(payload: ZoraSettingsUpdate) -> UserSettingsDocument:
+def patch_zora(payload: ToronSettingsUpdate) -> UserSettingsDocument:
     data = settings_service.update_zora_settings(app_settings.default_user_id, payload)
     return UserSettingsDocument(**data)
 

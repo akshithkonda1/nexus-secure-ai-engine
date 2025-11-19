@@ -51,9 +51,9 @@ import { copyToClipboard } from "@/lib/zoraClipboard";
 import { sendFeedback } from "@/lib/zoraFeedbackClient";
 import { getShareLink } from "@/lib/zoraShareClient";
 
-import ZoraMessageBubble from "@/zora/chat/ZoraMessageBubble";
-import ZoraStreamingBlock from "@/zora/chat/ZoraStreamingBlock";
-import ZoraShareModal from "@/zora/chat/ZoraShareModal";
+import ToronMessageBubble from "@/zora/chat/ZoraMessageBubble";
+import ToronStreamingBlock from "@/zora/chat/ZoraStreamingBlock";
+import ToronShareModal from "@/zora/chat/ZoraShareModal";
 
 const DEFAULT_VIRTUAL_ROW_HEIGHT = 96;
 
@@ -329,12 +329,12 @@ function ChatInner() {
     return `${prefix} at ${timeFormatter.format(firstDate)}`;
   }, [messages]);
 
-  /* -------------------------- Zora status chip ---------------------- */
+  /* -------------------------- Toron status chip --------------------- */
 
-  const zoraStatus = useMemo(() => {
+  const toronStatus = useMemo(() => {
     if (isRecording) {
       return {
-        label: "Zora is listening",
+        label: "Toron is listening",
         pillClasses:
           "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200 animate-pulse",
         dotClasses: "bg-emerald-500",
@@ -342,7 +342,7 @@ function ChatInner() {
     }
     if (isStreamingDebate) {
       return {
-        label: "Zora is reasoning",
+        label: "Toron is reasoning",
         pillClasses:
           "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-200 animate-pulse",
         dotClasses: "bg-sky-500",
@@ -350,14 +350,14 @@ function ChatInner() {
     }
     if (isThinking) {
       return {
-        label: "Zora is thinking",
+        label: "Toron is thinking",
         pillClasses:
           "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-200 animate-pulse",
         dotClasses: "bg-violet-500",
       };
     }
     return {
-      label: "Zora is ready",
+      label: "Toron is ready",
       pillClasses:
         "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200",
       dotClasses: "bg-emerald-500",
@@ -389,7 +389,7 @@ function ChatInner() {
   const startDictation = useCallback(() => {
     const SpeechRecognitionImpl = getSpeechRecognitionConstructor();
     if (!SpeechRecognitionImpl) {
-      setVoiceWarning("Zora voice dictation isn’t supported in this browser yet.");
+      setVoiceWarning("Toron voice dictation isn’t supported in this browser yet.");
       setVoiceSupported(false);
       return;
     }
@@ -408,7 +408,7 @@ function ChatInner() {
       };
       recognition.onerror = (event: any) => {
         setVoiceWarning(
-          event?.error ? `Zora voice error: ${event.error}` : "Zora dictation error.",
+          event?.error ? `Toron voice error: ${event.error}` : "Toron dictation error.",
         );
         cleanupRecognition();
       };
@@ -419,7 +419,7 @@ function ChatInner() {
       recognition.start();
       setIsRecording(true);
     } catch {
-      setVoiceWarning("Zora voice dictation could not start.");
+      setVoiceWarning("Toron voice dictation could not start.");
     }
   }, [
     cleanupRecognition,
@@ -474,7 +474,7 @@ function ChatInner() {
     const confirmed =
       typeof window === "undefined"
         ? true
-        : window.confirm("Clear all Zora chats on this device?");
+        : window.confirm("Clear all Toron chats on this device?");
     if (!confirmed) return;
     stopPendingReply();
     const sessionIds = sessions.map((session) => session.id);
@@ -602,7 +602,7 @@ function ChatInner() {
       const fallbackContent =
         existing?.content && existing.content.trim().length
           ? existing.content
-          : "Zora reply paused.";
+          : "Toron reply paused.";
       updateMessageInSession(sessionId, assistantId, {
         status: "error",
         content: fallbackContent,
@@ -655,12 +655,12 @@ function ChatInner() {
 
       const timeoutId = setTimeout(() => {
         const replyText = [
-          "Zora has pinned this to your thread.",
+          "Toron has pinned this to your thread.",
           settings.connectedApps
             ? "Connected apps are on: Workspace, Outbox, and Documents can now join the context when needed."
-            : "Turn on connected apps if you want Zora to read from Workspace, Outbox, and Documents.",
+            : "Turn on connected apps if you want Toron to read from Workspace, Outbox, and Documents.",
           settings.jokesEnabled
-            ? "\n\n(Soft reminder from Zora: you’re allowed to take a break.No Need to steamroll through your work right now.)"
+            ? "\n\n(Soft reminder from Toron: you’re allowed to take a break.No Need to steamroll through your work right now.)"
             : "",
         ]
           .filter(Boolean)
@@ -752,9 +752,9 @@ function ChatInner() {
 
   const handleShareSessionHeader = (session: ChatSession) => {
     if (typeof navigator === "undefined") return;
-    const shareText = `Zora chat: "${session.title}"\n\n${formatPreview(
+    const shareText = `Toron chat: "${session.title}"\n\n${formatPreview(
       session.messages,
-    )}\n\n#Zora`;
+    )}\n\n#Toron`;
     navigator.clipboard.writeText(shareText).then(() => {
       toast.success("Session summary copied. Paste it wherever you like.");
     });
@@ -765,7 +765,7 @@ function ChatInner() {
       try {
         await sendFeedback(messageId, direction);
         toast.success(
-          direction === "up" ? "Thanks — that helped Zora learn." : "Got it — Zora will tune this.",
+          direction === "up" ? "Thanks — that helped Toron learn." : "Got it — Toron will tune this.",
         );
       } catch {
         toast.error("Couldn’t save feedback. Try again in a bit.");
@@ -850,7 +850,7 @@ function ChatInner() {
       <div className="flex h-full w-full flex-col px-4 py-4 md:px-8 md:py-6">
         {/* Shell */}
         <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-slate-950/90 px-4 py-4 shadow-lg backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/95 md:px-6 md:py-5">
-          {/* Soft Zora background */}
+          {/* Soft Toron background */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-[-25%] -top-64 h-80 rounded-[999px] bg-gradient-to-r from-sky-500/30 via-cyan-400/25 to-emerald-400/35 blur-3xl opacity-70"
@@ -874,7 +874,7 @@ function ChatInner() {
                 onClick={() => setIsCollapsed((value) => !value)}
                 className="inline-flex items-center rounded-full border border-slate-700/70 bg-slate-900/70 px-2.5 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 aria-pressed={!isCollapsed}
-                aria-label={isCollapsed ? "Expand Zora chat" : "Collapse Zora chat"}
+                aria-label={isCollapsed ? "Expand Toron chat" : "Collapse Toron chat"}
               >
                 {isCollapsed ? (
                   <>
@@ -889,36 +889,36 @@ function ChatInner() {
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <h1 className="text-sm font-semibold text-slate-50">
-                    Zora Chat
+                    Toron Chat
                   </h1>
                   <span
                     className={[
                       "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                      zoraStatus.pillClasses,
+                      toronStatus.pillClasses,
                     ].join(" ")}
                   >
                     <span className="relative flex h-1.5 w-1.5">
                       <span
                         className={[
                           "absolute inset-0 rounded-full opacity-90",
-                          zoraStatus.dotClasses,
+                          toronStatus.dotClasses,
                         ].join(" ")}
                       />
                       <span
                         className={[
                           "absolute inset-0 rounded-full opacity-70",
-                          zoraStatus.dotClasses,
+                          toronStatus.dotClasses,
                         ].join(" ")}
                         style={{
                           animation: "aurora-pulse 2s ease-out infinite",
                         }}
                       />
                     </span>
-                    {zoraStatus.label}
+                    {toronStatus.label}
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-slate-300">
-                  Ask what you need — Zora pulls from AI Models, Command Center and your Workspace,
+                  Ask what you need — Toron pulls from AI Models, Command Center and your Workspace,
                   then explains things as needed.
                 </p>
               </div>
@@ -928,7 +928,7 @@ function ChatInner() {
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 shadow-sm transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              aria-label="Zora chat settings"
+              aria-label="Toron chat settings"
               aria-expanded={settingsOpen}
             >
               <Settings className="h-4 w-4" />
@@ -951,9 +951,9 @@ function ChatInner() {
                       onChange={(event) =>
                         setSearchQuery(event.target.value)
                       }
-                      placeholder="Search your Zora chats…"
+                      placeholder="Search your Toron chats…"
                       className="h-7 flex-1 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                      aria-label="Search Zora chats"
+                      aria-label="Search Toron chats"
                     />
                   </div>
                 </div>
@@ -1004,7 +1004,7 @@ function ChatInner() {
                             : "bg-slate-900/80 text-slate-100 hover:bg-slate-800",
                         ].join(" ")}
                         aria-pressed={isActive}
-                        aria-label={`Open Zora chat ${session.title}`}
+                        aria-label={`Open Toron chat ${session.title}`}
                       >
                         {renamingSessionId === session.id ? (
                           <input
@@ -1029,7 +1029,7 @@ function ChatInner() {
                             }}
                             autoFocus
                             className="w-32 rounded-full bg-white px-2 py-0.5 text-xs text-slate-900 focus:outline-none"
-                            aria-label="Rename Zora chat"
+                            aria-label="Rename Toron chat"
                           />
                         ) : (
                           <span
@@ -1089,10 +1089,10 @@ function ChatInner() {
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                        Zora settings
+                        Toron settings
                       </span>
                       <span className="text-[11px] text-slate-500">
-                        Nudge how serious, playful, or technical Zora should be.
+                        Nudge how serious, playful, or technical Toron should be.
                       </span>
                     </div>
                     <button
@@ -1128,7 +1128,7 @@ function ChatInner() {
                           Light jokes
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Let Zora sprinkle in gentle humor when it’s helpful.
+                          Let Toron sprinkle in gentle humor when it’s helpful.
                         </p>
                       </div>
                       <IOSSwitch
@@ -1162,7 +1162,7 @@ function ChatInner() {
                           Connected apps
                         </p>
                         <p className="mt-0.5 text-[11px] text-slate-400">
-                          Let Zora weave in context from Workspace, Outbox, and
+                          Let Toron weave in context from Workspace, Outbox, and
                           Docs (when wired).
                         </p>
                       </div>
@@ -1181,7 +1181,7 @@ function ChatInner() {
                       <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <p className="mb-2">
-                      Clearing chats wipes everything stored locally for Zora on
+                      Clearing chats wipes everything stored locally for Toron on
                       this browser.
                     </p>
                     <button
@@ -1199,7 +1199,7 @@ function ChatInner() {
               <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-3 pt-1">
                 {/* STREAMING BAR */}
                 {hasStreamingDebate && (
-                  <ZoraStreamingBlock
+                  <ToronStreamingBlock
                     firstAnswer={firstAnswer}
                     partialAnswer={partialAnswer}
                     finalAnswer={finalAnswer}
@@ -1264,7 +1264,7 @@ function ChatInner() {
                             <div
                               className={isAssistant ? "self-start" : "self-end"}
                             >
-                              <ZoraMessageBubble
+                              <ToronMessageBubble
                                 message={message}
                                 isAssistant={isAssistant}
                                 isPending={showThinking}
@@ -1335,7 +1335,7 @@ function ChatInner() {
                   {isThinking && (
                     <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
                       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/95 px-4 py-1.5 text-[11px] text-slate-200 shadow-sm animate-aurora-pulse">
-                        <span>Zora is composing a reply…</span>
+                        <span>Toron is composing a reply…</span>
                         <button
                           type="button"
                           onClick={stopPendingReply}
@@ -1455,9 +1455,9 @@ function ChatInner() {
                       onChange={(event) => setInputValue(event.target.value)}
                       onKeyDown={handleTextareaKeyDown}
                       rows={2}
-                      placeholder="Talk to Zora about your ideas, tasks, or anything you’re figuring out…"
+                      placeholder="Talk to Toron about your ideas, tasks, or anything you’re figuring out…"
                       className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
-                      aria-label="Zora composer"
+                      aria-label="Toron composer"
                     />
                     <button
                       type="submit"
@@ -1524,7 +1524,7 @@ function ChatInner() {
   );
 }
 
-export function Chat() {
+export function Toron() {
   return (
     <ChatProvider>
       <ChatInner />
@@ -1532,4 +1532,4 @@ export function Chat() {
   );
 }
 
-export default Chat;
+export default Toron;

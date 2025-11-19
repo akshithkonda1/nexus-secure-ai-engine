@@ -41,7 +41,7 @@ class BehaviourSettingsUpdate(BaseModel):
     allowAdvancedReasoning: Optional[bool] = None
 
 
-class ZoraSettings(BaseModel):
+class ToronSettings(BaseModel):
     modelRanking: List[str] = Field(default_factory=lambda: AVAILABLE_MODELS[:10])
     customInstructions: str = ""
     behaviours: BehaviourSettings = Field(default_factory=BehaviourSettings)
@@ -53,7 +53,7 @@ class ZoraSettings(BaseModel):
         return value
 
 
-class ZoraSettingsUpdate(BaseModel):
+class ToronSettingsUpdate(BaseModel):
     modelRanking: Optional[List[str]] = None
     customInstructions: Optional[str] = None
     behaviours: Optional[BehaviourSettingsUpdate] = None
@@ -140,14 +140,14 @@ class PrivacySecuritySettingsUpdate(BaseModel):
 
 class UserSettingsDocument(BaseModel):
     userId: str
-    zora: ZoraSettings = Field(default_factory=ZoraSettings)
+    zora: ToronSettings = Field(default_factory=ToronSettings)
     workspace: WorkspaceSettings = Field(default_factory=WorkspaceSettings)
     commandCenter: CommandCenterSettings = Field(default_factory=CommandCenterSettings)
     privacySecurity: PrivacySecuritySettings = Field(default_factory=PrivacySecuritySettings)
 
 
 class UserSettingsUpdate(BaseModel):
-    zora: Optional[ZoraSettingsUpdate] = None
+    zora: Optional[ToronSettingsUpdate] = None
     workspace: Optional[WorkspaceSettingsUpdate] = None
     commandCenter: Optional[CommandCenterSettingsUpdate] = None
     privacySecurity: Optional[PrivacySecuritySettingsUpdate] = None

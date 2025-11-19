@@ -45,12 +45,12 @@ import {
 import type { SettingsState } from "@/features/chat/context/ChatContext";
 import { useStreamingDebate } from "@/hooks/useStreamingDebate";
 
-import { createZoraShareLink, copyToClipboard } from "@/api/zoraClient";
-import { ZoraMessageActions } from "./ZoraMessageActions";
-import { ZoraMessageBubble } from "./ZoraMessageBubble";
-import { ZoraShareModal } from "./ZoraShareModal";
-import { ZoraStreamingPanel } from "./ZoraStreamingPanel";
-import { useZoraFeedback } from "./useZoraFeedback";
+import { createToronShareLink, copyToClipboard } from "@/api/zoraClient";
+import { ToronMessageActions } from "./ZoraMessageActions";
+import { ToronMessageBubble } from "./ZoraMessageBubble";
+import { ToronShareModal } from "./ZoraShareModal";
+import { ToronStreamingPanel } from "./ZoraStreamingPanel";
+import { useToronFeedback } from "./useZoraFeedback";
 import { formatPreview } from "./utils";
 
 const DEFAULT_VIRTUAL_ROW_HEIGHT = 112;
@@ -97,7 +97,7 @@ const Waveform: React.FC<{ active: boolean }> = ({ active }) => {
   );
 };
 
-export function ZoraChatShell() {
+export function ToronChatShell() {
   const {
     sessions,
     activeSessionId,
@@ -168,7 +168,7 @@ export function ZoraChatShell() {
     sendFeedback,
     isSubmitting: isFeedbackSubmitting,
     lastError: feedbackError,
-  } = useZoraFeedback(
+  } = useToronFeedback(
     activeSession?.id,
     finalAnswer?.model ?? partialAnswer?.model ?? firstAnswer?.model,
   );
@@ -476,7 +476,7 @@ export function ZoraChatShell() {
       const fallbackContent =
         existing?.content && existing.content.trim().length
           ? existing.content
-          : "Zora reply paused.";
+          : "Toron reply paused.";
       updateMessageInSession(sessionId, assistantId, {
         status: "error",
         content: fallbackContent,
@@ -667,7 +667,7 @@ export function ZoraChatShell() {
     return `${prefix} at ${timeFormatter.format(firstDate)}`;
   }, [messages]);
 
-  const zoraStatus = useMemo(() => {
+  const toronStatus = useMemo(() => {
     if (isRecording) {
       return {
         label: "Listening",
@@ -714,7 +714,7 @@ export function ZoraChatShell() {
     setShareError(null);
     setShareLoading(true);
     try {
-      const { url } = await createZoraShareLink({ messageId });
+      const { url } = await createToronShareLink({ messageId });
       setShareUrl(url);
     } catch (error) {
       setShareError(
@@ -737,7 +737,7 @@ export function ZoraChatShell() {
   };
 
   const composerPlaceholder = settings.technicalMode
-    ? "Ask Zora to reason through complex context…"
+    ? "Ask Toron to reason through complex context…"
     : "Drop a thought and I’ll riff with you…";
 
   const settingsToggles: Array<{
@@ -788,10 +788,10 @@ export function ZoraChatShell() {
               <div className="flex flex-wrap items-center gap-2">
                 <Sparkles className="h-5 w-5 text-sky-500" aria-hidden="true" />
                 <h1 className="text-base font-semibold text-slate-900 dark:text-white">
-                  Zora Prime · Aurora Chat
+                  Toron Prime · Aurora Chat
                 </h1>
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${zoraStatus.classes}`}>
-                  {zoraStatus.label}
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${toronStatus.classes}`}>
+                  {toronStatus.label}
                 </span>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -986,7 +986,7 @@ export function ZoraChatShell() {
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-4">
             {hasStreamingDebate && (
-              <ZoraStreamingPanel
+                      <ToronStreamingPanel
                 firstAnswer={firstAnswer}
                 partialAnswer={partialAnswer}
                 finalAnswer={finalAnswer}
@@ -1039,13 +1039,13 @@ export function ZoraChatShell() {
                           padding: "0 0.5rem",
                         }}
                       >
-                        <ZoraMessageBubble
+                        <ToronMessageBubble
                           message={message}
                           isAssistant={isAssistant}
                           onRetry={handleRetry}
                         >
                           {isAssistant && message.status !== "pending" ? (
-                            <ZoraMessageActions
+                            <ToronMessageActions
                               messageId={message.id}
                               messageText={message.content}
                               onCopy={handleCopyMessage}
@@ -1055,7 +1055,7 @@ export function ZoraChatShell() {
                               disabled={isFeedbackSubmitting}
                             />
                           ) : null}
-                        </ZoraMessageBubble>
+                        </ToronMessageBubble>
                       </div>
                     );
                   })}
@@ -1204,7 +1204,7 @@ export function ZoraChatShell() {
           </div>
         </div>
       </div>
-      <ZoraShareModal
+      <ToronShareModal
         open={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         shareUrl={shareUrl}

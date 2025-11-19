@@ -7,7 +7,7 @@ from .services.settings_service import create_all_tables
 
 create_all_tables()
 
-app = FastAPI(title="Zora Command Center", version="1.0.0")
+app = FastAPI(title="Ryuzen Command Center", version="1.0.0")
 
 app.include_router(settings.router)
 app.include_router(models.router)
