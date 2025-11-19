@@ -541,7 +541,7 @@ export function History() {
             </h2>
             <p className="mt-1 text-xs text-[rgba(var(--subtle),0.8)]">
               Live audit trail for model runs, workspace changes, and messages
-              across your Zora workspace.
+              across your Ryuzen workspace.
             </p>
           </div>
 

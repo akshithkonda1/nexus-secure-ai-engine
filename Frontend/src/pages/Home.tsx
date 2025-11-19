@@ -101,7 +101,7 @@ export function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Zora • Welcome back, {who}
+              Ryuzen • Welcome back, {who}
             </div>
             <h1 className="accent-ink text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
               Operate every AI workflow with clarity, governance, and speed.

@@ -1,6 +1,6 @@
 import React from "react";
 import type { ChatMessage } from "@/features/chat/context/ChatContext";
-import ZoraMessageActions from "./ZoraMessageActions";
+import ToronMessageActions from "./ZoraMessageActions";
 
 type Props = {
   message: ChatMessage;
@@ -12,7 +12,7 @@ type Props = {
   onShare?: () => void;
 };
 
-const ZoraMessageBubble: React.FC<Props> = ({
+export const ToronMessageBubble: React.FC<Props> = ({
   message,
   isAssistant,
   isPending,
@@ -42,7 +42,7 @@ const ZoraMessageBubble: React.FC<Props> = ({
       <div className={bubbleClasses}>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-slate-900/70 px-3 py-1 text-[11px] text-slate-200">
-            Zora is thinking…
+            Toron is thinking…
           </span>
           <div className="flex items-center gap-1">
             {[0, 1, 2].map((dot) => (
@@ -90,7 +90,7 @@ const ZoraMessageBubble: React.FC<Props> = ({
               onClick={onRetry}
               className="text-[11px] font-medium text-slate-200 underline decoration-dotted hover:text-slate-50 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
             >
-              Retry with Zora
+              Retry with Toron
             </button>
           )}
         </div>
@@ -98,7 +98,7 @@ const ZoraMessageBubble: React.FC<Props> = ({
 
       {showActions && (
         <div className="ml-1 mt-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <ZoraMessageActions
+          <ToronMessageActions
             onThumbsUp={onFeedback ? () => onFeedback("up") : undefined}
             onThumbsDown={onFeedback ? () => onFeedback("down") : undefined}
             onCopy={onCopy}
@@ -110,4 +110,4 @@ const ZoraMessageBubble: React.FC<Props> = ({
   );
 };
 
-export default ZoraMessageBubble;
+export default ToronMessageBubble;

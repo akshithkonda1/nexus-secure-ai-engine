@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True, frozen=True)
 class AppConfig:
-    """Runtime configuration for the Zora Command Center backend."""
+    """Runtime configuration for the Ryuzen Command Center backend."""
 
     database_url: str = os.getenv("ZORA_DB_URL", "sqlite:///./zora_command_center.db")
     default_user_id: str = os.getenv("ZORA_DEFAULT_USER", "user-0001")

@@ -1,19 +1,19 @@
 import { useCallback, useState } from "react";
 
 import { ChatMessage } from "@/features/chat/context/ChatContext";
-import { ZoraDirection, sendZoraFeedback } from "@/api/zoraClient";
+import { ToronDirection, sendToronFeedback } from "@/api/zoraClient";
 
-export function useZoraFeedback(sessionId?: string, modelHint?: string) {
+export function useToronFeedback(sessionId?: string, modelHint?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
   const sendFeedback = useCallback(
-    async (message: ChatMessage, direction: ZoraDirection) => {
+    async (message: ChatMessage, direction: ToronDirection) => {
       if (!sessionId) return;
       setIsSubmitting(true);
       setLastError(null);
       try {
-        await sendZoraFeedback({
+        await sendToronFeedback({
           messageId: message.id,
           sessionId,
           direction,

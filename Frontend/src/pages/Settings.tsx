@@ -91,7 +91,7 @@ const DEFAULT_ENGINES: EnginePreference[] = [
 
 type Tone = "balanced" | "precise" | "creative";
 
-type ZoraSettingsState = {
+type ToronSettingsState = {
   safeMode: boolean;
   autoEngine: boolean;
   explainReasoning: boolean;
@@ -225,7 +225,7 @@ export function Settings() {
 
   const [activeTab, setActiveTab] = useState<TabId>("zora");
 
-  const [zoraState, setZoraState] = useState<ZoraSettingsState | null>(null);
+  const [toronState, setToronState] = useState<ToronSettingsState | null>(null);
   const [workspaceState, setWorkspaceState] =
     useState<WorkspaceSettingsState | null>(null);
   const [commandState, setCommandState] =
@@ -238,9 +238,9 @@ export function Settings() {
     if (!data) return;
     const anyData = data as any;
 
-    if (!zoraState) {
+    if (!toronState) {
       const src = anyData.zoraSettings || {};
-      setZoraState({
+      setToronState({
         safeMode: src.safeMode ?? true,
         autoEngine: src.autoEngine ?? true,
         explainReasoning: src.explainReasoning ?? false,
@@ -289,7 +289,7 @@ export function Settings() {
         dataRetentionDays: src.dataRetentionDays ?? 90,
       });
     }
-  }, [data, zoraState, workspaceState, commandState, privacyState]);
+  }, [data, toronState, workspaceState, commandState, privacyState]);
 
   const applyThemeForDevice = () => {
     if (!data) return;
@@ -312,9 +312,9 @@ export function Settings() {
     }
   };
 
-  const handleSaveZora = () => {
-    if (!zoraState) return;
-    void saveWithPatch({ zoraSettings: zoraState }, "Zora settings");
+  const handleSaveToron = () => {
+    if (!toronState) return;
+    void saveWithPatch({ zoraSettings: toronState }, "Toron settings");
   };
 
   const handleSaveWorkspace = () => {
@@ -377,7 +377,7 @@ export function Settings() {
 
   if (
     !data ||
-    !zoraState ||
+    !toronState ||
     !workspaceState ||
     !commandState ||
     !privacyState
@@ -396,7 +396,7 @@ export function Settings() {
             Settings
           </p>
           <h1 className="mt-1 text-xl font-semibold text-[rgb(var(--text))]">
-            Tune how Zora, Workspace, and Command Center behave.
+            Tune how Toron, Workspace, and Command Center behave.
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -419,7 +419,7 @@ export function Settings() {
       {/* Tabs */}
       <div className="mt-5 flex flex-wrap gap-2 border-b border-[rgba(var(--border),0.35)] pb-2 text-xs font-semibold uppercase tracking-[0.22em]">
         {[
-          { id: "zora", label: "Zora" },
+          { id: "zora", label: "Toron" },
           { id: "workspace", label: "Workspace" },
           { id: "command", label: "Command Center" },
           { id: "privacy", label: "Privacy & security" },
@@ -442,14 +442,14 @@ export function Settings() {
       {/* Tab content */}
       <div className="mt-6 space-y-6">
         {activeTab === "zora" && (
-          <ZoraTab
-            state={zoraState}
+          <ToronTab
+            state={toronState}
             onChange={(patch) =>
-              setZoraState((prev) =>
-                prev ? { ...prev, ...patch } : ({ ...patch } as ZoraSettingsState),
+              setToronState((prev) =>
+                prev ? { ...prev, ...patch } : ({ ...patch } as ToronSettingsState),
               )
             }
-            onSave={handleSaveZora}
+            onSave={handleSaveToron}
           />
         )}
 
@@ -500,16 +500,16 @@ export function Settings() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Zora tab                                                                    */
+/* Toron tab                                                                   */
 /* -------------------------------------------------------------------------- */
 
-interface ZoraTabProps {
-  state: ZoraSettingsState;
-  onChange: (patch: Partial<ZoraSettingsState>) => void;
+interface ToronTabProps {
+  state: ToronSettingsState;
+  onChange: (patch: Partial<ToronSettingsState>) => void;
   onSave: () => void;
 }
 
-function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
+function ToronTab({ state, onChange, onSave }: ToronTabProps) {
   const moveEngine = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= state.engineRanking.length) return;
@@ -536,10 +536,10 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
               Behaviour
             </p>
             <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-              How Zora behaves by default
+              How Toron behaves by default
             </h3>
             <p className="mt-1 text-xs text-[rgba(var(--subtle),0.84)]">
-              These switches affect Zora everywhere: Workspace, Command Center,
+              These switches affect Toron everywhere: Workspace, Command Center,
               and standalone chat.
             </p>
           </header>
@@ -569,7 +569,7 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
                   Auto-choose engine
                 </dt>
                 <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Let Zora pick the best model for each request using your
+                  Let Toron pick the best model for each request using your
                   ranking as a bias.
                 </dd>
               </div>
@@ -586,7 +586,7 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
                   Explain reasoning
                 </dt>
                 <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Ask Zora to briefly explain why it chose a model or answer
+                  Ask Toron to briefly explain why it chose a model or answer
                   path.
                 </dd>
               </div>
@@ -669,7 +669,7 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
                 Rank your engines
               </h3>
               <p className="mt-1 text-xs text-[rgba(var(--subtle),0.82)]">
-                Zora will try engines in this order for complex tasks when
+                Toron will try engines in this order for complex tasks when
                 auto-choose is enabled. You can still override per request.
               </p>
             </div>
@@ -731,11 +731,11 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
             Custom instructions
           </p>
           <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-            Tell Zora how to think about you.
+            Tell Toron how to think about you.
           </h3>
           <p className="mt-1 text-xs text-[rgba(var(--subtle),0.82)]">
             Explain what matters to you, how formal you want answers to be, and
-            any standing preferences. Zora compresses this behind the scenes so
+            any standing preferences. Toron compresses this behind the scenes so
             it can travel with you across Workspace and Command Center.
           </p>
         </header>
@@ -753,7 +753,7 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
 
         <div className="mt-4">
           <label htmlFor="zora-custom-instructions" className="sr-only">
-            Custom instructions for Zora
+            Custom instructions for Toron
           </label>
           <textarea
             id="zora-custom-instructions"
@@ -762,11 +762,11 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
               onChange({ customInstructions: event.target.value })
             }
             rows={10}
-            placeholder="Tell Zora how you like to work. There’s no character limit."
+            placeholder="Tell Toron how you like to work. There’s no character limit."
             className="w-full resize-none rounded-2xl border border-[rgba(var(--border),0.4)] bg-[rgba(var(--panel),0.98)] px-3 py-2 text-sm text-[rgb(var(--text))] outline-none focus:border-[rgba(var(--brand),0.5)]"
           />
           <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.78)]">
-            There’s no character limit here. Zora will summarise and compress
+            There’s no character limit here. Toron will summarise and compress
             this behind the scenes to keep responses consistent.
           </p>
         </div>
@@ -777,7 +777,7 @@ function ZoraTab({ state, onChange, onSave }: ZoraTabProps) {
             onClick={onSave}
             className="btn btn-primary btn-neo ripple rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em]"
           >
-            <Save className="size-4" /> Save Zora settings
+            <Save className="size-4" /> Save Toron settings
           </button>
         </div>
       </div>
@@ -833,7 +833,7 @@ function WorkspaceTab({ state, onChange, onSave }: WorkspaceTabProps) {
                 Where Workspace pulls content from
               </h3>
               <p className="mt-1 text-xs text-[rgba(var(--subtle),0.82)]">
-                Toggle connections on or off. Zora will only analyse data from
+                Toggle connections on or off. Toron will only analyse data from
                 sources that are enabled here.
               </p>
             </div>
@@ -889,7 +889,7 @@ function WorkspaceTab({ state, onChange, onSave }: WorkspaceTabProps) {
                   Study mode
                 </dt>
                 <dd className="text-[11px] text-[rgba(var(--subtle),0.8)]">
-                  Tightens citations and slows Zora down slightly for more
+                  Tightens citations and slows Toron down slightly for more
                   careful answers.
                 </dd>
               </div>
@@ -1041,7 +1041,7 @@ function CommandCenterTab({
         <dl className="mt-4 space-y-3 text-sm">
           <ToggleRow
             title="Projects"
-            description="Keep active Zora projects pinned at the top of Command Center."
+            description="Keep active Ryuzen projects pinned at the top of Command Center."
             checked={state.showProjects}
             onChange={(checked) => onChange({ showProjects: checked })}
           />
@@ -1122,7 +1122,7 @@ function CommandCenterTab({
             </button>
           </div>
           <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.8)]">
-            Zora remembers this per device, so your Command Center can feel
+            Ryuzen remembers this per device, so your Command Center can feel
             dense on desktop and calmer on tablet.
           </p>
         </div>
@@ -1194,7 +1194,7 @@ function PrivacyTab({ state, onChange, onSave }: PrivacyTabProps) {
                 Telemetry (opt-in)
               </p>
               <h3 className="accent-ink mt-1 text-base font-semibold text-[rgb(var(--text))]">
-                Help Zora — and models — get smarter safely
+                Help Ryuzen — and models — get smarter safely
               </h3>
             </div>
           </header>
@@ -1204,7 +1204,7 @@ function PrivacyTab({ state, onChange, onSave }: PrivacyTabProps) {
             hallucinations, conflict between engines, and API reliability —
             never raw secrets. Aggregated data may be shared with model
             providers to improve accuracy and safety, and may generate revenue
-            that keeps Zora sustainable.
+            that keeps Ryuzen sustainable.
           </p>
 
           <div className="mt-4 flex items-center justify-between gap-4 rounded-[18px] border border-[rgba(var(--border),0.35)] bg-[rgba(var(--panel),0.96)] px-4 py-3 text-sm">
@@ -1328,7 +1328,7 @@ function PrivacyTab({ state, onChange, onSave }: PrivacyTabProps) {
               rel="noreferrer"
               className="text-brand underline-offset-2 hover:underline"
             >
-              Zora Telemetry Guide
+              Ryuzen Telemetry Guide
             </a>{" "}
             once published.
           </p>
@@ -1360,7 +1360,7 @@ function PrivacyTab({ state, onChange, onSave }: PrivacyTabProps) {
             </div>
           </header>
           <p className="mt-2 text-xs text-[rgba(var(--subtle),0.82)]">
-            Zora can help you reason about hard situations, but it&apos;s not a
+            Toron can help you reason about hard situations, but it&apos;s not a
             crisis service. If you or someone else may be in danger, contact a
             real person right away.
           </p>
@@ -1442,7 +1442,7 @@ function PrivacyTab({ state, onChange, onSave }: PrivacyTabProps) {
               CloudWatch / Bedrock logs) with the retention window you set.
             </li>
             <li>
-              • Zora never sells raw personal data. Aggregated, anonymised
+              • Ryuzen never sells raw personal data. Aggregated, anonymised
               telemetry may be used to improve engines and fund the product.
             </li>
           </ul>

@@ -43,7 +43,7 @@ const Section: React.FC<{ title: string; answer?: DebateAnswer | null }> = ({
   </div>
 );
 
-export function ZoraStreamingPanel({
+export function ToronStreamingPanel({
   firstAnswer,
   partialAnswer,
   finalAnswer,

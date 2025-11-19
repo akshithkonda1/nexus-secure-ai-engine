@@ -59,7 +59,7 @@ function startOAuthFlow(provider: CloudProvider) {
   const meta = CLOUD_PROVIDERS[provider];
 
   // You can inspect this in dev tools while wiring the backend.
-  console.debug("[ZORA OAuth] Starting auth flow:", meta);
+  console.debug("[RYUZEN OAuth] Starting auth flow:", meta);
 
   // Minimal “wiring”: navigate to the backend route that creates
   // an OAuth session and redirects to the provider.
@@ -67,7 +67,7 @@ function startOAuthFlow(provider: CloudProvider) {
   try {
     window.location.assign(meta.authPath);
   } catch (error) {
-    console.error("[ZORA OAuth] Failed to start OAuth flow", error);
+    console.error("[RYUZEN OAuth] Failed to start OAuth flow", error);
     toast.error(`Could not start ${meta.label} connection. Try again.`);
   }
 }
@@ -126,7 +126,7 @@ export function Documents() {
     const source = file ?? fileInputRef.current?.files?.[0];
 
     if (!source) {
-      toast.info("Select a file to upload to ZORA.");
+      toast.info("Select a file to upload to Ryuzen.");
       fileInputRef.current?.click();
       return;
     }
@@ -150,7 +150,7 @@ export function Documents() {
 
   const handleDeleteDocument = (doc: DocumentItem) => {
     const confirmed = window.confirm(
-      `Delete “${doc.name}”? This will remove it from your ZORA workspace.`,
+      `Delete “${doc.name}”? This will remove it from your Ryuzen workspace.`,
     );
     if (!confirmed) return;
 
@@ -167,14 +167,14 @@ export function Documents() {
     );
 
     // TODO: when you have an analysis endpoint:
-    // await analyzeWithZora.mutateAsync({ documentIds: selectedIds });
-    console.debug("[ZORA] Analyze selected documents", {
+    // await analyzeWithToron.mutateAsync({ documentIds: selectedIds });
+    console.debug("[RYUZEN] Analyze selected documents", {
       ids: selectedIds,
       docs: selectedDocs,
     });
 
     toast.success(
-      `ZORA will analyze ${selectedIds.length} document${
+      `Toron will analyze ${selectedIds.length} document${
         selectedIds.length === 1 ? "" : "s"
       } (API wiring goes here).`,
     );
@@ -278,14 +278,14 @@ export function Documents() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Analyze with ZORA */}
+          {/* Analyze with Toron */}
           <button
             type="button"
             onClick={handleAnalyzeSelected}
             disabled={selectedIds.length === 0}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#3EE4FF] to-[#8B5CF6] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[rgb(var(--zora-night,3,7,17))] shadow-[0_0_30px_rgba(62,228,255,0.35)] transition-transform transition-shadow hover:translate-y-[-1px] hover:shadow-[0_0_40px_rgba(139,92,246,0.5)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Analyze with ZORA
+            Analyze with Toron
             {selectedIds.length > 0 && (
               <span className="rounded-full bg-[rgba(3,7,17,0.15)] px-2 py-0.5 text-[0.65rem] font-semibold">
                 {selectedIds.length}

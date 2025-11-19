@@ -52,7 +52,7 @@ def build_overview(user_settings: Dict) -> Dict:
             {
                 "id": "seed-signal",
                 "priority": "info",
-                "content": "Zora Engine is ready to ingest workspace telemetry once enabled.",
+                "content": "Ryuzen Engine is ready to ingest workspace telemetry once enabled.",
                 "createdAt": "",
             }
         ],

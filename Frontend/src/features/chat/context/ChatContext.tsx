@@ -125,7 +125,7 @@ export const initialWelcome: ChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "Welcome to Zora, an AI Debate Engine.\n\nAsk anything about your projects, documents, or life logistics — I’ll help you reason it out.",
+    "Welcome to Toron, an AI Debate Engine.\n\nAsk anything about your projects, documents, or life logistics — I’ll help you reason it out.",
   attachments: [],
   createdAt: safeNow(),
   status: "sent",

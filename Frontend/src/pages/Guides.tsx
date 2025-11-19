@@ -3,7 +3,7 @@
    Production-ready page with opt-in telemetry FAQ entries + Settings references.
 
    Sections:
-   1. Zora Overview
+   1. Ryuzen Overview
    2. Workspace Overview
    3. Command Center Overview
 ============================================================================ */
@@ -28,19 +28,19 @@ import { getFirstName } from "@/lib/userName";
 const faqSections = [
   {
     id: "zora",
-    title: "What is Zora?",
+    title: "What is Ryuzen?",
     icon: Brain,
     items: [
       {
-        q: "What is Zora, in plain English?",
-        a: "Zora is your personal AI command center. It debates AI models, ranks their answers, filters hallucinations, and helps you work faster with more accuracy and safety.",
+        q: "What is Ryuzen, in plain English?",
+        a: "Ryuzen is your personal AI command center. It debates AI models, ranks their answers, filters hallucinations, and helps you work faster with more accuracy and safety.",
       },
       {
-        q: "Why does Zora debate AI models?",
-        a: "Even the best AI models hallucinate. Zora forces multiple models to disagree, compare their reasoning, and justify their answers. You see the strongest, most reliable output—not random guesswork.",
+        q: "Why does Ryuzen debate AI models?",
+        a: "Even the best AI models hallucinate. Ryuzen forces multiple models to disagree, compare their reasoning, and justify their answers. You see the strongest, most reliable output—not random guesswork.",
       },
       {
-        q: "How does Zora protect my data?",
+        q: "How does Ryuzen protect my data?",
         a: "Everything is encrypted at rest and in transit. Your Workspace, Command Center, and chat content are never used for training by default. Your work stays yours unless you explicitly opt in to share anonymized telemetry in Settings.",
       },
 
@@ -50,38 +50,38 @@ const faqSections = [
 
       {
         q: "What is telemetry?",
-        a: "Telemetry is anonymous system behavior data — like model latency, error signals, debate outcomes, and safety filter triggers. It helps Zora stay fast, stable, and secure. Telemetry never includes your personal content, and you control additional sharing from Settings.",
+        a: "Telemetry is anonymous system behavior data — like model latency, error signals, debate outcomes, and safety filter triggers. It helps Ryuzen stay fast, stable, and secure. Telemetry never includes your personal content, and you control additional sharing from Settings.",
       },
       {
         q: "What is opt-in telemetry?",
-        a: "Opt-in telemetry is an optional setting in Settings → Privacy & Telemetry that lets you choose to share anonymized performance signals with Zora. These signals include hallucination patterns, disagreement markers, and model failure points — never your actual text or documents.",
+        a: "Opt-in telemetry is an optional setting in Settings → Privacy & Telemetry that lets you choose to share anonymized performance signals with Ryuzen. These signals include hallucination patterns, disagreement markers, and model failure points — never your actual text or documents.",
       },
       {
         q: "Why would I turn on opt-in telemetry?",
-        a: "Turning it on helps improve Zora's accuracy, Workspace intelligence, Command Center recommendations, and the overall debate engine. It makes the entire Zora ecosystem smarter for you while protecting your privacy. You can enable or disable this anytime in Settings → Privacy & Telemetry.",
+        a: "Turning it on helps improve Ryuzen's accuracy, Workspace intelligence, Command Center recommendations, and the overall debate engine. It makes the entire Ryuzen ecosystem smarter for you while protecting your privacy. You can enable or disable this anytime in Settings → Privacy & Telemetry.",
       },
       {
-        q: "Does Zora train on my actual data?",
-        a: "No. Zora never trains on your chats, files, documents, Workspace content, or Command Center data. If opt-in telemetry is enabled in Settings → Privacy & Telemetry, only anonymized performance patterns are shared — never your content.",
+        q: "Does Ryuzen train on my actual data?",
+        a: "No. Ryuzen never trains on your chats, files, documents, Workspace content, or Command Center data. If opt-in telemetry is enabled in Settings → Privacy & Telemetry, only anonymized performance patterns are shared — never your content.",
       },
       {
-        q: "Does Zora sell data?",
-        a: "Zora never sells user data. If you enable opt-in telemetry, Zora may share anonymized model failure analytics with model providers to help improve their reliability. This never includes your personal data, and you can control participation from Settings → Privacy & Telemetry.",
+        q: "Does Ryuzen sell data?",
+        a: "Ryuzen never sells user data. If you enable opt-in telemetry, Ryuzen may share anonymized model failure analytics with model providers to help improve their reliability. This never includes your personal data, and you can control participation from Settings → Privacy & Telemetry.",
       },
       {
         q: "Can I turn telemetry off?",
-        a: "Yes. You can disable opt-in telemetry at any time in Settings → Privacy & Telemetry. It is always your choice, and Zora functions normally whether you enable it or not.",
+        a: "Yes. You can disable opt-in telemetry at any time in Settings → Privacy & Telemetry. It is always your choice, and Ryuzen functions normally whether you enable it or not.",
       },
 
       /* ======================== */
 
       {
-        q: "What does Zora do behind the scenes?",
-        a: "Zora detects risky prompts, verifies outputs, filters harmful content, cleans context, reduces hallucinations, and keeps your AI predictable and safe. Most of this happens instantly in the background.",
+        q: "What does Ryuzen do behind the scenes?",
+        a: "Ryuzen detects risky prompts, verifies outputs, filters harmful content, cleans context, reduces hallucinations, and keeps your AI predictable and safe. Most of this happens instantly in the background.",
       },
       {
-        q: "What should I NOT use Zora for?",
-        a: "Do not use Zora for licensed medical, legal, or financial decisions. Zora is a reasoning assistant—not a doctor, lawyer, or adviser.",
+        q: "What should I NOT use Toron for?",
+        a: "Do not use Toron for licensed medical, legal, or financial decisions. Toron is a reasoning assistant—not a doctor, lawyer, or adviser.",
       },
     ],
   },
@@ -93,7 +93,7 @@ const faqSections = [
     items: [
       {
         q: "What is Workspace?",
-        a: "Workspace is your digital desk inside Zora. It stores documents, notes, flashcards, research, and everything your AI needs to help you without repeating uploads.",
+        a: "Workspace is your digital desk inside Ryuzen. It stores documents, notes, flashcards, research, and everything your AI needs to help you without repeating uploads.",
       },
       {
         q: "What does Workspace do for me?",
@@ -104,8 +104,8 @@ const faqSections = [
         a: "If you want it to. Workspace can store everything you learn, read, or build. It’s optimized for students, analysts, researchers, and creators.",
       },
       {
-        q: "How does Workspace help Zora?",
-        a: "Everything in Workspace becomes structured context that Zora can draw from. This makes your AI dramatically more accurate without needing manual uploads every session.",
+        q: "How does Workspace help Ryuzen?",
+        a: "Everything in Workspace becomes structured context that Ryuzen can draw from. This makes your AI dramatically more accurate without needing manual uploads every session.",
       },
     ],
   },
@@ -120,16 +120,16 @@ const faqSections = [
         a: "The Command Center is your cockpit — the place that shows projects, tasks, connectors, research signals, and system insights. It lives in a glowing, animated drawer in the header.",
       },
       {
-        q: "Why does Zora need a Command Center?",
-        a: "AI needs structure to be reliable. The Command Center gives Zora that structure: your goals, your projects, your files, and your workflow map.",
+        q: "Why does Ryuzen need a Command Center?",
+        a: "AI needs structure to be reliable. The Command Center gives Ryuzen that structure: your goals, your projects, your files, and your workflow map.",
       },
       {
         q: "What can I control from the Command Center?",
-        a: "Projects, incoming tasks, connectors, integrations, signals, and the entire Zora agent ecosystem.",
+        a: "Projects, incoming tasks, connectors, integrations, signals, and the entire Ryuzen agent ecosystem.",
       },
       {
-        q: "Does the Command Center make Zora more accurate?",
-        a: "Yes. The more Zora understands your work and your context, the more accurate your AI becomes. The Command Center organizes this context automatically.",
+        q: "Does the Command Center make Ryuzen more accurate?",
+        a: "Yes. The more Ryuzen understands your work and your context, the more accurate your AI becomes. The Command Center organizes this context automatically.",
       },
     ],
   },
@@ -224,10 +224,10 @@ export default function Guides() {
           Welcome
         </p>
         <h1 className="text-2xl font-semibold text-[rgb(var(--text))] sm:text-3xl">
-          {who}, meet the Zora Handbook.
+          {who}, meet the Ryuzen Handbook.
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-[rgba(var(--subtle),0.8)]">
-          This is your simple, user-friendly guide to understanding Zora,
+          This is your simple, user-friendly guide to understanding Ryuzen,
           Workspace, and the Command Center. Everything is organized into
           collapsible sections so you can explore without friction or overwhelm.
         </p>
