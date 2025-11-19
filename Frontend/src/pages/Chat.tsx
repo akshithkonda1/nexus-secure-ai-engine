@@ -918,7 +918,7 @@ function ChatInner() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-slate-300">
-                  Ask what you need — Toron pulls from AI Models, Command Center and your Workspace,
+                  Ask what you need — Toron pulls from AI Models and the internet as well as the Command Center and your Workspace,
                   then explains things as needed.
                 </p>
               </div>
@@ -1004,7 +1004,7 @@ function ChatInner() {
                             : "bg-slate-900/80 text-slate-100 hover:bg-slate-800",
                         ].join(" ")}
                         aria-pressed={isActive}
-                        aria-label={`Open Toron chat ${session.title}`}
+                        aria-label={`Open Chat ${session.title}`}
                       >
                         {renamingSessionId === session.id ? (
                           <input
