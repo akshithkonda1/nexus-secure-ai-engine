@@ -1,8 +1,7 @@
-import zoraLogo from "@/assets/zora-logo.svg";
-import zoraMark from "@/assets/zora-mark.svg";
+import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
 
 export const BRAND = {
-  dark: zoraLogo,
-  light: zoraLogo,
-  mark: zoraMark,
+  dark: ryuzenDragon,
+  light: ryuzenDragon,
+  mark: ryuzenDragon,
 } as const;

@@ -14,8 +14,7 @@ import NavItem from "@/components/nav/NavItem";
 import { useSidebar } from "@/components/layout/sidebar/SidebarContext";
 import { cn } from "@/shared/lib/cn";
 import { requestBillingUpgrade, requestProjectCreation } from "@/lib/actions";
-import zoraLogo from "@/assets/zora-logo.svg";
-import zoraMark from "@/assets/zora-mark.svg";
+import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -60,8 +59,12 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       >
         <div className="flex h-full flex-col overflow-y-auto">
           <div className="mb-4 flex items-center gap-2 px-1 text-[rgb(var(--text))] font-semibold tracking-tight">
-            <img src={zoraMark} alt="Ryuzen" className="h-9 w-9 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]" />
-            {!collapsed && <img src={zoraLogo} alt="Ryuzen" className="h-5" />}
+            <img
+              src={ryuzenDragon}
+              alt="Ryuzen logo"
+              className="h-9 w-9 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]"
+            />
+            {!collapsed && <img src={ryuzenDragon} alt="Ryuzen logo" className="h-5" />}
             <button
               type="button"
               className={cn(
