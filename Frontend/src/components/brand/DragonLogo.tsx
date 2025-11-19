@@ -1,5 +1,7 @@
 import React from "react";
 
+import dragonLogo from "@/assets/ryuzen-dragon.svg";
+
 export interface DragonLogoProps {
   size?: number;
   className?: string;
@@ -7,7 +9,7 @@ export interface DragonLogoProps {
 
 export const DragonLogo: React.FC<DragonLogoProps> = ({ size, className }) => (
   <img
-    src="/assets/ryuzen-dragon.svg"
+    src={dragonLogo}
     alt="Ryuzen logo"
     width={size}
     height={size}

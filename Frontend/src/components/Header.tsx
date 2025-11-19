@@ -13,6 +13,7 @@ import { CommandCenterOverlay } from "@/components/command-center/CommandCenterO
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
+import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
 
 type HeaderProps = {
   onToggleSidebar?: () => void;
@@ -70,9 +71,14 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
 
           <div className="flex w-full items-center justify-between gap-4">
             <div className="flex min-w-0 flex-1 items-center gap-3">
+              <img
+                src={ryuzenDragon}
+                alt="Ryuzen logo"
+                className="h-9 w-auto shrink-0 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]"
+              />
               <div
-            className={cn(
-              "relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border px-4 py-2 backdrop-blur-xl transition-colors duration-300 sm:flex",
+                className={cn(
+                  "relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border px-4 py-2 backdrop-blur-xl transition-colors duration-300 sm:flex",
               isDark
                 ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_78%,transparent)] text-zora-white shadow-zora-soft"
                 : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-sm",
