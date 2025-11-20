@@ -6,6 +6,24 @@ import { AggregatedTelemetry, TelemetryMetricInput } from './TelemetryModelMetri
 export class TelemetryIngest {
   private records: AggregatedTelemetry[] = [];
 
+  private normaliseMetric(value: unknown, fallback = 0): number {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    const coerced = Number(value);
+    return Number.isFinite(coerced) ? coerced : fallback;
+  }
+
+  private normaliseActiveModels(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((entry) => (typeof entry === 'string' ? entry : String(entry)))
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+  }
+
   ingest(model: string, payload: TelemetryMetricInput, ip?: string): AggregatedTelemetry {
     const timeBucket = toHourlyBucket(payload.timestamp || Date.now());
     const region = payload.region || toRegionBucket(ip);
@@ -16,15 +34,15 @@ export class TelemetryIngest {
       engine,
       region,
       timeBucket,
-      latencyMs: payload.modelLatencyMs,
-      thinkingTimeMs: payload.thinkingTimeMs,
-      outputTimeMs: payload.outputTimeMs,
-      tokensPerSecond: payload.tokensPerSecond,
-      driftIndex: payload.driftIndex,
-      divergence: payload.divergence,
-      errorRate: payload.errorRate,
-      retryCount: payload.retryCount,
-      activeModels: payload.activeModels,
+      latencyMs: this.normaliseMetric(payload.modelLatencyMs),
+      thinkingTimeMs: this.normaliseMetric(payload.thinkingTimeMs),
+      outputTimeMs: this.normaliseMetric(payload.outputTimeMs),
+      tokensPerSecond: this.normaliseMetric(payload.tokensPerSecond),
+      driftIndex: this.normaliseMetric(payload.driftIndex),
+      divergence: this.normaliseMetric(payload.divergence),
+      errorRate: this.normaliseMetric(payload.errorRate),
+      retryCount: Math.max(0, Math.floor(this.normaliseMetric(payload.retryCount))),
+      activeModels: this.normaliseActiveModels(payload.activeModels),
     };
 
     this.records.push(record);
