@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
 import React, { useState } from "react";
 import { useSession } from "@/shared/state/session";
-import { CommandCenterOverlay } from "@/components/command-center/CommandCenterOverlay";
+import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
@@ -110,7 +110,7 @@ export function AppShell() {
         </div>
       </main>
 
-      <CommandCenterOverlay
+      <RyuzenCommandCenterOverlay
         open={commandCenterOpen}
         onClose={() => setCommandCenterOpen(false)}
       />
