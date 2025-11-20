@@ -1,0 +1,9 @@
+{{- /* ConfigMap for non-sensitive configuration */ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "toron.fullname" . }}
+  labels:
+    app: {{ include "toron.name" . }}
+data:
+  LOG_LEVEL: {{ .Values.config.LOG_LEVEL | quote }}

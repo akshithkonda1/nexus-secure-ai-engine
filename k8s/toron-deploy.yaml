@@ -1,0 +1,41 @@
+# Toron deployment manifest for Kubernetes
+# Build image: docker build -f docker/Dockerfile -t toron-engine:latest .
+# Push image: docker push <registry>/toron-engine:latest
+# Apply: kubectl apply -f k8s/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toron-engine
+  labels:
+    app: toron-engine
+spec:
+  replicas: 4  # scalable workload
+  selector:
+    matchLabels:
+      app: toron-engine
+  template:
+    metadata:
+      labels:
+        app: toron-engine
+    spec:
+      containers:
+        - name: toron
+          image: toron-engine:latest
+          imagePullPolicy: IfNotPresent  # reuse local cache when possible
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TORON_PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
