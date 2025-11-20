@@ -459,6 +459,56 @@ body::before{
   50%{ box-shadow: 0 0 28px rgba(var(--brand), .36), 0 0 54px rgba(var(--brand-soft), .2); }
 }
 
+@layer utilities {
+  .bg-aurora-edge {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(56,189,248,0.25), transparent 55%),
+      radial-gradient(circle at 80% 75%, rgba(99,102,241,0.22), transparent 60%);
+  }
+
+  .card-aurora {
+    @apply bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_45px_rgba(56,189,248,0.2)] transition-all duration-300;
+  }
+
+  .card-aurora:hover {
+    box-shadow: 0 0 60px rgba(56, 189, 248, 0.35), 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    border-color: rgba(56, 189, 248, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .progress-flowline {
+    background: linear-gradient(90deg, rgba(56,189,248,0.85), rgba(99,102,241,0.85));
+    position: relative;
+    overflow: hidden;
+    border-radius: 9999px;
+  }
+
+  .progress-flowline::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 50%);
+    background-size: 120px 120px;
+    animation: flowline-drift 8s linear infinite;
+    opacity: 0.5;
+  }
+
+  .fade-slide-up {
+    animation: fade-slide-up 0.8s ease both;
+  }
+}
+
+@keyframes flowline-drift {
+  0% { transform: translateX(-40%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(40%); }
+}
+
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce){
   [data-theme="dark"] .panel--alive{ animation: none !important; }
 }

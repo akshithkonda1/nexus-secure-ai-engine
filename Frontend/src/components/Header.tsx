@@ -9,7 +9,7 @@ import {
   requestProfileOpen,
 } from "@/lib/actions";
 import { NotificationBell } from "@/components/shell/NotificationBell";
-import { CommandCenterOverlay } from "@/components/command-center/CommandCenterOverlay";
+import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
@@ -211,7 +211,7 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
           </div>
         </div>
       </header>
-      <CommandCenterOverlay
+      <RyuzenCommandCenterOverlay
         open={commandCenterOpen}
         onClose={() => setCommandCenterOpen(false)}
       />
