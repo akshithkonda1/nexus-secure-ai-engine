@@ -1,0 +1,77 @@
+replicaCount: 4
+image:
+  repository: ghcr.io/ryuzen/toron-engine
+  tag: "1.6.0"
+  pullPolicy: IfNotPresent
+resources:
+  requests:
+    cpu: "1"
+    memory: 2Gi
+  limits:
+    cpu: "2"
+    memory: 4Gi
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 65
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+livenessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+logging:
+  level: info
+  format: json
+cors:
+  enabled: true
+  allowedOrigins:
+    - "https://app.ryuzen.example.com"
+  allowedMethods: [GET, POST, OPTIONS]
+  allowedHeaders: [Authorization, Content-Type, X-API-Key]
+env:
+  RYUZEN_API_KEY: "${RYUZEN_API_KEY}"
+  RYUZEN_PRIVATE_KEY: "${RYUZEN_PRIVATE_KEY}"
+  RYUZEN_PUBLIC_KEY: "${RYUZEN_PUBLIC_KEY}"
+  RYUZEN_JWT_SECRET: "${RYUZEN_JWT_SECRET}"
+  RYUZEN_DEFAULT_MODEL: toron-guard
+  RYUZEN_CONNECTORS_ENABLED: "true"
+  BACKEND_PUBLIC_URL: "https://api.ryuzen.example.com"
+serviceAccount:
+  create: true
+  name: ryuzen-engine
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<acct>:role/ryuzen-sa
+nodeSelector:
+  role: compute
+tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "ai"
+    effect: "NoSchedule"
+affinity: {}
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000

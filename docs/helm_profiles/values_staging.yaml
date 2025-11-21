@@ -1,0 +1,64 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/ryuzen/toron-engine
+  tag: "1.6.0-rc"
+  pullPolicy: IfNotPresent
+resources:
+  requests:
+    cpu: "500m"
+    memory: 1Gi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+livenessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /api/v1/health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+logging:
+  level: debug
+  format: json
+cors:
+  enabled: true
+  allowedOrigins:
+    - "https://staging.app.ryuzen.example.com"
+  allowedMethods: [GET, POST, OPTIONS]
+  allowedHeaders: [Authorization, Content-Type, X-API-Key]
+env:
+  RYUZEN_API_KEY: "${RYUZEN_API_KEY}"
+  RYUZEN_PRIVATE_KEY: "${RYUZEN_PRIVATE_KEY}"
+  RYUZEN_PUBLIC_KEY: "${RYUZEN_PUBLIC_KEY}"
+  RYUZEN_JWT_SECRET: "${RYUZEN_JWT_SECRET}"
+  RYUZEN_DEFAULT_MODEL: toron-guard
+  RYUZEN_CONNECTORS_ENABLED: "true"
+  BACKEND_PUBLIC_URL: "https://staging.api.ryuzen.example.com"
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
