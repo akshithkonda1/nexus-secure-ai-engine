@@ -1,0 +1,535 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Ryuzen Toron v1.6 API",
+    "version": "1.6.0",
+    "description": "OpenAPI schema for the Ryuzen Toron v1.6 backend. All endpoints are secured via API key\nor JWT bearer authentication. Streaming is available via Server-Sent Events (SSE) and\nWebSocket upgrades for low-latency delivery.\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.ryuzen.example.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://staging.api.ryuzen.example.com",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    },
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health probe",
+        "description": "Returns service liveness/readiness information.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "summary": "List supported models",
+        "description": "Returns the available LLMs/connectors with capability metadata.",
+        "responses": {
+          "200": {
+            "description": "Array of models.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModelInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ask": {
+      "post": {
+        "summary": "Submit a question for completion",
+        "description": "Executes a single-turn question/answer operation against the configured default\nmodel or a specific connector. For streaming responses, use `/api/v1/stream` or\n`/ws/stream`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completion succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error."
+          }
+        }
+      }
+    },
+    "/api/v1/stream": {
+      "post": {
+        "summary": "Stream completion via SSE",
+        "description": "Opens a Server-Sent Events (SSE) stream that emits incremental completion events.\nThe connection remains open until a `done` event is sent.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stream of delta events.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeltaEvent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ws/stream": {
+      "get": {
+        "summary": "WebSocket streaming channel",
+        "description": "Upgrades the connection to a WebSocket for bidirectional, low-latency streaming.\nClients should send an `AskRequest` payload once connected and expect `DeltaEvent`\nframes until completion.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional model or connector alias."
+          },
+          {
+            "in": "query",
+            "name": "conversation_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Client-supplied conversation identifier for idempotency and tracing."
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching protocols to WebSocket."
+          },
+          "400": {
+            "description": "Invalid upgrade or payload."
+          }
+        },
+        "x-websocket": true
+      }
+    },
+    "/api/v1/connectors": {
+      "get": {
+        "summary": "List connector states",
+        "description": "Returns the configured data/model connectors and their current sync status.",
+        "responses": {
+          "200": {
+            "description": "Array of connector states.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectorState"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Trigger connector sync",
+        "description": "Schedules an on-demand sync for the specified connector.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "connector"
+                ],
+                "properties": {
+                  "connector": {
+                    "type": "string",
+                    "description": "Connector name or identifier."
+                  },
+                  "force_full_sync": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Force a full resynchronization instead of an incremental sync."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Sync accepted for processing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorState"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/summary": {
+      "get": {
+        "summary": "Retrieve telemetry summary",
+        "description": "Provides anonymized operational metrics for dashboards.",
+        "responses": {
+          "200": {
+            "description": "Telemetry snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "AskRequest": {
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural language prompt or instruction.",
+            "maxLength": 16384
+          },
+          "model": {
+            "type": "string",
+            "description": "Explicit model or connector to target; defaults to server setting."
+          },
+          "connectors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional list of connector IDs to include."
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Indicates whether the client prefers a streaming response.",
+            "default": false
+          },
+          "temperature": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 0.7
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary client metadata for auditing."
+          },
+          "encrypted_payload": {
+            "type": "object",
+            "description": "Envelope for encrypted inputs. When present, the server will decrypt inside the\nToronEngine and ignore plaintext fields.",
+            "properties": {
+              "key_id": {
+                "type": "string",
+                "description": "KMS key identifier used for envelope encryption."
+              },
+              "iv": {
+                "type": "string",
+                "description": "Base64-encoded initialization vector."
+              },
+              "ciphertext": {
+                "type": "string",
+                "description": "Base64-encoded ciphertext of the serialized AskRequest payload."
+              },
+              "tag": {
+                "type": "string",
+                "description": "Authentication tag for AEAD ciphers (e.g., AES-GCM)."
+              }
+            }
+          }
+        }
+      },
+      "AskResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "answer",
+          "model",
+          "latency_ms",
+          "usage"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique request identifier."
+          },
+          "answer": {
+            "type": "string",
+            "description": "Final model response."
+          },
+          "model": {
+            "type": "string",
+            "description": "Model or connector that produced the answer."
+          },
+          "latency_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Time to first token or completion."
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer"
+              },
+              "completion_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          },
+          "finish_reason": {
+            "type": "string",
+            "description": "Model-specific completion reason."
+          },
+          "trace_id": {
+            "type": "string",
+            "description": "Correlation identifier for tracing."
+          }
+        }
+      },
+      "DeltaEvent": {
+        "type": "object",
+        "description": "Event emitted during streaming responses.",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "Event type (delta, error, done)."
+          },
+          "data": {
+            "type": "object",
+            "description": "Payload for the event.",
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "Incremental token text."
+              },
+              "usage": {
+                "type": "object",
+                "properties": {
+                  "completion_tokens": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "done": {
+            "type": "boolean",
+            "description": "Indicates the stream has completed."
+          }
+        }
+      },
+      "ModelInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latency_class": {
+            "type": "string",
+            "description": "Qualitative latency category (fast, standard, batch)."
+          },
+          "default": {
+            "type": "boolean",
+            "description": "Whether this model is the backend default."
+          }
+        }
+      },
+      "ConnectorState": {
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current lifecycle stage (idle, syncing, error)."
+          },
+          "last_synced_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "connector_type": {
+            "type": "string",
+            "description": "Data source or model provider category."
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "stats": {
+            "type": "object",
+            "description": "Aggregate metrics about connector ingestion."
+          }
+        }
+      },
+      "TelemetrySummary": {
+        "type": "object",
+        "properties": {
+          "requests_today": {
+            "type": "integer"
+          },
+          "avg_latency_ms": {
+            "type": "number",
+            "format": "float"
+          },
+          "error_rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Percentage of failed requests."
+          },
+          "token_usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer"
+              },
+              "completion_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          },
+          "models_breakdown": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "model": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "connectors_active": {
+            "type": "integer"
+          }
+        }
+      },
+      "HealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.6.0"
+          },
+          "uptime_s": {
+            "type": "integer",
+            "description": "Seconds the process has been healthy."
+          }
+        }
+      }
+    }
+  }
+}

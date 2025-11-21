@@ -1,322 +1,368 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
-  title: Nexus Secure AI Engine API
-  version: 1.0.0
+  title: Ryuzen Toron v1.6 API
+  version: "1.6.0"
   description: |
-    REST API for orchestrating multi-model debates and monitoring Nexus engine health.
+    OpenAPI schema for the Ryuzen Toron v1.6 backend. All endpoints are secured via API key
+    or JWT bearer authentication. Streaming is available via Server-Sent Events (SSE) and
+    WebSocket upgrades for low-latency delivery.
 servers:
-  - url: https://api.nexus.example.com
+  - url: https://api.ryuzen.example.com
     description: Production
-  - url: https://staging.nexus.example.com
+  - url: https://staging.api.ryuzen.example.com
     description: Staging
+  - url: http://localhost:8000
+    description: Local development
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+paths:
+  /api/v1/health:
+    get:
+      summary: Health probe
+      description: Returns service liveness/readiness information.
+      responses:
+        '200':
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+  /api/v1/models:
+    get:
+      summary: List supported models
+      description: Returns the available LLMs/connectors with capability metadata.
+      responses:
+        '200':
+          description: Array of models.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelInfo'
+  /api/v1/ask:
+    post:
+      summary: Submit a question for completion
+      description: |-
+        Executes a single-turn question/answer operation against the configured default
+        model or a specific connector. For streaming responses, use `/api/v1/stream` or
+        `/ws/stream`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+      responses:
+        '200':
+          description: Completion succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskResponse'
+        '400':
+          description: Validation error.
+  /api/v1/stream:
+    post:
+      summary: Stream completion via SSE
+      description: |-
+        Opens a Server-Sent Events (SSE) stream that emits incremental completion events.
+        The connection remains open until a `done` event is sent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+      responses:
+        '200':
+          description: Stream of delta events.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/DeltaEvent'
+  /ws/stream:
+    get:
+      summary: WebSocket streaming channel
+      description: |-
+        Upgrades the connection to a WebSocket for bidirectional, low-latency streaming.
+        Clients should send an `AskRequest` payload once connected and expect `DeltaEvent`
+        frames until completion.
+      parameters:
+        - in: query
+          name: model
+          required: false
+          schema:
+            type: string
+          description: Optional model or connector alias.
+        - in: query
+          name: conversation_id
+          required: false
+          schema:
+            type: string
+          description: Client-supplied conversation identifier for idempotency and tracing.
+      responses:
+        '101':
+          description: Switching protocols to WebSocket.
+        '400':
+          description: Invalid upgrade or payload.
+      x-websocket: true
+  /api/v1/connectors:
+    get:
+      summary: List connector states
+      description: Returns the configured data/model connectors and their current sync status.
+      responses:
+        '200':
+          description: Array of connector states.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConnectorState'
+    post:
+      summary: Trigger connector sync
+      description: Schedules an on-demand sync for the specified connector.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - connector
+              properties:
+                connector:
+                  type: string
+                  description: Connector name or identifier.
+                force_full_sync:
+                  type: boolean
+                  default: false
+                  description: Force a full resynchronization instead of an incremental sync.
+      responses:
+        '202':
+          description: Sync accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorState'
+  /api/v1/telemetry/summary:
+    get:
+      summary: Retrieve telemetry summary
+      description: Provides anonymized operational metrics for dashboards.
+      responses:
+        '200':
+          description: Telemetry snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetrySummary'
 components:
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
-    DebateRequest:
+    AskRequest:
       type: object
       required:
-        - prompt
+        - query
       properties:
-        prompt:
+        query:
           type: string
-          description: Natural language query to debate across models.
+          description: Natural language prompt or instruction.
           maxLength: 16384
-        context:
+        model:
           type: string
-          description: Optional routing or business context label.
-        models:
+          description: Explicit model or connector to target; defaults to server setting.
+        connectors:
           type: array
-          description: Explicit list of connector names to participate in the debate.
           items:
             type: string
-        deadline_ms:
-          type: integer
-          format: int32
-          description: Soft deadline in milliseconds for completing the debate.
-          minimum: 1000
-        pii_protection:
+          description: Optional list of connector IDs to include.
+        stream:
           type: boolean
-          description: Enable PII filtering and blocking logic.
-          default: true
-        pii_override:
-          type: boolean
-          description: Allow PII flagged prompts to proceed if permitted by policy.
+          description: Indicates whether the client prefers a streaming response.
           default: false
-        telemetry_opt_in:
-          type: boolean
-          description: Opt-in flag for anonymized telemetry capture.
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+          default: 0.7
         metadata:
           type: object
           additionalProperties: true
-          description: Optional client supplied metadata echoed back in audit logs.
-    DebateResponse:
+          description: Arbitrary client metadata for auditing.
+        encrypted_payload:
+          type: object
+          description: |-
+            Envelope for encrypted inputs. When present, the server will decrypt inside the
+            ToronEngine and ignore plaintext fields.
+          properties:
+            key_id:
+              type: string
+              description: KMS key identifier used for envelope encryption.
+            iv:
+              type: string
+              description: Base64-encoded initialization vector.
+            ciphertext:
+              type: string
+              description: Base64-encoded ciphertext of the serialized AskRequest payload.
+            tag:
+              type: string
+              description: Authentication tag for AEAD ciphers (e.g., AES-GCM).
+    AskResponse:
       type: object
       required:
-        - status
+        - id
         - answer
-        - pii_detected
-        - pii_details
-        - models_used
-        - timings
-        - meta
+        - model
+        - latency_ms
+        - usage
       properties:
-        status:
+        id:
           type: string
-          description: Status of the debate execution (e.g., ok, error, pii_detected).
+          description: Unique request identifier.
         answer:
           type: string
-          nullable: true
-          description: Final synthesized answer from the debate.
-        models_used:
-          type: array
-          items:
-            type: string
-          description: Ordered list of connectors that contributed responses.
-        timings:
+          description: Final model response.
+        model:
+          type: string
+          description: Model or connector that produced the answer.
+        latency_ms:
+          type: integer
+          format: int64
+          description: Time to first token or completion.
+        usage:
           type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Latency per connector in seconds.
-        pii_detected:
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+        finish_reason:
+          type: string
+          description: Model-specific completion reason.
+        trace_id:
+          type: string
+          description: Correlation identifier for tracing.
+    DeltaEvent:
+      type: object
+      description: Event emitted during streaming responses.
+      properties:
+        event:
+          type: string
+          description: Event type (delta, error, done).
+        data:
+          type: object
+          description: Payload for the event.
+          properties:
+            token:
+              type: string
+              description: Incremental token text.
+            usage:
+              type: object
+              properties:
+                completion_tokens:
+                  type: integer
+        done:
           type: boolean
-        pii_details:
+          description: Indicates the stream has completed.
+    ModelInfo:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        capabilities:
           type: array
           items:
             type: string
-        meta:
+        latency_class:
+          type: string
+          description: Qualitative latency category (fast, standard, batch).
+        default:
+          type: boolean
+          description: Whether this model is the backend default.
+    ConnectorState:
+      type: object
+      required:
+        - name
+        - status
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          description: Current lifecycle stage (idle, syncing, error).
+        last_synced_at:
+          type: string
+          format: date-time
+        connector_type:
+          type: string
+          description: Data source or model provider category.
+        error:
+          type: string
+          nullable: true
+        stats:
           type: object
-          additionalProperties: true
-          description: Structured metadata including schema version and request identifiers.
-        sources:
+          description: Aggregate metrics about connector ingestion.
+    TelemetrySummary:
+      type: object
+      properties:
+        requests_today:
+          type: integer
+        avg_latency_ms:
+          type: number
+          format: float
+        error_rate:
+          type: number
+          format: float
+          description: Percentage of failed requests.
+        token_usage:
+          type: object
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+        models_breakdown:
           type: array
           items:
             type: object
-            additionalProperties: true
-          description: Optional supporting evidence or search references.
-        error_code:
-          type: string
-          description: Machine readable error classification when status != ok.
-        error_message:
-          type: string
-          description: Human readable error message when status != ok.
-    ErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-        detail:
-          type: string
-        max_models:
+            properties:
+              model:
+                type: string
+              count:
+                type: integer
+        connectors_active:
           type: integer
-          description: Present when the number of requested models exceeds the plan limit.
-paths:
-  /debate:
-    post:
-      summary: Execute a multi-model debate
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DebateRequest'
-            examples:
-              simple:
-                value:
-                  prompt: Explain zero trust networking.
-                  models:
-                    - openai.gpt-4o
-                    - anthropic.claude-3
-                  deadline_ms: 120000
-      responses:
-        '200':
-          description: Debate completed successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DebateResponse'
-              examples:
-                success:
-                  value:
-                    status: ok
-                    answer: Zero trust enforces per-request verification across identity, device, and context.
-                    models_used:
-                      - openai.gpt-4o
-                      - anthropic.claude-3
-                    timings:
-                      openai.gpt-4o: 1.42
-                      anthropic.claude-3: 1.98
-                    pii_detected: false
-                    pii_details: []
-                    meta:
-                      schema_version: 1.0
-                      request_id: 6f3c2eab91cd
-                    sources:
-                      - url: https://example.com/article
-                        title: Zero Trust in Practice
-        '400':
-          description: Invalid request payload.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                missing_prompt:
-                  value:
-                    error: Prompt is required
-                too_many_models:
-                  value:
-                    error: Too many models requested
-                    max_models: 5
-        '401':
-          description: Missing or invalid API key.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                unauthorized:
-                  value:
-                    error: Unauthorized
-        '413':
-          description: Request body exceeded the configured size limit.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                too_large:
-                  value:
-                    error: Request too large
-        '429':
-          description: Quality of service or rate limiting triggered.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                throttled:
-                  value:
-                    error: Rate limited (rpm). Try again shortly.
-        '500':
-          description: Unexpected error while processing the debate.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                internal:
-                  value:
-                    error: Internal server error
-  /healthz:
-    get:
-      summary: Health check
-      description: Lightweight health probe used by load balancers.
-      responses:
-        '200':
-          description: The service is running.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  uptime:
-                    type: string
-              example:
-                status: ok
-                uptime: 0:02:14
-  /readyz:
-    get:
-      summary: Readiness probe
-      description: Indicates whether dependencies such as model connectors and memory stores are ready.
-      responses:
-        '200':
-          description: Ready to accept traffic.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  uptime:
-                    type: string
-                  detail:
-                    type: object
-                    additionalProperties: true
-              example:
-                status: ok
-                uptime: 0:02:15
-        '503':
-          description: One or more dependencies are unavailable.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  uptime:
-                    type: string
-                  detail:
-                    type: object
-                    additionalProperties: true
-              example:
-                status: error
-                uptime: 0:02:15
-                detail:
-                  connectors:
-                    search: degraded
-  /status:
-    get:
-      summary: Report status of connectors and memory subsystems
-      security:
-        - ApiKeyAuth: []
-      responses:
-        '200':
-          description: Current runtime status snapshot.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  version:
-                    type: string
-                  uptime:
-                    type: string
-                  models:
-                    type: object
-                    additionalProperties:
-                      type: string
-                  memory:
-                    type: object
-                    additionalProperties: true
-              example:
-                status: "🟢 Running"
-                version: 1.0.0
-                uptime: 0:03:01
-                models:
-                  openai.gpt-4o: Healthy
-                  anthropic.claude-3: Degraded
-                memory:
-                  redis: ok
-        '401':
-          description: Missing or invalid API key.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                error: Unauthorized
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        version:
+          type: string
+          example: 1.6.0
+        uptime_s:
+          type: integer
+          description: Seconds the process has been healthy.
