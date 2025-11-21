@@ -1,0 +1,50 @@
+name: Toron CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest --html=reports/report.html --self-contained-html
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-report
+          path: |
+            reports/report.html
+            htmlcov/
+
+      - name: Build Docker image
+        run: docker build -t toron-engine:${{ github.sha }} .
+
+      - name: Archive image layer
+        run: docker save toron-engine:${{ github.sha }} | gzip > toron-engine.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: toron-image
+          path: toron-engine.tar.gz
+
+      - name: Push to registry
+        run: echo "docker push commands here"
+
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG || '' }}

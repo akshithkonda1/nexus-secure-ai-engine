@@ -1,0 +1,68 @@
+replicaCount: 4
+image:
+  repository: gcr.io/ryuzen/toron-engine
+  tag: "1.6.0"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: true
+  className: gke
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.allow-http: "false"
+  hosts:
+    - host: api.gke.ryuzen.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 12
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+resources:
+  requests:
+    cpu: "600m"
+    memory: "1.25Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 20
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+nodeSelector:
+  cloud.google.com/gke-nodepool: ai-prod
+  workload: ai
+  topology.kubernetes.io/region: us-central1
+tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "ai"
+    effect: "NoSchedule"
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: ryuzen-toron@project-id.iam.gserviceaccount.com
+env:
+  RYUZEN_API_KEY: ""
+  RYUZEN_MASTER_KEY: ""
+  RYUZEN_PUBLIC_URL: "https://api.gke.ryuzen.example.com"
+  RYUZEN_DEFAULT_MODEL: "vertex-gemini-pro"
+  CONNECTORS_ENABLED: "vertex,openai,anthropic"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

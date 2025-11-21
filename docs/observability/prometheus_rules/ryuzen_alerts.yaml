@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ryuzen-alerts
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: ryuzen.core
+      rules:
+        - alert: high_engine_latency
+          expr: histogram_quantile(0.95, sum(rate(toron_request_latency_seconds_bucket[5m])) by (le)) > 2
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ToronEngine p95 latency above 2s"
+            description: "Investigate upstream models or saturation."
+        - alert: connector_failures
+          expr: sum(rate(toron_connector_errors_total[5m])) by (connector) > 5
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Connector errors exceed threshold"
+            description: "Connector {{ $labels.connector }} failing consistently."
+        - alert: model_drift_detected
+          expr: toron_model_drift_score > 0.7
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Model drift risk detected"
+            description: "Review evaluation signals for {{ $labels.model }}."
+        - alert: rate_limit_pressure
+          expr: sum(rate(toron_provider_rate_limit_total[5m])) by (provider) > 10
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Provider rate limits approaching"
+            description: "Provider {{ $labels.provider }} is throttling requests."
+        - alert: memory_pressure
+          expr: sum(container_memory_working_set_bytes{pod=~"toron.*"}) by (pod) / sum(kube_pod_container_resource_limits_memory_bytes{pod=~"toron.*"}) by (pod) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Memory pressure on Toron pods"
+            description: "Consider scaling memory limits or checking leaks."

@@ -1,0 +1,70 @@
+replicaCount: 4
+image:
+  repository: ghcr.io/ryuzen/toron-engine
+  tag: "1.6.0"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+  hosts:
+    - host: api.ryuzen.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 65
+  targetMemoryUtilizationPercentage: 70
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 20
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+nodeSelector:
+  nodegroup: inference
+  eks.amazonaws.com/capacityType: on-demand
+tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "ai"
+    effect: "NoSchedule"
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ryuzen-toron-irsa
+env:
+  RYUZEN_API_KEY: ""
+  RYUZEN_MASTER_KEY: ""
+  RYUZEN_PUBLIC_URL: "https://api.ryuzen.example.com"
+  RYUZEN_DEFAULT_MODEL: "gpt-4o"
+  CONNECTORS_ENABLED: "openai,anthropic,azure,vertex"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

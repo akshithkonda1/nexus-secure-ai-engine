@@ -1,0 +1,16 @@
+# Service exposing the Toron deployment
+# Apply alongside the deployment manifest via `kubectl apply -f k8s/`
+apiVersion: v1
+kind: Service
+metadata:
+  name: toron-engine
+  labels:
+    app: toron-engine
+spec:
+  selector:
+    app: toron-engine
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

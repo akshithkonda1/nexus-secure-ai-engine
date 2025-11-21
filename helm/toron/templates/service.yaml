@@ -1,0 +1,15 @@
+{{- /* Service exposing Toron HTTP endpoint */ -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "toron.fullname" . }}
+  labels:
+    app: {{ include "toron.name" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "toron.name" . }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: 8080
