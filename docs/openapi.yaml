@@ -21,6 +21,7 @@ paths:
     get:
       summary: Health probe
       description: Returns service liveness/readiness information.
+      security: []
       responses:
         '200':
           description: Service is healthy.

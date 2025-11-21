@@ -28,15 +28,16 @@
     }
   ],
   "paths": {
-    "/api/v1/health": {
-      "get": {
-        "summary": "Health probe",
-        "description": "Returns service liveness/readiness information.",
-        "responses": {
-          "200": {
-            "description": "Service is healthy.",
-            "content": {
-              "application/json": {
+  "/api/v1/health": {
+    "get": {
+      "summary": "Health probe",
+      "description": "Returns service liveness/readiness information.",
+      "security": [],
+      "responses": {
+        "200": {
+          "description": "Service is healthy.",
+          "content": {
+            "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthStatus"
                 }
