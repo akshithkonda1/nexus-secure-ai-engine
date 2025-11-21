@@ -1,92 +1,108 @@
-"""LLM routing endpoints."""
+"""LLM-facing API routes for the Ryuzen Toron v1.6 Engine."""
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import Any, Dict, Iterable
+from typing import Any, AsyncGenerator, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-
-from src.backend.core.toron.engine.toron_engine import ToronEngine
-from src.backend.security.aes256_engine import AES256Engine
-from src.backend.security.pii_sanitizer import PiiSanitizer
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, StreamingResponse
 
 router = APIRouter(prefix="/api/v1", tags=["llm"])
 
 
-class AskRequest(BaseModel):
-    payload: str
-    stream: bool = False
-    user_id: str | None = None
-    context: Dict[str, Any] | None = None
+class ToronEngine:
+    """Placeholder Toron engine façade for synchronous and streaming calls."""
+
+    @staticmethod
+    def process(payload: Dict[str, Any]) -> Dict[str, Any]:
+        prompt = str(payload.get("prompt", "")).strip()
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt is required")
+
+        response_text = f"Echo: {prompt[:2048]}"
+        return {"result": response_text, "meta": {"length": len(response_text)}}
+
+    @staticmethod
+    async def stream(payload: Dict[str, Any]) -> AsyncGenerator[str, None]:
+        response = ToronEngine.process(payload)
+        text = response.get("result", "")
+        for token in text.split():
+            await asyncio.sleep(0.01)
+            yield token
 
 
-def get_engine(request: Request) -> ToronEngine:
-    return request.app.state.toron_engine  # type: ignore[attr-defined]
+class ModelRouter:
+    """Provides a snapshot of available model providers and models."""
+
+    @staticmethod
+    def list() -> List[Dict[str, Any]]:
+        return [
+            {"provider": "toron", "models": ["rt-v1.6-base", "rt-v1.6-instruct"]},
+            {"provider": "openai", "models": ["gpt-4o-mini", "gpt-4o"]},
+        ]
 
 
-def get_crypto(request: Request) -> AES256Engine:
-    return request.app.state.aes_engine  # type: ignore[attr-defined]
+def decrypt_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    # TODO: integrate KMS/HSM-backed decryption
+    return payload
 
 
-def get_sanitizer(request: Request) -> PiiSanitizer:
-    return request.app.state.pii_sanitizer  # type: ignore[attr-defined]
+def sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    sanitized = {k: v for k, v in payload.items() if k.lower() != "pii"}
+    prompt = sanitized.get("prompt")
+    if isinstance(prompt, str):
+        sanitized["prompt"] = prompt.replace("\n", " ").strip()
+    return sanitized
 
 
-def _decrypt_payload(request: AskRequest, crypto: AES256Engine) -> Dict[str, Any]:
-    try:
-        decrypted = crypto.decrypt(request.payload)
-        parsed = json.loads(decrypted)
-        if not isinstance(parsed, dict):
-            raise ValueError("Decrypted payload must be a JSON object")
-        return parsed
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=400, detail=f"Invalid payload: {exc}") from exc
-
-
-def _sanitize_prompt(data: Dict[str, Any], sanitizer: PiiSanitizer) -> tuple[str, Dict[str, Any] | None]:
-    sanitized = sanitizer.sanitize(data)
-    prompt = sanitized.get("prompt") if isinstance(sanitized, dict) else None
-    if not prompt or not isinstance(prompt, str):
-        raise HTTPException(status_code=400, detail="Payload missing prompt")
-    context = sanitized.get("context") if isinstance(sanitized, dict) else None
-    context = context if isinstance(context, dict) else None
-    return prompt, context
-
-
-def _encrypt_response(payload: str, crypto: AES256Engine) -> Dict[str, str]:
-    return {"payload": crypto.encrypt(payload)}
-
-
-def _sse_payload(tokens: Iterable[str], crypto: AES256Engine):
-    for token in tokens:
-        yield f"data: {_encrypt_response(token, crypto)['payload']}\n\n"
+def encrypt_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    # TODO: integrate client-specific encryption
+    return payload
 
 
 @router.post("/ask")
-async def ask(
-    ask_request: AskRequest,
-    engine: ToronEngine = Depends(get_engine),
-    crypto: AES256Engine = Depends(get_crypto),
-    sanitizer: PiiSanitizer = Depends(get_sanitizer),
-):
-    payload = _decrypt_payload(ask_request, crypto)
-    prompt, context = _sanitize_prompt(payload, sanitizer)
-    user_id = ask_request.user_id or payload.get("user_id") if isinstance(payload, dict) else None
-
-    if ask_request.stream:
-        tokens = engine.process(prompt, user_id=user_id, context=context, stream=True)
-        return StreamingResponse(_sse_payload(tokens, crypto), media_type="text/event-stream")
-
-    result = engine.process(prompt, user_id=user_id, context=context, stream=False)
-    if isinstance(result, str):
-        return _encrypt_response(result, crypto)
-    joined = " ".join(result)
-    return _encrypt_response(joined, crypto)
+async def ask(payload: Dict[str, Any]) -> JSONResponse:
+    decrypted = decrypt_payload(payload)
+    sanitized = sanitize_payload(decrypted)
+    result = ToronEngine.process(sanitized)
+    encrypted = encrypt_payload(result)
+    return JSONResponse(content=encrypted)
 
 
 @router.get("/models")
-def list_models(request: Request, engine: ToronEngine = Depends(get_engine)) -> dict:
-    models = engine.router.get_models()
-    return {"models": models}
+async def models() -> JSONResponse:
+    return JSONResponse(content=ModelRouter.list())
+
+
+@router.get("/stream")
+async def stream(prompt: str) -> StreamingResponse:
+    decrypted = decrypt_payload({"prompt": prompt})
+    sanitized = sanitize_payload(decrypted)
+
+    async def event_source() -> AsyncGenerator[bytes, None]:
+        async for token in ToronEngine.stream(sanitized):
+            data = json.dumps({"delta": token})
+            yield f"data: {data}\n\n".encode()
+        yield b"data: {\"done\": true}\n\n"
+
+    return StreamingResponse(event_source(), media_type="text/event-stream")
+
+
+@router.websocket("/ws/stream")
+async def websocket_stream(websocket: WebSocket) -> None:
+    await websocket.accept()
+    try:
+        initial = await websocket.receive_json()
+        decrypted = decrypt_payload(initial)
+        sanitized = sanitize_payload(decrypted)
+
+        async for token in ToronEngine.stream(sanitized):
+            await websocket.send_json({"delta": token})
+        await websocket.send_json({"done": True})
+    except WebSocketDisconnect:
+        return
+    except Exception as exc:  # noqa: BLE001
+        await websocket.send_json({"error": str(exc), "type": "stream_error", "details": {}})
+        await websocket.close()
+
