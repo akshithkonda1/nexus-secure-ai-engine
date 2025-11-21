@@ -61,7 +61,7 @@ class SessionPool:
         while True:
             now = time.time()
             with lock:
-                self._evict_locked(region, now)
+                self._evict_locked(region, now, pool)
                 if pool:
                     session, created_at, _last_used = pool.popleft()
                     self._in_use[region] += 1
@@ -115,7 +115,8 @@ class SessionPool:
         for region in regions:
             lock = self._get_lock(region)
             with lock:
-                self._evict_locked(region, now)
+                pool = self._pools.get(region, deque())
+                self._evict_locked(region, now, pool)
 
     def reset_pool(self) -> None:
         """Close and clear all pools."""
@@ -136,8 +137,7 @@ class SessionPool:
     # -----------------------------
     # Internal helpers
     # -----------------------------
-    def _evict_locked(self, region: str, now: float) -> None:
-        pool = self._pool(region)
+    def _evict_locked(self, region: str, now: float, pool: Deque[Tuple[object, float, float]]) -> None:
         fresh_pool: Deque[Tuple[object, float, float]] = deque()
         while pool:
             session, created_at, last_used = pool.popleft()
