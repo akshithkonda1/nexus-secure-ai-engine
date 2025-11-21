@@ -88,7 +88,7 @@ class ToronEngine:
                 telemetry_opt_in=telemetry_opt_in,
             )
         shaped = self.error_shaper.shape(result)
-        if shaped is result:
+        if shaped is result and "response" not in result:
             shaped = self.response_builder.build(result)
         shaped["latency_ms"] = shaped.get("latency_ms", 0.0) or ((time.time() - start) * 1000.0)
         shaped["response"] = self.encrypt(str(shaped.get("response", "")), session_id=session_id)
