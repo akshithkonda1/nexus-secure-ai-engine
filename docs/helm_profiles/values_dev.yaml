@@ -2,63 +2,45 @@ replicaCount: 1
 image:
   repository: ghcr.io/ryuzen/toron-engine
   tag: "1.6.0-dev"
-  pullPolicy: IfNotPresent
-resources:
-  requests:
-    cpu: "250m"
-    memory: 512Mi
-  limits:
-    cpu: "500m"
-    memory: 1Gi
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 1
-  targetCPUUtilizationPercentage: 80
-deploymentStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 1
-    maxSurge: 1
-livenessProbe:
-  httpGet:
-    path: /api/v1/health
-    port: http
-  initialDelaySeconds: 5
-  periodSeconds: 10
-readinessProbe:
-  httpGet:
-    path: /api/v1/health
-    port: http
-  initialDelaySeconds: 3
-  periodSeconds: 5
-logging:
-  level: debug
-  format: console
-cors:
-  enabled: true
-  allowedOrigins:
-    - "http://localhost:5173"
-  allowedMethods: [GET, POST, OPTIONS]
-  allowedHeaders: [Authorization, Content-Type, X-API-Key]
-env:
-  RYUZEN_API_KEY: "${RYUZEN_API_KEY}"
-  RYUZEN_PRIVATE_KEY: "${RYUZEN_PRIVATE_KEY}"
-  RYUZEN_PUBLIC_KEY: "${RYUZEN_PUBLIC_KEY}"
-  RYUZEN_JWT_SECRET: "${RYUZEN_JWT_SECRET}"
-  RYUZEN_DEFAULT_MODEL: toron-guard
-  RYUZEN_CONNECTORS_ENABLED: "true"
-  BACKEND_PUBLIC_URL: "http://localhost:8000"
-podSecurityContext:
-  runAsNonRoot: true
-  fsGroup: 2000
-  seccompProfile:
-    type: RuntimeDefault
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
+  pullPolicy: Always
 service:
   type: ClusterIP
-  port: 80
-  targetPort: 8000
+  port: 8080
+autoscaling:
+  enabled: false
+resources:
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+  limits:
+    cpu: "1"
+    memory: "1.5Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 3
+    periodSeconds: 5
+nodeSelector:
+  environment: dev
+tolerations: []
+serviceAccount:
+  create: true
+  annotations: {}
+env:
+  RYUZEN_API_KEY: "dev-key"
+  RYUZEN_MASTER_KEY: "dev-master"
+  RYUZEN_PUBLIC_URL: "http://localhost:8080"
+  RYUZEN_DEFAULT_MODEL: "stub-model"
+  CONNECTORS_ENABLED: "mock"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

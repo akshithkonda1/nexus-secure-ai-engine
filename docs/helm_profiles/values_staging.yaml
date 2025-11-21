@@ -1,64 +1,50 @@
-replicaCount: 2
+replicaCount: 3
 image:
   repository: ghcr.io/ryuzen/toron-engine
   tag: "1.6.0-rc"
   pullPolicy: IfNotPresent
-resources:
-  requests:
-    cpu: "500m"
-    memory: 1Gi
-  limits:
-    cpu: "1"
-    memory: 2Gi
-autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 70
-deploymentStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 1
-    maxSurge: 1
-livenessProbe:
-  httpGet:
-    path: /api/v1/health
-    port: http
-  initialDelaySeconds: 10
-  periodSeconds: 10
-readinessProbe:
-  httpGet:
-    path: /api/v1/health
-    port: http
-  initialDelaySeconds: 5
-  periodSeconds: 5
-logging:
-  level: debug
-  format: json
-cors:
-  enabled: true
-  allowedOrigins:
-    - "https://staging.app.ryuzen.example.com"
-  allowedMethods: [GET, POST, OPTIONS]
-  allowedHeaders: [Authorization, Content-Type, X-API-Key]
-env:
-  RYUZEN_API_KEY: "${RYUZEN_API_KEY}"
-  RYUZEN_PRIVATE_KEY: "${RYUZEN_PRIVATE_KEY}"
-  RYUZEN_PUBLIC_KEY: "${RYUZEN_PUBLIC_KEY}"
-  RYUZEN_JWT_SECRET: "${RYUZEN_JWT_SECRET}"
-  RYUZEN_DEFAULT_MODEL: toron-guard
-  RYUZEN_CONNECTORS_ENABLED: "true"
-  BACKEND_PUBLIC_URL: "https://staging.api.ryuzen.example.com"
-podSecurityContext:
-  runAsNonRoot: true
-  fsGroup: 2000
-  seccompProfile:
-    type: RuntimeDefault
-securityContext:
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
 service:
   type: ClusterIP
   port: 80
-  targetPort: 8000
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+resources:
+  requests:
+    cpu: "400m"
+    memory: "1Gi"
+  limits:
+    cpu: "1.5"
+    memory: "3Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 8
+    periodSeconds: 5
+nodeSelector:
+  environment: staging
+tolerations: []
+serviceAccount:
+  create: true
+  annotations: {}
+env:
+  RYUZEN_API_KEY: ""
+  RYUZEN_MASTER_KEY: ""
+  RYUZEN_PUBLIC_URL: "https://staging.api.ryuzen.example.com"
+  RYUZEN_DEFAULT_MODEL: "gpt-4o-mini"
+  CONNECTORS_ENABLED: "openai,anthropic"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

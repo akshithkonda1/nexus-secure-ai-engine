@@ -1,0 +1,40 @@
+{
+  "title": "Connector Health",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "table",
+      "title": "Connector Status",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "toron_connector_status",
+          "format": "table"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 6}
+    },
+    {
+      "type": "graph",
+      "title": "Connector Sync Duration",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(toron_connector_sync_seconds_bucket[5m])) by (le, connector))",
+          "legendFormat": "{{connector}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 6, "w": 24, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Telemetry Ingestion Rate",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(rate(toron_telemetry_ingest_total[1m])) by (pipeline)"}
+      ],
+      "gridPos": {"x": 0, "y": 14, "w": 24, "h": 8}
+    }
+  ]
+}

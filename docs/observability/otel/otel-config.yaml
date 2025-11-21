@@ -1,0 +1,49 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  otlp:
+    endpoint: otel-collector:4317
+    tls:
+      insecure: true
+  logging:
+    loglevel: warn
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+  attributes/redact:
+    actions:
+      - key: api_key
+        action: delete
+      - key: user_email
+        action: delete
+      - key: token
+        action: delete
+  resource:
+    attributes:
+      - key: service.name
+        value: ryuzen-toron
+        action: upsert
+  span:
+    name:
+      to_lower: false
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, attributes/redact, batch]
+      exporters: [otlp, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp, logging]
+    logs:
+      receivers: [otlp]
+      processors: [resource, attributes/redact, batch]
+      exporters: [otlp, logging]
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133

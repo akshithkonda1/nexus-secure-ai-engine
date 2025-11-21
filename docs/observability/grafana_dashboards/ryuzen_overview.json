@@ -1,0 +1,45 @@
+{
+  "title": "Ryuzen Overview",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Engine Health Score",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "toron_engine_health_score"}
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "graph",
+      "title": "Request Latency (p95)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(toron_request_latency_seconds_bucket[5m])) by (le))"
+        }
+      ],
+      "gridPos": {"x": 6, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "SSE/WebSocket Throughput",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "rate(toron_stream_tokens_total[1m])"}
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Pod CPU Usage",
+      "datasource": "Prometheus",
+      "targets": [
+        {"expr": "sum(rate(container_cpu_usage_seconds_total{pod=~\"toron.*\"}[5m])) by (pod)"}
+      ],
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8}
+    }
+  ]
+}

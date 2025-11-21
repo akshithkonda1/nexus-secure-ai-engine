@@ -1,99 +1,55 @@
-# Ryuzen Toron v1.6 Secrets Management Guide
+# Ryuzen Toron Secrets Management Guide
 
-This guide describes production-grade patterns for handling secrets across AWS, GCP, and Azure. It enforces zero-knowledge operation for ToronEngine: no plaintext secrets in source control, images, or logs. All decryption must occur in-memory within the engine.
+Enterprise deployments must keep all credentials outside the codebase and images. This guide outlines cloud-native approaches for AWS, GCP, and Azure.
 
-## Global Controls
-- **No plaintext secrets in Git or Docker images.**
-- **No secrets printed to logs** (including CI/CD). Mask environment variables in pipelines.
-- Secrets decrypted **only inside ToronEngine** and wiped from memory after use.
-- AES keys are stored in each cloud's native KMS and rotated regularly.
-- Ephemeral, per-request keys are derived at runtime and never persisted.
-- Rotation policies must be documented and calendared in this guide.
-- Ensure GitHub Actions redact all secret environment variables (no echo).
+## Core Principles
+- Never commit secrets to Git or bake them into container images.
+- Only decrypt values inside ToronEngine process memory; avoid writing decrypted bytes to disk.
+- Prefer envelope encryption with KMS-backed keys; rotate keys and secrets regularly.
+- Use workload identity (IRSA/Workload Identity/Pod Managed Identity) to eliminate static cloud credentials.
+- Wipe decrypted values from memory after use via SecureMemory primitives where available.
 
----
-## AWS (Secrets Manager + KMS + EKS IRSA)
+## AWS (Secrets Manager + KMS + IRSA)
+1. Enable IRSA on the EKS cluster and annotate the service account used by Toron.
+2. Store secrets in AWS Secrets Manager. Example:
+   ```bash
+   aws secretsmanager create-secret \
+     --name ryuzen/api-key \
+     --secret-string '{"RYUZEN_API_KEY":"<value>","RYUZEN_MASTER_KEY":"<value>"}'
+   ```
+3. Grant decrypt permissions to the IAM role bound via `eks.amazonaws.com/role-arn`.
+4. Mount secrets as environment variables using the Secrets Store CSI driver or fetch at startup with the AWS SDK.
+5. Keys are encrypted with KMS; rotate regularly with `aws kms rotate-key` or automatic rotation policies.
 
-**Architecture**
-- Store secrets in AWS Secrets Manager using these paths:
-  - `/ryuzen/engine/api-key`
-  - `/ryuzen/engine/crypto/master-key`
-  - `/ryuzen/engine/jwt-secret`
-  - `/ryuzen/engine/connector/google`
-  - `/ryuzen/engine/connector/microsoft`
-- Master keys are encrypted with `aws_kms_key.ryuzen_master_key`.
-- Pods authenticate with an **IRSA** service account annotated as:
-  ```yaml
-  metadata:
-    annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::<acct>:role/ryuzen-sa
-  ```
-- Helm chart references Kubernetes secrets provisioned from Secrets Manager:
-  ```yaml
-  envFrom:
-    - secretRef:
-        name: ryuzen-secrets
-  ```
-- Never commit or template raw secret values.
+## GCP (Secret Manager + CMEK + Workload Identity)
+1. Enable Workload Identity and bind the Kubernetes service account to a Google service account.
+2. Create a Secret Manager secret:
+   ```bash
+   gcloud secrets create ryuzen-api --replication-policy="automatic"
+   echo -n "<value>" | gcloud secrets versions add ryuzen-api --data-file=-
+   ```
+3. Protect secrets with CMEK:
+   ```bash
+   gcloud kms keys create ryuzen-toron --keyring=platform --location=us --purpose=encryption
+   gcloud secrets update ryuzen-api --kms-key projects/<project>/locations/us/keyRings/platform/cryptoKeys/ryuzen-toron
+   ```
+4. Mount with Secret Manager CSI driver or fetch dynamically inside the pod using application-level caching.
 
-**Rotation**
-- Rotate `api-key` and `jwt-secret` every 90 days.
-- Rotate `crypto/master-key` via KMS annually or on incident.
-- Use Secrets Manager rotation lambdas with `Invocations` metrics monitored by CloudWatch.
+## Azure (Key Vault + Pod Managed Identity)
+1. Enable workload identity on AKS and assign a user-assigned managed identity to the Toron service account.
+2. Create and store secrets in Key Vault:
+   ```bash
+   az keyvault create --name ryuzenVault --resource-group platform
+   az keyvault secret set --vault-name ryuzenVault --name RYUZEN-API-KEY --value <value>
+   ```
+3. Grant access to the managed identity:
+   ```bash
+   az keyvault set-policy --name ryuzenVault --object-id <client-id> --secret-permissions get list
+   ```
+4. Use CSI Secrets Store driver or SDK retrieval at runtime. Do not persist the values to disk; inject directly as env vars.
 
----
-## GCP (Secret Manager + Workload Identity + GKE)
-
-**Architecture**
-- Store all secrets in Google Secret Manager; mirror the AWS key names for parity.
-- Bind the GKE service account to a Google IAM service account using Workload Identity:
-  ```bash
-gcloud iam service-accounts add-iam-policy-binding \
-  <gcp-iam-sa>@<project>.iam.gserviceaccount.com \
-  --role roles/iam.workloadIdentityUser \
-  --member "serviceAccount:<project>.svc.id.goog[ryuzen/engine]"
-  ```
-- Mount projected secrets into pods via Helm values:
-  ```yaml
-  secretVolume:
-    projected:
-      sources:
-        - secret:
-            name: ryuzen-secrets
-  ```
-- Rotate CMEK (Cloud KMS) keys periodically and re-encrypt stored secrets.
-
-**Rotation**
-- Rotate API keys and JWT secrets every 90 days; rotate CMEK annually.
-- Use Secret Manager versioning; deprecate old versions after rollout completes.
-
----
-## Azure (Key Vault + Pod Managed Identity + AKS)
-
-**Architecture**
-- Store secrets in Azure Key Vault with entries:
-  - `ryuzen-api-key`
-  - `ryuzen-crypto-key`
-  - `ryuzen-jwt`
-- Enable Managed Identity and bind pods via:
-  ```yaml
-  metadata:
-    annotations:
-      aadpodidentitybinding: ryuzen-identity
-  ```
-- Use the Secrets Store CSI Driver to sync Key Vault secrets into Kubernetes secrets consumed by the Helm chart.
-
-**Rotation**
-- Rotate Key Vault secrets every 90 days; regenerate crypto keys annually.
-- Enable purge protection and soft-delete to prevent accidental loss.
-
----
-## Zero-Knowledge Enforcement Checklist
-- [ ] No secrets in application logs (enable structured redaction middleware).
-- [ ] No secrets in CI logs; mask variables and disable command echoing.
-- [ ] Secret volumes mounted with `readOnly: true`; avoid writing to disk.
-- [ ] Secrets decrypted only inside ToronEngine request handlers.
-- [ ] SecureMemory or equivalent used to wipe buffers after use.
-- [ ] Short TTL for API keys; expired keys must be rejected server-side.
-- [ ] Documented rotation calendar per cloud and owner.
-
+## Runtime Handling
+- Store minimal configuration in Kubernetes secrets only as references to cloud secret identities, not the secret values themselves.
+- For SSE/WebSocket flows, redact tokens from logs and traces; rely on OTEL attribute filters.
+- Enforce periodic rotation by triggering CI jobs that call the respective cloud rotation APIs and restart deployments.
+- Validate secrets at startup and fail fast when missing; never continue with blank defaults in production.
