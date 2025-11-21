@@ -1,0 +1,95 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ryuzen/toron-engine
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Determine bump type
+        id: bump
+        run: |
+          commit_msg="${{ github.event.head_commit.message || github.event.commits[0].message || '' }}"
+          if echo "$commit_msg" | grep -iq "breaking:"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+          elif echo "$commit_msg" | grep -iq "feat:"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version
+        id: version
+        run: |
+          new_version=$(python scripts/bump_version.py --type ${{ steps.bump.outputs.type }})
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        run: |
+          python scripts/generate_changelog.py --version "${{ steps.version.outputs.version }}"
+
+      - name: Commit version and changelog
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add VERSION docs/openapi.yaml docs/openapi.json CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.version.outputs.version }}" || echo "No changes to commit"
+
+      - name: Create tag
+        run: |
+          git tag v${{ steps.version.outputs.version }}
+          git push origin HEAD
+          git push origin v${{ steps.version.outputs.version }}
+
+      - name: Build Docker image
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.version.outputs.version }}
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Ryuzen Toron v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            docs/openapi.json
+            docs/openapi.yaml
+            docs/helm_profiles/*.yaml
+            CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

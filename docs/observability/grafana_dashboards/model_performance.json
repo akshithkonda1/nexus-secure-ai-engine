@@ -1,0 +1,43 @@
+{
+  "title": "Model Performance",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Model Latency (p90)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(toron_model_latency_seconds_bucket[5m])) by (le, model))",
+          "legendFormat": "{{model}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Tokens Streamed per Second",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(toron_stream_tokens_total[1m])) by (model)",
+          "legendFormat": "{{model}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Error Rate by Model",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(toron_request_errors_total[5m])) by (model, status)",
+          "legendFormat": "{{model}} {{status}}"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8}
+    }
+  ]
+}
