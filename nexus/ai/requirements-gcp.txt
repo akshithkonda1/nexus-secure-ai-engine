@@ -1,5 +1,0 @@
--r requirements.txt
-google-cloud-firestore>=2.14,<3.0
-google-cloud-storage>=2.14,<4.0
-google-cloud-secret-manager>=2.20,<3.0
-google-cloud-compute>=1.16,<2.0
