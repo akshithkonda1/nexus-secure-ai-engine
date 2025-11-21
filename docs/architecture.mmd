@@ -1,0 +1,8 @@
+flowchart TD
+   user --> ToronEngine
+   ToronEngine --> CloudProviderAdapter
+   ToronEngine --> TelemetryIngest
+   ToronEngine --> CrypterAES256
+   CloudProviderAdapter --> AWS[(AWS Bedrock)]
+   CloudProviderAdapter --> Azure[(Azure OpenAI)]
+   CloudProviderAdapter --> GCP[(Vertex AI)]

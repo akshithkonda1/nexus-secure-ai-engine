@@ -1,88 +1,47 @@
-# Ryuzen Toron v1.6
+# Toron v1.6 — Ryuzen Nims Engine
 
-## Overview
-Ryuzen Toron v1.6 is a production-ready orchestration engine that powers the secure AI experience behind the Ryuzen platform. The backend exposes a hardened FastAPI gateway, region-aware rate limiting, and an opinionated Toron Engine pipeline designed for low-latency responses and safe frontend interoperability.
+The Toron engine is a cloud-neutral orchestration layer that secures prompts and responses with AES-256, masks PII, and exposes connectors for AWS, Azure, and GCP model backends. This repo packages the engine with container tooling, Helm charts, Terraform plans, and a full pytest harness so you can ship the system with confidence.
 
-## Multi-cloud orchestration
-The Toron Engine abstracts provider differences and routes workloads across multiple clouds, allowing for plug and play operations. A lightweight model router provides deterministic fallbacks while the orchestrator records audit trails for observability.
-
-## Zero-knowledge architecture
-All ingress payloads are decrypted in-memory via AES-256-GCM and scrubbed for PII prior to processing. No plaintext leaves the request boundary, enabling zero-knowledge data handling across services and connectors.
-
-## Multi-model debate engine
-Requests pass through a multi-reviewer debate stage to blend reasoning and guard-rail perspectives. Consensus outputs feed the orchestrator for summarization and telemetry logging.
-
-## Connectors
-The unified connectors layer exposes discovery and synchronization endpoints for provider integrations (GitHub, Google, Outlook, and more). State is tracked centrally to keep the frontend command center in sync.
-
-## Telemetry
-Telemetry aggregation captures per-model counters, latency, and timestamps so that dashboards can display the health of ongoing operations. Summaries are exportable through the API when opted in by the user.
-
-## Session pooling
-Concurrency gates and per-user rate limiters keep the engine responsive under load. Warmup hooks pre-initialize the orchestration stack for fast handshakes.
-
-## Region-aware rate limits
-Global and user-aware limiters can be tuned per region to respect regulatory and capacity boundaries, ensuring graceful degradation instead of hard failures.
-
-## Security model (AES-256 + PII scrub)
-Inbound payloads are decrypted with AES-256-GCM, sanitized to remove PII markers, routed for processing, and re-encrypted before leaving the gateway. Secure memory helpers wipe sensitive buffers after use.
-
-## Architecture diagram
-The Mermaid source for the system diagram lives at `docs/architecture.mmd`.
-
-## Folder structure
+## Repository layout
 ```
-src/
-  backend/
-    core/toron/engine/
-    retriever/
-    connectors/
-    rate_limit/
-    telemetry/
-    health/
-    security/
-    utils/
-    api/
-docker/
-k8s/
-helm/
-terraform/
-tests/
-docs/
-.github/workflows/
+.
+├── docker/                 # Dockerfile and compose for local runs
+├── k8s/                    # Raw Kubernetes manifests
+├── helm/toron/             # Helm chart for configurable releases
+├── terraform/              # AWS, Azure, and GCP infrastructure plans
+├── toron/                  # Python engine primitives
+├── src/backend/server.py   # Flask entrypoint for container images
+├── tests/                  # Unit tests, fixtures, and pytest config
+├── docs/                   # Architecture + deployment + testing guides
+└── .github/workflows/      # CI/CD automation
 ```
 
 ## Local development
-```sh
-make run
-```
-This launches the FastAPI gateway on `http://0.0.0.0:8080` with CORS enabled and tracing headers set for frontend calls.
+- **Python server**: `python src/backend/server.py`
+- **Docker image**: `docker build -f docker/Dockerfile -t toron-engine:latest .`
+- **Compose**: `cd docker && docker compose up -d` (loads `.env` and maps port 8080)
 
-## Docker & Compose usage
-Build the engine container locally with:
-```sh
-make docker
-```
-A `docker-compose.yml` example is included for multi-service development.
+## Deployments
+- **Kubernetes manifests**: `kubectl apply -f k8s/`
+- **Helm chart**: `helm upgrade --install toron ./helm/toron --set image.tag=$(git rev-parse --short HEAD)`
+- **Terraform**: initialize the target cloud under `terraform/aws`, `terraform/azure`, or `terraform/gcp`, then `terraform plan -var="image_tag=$(git rev-parse --short HEAD)"`
 
-## Helm deployment
-The `helm/` chart packages the service for Kubernetes environments. Update values as needed, then deploy through your preferred CI/CD orchestrator.
+## Testing
+- `pip install -r requirements-dev.txt`
+- `pytest` (HTML report written to `reports/report.html`, coverage to `htmlcov/`)
+- `make test` shortcut for `pytest --cov=toron --cov-report=html`
 
-## Terraform deployment
-The `terraform/` directory contains infrastructure blueprints for provisioning cloud resources and secrets required by the engine.
+## Contributing
+1. Create a feature branch and include tests for new behaviour.
+2. Run `pytest` locally; CI enforces coverage ≥ 90%.
+3. Update docs in `docs/` when you change deployment or testing flows.
 
-## Frontend integration endpoints
-- `POST /api/v1/ask` — decrypts, sanitizes, orchestrates via ToronEngine, and returns encrypted text (supports SSE streaming when `stream=true`).
-- `GET /api/v1/health` — returns `HealthMonitor.status()` for readiness probes.
-- `GET /api/v1/telemetry/summary` — exports telemetry aggregates for the Command Center.
-- `GET /api/v1/connectors` — retrieves connector states.
-- `POST /api/v1/connectors/sync` — triggers sync for all connectors.
-- `GET /api/v1/models` — lists model catalog from the router.
-- `WS /ws/stream` — streams tokens in real time for interactive sessions.
+## Security model
+- **Encryption**: AES-256-GCM helpers enforce authenticated encryption.
+- **PII pipeline**: deterministic redaction and masking for emails, phones, and names.
+- **Secrets**: inject via `.env` locally, Kubernetes Secrets in clusters, or Terraform variables; never commit plaintext credentials.
 
-## Testing & CI/CD
-Run the full backend test suite and generate an HTML report with:
-```sh
-make test
-```
-Formatting helpers are available via `make fmt`. CI/CD workflows are configured under `.github/workflows/` to validate builds, run tests, and publish deployment artifacts.
+## Documentation
+- [Architecture Mermaid](docs/architecture.mmd)
+- [Deployment Guide](docs/deployment_guide.md)
+- [Testing Guide](docs/testing_guide.md)

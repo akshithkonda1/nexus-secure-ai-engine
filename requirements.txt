@@ -5,3 +5,7 @@ flask
 flask-cors
 flask-sock
 pyjwt
+pytest>=8.2.0
+pytest-html>=4.1.1
+pytest-cov>=4.1.0
+coverage>=7.5.0

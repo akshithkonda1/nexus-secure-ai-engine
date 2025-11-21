@@ -1,0 +1,50 @@
+{{- /* Deployment for Toron engine */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "toron.fullname" . }}
+  labels:
+    app: {{ include "toron.name" . }}
+    chart: {{ include "toron.chart" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "toron.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "toron.name" . }}
+    spec:
+      containers:
+        - name: toron
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TORON_PORT
+              value: {{ .Values.env.TORON_PORT | quote }}
+            - name: TORON_LOG_LEVEL
+              value: {{ .Values.config.LOG_LEVEL | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "toron.fullname" . }}
+            {{- if .Values.secrets.enabled }}
+            - secretRef:
+                name: {{ include "toron.fullname" . }}
+            {{- end }}
+          resources:
+{{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20

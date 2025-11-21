@@ -1,0 +1,5 @@
+apiVersion: v2
+name: toron
+version: 0.1.0
+description: Helm chart for deploying the Toron v1.6 engine
+appVersion: "1.6"
