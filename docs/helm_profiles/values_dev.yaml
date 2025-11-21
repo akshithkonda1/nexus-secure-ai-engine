@@ -1,0 +1,46 @@
+replicaCount: 1
+image:
+  repository: ghcr.io/ryuzen/toron-engine
+  tag: "1.6.0-dev"
+  pullPolicy: Always
+service:
+  type: ClusterIP
+  port: 8080
+autoscaling:
+  enabled: false
+resources:
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+  limits:
+    cpu: "1"
+    memory: "1.5Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 3
+    periodSeconds: 5
+nodeSelector:
+  environment: dev
+tolerations: []
+serviceAccount:
+  create: true
+  annotations: {}
+env:
+  RYUZEN_API_KEY: "dev-key"
+  RYUZEN_MASTER_KEY: "dev-master"
+  RYUZEN_PUBLIC_URL: "http://localhost:8080"
+  RYUZEN_DEFAULT_MODEL: "stub-model"
+  CONNECTORS_ENABLED: "mock"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

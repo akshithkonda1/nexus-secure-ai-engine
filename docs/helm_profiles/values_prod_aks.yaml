@@ -1,0 +1,67 @@
+replicaCount: 4
+image:
+  repository: acr.example.com/ryuzen/toron-engine
+  tag: "1.6.0"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.aks.ryuzen.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+autoscaling:
+  enabled: true
+  minReplicas: 4
+  maxReplicas: 12
+  targetCPUUtilizationPercentage: 65
+  targetMemoryUtilizationPercentage: 75
+resources:
+  requests:
+    cpu: "600m"
+    memory: "1.5Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 20
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+nodeSelector:
+  agentpool: ai-prod
+  kubernetes.azure.com/mode: system
+tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "ai"
+    effect: "NoSchedule"
+serviceAccount:
+  create: true
+  annotations:
+    azure.workload.identity/client-id: 00000000-0000-0000-0000-000000000000
+env:
+  RYUZEN_API_KEY: ""
+  RYUZEN_MASTER_KEY: ""
+  RYUZEN_PUBLIC_URL: "https://api.aks.ryuzen.example.com"
+  RYUZEN_DEFAULT_MODEL: "azure-gpt-4o"
+  CONNECTORS_ENABLED: "azure,openai,anthropic"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true

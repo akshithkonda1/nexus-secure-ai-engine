@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ryuzen-engine
+description: Helm chart for Ryuzen Toron v1.6 Engine
+type: application
+version: 1.0.0
+appVersion: "1.6"

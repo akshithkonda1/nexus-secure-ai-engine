@@ -1,0 +1,384 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Ryuzen Toron Engine API",
+    "version": "1.6.0",
+    "description": "Ryuzen Toron v1.6 API for conversational inference, connector management, telemetry, and health.\n"
+  },
+  "servers": [
+    {
+      "url": "https://api.ryuzen.example.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://staging.ryuzen.example.com",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Ryuzen-Key"
+      }
+    },
+    "schemas": {
+      "AskRequest": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "User query to route through ToronEngine."
+          },
+          "model": {
+            "type": "string",
+            "description": "Preferred model name or connector identifier."
+          },
+          "models": {
+            "type": "array",
+            "description": "Explicit list of models to consider.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "Enable token streaming responses.",
+            "default": false
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary key/value pairs for audit and routing."
+          },
+          "encryption": {
+            "type": "object",
+            "description": "Envelope encryption payload metadata.",
+            "properties": {
+              "key_id": {
+                "type": "string"
+              },
+              "nonce": {
+                "type": "string"
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "payload": {
+                "type": "string",
+                "description": "Base64 encoded ciphertext of the prompt payload."
+              }
+            }
+          }
+        }
+      },
+      "AskResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "output"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "ok or error."
+          },
+          "output": {
+            "type": "string",
+            "description": "Final completion text when streaming disabled."
+          },
+          "tokens": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Token count returned."
+          },
+          "latency_ms": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "models_used": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Connector": {
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "Provider type such as openai, azure, vertex."
+          },
+          "status": {
+            "type": "string",
+            "description": "healthy | degraded | offline."
+          },
+          "last_sync": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TelemetrySummary": {
+        "type": "object",
+        "properties": {
+          "requests_last_minute": {
+            "type": "integer"
+          },
+          "error_rate": {
+            "type": "number",
+            "format": "float"
+          },
+          "avg_latency_ms": {
+            "type": "integer"
+          },
+          "sse_throughput_eps": {
+            "type": "number",
+            "format": "float"
+          },
+          "websocket_sessions": {
+            "type": "integer"
+          },
+          "engine_health_score": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "uptime_s": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/ask": {
+      "post": {
+        "summary": "Submit a synchronous question to ToronEngine.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              },
+              "examples": {
+                "simple": {
+                  "value": {
+                    "prompt": "Summarize the zero trust networking model",
+                    "model": "gpt-4o",
+                    "stream": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completed response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key."
+          }
+        }
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "summary": "List available connectors and models.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available connectors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Connector"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stream": {
+      "get": {
+        "summary": "Stream tokens over Server-Sent Events.",
+        "description": "Returns an SSE stream where each data event contains JSON encoded token deltas.\n",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "prompt",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of tokens.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ws/stream": {
+      "get": {
+        "summary": "Open a WebSocket for token streaming.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols to WebSocket."
+          }
+        }
+      }
+    },
+    "/api/v1/connectors": {
+      "get": {
+        "summary": "Retrieve connector status and metadata.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connector catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Connector"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/summary": {
+      "get": {
+        "summary": "Fetch aggregate telemetry metrics.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Telemetry summary snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health probe endpoint for Kubernetes.",
+        "responses": {
+          "200": {
+            "description": "Health payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

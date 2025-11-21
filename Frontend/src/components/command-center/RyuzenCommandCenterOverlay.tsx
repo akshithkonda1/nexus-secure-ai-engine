@@ -1,99 +1,103 @@
-import React, { useEffect, useRef } from "react";
-import Draggable from "react-draggable";
+import ToronPanel from "@/components/common/ToronPanel";
+import ToronGrid from "@/components/command-center/ToronGrid";
 import { X } from "lucide-react";
 
-import { useSession } from "@/shared/state/session";
-
-import { ConnectorEcosystemsCard } from "./ConnectorEcosystemsCard";
-import { DataTransformerCard } from "./DataTransformerCard";
-import { RyuzenAlertsCard } from "./RyuzenAlertsCard";
-import { RyuzenContinueTile } from "./RyuzenContinueTile";
-import { RyuzenQuickActionsCard } from "./RyuzenQuickActionsCard";
-import { RyuzenSystemCard } from "./RyuzenSystemCard";
-import { ToronEngineCard } from "./ToronEngineCard";
-import { ToronNeuralCoreHero } from "./ToronNeuralCoreHero";
-
-interface RyuzenCommandCenterOverlayProps {
-  open: boolean;
-  onClose: () => void;
-}
-
-export function RyuzenCommandCenterOverlay({ open, onClose }: RyuzenCommandCenterOverlayProps) {
-  const nodeRef = useRef<HTMLDivElement | null>(null);
-  const { user } = useSession();
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
+export default function RyuzenCommandCenterOverlay({ onClose }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-3xl"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+      className="
+        fixed 
+        inset-0 
+        bg-black/40 
+        backdrop-blur-3xl 
+        flex 
+        justify-center 
+        items-center 
+        p-4 
+        z-50
+      "
     >
-      <div className="absolute inset-0 bg-aurora-edge opacity-60 blur-3xl" />
-      <div className="relative flex h-full w-full items-center justify-center px-4 py-6 sm:px-8">
-        <Draggable
-          nodeRef={nodeRef}
-          handle=".ryuzen-drag-handle"
-          bounds="parent"
-          defaultPosition={{ x: 0, y: 0 }}
+      <div
+        className="
+          relative 
+          w-[95%] 
+          h-[85%] 
+          bg-gradient-to-b 
+          from-[#0b0f17]/70 
+          to-[#03050a]/70 
+          rounded-2xl 
+          border border-white/10 
+          shadow-[0_20px_60px_rgba(0,0,0,0.8)]
+          overflow-hidden
+        "
+      >
+        <button
+          onClick={onClose}
+          className="
+            absolute 
+            top-4 
+            right-4 
+            text-white/40 
+            hover:text-white/90 
+            transition
+            z-[99]
+          "
         >
-          <div
-            ref={nodeRef}
-            className="relative w-full max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-[0_0_60px_rgba(56,189,248,0.25)] backdrop-blur-3xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="absolute inset-0 bg-aurora-edge" />
-            <div className="relative space-y-6 p-6 lg:p-8">
-              <header className="ryuzen-drag-handle flex cursor-move items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.32em] text-cyan-200">Nimbus Command Center</p>
-                  <h1 className="mt-2 text-2xl font-semibold text-white">Hello, {user?.name ?? "Operator"}</h1>
-                  <p className="mt-1 text-sm text-slate-200">
-                    Glassy, draggable system overview with holographic Toron core and neon controls.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close command center"
-                  onClick={onClose}
-                  className="group inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:border-cyan-400/50 hover:bg-cyan-500/15"
-                >
-                  <X className="h-5 w-5 transition group-hover:rotate-90" />
-                </button>
-              </header>
+          <X size={24} />
+        </button>
 
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div className="space-y-4">
-                  <RyuzenSystemCard />
-                  <ToronEngineCard />
-                  <DataTransformerCard />
-                  <ConnectorEcosystemsCard />
-                </div>
+        <ToronGrid>
+          
+          <ToronPanel>
+            <div className="text-white text-xl font-semibold">Neural Load</div>
+            <div className="text-white/60">4 active models</div>
+          </ToronPanel>
 
-                <div>
-                  <ToronNeuralCoreHero />
-                </div>
+          <ToronPanel>
+            <div className="text-white text-xl font-semibold">Pipelines</div>
+            <div className="text-white/60">Transformer 98.4%</div>
+          </ToronPanel>
 
-                <div className="space-y-4">
-                  <RyuzenAlertsCard />
-                  <RyuzenQuickActionsCard />
-                  <RyuzenContinueTile />
-                </div>
-              </div>
+          <ToronPanel>
+            <div className="text-white text-xl font-semibold">Connectors</div>
+            <div className="text-white/60">8 linked</div>
+          </ToronPanel>
+
+          <ToronPanel>
+            <div className="text-white text-xl font-semibold">Workspace</div>
+            <div className="text-white/60">Hologram jump</div>
+          </ToronPanel>
+
+          <ToronPanel>
+            <div className="text-white text-xl font-semibold">Telemetry</div>
+            <div className="text-white/60">Live monitoring</div>
+          </ToronPanel>
+
+          <ToronPanel className="bg-gradient-to-br from-[#102037]/80 to-[#091629]/80">
+            <div className="text-white text-lg font-semibold">
+              Resume Analysis: Project Ryuzen
             </div>
-          </div>
-        </Draggable>
+            <div className="text-white/60">Toron paused on node clustering.</div>
+
+            <button
+              className="
+                mt-3
+                w-fit
+                px-4
+                py-2
+                rounded-md
+                bg-cyan-500/20
+                text-cyan-300
+                border border-cyan-400/20
+                hover:bg-cyan-500/30
+                transition
+              "
+            >
+              Continue →
+            </button>
+          </ToronPanel>
+
+        </ToronGrid>
       </div>
     </div>
   );

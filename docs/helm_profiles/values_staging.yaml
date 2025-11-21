@@ -1,0 +1,50 @@
+replicaCount: 3
+image:
+  repository: ghcr.io/ryuzen/toron-engine
+  tag: "1.6.0-rc"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+resources:
+  requests:
+    cpu: "400m"
+    memory: "1Gi"
+  limits:
+    cpu: "1.5"
+    memory: "3Gi"
+probes:
+  liveness:
+    path: /api/v1/health
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  readiness:
+    path: /api/v1/health
+    initialDelaySeconds: 8
+    periodSeconds: 5
+nodeSelector:
+  environment: staging
+tolerations: []
+serviceAccount:
+  create: true
+  annotations: {}
+env:
+  RYUZEN_API_KEY: ""
+  RYUZEN_MASTER_KEY: ""
+  RYUZEN_PUBLIC_URL: "https://staging.api.ryuzen.example.com"
+  RYUZEN_DEFAULT_MODEL: "gpt-4o-mini"
+  CONNECTORS_ENABLED: "openai,anthropic"
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  runAsUser: 1000
+  runAsGroup: 1000
+features:
+  sse: true
+  websocket: true
