@@ -32,6 +32,9 @@ importers:
       react-dom:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
+      react-draggable:
+        specifier: ^4.5.0
+        version: 4.5.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-easy-crop:
         specifier: ^5.5.3
         version: 5.5.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -47,6 +50,9 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.25.76
+      zustand:
+        specifier: ^5.0.8
+        version: 5.0.8(@types/react@19.2.6)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0))
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.0.0
@@ -2162,6 +2168,12 @@ packages:
     peerDependencies:
       react: ^19.2.0
 
+  react-draggable@4.5.0:
+    resolution: {integrity: sha512-VC+HBLEZ0XJxnOxVAZsdRi8rD04Iz3SiiKOoYzamjylUcju/hP9np/aZdLHf/7WOD268WMoNJMvYfB5yAK45cw==}
+    peerDependencies:
+      react: '>= 16.3.0'
+      react-dom: '>= 16.3.0'
+
   react-easy-crop@5.5.5:
     resolution: {integrity: sha512-aRiY8CnsHir4cmoPaXbZW0Hpmy0Wd+7mxZbALx/+rxvAIIy0hesK48hCBjorAt9Kl9dA8IskWnhOq3ky44coLA==}
     peerDependencies:
@@ -2655,6 +2667,24 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zustand@5.0.8:
+    resolution: {integrity: sha512-gyPKpIaxY9XcO2vSMrLbiER7QMAMGOQZVRdJ6Zi782jkbzZygq5GI9nG8g+sMgitRtndwaBSl7uiqC49o1SSiw==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
 
 snapshots:
 
@@ -4792,6 +4822,13 @@ snapshots:
       react: 19.2.0
       scheduler: 0.27.0
 
+  react-draggable@4.5.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+
   react-easy-crop@5.5.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       normalize-wheel: 1.0.1
@@ -5328,3 +5365,9 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zustand@5.0.8(@types/react@19.2.6)(react@19.2.0)(use-sync-external-store@1.6.0(react@19.2.0)):
+    optionalDependencies:
+      '@types/react': 19.2.6
+      react: 19.2.0
+      use-sync-external-store: 1.6.0(react@19.2.0)
