@@ -30,6 +30,13 @@ resource "google_artifact_registry_repository" "toron" {
   format         = "DOCKER"
 }
 
+resource "google_artifact_registry_repository_iam_member" "node_pull" {
+  location   = google_artifact_registry_repository.toron.location
+  repository = google_artifact_registry_repository.toron.repository_id
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:${google_service_account.toron.email}"
+}
+
 resource "google_service_account" "toron" {
   account_id   = "toron-engine"
   display_name = "Toron Engine"
