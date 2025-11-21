@@ -1,0 +1,33 @@
+replicaCount: 2
+
+image:
+  repository: ryuzen-engine
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+env:
+  environment: production
+  logLevel: info
+  secretKey: ryuzen-super-secret
+
+ingress:
+  enabled: true
+  className: ""
+  hosts:
+    - host: ryuzen.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "1Gi"

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ryuzen-engine-config
+  labels:
+    app: ryuzen-engine
+data:
+  environment: "production"
+  log_level: "info"

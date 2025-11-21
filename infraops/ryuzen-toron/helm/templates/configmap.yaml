@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ryuzen-engine.fullname" . }}
+  labels:
+    {{- include "ryuzen-engine.labels" . | nindent 4 }}
+data:
+  environment: {{ .Values.env.environment | quote }}
+  log_level: {{ .Values.env.logLevel | quote }}
