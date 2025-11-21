@@ -63,7 +63,11 @@ class RyuzenPIIRemovalPipeline:
         user_hash = hash_identifier(user, salt)
         tenant_hash = stable_longitudinal_hash(tenant)
         region = ip_to_region(metadata.get("ip") or metadata.get("region"))
-        year, month, day, hour = bucket_timestamp(metadata.get("timestamp", _dt.datetime.utcnow()))
+        timestamp = metadata.get("timestamp") or _dt.datetime.now(_dt.timezone.utc)
+        if timestamp.tzinfo is None or timestamp.utcoffset() is None:
+            timestamp = timestamp.replace(tzinfo=_dt.timezone.utc)
+
+        year, month, day, hour = bucket_timestamp(timestamp)
         envelope = {
             "bucket": {"year": year, "month": month, "day": day, "hour": hour},
             "region": region,
