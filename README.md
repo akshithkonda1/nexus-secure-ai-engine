@@ -4,7 +4,7 @@
 Ryuzen Toron v1.6 is a production-ready orchestration engine that powers the secure AI experience behind the Ryuzen platform. The backend exposes a hardened FastAPI gateway, region-aware rate limiting, and an opinionated Toron Engine pipeline designed for low-latency responses and safe frontend interoperability.
 
 ## Multi-cloud orchestration
-The Toron Engine abstracts provider differences and routes workloads across multiple clouds. A lightweight model router provides deterministic fallbacks while the orchestrator records audit trails for observability.
+The Toron Engine abstracts provider differences and routes workloads across multiple clouds, allowing for plug and play operations. A lightweight model router provides deterministic fallbacks while the orchestrator records audit trails for observability.
 
 ## Zero-knowledge architecture
 All ingress payloads are decrypted in-memory via AES-256-GCM and scrubbed for PII prior to processing. No plaintext leaves the request boundary, enabling zero-knowledge data handling across services and connectors.
