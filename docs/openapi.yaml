@@ -21,9 +21,9 @@ components:
     AskRequest:
       type: object
       required:
-        - prompt
+        - query
       properties:
-        prompt:
+        query:
           type: string
           description: User query to route through ToronEngine.
         model:

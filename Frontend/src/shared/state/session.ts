@@ -14,3 +14,5 @@ export const useSession = create<SessionState>((set) => ({
       user: { ...state.user, ...user },
     })),
 }));
+
+export default useSession;

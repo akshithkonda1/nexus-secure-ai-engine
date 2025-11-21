@@ -1,259 +1,88 @@
-<!-- Repo Banner -->
-<p align="center">
-  <img src="assets/banner_nexus_suite.png" alt="Nexus Suite Banner" width="100%">
-</p>
+# Ryuzen Toron v1.6
 
-# nexus-secure-ai-engine
+## Overview
+Ryuzen Toron v1.6 is a production-ready orchestration engine that powers the secure AI experience behind the Ryuzen platform. The backend exposes a hardened FastAPI gateway, region-aware rate limiting, and an opinionated Toron Engine pipeline designed for low-latency responses and safe frontend interoperability.
 
-![Build](https://img.shields.io/badge/build-Passing-brightgreen)
-![Python](https://img.shields.io/badge/python-3.10+-blue)
-![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-orange)
-![Status](https://img.shields.io/badge/status-Production%20Ready-brightgreen)
+## Multi-cloud orchestration
+The Toron Engine abstracts provider differences and routes workloads across multiple clouds. A lightweight model router provides deterministic fallbacks while the orchestrator records audit trails for observability.
 
----
+## Zero-knowledge architecture
+All ingress payloads are decrypted in-memory via AES-256-GCM and scrubbed for PII prior to processing. No plaintext leaves the request boundary, enabling zero-knowledge data handling across services and connectors.
 
-# Nexus — Secure, Scalable, Smart.
+## Multi-model debate engine
+Requests pass through a multi-reviewer debate stage to blend reasoning and guard-rail perspectives. Consensus outputs feed the orchestrator for summarization and telemetry logging.
 
-> **The AI debate engine that validates answers before they reach you** — combining multiple LLMs, real-time web intelligence, and enterprise-grade encryption.
+## Connectors
+The unified connectors layer exposes discovery and synchronization endpoints for provider integrations (GitHub, Google, Outlook, and more). State is tracked centrally to keep the frontend command center in sync.
 
----
+## Telemetry
+Telemetry aggregation captures per-model counters, latency, and timestamps so that dashboards can display the health of ongoing operations. Summaries are exportable through the API when opted in by the user.
 
-## Quick Snapshot
-| Category       | Details |
-|----------------|---------|
-| **Status**     | Production Ready — automated CI/CD, hardened dependencies, Dockerized deployment |
-| **Tech Stack** | Python 3.10+, Flask, Terraform |
-| **Cloud Stack**| **AWS** (S3, RDS, DynamoDB, Glacier, ECS, KMS), **Azure** (Blob Storage, Key Vault, Cosmos DB, AKS), **GCP** (GCS, Cloud SQL/Spanner, BigQuery, GKE, KMS) |
-| **Core Focus** | Multi-cloud AI orchestration, secure data flow, scalable low-latency architecture |
-| **License**    | CC BY-NC 4.0 — Non-commercial use only without written consent |
+## Session pooling
+Concurrency gates and per-user rate limiters keep the engine responsive under load. Warmup hooks pre-initialize the orchestration stack for fast handshakes.
 
----
+## Region-aware rate limits
+Global and user-aware limiters can be tuned per region to respect regulatory and capacity boundaries, ensuring graceful degradation instead of hard failures.
 
-## What is Nexus?
+## Security model (AES-256 + PII scrub)
+Inbound payloads are decrypted with AES-256-GCM, sanitized to remove PII markers, routed for processing, and re-encrypted before leaving the gateway. Secure memory helpers wipe sensitive buffers after use.
 
-Nexus is a security-focused AI engine that aggregates and analyzes responses from multiple AI models plus traditional search
-engines and media to deliver a comprehensive and nuanced answer to user queries. It pairs live web retrieval and scraping with
-strict schema guarantees and cryptographic isolation.
+## Architecture diagram
+The Mermaid source for the system diagram lives at `docs/architecture.mmd`.
 
-Nexus integrates 256-bit AES-GCM encryption for data at rest and in motion (with tenant/instance/user-scoped AAD), and uses
-response aggregation policies—including model "debate" and consensus—to improve reliability. It’s horizontally scalable and
-easily extensible: new models and data sources can be onboarded without rewriting the core engine.
-
-Built for developers and researchers yet friendly to end users, Nexus focuses on clear, actionable insights verified against the
-web.
-
-Nexus was developed by Akshith Konda.
-
----
-
-## Why It’s Different
-Unlike most AI systems that simply generate output, Nexus:
-1. Forces **multi-model debate** to reduce bias and hallucinations.
-2. Validates answers against **real-time, authoritative sources**.
-3. Embeds **production-grade security** from the first line of code.
-4. Ships with **release-pipeline automation** so teams can promote builds confidently.
-5. Integrates seamlessly into **existing enterprise ecosystems** without lock-in.
-
----
-
-## Why It Matters
-Unchecked AI can:
-- Hallucinate or fabricate facts.
-- Miss critical real-time updates.
-- Expose sensitive information (especially critical in Government Environments).
-- Introduce costly operational errors.
-
-**Nexus mitigates these risks** by:
-- Cross-verifying results across multiple models.
-- Adding context from **live search and web intelligence**.
-- Applying **AES-256 encryption** end-to-end.
-- Scaling for **millions of secure, low-latency requests**.
-
----
-
-## Core Features (With Impact)
-- **Multi-Model AI Debate** — Truth-prioritized, bias-resistant outputs that converge on a consensus answer with ≥2 independent
-  sources.
-- **Live Context Injection** — Always relevant, always current.
-- **Encryption by Default** — AES-256, KMS integration, TLS 1.3 enforcement.
-- **Intelligent Ranking** — Noise-filtering algorithms to surface the best answer.
-- **Horizontally Scalable** — Operates across AWS, Azure, and GCP without single-region bottlenecks.
-
-## Testing
-How to run tests: `pytest -v --cov=backend`
-- **Release automation included** — GitHub Actions builds, tests, and signs off artefacts on every change.
-- **Compliance-Grade Logging** — Full audit trails with configurable TTL.
-
----
-
-## <img src="assets/logo_infraops.png" alt="InfraOps Logo" width="180px"><br>
-
-#  InfraOps Companion (Coming Soon)
-
-**InfraOps Companion** is a **machine learning & LLM-powered operations manager** for real-time infrastructure observability and automated remediation across multi-cloud environments.
-
-# Key Capabilities
-
-* **Predictive Anomaly Detection** — Anticipates failures before they impact workloads.
-* **Automated Incident Resolution** — Executes pre-defined or LLM-assisted remediation workflows to reduce MTTR.
-* **Multi-Cloud Operational Dashboards** — Unified visibility across AWS, Azure, and GCP resources.
-* **SIEM Integration Ready** — Hooks into enterprise security stacks for compliance and incident correlation.
-* **Mission-Critical Resilience** — Designed for zero-downtime environments and distributed systems.
-
-# Why It Matters
-
-InfraOps Companion continuously ingests telemetry from distributed systems, applies **ML-based anomaly detection** and **semantic analysis**, then triggers **auto-remediation playbooks** or human-in-the-loop responses. The result:
-
-* Lower operational overhead
-* Faster root-cause analysis
-* Higher uptime and resilience
-* Reduced costs from outages and escalations
-
-## <img src="assets/logo_loganalyzer.png" alt="LogAnalyzer.AI Logo" width="180px"><br>
-
-# LogAnalyzer.AI (Coming Soon)
-
-**LogAnalyzer.AI** is an **LLM-powered log intelligence platform** purpose-built for AI and multi-cloud ecosystems. It transforms raw logs into actionable insights with natural language, machine learning, and anomaly detection.
-
-### Key Capabilities
-
-* **Natural Language Queries** — Interrogate logs conversationally without complex syntax.
-* **AI Hallucination & Drift Detection** — Monitor and surface unusual model behaviors in real time.
-* **API Call Pattern Analysis** — Spot emerging systemic risks before they propagate.
-* **Root Cause AI Insights** — Accelerate mean time to resolution (MTTR) with automated context and recommendations.
-
----
-
-## Release Checklist
-
-1. **Verify CI/CD status** — The `CI` GitHub Actions workflow executes `ruff`, `black`, `mypy`, `pytest`, `bandit`, and `pip-audit`. Branch protection should block merges unless the workflow is green.
-2. **Tag the stable build** — `git tag -a v1.0.0 -m "Stable build: Nexus engine passes CI" && git push origin v1.0.0`.
-3. **Promote artefacts** — Build the multi-stage container with `docker compose build` or via your CI registry publishing job. The provided `Dockerfile` emits a slim, non-root runtime image ready for production orchestrators.
-4. **Run load validation** — Execute `k6 run tests/load/k6-smoke.js` against a staging environment and capture the latency histogram in your release notes.
-
-### Why It Matters
-
-Automated linting, security scanning, and dependency audits prevent regressions from landing in production. The container build paired with the load test script ensures parity between CI artefacts and deployed workloads while proving the performance envelope before every release.
-
-## Operations & Security Playbooks
-
-- [Security policy](SECURITY.md) — disclosure process, hardening checklist, and dependency management expectations.
-- [Operations guide](docs/OPERATIONS.md) — deployment workflow, health probes, observability hooks, and backup guidance.
-- [Health monitor runbook](docs/runbooks/health-monitor.md) — how to respond to failed background snapshots.
-- [Rate limiter runbook](docs/runbooks/rate-limiter.md) — steps to diagnose 429 storms or Redis exhaustion.
-
-These documents are the canonical source for SRE and security teams preparing a Nexus production rollout.
-
-
-
-## System at a Glance  
-**Design Principles:** **Safety, Scalability, Security**  
-
-**Infrastructure Highlights:**  
-- **Security:** AES-256, RBAC, multi-cloud KMS, network segmentation, audit logging.  
-- **Containerization:** Isolated microservices for each tool, orchestrated via Kubernetes or ECS/AKS/GKE.  
-- **Storage Strategy:**  
-  - **Hot:** Low-latency object storage, distributed NoSQL.  
-  - **Warm:** Relational DBs for transactional workloads.  
-  - **Cold:** Long-term archival in cost-optimized storage.  
-- **Compute:** Auto-scaling containerized workloads and VM clusters across all major clouds.  
-- **Observability:** Cloud-native metrics, automated backups, tiered storage rollovers.
-
----
-
-## Security Model
-- **No hardcoded secrets** — uses `.env` or cloud secrets managers.  
-- **Data encryption** — at rest and in transit.  
-- **Granular API scopes** — least-privilege integrations.  
-- **Attack surface reduction** — DoS mitigation, HTTPS-only endpoints.  
-- **Controlled log retention** — compliance-aligned TTL.
-
----
-
-## Author & Ownership
-**Designed, architected, and implemented end-to-end by a single engineer**, showcasing the ability to:
-- Deliver **multi-cloud, production-grade AI platforms**.  
-- Integrate **security-first principles** into every layer.  
-- Build modular systems for **scalable enterprise adoption**.
-
----
-
-## Getting Started
-```bash
-# 1. Clone repository
-git clone https://github.com/akshithkonda1/nexus-secure-ai-engine.git
-cd nexus-secure-ai-engine
-
-# 2. Create a local environment file
-cp .env.example .env
-# Edit .env with production values (API keys, trusted origins, Redis, DynamoDB, etc.).
-# At minimum set:
-#   AUTHORIZED_API_KEYS=dev-key
-#   TRUSTED_ORIGINS=https://localhost:8443
-#   REDIS_URL=redis://localhost:6379/0
-
-# 3. Run the stack locally (Redis + Nexus gateway)
-docker compose up --build
-
-# 4. Run the contributor quality gates (optional)
-pip install -r requirements-dev.txt
-ruff check .
-black --check .
-pytest
-
-# 5. Execute the load smoke test against a running stack
-NEXUS_API_KEY=replace-with-key \
-NEXUS_BASE_URL=https://localhost:8443 \
-  k6 run tests/load/k6-smoke.js
+## Folder structure
+```
+src/
+  backend/
+    core/toron/engine/
+    retriever/
+    connectors/
+    rate_limit/
+    telemetry/
+    health/
+    security/
+    utils/
+    api/
+docker/
+k8s/
+helm/
+terraform/
+tests/
+docs/
+.github/workflows/
 ```
 
-> **Fair-use QoS:** "Unlimited" refers to the absence of a fixed monthly request quota. The platform still enforces fair-use rat
-e/concurrency/token shaping so shared capacity stays healthy.
-
-
-## Multi-Cloud Deployment Quickstart
-
-Nexus modules are deployable to any major cloud using Terraform for infrastructure and Kubernetes for orchestration. Below are minimal, production-oriented examples that you can adapt to your environment.
-
-### Prerequisites
-- Terraform ≥ 1.5 installed
-- kubectl ≥ 1.27 installed
-- Docker or compatible OCI builder
-- Cloud CLI configured (one or more): `aws` / `az` / `gcloud`
-- A container registry (ECR/ACR/GCR/Artifact Registry) and a repository created
-
----
-
-### 1) Containerize the Module (any module: `nexus`, `infra-ops`, or `log-analyzer`)
-```bash
-# From the module directory (e.g., ./nexus)
-docker build -t <REGISTRY>/<PROJECT>/nexus:<TAG> .
-docker push <REGISTRY>/<PROJECT>/nexus:<TAG>
-
+## Local development
+```sh
+make run
 ```
+This launches the FastAPI gateway on `http://0.0.0.0:8080` with CORS enabled and tracing headers set for frontend calls.
 
----
+## Docker & Compose usage
+Build the engine container locally with:
+```sh
+make docker
+```
+A `docker-compose.yml` example is included for multi-service development.
 
-## Frontend preview & static demo
-The Nexus chat frontend lives in [`Frontend/`](Frontend/). To interact with it:
+## Helm deployment
+The `helm/` chart packages the service for Kubernetes environments. Update values as needed, then deploy through your preferred CI/CD orchestrator.
 
-- **Frontend dev workflow:**
+## Terraform deployment
+The `terraform/` directory contains infrastructure blueprints for provisioning cloud resources and secrets required by the engine.
 
-  ```bash
-  cd Frontend
-  npm install
-  npm run dev
-  ```
+## Frontend integration endpoints
+- `POST /api/v1/ask` — decrypts, sanitizes, orchestrates via ToronEngine, and returns encrypted text (supports SSE streaming when `stream=true`).
+- `GET /api/v1/health` — returns `HealthMonitor.status()` for readiness probes.
+- `GET /api/v1/telemetry/summary` — exports telemetry aggregates for the Command Center.
+- `GET /api/v1/connectors` — retrieves connector states.
+- `POST /api/v1/connectors/sync` — triggers sync for all connectors.
+- `GET /api/v1/models` — lists model catalog from the router.
+- `WS /ws/stream` — streams tokens in real time for interactive sessions.
 
-- **UI guide:** World-class Script-inspired dashboard. Run `npm run dev` for the live redesign experience.
-
-- **Unit tests:**
-
-  ```bash
-  cd Frontend
-  npm run test:unit
-  ```
-
-- **Static snapshot:** Serve `Frontend/preview.html` over HTTP (for example `python3 -m http.server 4173`) and open `http://localhost:4173/preview.html` in your browser to explore the lazy-loaded UI without building the project.
-
-Both options exercise the same React components, so you can verify layout, drawers, modals, and other surfaces even without network access to install dependencies.
+## Testing & CI/CD
+Run the full backend test suite and generate an HTML report with:
+```sh
+make test
+```
+Formatting helpers are available via `make fmt`. CI/CD workflows are configured under `.github/workflows/` to validate builds, run tests, and publish deployment artifacts.

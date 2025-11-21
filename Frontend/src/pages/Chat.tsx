@@ -20,6 +20,7 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  Folder,
   Mic,
   MicOff,
   MoreHorizontal,
@@ -32,6 +33,8 @@ import {
   Zap,
   Share2,
 } from "lucide-react";
+
+import { ProjectsModal } from "@/components/projects/ProjectsModal";
 
 import {
   ChatMessage,
@@ -215,6 +218,7 @@ function ChatInner() {
     message: ChatMessage;
     url: string;
   } | null>(null);
+  const [showProjects, setShowProjects] = useState(false);
 
   const setActiveSessionId = useCallback(
     (value: string) => dispatch({ type: "setActiveSession", payload: value }),
@@ -924,6 +928,14 @@ function ChatInner() {
               </div>
             </div>
             <button
+              className="header-button"
+              onClick={() => setShowProjects(true)}
+              title="Projects"
+              type="button"
+            >
+              <Folder size={20} />
+            </button>
+            <button
               ref={settingsButtonRef}
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
@@ -1498,6 +1510,7 @@ function ChatInner() {
         </div>
       </div>
 
+      {showProjects && <ProjectsModal onClose={() => setShowProjects(false)} />}
       {/* animation helpers */}
       <style>{`
         @keyframes aurora-dot {
