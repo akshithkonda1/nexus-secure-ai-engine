@@ -3,6 +3,7 @@ import ToronGrid from "@/components/command-center/ToronGrid";
 import { X } from "lucide-react";
 
 export default function RyuzenCommandCenterOverlay({ onClose }) {
+  console.log("Overlay Loaded Successfully");
   return (
     <div
       className="

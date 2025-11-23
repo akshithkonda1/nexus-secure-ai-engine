@@ -12,6 +12,7 @@ import AmbientFX from "@/components/AmbientFX";
 import { SidebarProvider } from "@/components/layout/sidebar/SidebarContext";
 
 export default function RootLayout() {
+  console.log("RootLayout Loaded");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);

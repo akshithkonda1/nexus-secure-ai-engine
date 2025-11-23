@@ -9,7 +9,7 @@ import {
   requestProfileOpen,
 } from "@/lib/actions";
 import { NotificationBell } from "@/components/shell/NotificationBell";
-import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
+import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
@@ -32,6 +32,11 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   const isDark = theme === "dark";
   const [notificationCount] = useState<number>(7); // TODO: wire to live notifications feed
   const [commandCenterOpen, setCommandCenterOpen] = useState(false);
+
+  if (!RyuzenCommandCenterOverlay) {
+    console.error("Overlay import failed");
+    return null;
+  }
 
   const initials = useMemo(() => {
     const name = profile?.fullName;

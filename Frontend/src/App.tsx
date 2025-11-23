@@ -1,6 +1,6 @@
 import RootLayout from "@/layouts/RootLayout";
 
 export function App() {
-  console.log("Ryuzen UI Mounted");
+  console.log("Ryuzen App Mounted");
   return <RootLayout />;
 }
