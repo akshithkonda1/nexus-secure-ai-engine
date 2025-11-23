@@ -1,83 +1,49 @@
-import ToronPanel from "@/components/common/ToronPanel";
-import ToronGrid from "@/components/command-center/ToronGrid";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
-export default function RyuzenCommandCenterOverlay({ onClose }) {
+import { useUI } from "@/state/ui";
+import { ToronGrid } from "@/components/command-center/ToronGrid";
+
+export function RyuzenCommandCenterOverlay() {
+  const { isCommandCenterOpen, closeCommandCenter } = useUI();
+
   return (
-    <div
-      className="
-        fixed inset-0 bg-black/40 backdrop-blur-3xl
-        flex justify-center items-center p-4 z-50
-      "
-    >
-      <div
-        className="
-          relative w-[95%] h-[85%]
-          bg-gradient-to-b from-[#0b0f17]/70 to-[#03050a]/70
-          rounded-2xl border border-white/10
-          shadow-[0_20px_60px_rgba(0,0,0,0.8)]
-          overflow-hidden
-        "
-      >
-        <button
-          onClick={onClose}
-          className="
-            absolute top-4 right-4 text-white/40
-            hover:text-white/90 transition z-[99]
-          "
+    <AnimatePresence>
+      {isCommandCenterOpen && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={closeCommandCenter}
         >
-          <X size={24} />
-        </button>
-
-        <ToronGrid>
-
-          <ToronPanel>
-            <div className="text-white text-xl font-semibold">Neural Load</div>
-            <div className="text-white/60">4 active models</div>
-          </ToronPanel>
-
-          <ToronPanel>
-            <div className="text-white text-xl font-semibold">Pipelines</div>
-            <div className="text-white/60">Transformer 98.4%</div>
-          </ToronPanel>
-
-          <ToronPanel>
-            <div className="text-white text-xl font-semibold">Connectors</div>
-            <div className="text-white/60">8 linked</div>
-          </ToronPanel>
-
-          <ToronPanel>
-            <div className="text-white text-xl font-semibold">Workspace</div>
-            <div className="text-white/60">Hologram jump</div>
-          </ToronPanel>
-
-          <ToronPanel>
-            <div className="text-white text-xl font-semibold">Telemetry</div>
-            <div className="text-white/60">Live monitoring</div>
-          </ToronPanel>
-
-          <ToronPanel className="bg-gradient-to-br from-[#102037]/80 to-[#091629]/80">
-            <div className="text-white text-lg font-semibold">
-              Resume Analysis: Project Ryuzen
-            </div>
-            <div className="text-white/60">
-              Toron paused on node clustering.
+          <motion.div
+            className="glass-panel relative w-[min(1040px,95vw)] rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_30px_120px_rgba(0,0,0,0.55)]"
+            initial={{ scale: 0.94, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1, transition: { duration: 0.28, ease: "easeOut" } }}
+            exit={{ scale: 0.94, opacity: 0, transition: { duration: 0.2 } }}
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen Command Center</p>
+                <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Toron dashboard</h2>
+              </div>
+              <button
+                onClick={closeCommandCenter}
+                className="rounded-full border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] p-2 text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
+                aria-label="Close command center"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <button
-              className="
-                mt-3 w-fit px-4 py-2 rounded-md
-                bg-cyan-500/20 text-cyan-300
-                border border-cyan-400/20
-                hover:bg-cyan-500/30 transition
-              "
-            >
-              Continue →
-            </button>
-          </ToronPanel>
-
-        </ToronGrid>
-      </div>
-    </div>
+            <ToronGrid />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -149,7 +149,7 @@ export function SettingsPanel() {
             />
           </label>
         </div>
-        <p className="mt-4 text-xs text-[rgba(var(--subtle),0.75)]">Adjust caps anytime. Changes propagate instantly across Nexus services.</p>
+        <p className="mt-4 text-xs text-[rgba(var(--subtle),0.75)]">Adjust caps anytime. Changes propagate instantly across Ryuzen services.</p>
       </section>
     </div>
   );

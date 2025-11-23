@@ -1,0 +1,38 @@
+:root {
+  --font-sans: "Inter", "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --header-height: 72px;
+  --sidebar-width: 268px;
+
+  --surface-base: #070c15;
+  --surface-card: rgba(15, 20, 34, 0.9);
+  --panel-elevated: rgba(12, 18, 30, 0.85);
+  --panel-strong: rgba(14, 20, 35, 0.92);
+  --text-primary: #e8edf9;
+  --text-secondary: #a8b4ce;
+  --border-strong: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --accent-primary: #5cf0ff;
+  --accent-secondary: #7c5dff;
+  --accent-emerald: #34e0a1;
+  --accent-warning: #f4b860;
+
+  --shadow-soft: 0 14px 30px rgba(0, 0, 0, 0.22);
+  --shadow-strong: 0 18px 60px rgba(0, 0, 0, 0.48);
+
+  --radius-xl: 26px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --noise-opacity: 0.08;
+
+  --blur-glass: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

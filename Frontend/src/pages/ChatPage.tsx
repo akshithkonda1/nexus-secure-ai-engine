@@ -124,7 +124,7 @@ export default function ChatPage() {
       {!isConnected && !error && (
         <div className="flex items-center justify-center gap-2 border-b border-[rgba(var(--accent-amber),0.3)] bg-[rgba(var(--accent-amber),0.18)] px-4 py-2 text-sm text-[rgb(var(--accent-amber-ink))]">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Connecting to Nexus…
+          Connecting to Ryuzen…
         </div>
       )}
 
@@ -187,7 +187,7 @@ export default function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value.slice(0, MAX_INPUT_LENGTH))}
                 onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); handleSend(); } }}
-                placeholder="Message Nexus…"
+                placeholder="Message Ryuzen…"
                 rows={1}
                 aria-label="Message input"
                 className="w-full resize-none rounded-2xl border border-app bg-app px-4 py-3 pr-16 text-sm text-ink outline-none placeholder:text-muted focus:border-trustBlue/50 focus:ring-2 focus:ring-trustBlue/20"

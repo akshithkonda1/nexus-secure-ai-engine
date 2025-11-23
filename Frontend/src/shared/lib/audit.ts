@@ -4,7 +4,7 @@ export type AuditEvent = {
   meta?: Record<string, unknown>;
 };
 
-const AUDIT_KEY = "nexus.audit";
+const AUDIT_KEY = "ryuzen.audit";
 const MAX_EVENTS = 500;
 
 function readAudit(): AuditEvent[] {

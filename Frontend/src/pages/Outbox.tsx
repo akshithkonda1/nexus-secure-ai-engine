@@ -105,7 +105,7 @@ interface WorkflowConfig {
   customInstructions: string;
 }
 
-const CONFIG_KEY = "nexusWorkflowConfig";
+const CONFIG_KEY = "ryuzenWorkflowConfig";
 
 /* ------------------------------------------------------------------ */
 /* Connector Metadata                                                 */
@@ -428,7 +428,7 @@ export const Outbox: React.FC = () => {
   const [hydrated, setHydrated] = useState(false);
   const { replaceBySource } = useGlobalNotifications();
 
-  // Whether Nexus "balanced" the day (affects ordering + copy)
+  // Whether Ryuzen "balanced" the day (affects ordering + copy)
   const [isBalanced, setIsBalanced] = useState(false);
 
   useEffect(() => {
@@ -525,7 +525,7 @@ export const Outbox: React.FC = () => {
 
   const todaySubtitle = useMemo(() => {
     if (isBalanced) {
-      return "Sorted by impact and urgency · Balanced by Nexus";
+      return "Sorted by impact and urgency · Balanced by Ryuzen";
     }
     switch (primaryRole) {
       case "student":
@@ -533,7 +533,7 @@ export const Outbox: React.FC = () => {
       case "professional":
         return "Meetings, drafts, and follow-ups in one place.";
       case "executive":
-        return "Nexus lines up the prep you need for the day.";
+        return "Ryuzen lines up the prep you need for the day.";
       case "parent":
         return "School, work, and family reminders in one list.";
       default:
@@ -584,7 +584,7 @@ export const Outbox: React.FC = () => {
                 Scheduled Briefs & Auto Sends
               </h1>
               <p className="text-sm text-[rgb(var(--subtle))]">
-                Nexus keeps your important sends, reminders, and workflows aligned so you
+                Ryuzen keeps your important sends, reminders, and workflows aligned so you
                 don’t have to juggle them in your head.
               </p>
             </div>
@@ -649,7 +649,7 @@ export const Outbox: React.FC = () => {
                     <Zap className="size-5 text-[rgb(var(--brand))]" /> Automation Controls
                   </h3>
                   <p className="text-sm text-[rgb(var(--subtle))] mb-3">
-                    Connected tools that Nexus uses to keep your schedule in sync:
+                    Connected tools that Ryuzen uses to keep your schedule in sync:
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {config.connectors.map((c) => (
@@ -690,7 +690,7 @@ export const Outbox: React.FC = () => {
                     ].join(" ")}
                   >
                     <Sparkles className="size-4" />
-                    {isBalanced ? "Revert to original order" : "Let Nexus balance my day"}
+                    {isBalanced ? "Revert to original order" : "Let Ryuzen balance my day"}
                   </button>
                 </div>
 
@@ -751,7 +751,7 @@ export const Outbox: React.FC = () => {
                   <ShieldCheck className="size-8 text-[rgb(var(--accent-emerald))]" />
                 </div>
                 <p className="text-base text-[rgb(var(--subtle))]">
-                  Every outbound asset runs through Nexus guardrails. Track pending approvals
+                  Every outbound asset runs through Ryuzen guardrails. Track pending approvals
                   and make sure the right people sign off before anything hits inboxes or
                   dashboards.
                 </p>

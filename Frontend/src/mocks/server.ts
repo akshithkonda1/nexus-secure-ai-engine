@@ -52,7 +52,7 @@ function createSessionFromTemplate(templateId?: string): CreateSessionData {
   const session = {
     id,
     title: template ? `${template.name} Session` : "Untitled session",
-    preview: template?.description ?? "Kick things off with a trusted Nexus debate.",
+    preview: template?.description ?? "Kick things off with a trusted Ryuzen debate.",
     updatedAt: now,
     messages: 0,
     providers: ["gpt-4o", "claude-3.5"],
@@ -67,7 +67,7 @@ function createSessionFromTemplate(templateId?: string): CreateSessionData {
       role: "system",
       text: template
         ? `Template ${template.name} initiated. ${template.description}`
-        : "New Nexus.ai session ready.",
+        : "New Ryuzen.ai session ready.",
       at: now,
     },
   ];

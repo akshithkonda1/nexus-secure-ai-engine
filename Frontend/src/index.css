@@ -1,27 +1,141 @@
-@import url('https://rsms.me/inter/inter.css');
+@import "tailwindcss";
+@import "./theme/theme-base.css";
+@import "./theme/theme-dark.css";
+@import "./theme/theme-light.css";
+@import "./theme/motion.css";
 
-@reference "tailwindcss";
+* {
+  box-sizing: border-box;
+}
 
 :root {
-  --toron-indigo: #0b0f17;
-  --toron-cyan: #29f5ff;
-  --toron-deep: #09121f;
-  --toron-glow: 0 0 20px rgba(41, 245, 255, 0.4);
+  font-feature-settings: "salt" 1;
 }
 
-/* Custom toggle styles for providers/limits (Image 3) */
-.toggle {
-  @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  transition: background 240ms ease, color 240ms ease;
 }
-.toggle:checked {
-  @apply bg-primary;
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
-.toggle:not(:checked) {
-  @apply bg-gray-600;
+
+::selection {
+  background: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  color: var(--text-primary);
 }
-.toggle:before {
-  @apply pointer-events-none absolute inset-y-0 left-0 inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out;
+
+.glow-border {
+  position: relative;
+  overflow: hidden;
 }
-.toggle:checked:before {
-  @apply translate-x-5;
+
+.glow-border::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 20% 20%, rgba(92, 240, 255, 0.18), transparent 35%),
+    radial-gradient(circle at 80% 20%, rgba(124, 93, 255, 0.25), transparent 40%),
+    radial-gradient(circle at 50% 80%, rgba(52, 224, 161, 0.25), transparent 45%);
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.glow-border:hover::after {
+  opacity: 1;
+}
+
+.glass-panel {
+  background: var(--panel-elevated);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-strong), var(--shadow-soft);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-radius: var(--radius-xl);
+}
+
+.holo-ring {
+  position: relative;
+}
+
+.holo-ring::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 50%, rgba(111, 255, 243, 0.2), transparent 60%);
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.holo-ring:hover::before {
+  opacity: 1;
+}
+
+.button-primary {
+  background: linear-gradient(135deg, rgba(92, 240, 255, 0.95), rgba(124, 93, 255, 0.92));
+  color: #040711;
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 60%, transparent);
+  box-shadow: 0 10px 35px rgba(92, 240, 255, 0.25), 0 12px 40px rgba(124, 93, 255, 0.22);
+}
+
+.button-ghost {
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface-card) 82%, transparent);
+  color: var(--text-primary);
+}
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  opacity: var(--noise-opacity);
+  z-index: 1;
+}
+
+.backdrop-gradient {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(120% 120% at 20% 10%, rgba(92, 240, 255, 0.12), transparent 45%),
+    radial-gradient(120% 120% at 80% 0%, rgba(124, 93, 255, 0.2), transparent 40%),
+    radial-gradient(120% 120% at 50% 80%, rgba(52, 224, 161, 0.14), transparent 50%);
+  filter: blur(40px);
+  opacity: 0.75;
+  z-index: 0;
+}
+
+.main-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+.content-area {
+  position: relative;
+  padding: calc(var(--header-height) + 16px) 24px 32px;
+  overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+  .main-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .content-area {
+    padding-top: calc(var(--header-height) + 24px);
+  }
 }

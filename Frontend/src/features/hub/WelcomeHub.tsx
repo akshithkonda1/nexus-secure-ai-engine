@@ -5,8 +5,8 @@ export default function WelcomeHub() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="panel panel--glassy panel--hover rounded-3xl bg-card/40 border p-10 text-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Welcome to Nexus</h1>
-        <p className="mt-3 text-muted-foreground">Get started by asking Nexus to do something. Not sure where to start?</p>
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">Welcome to Ryuzen</h1>
+        <p className="mt-3 text-muted-foreground">Get started by asking Ryuzen to do something. Not sure where to start?</p>
 
         {/* Action chips */}
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
@@ -37,7 +37,7 @@ export default function WelcomeHub() {
               </button>
             </div>
             <div className="px-3 pt-2 pb-1 text-[11px] text-muted-foreground">
-              Nexus may generate inaccurate information about people, places, or facts.
+              Ryuzen may generate inaccurate information about people, places, or facts.
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React from "react";
 import type { ChatMessage } from "@/features/chat/context/ChatContext";
-import ToronMessageActions from "./ZoraMessageActions";
+import ToronMessageActions from "./RyuzenMessageActions";
 
 type Props = {
   message: ChatMessage;

@@ -72,7 +72,7 @@ export default function HistoryPage() {
     <div className="space-y-8">
       <PageHeader
         title="History"
-        description="Inspect every action across Nexus sessions with fine-grained filters."
+        description="Inspect every action across Ryuzen sessions with fine-grained filters."
       />
 
       <section className="rounded-3xl border border-app bg-panel panel panel--glassy panel--hover p-6 shadow-xl">

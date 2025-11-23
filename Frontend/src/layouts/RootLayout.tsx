@@ -1,66 +1,56 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
-import AppShell from "@/components/AppShell";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { ProfileModal } from "@/components/ProfileModal";
-import { NotificationsModal } from "@/components/NotificationsModal";
-import { useCommand } from "@/lib/actions";
-import { Toaster } from "@/shared/ui/components/toast";
-import AmbientFX from "@/components/AmbientFX";
-import { SidebarProvider } from "@/components/layout/sidebar/SidebarContext";
+import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
+import { ProfileModal } from "@/components/profile/ProfileModal";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 export default function RootLayout() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [isProfileOpen, setProfileOpen] = useState(false);
-  const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const location = useLocation();
 
-  useCommand((command) => {
-    if (command.type === "profile:open") {
-      setProfileOpen(true);
-      return;
-    }
-
-    if (command.type === "notifications:open") {
-      setNotificationsOpen(true);
-    }
-  });
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
   return (
-    <SidebarProvider>
+    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-base)] text-[var(--text-primary)]">
+      <div className="backdrop-gradient" aria-hidden="true" />
+      <div className="noise-overlay" aria-hidden="true" />
+
       <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 btn-ghost z-50"
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 rounded-lg bg-black/60 px-3 py-2 text-white"
       >
-        Skip to content
+        Skip to main content
       </a>
-      <AppShell left={<Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />}>
-        <div className="flex min-h-full flex-col bg-transparent text-zora-white">
-          <Header
-            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-            onOpenProfile={() => setProfileOpen(true)}
-          />
-          <div className="flex-1">
-            <div
-              id="main"
-              role="main"
-              className="ambient-page h-full px-5 pb-10 pt-6 md:px-8 lg:px-12"
+
+      <Header onOpenProfile={() => setIsProfileOpen(true)} />
+
+      <div className="main-shell">
+        <Sidebar />
+        <main id="main-content" className="content-area">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+              exit={{ opacity: 0, y: -6, transition: { duration: 0.2, ease: "easeIn" } }}
+              className="gpu"
             >
-              <div className="mx-auto flex w-full max-w-5xl flex-col gap-10">
+              <ErrorBoundary>
                 <Outlet />
-              </div>
-            </div>
-          </div>
-        </div>
-      </AppShell>
-      <ProfileModal open={isProfileOpen} onOpenChange={setProfileOpen} />
-      <NotificationsModal
-        open={isNotificationsOpen}
-        onOpenChange={setNotificationsOpen}
-      />
-      <Toaster />
-      <AmbientFX />
-    </SidebarProvider>
+              </ErrorBoundary>
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+
+      <ProfileModal open={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <RyuzenCommandCenterOverlay />
+    </div>
   );
 }

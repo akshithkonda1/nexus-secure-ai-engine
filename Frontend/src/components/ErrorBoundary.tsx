@@ -10,7 +10,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
   componentDidCatch(err: unknown) {
     // eslint-disable-next-line no-console
-    console.error("[Nexus] Render error:", err);
+    console.error("[Ryuzen] Render error:", err);
   }
   render() {
     if (this.state.hasError) {

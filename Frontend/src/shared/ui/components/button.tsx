@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-accent-nexus via-accent-business to-accent-nexus text-[rgb(var(--on-accent))] shadow-ambient",
+        default: "bg-gradient-to-r from-accent-ryuzen via-accent-business to-accent-ryuzen text-[rgb(var(--on-accent))] shadow-ambient",
         subtle: "bg-surface text-[rgb(var(--text))] border border-app shadow-sm",
         outline: "border border-app bg-transparent text-[rgb(var(--text))]",
         ghost: "bg-transparent text-[rgb(var(--text))] hover:bg-surface",

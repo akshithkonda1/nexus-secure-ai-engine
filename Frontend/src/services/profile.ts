@@ -37,7 +37,7 @@ const FALLBACK_PROFILE: UserProfile = {
   fullName: "Avery Quinn",
   handle: "@avery.quinn",
   role: "Director of AI Programs",
-  email: "avery.quinn@nexus.ai",
+  email: "avery.quinn@ryuzen.ai",
   workspace: "Secure AI Engine",
   timezone: "America/Los_Angeles",
   phone: "+1-415-555-0147",

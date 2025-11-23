@@ -75,7 +75,7 @@ export default function PricingPage() {
           Proof-first intelligence
         </span>
         <h1 className="text-3xl font-semibold leading-tight sm:text-4xl md:text-5xl">
-          Nexus.ai — Where AIs debate, verify, and agree on the truth.
+          Ryuzen.ai — Where AIs debate, verify, and agree on the truth.
         </h1>
         <p className="text-base text-muted-foreground sm:text-lg">
           Encrypted. Auditable. Vendor-neutral. Because accuracy deserves proof.
@@ -124,7 +124,7 @@ export default function PricingPage() {
 
       <footer className="mx-auto max-w-3xl space-y-4 text-center text-sm text-muted-foreground">
         <p>
-          Need volume pricing or governance reviews? Email <a className="underline" href="mailto:accuracy@nexus.ai">accuracy@nexus.ai</a>{" "}
+          Need volume pricing or governance reviews? Email <a className="underline" href="mailto:accuracy@ryuzen.ai">accuracy@ryuzen.ai</a>{" "}
           and our compliance team will reach out within one business day.
         </p>
         <p>All paid plans include accuracy receipts, model provenance, and red-team regression tracking.</p>
