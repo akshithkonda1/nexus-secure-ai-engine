@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export type NexusCommand =
+export type RyuzenCommand =
   | { type: "prompt:new" }
   | { type: "notifications:open" }
   | { type: "project:create"; payload?: { name?: string } }
@@ -10,22 +10,22 @@ export type NexusCommand =
   | { type: "auth:signOut" }
   | { type: "profile:open" };
 
-const EVENT_NAME = "nexus:command";
+const EVENT_NAME = "ryuzen:command";
 
 declare global {
   interface WindowEventMap {
-    [EVENT_NAME]: CustomEvent<NexusCommand>;
+    [EVENT_NAME]: CustomEvent<RyuzenCommand>;
   }
 }
 
-export function emitCommand(command: NexusCommand) {
+export function emitCommand(command: RyuzenCommand) {
   if (typeof window === "undefined") {
     return;
   }
   window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: command }));
 }
 
-export function useCommand(handler: (command: NexusCommand) => void) {
+export function useCommand(handler: (command: RyuzenCommand) => void) {
   useEffect(() => {
     const listener = (event: WindowEventMap[typeof EVENT_NAME]) => {
       handler(event.detail);

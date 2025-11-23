@@ -9,7 +9,7 @@ type PanelsContextValue = {
 };
 
 const Ctx = createContext<PanelsContextValue | null>(null);
-const LS_KEY = "nexus.panels.v1";
+const LS_KEY = "ryuzen.panels.v1";
 
 export function PanelProvider({ children }: { children: ReactNode }) {
   const [leftOpen, setLeftOpen] = useState(true);

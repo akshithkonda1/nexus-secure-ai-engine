@@ -1,338 +1,125 @@
-import React from "react";
-import {
-  ArrowRight,
-  Bot,
-  FileText,
-  MessageSquare,
-  PenSquare,
-  ShieldCheck,
-  Sparkles,
-  Video,
-  Wand2,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useProfile } from "@/features/profile/ProfileProvider";
-import { getFirstName } from "@/lib/userName";
+import { type ReactNode } from "react";
+import { motion } from "framer-motion";
+import { useUI } from "@/state/ui";
+import { Skeleton } from "@/components/common/Skeleton";
+import { useTheme } from "@/hooks/useTheme";
+import { Sparkles, Cpu, ShieldCheck, Activity } from "lucide-react";
 
-const quickStarts = [
-  {
-    label: "Write copy",
-    description: "Launch marketing-ready narratives",
-    icon: PenSquare,
-    hue: "from-[#3EE4FF] to-[#8B5CF6]",
-    to: "/templates",
-  },
-  {
-    label: "Image generation",
-    description: "Spin up branded assets",
-    icon: Sparkles,
-    hue: "from-[#9360FF] to-[#C5B9DA]",
-    to: "/chat",
-  },
-  {
-    label: "Create avatar",
-    description: "Train a spokesperson persona",
-    icon: Bot,
-    hue: "from-[#8B5CF6] to-[#34D399]",
-    to: "/settings",
-  },
-  {
-    label: "Voice console",
-    description: "Enable realtime co-pilot",
-    icon: Video,
-    hue: "from-[#C5B9DA] to-[#9360FF]",
-    to: "/documents",
-  },
-];
+export default function Home() {
+  const { openCommandCenter } = useUI();
+  const { resolvedTheme } = useTheme();
 
-const recentDocs = [
-  { name: "SOC2 audit briefing", owner: "Compliance", status: "Ready" },
-  { name: "Agent launch checklist", owner: "Ops", status: "In review" },
-  { name: "Guardrail feedback", owner: "Security", status: "Updated" },
-];
-
-const highlights = [
-  {
-    title: "Summaries delivered",
-    value: "248",
-    delta: "+18%", // mimic style
-  },
-  {
-    title: "Avg. response",
-    value: "1m 42s",
-    delta: "-9%",
-  },
-  {
-    title: "CSAT",
-    value: "96%",
-    delta: "+4%",
-  },
-];
-
-const getDeltaStyles = (delta: string) => {
-  if (delta.startsWith("+")) {
-    return "bg-[rgba(34,197,94,0.12)] text-[#22C55E]";
-  }
-
-  if (delta.startsWith("-")) {
-    return "bg-[rgba(239,68,68,0.12)] text-[#EF4444]";
-  }
-
-  return "bg-[rgba(var(--subtle),0.16)] text-[rgba(var(--subtle),0.8)]";
-};
-
-export function Home() {
-  const navigate = useNavigate();
-  const { profile } = useProfile();
-  const userName = getFirstName(profile);
-  const who = profile?.fullName || profile?.handle || userName || "there";
+  const heroGradient =
+    resolvedTheme === "dark"
+      ? "from-cyan-400/30 via-sky-500/20 to-purple-500/25"
+      : "from-cyan-500/30 via-sky-500/25 to-purple-500/25";
 
   return (
-    <div className="flex flex-col gap-12">
-      <section className="panel panel--glassy panel--hover halo panel--hover panel--immersive panel--edge panel--alive relative overflow-hidden rounded-[28px] border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.88)] p-10 shadow-[var(--shadow-soft)]">
-        <div
-          className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--brand),0.16),transparent_55%)]"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -right-20 -top-24 size-[260px] rounded-full bg-[radial-gradient(circle_at_center,rgba(var(--brand-soft),0.18),transparent_70%)]"
-          aria-hidden="true"
-        />
-        <div className="relative grid gap-10 lg:grid-cols-[1.45fr_1fr]">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand),0.2)] bg-[rgba(var(--brand),0.08)] px-4 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand">
-              Ryuzen • Welcome back, {who}
-            </div>
-            <h1 className="accent-ink text-4xl font-semibold leading-tight text-[rgb(var(--text))]">
-              Operate every AI workflow with clarity, governance, and speed.
+    <div className="space-y-8">
+      <motion.section
+        className={`relative overflow-hidden rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-8 shadow-[0_25px_80px_rgba(0,0,0,0.35)]`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+      >
+        <div className={`absolute inset-0 bg-gradient-to-br ${heroGradient}`} aria-hidden="true" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl space-y-4">
+            <p className="text-sm uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen OS</p>
+            <h1 className="text-3xl font-bold leading-tight text-[var(--text-primary)] sm:text-4xl">
+              Orchestrate Toron missions with PS5-grade smoothness.
             </h1>
-            <p className="max-w-2xl text-base text-[rgba(var(--subtle),0.85)]">
-              Launch trusted sessions, align agents across teams, and keep
-              insights anchored to the projects that matter most.
+            <p className="text-lg text-[var(--text-secondary)]">
+              Ryuzen fuses holographic control tiles, ambient motion, and auto theme intelligence. Stay in flow while the system adapts to you.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <button
-                type="button"
-                onClick={() => navigate("/chat")}
-                className="btn btn-primary px-6 py-2.5 shadow-zora-glow"
+                onClick={openCommandCenter}
+                className="button-primary rounded-xl px-5 py-3 text-sm font-semibold shadow-lg shadow-cyan-500/30 transition hover:-translate-y-[1px]"
               >
-                <ShieldCheck className="size-4" /> Launch Chat
+                Open Command Center
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/templates")}
-                className="btn btn-ghost btn-neo btn-quiet rounded-full px-6"
-              >
-                Browse playbooks
+              <button className="button-ghost rounded-xl px-4 py-3 text-sm font-semibold shadow-inner">
+                View Release Notes
               </button>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {highlights.map((item) => (
-                <div
-                  key={item.title}
-                  className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.85)] p-4"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">
-                    {item.title}
-                  </p>
-                  <div className="mt-3 flex items-end justify-between">
-                    <span className="text-2xl font-semibold text-[rgb(var(--text))]">
-                      {item.value}
-                    </span>
-                    <span
-                      className={
-                        "inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold uppercase " +
-                        getDeltaStyles(item.delta)
-                      }
-                    >
-                      {item.delta}
-                    </span>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
-
-          <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex flex-col gap-6 rounded-[24px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-6 shadow-[var(--shadow-soft)]">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.8)]">
-                Autopilot
-              </p>
-              <h2 className="accent-ink mt-2 text-xl font-semibold text-[rgb(var(--text))]">
-                Summarize the latest
-              </h2>
-              <p className="mt-2 text-sm text-[rgba(var(--subtle),0.8)]">
-                We already collected transcripts from legal and research. Draft
-                a shareable brief?
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 rounded-2xl bg-[rgba(var(--surface),0.94)] p-4 shadow-inner">
-              <div className="flex items-center justify-between text-xs text-[rgba(var(--subtle),0.8)]">
-                <span className="inline-flex items-center gap-2">
-                  <MessageSquare className="h-3.5 w-3.5 text-[color:var(--zora-glow-2)]" /> Latest
-                  thread
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-neo rounded-full px-3 py-1 text-[10px] text-[rgba(var(--subtle),0.8)] hover:text-[color:var(--zora-glow-1)]"
-                >
-                  View <ArrowRight className="size-3" />
-                </button>
-              </div>
-              <div className="rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--panel),0.7)] p-3 text-sm text-[rgb(var(--text))]">
-                Summarize the latest customer learning for the leadership
-                weekly. Highlight tone shifts.
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate("/chat")}
-                className="btn btn-primary px-4 py-2 shadow-zora-glow"
-              >
-                <Wand2 className="size-4" /> Generate brief
-              </button>
-            </div>
-            <div className="rounded-2xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-                Queue
-              </p>
-              <ul className="mt-3 space-y-2 text-sm text-[rgb(var(--text))]">
-                <li className="panel panel--glassy panel--hover panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
-                  <span>Voice agents rollout</span>
-                  <span className="text-xs text-[rgba(var(--subtle),0.7)]">
-                    Due today
-                  </span>
-                </li>
-                <li className="panel panel--glassy panel--hover panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
-                  <span>Compliance audit pack</span>
-                  <span className="text-xs text-[rgba(var(--subtle),0.7)]">
-                    Tomorrow
-                  </span>
-                </li>
-                <li className="panel panel--glassy panel--hover panel--immersive flex items-center justify-between rounded-2xl border border-transparent bg-transparent p-0 shadow-none">
-                  <span>UX research synthesis</span>
-                  <span className="text-xs text-[rgba(var(--subtle),0.7)]">
-                    Fri
-                  </span>
-                </li>
-              </ul>
-            </div>
+          <div className="grid w-full max-w-md grid-cols-2 gap-3 rounded-3xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_88%,transparent)] p-4">
+            <StatusTile icon={<Sparkles className="h-5 w-5" />} title="Live tasks" value="12" />
+            <StatusTile icon={<Cpu className="h-5 w-5" />} title="Model blend" value="Omni · Toron" />
+            <StatusTile icon={<ShieldCheck className="h-5 w-5" />} title="Guardrails" value="Active" />
+            <StatusTile icon={<Activity className="h-5 w-5" />} title="Sync" value="Low latency" />
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="grid gap-6 md:grid-cols-2">
-        {quickStarts.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={() => navigate(item.to)}
-            className={`panel panel--glassy panel--hover panel--immersive panel--alive group flex h-full flex-col items-start justify-between overflow-hidden rounded-[26px] border border-[rgba(var(--border),0.55)] bg-[rgba(var(--surface),0.92)] p-6 text-left shadow-[var(--shadow-soft)] transition hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]`}
-          >
-            <span
-              className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${item.hue} px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[rgb(var(--on-accent))]`}
-            >
-              Quick start
-            </span>
-            <div className="mt-5 space-y-3">
-              <h3 className="text-xl font-semibold text-[rgb(var(--text))]">
-                {item.label}
-              </h3>
-              <p className="text-sm text-[rgba(var(--subtle),0.8)]">
-                {item.description}
-              </p>
-            </div>
-            <div className="mt-6 flex w-full items-center justify-between text-sm text-brand">
-              <span className="inline-flex items-center gap-2">
-                <item.icon className="size-4" /> Launch
-              </span>
-              <ArrowRight className="size-4 transition group-hover:translate-x-1" />
-            </div>
-          </button>
-        ))}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
-          <header className="flex items-center justify-between">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <motion.section
+          className="glass-panel col-span-2 rounded-3xl border border-[var(--border-strong)] p-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.35 } }}
+        >
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-                Recent documents
-              </p>
-              <h2 className="accent-ink text-lg font-semibold text-[rgb(var(--text))]">
-                Workspace library
-              </h2>
+              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Live missions</p>
+              <h3 className="text-xl font-semibold text-[var(--text-primary)]">Toron queue</h3>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/documents")}
-              className="btn btn-ghost btn-quiet inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.95)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand transition hover:bg-[rgba(var(--panel),0.7)]"
-            >
-              View all
-            </button>
-          </header>
-          <div className="mt-4 space-y-3">
-            {recentDocs.map((doc) => (
+            <span className="rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_18%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--text-primary)]">
+              Auto-prioritized
+            </span>
+          </div>
+          <div className="mt-5 space-y-3">
+            {["Recon web brief", "Summon holo board", "Align agents", "Publish note"].map((item) => (
               <div
-                key={doc.name}
-                className="panel panel--glassy panel--hover panel--immersive panel--alive flex items-center justify-between rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.7)] px-4 py-3 text-sm text-[rgb(var(--text))]"
+                key={item}
+                className="flex items-center justify-between rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_82%,transparent)] px-4 py-3"
               >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex size-10 items-center justify-center rounded-xl bg-[rgba(var(--brand),0.12)] text-brand">
-                    <FileText className="size-4" />
-                  </span>
-                  <div>
-                    <p className="font-semibold">{doc.name}</p>
-                    <p className="text-xs text-[rgba(var(--subtle),0.7)]">
-                      {doc.owner}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-3 text-[var(--text-primary)]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]" />
+                  <span className="font-semibold">{item}</span>
                 </div>
-                <span className="chip chip--warn rounded-full bg-[rgba(var(--surface),0.95)] px-3 py-1 text-xs font-semibold text-[rgba(var(--subtle),0.8)]">
-                  {doc.status}
-                </span>
+                <span className="text-sm text-[var(--text-secondary)]">Auto</span>
               </div>
             ))}
           </div>
-        </div>
+        </motion.section>
 
-        <div className="panel panel--glassy panel--hover panel--immersive panel--alive flex h-full flex-col rounded-[26px] border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.92)] p-6 shadow-[var(--shadow-soft)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.7)]">
-            Quick briefs
-          </p>
-          <h2 className="accent-ink mt-2 text-lg font-semibold text-[rgb(var(--text))]">
-            Latest decisions
-          </h2>
-          <div className="mt-4 flex-1 space-y-4 text-sm text-[rgb(var(--text))]">
-            <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-4">
-              <p className="font-semibold">Launch guardrails in EMEA</p>
-              <p className="mt-1 text-xs text-[rgba(var(--subtle),0.75)]">
-                Pending compliance sign-off • Assigned to Ava
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-4">
-              <p className="font-semibold">Scale voice agents</p>
-              <p className="mt-1 text-xs text-[rgba(var(--subtle),0.75)]">
-                Session recap generated • Share with GTM
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.65)] p-4">
-              <p className="font-semibold">Synthesize weekly research</p>
-              <p className="mt-1 text-xs text-[rgba(var(--subtle),0.75)]">
-                Brief scheduled • Auto-send every Friday
-              </p>
-            </div>
+        <motion.section
+          className="glass-panel rounded-3xl border border-[var(--border-strong)] p-6"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.08, duration: 0.35 } }}
+        >
+          <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Activity</p>
+          <h3 className="text-xl font-semibold text-[var(--text-primary)]">Live telemetry</h3>
+          <div className="mt-5 space-y-3">
+            <Skeleton className="h-3.5 w-[70%]" />
+            <Skeleton className="h-3.5 w-[60%]" />
+            <Skeleton className="h-3.5 w-[80%]" />
+            <Skeleton className="h-3.5 w-[50%]" />
           </div>
-          <button
-            type="button"
-            onClick={() => navigate("/history")}
-            className="btn btn-ghost btn-quiet mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[rgba(var(--brand),0.12)] px-4 py-2 text-sm font-semibold text-brand transition hover:bg-[rgba(var(--brand),0.18)]"
-          >
-            Review timeline <ArrowRight className="size-4" />
-          </button>
-        </div>
-      </section>
+        </motion.section>
+      </div>
     </div>
   );
 }
 
-export default Home;
+function StatusTile({
+  icon,
+  title,
+  value,
+}: {
+  icon: ReactNode;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_82%,transparent)] px-4 py-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--panel-elevated)_90%,transparent)] text-[var(--text-primary)]">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-secondary)]">{title}</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)]">{value}</p>
+      </div>
+    </div>
+  );
+}

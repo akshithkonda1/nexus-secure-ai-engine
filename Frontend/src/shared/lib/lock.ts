@@ -1,6 +1,6 @@
 import { PRICE_LOCK } from "@/config/pricing";
-const KEY_FIRST = "nexus.firstInstallISO";
-const KEY_LOCK  = "nexus.lockedUntilISO";
+const KEY_FIRST = "ryuzen.firstInstallISO";
+const KEY_LOCK  = "ryuzen.lockedUntilISO";
 export function getLockedUntil(): string {
   const explicit = PRICE_LOCK.lockedUntilISO?.trim();
   if (explicit) return explicit;

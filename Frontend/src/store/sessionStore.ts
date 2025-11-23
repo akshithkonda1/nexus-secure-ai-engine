@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 export type Session = { id: string; title: string; template?: string | null; updatedAt: number };
-const KEY = "nexus.sessions.v1";
+const KEY = "ryuzen.sessions.v1";
 const storage: Storage | null = typeof window !== "undefined" ? window.localStorage : null;
 
 function read(): Session[] {

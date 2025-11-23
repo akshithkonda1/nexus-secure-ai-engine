@@ -1,4 +1,4 @@
-const DB_NAME = "nexus-zora-cache";
+const DB_NAME = "ryuzen-zora-cache";
 const STORE_NAME = "kv";
 const DB_VERSION = 1;
 

@@ -82,7 +82,7 @@ export default function ProjectsAllPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">Projects</p>
           <h1 className="mt-1 text-3xl font-semibold text-foreground">All initiatives</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Review every project wired to Nexus AI. Metrics update automatically once the backend service is connected.
+            Review every project wired to Ryuzen AI. Metrics update automatically once the backend service is connected.
           </p>
         </div>
         <button

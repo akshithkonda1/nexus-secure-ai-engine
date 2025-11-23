@@ -52,7 +52,7 @@ const http = axios.create({
 });
 
 const resolveTelemetryOptIn = async () => {
-  const stored = await getItem<string>("nexus.telemetryOptIn");
+  const stored = await getItem<string>("ryuzen.telemetryOptIn");
   return stored === "true";
 };
 
@@ -173,7 +173,7 @@ export const useDebateStore = create<DebateState>((set, get) => ({
   },
   async setOptIn(value) {
     set({ telemetryOptIn: value });
-    await setItem("nexus.telemetryOptIn", value ? "true" : "false");
+    await setItem("ryuzen.telemetryOptIn", value ? "true" : "false");
     await postTelemetry({
       event: "telemetry_opt_in",
       data: { value },

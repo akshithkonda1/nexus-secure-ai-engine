@@ -20,7 +20,7 @@ export function AppearanceControls() {
   return (
     <div className="rounded-2xl border border-app bg-panel panel panel--glassy panel--hover p-4">
       <h3 className="mb-2 text-base font-semibold text-ink">Appearance</h3>
-      <p className="mb-3 text-sm text-muted">Choose how Nexus renders. <span className="ml-2 text-ink/60">Current: {theme}</span></p>
+      <p className="mb-3 text-sm text-muted">Choose how Ryuzen renders. <span className="ml-2 text-ink/60">Current: {theme}</span></p>
       <div className="flex flex-wrap gap-2">
         <Btn value="light" label="Light" />
         <Btn value="dark" label="Dark" />

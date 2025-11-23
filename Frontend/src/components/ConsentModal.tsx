@@ -3,7 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { useDebateStore } from "@/stores/debateStore";
 
-const CONSENT_ACK_KEY = "nexus.telemetryConsentAck";
+const CONSENT_ACK_KEY = "ryuzen.telemetryConsentAck";
 
 export function ConsentModal() {
   const telemetryOptIn = useDebateStore((state) => state.telemetryOptIn);
@@ -88,7 +88,7 @@ export function ConsentModal() {
                   <ShieldCheck className="h-6 w-6" aria-hidden="true" />
                 </div>
                 <div>
-                  <Dialog.Title className="text-lg font-semibold">Help us improve Nexus.ai</Dialog.Title>
+                  <Dialog.Title className="text-lg font-semibold">Help us improve Ryuzen.ai</Dialog.Title>
                   <Dialog.Description className="mt-2 text-sm text-subtle">
                    Please Opt in to share anonymized telemetry so that we can make the debate engine smarter. This is entirely optional. None of your chats are used and we never store PII and you can
                     change this anytime from Settings.

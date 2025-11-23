@@ -46,11 +46,11 @@ import type { SettingsState } from "@/features/chat/context/ChatContext";
 import { useStreamingDebate } from "@/hooks/useStreamingDebate";
 
 import { createToronShareLink, copyToClipboard } from "@/api/zoraClient";
-import { ToronMessageActions } from "./ZoraMessageActions";
-import { ToronMessageBubble } from "./ZoraMessageBubble";
-import { ToronShareModal } from "./ZoraShareModal";
-import { ToronStreamingPanel } from "./ZoraStreamingPanel";
-import { useToronFeedback } from "./useZoraFeedback";
+import { ToronMessageActions } from "./RyuzenMessageActions";
+import { ToronMessageBubble } from "./RyuzenMessageBubble";
+import { ToronShareModal } from "./RyuzenShareModal";
+import { ToronStreamingPanel } from "./RyuzenStreamingPanel";
+import { useToronFeedback } from "./useRyuzenFeedback";
 import { formatPreview } from "./utils";
 
 const DEFAULT_VIRTUAL_ROW_HEIGHT = 112;

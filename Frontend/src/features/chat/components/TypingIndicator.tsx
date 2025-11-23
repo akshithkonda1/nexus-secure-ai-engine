@@ -4,7 +4,7 @@ export function TypingIndicator() {
       <span className="inline-flex h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" />
       <span className="inline-flex h-2 w-2 animate-bounce rounded-full bg-current" />
       <span className="inline-flex h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:0.2s]" />
-      <span className="ml-2">Nexus is typing…</span>
+      <span className="ml-2">Ryuzen is typing…</span>
     </div>
   );
 }

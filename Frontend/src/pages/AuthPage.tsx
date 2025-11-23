@@ -59,8 +59,8 @@ export default function AuthPage() {
 
   return (
     <SignInLayout
-      heroTitle="Welcome to Nexus."
-      heroSubtitle=" Nexus is an AI Orchestration Engine that debates models against each other and uses the internet to verify the answers ensuring every response is accurate. Sign in to pick up exactly where you left off."
+      heroTitle="Welcome to Ryuzen."
+      heroSubtitle=" Ryuzen is an AI Orchestration Engine that debates models against each other and uses the internet to verify the answers ensuring every response is accurate. Sign in to pick up exactly where you left off."
       highlights={[
         { title: "Enterprise-grade", description: "SOC 2 compliant single sign-on and audit trails ready for review." },
         { title: "Global by default", description: "Latency-aware regions keep your team in flow wherever they collaborate." },
@@ -70,7 +70,7 @@ export default function AuthPage() {
     >
       <div className="rounded-[28px] border border-app bg-card p-10 shadow-2xl shadow-black/20 backdrop-blur-xl">
         <header className="space-y-2 text-left">
-          <h2 className="text-2xl font-semibold">Sign in to Nexus</h2>
+          <h2 className="text-2xl font-semibold">Sign in to Ryuzen</h2>
           <p className="text-sm text-muted-foreground">Choose a secure sign-in method to continue your session.</p>
         </header>
 

@@ -96,9 +96,9 @@ export type ChatAction =
   | { type: "setFollow"; payload: boolean };
 
 const STORAGE_KEYS = {
-  sessions: "nexus.chat.sessions.v1",
-  activeSessionId: "nexus.chat.activeSessionId.v1",
-  settings: "nexus.chat.settings.v1",
+  sessions: "ryuzen.chat.sessions.v1",
+  activeSessionId: "ryuzen.chat.activeSessionId.v1",
+  settings: "ryuzen.chat.settings.v1",
 } as const;
 
 export const RESPONSE_DELAY_MS: Record<Speed, number> = {

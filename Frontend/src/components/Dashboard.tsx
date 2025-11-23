@@ -30,7 +30,7 @@ const ACTIONS = [
 const RECENT_SESSIONS = [
   {
     title: "Market intelligence thread 6",
-    desc: "Exploring Spurs-inspired UI refinements for Nexus debates.",
+    desc: "Exploring Spurs-inspired UI refinements for Ryuzen debates.",
   },
   {
     title: "Partner enablement thread 12",
@@ -42,7 +42,7 @@ export function Dashboard() {
   return (
     <div className="space-y-10 text-[rgb(var(--text))]">
       <header className="space-y-2">
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome to Nexus.ai</h2>
+        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Welcome to Ryuzen.ai</h2>
         <p className="max-w-2xl text-sm text-muted sm:text-base">
           Orchestrate trusted AI debate sessions, audit every decision, and keep tabs on telemetry in one place.
         </p>
