@@ -12,7 +12,9 @@ import resumeEngineIcon from "@/assets/icons/resume-engine.svg";
 import feedbackIcon from "@/assets/icons/feedback.svg";
 
 export function RyuzenCommandCenterOverlay() {
-  const { closeCommandCenter } = useUI();
+  const { isCommandCenterOpen, closeCommandCenter } = useUI();
+
+  if (!isCommandCenterOpen) return null;
 
   const modules = [
     {
