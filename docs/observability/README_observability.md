@@ -31,3 +31,8 @@ ToronEngine emits spans for:
 ## Logs and Redaction
 - Sensitive attributes (`api_key`, `user_email`, `token`) are dropped at the collector using attribute filters.
 - Sampling defaults to 1:1 for production; adjust `tail_sampling` policies if volume requires.
+
+## Toron Visualizer overlays
+- Safety layer overlays highlight poisoning detections, abuse intent scores, risk bands, and drift spikes per tenant without surfacing prompts.
+- Routing overlays display active multi-cloud provider, failover chain, and tenant allow-list decisions alongside latency gauges.
+- Audit overlays surface encrypted-event counters and key rotation timestamps to validate the EncryptedAuditTrail pipeline end-to-end.

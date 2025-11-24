@@ -8,7 +8,23 @@ from typing import Any, AsyncGenerator, Dict, List
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from src.backend.audit.EncryptedAuditTrail import EncryptedAuditTrail
+from src.backend.enterprise.TenantIsolation import EnterpriseTenantIsolation
+from src.backend.routing.MultiCloudFailoverRouter import MultiCloudFailoverRouter
+from src.backend.safety.SafetyOrchestrator import SafetyOrchestrator, SafetyOutcome
+from src.backend.utils.IDGenerator import trace_id
+
 router = APIRouter(prefix="/api/v1", tags=["llm"])
+
+
+tenant_isolation = EnterpriseTenantIsolation()
+failover_router = MultiCloudFailoverRouter()
+audit_trail = EncryptedAuditTrail()
+safety_orchestrator = SafetyOrchestrator(
+    router=failover_router,
+    audit_trail=audit_trail,
+    tenant_isolation=tenant_isolation,
+)
 
 
 class ToronEngine:
@@ -61,12 +77,44 @@ def encrypt_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     return payload
 
 
+def run_safety_layer(payload: Dict[str, Any]) -> SafetyOutcome:
+    tenant_id = str(payload.get("tenant_id", "public"))
+    anchors = payload.get("context_anchors") or []
+    preferred = payload.get("preferred_providers") or None
+    outcome = safety_orchestrator.run(
+        prompt=str(payload.get("prompt", "")),
+        tenant_id=tenant_id,
+        context_anchors=anchors if isinstance(anchors, list) else [],
+        preferred_providers=preferred if isinstance(preferred, list) else None,
+    )
+    return outcome
+
+
+def enrich_with_safety_metadata(response: Dict[str, Any], outcome: SafetyOutcome) -> Dict[str, Any]:
+    meta = response.setdefault("meta", {})
+    meta.update(
+        {
+            "provider": outcome.routing.provider,
+            "safe_mode": outcome.safe_mode,
+            "risk_score": outcome.risk.value,
+            "drift_score": outcome.drift.drift_score,
+            "reasoning_budget": outcome.reasoning_budget,
+            "trace_id": trace_id(),
+        }
+    )
+    return response
+
+
 @router.post("/ask")
 async def ask(payload: Dict[str, Any]) -> JSONResponse:
     decrypted = decrypt_payload(payload)
     sanitized = sanitize_payload(decrypted)
+    outcome = run_safety_layer(sanitized)
+    sanitized["prompt"] = outcome.sanitized_prompt if not outcome.safe_mode else f"[STRICT_SAFE] {outcome.sanitized_prompt}"
+    sanitized["provider"] = outcome.routing.provider
     result = ToronEngine.process(sanitized)
-    encrypted = encrypt_payload(result)
+    enriched = enrich_with_safety_metadata(result, outcome)
+    encrypted = encrypt_payload(enriched)
     return JSONResponse(content=encrypted)
 
 
@@ -79,10 +127,13 @@ async def models() -> JSONResponse:
 async def stream(prompt: str) -> StreamingResponse:
     decrypted = decrypt_payload({"prompt": prompt})
     sanitized = sanitize_payload(decrypted)
+    outcome = run_safety_layer(sanitized)
+    sanitized["prompt"] = outcome.sanitized_prompt if not outcome.safe_mode else f"[STRICT_SAFE] {outcome.sanitized_prompt}"
+    sanitized["provider"] = outcome.routing.provider
 
     async def event_source() -> AsyncGenerator[bytes, None]:
         async for token in ToronEngine.stream(sanitized):
-            data = json.dumps({"delta": token})
+            data = json.dumps({"delta": token, "provider": outcome.routing.provider})
             yield f"data: {data}\n\n".encode()
         yield b"data: {\"done\": true}\n\n"
 
@@ -96,10 +147,13 @@ async def websocket_stream(websocket: WebSocket) -> None:
         initial = await websocket.receive_json()
         decrypted = decrypt_payload(initial)
         sanitized = sanitize_payload(decrypted)
+        outcome = run_safety_layer(sanitized)
+        sanitized["prompt"] = outcome.sanitized_prompt if not outcome.safe_mode else f"[STRICT_SAFE] {outcome.sanitized_prompt}"
+        sanitized["provider"] = outcome.routing.provider
 
         async for token in ToronEngine.stream(sanitized):
-            await websocket.send_json({"delta": token})
-        await websocket.send_json({"done": True})
+            await websocket.send_json({"delta": token, "provider": outcome.routing.provider})
+        await websocket.send_json({"done": True, "provider": outcome.routing.provider})
     except WebSocketDisconnect:
         return
     except Exception as exc:  # noqa: BLE001
