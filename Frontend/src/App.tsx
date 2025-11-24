@@ -10,19 +10,8 @@ import Toron from "@/pages/Toron";
 import Workspace from "@/pages/Workspace";
 
 export function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<RootLayout />}>
-        <Route index element={<Home />} />
-        <Route path="toron" element={<Toron />} />
-        <Route path="workspace" element={<Workspace />} />
-        <Route path="documents" element={<Documents />} />
-        <Route path="history" element={<History />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
-  );
+  console.log("Ryuzen App Mounted");
+  return <RootLayout />;
 }
 
 export default App;

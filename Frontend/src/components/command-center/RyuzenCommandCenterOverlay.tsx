@@ -1,7 +1,35 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { useUI } from "@/state/ui";
+export default function RyuzenCommandCenterOverlay({ onClose }) {
+  console.log("Overlay Loaded Successfully");
+  return (
+    <div
+      className="
+        fixed inset-0 bg-black/40 backdrop-blur-3xl
+        flex justify-center items-center p-4 z-50
+      "
+    >
+      <div
+        className="
+          relative w-[95%] h-[85%]
+          bg-gradient-to-b from-[#0b0f17]/70 to-[#03050a]/70
+          rounded-2xl border border-white/10
+          shadow-[0_20px_60px_rgba(0,0,0,0.8)]
+          overflow-hidden
+        "
+      >
+        <button
+          onClick={onClose}
+          className="
+            absolute top-4 right-4 text-white/40
+            hover:text-white/90 transition z-[99]
+          "
+        >
+          <X size={24} />
+        </button>
+
+        <ToronGrid>
 
 const panels = [
   { title: "Neural Load", body: "Model orchestration heat" },

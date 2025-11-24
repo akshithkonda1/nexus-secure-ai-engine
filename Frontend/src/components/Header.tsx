@@ -1,5 +1,18 @@
-import { motion } from "framer-motion";
-import { SunMedium, Moon, MonitorSmartphone, Sparkles } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Command, Menu, Search, Sparkles, Network } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import { useProfile } from "@/features/profile/ProfileProvider";
+import {
+  requestNewPrompt,
+  requestNotifications,
+  requestProfileOpen,
+} from "@/lib/actions";
+import { NotificationBell } from "@/components/shell/NotificationBell";
+import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
+import { cn } from "@/shared/lib/cn";
+import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
+import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
 import { useUI } from "@/state/ui";
@@ -14,9 +27,21 @@ const themeOptions: { value: ThemeMode; label: string; icon: JSX.Element }[] = [
   { value: "dark", label: "Dark", icon: <Moon className="h-4 w-4" /> },
 ];
 
-export function Header({ onOpenProfile }: HeaderProps) {
-  const { theme, setTheme } = useTheme();
-  const { openCommandCenter } = useUI();
+  if (!RyuzenCommandCenterOverlay) {
+    console.error("Overlay import failed");
+    return null;
+  }
+
+  const initials = useMemo(() => {
+    const name = profile?.fullName;
+    if (!name) return "AI";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [profile?.fullName]);
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 px-4 backdrop-blur-xl lg:pl-[var(--sidebar-width)]">
