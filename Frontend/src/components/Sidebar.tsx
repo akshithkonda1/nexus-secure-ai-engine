@@ -6,6 +6,7 @@ import workspaceIcon from "@/assets/icons/workspace.svg";
 import documentsIcon from "@/assets/icons/documents.svg";
 import historyIcon from "@/assets/icons/history.svg";
 import settingsIcon from "@/assets/icons/settings.svg";
+import { useFeedback } from "@/state/feedback";
 
 const navItems = [
   { label: "Home", href: "/", icon: homeIcon },
@@ -18,6 +19,7 @@ const navItems = [
 
 export function Sidebar() {
   const { pathname } = useLocation();
+  const { openModal } = useFeedback();
 
   return (
     <aside className="relative z-30 hidden h-screen border-r border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_88%,transparent)] px-5 py-6 shadow-2xl shadow-black/50 lg:block">
@@ -60,6 +62,28 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="mt-6 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_88%,transparent)] p-4 shadow-inner shadow-black/20">
+        <button
+          type="button"
+          onClick={openModal}
+          className="relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--accent-secondary)_35%,var(--border-soft))] bg-[color-mix(in_srgb,var(--panel-elevated)_82%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-[1px] hover:shadow-[0_12px_35px_rgba(34,211,238,0.28)]"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--accent-secondary)_20%,transparent)] text-[color-mix(in_srgb,var(--accent-secondary)_95%,var(--text-primary))] shadow-inner shadow-black/30">
+              ✨
+            </span>
+            <div className="text-left">
+              <p className="text-sm font-semibold">Send Feedback</p>
+              <p className="text-xs text-[var(--text-secondary)]">Share thoughts anonymously.</p>
+            </div>
+          </div>
+          <span
+            className="absolute inset-px rounded-xl border border-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)] blur-[1.5px]"
+            aria-hidden
+          />
+        </button>
+      </div>
     </aside>
   );
 }
