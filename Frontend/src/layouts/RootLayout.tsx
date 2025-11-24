@@ -7,6 +7,7 @@ import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCo
 import { RyuzenErrorBoundary } from "@/components/errors/RyuzenErrorBoundary";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { FeedbackModal } from "@/components/feedback/FeedbackModal";
 
 export default function RootLayout() {
   console.log("RootLayout Loaded");
@@ -70,6 +71,7 @@ export default function RootLayout() {
       </div>
 
       <RyuzenCommandCenterOverlay />
+      <FeedbackModal />
     </div>
   );
 }
