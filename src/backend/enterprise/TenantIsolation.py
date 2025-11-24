@@ -48,7 +48,7 @@ class EnterpriseTenantIsolation:
     def enforce_risk(self, tenant_id: str, risk_score: float) -> float:
         policy = self.get_policy(tenant_id)
         allowed_score = min(policy.custom_risk_tolerance, 0.95)
-        adjusted_score = min(risk_score, allowed_score)
+        adjusted_score = max(risk_score, allowed_score)
         self.logger.info(
             "risk-adjusted",
             tenant_id=tenant_id,

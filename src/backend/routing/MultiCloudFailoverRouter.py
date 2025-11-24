@@ -76,7 +76,7 @@ class MultiCloudFailoverRouter:
             chain = allow_list
 
         failover_chain: List[str] = []
-        chosen_provider = chain[0]
+        chosen_provider: Optional[str] = None
         safe_mode = safety_violation or risk_score > 0.6 or drift_score > 0.45
 
         for provider in chain:
@@ -95,8 +95,17 @@ class MultiCloudFailoverRouter:
                 continue
             chosen_provider = provider
             break
-        else:
-            failover_chain.extend([p for p in chain if p != chosen_provider])
+
+        if chosen_provider is None:
+            failover_chain.extend(chain)
+            self.logger.error(
+                "route-decision-failed",
+                chain=chain,
+                risk=risk_score,
+                drift=drift_score,
+                safe_mode=safe_mode,
+            )
+            raise RuntimeError("No available providers for failover chain")
 
         self.logger.info(
             "route-decision",
