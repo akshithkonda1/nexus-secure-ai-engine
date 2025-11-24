@@ -1,18 +1,30 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useUI } from "@/state/ui";
+import { useNavigate } from "react-router-dom";
 
-const panels = [
-  { title: "Neural Load", body: "Model orchestration heat" },
-  { title: "Pipelines", body: "Flow states & triggers" },
-  { title: "Connectors", body: "Live integrations" },
-  { title: "Workspace", body: "Quick context sync" },
-  { title: "Telemetry", body: "Live monitoring" },
-  { title: "Ryuzen Resume Engine", body: "Node clustering in progress…" }
-];
+import { useUI } from "@/state/ui";
 
 export function RyuzenCommandCenterOverlay() {
   const { isCommandCenterOpen, closeCommandCenter } = useUI();
+  const navigate = useNavigate();
+
+  const panels = [
+    { title: "Neural Load", body: "Model orchestration heat" },
+    { title: "Pipelines", body: "Flow states & triggers" },
+    { title: "Connectors", body: "Live integrations" },
+    { title: "Workspace", body: "Quick context sync" },
+    { title: "Telemetry", body: "Live monitoring" },
+    { title: "Ryuzen Resume Engine", body: "Node clustering in progress…" },
+    {
+      title: "Feedback Intelligence",
+      body: "Toron-powered insights",
+      cta: "Open Dashboard →",
+      onClick: () => {
+        navigate("/feedback-dashboard");
+        closeCommandCenter();
+      },
+    },
+  ];
 
   return (
     <AnimatePresence>
@@ -61,11 +73,11 @@ export function RyuzenCommandCenterOverlay() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.06 }}
                 className="
-                  bg-gradient-to-br 
-                  from-[#111827]/90 
+                  bg-gradient-to-br
+                  from-[#111827]/90
                   to-[#0c1321]/90
-                  border border-white/5 
-                  rounded-xl 
+                  border border-white/5
+                  rounded-xl
                   p-6 shadow-lg
                   hover:shadow-2xl hover:-translate-y-1 transition
                 "
@@ -76,6 +88,14 @@ export function RyuzenCommandCenterOverlay() {
                 <div className="mt-2 text-white/60 text-sm">
                   {panel.body}
                 </div>
+                {panel.cta && (
+                  <button
+                    onClick={panel.onClick}
+                    className="mt-4 inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
+                  >
+                    {panel.cta}
+                  </button>
+                )}
               </motion.div>
             ))}
 
