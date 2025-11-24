@@ -15,7 +15,7 @@ interface UIState {
   resetContextSnapshot: () => void;
 }
 
-export const useUI = create<UIState>((set) => ({
+export const useUI = create<UIState>((set, get) => ({
   isCommandCenterOpen: false,
   contextSnapshot: undefined,
   openCommandCenter: () => set({ isCommandCenterOpen: true }),
