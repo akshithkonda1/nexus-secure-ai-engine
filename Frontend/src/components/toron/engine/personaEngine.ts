@@ -1,57 +1,32 @@
-import { IntentClassification, PersonaProfile, ToronPersona, clamp } from "./types";
+import { CompiledContext, PersonaProfile, ShapedContextMetadata } from "../context/types";
 
-const personaTone: Record<ToronPersona, string> = {
-  direct: "succinct and actionable",
-  analytical: "methodical and clear",
-  creative: "imaginative and fluid",
-  empathetic: "supportive and warm",
-  technical: "precise and detailed",
-  neutral: "grounded and balanced",
+export const defaultPersona: PersonaProfile = {
+  name: "Toron Core",
+  tone: "balanced",
+  agility: 0.6,
+  empathy: 0.7,
+  riskTolerance: 0.3,
+  continuityAffinity: 0.5,
 };
 
-const personaBias: Record<ToronPersona, PersonaProfile["visualBias"]> = {
-  direct: { colorBoost: 0.4, waveformEnergy: 0.65, resonanceShift: 0.45 },
-  analytical: { colorBoost: 0.35, waveformEnergy: 0.55, resonanceShift: 0.5 },
-  creative: { colorBoost: 0.6, waveformEnergy: 0.7, resonanceShift: 0.65 },
-  empathetic: { colorBoost: 0.55, waveformEnergy: 0.45, resonanceShift: 0.35 },
-  technical: { colorBoost: 0.3, waveformEnergy: 0.6, resonanceShift: 0.7 },
-  neutral: { colorBoost: 0.25, waveformEnergy: 0.4, resonanceShift: 0.4 },
-};
+export const evolvePersona = (
+  persona: PersonaProfile,
+  compiled: CompiledContext,
+  shaped: ShapedContextMetadata
+): PersonaProfile => {
+  const continuityAffinity = Math.min(1, Math.max(0, compiled.continuityScore * 0.8 + 0.2));
+  const agility = Math.min(1, Math.max(0.4, persona.agility * 0.9 + shaped.llmHints.reasoning * 0.2));
+  const empathy = Math.min(1, Math.max(0.4, persona.empathy * 0.85 + shaped.emotionalTemperature * 0.3));
+  const riskTolerance = Math.min(1, Math.max(0, persona.riskTolerance * 0.8 + (1 - shaped.safetyBias) * 0.2));
 
-export const derivePersona = (classification: IntentClassification): PersonaProfile => {
-  const { intent, emotion, complexity } = classification;
-  let persona: ToronPersona = "neutral";
-
-  if (intent === "command") {
-    persona = "direct";
-  } else if (intent === "technical" || complexity > 0.65) {
-    persona = "technical";
-  } else if (intent === "question" || intent === "analysis") {
-    persona = "analytical";
-  } else if (intent === "creative") {
-    persona = "creative";
-  } else if (intent === "emotional") {
-    persona = "empathetic";
-  }
-
-  if (emotion === "negative") {
-    persona = "empathetic";
-  } else if (emotion === "positive" && persona === "neutral") {
-    persona = "creative";
-  }
-
-  const tone = personaTone[persona];
-  const visualBias = personaBias[persona];
+  const tone = compiled.conversationPhase === "analysis" ? "analytical" : compiled.conversationPhase === "resolution" ? "concise" : "curious";
 
   return {
-    persona,
+    ...persona,
     tone,
-    visualBias: {
-      colorBoost: clamp(visualBias.colorBoost),
-      waveformEnergy: clamp(visualBias.waveformEnergy),
-      resonanceShift: clamp(visualBias.resonanceShift),
-    },
+    continuityAffinity,
+    agility,
+    empathy,
+    riskTolerance,
   };
 };
-
-export default derivePersona;
