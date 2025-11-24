@@ -12,6 +12,7 @@ const navItems = [
   { label: "Home", href: "/", icon: homeIcon },
   { label: "Toron", href: "/toron", icon: toronIcon },
   { label: "Workspace", href: "/workspace", icon: workspaceIcon },
+  { label: "Projects", href: "/projects", icon: workspaceIcon },
   { label: "Documents", href: "/documents", icon: documentsIcon },
   { label: "History", href: "/history", icon: historyIcon },
   { label: "Settings", href: "/settings", icon: settingsIcon },
