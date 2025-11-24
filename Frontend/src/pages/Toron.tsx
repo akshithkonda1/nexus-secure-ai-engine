@@ -1,24 +1,29 @@
-import { motion } from "framer-motion";
+import { SlideUp } from "@/components/animations/SlideUp";
+import { useTheme } from "@/theme/useTheme";
 
 export default function Toron() {
-  return (
-    <PageStub
-      title="Toron Ops"
-      subtitle="Arrange Toron tiles, connect models, and orchestrate flows without friction."
-    />
-  );
-}
+  const { resolvedTheme } = useTheme();
 
-function PageStub({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <motion.section
-      className="glass-panel rounded-3xl border border-[var(--border-strong)] p-8"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }}
-    >
-      <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-      <h1 className="text-3xl font-semibold text-[var(--text-primary)]">{title}</h1>
-      <p className="mt-2 text-[var(--text-secondary)]">{subtitle}</p>
-    </motion.section>
+    <div className="space-y-6">
+      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
+        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Toron</p>
+        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Mission control</h1>
+        <p className="text-sm text-[var(--text-secondary)]">Toron tiles will land here. The theme is currently {resolvedTheme}.</p>
+      </SlideUp>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {["Queue", "Agents"].map((item) => (
+          <SlideUp
+            key={item}
+            className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_90%,transparent)] p-4"
+          >
+            <p className="text-xs uppercase tracking-[0.24em] text-[var(--text-secondary)]">Placeholder</p>
+            <p className="text-lg font-semibold text-[var(--text-primary)]">{item}</p>
+            <p className="text-sm text-[var(--text-secondary)]">Hook up Toron data feeds when backend is ready.</p>
+          </SlideUp>
+        ))}
+      </div>
+    </div>
   );
 }

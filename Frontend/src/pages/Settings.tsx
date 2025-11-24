@@ -1,42 +1,36 @@
-import { motion } from "framer-motion";
-import { useTheme, ThemeMode } from "@/hooks/useTheme";
-
-const themeModes: { value: ThemeMode; label: string; description: string }[] = [
-  { value: "light", label: "Light", description: "Bright panels, softer glass." },
-  { value: "system", label: "System", description: "Follow your OS preference automatically." },
-  { value: "dark", label: "Dark", description: "Midnight surfaces with neon edges." },
-];
+import { SlideUp } from "@/components/animations/SlideUp";
+import { useTheme, type ThemeMode } from "@/theme/useTheme";
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const modes: ThemeMode[] = ["light", "dark", "system"];
 
   return (
-    <motion.section
-      className="glass-panel rounded-3xl border border-[var(--border-strong)] p-8"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }}
-    >
-      <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-      <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Settings</h1>
-      <p className="mt-2 text-[var(--text-secondary)]">
-        Configure Ryuzen experience, global motion, and theme intelligence.
-      </p>
-
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {themeModes.map((mode) => {
-          const isActive = mode.value === theme;
-          return (
+    <div className="space-y-6">
+      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
+        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Settings</p>
+        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">System preferences</h1>
+        <p className="text-sm text-[var(--text-secondary)]">Choose how Ryuzen renders. Currently using {resolvedTheme}.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {modes.map((mode) => (
             <button
-              key={mode.value}
-              onClick={() => setTheme(mode.value)}
-              className={`glow-border flex flex-col items-start gap-2 rounded-2xl border border-[var(--border-soft)] p-4 text-left transition ${isActive ? "bg-[color-mix(in_srgb,var(--accent-primary)_12%,var(--panel-elevated))] border-[color-mix(in_srgb,var(--accent-primary)_35%,transparent)]" : "bg-[color-mix(in_srgb,var(--panel-elevated)_86%,transparent)] hover:-translate-y-[1px]"}`}
+              key={mode}
+              onClick={() => setTheme(mode)}
+              className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+                theme === mode
+                  ? "border-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] text-[var(--text-primary)]"
+                  : "border-[var(--border-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
             >
-              <span className="text-sm font-semibold text-[var(--text-primary)]">{mode.label}</span>
-              <span className="text-sm text-[var(--text-secondary)]">{mode.description}</span>
+              {mode.toUpperCase()}
             </button>
-          );
-        })}
-      </div>
-    </motion.section>
+          ))}
+        </div>
+      </SlideUp>
+
+      <SlideUp className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4">
+        <p className="text-sm text-[var(--text-secondary)]">More settings panels will appear here soon.</p>
+      </SlideUp>
+    </div>
   );
 }

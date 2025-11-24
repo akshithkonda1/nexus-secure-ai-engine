@@ -1,24 +1,20 @@
-import { motion } from "framer-motion";
+import { SlideUp } from "@/components/animations/SlideUp";
+import { useTheme } from "@/theme/useTheme";
 
 export default function Documents() {
-  return (
-    <PageStub
-      title="Documents"
-      subtitle="Secure files, shared context, and versioned briefs anchored to Toron runs."
-    />
-  );
-}
+  const { resolvedTheme } = useTheme();
 
-function PageStub({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <motion.section
-      className="glass-panel rounded-3xl border border-[var(--border-strong)] p-8"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }}
-    >
-      <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-      <h1 className="text-3xl font-semibold text-[var(--text-primary)]">{title}</h1>
-      <p className="mt-2 text-[var(--text-secondary)]">{subtitle}</p>
-    </motion.section>
+    <div className="space-y-6">
+      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
+        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Documents</p>
+        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Intelligence cache</h1>
+        <p className="text-sm text-[var(--text-secondary)]">Attach your files once backend sync is ready. Theme: {resolvedTheme}.</p>
+      </SlideUp>
+
+      <SlideUp className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4">
+        <p className="text-sm text-[var(--text-secondary)]">Document grid placeholder.</p>
+      </SlideUp>
+    </div>
   );
 }
