@@ -182,12 +182,6 @@ export function useLightfield(
     const canvas = canvasRef.current;
     if (!canvas) return false;
 
-    const gl = canvas.getContext("webgl", { premultipliedAlpha: true, antialias: true });
-    if (gl) {
-      // WebGL context acquired for potential future use; fallback drawing uses 2D for now.
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-
     const context2d = canvas.getContext("2d", { alpha: true });
     if (!context2d) return false;
 
