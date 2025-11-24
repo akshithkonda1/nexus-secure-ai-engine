@@ -14,24 +14,18 @@ import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
 import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
+import { useTheme, ThemeMode } from "@/hooks/useTheme";
+import { useUI } from "@/state/ui";
 
-type HeaderProps = {
-  onToggleSidebar?: () => void;
-  onOpenProfile?: () => void;
-};
+interface HeaderProps {
+  onOpenProfile: () => void;
+}
 
-export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
-  const today = new Intl.DateTimeFormat("en", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  }).format(new Date());
-  const navigate = useNavigate();
-  const { profile, loading } = useProfile();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-  const [notificationCount] = useState<number>(7); // TODO: wire to live notifications feed
-  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
+const themeOptions: { value: ThemeMode; label: string; icon: JSX.Element }[] = [
+  { value: "light", label: "Light", icon: <SunMedium className="h-4 w-4" /> },
+  { value: "system", label: "System", icon: <MonitorSmartphone className="h-4 w-4" /> },
+  { value: "dark", label: "Dark", icon: <Moon className="h-4 w-4" /> },
+];
 
   if (!RyuzenCommandCenterOverlay) {
     console.error("Overlay import failed");
@@ -50,176 +44,65 @@ export function Header({ onToggleSidebar, onOpenProfile }: HeaderProps = {}) {
   }, [profile?.fullName]);
 
   return (
-    <>
-      <header
-      className={cn(
-        "sticky top-0 z-30 border-b bg-[rgb(var(--surface))] text-[rgb(var(--text))] backdrop-blur-xl transition-colors duration-300",
-        isDark
-          ? "border-zora-border/80 bg-[color:color-mix(in_srgb,var(--zora-space)_84%,transparent)] shadow-zora-soft"
-          : "border-[rgba(var(--border),0.45)] shadow-[0_12px_32px_rgba(15,23,42,0.08)]",
-      )}
-      >
-        <div className="flex h-20 items-center gap-4 px-5 md:px-8 lg:px-12">
-          <button
-            type="button"
-            className={cn(
-              "inline-flex size-10 items-center justify-center rounded-full border text-[rgba(var(--subtle),0.9)] transition hover:scale-[1.01] active:scale-[0.99] lg:hidden",
-            isDark
-              ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)] text-zora-muted shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
-              : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] shadow-sm hover:bg-[rgba(var(--surface),0.85)] hover:text-[rgb(var(--text))]",
-          )}
-          onClick={() => onToggleSidebar?.()}
-          aria-label="Toggle navigation"
-        >
-          <Menu className="size-4" />
-        </button>
-
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <img
-                src={ryuzenDragon}
-                alt="Ryuzen logo"
-                className="h-9 w-auto shrink-0 drop-shadow-[0_10px_30px_rgba(62,228,255,0.3)]"
-              />
-              <div
-                className={cn(
-                  "relative hidden max-w-md flex-1 items-center overflow-hidden rounded-[24px] border px-4 py-2 backdrop-blur-xl transition-colors duration-300 sm:flex",
-              isDark
-                ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_78%,transparent)] text-zora-white shadow-zora-soft"
-                : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-sm",
-            )}
-          >
-            <Search
-              className={cn(
-                "mr-3 size-4 transition-colors duration-300",
-                isDark ? "text-zora-muted" : "text-[rgba(var(--subtle),0.7)]",
-              )}
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              placeholder="Search sessions, documents, or commands"
-              className={cn(
-                "input h-9 flex-1 border-0 bg-transparent pl-0 pr-0 text-[rgb(var(--text))] placeholder:text-[rgba(var(--subtle),0.75)] focus:outline-none focus:ring-0",
-                isDark && "text-zora-white placeholder:text-zora-muted",
-              )}
-            />
-            <span
-              className={cn(
-                "hidden items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors duration-300 sm:inline-flex",
-                isDark
-                  ? "bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-muted shadow-none"
-                  : "bg-[rgb(var(--surface))] text-[rgba(var(--subtle),0.7)] shadow-sm",
-              )}
-            >
-              <Command className="size-3" /> K
-            </span>
+    <header className="fixed left-0 right-0 top-0 z-40 px-4 backdrop-blur-xl lg:pl-[var(--sidebar-width)]">
+      <div className="mx-auto flex h-[var(--header-height)] items-center justify-between px-2 sm:px-4 md:px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] shadow-lg shadow-cyan-500/15">
+            <img src={ryuzenDragon} alt="Ryuzen" className="h-8 w-8 drop-shadow-[0_6px_18px_rgba(92,240,255,0.45)]" />
           </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  requestNewPrompt();
-                  navigate("/chat");
-                }}
-                className="btn btn-primary whitespace-nowrap shadow-zora-glow"
-              >
-                <Sparkles className="size-4" /> New prompt
-              </button>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="hidden flex-col text-right md:flex">
-                <span className="text-xs font-semibold uppercase tracking-[0.26em] text-[rgba(var(--subtle),0.6)]">
-                  Today
-                </span>
-                <span className="text-sm font-medium text-[rgb(var(--text))]">
-                  {today}
-                </span>
-              </div>
-              <NotificationBell
-                count={notificationCount}
-                onClick={() => {
-                  requestNotifications();
-                  // TODO: open notifications panel when available
-                }}
-                className={cn(
-                  isDark
-                    ? "bg-[color:color-mix(in_srgb,var(--zora-space)_80%,transparent)]"
-                    : undefined,
-                )}
-              />
-              <button
-                type="button"
-                onClick={() => setCommandCenterOpen(true)}
-                className="relative inline-flex items-center gap-2 rounded-full border border-[rgba(var(--border),0.6)] bg-[rgba(var(--panel),0.9)] px-3 py-1.5 text-xs font-semibold text-[rgba(var(--subtle),0.9)] shadow-[0_0_22px_rgba(0,0,0,0.4)] transition hover:border-[rgba(var(--brand),0.7)] hover:text-[rgb(var(--text))]"
-              >
-                <span className="relative flex h-6 w-6 items-center justify-center">
-                  <span className="absolute h-6 w-6 animate-[pulse_3s_ease-in-out_infinite] rounded-full bg-[radial-gradient(circle,_rgba(var(--accent-emerald),0.7),_transparent_70%)] opacity-70" />
-                  <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-[rgba(var(--accent-emerald),0.2)]">
-                    <Network className="size-3 text-[rgb(var(--accent-emerald))]" />
-                  </span>
-                </span>
-                <span>Command Center</span>
-              </button>
-              <ThemeToggle className="hidden lg:inline-flex" />
-              <div
-                className="hidden h-12 w-px rounded-full bg-[rgba(var(--border),0.4)] transition-colors duration-300 lg:block dark:bg-[color:rgba(148,163,184,0.28)]"
-                aria-hidden="true"
-              />
-              <button
-                type="button"
-                className={cn(
-                  "hidden items-center gap-3 rounded-[18px] border px-3 py-2.5 text-left text-sm font-medium transition lg:flex",
-                  isDark
-                    ? "border-zora-border bg-[color:color-mix(in_srgb,var(--zora-soft)_75%,transparent)] text-zora-white shadow-zora-soft hover:bg-zora-deep hover:text-zora-white"
-                    : "border-[rgba(var(--border),0.55)] bg-[rgb(var(--surface))] text-[rgb(var(--text))] shadow-sm hover:bg-[rgba(var(--surface),0.9)] hover:text-[rgb(var(--text))]",
-                )}
-                onClick={() => {
-                  requestProfileOpen();
-                  onOpenProfile?.();
-                }}
-                disabled={loading}
-              >
-                <span
-                  className={cn(
-                    "inline-flex size-9 items-center justify-center overflow-hidden rounded-xl shadow-zora-soft",
-                    isDark
-                      ? "bg-[color:color-mix(in_srgb,var(--zora-space)_82%,transparent)] text-zora-white"
-                      : "bg-[rgba(var(--surface),0.85)] text-[rgb(var(--text))] shadow-sm",
-                  )}
-                >
-                  {profile?.avatarUrl ? (
-                    <img
-                      src={profile.avatarUrl}
-                      alt="Profile avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    initials
-                  )}
-                </span>
-                <span className="leading-tight">
-                  {profile?.fullName ?? "Workspace admin"}
-                  <br />
-                  <span
-                    className={cn(
-                      "text-xs font-normal",
-                      isDark ? "text-zora-muted" : "text-[rgba(var(--subtle),0.75)]",
-                    )}
-                  >
-                    {profile?.role ?? "Secure workspace"}
-                  </span>
-                </span>
-              </button>
-            </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-secondary)]">Ryuzen Command OS</p>
+            <p className="text-lg font-semibold text-[var(--text-primary)]">Toron Control Surface</p>
           </div>
         </div>
-      </header>
-      <RyuzenCommandCenterOverlay
-        open={commandCenterOpen}
-        onClose={() => setCommandCenterOpen(false)}
-      />
-    </>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center rounded-full border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_86%,transparent)] p-1 shadow-inner shadow-black/10 md:flex">
+            {themeOptions.map((option) => {
+              const isActive = option.value === theme;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setTheme(option.value)}
+                  className="relative flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] transition"
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="theme-toggle"
+                      className="absolute inset-0 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_18%,transparent)]"
+                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-1">
+                    {option.icon}
+                    {option.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03, boxShadow: "0 12px 40px rgba(52,224,161,0.35)" }}
+            whileTap={{ scale: 0.98 }}
+            onClick={openCommandCenter}
+            className="relative flex items-center gap-2 rounded-full border border-emerald-300/40 bg-gradient-to-r from-emerald-400/30 via-cyan-400/30 to-sky-400/30 px-4 py-2 text-sm font-semibold text-emerald-50 shadow-[0_10px_35px_rgba(56,189,248,0.3)]"
+          >
+            <Sparkles className="h-4 w-4" />
+            Command Center
+            <span className="absolute inset-0 -z-10 rounded-full blur-xl bg-emerald-400/30" aria-hidden="true" />
+          </motion.button>
+
+          <button
+            onClick={onOpenProfile}
+            className="relative h-11 w-11 overflow-hidden rounded-full border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)] shadow-lg shadow-black/30 transition hover:-translate-y-[1px] hover:shadow-cyan-500/20"
+            aria-label="Open profile"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/30 via-transparent to-purple-500/25" />
+            <span className="relative flex h-full w-full items-center justify-center text-[var(--text-primary)]">RY</span>
+          </button>
+        </div>
+      </div>
+    </header>
   );
 }

@@ -54,9 +54,9 @@ import { copyToClipboard } from "@/lib/zoraClipboard";
 import { sendFeedback } from "@/lib/zoraFeedbackClient";
 import { getShareLink } from "@/lib/zoraShareClient";
 
-import ToronMessageBubble from "@/zora/chat/ZoraMessageBubble";
-import ToronStreamingBlock from "@/zora/chat/ZoraStreamingBlock";
-import ToronShareModal from "@/zora/chat/ZoraShareModal";
+import ToronMessageBubble from "@/zora/chat/RyuzenMessageBubble";
+import ToronStreamingBlock from "@/zora/chat/RyuzenStreamingBlock";
+import ToronShareModal from "@/zora/chat/RyuzenShareModal";
 
 const DEFAULT_VIRTUAL_ROW_HEIGHT = 96;
 

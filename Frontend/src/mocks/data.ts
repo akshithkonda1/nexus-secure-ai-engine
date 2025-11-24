@@ -77,7 +77,7 @@ function createProjects(rand: () => number): Project[] {
   return names.map((name, idx) => ({
     id: `project-${idx + 1}`,
     name,
-    description: `${name} initiative inside Nexus.ai`,
+    description: `${name} initiative inside Ryuzen.ai`,
     updatedAt: hoursAgo(rand() * 72),
     sessionsCount: Math.floor(rand() * 24) + 6,
     activeCount: Math.floor(rand() * 12) + 1,
@@ -105,7 +105,7 @@ function createSessions(rand: () => number, projects: Project[]): [Session[], Ma
       preview:
         index % 3 === 0
           ? "Evaluating cross-model consensus alignment across policy updates."
-          : "Exploring Spurs-inspired UI refinements for Nexus debates.",
+          : "Exploring Spurs-inspired UI refinements for Ryuzen debates.",
       updatedAt,
       messages: Math.floor(rand() * 60) + 6,
       providers: providers.filter(() => rand() > 0.45).slice(0, 3),
@@ -118,7 +118,7 @@ function createSessions(rand: () => number, projects: Project[]): [Session[], Ma
       {
         id: `${id}-m1`,
         role: "system",
-        text: "You are Nexus.ai orchestrating multi-model debates with transparency.",
+        text: "You are Ryuzen.ai orchestrating multi-model debates with transparency.",
         at: hoursAgo(rand() * 160),
       },
     ];
@@ -231,7 +231,7 @@ function defaultSettings(): SettingsData {
   return {
     profile: {
       displayName: "Trust Team",
-      email: "trust@nexus.ai",
+      email: "trust@ryuzen.ai",
       avatarUrl: "https://avatars.dicebear.com/api/initials/NT.svg",
     },
     appearance: {
@@ -256,7 +256,7 @@ function defaultProfile(): ProfileRecord {
     fullName: "Avery Quinn",
     handle: "@avery.quinn",
     role: "Director of AI Programs",
-    email: "avery.quinn@nexus.ai",
+    email: "avery.quinn@ryuzen.ai",
     workspace: "Secure AI Engine",
     timezone: "America/Los_Angeles",
     phone: "+1-415-555-0147",

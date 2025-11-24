@@ -65,7 +65,7 @@ function SessionCard({ session }: { session: Session }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-ink">{session.title}</h3>
-          <p className="mt-2 line-clamp-2 text-sm text-muted">{session.preview ?? "Kick off a fresh Nexus debate."}</p>
+          <p className="mt-2 line-clamp-2 text-sm text-muted">{session.preview ?? "Kick off a fresh Ryuzen debate."}</p>
         </div>
         {session.pinned ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-trustBlue/40 bg-trustBlue/10 px-3 py-1 text-xs font-medium text-trustBlue">

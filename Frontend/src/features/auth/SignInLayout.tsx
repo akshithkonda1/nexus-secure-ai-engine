@@ -72,7 +72,7 @@ export function SignInLayout({
 function DecorativeBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10">
-      <div className="absolute -left-32 top-[-10%] h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,_var(--accent-nexus)/18,_transparent_70%)] blur-3xl" />
+      <div className="absolute -left-32 top-[-10%] h-96 w-96 rounded-full bg-[radial-gradient(circle_at_center,_var(--accent-ryuzen)/18,_transparent_70%)] blur-3xl" />
       <div className="absolute bottom-[-20%] right-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,_var(--accent-business)/16,_transparent_60%)] blur-3xl" />
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-app-text/40 to-transparent" />
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-app-text/20 via-transparent" />

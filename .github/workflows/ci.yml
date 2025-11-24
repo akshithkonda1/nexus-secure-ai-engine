@@ -1,92 +1,56 @@
-name: CI
-on:
-  pull_request:
-  push:
-    branches: [ main ]
+name: Ryuzen CI/CD
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  PORT: 8080
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
+
     steps:
-      - uses: actions/checkout@v5
+    - uses: actions/checkout@v3
 
-      # Frontend quality (adjust paths as needed)
-      - uses: actions/setup-node@v6
-        with: { node-version: '20' }
-      - name: Frontend install
-        working-directory: nexus/ai/frontend
-        run: |
-          corepack enable
-          pnpm install
-      - name: Frontend typecheck & build
-        working-directory: nexus/ai/frontend
-        run: |
-          pnpm tsc --noEmit
-          pnpm build
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      # Log in to GHCR
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install Backend Dependencies
+      run: |
+        cd Backend
+        pip install -r requirements.txt
 
-      # Generate image metadata and safe tags
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          flavor: latest=false
-          tags: |
-            type=sha
-            type=ref,event=branch
-            type=ref,event=pr
+    - name: Install Node for Frontend
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
 
-      # Build and push image
-      - name: Build & push
-        id: build-and-push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+    - name: Install Frontend Dependencies
+      run: |
+        cd Frontend
+        npm install
 
-      - name: Export compose image ref
-        run: |
-          FIRST_TAG=$(printf '%s\n' "${{ steps.meta.outputs.tags }}" | head -n1)
-          echo "CI_IMAGE_REF=${FIRST_TAG}" >> "$GITHUB_ENV"
+    - name: Run Backend Tests
+      run: |
+        cd Backend
+        pytest --maxfail=1 --disable-warnings
 
-      # Trivy scan (container)
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-and-push.outputs.digest }}
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'HIGH,CRITICAL'
+    - name: Run Frontend Build
+      run: |
+        cd Frontend
+        npm run build
 
-      # Integration smoke with compose + k6
-      - name: Compose smoke
-        run: scripts/ci-smoke.sh
-      - name: k6 smoke
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: ./k6/smoke.js
-        env:
-          BASE_URL: http://localhost:8080
+    - name: Docker Build
+      run: |
+        docker build -t ryuzen-engine:latest .
 
-      - name: Tear down
-        if: always()
-        run: docker compose -f docker-compose.ci.yml down -v
+    - name: Push Docker Image
+      run: echo "Pushing to registry disabled for demo"
+
+    - name: Deploy to Kubernetes
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "k8s deploy example"

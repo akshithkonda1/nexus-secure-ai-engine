@@ -239,7 +239,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                     </div>
 
                     <p className="text-sm text-[rgba(var(--subtle),0.8)]">
-                      Manage how people see you across Nexus. Changes sync instantly once saved.
+                      Manage how people see you across Ryuzen. Changes sync instantly once saved.
                     </p>
 
                     <div className="space-y-4">

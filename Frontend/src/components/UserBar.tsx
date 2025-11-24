@@ -21,9 +21,9 @@ async function copyAndJump(prompt: string, navigate?: (to: string) => void) {
     document.execCommand("copy");
     document.body.removeChild(ta);
   }
-  window.dispatchEvent(new CustomEvent("nexus:prompt:insert", { detail: prompt }));
+  window.dispatchEvent(new CustomEvent("ryuzen:prompt:insert", { detail: prompt }));
   if (navigate) navigate("/chat");
-  else window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/chat" }));
+  else window.dispatchEvent(new CustomEvent("ryuzen:navigate", { detail: "/chat" }));
 }
 
 const PROMPTS = [
@@ -134,7 +134,7 @@ function PromptBrowserButton({ items }: { items: MenuItem[] }) {
           <button
             role="menuitem"
             className="block w-full cursor-pointer px-3 py-2 text-left text-xs text-muted outline-none transition hover:bg-[rgba(var(--panel),0.2)] hover:text-ink"
-            onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("nexus:navigate", { detail: "/prompts" })); }}
+            onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent("ryuzen:navigate", { detail: "/prompts" })); }}
           >
             Manage prompts…
           </button>
@@ -155,11 +155,11 @@ type Profile = {
   avatarDataUrl?: string; // JPEG data URL (compressed)
 };
 
-const STORAGE_KEY = "nexus.profile.v1";
+const STORAGE_KEY = "ryuzen.profile.v1";
 const DEFAULT_PROFILE: Profile = {
   id: "local",
   displayName: "John Doe",
-  handle: "@nexus",
+  handle: "@ryuzen",
   about: "",
 };
 
@@ -176,7 +176,7 @@ function loadProfile(): Profile {
 function safeSaveProfile(p: Profile): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-    window.dispatchEvent(new CustomEvent("nexus:profile:update", { detail: p }));
+    window.dispatchEvent(new CustomEvent("ryuzen:profile:update", { detail: p }));
     return true;
   } catch {
     return false; // quota / serialization error
@@ -489,12 +489,12 @@ export function UserBar() {
       const p = (e as CustomEvent<Profile>).detail;
       if (p) setProfile(p);
     };
-    window.addEventListener("nexus:profile:update", onUpdate as EventListener);
-    return () => window.removeEventListener("nexus:profile:update", onUpdate as EventListener);
+    window.addEventListener("ryuzen:profile:update", onUpdate as EventListener);
+    return () => window.removeEventListener("ryuzen:profile:update", onUpdate as EventListener);
   }, []);
 
   const displayName = profile.displayName || user.name?.trim() || "Guest";
-  const handle = profile.handle ?? user.handle ?? "@nexus";
+  const handle = profile.handle ?? user.handle ?? "@ryuzen";
   const initials = displayName.split(" ").map((part: string) => part[0]).join("").slice(0, 2).toUpperCase();
 
   const [profileOpen, setProfileOpen] = React.useState(false);
@@ -505,7 +505,7 @@ export function UserBar() {
   const onFilesChosen: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    window.dispatchEvent(new CustomEvent("nexus:attach", { detail: files }));
+    window.dispatchEvent(new CustomEvent("ryuzen:attach", { detail: files }));
     e.currentTarget.value = "";
   };
 
@@ -538,13 +538,13 @@ export function UserBar() {
       mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
       mr.onstart = () => {
         setRecording(true);
-        window.dispatchEvent(new CustomEvent("nexus:voice:recording", { detail: { state: "start" } }));
+        window.dispatchEvent(new CustomEvent("ryuzen:voice:recording", { detail: { state: "start" } }));
       };
       mr.onstop = () => {
         setRecording(false);
         setBusy(false);
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        window.dispatchEvent(new CustomEvent("nexus:voice:data", { detail: { blob, transcript: undefined } }));
+        window.dispatchEvent(new CustomEvent("ryuzen:voice:data", { detail: { blob, transcript: undefined } }));
         stream.getTracks().forEach((t) => t.stop());
       };
       mediaRecorderRef.current = mr;
@@ -557,7 +557,7 @@ export function UserBar() {
               const result = event.results[i];
               if (result.isFinal) tmp += result[0].transcript + " ";
             }
-            window.dispatchEvent(new CustomEvent("nexus:voice:partial", { detail: tmp.trim() }));
+            window.dispatchEvent(new CustomEvent("ryuzen:voice:partial", { detail: tmp.trim() }));
           };
           recRef.current.start();
         } catch {
@@ -569,7 +569,7 @@ export function UserBar() {
     } catch (err) {
       setBusy(false);
       console.error("Mic error", err);
-      window.dispatchEvent(new CustomEvent("nexus:voice:error", { detail: err }));
+      window.dispatchEvent(new CustomEvent("ryuzen:voice:error", { detail: err }));
     }
   };
   const stopRecording = () => {

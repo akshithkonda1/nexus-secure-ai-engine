@@ -64,7 +64,7 @@ export function SurveyTooltip({ open, onSubmit, onDismiss }: SurveyTooltipProps)
       </div>
       {submitted ? (
         <p className="mt-3 text-center text-xs text-subtle" role="status">
-          Thanks for the {submitted === "up" ? "love" : "feedback"}! We’ll use it to improve Nexus.ai.
+          Thanks for the {submitted === "up" ? "love" : "feedback"}! We’ll use it to improve Ryuzen.ai.
         </p>
       ) : null}
       <button

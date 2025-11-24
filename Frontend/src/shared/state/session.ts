@@ -8,7 +8,7 @@ type SessionState = {
 };
 
 export const useSession = create<SessionState>((set) => ({
-  user: { name: "John Doe", handle: "@nexus", avatarUrl: "/assets/avatar-placeholder.png" },
+  user: { name: "John Doe", handle: "@ryuzen", avatarUrl: "/assets/avatar-placeholder.png" },
   setUser: (user) =>
     set((state) => ({
       user: { ...state.user, ...user },

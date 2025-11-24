@@ -17,7 +17,7 @@ export default function Login() {
             <BrandMark className="mx-auto h-10" />
             <div className="space-y-2">
               <p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">WELCOME BACK</p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Sign in to Nexus</h1>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Sign in to Ryuzen</h1>
               <p className="text-sm text-muted-foreground sm:text-base">
                 Choose a social provider or continue with your email credentials to access your workspace.
               </p>
@@ -34,7 +34,7 @@ export default function Login() {
           <LocalAccountForm className="pt-2" />
 
           <p className="text-center text-xs text-muted-foreground">
-            By continuing you agree to Nexus security policies and acknowledge that multi-factor safeguards may apply.
+            By continuing you agree to Ryuzen security policies and acknowledge that multi-factor safeguards may apply.
           </p>
         </div>
       </div>
