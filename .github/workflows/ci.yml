@@ -20,7 +20,6 @@ jobs:
 
     - name: Install Backend Dependencies
       run: |
-        cd Backend
         pip install -r requirements.txt
 
     - name: Install Node for Frontend
@@ -35,7 +34,6 @@ jobs:
 
     - name: Run Backend Tests
       run: |
-        cd Backend
         pytest --maxfail=1 --disable-warnings
 
     - name: Run Frontend Build
