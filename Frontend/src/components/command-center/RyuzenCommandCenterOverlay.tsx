@@ -11,12 +11,12 @@ const panels = [
   { title: "Ryuzen Resume Engine", body: "Node clustering in progress…" }
 ];
 
-export default function RyuzenCommandCenterOverlay() {
-  const { commandCenterOpen, closeCommandCenter } = useUI();
+export function RyuzenCommandCenterOverlay() {
+  const { isCommandCenterOpen, closeCommandCenter } = useUI();
 
   return (
     <AnimatePresence>
-      {commandCenterOpen && (
+      {isCommandCenterOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
