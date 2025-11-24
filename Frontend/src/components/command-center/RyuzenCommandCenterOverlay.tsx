@@ -1,107 +1,142 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
 import { useUI } from "@/state/ui";
 
-export function RyuzenCommandCenterOverlay() {
-  const { isCommandCenterOpen, closeCommandCenter } = useUI();
-  const navigate = useNavigate();
+// ICON IMPORTS (binary-safe)
+import neuralIcon from "@/assets/icons/neural-load.svg";
+import pipelinesIcon from "@/assets/icons/pipelines.svg";
+import connectorsIcon from "@/assets/icons/connectors.svg";
+import workspaceIcon from "@/assets/icons/workspace.svg";
+import telemetryIcon from "@/assets/icons/telemetry.svg";
+import resumeEngineIcon from "@/assets/icons/resume-engine.svg";
+import feedbackIcon from "@/assets/icons/feedback.svg";
 
-  const panels = [
-    { title: "Neural Load", body: "Model orchestration heat" },
-    { title: "Pipelines", body: "Flow states & triggers" },
-    { title: "Connectors", body: "Live integrations" },
-    { title: "Workspace", body: "Quick context sync" },
-    { title: "Telemetry", body: "Live monitoring" },
-    { title: "Ryuzen Resume Engine", body: "Node clustering in progress…" },
+export function RyuzenCommandCenterOverlay() {
+  const { closeCommandCenter } = useUI();
+
+  const modules = [
     {
-      title: "Feedback Intelligence",
-      body: "Toron-powered insights",
-      cta: "Open Dashboard →",
-      onClick: () => {
-        navigate("/feedback-dashboard");
-        closeCommandCenter();
-      },
+      label: "Neural Load",
+      desc: "Model orchestration heat",
+      icon: neuralIcon,
+      route: "/neural",
+    },
+    {
+      label: "Pipelines",
+      desc: "Flow states & triggers",
+      icon: pipelinesIcon,
+      route: "/pipelines",
+    },
+    {
+      label: "Connectors",
+      desc: "Live integrations",
+      icon: connectorsIcon,
+      route: "/connectors",
+    },
+    {
+      label: "Workspace",
+      desc: "Quick context sync",
+      icon: workspaceIcon,
+      route: "/workspace",
+    },
+    {
+      label: "Telemetry",
+      desc: "Live monitoring",
+      icon: telemetryIcon,
+      route: "/telemetry",
+    },
+    {
+      label: "Ryuzen Resume Engine",
+      desc: "Node clustering in progress…",
+      icon: resumeEngineIcon,
+      route: "/resume-engine",
+    },
+    {
+      label: "Feedback Intelligence",
+      desc: "Toron-powered insights",
+      icon: feedbackIcon,
+      route: "/feedback",
+      cta: true,
     },
   ];
 
   return (
-    <AnimatePresence>
-      {isCommandCenterOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="
-            fixed inset-0 
-            bg-black/40 
-            backdrop-blur-3xl 
-            flex justify-center items-center 
-            z-50
-          "
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-[999] flex items-start justify-center bg-black/70 backdrop-blur-3xl"
+    >
+      <motion.div
+        initial={{ scale: 0.93, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.93, opacity: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="relative mt-14 w-full max-w-7xl rounded-3xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-strong)_96%,transparent)] p-10 shadow-[0_0_80px_rgba(0,0,0,0.55)]"
+      >
+
+        {/* CLOSE BUTTON */}
+        <button
+          onClick={closeCommandCenter}
+          className="absolute right-6 top-6 rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10 hover:scale-105 transition-all"
         >
-          <motion.div
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.92, opacity: 0 }}
-            className="
-              relative w-[92%] h-[84%] 
-              bg-gradient-to-b from-[#0d1018] to-[#04060b]
-              rounded-2xl border border-white/10 
-              shadow-[0_20px_60px_rgba(0,0,0,0.8)]
-              p-10 grid grid-cols-3 gap-6
-              overflow-hidden
-            "
-          >
-            <button
-              aria-label="Close Command Center"
-              onClick={closeCommandCenter}
-              className="
-                absolute top-5 right-6 
-                text-white/40 hover:text-white
-                transition z-[99]
-              "
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* GRID */}
+        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+          {modules.map((mod, i) => (
+            <motion.div
+              key={mod.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: i * 0.06 }}
+              whileHover={{
+                scale: 1.03,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+              }}
+              whileTap={{ scale: 0.985 }}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-transparent to-transparent p-7 backdrop-blur-xl transition-all cursor-pointer"
             >
-              <X size={28} />
-            </button>
 
-            {panels.map((panel, index) => (
+              {/* Glow Hover Layer */}
               <motion.div
-                key={panel.title}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.06 }}
-                className="
-                  bg-gradient-to-br
-                  from-[#111827]/90
-                  to-[#0c1321]/90
-                  border border-white/5
-                  rounded-xl
-                  p-6 shadow-lg
-                  hover:shadow-2xl hover:-translate-y-1 transition
-                "
-              >
-                <div className="text-xl font-semibold text-white">
-                  {panel.title}
-                </div>
-                <div className="mt-2 text-white/60 text-sm">
-                  {panel.body}
-                </div>
-                {panel.cta && (
-                  <button
-                    onClick={panel.onClick}
-                    className="mt-4 inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
-                  >
-                    {panel.cta}
-                  </button>
-                )}
-              </motion.div>
-            ))}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0 }}
+                whileHover={{ opacity: 0.22 }}
+                className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 via-purple-500/25 to-emerald-500/25 blur-2xl rounded-2xl pointer-events-none"
+              />
 
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+              {/* ICON */}
+              <img
+                src={mod.icon}
+                alt={`${mod.label} icon`}
+                className="h-9 w-9 opacity-90 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform duration-300"
+              />
+
+              {/* LABEL */}
+              <p className="mt-4 text-xl font-semibold text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
+                {mod.label}
+              </p>
+
+              {/* DESCRIPTION */}
+              <p className="mt-1 text-sm text-white/60">{mod.desc}</p>
+
+              {/* CTA BUTTON */}
+              {mod.cta && (
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="mt-5 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all"
+                >
+                  Open Dashboard →
+                </motion.button>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
