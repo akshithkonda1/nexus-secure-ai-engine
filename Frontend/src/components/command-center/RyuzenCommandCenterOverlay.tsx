@@ -1,142 +1,144 @@
-import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useUI } from "@/state/ui";
+import {
+  NeuralLoadIcon,
+  PipelinesIcon,
+  ConnectorsIcon,
+  WorkspaceIcon,
+  TelemetryIcon,
+  ResumeEngineIcon,
+  FeedbackIcon,
+} from "@/components/home/moduleIcons";
 
-// ICON IMPORTS (binary-safe)
-import neuralIcon from "@/assets/icons/neural-load.svg";
-import pipelinesIcon from "@/assets/icons/pipelines.svg";
-import connectorsIcon from "@/assets/icons/connectors.svg";
-import workspaceIcon from "@/assets/icons/workspace.svg";
-import telemetryIcon from "@/assets/icons/telemetry.svg";
-import resumeEngineIcon from "@/assets/icons/resume-engine.svg";
-import feedbackIcon from "@/assets/icons/feedback.svg";
+export default function RyuzenCommandCenterOverlay() {
+  const { commandCenterOpen, closeCommandCenter } = useUI();
 
-export function RyuzenCommandCenterOverlay() {
-  const { closeCommandCenter } = useUI();
+  // ESC key closes overlay
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeCommandCenter();
+    };
+    window.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = commandCenterOpen ? "hidden" : "";
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
+    };
+  }, [commandCenterOpen]);
 
-  const modules = [
+  if (!commandCenterOpen) return null;
+
+  const items = [
     {
-      label: "Neural Load",
+      title: "Neural Load",
       desc: "Model orchestration heat",
-      icon: neuralIcon,
-      route: "/neural",
+      icon: <NeuralLoadIcon className="h-6 w-6" />,
     },
     {
-      label: "Pipelines",
+      title: "Pipelines",
       desc: "Flow states & triggers",
-      icon: pipelinesIcon,
-      route: "/pipelines",
+      icon: <PipelinesIcon className="h-6 w-6" />,
     },
     {
-      label: "Connectors",
+      title: "Connectors",
       desc: "Live integrations",
-      icon: connectorsIcon,
-      route: "/connectors",
+      icon: <ConnectorsIcon className="h-6 w-6" />,
     },
     {
-      label: "Workspace",
+      title: "Workspace",
       desc: "Quick context sync",
-      icon: workspaceIcon,
-      route: "/workspace",
+      icon: <WorkspaceIcon className="h-6 w-6" />,
     },
     {
-      label: "Telemetry",
+      title: "Telemetry",
       desc: "Live monitoring",
-      icon: telemetryIcon,
-      route: "/telemetry",
+      icon: <TelemetryIcon className="h-6 w-6" />,
     },
     {
-      label: "Ryuzen Resume Engine",
-      desc: "Node clustering in progress…",
-      icon: resumeEngineIcon,
-      route: "/resume-engine",
+      title: "Ryuzen Resume Engine",
+      desc: "Node clustering in progress...",
+      icon: <ResumeEngineIcon className="h-6 w-6" />,
     },
     {
-      label: "Feedback Intelligence",
+      title: "Feedback Intelligence",
       desc: "Toron-powered insights",
-      icon: feedbackIcon,
-      route: "/feedback",
-      cta: true,
+      icon: <FeedbackIcon className="h-6 w-6" />,
+      button: true,
     },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-[999] flex items-start justify-center bg-black/70 backdrop-blur-3xl"
-    >
-      <motion.div
-        initial={{ scale: 0.93, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.93, opacity: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="relative mt-14 w-full max-w-7xl rounded-3xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-strong)_96%,transparent)] p-10 shadow-[0_0_80px_rgba(0,0,0,0.55)]"
-      >
-
-        {/* CLOSE BUTTON */}
-        <button
+    <AnimatePresence>
+      {commandCenterOpen && (
+        <motion.div
           onClick={closeCommandCenter}
-          className="absolute right-6 top-6 rounded-xl border border-white/10 bg-white/5 p-2 text-white hover:bg-white/10 hover:scale-105 transition-all"
+          className="fixed inset-0 z-[120] flex items-start justify-center bg-black/50 backdrop-blur-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <X className="h-5 w-5" />
-        </button>
-
-        {/* GRID */}
-        <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-          {modules.map((mod, i) => (
-            <motion.div
-              key={mod.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
-              }}
-              whileTap={{ scale: 0.985 }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 via-transparent to-transparent p-7 backdrop-blur-xl transition-all cursor-pointer"
+          <motion.div
+            onClick={(e) => e.stopPropagation()}
+            className="relative mt-24 w-full max-w-7xl rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-strong)_92%,transparent)] p-10 shadow-[0_0_60px_rgba(0,0,0,0.45)]"
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.90, y: 10 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={closeCommandCenter}
+              aria-label="Close Command Center"
+              className="absolute right-6 top-6 rounded-full p-2 text-[var(--text-secondary)] hover:bg-white/10 hover:text-[var(--text-primary)] transition"
             >
+              <X className="h-5 w-5" />
+            </button>
 
-              {/* Glow Hover Layer */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0 }}
-                whileHover={{ opacity: 0.22 }}
-                className="absolute inset-0 bg-gradient-to-br from-cyan-500/30 via-purple-500/25 to-emerald-500/25 blur-2xl rounded-2xl pointer-events-none"
-              />
-
-              {/* ICON */}
-              <img
-                src={mod.icon}
-                alt={`${mod.label} icon`}
-                className="h-9 w-9 opacity-90 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform duration-300"
-              />
-
-              {/* LABEL */}
-              <p className="mt-4 text-xl font-semibold text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.3)]">
-                {mod.label}
-              </p>
-
-              {/* DESCRIPTION */}
-              <p className="mt-1 text-sm text-white/60">{mod.desc}</p>
-
-              {/* CTA BUTTON */}
-              {mod.cta && (
-                <motion.button
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.96 }}
-                  className="mt-5 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/10 px-4 py-1.5 text-xs font-semibold text-white hover:bg-white/20 transition-all"
+            {/* Grid */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((mod, i) => (
+                <motion.div
+                  key={mod.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: i * 0.05 }}
                 >
-                  Open Dashboard →
-                </motion.button>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
+                  <div
+                    className="group relative overflow-hidden rounded-2xl border border-[var(--border-soft)] 
+                    bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-6 
+                    shadow-[0_16px_40px_rgba(0,0,0,0.25)]
+                    transition hover:border-[var(--accent-primary)]
+                    hover:shadow-[0_25px_80px_rgba(0,200,255,0.28)] cursor-pointer"
+                  >
+                    {/* Glow */}
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-20 
+                      transition bg-gradient-to-br from-cyan-400 to-purple-500 blur-2xl"
+                    />
+
+                    <div className="mb-4 flex items-center gap-3">
+                      {mod.icon}
+                      <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                        {mod.title}
+                      </h3>
+                    </div>
+
+                    <p className="text-sm text-[var(--text-secondary)]">{mod.desc}</p>
+
+                    {mod.button && (
+                      <button className="mt-4 rounded-xl bg-[var(--accent-primary)]/20 px-4 py-2 text-xs font-semibold text-[var(--accent-primary)] transition hover:bg-[var(--accent-primary)]/30">
+                        Open Dashboard →
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
