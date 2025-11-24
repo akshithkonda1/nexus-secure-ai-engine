@@ -13,7 +13,7 @@ import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenComman
 import { cn } from "@/shared/lib/cn";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { useTheme } from "@/shared/ui/theme/ThemeProvider";
-import ryuzenDragon from "@/assets/ryuzen-dragon.svg";
+import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
 import { useUI } from "@/state/ui";
 
@@ -48,7 +48,10 @@ const themeOptions: { value: ThemeMode; label: string; icon: JSX.Element }[] = [
       <div className="mx-auto flex h-[var(--header-height)] items-center justify-between px-2 sm:px-4 md:px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] shadow-lg shadow-cyan-500/15">
-            <img src={ryuzenDragon} alt="Ryuzen" className="h-8 w-8 drop-shadow-[0_6px_18px_rgba(92,240,255,0.45)]" />
+            <RyuzenBrandmark
+              size={26}
+              className="rounded-full drop-shadow-[0_6px_18px_rgba(92,240,255,0.45)]"
+            />
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-secondary)]">Ryuzen Command OS</p>
