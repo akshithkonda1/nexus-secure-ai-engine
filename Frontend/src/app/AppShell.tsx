@@ -2,8 +2,9 @@ import { Outlet, NavLink } from "react-router-dom";
 import { BrandMark } from "@/shared/ui/BrandMark";
 import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
-import React, { useState } from "react";
+import React from "react";
 import { useSession } from "@/shared/state/session";
+import { useUI } from "@/state/ui";
 import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
 
 function cx(...c: (string | false | undefined)[]) {
@@ -12,14 +13,13 @@ function cx(...c: (string | false | undefined)[]) {
 
 export function AppShell() {
   const { user } = useSession();
+  const { openCommandCenter } = useUI();
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -77,7 +77,7 @@ export function AppShell() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setCommandCenterOpen(true)}
+              onClick={openCommandCenter}
               className="group relative flex items-center gap-2 rounded-full border border-[rgba(var(--accent-emerald),0.55)] bg-[rgba(15,23,42,0.78)] px-3 py-1.5 text-left shadow-[0_0_18px_rgba(var(--accent-emerald),0.35)] transition-all hover:shadow-[0_0_26px_rgba(var(--accent-emerald),0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent-emerald),0.6)] focus:ring-offset-2 focus:ring-offset-[rgba(15,23,42,0.45)]"
             >
               <span className="flex size-7 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(var(--accent-emerald),0.95),rgba(var(--brand-soft),0.85))] text-[rgb(var(--accent-emerald-ink))] shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">
@@ -110,10 +110,7 @@ export function AppShell() {
         </div>
       </main>
 
-      <RyuzenCommandCenterOverlay
-        open={commandCenterOpen}
-        onClose={() => setCommandCenterOpen(false)}
-      />
+      <RyuzenCommandCenterOverlay />
     </div>
   );
 }
