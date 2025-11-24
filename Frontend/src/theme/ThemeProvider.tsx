@@ -4,16 +4,18 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
-  type ReactNode,
+  type PropsWithChildren,
 } from "react";
 
+import "./RyuzenTokens.css";
+
 export type ThemeMode = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
 
 type ThemeContextValue = {
   theme: ThemeMode;
-  resolvedTheme: "light" | "dark";
+  resolvedTheme: ResolvedTheme;
   setTheme: (mode: ThemeMode) => void;
   toggleTheme: () => void;
 };
@@ -21,107 +23,89 @@ type ThemeContextValue = {
 const STORAGE_KEY = "ryuzen-theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const getSystemTheme = (): "light" | "dark" => {
+const getSystemTheme = (): ResolvedTheme => {
   if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 };
 
-const resolveTheme = (mode: ThemeMode): "light" | "dark" => {
-  return mode === "system" ? getSystemTheme() : mode;
+const resolveTheme = (mode: ThemeMode): ResolvedTheme => (mode === "system" ? getSystemTheme() : mode);
+
+const syncDocumentTheme = (mode: ThemeMode, resolved: ResolvedTheme) => {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.classList.add("ryuzen-theme");
+  root.setAttribute("data-theme", resolved);
+  root.style.colorScheme = resolved;
+  root.dataset.userTheme = mode;
 };
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(getSystemTheme());
-  const transitionTimer = useRef<number>();
+export function ThemeProvider({ children }: PropsWithChildren) {
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "system";
+    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "system";
+    return stored;
+  });
 
-  const applyTheme = useCallback(
-    (mode: ThemeMode, resolved: "light" | "dark") => {
-      if (typeof document === "undefined") return;
-      const root = document.documentElement;
-      root.dataset.theme = resolved;
-      root.classList.add("theme-fade");
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
+    const initial = typeof window === "undefined" ? "system" : ((localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "system");
+    return resolveTheme(initial);
+  });
 
-      if (transitionTimer.current) {
-        window.clearTimeout(transitionTimer.current);
-      }
-      transitionTimer.current = window.setTimeout(() => {
-        root.classList.remove("theme-fade");
-      }, 320);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    const stored = (typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY)) as ThemeMode | null;
-    const initial = stored ?? "system";
-    const resolved = resolveTheme(initial);
-    setThemeState(initial);
+  const setTheme = useCallback((mode: ThemeMode) => {
+    setThemeState(mode);
+    const resolved = resolveTheme(mode);
     setResolvedTheme(resolved);
-    applyTheme(initial, resolved);
-  }, [applyTheme]);
-
-  useEffect(() => {
-    if (theme !== "system") {
-      const resolved = resolveTheme(theme);
-      setResolvedTheme(resolved);
-      applyTheme(theme, resolved);
-      return;
-    }
-
-    const handleMediaChange = () => {
-      const next = resolveTheme("system");
-      setResolvedTheme(next);
-      applyTheme("system", next);
-    };
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", handleMediaChange);
-    handleMediaChange();
-    return () => media.removeEventListener("change", handleMediaChange);
-  }, [theme, applyTheme]);
-
-  const setTheme = useCallback(
-    (next: ThemeMode) => {
-      setThemeState(next);
-      const resolved = resolveTheme(next);
-      setResolvedTheme(resolved);
-      applyTheme(next, resolved);
+    syncDocumentTheme(mode, resolved);
+    if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY, next);
+        localStorage.setItem(STORAGE_KEY, mode);
       } catch (error) {
-        console.warn("Failed to persist theme", error);
+        console.warn("Unable to persist theme preference", error);
       }
-    },
-    [applyTheme],
-  );
+    }
+  }, []);
 
   const toggleTheme = useCallback(() => {
-    const nextTheme: ThemeMode =
-      theme === "light"
-        ? "dark"
-        : theme === "dark"
-          ? "light"
-          : getSystemTheme() === "dark"
-            ? "light"
-            : "dark";
-    setTheme(nextTheme);
+    setTheme(theme === "dark" ? "light" : "dark");
   }, [setTheme, theme]);
 
-  const value = useMemo(
-    () => ({ theme, resolvedTheme, setTheme, toggleTheme }),
+  useEffect(() => {
+    syncDocumentTheme(theme, resolvedTheme);
+  }, [theme, resolvedTheme]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (theme !== "system") return;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      const nextResolved = resolveTheme("system");
+      setResolvedTheme(nextResolved);
+      syncDocumentTheme("system", nextResolved);
+    };
+
+    handleChange();
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [theme]);
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({
+      theme,
+      resolvedTheme,
+      setTheme,
+      toggleTheme,
+    }),
     [theme, resolvedTheme, setTheme, toggleTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function useThemeContext() {
+export function useThemeContext(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error("useTheme must be used within ThemeProvider");
-  }
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }
 
-export const useTheme = useThemeContext;
+export { useTheme } from "./useTheme";
