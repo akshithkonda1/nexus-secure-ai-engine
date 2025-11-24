@@ -1,41 +1,39 @@
-import React, { useEffect, useRef } from "react";
-import { createToronEngine } from "./toron-visual-engine";
+import { useEffect, useRef } from "react";
+import { createToronEngine, ToronEngineMode, ToronEvent } from "./toron-visual-engine";
 
 interface ToronVisualizerProps {
-  mode?: "orbital" | "graph";
+  mode?: ToronEngineMode;
   className?: string;
+  event?: { type: string; strength?: number };
 }
 
-export const ToronVisualizer: React.FC<ToronVisualizerProps> = ({
-  mode = "orbital",
-  className = "",
-}) => {
+export function ToronVisualizer({ mode = "orbital", className, event }: ToronVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<ReturnType<typeof createToronEngine> | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    engineRef.current = createToronEngine(canvas);
-    engineRef.current.start();
+    if (!canvasRef.current || engineRef.current) return;
+    const engine = createToronEngine(canvasRef.current);
+    engineRef.current = engine;
+    engine.setMode(mode);
+    engine.start();
 
     return () => {
-      engineRef.current?.stop();
+      engine.stop();
       engineRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    engineRef.current?.setMode(mode);
+    if (!engineRef.current) return;
+    engineRef.current.setMode(mode);
   }, [mode]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className={`w-full h-full rounded-xl overflow-hidden backdrop-blur-xl border border-[var(--border-strong)] ${className}`}
-    />
-  );
-};
+  useEffect(() => {
+    if (!engineRef.current || !event || !event.type) return;
+    const evt = event as ToronEvent;
+    engineRef.current.triggerEvent(evt);
+  }, [event]);
 
-export default ToronVisualizer;
+  return <canvas ref={canvasRef} className={className} />;
+}

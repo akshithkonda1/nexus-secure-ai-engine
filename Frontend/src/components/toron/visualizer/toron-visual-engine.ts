@@ -1,236 +1,318 @@
-import { VisNode } from "./VisNode";
+export type ToronEngineMode = "orbital" | "graph";
 
-type ToronMode = "orbital" | "graph";
+export type ToronEvent = {
+  type: "thinking" | "response" | "error" | "spark";
+  strength?: number;
+};
 
-interface GraphPoint {
-  x: number;
-  baseY: number;
+interface ToronEngine {
+  setMode: (mode: ToronEngineMode) => void;
+  start: () => void;
+  stop: () => void;
+  triggerEvent: (evt: ToronEvent) => void;
+}
+
+interface Node {
+  angle: number;
+  radius: number;
+  speed: number;
+  size: number;
   drift: number;
 }
 
-export function createToronEngine(canvas: HTMLCanvasElement) {
+interface Spark {
+  x: number;
+  y: number;
+  angle: number;
+  speed: number;
+  life: number;
+}
+
+export function createToronEngine(canvas: HTMLCanvasElement): ToronEngine {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    throw new Error("2D context not supported");
+    throw new Error("Canvas 2D context unavailable");
   }
 
-  let mode: ToronMode = "orbital";
-  let nodes: VisNode[] = [];
-  let graphPoints: GraphPoint[] = [];
+  let mode: ToronEngineMode = "orbital";
   let frameId: number | null = null;
-  let pulseTime = 0;
-  let lastTime = 0;
-  const mouse = { x: 0, y: 0 };
+  let lastTime = performance.now();
+  const nodes: Node[] = Array.from({ length: 22 }).map(() => ({
+    angle: Math.random() * Math.PI * 2,
+    radius: 72 + Math.random() * 120,
+    speed: 0.0025 + Math.random() * 0.003,
+    size: 2.2 + Math.random() * 2.6,
+    drift: 0.8 + Math.random() * 0.8,
+  }));
 
-  const css = getComputedStyle(document.documentElement);
-  const coreColor1 = css.getPropertyValue("--toron-core-c1").trim() || "#7c3aed";
-  const coreColor2 = css.getPropertyValue("--toron-core-c2").trim() || "#1d4ed8";
-  const coreColor3 = css.getPropertyValue("--toron-core-c3").trim() || "#10b981";
+  const interaction = {
+    thinking: 0,
+    response: 0,
+    error: 0,
+  };
+
+  const sparks: Spark[] = [];
+
+  let corePulse = 0;
+  let responseRipple = 0;
+
+  const resizeObserver = new ResizeObserver(() => resize());
 
   function resize() {
     const dpr = window.devicePixelRatio || 1;
-    const { width, height } = canvas.getBoundingClientRect();
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    initNodes();
-    initGraph();
   }
 
-  function randomBetween(min: number, max: number) {
-    return Math.random() * (max - min) + min;
-  }
+  resize();
+  resizeObserver.observe(canvas);
 
-  function initNodes() {
-    const { width, height } = canvas;
-    const center = Math.min(width, height) / (window.devicePixelRatio || 1);
-    const innerCount = Math.round(randomBetween(6, 8));
-    const outerCount = Math.round(randomBetween(10, 14));
-    const innerRadius = center * 0.18;
-    const outerRadius = center * 0.32;
-
-    nodes = [];
-    for (let i = 0; i < innerCount + outerCount; i += 1) {
-      const isOuter = i >= innerCount;
-      const orbitRadius = isOuter ? outerRadius : innerRadius;
-      nodes.push({
-        x: 0,
-        y: 0,
-        radius: randomBetween(3, 6),
-        baseRadius: randomBetween(3, 6),
-        driftOffsetX: Math.random() * Math.PI * 2,
-        driftOffsetY: Math.random() * Math.PI * 2,
-        orbitAngle: Math.random() * Math.PI * 2,
-        orbitSpeed: randomBetween(isOuter ? 0.003 : 0.005, isOuter ? 0.007 : 0.01),
-        orbitRadius,
+  function spawnSparks() {
+    const count = 8 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < count; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      sparks.push({
+        x: canvas.width / (window.devicePixelRatio || 1) / 2,
+        y: canvas.height / (window.devicePixelRatio || 1) / 2,
+        angle,
+        speed: 2.5 + Math.random() * 1.5,
+        life: 1,
       });
     }
   }
 
-  function initGraph() {
-    const { width, height } = canvas.getBoundingClientRect();
-    const count = 40;
-    graphPoints = Array.from({ length: count }, (_, i) => {
-      const t = i / (count - 1);
-      return {
-        x: t * width,
-        baseY: height * 0.5 + Math.sin(t * Math.PI * 2) * height * 0.05,
-        drift: randomBetween(14, 34),
-      };
+  function triggerEvent(evt: ToronEvent) {
+    if (!evt?.type) return;
+    const strength = Math.min(1, Math.max(0, evt.strength ?? 0.6));
+    if (evt.type === "thinking") {
+      interaction.thinking = Math.max(interaction.thinking, strength);
+    }
+    if (evt.type === "response") {
+      interaction.response = Math.max(interaction.response, strength);
+      responseRipple = 0;
+    }
+    if (evt.type === "error") {
+      interaction.error = Math.max(interaction.error, strength);
+    }
+    if (evt.type === "spark") {
+      spawnSparks();
+    }
+  }
+
+  function update(dt: number) {
+    interaction.thinking = Math.max(0, interaction.thinking - 0.014 * dt);
+    interaction.response = Math.max(0, interaction.response - 0.017 * dt);
+    interaction.error = Math.max(0, interaction.error - 0.015 * dt);
+
+    if (interaction.response > 0) {
+      responseRipple += 0.02 * dt;
+    } else {
+      responseRipple = 0;
+    }
+
+    corePulse += 0.08 * dt * (1 + interaction.thinking * 0.6);
+
+    nodes.forEach((node) => {
+      const modeMultiplier = mode === "graph" ? 0.6 : 1;
+      node.angle += node.speed * dt * modeMultiplier;
+      node.angle %= Math.PI * 2;
+      node.drift += (Math.sin(corePulse * 0.2 + node.angle) * 0.0025 * dt);
     });
+
+    for (let i = sparks.length - 1; i >= 0; i -= 1) {
+      const spark = sparks[i];
+      spark.x += Math.cos(spark.angle) * spark.speed * dt;
+      spark.y += Math.sin(spark.angle) * spark.speed * dt;
+      spark.life -= 0.04 * dt;
+      if (spark.life <= 0) {
+        sparks.splice(i, 1);
+      }
+    }
   }
 
-  function updatePulse(delta: number) {
-    pulseTime += delta * 0.0015;
-  }
+  function drawCore(centerX: number, centerY: number) {
+    const baseRadius = 28;
+    const pulse = (Math.sin(corePulse) + 1) / 2;
+    const thinkingBoost = 6 * interaction.thinking;
+    const responseBoost = 4 * interaction.response;
+    const radius = baseRadius + pulse * 6 + thinkingBoost + responseBoost;
 
-  function drawPulse() {
-    const { width, height } = canvas.getBoundingClientRect();
-    const parallaxX = mouse.x * 0.015;
-    const parallaxY = mouse.y * 0.015;
-    const cx = width / 2 + parallaxX;
-    const cy = height / 2 + parallaxY;
-    const base = Math.min(width, height) * 0.09;
-    const pulse = Math.sin(pulseTime * 2.5) * 10;
-    const radius = base + pulse;
-
-    const gradient = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius * 1.4);
-    gradient.addColorStop(0, coreColor1);
-    gradient.addColorStop(0.45, coreColor2 + "dd");
-    gradient.addColorStop(1, coreColor3 + "00");
+    const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.2, centerX, centerY, radius * 1.2);
+    gradient.addColorStop(0, "rgba(120, 200, 255, 0.95)");
+    gradient.addColorStop(0.4, "rgba(64, 180, 255, 0.85)");
+    gradient.addColorStop(1, "rgba(18, 61, 116, 0.65)");
 
     ctx.save();
     ctx.beginPath();
     ctx.fillStyle = gradient;
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.shadowColor = `rgba(90, 180, 255, ${0.35 + interaction.thinking * 0.3})`;
+    ctx.shadowBlur = 24 + interaction.response * 24;
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowColor = coreColor2;
-    ctx.shadowBlur = 25;
-    ctx.strokeStyle = coreColor2;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+
+    if (interaction.response > 0.1) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.25 * interaction.response})`;
+      ctx.arc(centerX, centerY, radius * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    if (interaction.error > 0.1) {
+      ctx.globalCompositeOperation = "color";
+      ctx.fillStyle = `rgba(255, 64, 64, ${interaction.error * 0.8})`;
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    if (interaction.thinking > 0.02) {
+      const shimmerScale = 1.4 + interaction.thinking * 0.4;
+      const shimmerGradient = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        radius * 0.1,
+        centerX,
+        centerY,
+        radius * shimmerScale
+      );
+      shimmerGradient.addColorStop(0, `rgba(255, 255, 255, ${0.25 * interaction.thinking})`);
+      shimmerGradient.addColorStop(0.6, `rgba(180, 220, 255, ${0.12 * interaction.thinking})`);
+      shimmerGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = shimmerGradient;
+      ctx.fillRect(centerX - radius * shimmerScale, centerY - radius * shimmerScale, radius * shimmerScale * 2, radius * shimmerScale * 2);
+    }
+
     ctx.restore();
   }
 
-  function drawOrbitalNodes() {
-    const { width, height } = canvas.getBoundingClientRect();
-    const parallaxX = mouse.x * 0.015;
-    const parallaxY = mouse.y * 0.015;
-    const cx = width / 2 + parallaxX;
-    const cy = height / 2 + parallaxY;
-    const pointerX = width / 2 + mouse.x;
-    const pointerY = height / 2 + mouse.y;
+  function drawNodes(centerX: number, centerY: number) {
+    nodes.forEach((node) => {
+      const orbitRadius = node.radius * (1 + interaction.response * 0.08);
+      const x = centerX + Math.cos(node.angle) * orbitRadius;
+      const y = centerY + Math.sin(node.angle) * orbitRadius * 0.9;
+      const pulse = (Math.sin(corePulse * node.drift + node.angle) + 1) / 2;
+      const size = node.size * (1 + interaction.thinking * 0.2) + pulse * 0.4;
 
-    nodes.forEach((node, idx) => {
-      const driftX = Math.sin(pulseTime + node.driftOffsetX) * 4;
-      const driftY = Math.cos(pulseTime + node.driftOffsetY) * 4;
-      node.orbitAngle += node.orbitSpeed;
-      node.x = cx + Math.cos(node.orbitAngle) * node.orbitRadius + driftX;
-      node.y = cy + Math.sin(node.orbitAngle) * node.orbitRadius + driftY;
-
-      const sizePulse = Math.sin(pulseTime * 2 + idx) * 0.4;
-      node.radius = node.baseRadius + sizePulse;
-
-      const distance = Math.hypot(pointerX - node.x, pointerY - node.y);
-      const hoverBoost = Math.max(0, 1 - distance / 28) * 2.5;
-      const renderRadius = Math.max(1.5, node.radius + hoverBoost);
-
-      ctx.save();
       ctx.beginPath();
-      ctx.fillStyle = coreColor3;
-      ctx.shadowColor = coreColor1;
-      ctx.shadowBlur = 10 + hoverBoost * 2;
-      ctx.arc(node.x, node.y, renderRadius, 0, Math.PI * 2);
+      const redShift = interaction.error * 120;
+      const green = 160 + pulse * 60;
+      const blue = 255 - redShift * 0.2;
+      const alpha = 0.55 + interaction.thinking * 0.2;
+      ctx.fillStyle = `rgba(${80 + redShift}, ${green}, ${blue}, ${alpha})`;
+      ctx.shadowColor = `rgba(90, 180, 255, ${0.4 + interaction.response * 0.3})`;
+      ctx.shadowBlur = 14 + interaction.response * 10;
+      ctx.arc(x, y, size, 0, Math.PI * 2);
       ctx.fill();
+
+      if (interaction.response > 0.1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.18 * interaction.response})`;
+        ctx.scale(1 + interaction.response * 0.08, 1 + interaction.response * 0.08);
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    });
+  }
+
+  function drawRipples(centerX: number, centerY: number) {
+    if (interaction.response <= 0.1) return;
+    const radius = 40 + Math.min(responseRipple, 1.2) * 160;
+    const opacity = Math.max(0, interaction.response * (1 - responseRipple / 1.2));
+    if (opacity <= 0) return;
+
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(180, 230, 255, ${0.35 * opacity})`;
+    ctx.lineWidth = 2 + interaction.response * 2;
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  function drawSparks() {
+    sparks.forEach((spark) => {
+      const hue = 190 + Math.random() * 50;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, spark.life));
+      ctx.shadowColor = `hsla(${hue}, 100%, 70%, ${spark.life})`;
+      ctx.shadowBlur = 16 * spark.life;
+      ctx.fillStyle = `hsla(${hue}, 90%, 70%, ${spark.life})`;
+
+      ctx.beginPath();
+      ctx.arc(spark.x, spark.y, 2 + (1 - spark.life) * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const trailX = spark.x - Math.cos(spark.angle) * spark.speed * 3;
+      const trailY = spark.y - Math.sin(spark.angle) * spark.speed * 3;
+      ctx.strokeStyle = `hsla(${hue}, 100%, 80%, ${spark.life * 0.9})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(trailX, trailY);
+      ctx.lineTo(spark.x, spark.y);
+      ctx.stroke();
       ctx.restore();
     });
   }
 
-  function drawGraph() {
-    const { width, height } = canvas.getBoundingClientRect();
-    const parallaxX = mouse.x * 0.015;
-    const parallaxY = mouse.y * 0.015;
-
+  function drawGlow(centerX: number, centerY: number, width: number, height: number) {
+    if (interaction.error <= 0.05) return;
     ctx.save();
-    ctx.translate(parallaxX, parallaxY);
-
-    ctx.beginPath();
-    const amplitude = Math.sin(pulseTime * 2) * 12 + 28;
-    graphPoints.forEach((point, idx) => {
-      const phase = pulseTime * 0.5 + point.x * 0.015;
-      const y = point.baseY + Math.sin(phase) * point.drift + Math.sin(point.x * 0.15) * 4;
-      const adjustedY = y + Math.sin(pulseTime + idx * 0.2) * 3 + amplitude * 0.05;
-
-      if (idx === 0) {
-        ctx.moveTo(point.x, adjustedY);
-      } else {
-        const prev = graphPoints[idx - 1];
-        const cp1x = prev.x + (point.x - prev.x) / 3;
-        const cp1y = prev.baseY + Math.sin(phase - 0.3) * prev.drift;
-        const cp2x = point.x - (point.x - prev.x) / 3;
-        const cp2y = point.baseY + Math.sin(phase + 0.3) * point.drift;
-        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, point.x, adjustedY);
-      }
-    });
-
-    ctx.strokeStyle = coreColor2;
-    ctx.lineWidth = 2;
-    ctx.shadowColor = coreColor1 + "55";
-    ctx.shadowBlur = 14;
-    ctx.stroke();
+    const gradient = ctx.createRadialGradient(centerX, centerY, width * 0.2, centerX, centerY, Math.max(width, height));
+    gradient.addColorStop(0, `rgba(255, 80, 80, ${0.12 * interaction.error})`);
+    gradient.addColorStop(1, "rgba(255, 80, 80, 0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
     ctx.restore();
   }
 
-  function draw(timestamp: number) {
-    const delta = lastTime === 0 ? 16 : timestamp - lastTime;
-    lastTime = timestamp;
-    const { width, height } = canvas.getBoundingClientRect();
+  function render() {
+    frameId = requestAnimationFrame(render);
+    const now = performance.now();
+    const dt = Math.min(2.5, Math.max(0.5, (now - lastTime) / 16.67));
+    lastTime = now;
+
+    const width = canvas.width / (window.devicePixelRatio || 1);
+    const height = canvas.height / (window.devicePixelRatio || 1);
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    update(dt);
+
     ctx.clearRect(0, 0, width, height);
 
-    updatePulse(delta);
-    drawPulse();
-
-    if (mode === "orbital") {
-      drawOrbitalNodes();
-    } else {
-      drawGraph();
-    }
-
-    frameId = window.requestAnimationFrame(draw);
+    drawGlow(centerX, centerY, width, height);
+    drawRipples(centerX, centerY);
+    drawCore(centerX, centerY);
+    drawNodes(centerX, centerY);
+    drawSparks();
   }
 
   function start() {
-    if (frameId !== null) return;
-    resize();
-    frameId = window.requestAnimationFrame(draw);
+    if (frameId === null) {
+      lastTime = performance.now();
+      render();
+    }
   }
 
   function stop() {
     if (frameId !== null) {
-      window.cancelAnimationFrame(frameId);
+      cancelAnimationFrame(frameId);
       frameId = null;
     }
-    window.removeEventListener("resize", resize);
-    window.removeEventListener("mousemove", handleMouseMove);
+    resizeObserver.disconnect();
   }
 
-  function setMode(nextMode: ToronMode) {
+  function setMode(nextMode: ToronEngineMode) {
     mode = nextMode;
   }
-
-  function handleMouseMove(event: MouseEvent) {
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = event.clientX - rect.left - rect.width / 2;
-    mouse.y = event.clientY - rect.top - rect.height / 2;
-  }
-
-  window.addEventListener("resize", resize);
-  window.addEventListener("mousemove", handleMouseMove);
-  resize();
 
   return {
     setMode,
     start,
     stop,
+    triggerEvent,
   };
 }
