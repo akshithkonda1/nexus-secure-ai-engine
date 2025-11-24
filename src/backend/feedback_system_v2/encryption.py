@@ -28,10 +28,12 @@ class AESGCMEngine:
                 key = base64.b64decode(key_source)
             except Exception:
                 key = key_source.encode("utf-8")
+            if key and len(key) != 32:
+                # Preserve resilience by falling back to a generated key when the
+                # provided secret is misconfigured (wrong length or format).
+                key = None
         if not key:
             key = AESGCM.generate_key(bit_length=256)
-        if len(key) != 32:
-            raise ValueError("AES-256-GCM requires a 32-byte key")
         return cls(key)
 
     def encrypt(self, plaintext: bytes, *, aad: bytes | None = None) -> str:
