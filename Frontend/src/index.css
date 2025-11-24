@@ -1,7 +1,5 @@
 @import "tailwindcss";
-@import "./theme/theme-base.css";
-@import "./theme/theme-dark.css";
-@import "./theme/theme-light.css";
+@import "./theme/themes.css";
 @import "./theme/motion.css";
 
 * {
