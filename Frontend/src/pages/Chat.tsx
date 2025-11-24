@@ -34,7 +34,7 @@ import {
   Share2,
 } from "lucide-react";
 
-import { ProjectsModal } from "@/components/projects/ProjectsModal";
+import { NewProjectModal } from "@/components/projects/NewProjectModal";
 
 import {
   ChatMessage,
@@ -49,6 +49,7 @@ import {
   useChatDispatch,
   useChatState,
 } from "@/features/chat/context/ChatContext";
+import { useProjects } from "@/features/projects/useProjects";
 
 import { copyToClipboard } from "@/lib/zoraClipboard";
 import { sendFeedback } from "@/lib/zoraFeedbackClient";
@@ -219,6 +220,7 @@ function ChatInner() {
     url: string;
   } | null>(null);
   const [showProjects, setShowProjects] = useState(false);
+  const { activeProject } = useProjects();
 
   const setActiveSessionId = useCallback(
     (value: string) => dispatch({ type: "setActiveSession", payload: value }),
@@ -927,14 +929,22 @@ function ChatInner() {
                 </p>
               </div>
             </div>
-            <button
-              className="header-button"
-              onClick={() => setShowProjects(true)}
-              title="Projects"
-              type="button"
-            >
-              <Folder size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              {activeProject && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/60 px-3 py-1 text-[11px] font-semibold text-slate-100">
+                  <Folder className="h-4 w-4" /> {activeProject.name}
+                </span>
+              )}
+              <button
+                className="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-3 py-1 text-[11px] font-semibold text-slate-100 transition hover:-translate-y-[1px] hover:border-sky-500 hover:text-white"
+                onClick={() => setShowProjects(true)}
+                title="Open in Project"
+                type="button"
+              >
+                <Folder size={16} />
+                Open in Project
+              </button>
+            </div>
             <button
               ref={settingsButtonRef}
               type="button"
@@ -1510,7 +1520,7 @@ function ChatInner() {
         </div>
       </div>
 
-      {showProjects && <ProjectsModal onClose={() => setShowProjects(false)} />}
+      {showProjects && <NewProjectModal onClose={() => setShowProjects(false)} />}
       {/* animation helpers */}
       <style>{`
         @keyframes aurora-dot {

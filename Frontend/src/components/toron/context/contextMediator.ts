@@ -1,138 +1,88 @@
-import { buildAdaptivePlan } from "../engine/adaptiveResponseEngine";
-import { classifyIntent } from "../engine/intentClassifier";
-import { defaultPersona, evolvePersona } from "../engine/personaEngine";
-import { initialState, updateState } from "../engine/stateMachine";
-import { compileContext } from "./contextCompiler";
-import { shapeContext } from "./contextShaper";
-import { ToronContextWindow, deriveMeaningVector, summarizeInputSafely } from "./contextWindow";
-import { ToronSanitizedTrace } from "./sanitizedTrace";
-import {
-  CompiledContext,
-  ContextBundle,
-  IntentClassification,
-  PersonaProfile,
-  ShapedContextMetadata,
-  ToronState,
-} from "./types";
+export type ToronContextState = {
+  persona: string;
+  reasoningHints: string[];
+  continuityScore: number;
+  difficultyScore: number;
+  topicTags: string[];
+};
 
-export class ContextMediator {
-  private readonly contextWindow = new ToronContextWindow();
-  private readonly sanitizedTrace = new ToronSanitizedTrace();
-  private persona: PersonaProfile = { ...defaultPersona };
-  private state: ToronState = { ...initialState };
-  private compiledContext: CompiledContext = {
-    semanticContext: "",
-    conversationPhase: "exploration",
-    difficultyScore: 0,
-    continuityScore: 0,
-  };
-  private shapedContext: ShapedContextMetadata = {
-    llmHints: { reasoning: 0.5, creativity: 0.5, brevity: 0.5 },
-    emotionalTemperature: 0.2,
-    structuralStyle: "balanced",
-    safetyBias: 0.5,
-    metaConfidence: 0.5,
-  };
+const REDACTION = "[sanitized]";
+const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
 
-  beginTurn(userInput: string): ContextBundle {
-    const sanitizedInput = summarizeInputSafely(userInput);
-    const intent = classifyIntent(sanitizedInput, this.sanitizedTrace.getSnapshot());
+const sanitizeText = (value: string) => {
+  const trimmed = normalize(value || "");
+  if (!trimmed) return "";
+  return trimmed
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTION)
+    .replace(/\+?\d[\d\s().-]{8,}\d/g, REDACTION)
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, REDACTION)
+    .replace(/\b(?:\d[ -]*?){13,16}\b/g, REDACTION)
+    .slice(0, 240);
+};
 
-    const traceSnapshot = this.sanitizedTrace.updateTrace({
-      intent: intent.intent,
-      emotion: intent.emotion,
-      topic: intent.intent,
-    });
+const clampScore = (value: number | undefined) => {
+  if (typeof value !== "number" || Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+};
 
-    this.contextWindow.addEntry({
-      role: "user",
-      intent: intent.intent,
-      emotion: intent.emotion,
-      meaningVector: deriveMeaningVector(sanitizedInput),
-      summary: sanitizedInput,
-      timestamp: Date.now(),
-    });
+const defaultContext = (): ToronContextState => ({
+  persona: "toron-neutral",
+  reasoningHints: [],
+  continuityScore: 0.5,
+  difficultyScore: 0.4,
+  topicTags: [],
+});
 
-    this.refreshContext(intent, traceSnapshot);
-    return this.getContextMetadata();
+const sanitizeContext = (partial: Partial<ToronContextState> | undefined): ToronContextState => ({
+  persona: sanitizeText(partial?.persona ?? defaultContext().persona),
+  reasoningHints: Array.isArray(partial?.reasoningHints)
+    ? partial!.reasoningHints.map((hint) => sanitizeText(hint)).filter(Boolean)
+    : [],
+  continuityScore: clampScore(partial?.continuityScore ?? defaultContext().continuityScore),
+  difficultyScore: clampScore(partial?.difficultyScore ?? defaultContext().difficultyScore),
+  topicTags: Array.isArray(partial?.topicTags)
+    ? partial!.topicTags.map((tag) => sanitizeText(tag)).filter(Boolean)
+    : [],
+});
+
+let ephemeralContext: ToronContextState = defaultContext();
+
+export const contextMediator = {
+  getEphemeral(): ToronContextState {
+    return { ...ephemeralContext };
+  },
+  setEphemeral(partial: Partial<ToronContextState>): ToronContextState {
+    ephemeralContext = sanitizeContext({ ...ephemeralContext, ...partial });
+    return ephemeralContext;
+  },
+  reset(): ToronContextState {
+    ephemeralContext = defaultContext();
+    return ephemeralContext;
+  },
+};
+
+export function loadProjectContext(
+  projectId: string,
+  state?: Partial<ToronContextState>,
+): ToronContextState {
+  void projectId;
+  ephemeralContext = sanitizeContext(state ?? defaultContext());
+  return ephemeralContext;
+}
+
+export async function saveProjectContext(
+  projectId: string,
+  persist?: (state: ToronContextState) => Promise<void>,
+): Promise<ToronContextState> {
+  void projectId;
+  const snapshot = sanitizeContext(ephemeralContext);
+  if (persist) {
+    await persist(snapshot);
   }
+  return snapshot;
+}
 
-  updateAfterLLM(llmOutput: string): ContextBundle {
-    const sanitizedOutput = summarizeInputSafely(llmOutput);
-    const traceSnapshot = this.sanitizedTrace.updateTrace({
-      topic: "assistant-response",
-      llmAgreement: 0.8,
-    });
-
-    this.contextWindow.addEntry({
-      role: "assistant",
-      intent: "respond",
-      emotion: "steady",
-      meaningVector: deriveMeaningVector(sanitizedOutput),
-      summary: sanitizedOutput,
-      timestamp: Date.now(),
-    });
-
-    const syntheticIntent: IntentClassification = {
-      intent: "respond",
-      confidence: 0.6,
-      emotion: "steady",
-    };
-
-    this.refreshContext(syntheticIntent, traceSnapshot);
-    return this.getContextMetadata();
-  }
-
-  resetContext(): void {
-    this.contextWindow.reset();
-    this.sanitizedTrace.wipe();
-    this.persona = { ...defaultPersona };
-    this.state = { ...initialState };
-    this.compiledContext = {
-      semanticContext: "",
-      conversationPhase: "exploration",
-      difficultyScore: 0,
-      continuityScore: 0,
-    };
-    this.shapedContext = {
-      llmHints: { reasoning: 0.5, creativity: 0.5, brevity: 0.5 },
-      emotionalTemperature: 0.2,
-      structuralStyle: "balanced",
-      safetyBias: 0.5,
-      metaConfidence: 0.5,
-    };
-  }
-
-  getContextMetadata(): ContextBundle {
-    return {
-      currentContext: this.compiledContext,
-      metadataForVisualizer: {
-        ...this.shapedContext,
-        trace: this.sanitizedTrace.getSnapshot(),
-        windowSize: this.contextWindow.getWindow().length,
-        semanticDensity: this.contextWindow.getSemanticDensityScore(),
-      },
-      metadataForLLM: this.shapedContext,
-      persona: this.persona,
-      state: this.state,
-    };
-  }
-
-  private refreshContext(
-    intent: IntentClassification,
-    traceSnapshot: ReturnType<ToronSanitizedTrace["getSnapshot"]>
-  ): void {
-    this.compiledContext = compileContext(
-      this.contextWindow.getWindow(),
-      this.persona,
-      this.state,
-      intent
-    );
-
-    this.shapedContext = shapeContext(this.compiledContext, traceSnapshot);
-    this.persona = evolvePersona(this.persona, this.compiledContext, this.shapedContext);
-    this.state = updateState(this.state, intent, this.compiledContext);
-
-    buildAdaptivePlan(this.compiledContext, this.shapedContext, traceSnapshot);
-  }
+export function resetEphemeralContext(): ToronContextState {
+  ephemeralContext = defaultContext();
+  return ephemeralContext;
 }
