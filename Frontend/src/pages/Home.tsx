@@ -1,7 +1,42 @@
 import { SlideUp } from "@/components/animations/SlideUp";
+import { ModuleTile } from "@/components/home/ModuleTile";
+import { moduleIcons } from "@/components/home/moduleIcons";
 import { motion } from "framer-motion";
 import { useUI } from "@/state/ui";
 import { useTheme } from "@/theme/useTheme";
+
+const modules = [
+  {
+    key: "neuralLoad" as const,
+    title: "Neural Load",
+    description: "Live model load, queue depth, and orchestration state.",
+  },
+  {
+    key: "pipelines" as const,
+    title: "Pipelines",
+    description: "Pipeline health, batch status, and data flow stability.",
+  },
+  {
+    key: "workspace" as const,
+    title: "Workspace",
+    description: "Active documents, tasks, and workspace activity.",
+  },
+  {
+    key: "documents" as const,
+    title: "Documents",
+    description: "Ingestion progress, index freshness, and file status.",
+  },
+  {
+    key: "telemetry" as const,
+    title: "Telemetry",
+    description: "System vitals, latency, and infrastructure signals.",
+  },
+  {
+    key: "history" as const,
+    title: "History",
+    description: "Event log of Toron sessions, runs, and changes.",
+  },
+];
 
 export default function Home() {
   const { openCommandCenter } = useUI();
@@ -11,15 +46,6 @@ export default function Home() {
     resolvedTheme === "dark"
       ? "from-cyan-400/20 via-purple-500/20 to-emerald-400/10"
       : "from-emerald-500/25 via-purple-500/20 to-cyan-400/20";
-
-  const tiles = [
-    "Neural Load",
-    "Pipelines",
-    "Workspace",
-    "Documents",
-    "Telemetry",
-    "History",
-  ];
 
   return (
     <div className="space-y-14 pb-20">
@@ -84,46 +110,19 @@ export default function Home() {
       {/* ─────────────────────────────────────────────
           GRID: SYSTEM MODULES (Production Style)
       ───────────────────────────────────────────── */}
-      <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-        {tiles.map((title, index) => (
-          <motion.div
-            key={title}
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.42,
-              ease: "easeOut",
-              delay: 0.08 * index,
-            }}
-          >
-            <SlideUp
-              className="relative overflow-hidden rounded-2xl border border-[var(--border-soft)] 
-                         bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] 
-                         p-6 shadow-[0_18px_45px_rgba(0,0,0,0.26)] backdrop-blur-xl transition-all"
-            >
-              <div
-                className="absolute inset-0 bg-gradient-to-br 
-                           from-[var(--accent-primary)]/6 
-                           via-transparent 
-                           to-[var(--accent-secondary)]/12 
-                           pointer-events-none opacity-80"
-                aria-hidden
-              />
-
-              <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)] pb-1">
-                Module
-              </p>
-
-              <p className="text-xl font-semibold text-[var(--text-primary)] tracking-tight pb-1">
-                {title}
-              </p>
-
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                Live telemetry and operational state will appear here soon.
-              </p>
-            </SlideUp>
-          </motion.div>
-        ))}
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 pt-4">
+        {modules.map((mod, index) => {
+          const Icon = moduleIcons[mod.key];
+          return (
+            <ModuleTile
+              key={mod.key}
+              title={mod.title}
+              description={mod.description}
+              delay={index * 0.08}
+              icon={<Icon />}
+            />
+          );
+        })}
       </div>
     </div>
   );
