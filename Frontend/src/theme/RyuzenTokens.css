@@ -1,0 +1,117 @@
+:root {
+  /* Hybrid Pulse Core */
+  --toron-core-c1: #29f5ff;
+  --toron-core-c2: #9b4dff;
+  --toron-core-c3: #2b6bff;
+
+  --pulse-duration: 8s;
+
+  /* Accents */
+  --accent-primary: #29f5ff;
+  --accent-secondary: #9b4dff;
+  --accent-tertiary: #2b6bff;
+
+  /* Surfaces */
+  --surface-0: #0b0f17;
+  --surface-1: #111826;
+  --surface-2: #162132;
+  --surface-glass: rgba(255, 255, 255, 0.08);
+  --surface-ps5: rgba(255, 255, 255, 0.04);
+
+  /* Panels */
+  --panel-primary: rgba(17, 24, 38, 0.8);
+  --panel-elevated: rgba(22, 33, 50, 0.9);
+  --panel-deep: rgba(9, 13, 21, 0.92);
+
+  /* Borders */
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Shadows */
+  --shadow-1: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-2: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 30px 90px rgba(0, 0, 0, 0.45);
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-disabled: rgba(255, 255, 255, 0.32);
+
+  /* Toron States */
+  --toron-good: #52ffa0;
+  --toron-warn: #ffd85c;
+  --toron-critical: #ff5c5c;
+
+  /* Glow */
+  --glow-cyan: 0 0 22px rgba(41, 245, 255, 0.45);
+  --glow-purple: 0 0 22px rgba(155, 77, 255, 0.45);
+  --glow-blue: 0 0 22px rgba(43, 107, 255, 0.45);
+
+  /* Gradients */
+  --gradient-hybrid-pulse: linear-gradient(125deg, var(--toron-core-c1) 0%, var(--toron-core-c2) 50%, var(--toron-core-c3) 100%);
+  --gradient-sheen: linear-gradient(90deg, rgba(41, 245, 255, 0.24), rgba(155, 77, 255, 0.22), rgba(43, 107, 255, 0.2));
+  --gradient-panel-depth: linear-gradient(145deg, rgba(17, 24, 38, 0.9), rgba(16, 24, 37, 0.75), rgba(9, 13, 21, 0.7));
+
+  /* Interaction */
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --surface-0: #eef2f7;
+  --surface-1: #f6f7fb;
+  --surface-2: #ffffff;
+  --surface-glass: rgba(17, 24, 38, 0.06);
+  --surface-ps5: rgba(17, 24, 38, 0.04);
+
+  --panel-primary: rgba(255, 255, 255, 0.92);
+  --panel-elevated: rgba(240, 242, 248, 0.96);
+  --panel-deep: rgba(220, 225, 236, 0.98);
+
+  --border-soft: rgba(17, 24, 38, 0.08);
+  --border-strong: rgba(17, 24, 38, 0.18);
+
+  --text-primary: #0a0f1a;
+  --text-secondary: rgba(10, 15, 26, 0.68);
+  --text-disabled: rgba(10, 15, 26, 0.38);
+
+  --shadow-1: 0 10px 30px rgba(12, 19, 33, 0.12);
+  --shadow-2: 0 20px 60px rgba(12, 19, 33, 0.16);
+  --shadow-3: 0 30px 90px rgba(12, 19, 33, 0.2);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@keyframes toronPulse {
+  0% {
+    color: var(--toron-core-c1);
+    text-shadow: var(--glow-cyan);
+  }
+  33% {
+    color: var(--toron-core-c2);
+    text-shadow: var(--glow-purple);
+  }
+  66% {
+    color: var(--toron-core-c3);
+    text-shadow: var(--glow-blue);
+  }
+  100% {
+    color: var(--toron-core-c1);
+    text-shadow: var(--glow-cyan);
+  }
+}
+
+@keyframes ryuzenPulse {
+  0% {
+    filter: brightness(0.98) drop-shadow(0 0 8px rgba(41, 245, 255, 0.12));
+  }
+  50% {
+    filter: brightness(1.05) drop-shadow(0 0 12px rgba(155, 77, 255, 0.18));
+  }
+  100% {
+    filter: brightness(0.98) drop-shadow(0 0 8px rgba(43, 107, 255, 0.12));
+  }
+}
