@@ -10,6 +10,8 @@ from .middleware.cors import apply_cors
 from .middleware.errors import apply_error_handling
 from .middleware.ratelimit import apply_rate_limiting
 from .routers import connectors, health, llm, telemetry
+from src.backend.feedback_system_v2.router import router as FeedbackRouter
+from src.backend.feedback_system_v2.routes_admin import router as FeedbackAdminRouter
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,8 @@ def create_app() -> FastAPI:
     app.include_router(connectors.router)
     app.include_router(telemetry.router)
     app.include_router(health.router)
+    app.include_router(FeedbackRouter, prefix="/api/v1")
+    app.include_router(FeedbackAdminRouter, prefix="/api/v1")
 
     @app.on_event("startup")
     async def startup_event() -> None:

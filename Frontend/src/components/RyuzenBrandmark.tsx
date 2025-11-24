@@ -1,4 +1,4 @@
-import RyuzenLogo from "@/assets/logo/ryuzen-logo.png";
+import RyuzenLogo from "@/assets/ryuzen-dragon.svg";
 
 type RyuzenBrandmarkProps = {
   size?: number;

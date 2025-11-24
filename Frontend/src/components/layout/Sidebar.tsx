@@ -9,6 +9,7 @@ import WorkspaceIcon from "@/assets/icons/workspace.svg";
 import DocumentsIcon from "@/assets/icons/documents.svg";
 import HistoryIcon from "@/assets/icons/history.svg";
 import SettingsIcon from "@/assets/icons/settings.svg";
+import { useFeedback } from "@/state/feedback";
 
 const navItems = [
   { label: "Home", path: "/", icon: HomeIcon },
@@ -30,6 +31,8 @@ export function Sidebar({
   mobileVisible?: boolean;
   onNavigate?: () => void;
 }) {
+  const { openModal } = useFeedback();
+
   return (
     <motion.aside
       initial={{ x: -16, opacity: 0 }}
@@ -106,6 +109,25 @@ export function Sidebar({
             )}
           </NavLink>
         ))}
+        <div className="mt-2 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_82%,transparent)] p-3">
+          <button
+            type="button"
+            onClick={openModal}
+            className="group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-[color-mix(in_srgb,var(--accent-secondary)_32%,var(--border-soft))] bg-[color-mix(in_srgb,var(--panel-elevated)_80%,transparent)] px-3 py-3 text-left text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-[1px] hover:shadow-[0_10px_30px_rgba(34,211,238,0.22)]"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--accent-secondary)_18%,transparent)] text-[color-mix(in_srgb,var(--accent-secondary)_90%,var(--text-primary))] shadow-inner shadow-black/30">
+              ✨
+            </span>
+            <div className="flex flex-col">
+              <span>Send Feedback</span>
+              <span className="text-xs font-normal text-[var(--text-secondary)]">Secure & anonymous</span>
+            </div>
+            <span
+              className="absolute inset-px rounded-xl border border-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)] blur-[1px]"
+              aria-hidden
+            />
+          </button>
+        </div>
       </nav>
 
       <div className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_86%,transparent)] p-3 text-[var(--text-secondary)]">
