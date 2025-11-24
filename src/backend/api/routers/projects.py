@@ -85,6 +85,10 @@ class ProjectModel(BaseModel):
     def sanitize(cls, payload: "ProjectModel", *, bump_version: bool = False) -> "ProjectModel":
         now_ms = int(time.time() * 1000)
         version = (payload.version or 0) + (1 if bump_version else 0)
+        connectors = payload.connectorsEnabled or {}
+        if isinstance(connectors, ProjectConnectors):
+            connectors = connectors.model_dump()
+
         return cls(
             id=str(payload.id),
             name=sanitize_text(payload.name or "Untitled project"),
@@ -98,7 +102,7 @@ class ProjectModel(BaseModel):
             if payload.semanticGraph
             else [],
             taskList=[ProjectTask.sanitize(task) for task in payload.taskList],
-            connectorsEnabled=ProjectConnectors(**(payload.connectorsEnabled or {})),
+            connectorsEnabled=ProjectConnectors(**connectors),
             contextState=ProjectContextState.sanitize(payload.contextState),
             version=version or 1,
         )
