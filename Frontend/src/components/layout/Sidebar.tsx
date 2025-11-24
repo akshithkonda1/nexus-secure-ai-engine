@@ -3,14 +3,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 
 import logo from "@/assets/ryuzen-dragon.svg";
+import HomeIcon from "@/assets/icons/home.svg";
+import ToronIcon from "@/assets/icons/toron.svg";
+import WorkspaceIcon from "@/assets/icons/workspace.svg";
+import DocumentsIcon from "@/assets/icons/documents.svg";
+import HistoryIcon from "@/assets/icons/history.svg";
+import SettingsIcon from "@/assets/icons/settings.svg";
 
 const navItems = [
-  { label: "Home", path: "/" },
-  { label: "Toron", path: "/toron" },
-  { label: "Workspace", path: "/workspace" },
-  { label: "Documents", path: "/documents" },
-  { label: "History", path: "/history" },
-  { label: "Settings", path: "/settings" },
+  { label: "Home", path: "/", icon: HomeIcon },
+  { label: "Toron", path: "/toron", icon: ToronIcon },
+  { label: "Workspace", path: "/workspace", icon: WorkspaceIcon },
+  { label: "Documents", path: "/documents", icon: DocumentsIcon },
+  { label: "History", path: "/history", icon: HistoryIcon },
+  { label: "Settings", path: "/settings", icon: SettingsIcon },
 ];
 
 export function Sidebar({
@@ -75,7 +81,11 @@ export function Sidebar({
                 }`}
               >
                 <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)]">
-                  <img src={logo} alt="" className="h-5 w-5 opacity-80" />
+                  <img
+                    src={item.icon}
+                    alt={item.label}
+                    className="w-6 h-6 opacity-90"
+                  />
                   {isActive && <GlowOverlay />}
                 </span>
                 <AnimatePresence initial={false}>
