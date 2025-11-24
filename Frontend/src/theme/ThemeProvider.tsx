@@ -17,6 +17,7 @@ type ThemeContextValue = {
   theme: ThemeMode;
   resolvedTheme: ResolvedTheme;
   setTheme: (mode: ThemeMode) => void;
+  toggleTheme: () => void;
 };
 
 const STORAGE_KEY = "ryuzen-theme";
@@ -64,6 +65,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }, [setTheme, theme]);
+
   useEffect(() => {
     syncDocumentTheme(theme, resolvedTheme);
   }, [theme, resolvedTheme]);
@@ -89,8 +94,9 @@ export function ThemeProvider({ children }: PropsWithChildren) {
       theme,
       resolvedTheme,
       setTheme,
+      toggleTheme,
     }),
-    [theme, resolvedTheme, setTheme],
+    [theme, resolvedTheme, setTheme, toggleTheme],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
@@ -101,3 +107,5 @@ export function useThemeContext(): ThemeContextValue {
   if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }
+
+export { useTheme } from "./useTheme";

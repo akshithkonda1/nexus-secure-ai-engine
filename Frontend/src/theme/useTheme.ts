@@ -12,8 +12,9 @@ export function useTheme() {
       theme: ctx.theme,
       setTheme: ctx.setTheme,
       resolvedTheme: ctx.resolvedTheme,
+      toggleTheme: ctx.toggleTheme,
     }),
-    [ctx.theme, ctx.setTheme, ctx.resolvedTheme],
+    [ctx.theme, ctx.setTheme, ctx.resolvedTheme, ctx.toggleTheme],
   );
 
   return value;
