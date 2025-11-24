@@ -97,12 +97,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleTheme = useCallback(() => {
-    setTheme((current) => {
-      if (current === "light") return "dark";
-      if (current === "dark") return "light";
-      return getSystemTheme() === "dark" ? "light" : "dark";
-    });
-  }, []);
+    const nextTheme: ThemeMode =
+      theme === "light"
+        ? "dark"
+        : theme === "dark"
+          ? "light"
+          : getSystemTheme() === "dark"
+            ? "light"
+            : "dark";
+    setTheme(nextTheme);
+  }, [setTheme, theme]);
 
   const value = useMemo(
     () => ({ theme, resolvedTheme, setTheme, toggleTheme }),
