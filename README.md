@@ -1,4 +1,15 @@
-# Toron v1.6 — Ryuzen Nims Engine
+# This is Ryuzen, an AI ecosystem 
+
+
+
+
+
+
+
+
+
+
+# Toron v1.6 — Ryuzen Engine
 
 The Toron engine is a cloud-neutral orchestration layer that secures prompts and responses with AES-256, masks PII, and exposes connectors for AWS, Azure, and GCP model backends. This repo packages the engine with container tooling, Helm charts, Terraform plans, and a full pytest harness so you can ship the system with confidence.
 
