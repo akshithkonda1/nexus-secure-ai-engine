@@ -1,40 +1,53 @@
 import { SlideUp } from "@/components/animations/SlideUp";
 import { ModuleTile } from "@/components/home/ModuleTile";
-import { moduleIcons } from "@/components/home/moduleIcons";
+import {
+  ConnectorsIcon,
+  FeedbackIcon,
+  NeuralLoadIcon,
+  PipelinesIcon,
+  ResumeEngineIcon,
+  TelemetryIcon,
+  WorkspaceIcon,
+} from "@/components/home/moduleIcons";
 import { motion } from "framer-motion";
 import { useUI } from "@/state/ui";
 import { useTheme } from "@/theme/useTheme";
 
 const modules = [
   {
-    key: "neuralLoad" as const,
     title: "Neural Load",
     description: "Live model load, queue depth, and orchestration state.",
+    Icon: NeuralLoadIcon,
   },
   {
-    key: "pipelines" as const,
     title: "Pipelines",
     description: "Pipeline health, batch status, and data flow stability.",
+    Icon: PipelinesIcon,
   },
   {
-    key: "workspace" as const,
+    title: "Connectors",
+    description: "Live integrations and connector health.",
+    Icon: ConnectorsIcon,
+  },
+  {
     title: "Workspace",
     description: "Active documents, tasks, and workspace activity.",
+    Icon: WorkspaceIcon,
   },
   {
-    key: "documents" as const,
-    title: "Documents",
-    description: "Ingestion progress, index freshness, and file status.",
-  },
-  {
-    key: "telemetry" as const,
     title: "Telemetry",
     description: "System vitals, latency, and infrastructure signals.",
+    Icon: TelemetryIcon,
   },
   {
-    key: "history" as const,
-    title: "History",
-    description: "Event log of Toron sessions, runs, and changes.",
+    title: "Ryuzen Resume Engine",
+    description: "Node clustering progress and inference routing.",
+    Icon: ResumeEngineIcon,
+  },
+  {
+    title: "Feedback Intelligence",
+    description: "Toron-powered insights and signal loops.",
+    Icon: FeedbackIcon,
   },
 ];
 
@@ -112,10 +125,10 @@ export default function Home() {
       ───────────────────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 pt-4">
         {modules.map((mod, index) => {
-          const Icon = moduleIcons[mod.key];
+          const Icon = mod.Icon;
           return (
             <ModuleTile
-              key={mod.key}
+              key={mod.title}
               title={mod.title}
               description={mod.description}
               delay={index * 0.08}
