@@ -7,7 +7,6 @@ import {
   ProjectTask,
   ProjectConnectors,
 } from "./types";
-import { loadProjectContext, resetEphemeralContext, saveProjectContext } from "@/components/toron/context/contextMediator";
 
 const normalizeWhitespace = (value: string) => value.replace(/\s+/g, " ").trim();
 const REDACTION = "[sanitized]";
@@ -61,6 +60,10 @@ const sanitizeConnectors = (value: Partial<ProjectConnectors> | undefined): Proj
   googleDrive: Boolean(value?.googleDrive),
   quizlet: Boolean(value?.quizlet),
 });
+
+const loadProjectContext = (_id: string, _state: ProjectContextState) => undefined;
+const saveProjectContext = (_id: string, _state: ProjectContextState) => undefined;
+const resetEphemeralContext = () => undefined;
 
 const sanitizeProject = (incoming: Partial<Project>): Project => {
   const now = Date.now();
