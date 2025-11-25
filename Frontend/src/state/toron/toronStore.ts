@@ -1,216 +1,127 @@
+import { nanoid } from "nanoid";
 import { create } from "zustand";
 
-import type { ToronMessage } from "@/pages/Toron/toronTypes";
-
-type ProjectState = {
-  messages: ToronMessage[];
-  initialWelcomeShown: boolean;
-};
+import type { ToronMessage, ToronProject } from "@/pages/Toron/toronTypes";
 
 type ToronStore = {
-  activeProjectId: string;
-  projectStates: Record<string, ProjectState>;
   messages: ToronMessage[];
-  streaming: boolean;
+  projects: ToronProject[];
+  activeProjectId: string | null;
   loading: boolean;
   initialWelcomeShown: boolean;
-  addMessage: (message: ToronMessage, projectId?: string) => void;
-  updateMessage: (
-    messageId: string,
-    updater: (prev: ToronMessage) => ToronMessage,
-    projectId?: string,
+  addMessage: (
+    msg: Omit<ToronMessage, "id" | "timestamp"> &
+      Partial<Pick<ToronMessage, "id" | "timestamp">>,
   ) => void;
-  clearChat: (projectId?: string) => void;
-  setProject: (projectId: string) => void;
-  setStreaming: (value: boolean) => void;
-  setLoading: (value: boolean) => void;
-  setInitialWelcomeShown: (projectId?: string) => void;
-  deleteProject: (projectId: string) => void;
+  simulateToronReply: (text: string) => void;
+  clearChat: () => void;
+  setProject: (id: string) => void;
+  createProject: (name: string) => void;
+  deleteProject: (id: string) => void;
 };
 
-const STORAGE_KEY = "toron:projects:v1";
-
-const defaultProjectId = "default";
-
-const emptyProjectState: ProjectState = {
+export const useToronStore = create<ToronStore>((set, get) => ({
   messages: [],
+  projects: [],
+  activeProjectId: null,
+  loading: false,
   initialWelcomeShown: false,
-};
 
-function loadProjects(): Record<string, ProjectState> {
-  if (typeof window === "undefined") return { [defaultProjectId]: emptyProjectState };
+  addMessage: (msg) => {
+    const newMsg: ToronMessage = { id: nanoid(), timestamp: Date.now(), ...msg };
 
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return { [defaultProjectId]: emptyProjectState };
+    set((state) => {
+      const updatedProjects = state.activeProjectId
+        ? state.projects.map((p) =>
+            p.id === state.activeProjectId
+              ? { ...p, messages: [...p.messages, newMsg] }
+              : p,
+          )
+        : state.projects;
 
-    const parsed = JSON.parse(saved) as Record<string, ProjectState>;
-    return Object.keys(parsed).length
-      ? parsed
-      : { [defaultProjectId]: emptyProjectState };
-  } catch (error) {
-    console.error("Failed to load toron state", error);
-    return { [defaultProjectId]: emptyProjectState };
-  }
-}
+      return {
+        messages: [...state.messages, newMsg],
+        projects: updatedProjects,
+        initialWelcomeShown: true,
+      };
+    });
+  },
 
-function persistProjects(projects: Record<string, ProjectState>) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  } catch (error) {
-    console.error("Failed to persist toron state", error);
-  }
-}
+  simulateToronReply: (text) => {
+    set({ loading: true });
 
-function ensureProjectState(
-  projectStates: Record<string, ProjectState>,
-  projectId: string,
-): Record<string, ProjectState> {
-  if (projectStates[projectId]) return projectStates;
-  return { ...projectStates, [projectId]: { ...emptyProjectState } };
-}
+    let buffer = "";
+    const reply = `Toron received: "${text}"`;
 
-export const useToronStore = create<ToronStore>((set) => {
-  const initialProjects = loadProjects();
-  const initialActive = Object.keys(initialProjects)[0] ?? defaultProjectId;
-  const initialState = ensureProjectState(initialProjects, initialActive);
-  const activeState = initialState[initialActive];
+    reply.split("").forEach((char, i) => {
+      setTimeout(() => {
+        buffer += char;
 
-  return {
-    activeProjectId: initialActive,
-    projectStates: initialState,
-    messages: activeState.messages,
-    streaming: false,
-    loading: false,
-    initialWelcomeShown: activeState.initialWelcomeShown,
-    addMessage: (message, projectId) => {
-      set((state) => {
-        const pid = projectId ?? state.activeProjectId;
-        const preparedStates = ensureProjectState(state.projectStates, pid);
-        const project = preparedStates[pid];
-        const updatedProject = {
-          ...project,
-          messages: [...project.messages, message],
-        };
-        const projectStates = { ...preparedStates, [pid]: updatedProject };
-        persistProjects(projectStates);
+        if (i === reply.length - 1) {
+          const toronMessage: ToronMessage = {
+            id: nanoid(),
+            sender: "toron",
+            text: buffer,
+            timestamp: Date.now(),
+          };
 
-        return {
-          projectStates,
-          messages: pid === state.activeProjectId ? updatedProject.messages : state.messages,
-          initialWelcomeShown:
-            pid === state.activeProjectId
-              ? updatedProject.initialWelcomeShown
-              : state.initialWelcomeShown,
-        };
-      });
-    },
-    updateMessage: (messageId, updater, projectId) => {
-      set((state) => {
-        const pid = projectId ?? state.activeProjectId;
-        const preparedStates = ensureProjectState(state.projectStates, pid);
-        const project = preparedStates[pid];
-        const updatedMessages = project.messages.map((msg) =>
-          msg.id === messageId ? updater(msg) : msg,
-        );
-        const updatedProject = { ...project, messages: updatedMessages };
-        const projectStates = { ...preparedStates, [pid]: updatedProject };
-        persistProjects(projectStates);
+          set((state) => {
+            const updatedProjects = state.activeProjectId
+              ? state.projects.map((p) =>
+                  p.id === state.activeProjectId
+                    ? { ...p, messages: [...p.messages, toronMessage] }
+                    : p,
+                )
+              : state.projects;
 
-        return {
-          projectStates,
-          messages: pid === state.activeProjectId ? updatedMessages : state.messages,
-          initialWelcomeShown:
-            pid === state.activeProjectId
-              ? updatedProject.initialWelcomeShown
-              : state.initialWelcomeShown,
-        };
-      });
-    },
-    clearChat: (projectId) => {
-      set((state) => {
-        const pid = projectId ?? state.activeProjectId;
-        const preparedStates = ensureProjectState(state.projectStates, pid);
-        const projectStates = {
-          ...preparedStates,
-          [pid]: { ...emptyProjectState },
-        };
-        persistProjects(projectStates);
-
-        return {
-          projectStates,
-          messages:
-            pid === state.activeProjectId ? projectStates[pid].messages : state.messages,
-          initialWelcomeShown:
-            pid === state.activeProjectId
-              ? projectStates[pid].initialWelcomeShown
-              : state.initialWelcomeShown,
-          streaming: pid === state.activeProjectId ? false : state.streaming,
-        };
-      });
-    },
-    setProject: (projectId) => {
-      set((state) => {
-        const pid = projectId || defaultProjectId;
-        const projectStates = ensureProjectState(state.projectStates, pid);
-        const activeState = projectStates[pid];
-        persistProjects(projectStates);
-
-        return {
-          activeProjectId: pid,
-          projectStates,
-          messages: activeState.messages,
-          initialWelcomeShown: activeState.initialWelcomeShown,
-          streaming: false,
-        };
-      });
-    },
-    setStreaming: (value) => set({ streaming: value }),
-    setLoading: (value) => set({ loading: value }),
-    setInitialWelcomeShown: (projectId) => {
-      set((state) => {
-        const pid = projectId ?? state.activeProjectId;
-        const preparedStates = ensureProjectState(state.projectStates, pid);
-        const project = preparedStates[pid];
-        const updatedProject = { ...project, initialWelcomeShown: true };
-        const projectStates = { ...preparedStates, [pid]: updatedProject };
-        persistProjects(projectStates);
-
-        return {
-          projectStates,
-          initialWelcomeShown:
-            pid === state.activeProjectId ? true : state.initialWelcomeShown,
-        };
-      });
-    },
-    deleteProject: (projectId) => {
-      set((state) => {
-        const projectStates = { ...state.projectStates };
-        delete projectStates[projectId];
-
-        const remainingIds = Object.keys(projectStates);
-        if (!remainingIds.length) {
-          projectStates[defaultProjectId] = { ...emptyProjectState };
+            return {
+              messages: [...state.messages, toronMessage],
+              projects: updatedProjects,
+              loading: false,
+            };
+          });
         }
+      }, i * 25);
+    });
+  },
 
-        const nextActive =
-          state.activeProjectId === projectId
-            ? remainingIds[0] ?? defaultProjectId
-            : state.activeProjectId;
-        const normalizedStates = ensureProjectState(projectStates, nextActive);
-        persistProjects(normalizedStates);
+  clearChat: () => {
+    const activeProjectId = get().activeProjectId;
 
-        const activeState = normalizedStates[nextActive];
+    set((state) => ({
+      messages: [],
+      projects: activeProjectId
+        ? state.projects.map((project) =>
+            project.id === activeProjectId
+              ? { ...project, messages: [] }
+              : project,
+          )
+        : state.projects,
+      initialWelcomeShown: false,
+    }));
+  },
 
-        return {
-          activeProjectId: nextActive,
-          projectStates: normalizedStates,
-          messages: activeState.messages,
-          initialWelcomeShown: activeState.initialWelcomeShown,
-          streaming: false,
-        };
-      });
-    },
-  };
-});
+  setProject: (id) => {
+    const target = get().projects.find((p) => p.id === id);
+    set({
+      activeProjectId: id,
+      messages: target ? target.messages : [],
+    });
+  },
+
+  createProject: (name) =>
+    set((state) => ({
+      projects: [
+        ...state.projects,
+        { id: nanoid(), name, messages: [] },
+      ],
+    })),
+
+  deleteProject: (id) =>
+    set((state) => ({
+      projects: state.projects.filter((p) => p.id !== id),
+      ...(state.activeProjectId === id
+        ? { activeProjectId: null, messages: [] }
+        : {}),
+    })),
+}));
