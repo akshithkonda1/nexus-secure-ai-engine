@@ -42,9 +42,9 @@ export function ToronHeader({ onOpenProjects, onNewChat }: ToronHeaderProps) {
             ? "0 24px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04)"
             : "0 24px 80px rgba(15,23,42,0.1), 0 0 0 1px rgba(255,255,255,0.08)",
       }}
-      initial={{ opacity: 0, y: -12 }}
+      initial={{ opacity: 0, y: -18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      transition={{ type: "spring", stiffness: 160, damping: 20 }}
     >
       <motion.div
         className="absolute inset-0 rounded-3xl"
@@ -73,7 +73,7 @@ export function ToronHeader({ onOpenProjects, onNewChat }: ToronHeaderProps) {
           <motion.div
             className="relative"
             animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ type: "spring", stiffness: 120, damping: 10, repeat: Infinity, repeatType: "mirror" }}
           >
             <div className="absolute inset-[-16px] rounded-full bg-gradient-to-br from-cyan-400/20 via-purple-500/20 to-emerald-400/16 blur-2xl" />
             <RyuzenBrandmark size={40} className="relative drop-shadow-lg" />
