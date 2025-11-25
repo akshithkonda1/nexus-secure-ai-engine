@@ -10,7 +10,7 @@ import NotFound from "@/pages/NotFound";
 import ProjectDashboard from "@/pages/projects/ProjectDashboard";
 import ProjectView from "@/pages/projects/ProjectView";
 import Settings from "@/pages/Settings";
-import Toron from "@/pages/Toron";
+import ToronPage from "@/pages/Toron/ToronPage";
 import Workspace from "@/pages/Workspace";
 
 export function App() {
@@ -19,7 +19,7 @@ export function App() {
     <Routes>
       <Route element={<ProjectProvider><RootLayout /></ProjectProvider>}>
         <Route index element={<Home />} />
-        <Route path="toron" element={<Toron />} />
+        <Route path="toron" element={<ToronPage />} />
         <Route path="workspace" element={<Workspace />} />
         <Route path="projects" element={<ProjectDashboard />} />
         <Route path="projects/:id" element={<ProjectView />} />
