@@ -5,7 +5,7 @@ import { Button } from "@/shared/ui/components/button";
 import React from "react";
 import { useSession } from "@/shared/state/session";
 import { useUI } from "@/state/ui";
-import { RyuzenCommandCenterOverlay } from "@/components/command-center/RyuzenCommandCenterOverlay";
+import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");

@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 
 import { useProfile } from "@/features/profile/ProfileProvider";
 import { NotificationBell } from "@/components/shell/NotificationBell";
-import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
-
 import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
 import { useUI } from "@/state/ui";
@@ -19,7 +17,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { theme, setTheme } = useTheme();
-  const { isCommandCenterOpen, openCommandCenter, closeCommandCenter } = useUI();
+  const { openCommandCenter } = useUI();
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -40,11 +38,6 @@ export default function Header() {
 
   return (
     <>
-      {/* Command Center Overlay */}
-      {isCommandCenterOpen && (
-        <RyuzenCommandCenterOverlay onClose={closeCommandCenter} />
-      )}
-
       <header className="fixed left-0 right-0 top-0 z-40 px-4 backdrop-blur-xl lg:pl-[var(--sidebar-width)]">
         <div className="mx-auto flex h-[var(--header-height)] items-center justify-between px-2 sm:px-4 md:px-6">
 
