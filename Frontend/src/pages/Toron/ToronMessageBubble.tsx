@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
 import type { ToronMessage } from "./toronTypes";
@@ -76,8 +75,9 @@ export function ToronMessageBubble({ message }: ToronMessageBubbleProps) {
           <div className="relative whitespace-pre-wrap text-base leading-relaxed">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw, rehypeHighlight]}
+              rehypePlugins={[rehypeHighlight]}
               linkTarget="_blank"
+              skipHtml
               className="prose prose-sm max-w-none text-[inherit] prose-headings:text-[inherit] prose-p:text-[inherit] prose-strong:text-[inherit] prose-em:text-[inherit] prose-code:text-[inherit]"
             >
               {message.text}
