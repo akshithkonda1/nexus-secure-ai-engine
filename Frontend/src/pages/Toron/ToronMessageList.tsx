@@ -10,16 +10,20 @@ export function ToronMessageList() {
   const { messages, initialWelcomeShown } = useToronStore();
   const endRef = useRef<HTMLDivElement | null>(null);
 
+  const safeMessages = useMemo(() => messages ?? [], [messages]);
+
   const hasUserMessage = useMemo(
-    () => messages.some((msg) => msg.sender === "user"),
-    [messages],
+    () => safeMessages.some((msg) => msg.sender === "user"),
+    [safeMessages],
   );
 
   useEffect(() => {
-    if (endRef.current) {
-      endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, [messages.length]);
+    const id = setTimeout(() => {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 20);
+
+    return () => clearTimeout(id);
+  }, [safeMessages]);
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -30,7 +34,7 @@ export function ToronMessageList() {
         {!initialWelcomeShown && !hasUserMessage && <ToronWelcome />}
 
         <AnimatePresence initial={false}>
-          {messages.map((message) => (
+          {safeMessages.map((message) => (
             <motion.div key={message.id} layout className="mb-3 last:mb-6">
               <ToronMessageBubble message={message} />
             </motion.div>
