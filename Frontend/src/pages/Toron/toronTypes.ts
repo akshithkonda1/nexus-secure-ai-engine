@@ -1,11 +1,6 @@
-export type ToronSender = "user" | "toron";
+import type { ToronMessage, ToronRole, ToronSession } from "@/state/toron/toronSessionTypes";
 
-export interface ToronMessage {
-  id: string;
-  sender: ToronSender;
-  text: string;
-  timestamp: number;
-}
+export type { ToronMessage, ToronRole, ToronSession };
 
 export interface ToronProject {
   id: string;

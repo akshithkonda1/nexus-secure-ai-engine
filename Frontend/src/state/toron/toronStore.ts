@@ -1,9 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { ToronMessage } from "@/pages/Toron/toronTypes";
+import type { ToronMessage } from "@/state/toron/toronSessionTypes";
+import { safeArray, safeMessage, safeSessionRecord } from "@/shared/lib/toronSafe";
+import { useToronTelemetry } from "@/hooks/useToronTelemetry";
 
-type ToronState = {
+interface ToronState {
   messages: ToronMessage[];
   activeSessionId: string | null;
   sessions: Record<string, ToronMessage[]>;
@@ -12,7 +14,9 @@ type ToronState = {
   deleteSession: (id: string) => void;
   setActiveSession: (id: string | null) => void;
   clearMessages: () => void;
-};
+}
+
+const useTelemetry = useToronTelemetry;
 
 export const useToronStore = create<ToronState>()(
   persist(
@@ -21,55 +25,94 @@ export const useToronStore = create<ToronState>()(
       activeSessionId: null,
       sessions: {},
 
-      addMessage: (msg) =>
-        set((state) => {
-          const sessionId = state.activeSessionId!;
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: [
-                ...(state.sessions[sessionId] ?? []),
-                msg,
-              ],
-            },
-          };
-        }),
+      addMessage: (msg) => {
+        const telemetry = useTelemetry();
+        try {
+          const safeMsg = safeMessage(msg);
+          set((state) => {
+            const sessionId = state.activeSessionId;
+            if (!sessionId) return state;
+            const current = safeArray(state.sessions[sessionId], []);
+            return {
+              sessions: {
+                ...state.sessions,
+                [sessionId]: [...current, safeMsg],
+              },
+              messages: [...current, safeMsg],
+            };
+          });
+          telemetry("message_send", { sessionId: get().activeSessionId ?? "none" });
+        } catch (error) {
+          telemetry("state_anomaly", { action: "addMessage", error: (error as Error).message });
+        }
+      },
 
-      createSession: () =>
-        set((state) => {
+      createSession: () => {
+        const telemetry = useTelemetry();
+        try {
           const newId = crypto.randomUUID();
-          return {
+          set((state) => ({
             activeSessionId: newId,
             sessions: { ...state.sessions, [newId]: [] },
-          };
-        }),
+            messages: [],
+          }));
+        } catch (error) {
+          telemetry("state_anomaly", { action: "createSession", error: (error as Error).message });
+        }
+      },
 
-      deleteSession: (id) =>
-        set((state) => {
-          const s = { ...state.sessions };
-          delete s[id];
-          return {
-            sessions: s,
-            activeSessionId:
-              state.activeSessionId === id ? null : state.activeSessionId,
-          };
-        }),
+      deleteSession: (id) => {
+        const telemetry = useTelemetry();
+        try {
+          set((state) => {
+            const next = { ...state.sessions };
+            delete next[id];
+            return {
+              sessions: next,
+              activeSessionId: state.activeSessionId === id ? null : state.activeSessionId,
+              messages: [],
+            };
+          });
+        } catch (error) {
+          telemetry("state_anomaly", { action: "deleteSession", error: (error as Error).message });
+        }
+      },
 
-      setActiveSession: (id) =>
-        set(() => ({ activeSessionId: id })),
+      setActiveSession: (id) => {
+        const telemetry = useTelemetry();
+        try {
+          set((state) => ({
+            activeSessionId: id,
+            messages: safeArray(state.sessions[id ?? ""], []),
+          }));
+        } catch (error) {
+          telemetry("state_anomaly", { action: "setActiveSession", error: (error as Error).message });
+        }
+      },
 
-      clearMessages: () =>
-        set((state) => {
-          const id = state.activeSessionId!;
-          return {
-            sessions: { ...state.sessions, [id]: [] },
-          };
-        }),
+      clearMessages: () => {
+        const telemetry = useTelemetry();
+        try {
+          set((state) => {
+            const id = state.activeSessionId;
+            if (!id) return state;
+            return {
+              sessions: { ...state.sessions, [id]: [] },
+              messages: [],
+            };
+          });
+        } catch (error) {
+          telemetry("state_anomaly", { action: "clearMessages", error: (error as Error).message });
+        }
+      },
     }),
-
     {
       name: "toron-store",
-      version: 1,
-    }
-  )
+      version: 2,
+      partialize: (state) => ({
+        sessions: safeSessionRecord(state.sessions),
+        activeSessionId: state.activeSessionId,
+      }),
+    },
+  ),
 );
