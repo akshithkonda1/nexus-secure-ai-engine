@@ -63,6 +63,11 @@ export default function ToronPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision_block_id: plan.id }),
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Plan approval failed");
+      }
+
       const data = await res.json();
       const results = (data?.results ?? []) as MicroAgentResult[];
       setPlanResults(results);
