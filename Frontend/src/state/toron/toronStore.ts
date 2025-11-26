@@ -1,15 +1,24 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { ToronMessage, ToronProject, ToronSender } from "@/pages/Toron/toronTypes";
+import type { ToronMessage, ToronProject } from "@/pages/Toron/toronTypes";
 
 export const DEFAULT_PROJECT: ToronProject = { id: "toron-default", name: "Personal Space" };
 
+type MessagePayload = Partial<ToronMessage> & { sender: ToronSender; text: string };
+
 type ToronState = {
   messages: ToronMessage[];
+  createdAt: number;
+  updatedAt: number;
+};
+
+type ToronStore = {
+  sessions: ToronSession[];
+  activeSessionId: string | null;
   projects: ToronProject[];
   activeProjectId: string | null;
+  activeSessionId: string | null;
   welcomeShown: boolean;
   streaming: boolean;
   loading: boolean;
@@ -17,7 +26,10 @@ type ToronState = {
 };
 
 type ToronActions = {
-  addMessage: (message: Partial<ToronMessage> & { sender: ToronSender; text: string }) => void;
+  addMessage: {
+    (message: MessagePayload): void;
+    (sessionId: string, message: MessagePayload): void;
+  };
   appendToMessage: (projectId: string, messageId: string, chunk: string) => void;
   clearChat: () => void;
   createProject: (name: string) => void;
@@ -26,21 +38,29 @@ type ToronActions = {
   setProject: (id: string | null) => void;
   setStreaming: (streaming: boolean) => void;
   setLoading: (loading: boolean) => void;
+  autoGenerateTitleFromFirstToronReply: (sessionId: string) => void;
 };
 
-export const useToronStore = create<ToronState & ToronActions>()(
-  persist(
-    (set, get) => ({
+    const session: ToronSession = {
+      id,
+      title: "New Session",
       messages: [],
       projects: [DEFAULT_PROJECT],
       activeProjectId: DEFAULT_PROJECT.id,
+      activeSessionId: DEFAULT_PROJECT.id,
       welcomeShown: true,
       streaming: false,
       loading: false,
       projectMessages: { [DEFAULT_PROJECT.id]: [] },
 
-      addMessage: (message) => {
-        const projectId = get().activeProjectId ?? DEFAULT_PROJECT.id;
+      addMessage: (sessionOrMessage: string | MessagePayload, maybeMessage?: MessagePayload) => {
+        const sessionId = typeof sessionOrMessage === "string"
+          ? sessionOrMessage
+          : get().activeProjectId ?? DEFAULT_PROJECT.id;
+
+        const message = typeof sessionOrMessage === "string" ? maybeMessage : sessionOrMessage;
+        if (!message) return;
+
         const msg: ToronMessage = {
           id: message.id ?? nanoid(),
           sender: message.sender,
@@ -49,10 +69,12 @@ export const useToronStore = create<ToronState & ToronActions>()(
         };
 
         set((state) => ({
-          messages: [...state.messages, msg],
+          messages: sessionId === (state.activeProjectId ?? DEFAULT_PROJECT.id)
+            ? [...state.messages, msg]
+            : state.messages,
           projectMessages: {
             ...state.projectMessages,
-            [projectId]: [...(state.projectMessages[projectId] ?? []), msg],
+            [sessionId]: [...(state.projectMessages[sessionId] ?? []), msg],
           },
           welcomeShown: message.sender === "user" ? false : state.welcomeShown,
         }));
@@ -106,6 +128,7 @@ export const useToronStore = create<ToronState & ToronActions>()(
           return {
             projects: [...state.projects, project],
             activeProjectId: project.id,
+            activeSessionId: project.id,
             messages: [],
             projectMessages: { ...state.projectMessages, [project.id]: [] },
             welcomeShown: true,
@@ -138,6 +161,7 @@ export const useToronStore = create<ToronState & ToronActions>()(
           return {
             projects: ensuredProjects,
             activeProjectId: nextActive,
+            activeSessionId: nextActive,
             messages: projectMessages[nextActive],
             projectMessages,
             welcomeShown: projectMessages[nextActive].length === 0,
@@ -152,6 +176,7 @@ export const useToronStore = create<ToronState & ToronActions>()(
           const messages = state.projectMessages[target] ?? [];
           return {
             activeProjectId: target,
+            activeSessionId: target,
             messages,
             welcomeShown: messages.length === 0 ? true : state.welcomeShown,
             streaming: false,
@@ -161,10 +186,45 @@ export const useToronStore = create<ToronState & ToronActions>()(
       setStreaming: (streaming) => set({ streaming }),
 
       setLoading: (loading) => set({ loading }),
+
+      autoGenerateTitleFromFirstToronReply: (sessionId) =>
+        set((state) => {
+          const messages = state.projectMessages[sessionId] ?? [];
+          const firstReply = messages.find((message) => message.sender === "toron");
+          const existingProject = state.projects.find((project) => project.id === sessionId);
+
+          if (!firstReply || !existingProject) return state;
+
+          const trimmed = firstReply.text.trim();
+          if (!trimmed) return state;
+
+          const derivedTitle = trimmed.length > 60 ? `${trimmed.slice(0, 57)}...` : trimmed;
+
+          return {
+            projects: state.projects.map((project) =>
+              project.id === sessionId ? { ...project, name: derivedTitle } : project,
+            ),
+          };
+        }),
     }),
     {
       name: "toron-store",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state, error) => {
+        if (error || !state) return;
+
+        const targetProjectId = state.activeProjectId ?? state.activeSessionId ?? DEFAULT_PROJECT.id;
+        const targetSessionId = state.activeSessionId ?? state.activeProjectId ?? DEFAULT_PROJECT.id;
+        const projectMessages = state.projectMessages ?? {};
+
+        const messages = projectMessages[targetSessionId] ?? [];
+
+        set({
+          activeProjectId: targetProjectId,
+          activeSessionId: targetSessionId,
+          messages,
+        });
+      },
     },
   ),
 );
