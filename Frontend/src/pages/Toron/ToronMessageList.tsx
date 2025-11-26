@@ -1,31 +1,29 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef } from "react";
 
-import { useToronStore } from "@/state/toron/toronStore";
+import { ToronSession, ToronMessage } from "@/state/toron/toronSessionTypes";
 
 import ToronMessageBubble from "./ToronMessageBubble";
 import ToronWelcome from "./ToronWelcome";
-import type { ToronMessage } from "./toronTypes";
-
 type StableMessage = ToronMessage & { id: string };
 
-export default function ToronMessageList() {
-  const { sessions, activeSessionId } = useToronStore();
+type ToronMessageListProps = {
+  session: ToronSession | null;
+};
 
-  const activeSession = sessions.find((s) => s.id === activeSessionId);
-  const messages = activeSession?.messages || [];
-
+export function ToronMessageList({ session }: ToronMessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const safeMessages = useMemo<StableMessage[]>(() => {
-    return (messages ?? [])
+    const messages = session?.messages ?? [];
+    return messages
       .filter(
         (message): message is ToronMessage =>
           typeof message?.text === "string" && Boolean(message?.sender),
       )
       .map((message) => ({ ...message, id: message.id ?? crypto.randomUUID() }));
-  }, [messages]);
+  }, [session?.messages]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -60,6 +58,7 @@ export default function ToronMessageList() {
                 <ToronMessageBubble
                   message={message}
                   index={index}
+                  isStreaming={false}
                 />
               </motion.div>
             ))}
@@ -70,3 +69,5 @@ export default function ToronMessageList() {
     </div>
   );
 }
+
+export default ToronMessageList;
