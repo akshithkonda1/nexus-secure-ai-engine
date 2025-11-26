@@ -5,13 +5,13 @@ import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
 import { useTheme } from "@/theme/useTheme";
 
 type ToronHeaderProps = {
-  onOpenProjects: () => void;
-  onNewChat: () => void;
+  onOpenProjects?: () => void;
+  onNewChat?: () => void;
 };
 
 const pulseTransition = { duration: 2.8, repeat: Infinity, ease: "easeInOut" };
 
-export default function ToronHeader({ onOpenProjects, onNewChat }: ToronHeaderProps) {
+export function ToronHeader({ onOpenProjects, onNewChat }: ToronHeaderProps) {
   const { resolvedTheme, setTheme, theme } = useTheme();
 
   const glassBackground = useMemo(
@@ -136,3 +136,5 @@ export default function ToronHeader({ onOpenProjects, onNewChat }: ToronHeaderPr
     </motion.header>
   );
 }
+
+export default ToronHeader;

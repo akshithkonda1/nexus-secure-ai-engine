@@ -4,7 +4,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
-import type { ToronMessage } from "./toronTypes";
+import type { ToronMessage } from "@/state/toron/toronSessionTypes";
 
 type ToronMessageBubbleProps = {
   message: ToronMessage;

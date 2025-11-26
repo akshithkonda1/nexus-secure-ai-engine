@@ -1,35 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
-
-import ToronHeader from "@/components/toron/ToronHeader";
-import WebConsentModal from "@/components/web/WebConsentModal";
-import WebExtractionPanel from "@/components/web/WebExtractionPanel";
-import { useToronStore } from "@/state/toron/toronStore";
-
-import ToronInputBar from "./ToronInputBar";
-import ToronMessageList from "./ToronMessageList";
-import ToronProjectsModal from "./ToronProjectsModal";
-import MicroAgentRunner from "./components/MicroAgentRunner";
-import ToronPlanPreview from "./modals/ToronPlanPreview";
-import type { DecisionBlock, MicroAgentResult } from "./toronTypes";
+import { useEffect } from "react";
+import { ToronHeader } from "@/components/toron/ToronHeader";
+import { ToronMessageList } from "@/pages/Toron/ToronMessageList";
+import { ToronInputBar } from "@/pages/Toron/ToronInputBar";
+import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { ToronSessionSidebar } from "@/pages/Toron/ToronSessionSidebar";
 
 export default function ToronPage() {
-  const { activeProjectId, projects, setProject, clearChat, messages } = useToronStore();
-  const [projectsOpen, setProjectsOpen] = useState(false);
-  const [consentData, setConsentData] = useState<any>(null);
-  const [showConsent, setShowConsent] = useState(false);
-  const [extractedData, setExtractedData] = useState<any>(null);
-  const [decisionBlock, setDecisionBlock] = useState<any>(null);
-  const [detectedUrl, setDetectedUrl] = useState<string | null>(null);
-  const [lastApprovedUrl, setLastApprovedUrl] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [consentReason, setConsentReason] = useState<string>("");
-  const [webLoading, setWebLoading] = useState(false);
+  const {
+    sessions,
+    activeSessionId,
+    hydrateSessions,
+    createSession,
+  } = useToronSessionStore();
 
   useEffect(() => {
-    if (!activeProjectId && projects.length) {
-      setProject(projects[0].id);
-    }
-  }, [activeProjectId, projects, setProject]);
+    // initial load
+    hydrateSessions().then(async () => {
+      // if no sessions exist, create the first one
+      const hasAny = Object.keys(useToronSessionStore.getState().sessions).length > 0;
+      if (!hasAny) {
+        await createSession("New Toron Session");
+      }
+    });
+  }, [hydrateSessions, createSession]);
+
+  const activeSession = activeSessionId
+    ? sessions[activeSessionId]
+    : null;
 
   const prepareWebAccess = useCallback(
     async (url: string, reason: string) => {
@@ -119,58 +116,21 @@ export default function ToronPage() {
   }, []);
 
   return (
-    <main className="relative flex h-full flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.12),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(99,102,241,0.14),transparent_50%),radial-gradient(circle_at_60%_70%,rgba(16,185,129,0.12),transparent_50%)] blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.06),transparent_45%),linear-gradient(200deg,rgba(255,255,255,0.05),transparent_50%)]" />
-      <ToronHeader onOpenProjects={() => setProjectsOpen(true)} onNewChat={() => clearChat()} />
-      <ToronMessageList />
-      <ToronInputBar />
-      {extractedData && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-6">
-          <div className="pointer-events-auto w-full max-w-5xl space-y-3">
-            <WebExtractionPanel data={extractedData} onClear={clearExtraction} sourceUrl={consentData?.url ?? detectedUrl ?? ""} />
-            {decisionBlock && (
-              <div className="rounded-2xl border border-white/10 bg-[var(--panel-bg)] p-4 shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--text-primary)]">Decision Block</div>
-                    <div className="text-xs text-[var(--text-secondary)]">{decisionBlock.planName}</div>
-                  </div>
-                  <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">Risk: {decisionBlock.risk}</span>
-                </div>
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  {decisionBlock.steps?.map((step: any, idx: number) => (
-                    <div key={`step-${idx}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] dark:bg-white/5">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">{step.action}</div>
-                      <div className="text-xs text-[var(--text-secondary)]">{JSON.stringify(step.params)}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 text-sm text-[var(--text-secondary)]">{decisionBlock.reflection}</div>
-                {sessionId && <div className="mt-2 text-[10px] text-[var(--text-secondary)]">Session: {sessionId}</div>}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      {projectsOpen && <ToronProjectsModal onClose={() => setProjectsOpen(false)} />}
-      {consentData && (
-        <WebConsentModal
-          open={showConsent}
-          pageTitle={consentData.page_title ?? "Web page"}
-          url={consentData.url}
-          purpose={consentReason || consentData.justification}
-          risk={consentData.risk ?? "low"}
-          loading={webLoading}
-          onAllowOnce={() => handleApproval(true)}
-          onAllowSession={() => handleApproval(false)}
-          onDeny={() => {
-            setShowConsent(false);
-            setConsentData(null);
-            setExtractedData(null);
-          }}
+    <main className="relative flex h-full min-h-screen flex-row">
+      <section className="flex min-h-screen flex-1 flex-col">
+        <ToronHeader />
+        <ToronMessageList
+          session={activeSession}
         />
-      )}
+        <ToronInputBar
+          sessionId={activeSession?.sessionId ?? null}
+        />
+      </section>
+
+      {/* Right-hand session list, ChatGPT-style */}
+      <aside className="hidden w-72 border-l border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] lg:block">
+        <ToronSessionSidebar />
+      </aside>
     </main>
   );
 }
