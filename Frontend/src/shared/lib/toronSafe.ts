@@ -63,11 +63,15 @@ export const safeMessage = (raw: unknown): ToronMessage => {
   const baseId = nanoid();
   const obj = safeObject(raw as Record<string, unknown>, { id: baseId } as Record<string, unknown>);
   const timestamp = safeTimestamp(obj.timestamp);
-  const roleCandidate = obj.role ?? obj.sender;
-  const normalizedRole =
-    roleCandidate === "user" || roleCandidate === "assistant" || roleCandidate === "system"
-      ? roleCandidate
-      : "assistant";
+  const roleCandidate = (obj.role ?? obj.sender) as string | undefined;
+  const normalizedRole = (() => {
+    const lower = typeof roleCandidate === "string" ? roleCandidate.toLowerCase() : undefined;
+    if (lower === "user") return "user" as const;
+    if (lower === "assistant") return "assistant" as const;
+    if (lower === "system") return "system" as const;
+    if (lower === "toron") return "assistant" as const;
+    return "assistant" as const;
+  })();
   return {
     id: safeString(obj.id, baseId),
     role: normalizedRole,
