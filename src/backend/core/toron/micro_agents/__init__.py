@@ -1,2 +1,1 @@
-"""Micro-agent package initializer."""
-
+"""Micro-agents for scoped Toron workflows."""
