@@ -63,12 +63,9 @@ async def prepare_web_access(payload: PrepareRequest) -> PrepareResponse:
 
 @router.post("/approve", response_model=ApproveResponse)
 async def approve_web_access(payload: ApproveRequest) -> ApproveResponse:
-    def _fetch_and_extract(url: str) -> Dict[str, Any]:
-        html = web_fetch_agent.run_web_fetch(url)
-        return web_extract_agent.run_web_extract(html)
-
     try:
-        extracted = await run_in_threadpool(_fetch_and_extract, str(payload.url))
+        html = await run_in_threadpool(web_fetch_agent.run_web_fetch, str(payload.url))
+        extracted = await run_in_threadpool(web_extract_agent.run_web_extract, html)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
