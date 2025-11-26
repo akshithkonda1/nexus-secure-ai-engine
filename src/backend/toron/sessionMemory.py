@@ -1,3 +1,4 @@
+import os
 import redis
 import json
 import time
@@ -6,7 +7,8 @@ import boto3
 import uuid
 
 # Redis for fast-access short-term memory
-r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+REDIS_URL = os.getenv("NEXUS_RATE_LIMIT_STORAGE_URL", "redis://redis:6379/0")
+r = redis.from_url(REDIS_URL, decode_responses=True)
 
 s3 = boto3.client("s3")
 BUCKET = "ryuzen-session-memory"

@@ -204,6 +204,21 @@ export const useToronStore = create<ToronState & ToronActions>()(
     {
       name: "toron-store",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state, error) => {
+        if (error || !state) return;
+
+        const targetProjectId = state.activeProjectId ?? state.activeSessionId ?? DEFAULT_PROJECT.id;
+        const targetSessionId = state.activeSessionId ?? state.activeProjectId ?? DEFAULT_PROJECT.id;
+        const projectMessages = state.projectMessages ?? {};
+
+        const messages = projectMessages[targetSessionId] ?? [];
+
+        set({
+          activeProjectId: targetProjectId,
+          activeSessionId: targetSessionId,
+          messages,
+        });
+      },
     },
   ),
 );
