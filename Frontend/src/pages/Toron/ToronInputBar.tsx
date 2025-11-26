@@ -3,11 +3,15 @@ import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
+import { useRyuzenClient } from "@/api/useRyuzenClient";
 import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
-  const { activeSessionId, addMessage } = useToronStore();
+  const { activeSessionId, addMessage, autoGenerateTitleFromFirstToronReply } =
+    useToronStore();
+  const { ask } = useRyuzenClient();
   const [value, setValue] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const glassStyles = useMemo(
     () => ({
@@ -17,13 +21,15 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = !value.trim() || !activeSessionId;
+  const disabled = isSending || !value.trim() || !activeSessionId;
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const prompt = value.trim();
     if (!prompt || !activeSessionId) return;
 
-    addMessage(activeSessionId, {
+    const sessionId = activeSessionId;
+
+    addMessage(sessionId, {
       id: nanoid(),
       sender: "user",
       text: prompt,
@@ -31,7 +37,34 @@ export default function ToronInputBar() {
     });
 
     setValue("");
-  }, [activeSessionId, addMessage, value]);
+    setIsSending(true);
+
+    try {
+      const response = await ask<{ result?: string }>({ prompt });
+      const toronMessage = response?.result ?? "Toron couldn’t generate a response.";
+
+      addMessage(sessionId, {
+        id: nanoid(),
+        sender: "toron",
+        text: toronMessage,
+        timestamp: Date.now(),
+      });
+
+      autoGenerateTitleFromFirstToronReply(sessionId);
+    } catch (error) {
+      const fallback =
+        error instanceof Error ? error.message : "Unable to reach Toron at the moment.";
+
+      addMessage(sessionId, {
+        id: nanoid(),
+        sender: "toron",
+        text: fallback,
+        timestamp: Date.now(),
+      });
+    } finally {
+      setIsSending(false);
+    }
+  }, [activeSessionId, addMessage, ask, autoGenerateTitleFromFirstToronReply, value]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">

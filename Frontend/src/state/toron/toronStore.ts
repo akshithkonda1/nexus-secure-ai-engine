@@ -1,14 +1,45 @@
-import { create } from "zustand";
 import { nanoid } from "nanoid";
+import { create } from "zustand";
 
-export const useToronStore = create((set, get) => ({
+import type { ToronMessage, ToronProject } from "@/pages/Toron/toronTypes";
+
+type ToronSession = {
+  id: string;
+  title: string;
+  messages: ToronMessage[];
+  createdAt: number;
+  updatedAt: number;
+};
+
+type ToronStore = {
+  sessions: ToronSession[];
+  activeSessionId: string | null;
+  projects: ToronProject[];
+  activeProjectId: string | null;
+  createSession: () => string;
+  setActiveSession: (id: string) => void;
+  addMessage: (sessionId: string, message: ToronMessage) => void;
+  deleteSession: (sessionId: string) => void;
+  renameSession: (sessionId: string, newTitle: string) => void;
+  autoGenerateTitleFromFirstToronReply: (sessionId: string) => void;
+  createProject: (name: string) => string;
+  renameProject: (projectId: string, newName: string) => void;
+  deleteProject: (projectId: string) => void;
+  setProject: (projectId: string) => void;
+};
+
+const initialProjectId = nanoid();
+
+export const useToronStore = create<ToronStore>((set, get) => ({
   sessions: [],
   activeSessionId: null,
+  projects: [{ id: initialProjectId, name: "General" }],
+  activeProjectId: initialProjectId,
 
   createSession: () => {
     const id = nanoid();
 
-    const session = {
+    const session: ToronSession = {
       id,
       title: "New Session",
       messages: [],
@@ -75,5 +106,47 @@ export const useToronStore = create((set, get) => ({
         s.id === sessionId ? { ...s, title } : s
       ),
     }));
+  },
+
+  createProject: (name) => {
+    const id = nanoid();
+    const project: ToronProject = { id, name };
+
+    set((state) => ({
+      projects: [...state.projects, project],
+      activeProjectId: id,
+    }));
+
+    return id;
+  },
+
+  renameProject: (projectId, newName) => {
+    set((state) => ({
+      projects: state.projects.map((project) =>
+        project.id === projectId ? { ...project, name: newName } : project,
+      ),
+    }));
+  },
+
+  deleteProject: (projectId) => {
+    set((state) => {
+      const remaining = state.projects.filter((project) => project.id !== projectId);
+      const fallbackProjectId =
+        state.activeProjectId === projectId
+          ? remaining[0]?.id ?? null
+          : state.activeProjectId;
+
+      return {
+        projects: remaining,
+        activeProjectId: fallbackProjectId,
+      };
+    });
+  },
+
+  setProject: (projectId) => {
+    const projectExists = get().projects.some((project) => project.id === projectId);
+    if (!projectExists) return;
+
+    set({ activeProjectId: projectId });
   },
 }));
