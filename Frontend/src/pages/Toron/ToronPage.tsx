@@ -63,8 +63,8 @@ export default function ToronPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision_block_id: plan.id }),
       });
+      const errorText = !res.ok ? await res.text() : null;
       if (!res.ok) {
-        const errorText = await res.text();
         throw new Error(errorText || "Plan approval failed");
       }
 
@@ -76,7 +76,8 @@ export default function ToronPage() {
         appendToMessage(planContext.projectId, planContext.toronMessageId, `\n${data?.reflection ?? "Plan executed."}`);
       }
     } catch (error) {
-      appendToMessage(planContext.projectId, planContext.toronMessageId, "Execution failed. Please retry.");
+      const errorMessage = error instanceof Error && error.message ? error.message : "Execution failed. Please retry.";
+      appendToMessage(planContext.projectId, planContext.toronMessageId, `Execution failed. ${errorMessage}`);
     } finally {
       setExecutingPlan(false);
       setStreaming(false);
