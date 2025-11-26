@@ -29,11 +29,16 @@ export const useToronStore = create<ToronStore>((set, get) => ({
   initialWelcomeShown: false,
 
   addMessage: (msg) => {
+    if (!msg) return;
+
+    const sender =
+      msg.sender === "user" || msg.sender === "toron" ? msg.sender : "toron";
+
     const safeMessage: ToronMessage = {
       id: msg.id ?? nanoid(),
-      text: msg.text ?? "",
+      text: typeof msg.text === "string" ? msg.text : "",
       timestamp: msg.timestamp ?? Date.now(),
-      sender: msg.sender,
+      sender,
       tokens: msg.tokens,
     };
 

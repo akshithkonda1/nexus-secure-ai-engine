@@ -5,12 +5,37 @@ import { useToronStore } from "@/state/toron/toronStore";
 
 import ToronMessageBubble from "./ToronMessageBubble";
 import ToronWelcome from "./ToronWelcome";
+import type { ToronMessage } from "./toronTypes";
+
+type NormalizedMessage = ToronMessage & { id: string; sender: string; text: string };
+
+const normalizeMessage = (message: ToronMessage): NormalizedMessage | null => {
+  if (!message) return null;
+
+  if (typeof message.text !== "string") {
+    console.warn("ToronMessageList skipped message with invalid text:", message);
+    return null;
+  }
+
+  if (!message.sender || typeof message.sender !== "string") {
+    console.warn("ToronMessageList skipped message with invalid sender:", message);
+    return null;
+  }
+
+  const id = message.id ?? crypto.randomUUID();
+
+  return { ...message, id, sender: message.sender, text: message.text };
+};
 
 export function ToronMessageList() {
   const { messages, initialWelcomeShown } = useToronStore();
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const safeMessages = useMemo(() => messages ?? [], [messages]);
+  const safeMessages = useMemo(() => {
+    return (messages ?? [])
+      .map(normalizeMessage)
+      .filter((message): message is NormalizedMessage => message !== null);
+  }, [messages]);
 
   const hasUserMessage = useMemo(
     () => safeMessages.some((msg) => msg.sender === "user"),
