@@ -65,3 +65,33 @@ class ToronEngine:
 
         self.global_rate_limiter.reset()
         self.user_rate_limiter.reset()
+
+    def generate_web_access_plan(self, url: str, reason: str) -> Dict[str, object]:
+        """Produce a reversible DecisionBlock for sandboxed web extraction."""
+
+        return {
+            "plan_name": "Extract Web Data",
+            "steps": [
+                {"action": "web_fetch", "params": {"url": url}},
+                {"action": "web_extract", "params": {}},
+            ],
+            "reversible": True,
+            "risk": "Low",
+            "reason": reason,
+        }
+
+    def reflect_web_data(self, block: Dict[str, object], extracted_json: Dict[str, object]) -> Dict[str, object]:
+        """Reflect on extraction results versus planned actions."""
+
+        headings = extracted_json.get("headings", []) if isinstance(extracted_json, dict) else []
+        paragraphs = extracted_json.get("paragraphs", []) if isinstance(extracted_json, dict) else []
+        tables = extracted_json.get("tables", []) if isinstance(extracted_json, dict) else []
+        links = extracted_json.get("links", []) if isinstance(extracted_json, dict) else []
+
+        summary = {
+            "summary": f"Captured {len(headings)} headings, {len(paragraphs)} paragraphs, {len(tables)} tables, and {len(links)} links.",
+            "plan_reference": block,
+            "accuracy_boost": "context_enriched" if paragraphs else "neutral",
+        }
+
+        return summary
