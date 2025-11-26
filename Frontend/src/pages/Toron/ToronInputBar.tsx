@@ -24,9 +24,13 @@ export default function ToronInputBar() {
   async function sendMessage() {
     if (!inputValue.trim() || !activeSessionId) return;
 
-    // 1. Add user message locally
-    addMessage(activeSessionId, {
-      id: nanoid(),
+    const userMessageId = nanoid();
+    const toronMessageId = nanoid();
+    const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
+    const sessionId = nanoid();
+
+    addMessage({
+      id: userMessageId,
       sender: "user",
       text: inputValue,
       timestamp: Date.now(),
@@ -36,33 +40,99 @@ export default function ToronInputBar() {
     setInputValue("");
     setSending(true);
 
+    const finishStreaming = () => {
+      setStreaming(false);
+      setLoading(false);
+    };
+
+    const fallback = async () => {
+      try {
+        const res = await fetch("/api/v1/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await res.json().catch(() => null);
+        const outputString = data?.answer ?? `Toron received: "${prompt}"`;
+
+        await simulateStream(outputString, projectId, toronMessageId);
+      } catch (error) {
+        await simulateStream(
+          "Toron is warming up. Let's try that again in a moment.",
+          projectId,
+          toronMessageId,
+        );
+      } finally {
+        finishStreaming();
+      }
+    };
+
+    let streamClosed = false;
+    let fallbackTriggered = false;
+    const stream = new EventSource(`/api/v1/toron/stream/${sessionId}`);
+
+    const closeStream = () => {
+      if (streamClosed) return;
+      streamClosed = true;
+      stream.close();
+    };
+
+    stream.onmessage = (event) => {
+      const parsed = (() => {
+        try {
+          return JSON.parse(event.data);
+        } catch (error) {
+          return null;
+        }
+      })();
+
+      if (parsed?.done || event.data === "[DONE]") {
+        fallbackTriggered = true;
+        closeStream();
+        finishStreaming();
+        return;
+      }
+
+      const chunk = parsed?.delta ?? parsed?.token ?? event.data ?? "";
+      if (chunk) {
+        appendToMessage(projectId, toronMessageId, chunk);
+      }
+    };
+
+    stream.onerror = () => {
+      closeStream();
+      if (!fallbackTriggered) {
+        fallbackTriggered = true;
+        void fallback();
+      }
+    };
+
     try {
-      // 2. Send to backend
-      const res = await fetch("/api/v1/toron/ask", {
+      const res = await fetch(`/api/v1/toron/stream/${sessionId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: activeSessionId,
-          message: msg,
-        }),
+        body: JSON.stringify({ message: prompt, sessionId }),
       });
 
-      const data = await res.json();
-
-      // 3. Insert Toron reply
-      addMessage(activeSessionId, {
-        id: nanoid(),
-        sender: "toron",
-        text: data.reply,
-        timestamp: Date.now(),
-      });
-
-      // 4. Title auto-generation
-      autoGenerateTitleFromFirstToronReply(activeSessionId);
-    } finally {
-      setSending(false);
+      if (!res.ok) throw new Error("Toron stream failed to start");
+    } catch (error) {
+      closeStream();
+      if (!fallbackTriggered) {
+        fallbackTriggered = true;
+        await fallback();
+      }
     }
-  }
+  }, [
+    activeProjectId,
+    addMessage,
+    appendToMessage,
+    setLoading,
+    setStreaming,
+    simulateStream,
+    streaming,
+    value,
+  ]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">
