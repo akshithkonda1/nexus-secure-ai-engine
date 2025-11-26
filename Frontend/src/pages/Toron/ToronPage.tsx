@@ -1,30 +1,49 @@
-import { useEffect, useState } from "react";
-
-import ToronHeader from "@/components/toron/ToronHeader";
-import { useToronStore } from "@/state/toron/toronStore";
-
-import ToronInputBar from "./ToronInputBar";
-import ToronMessageList from "./ToronMessageList";
-import ToronProjectsModal from "./ToronProjectsModal";
+import { useEffect } from "react";
+import { ToronHeader } from "@/components/toron/ToronHeader";
+import { ToronMessageList } from "@/pages/Toron/ToronMessageList";
+import { ToronInputBar } from "@/pages/Toron/ToronInputBar";
+import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { ToronSessionSidebar } from "@/pages/Toron/ToronSessionSidebar";
 
 export default function ToronPage() {
-  const { activeProjectId, projects, setProject, clearChat } = useToronStore();
-  const [projectsOpen, setProjectsOpen] = useState(false);
+  const {
+    sessions,
+    activeSessionId,
+    hydrateSessions,
+    createSession,
+  } = useToronSessionStore();
 
   useEffect(() => {
-    if (!activeProjectId && projects.length) {
-      setProject(projects[0].id);
-    }
-  }, [activeProjectId, projects, setProject]);
+    // initial load
+    hydrateSessions().then(async () => {
+      // if no sessions exist, create the first one
+      const hasAny = Object.keys(useToronSessionStore.getState().sessions).length > 0;
+      if (!hasAny) {
+        await createSession("New Toron Session");
+      }
+    });
+  }, [hydrateSessions, createSession]);
+
+  const activeSession = activeSessionId
+    ? sessions[activeSessionId]
+    : null;
 
   return (
-    <main className="relative flex h-full flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.12),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(99,102,241,0.14),transparent_50%),radial-gradient(circle_at_60%_70%,rgba(16,185,129,0.12),transparent_50%)] blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.06),transparent_45%),linear-gradient(200deg,rgba(255,255,255,0.05),transparent_50%)]" />
-      <ToronHeader onOpenProjects={() => setProjectsOpen(true)} onNewChat={() => clearChat()} />
-      <ToronMessageList />
-      <ToronInputBar />
-      {projectsOpen && <ToronProjectsModal onClose={() => setProjectsOpen(false)} />}
+    <main className="relative flex h-full min-h-screen flex-row">
+      <section className="flex min-h-screen flex-1 flex-col">
+        <ToronHeader />
+        <ToronMessageList
+          session={activeSession}
+        />
+        <ToronInputBar
+          sessionId={activeSession?.sessionId ?? null}
+        />
+      </section>
+
+      {/* Right-hand session list, ChatGPT-style */}
+      <aside className="hidden w-72 border-l border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] lg:block">
+        <ToronSessionSidebar />
+      </aside>
     </main>
   );
 }
