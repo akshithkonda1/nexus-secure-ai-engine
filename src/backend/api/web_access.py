@@ -9,6 +9,7 @@ from typing import Any, Dict
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import AnyHttpUrl, BaseModel, Field
 
 from src.backend.core.toron.micro_agents import web_extract_agent, web_fetch_agent
@@ -62,9 +63,12 @@ async def prepare_web_access(payload: PrepareRequest) -> PrepareResponse:
 
 @router.post("/approve", response_model=ApproveResponse)
 async def approve_web_access(payload: ApproveRequest) -> ApproveResponse:
+    def _fetch_and_extract(url: str) -> Dict[str, Any]:
+        html = web_fetch_agent.run_web_fetch(url)
+        return web_extract_agent.run_web_extract(html)
+
     try:
-        html = web_fetch_agent.run_web_fetch(str(payload.url))
-        extracted = web_extract_agent.run_web_extract(html)
+        extracted = await run_in_threadpool(_fetch_and_extract, str(payload.url))
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
