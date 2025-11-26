@@ -20,7 +20,10 @@ export default function ToronMessageList() {
         (message): message is ToronMessage =>
           typeof message?.text === "string" && Boolean(message?.sender),
       )
-      .map((message) => ({ ...message, id: message.id ?? crypto.randomUUID() }));
+      .map((message) => ({
+        ...message,
+        id: message.id ?? `${message.sender}-${message.timestamp}`,
+      }));
   }, [messages]);
 
   useEffect(() => {
