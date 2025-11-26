@@ -28,6 +28,93 @@ export default function ToronPage() {
     ? sessions[activeSessionId]
     : null;
 
+  const prepareWebAccess = useCallback(
+    async (url: string, reason: string) => {
+      try {
+        const res = await fetch("/api/v1/web/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, reason }),
+        });
+
+        const data = await res.json();
+        setConsentData(data);
+        setConsentReason(reason);
+        setShowConsent(true);
+      } catch (err) {
+        console.error("Failed to prepare web access", err);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!messages.length) return;
+
+    const latestUser = [...messages].reverse().find((msg) => msg.sender === "user");
+    if (!latestUser) return;
+
+    const match = latestUser.text.match(/https?:\/\/[^\s>]+/);
+    if (!match) return;
+
+    const candidateUrl = match[0].replace(/[),.;]+$/, "");
+
+    if (candidateUrl !== detectedUrl && candidateUrl !== lastApprovedUrl) {
+      setDetectedUrl(candidateUrl);
+      prepareWebAccess(candidateUrl, `User requested web context for ${candidateUrl}`);
+    }
+  }, [messages, detectedUrl, lastApprovedUrl, prepareWebAccess]);
+
+  const handleApproval = useCallback(
+    async (allowOnce: boolean) => {
+      if (!consentData) return;
+      setWebLoading(true);
+      try {
+        const res = await fetch("/api/v1/web/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: consentData.url,
+            session_id: consentData.session_id,
+            allow_once: allowOnce,
+          }),
+        });
+
+        const data = await res.json();
+        setExtractedData(data.extracted);
+        setSessionId(data.session_id);
+        setShowConsent(false);
+        setLastApprovedUrl(consentData.url);
+        const headings = data.extracted?.headings?.length ?? 0;
+        const paragraphs = data.extracted?.paragraphs?.length ?? 0;
+        const tables = data.extracted?.tables?.length ?? 0;
+        const links = data.extracted?.links?.length ?? 0;
+        setDecisionBlock({
+          planName: "Extract Web Data",
+          steps: [
+            { action: "web_fetch", params: { url: consentData.url } },
+            { action: "web_extract", params: {} },
+          ],
+          reversible: true,
+          risk: "Low",
+          reflection: `Captured ${headings} headings, ${paragraphs} paragraphs, ${tables} tables, and ${links} links to enrich reasoning.`,
+          reason: consentReason,
+        });
+      } catch (err) {
+        console.error("Web approval failed", err);
+      } finally {
+        setWebLoading(false);
+      }
+    },
+    [consentData, consentReason],
+  );
+
+  const clearExtraction = useCallback(() => {
+    setExtractedData(null);
+    setDecisionBlock(null);
+    setSessionId(null);
+  }, []);
+
   return (
     <main className="relative flex h-full min-h-screen flex-row">
       <section className="flex min-h-screen flex-1 flex-col">
