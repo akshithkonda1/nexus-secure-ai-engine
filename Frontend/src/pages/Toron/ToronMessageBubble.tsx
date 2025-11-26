@@ -16,8 +16,18 @@ const bubbleVariants = {
 };
 
 export function ToronMessageBubble({ message }: ToronMessageBubbleProps) {
-  if (!message || typeof message.text !== "string") {
-    console.warn("Invalid message:", message);
+  if (!message) {
+    console.warn("ToronMessageBubble received null/undefined message.");
+    return null;
+  }
+
+  if (typeof message.text !== "string") {
+    console.warn("ToronMessageBubble skipped invalid text:", message);
+    return null;
+  }
+
+  if (!message.sender || typeof message.sender !== "string") {
+    console.warn("ToronMessageBubble skipped invalid sender:", message);
     return null;
   }
 
