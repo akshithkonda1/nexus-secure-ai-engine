@@ -1,14 +1,13 @@
+export type ToronSender = "user" | "toron";
+
 export interface ToronMessage {
   id: string;
-  sender: "user" | "toron";
+  sender: ToronSender;
   text: string;
   timestamp: number;
-  tokens?: number;
 }
 
 export interface ToronProject {
   id: string;
   name: string;
-  summary?: string;
-  messages: ToronMessage[];
 }

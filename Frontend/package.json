@@ -28,6 +28,7 @@
     "react-easy-crop": "^5.5.3",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.6",
+    "react-textarea-autosize": "^8.5.9",
     "recharts": "^2.13.2",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",

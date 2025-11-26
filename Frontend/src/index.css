@@ -8,6 +8,11 @@
 
 :root {
   font-feature-settings: "salt" 1;
+  --toron-glass-light: rgba(255, 255, 255, 0.45);
+  --toron-glass-dark: rgba(0, 40, 60, 0.45);
+  --toron-cosmic-primary: #00e1ff;
+  --toron-cosmic-secondary: #9a4dff;
+  --toron-bubble-user: #007aff;
 }
 
 body {
