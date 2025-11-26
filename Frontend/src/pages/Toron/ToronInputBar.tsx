@@ -1,17 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { useRyuzenClient } from "@/api/useRyuzenClient";
 import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
   const { activeSessionId, addMessage, autoGenerateTitleFromFirstToronReply } =
     useToronStore();
-  const { ask } = useRyuzenClient();
-  const [value, setValue] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [sending, setSending] = useState(false);
 
   const glassStyles = useMemo(
     () => ({
@@ -21,50 +19,50 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = isSending || !value.trim() || !activeSessionId;
+  const disabled = !inputValue.trim() || sending || !activeSessionId;
 
-  const handleSend = useCallback(async () => {
-    const prompt = value.trim();
-    if (!prompt || !activeSessionId) return;
+  async function sendMessage() {
+    if (!inputValue.trim() || !activeSessionId) return;
 
-    const sessionId = activeSessionId;
-
-    addMessage(sessionId, {
+    // 1. Add user message locally
+    addMessage(activeSessionId, {
       id: nanoid(),
       sender: "user",
-      text: prompt,
+      text: inputValue,
       timestamp: Date.now(),
     });
 
-    setValue("");
-    setIsSending(true);
+    const msg = inputValue;
+    setInputValue("");
+    setSending(true);
 
     try {
-      const response = await ask<{ result?: string }>({ prompt });
-      const toronMessage = response?.result ?? "Toron couldn’t generate a response.";
+      // 2. Send to backend
+      const res = await fetch("/api/v1/toron/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: activeSessionId,
+          message: msg,
+        }),
+      });
 
-      addMessage(sessionId, {
+      const data = await res.json();
+
+      // 3. Insert Toron reply
+      addMessage(activeSessionId, {
         id: nanoid(),
         sender: "toron",
-        text: toronMessage,
+        text: data.reply,
         timestamp: Date.now(),
       });
 
-      autoGenerateTitleFromFirstToronReply(sessionId);
-    } catch (error) {
-      const fallback =
-        error instanceof Error ? error.message : "Unable to reach Toron at the moment.";
-
-      addMessage(sessionId, {
-        id: nanoid(),
-        sender: "toron",
-        text: fallback,
-        timestamp: Date.now(),
-      });
+      // 4. Title auto-generation
+      autoGenerateTitleFromFirstToronReply(activeSessionId);
     } finally {
-      setIsSending(false);
+      setSending(false);
     }
-  }, [activeSessionId, addMessage, ask, autoGenerateTitleFromFirstToronReply, value]);
+  }
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">
@@ -74,22 +72,27 @@ export default function ToronInputBar() {
       >
         <div className="flex-1">
           <TextareaAutosize
-            value={value}
+            value={inputValue}
             minRows={1}
             maxRows={6}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSend();
+                void sendMessage();
               }
             }}
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
+          {sending && (
+            <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
+              <span className="animate-pulse">Toron is thinking…</span>
+            </div>
+          )}
         </div>
         <button
-          onClick={handleSend}
+          onClick={() => void sendMessage()}
           disabled={disabled}
           className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[var(--toron-cosmic-primary)] to-[var(--toron-cosmic-secondary)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,225,255,0.35)] transition-all duration-150 ease-out enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(154,77,255,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
         >
