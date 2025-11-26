@@ -63,10 +63,15 @@ export const safeMessage = (raw: unknown): ToronMessage => {
   const baseId = nanoid();
   const obj = safeObject(raw as Record<string, unknown>, { id: baseId } as Record<string, unknown>);
   const timestamp = safeTimestamp(obj.timestamp);
+  const roleCandidate = obj.role ?? obj.sender;
+  const normalizedRole =
+    roleCandidate === "user" || roleCandidate === "assistant" || roleCandidate === "system"
+      ? roleCandidate
+      : "assistant";
   return {
     id: safeString(obj.id, baseId),
-    role: (obj.role === "user" || obj.role === "assistant" || obj.role === "system") ? obj.role : "assistant",
-    content: safeString(obj.content, ""),
+    role: normalizedRole,
+    content: safeString(obj.content ?? obj.text, ""),
     model: safeString(obj.model, "unknown-model"),
     timestamp,
   };
