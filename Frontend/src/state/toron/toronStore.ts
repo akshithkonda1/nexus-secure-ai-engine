@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { ToronMessage, ToronProject, ToronSender } from "@/pages/Toron/toronTypes";
 
-const DEFAULT_PROJECT: ToronProject = { id: "toron-default", name: "Personal Space" };
+export const DEFAULT_PROJECT: ToronProject = { id: "toron-default", name: "Personal Space" };
 
 type ToronState = {
   messages: ToronMessage[];
@@ -18,7 +18,7 @@ type ToronState = {
 
 type ToronActions = {
   addMessage: (message: Partial<ToronMessage> & { sender: ToronSender; text: string }) => void;
-  appendToLastMessage: (chunk: string) => void;
+  appendToMessage: (projectId: string, messageId: string, chunk: string) => void;
   clearChat: () => void;
   createProject: (name: string) => void;
   renameProject: (id: string, name: string) => void;
@@ -58,25 +58,32 @@ export const useToronStore = create<ToronState & ToronActions>()(
         }));
       },
 
-      appendToLastMessage: (chunk) =>
+      appendToMessage: (projectId, messageId, chunk) =>
         set((state) => {
-          const projectId = state.activeProjectId ?? DEFAULT_PROJECT.id;
+          const targetProjectId = projectId ?? DEFAULT_PROJECT.id;
           const updateList = (list: ToronMessage[]) => {
             if (!list.length) return list;
+            const targetIndex = list.findIndex((message) => message.id === messageId);
+            if (targetIndex === -1) return list;
+
             const updated = [...list];
-            const lastIndex = updated.length - 1;
-            updated[lastIndex] = {
-              ...updated[lastIndex],
-              text: `${updated[lastIndex].text}${chunk}`,
+            updated[targetIndex] = {
+              ...updated[targetIndex],
+              text: `${updated[targetIndex].text}${chunk}`,
             };
             return updated;
           };
 
+          const updatedProjectMessages = updateList(state.projectMessages[targetProjectId] ?? []);
+
           return {
-            messages: updateList(state.messages),
+            messages:
+              state.activeProjectId === targetProjectId
+                ? updateList(state.messages)
+                : state.messages,
             projectMessages: {
               ...state.projectMessages,
-              [projectId]: updateList(state.projectMessages[projectId] ?? []),
+              [targetProjectId]: updatedProjectMessages,
             },
           };
         }),

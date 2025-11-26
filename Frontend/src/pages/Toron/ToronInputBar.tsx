@@ -3,16 +3,17 @@ import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { useToronStore } from "@/state/toron/toronStore";
+import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
   const {
     addMessage,
-    appendToLastMessage,
+    appendToMessage,
     setStreaming,
     setLoading,
     streaming,
     loading,
+    activeProjectId,
   } = useToronStore();
   const [value, setValue] = useState("");
 
@@ -27,14 +28,14 @@ export default function ToronInputBar() {
   const disabled = !value.trim() || streaming || loading;
 
   const simulateStream = useCallback(
-    async (output: string) => {
+    async (output: string, projectId: string, messageId: string) => {
       for (const char of output) {
-        appendToLastMessage(char);
+        appendToMessage(projectId, messageId, char);
         // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve) => setTimeout(resolve, 12));
       }
     },
-    [appendToLastMessage],
+    [appendToMessage],
   );
 
   const handleSend = useCallback(async () => {
@@ -43,6 +44,7 @@ export default function ToronInputBar() {
 
     const userMessageId = nanoid();
     const toronMessageId = nanoid();
+    const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
 
     addMessage({
       id: userMessageId,
@@ -72,14 +74,26 @@ export default function ToronInputBar() {
       const data = await res.json().catch(() => null);
       const outputString = data?.answer ?? `Toron received: "${prompt}"`;
 
-      await simulateStream(outputString);
+      await simulateStream(outputString, projectId, toronMessageId);
     } catch (error) {
-      await simulateStream("Toron is warming up. Let's try that again in a moment.");
+      await simulateStream(
+        "Toron is warming up. Let's try that again in a moment.",
+        projectId,
+        toronMessageId,
+      );
     } finally {
       setStreaming(false);
       setLoading(false);
     }
-  }, [addMessage, setLoading, setStreaming, simulateStream, streaming, value]);
+  }, [
+    activeProjectId,
+    addMessage,
+    setLoading,
+    setStreaming,
+    simulateStream,
+    streaming,
+    value,
+  ]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">
