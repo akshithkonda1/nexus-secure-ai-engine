@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 
-import { useToronStore } from "@/state/toron/toronStore";
+type ToronInputBarProps = {
+  onSend: (value: string) => Promise<void> | void;
+  loading?: boolean;
+};
 
-export default function ToronInputBar() {
-  const { addMessage, simulateToronReply, loading } = useToronStore();
+export default function ToronInputBar({ onSend, loading = false }: ToronInputBarProps) {
   const [value, setValue] = useState("");
 
   const glassVars = useMemo(
@@ -14,23 +16,18 @@ export default function ToronInputBar() {
     [],
   );
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = value.trim();
     if (!text || loading) return;
 
-    addMessage({
-      sender: "user",
-      text,
-    });
-
-    simulateToronReply(text);
     setValue("");
+    await onSend(text);
   };
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-6">
       <div
-        className="pointer-events-auto flex w-full max-w-5xl items-center gap-3 rounded-full border border-white/30 bg-white/60 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.25)] dark:border-white/10 dark:bg-white/5"
+        className="pointer-events-auto flex w-full max-w-5xl items-center gap-3 rounded-full border border-white/30 bg-white/60 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition-all duration-150 ease-out hover:-translate-y-[1px] hover:shadow-[0_22px_70px_rgba(0,0,0,0.25)] dark:border-white/10 dark:bg-white/5"
         style={glassVars}
       >
         <div className="flex-1">
@@ -56,7 +53,7 @@ export default function ToronInputBar() {
         <button
           onClick={handleSend}
           disabled={!value.trim() || loading}
-          className="group relative overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(59,130,246,0.4)] transition enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(99,102,241,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative overflow-hidden rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(59,130,246,0.4)] transition-all duration-150 ease-out enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(99,102,241,0.55)] enabled:focus-visible:shadow-[0_18px_46px_rgba(99,102,241,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="relative">Send</span>
           <span

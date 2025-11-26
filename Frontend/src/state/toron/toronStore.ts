@@ -7,16 +7,16 @@ type ToronStore = {
   messages: ToronMessage[];
   projects: ToronProject[];
   activeProjectId: string | null;
+  projectContext: string;
   loading: boolean;
   initialWelcomeShown: boolean;
-  addMessage: (
-    msg: Omit<ToronMessage, "id" | "timestamp"> &
-      Partial<Pick<ToronMessage, "id" | "timestamp">>,
-  ) => void;
-  simulateToronReply: (text: string) => void;
+  addMessage: (msg: ToronMessage) => void;
+  appendToMessage: (id: string, chunk: string) => void;
   clearChat: () => void;
-  setProject: (id: string) => void;
-  createProject: (name: string) => void;
+  setProjectContext: (context: string) => void;
+  setActiveProjectId: (id: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  createProject: (name: string, summary?: string) => void;
   deleteProject: (id: string) => void;
 };
 
@@ -24,96 +24,98 @@ export const useToronStore = create<ToronStore>((set, get) => ({
   messages: [],
   projects: [],
   activeProjectId: null,
+  projectContext: "",
   loading: false,
   initialWelcomeShown: false,
 
   addMessage: (msg) => {
-    const newMsg: ToronMessage = { id: nanoid(), timestamp: Date.now(), ...msg };
+    const safeMessage: ToronMessage = {
+      id: msg.id ?? nanoid(),
+      text: msg.text ?? "",
+      timestamp: msg.timestamp ?? Date.now(),
+      sender: msg.sender,
+      tokens: msg.tokens,
+    };
 
     set((state) => {
-      const updatedProjects = state.activeProjectId
-        ? state.projects.map((p) =>
-            p.id === state.activeProjectId
-              ? { ...p, messages: [...p.messages, newMsg] }
-              : p,
+      const projects = state.activeProjectId
+        ? state.projects.map((project) =>
+            project.id === state.activeProjectId
+              ? {
+                  ...project,
+                  messages: [...(project.messages ?? []), safeMessage],
+                }
+              : project,
           )
         : state.projects;
 
       return {
-        messages: [...state.messages, newMsg],
-        projects: updatedProjects,
+        messages: [...state.messages, safeMessage],
+        projects,
         initialWelcomeShown: true,
       };
     });
   },
 
-  simulateToronReply: (text) => {
-    set({ loading: true });
+  appendToMessage: (id, chunk) =>
+    set((state) => {
+      const appendChunk = (messageList: ToronMessage[]) =>
+        messageList.map((message) =>
+          message.id === id
+            ? { ...message, text: `${message.text ?? ""}${chunk}` }
+            : message,
+        );
 
-    let buffer = "";
-    const reply = `Toron received: "${text}"`;
-
-    reply.split("").forEach((char, i) => {
-      setTimeout(() => {
-        buffer += char;
-
-        if (i === reply.length - 1) {
-          const toronMessage: ToronMessage = {
-            id: nanoid(),
-            sender: "toron",
-            text: buffer,
-            timestamp: Date.now(),
-          };
-
-          set((state) => {
-            const updatedProjects = state.activeProjectId
-              ? state.projects.map((p) =>
-                  p.id === state.activeProjectId
-                    ? { ...p, messages: [...p.messages, toronMessage] }
-                    : p,
-                )
-              : state.projects;
-
-            return {
-              messages: [...state.messages, toronMessage],
-              projects: updatedProjects,
-              loading: false,
-            };
-          });
-        }
-      }, i * 25);
-    });
-  },
-
-  clearChat: () => {
-    const activeProjectId = get().activeProjectId;
-
-    set((state) => ({
-      messages: [],
-      projects: activeProjectId
+      const projects = state.activeProjectId
         ? state.projects.map((project) =>
-            project.id === activeProjectId
+            project.id === state.activeProjectId
+              ? { ...project, messages: appendChunk(project.messages ?? []) }
+              : project,
+          )
+        : state.projects;
+
+      return {
+        messages: appendChunk(state.messages),
+        projects,
+      };
+    }),
+
+  clearChat: () =>
+    set((state) => {
+      const projects = state.activeProjectId
+        ? state.projects.map((project) =>
+            project.id === state.activeProjectId
               ? { ...project, messages: [] }
               : project,
           )
-        : state.projects,
-      initialWelcomeShown: false,
-    }));
-  },
+        : state.projects;
 
-  setProject: (id) => {
-    const target = get().projects.find((p) => p.id === id);
+      return {
+        messages: [],
+        projects,
+        projectContext: "",
+        initialWelcomeShown: false,
+      };
+    }),
+
+  setProjectContext: (context) => set({ projectContext: context ?? "" }),
+
+  setActiveProjectId: (id) => {
+    const target = id ? get().projects.find((project) => project.id === id) : null;
     set({
-      activeProjectId: id,
-      messages: target ? target.messages : [],
+      activeProjectId: id ?? null,
+      messages: target?.messages ?? [],
+      projectContext: target?.summary ?? get().projectContext ?? "",
     });
   },
 
-  createProject: (name) =>
+  setLoading: (loading) => set({ loading }),
+
+  createProject: (name, summary = "") =>
     set((state) => ({
       projects: [
         ...state.projects,
-        { id: nanoid(), name, messages: [] },
+        { id: nanoid(), name, summary, messages: [] },
       ],
     })),
 
@@ -121,7 +123,7 @@ export const useToronStore = create<ToronStore>((set, get) => ({
     set((state) => ({
       projects: state.projects.filter((p) => p.id !== id),
       ...(state.activeProjectId === id
-        ? { activeProjectId: null, messages: [] }
+        ? { activeProjectId: null, messages: [], projectContext: "" }
         : {}),
     })),
 }));

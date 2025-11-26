@@ -9,5 +9,6 @@ export interface ToronMessage {
 export interface ToronProject {
   id: string;
   name: string;
+  summary?: string;
   messages: ToronMessage[];
 }

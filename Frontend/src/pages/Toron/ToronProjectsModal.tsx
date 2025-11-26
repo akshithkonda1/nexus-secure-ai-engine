@@ -2,13 +2,15 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 import { useToronStore } from "@/state/toron/toronStore";
+import type { ToronProject } from "./toronTypes";
 
 type ToronProjectsModalProps = {
   onClose: () => void;
+  onSelectProject?: (project: ToronProject) => void;
 };
 
-export default function ToronProjectsModal({ onClose }: ToronProjectsModalProps) {
-  const { projects, setProject, createProject, deleteProject } = useToronStore();
+export default function ToronProjectsModal({ onClose, onSelectProject }: ToronProjectsModalProps) {
+  const { projects, createProject, deleteProject, setActiveProjectId } = useToronStore();
   const [newName, setNewName] = useState("");
 
   const handleCreate = () => {
@@ -17,14 +19,22 @@ export default function ToronProjectsModal({ onClose }: ToronProjectsModalProps)
     setNewName("");
   };
 
+  const handleSelect = (project: ToronProject) => {
+    if (onSelectProject) {
+      onSelectProject(project);
+    } else {
+      setActiveProjectId(project.id);
+    }
+  };
+
   return (
     <motion.div
-      className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md flex items-center justify-center"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-md"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
       <motion.div
-        className="w-[420px] bg-[var(--panel-elevated)] rounded-3xl p-6 border border-[var(--border-soft)] shadow-xl"
+        className="w-[420px] rounded-3xl border border-[var(--border-soft)] bg-[var(--panel-elevated)] p-6 shadow-xl"
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
       >
@@ -32,26 +42,25 @@ export default function ToronProjectsModal({ onClose }: ToronProjectsModalProps)
           Toron Projects
         </h2>
 
-        <div className="mt-4 space-y-2 max-h-[260px] overflow-y-auto pr-1">
+        <div className="mt-4 max-h-[260px] space-y-2 overflow-y-auto pr-1">
           {projects.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between p-3 rounded-xl
-                         bg-[var(--panel-strong)] border border-[var(--border-soft)]"
+              className="flex items-center justify-between rounded-xl border border-[var(--border-soft)] bg-[var(--panel-strong)] p-3 transition hover:-translate-y-[1px] hover:border-[color-mix(in_srgb,var(--accent-primary),transparent_30%)] hover:shadow-lg"
             >
               <button
                 onClick={() => {
-                  setProject(p.id);
+                  handleSelect(p);
                   onClose();
                 }}
-                className="text-[var(--text-primary)] font-medium"
+                className="text-[var(--text-primary)] font-medium transition-colors hover:text-[color-mix(in_srgb,var(--accent-primary),transparent_20%)]"
               >
                 {p.name}
               </button>
 
               <button
                 onClick={() => deleteProject(p.id)}
-                className="text-red-400 text-sm"
+                className="text-sm text-red-400 transition hover:text-red-300"
               >
                 Delete
               </button>
@@ -64,14 +73,12 @@ export default function ToronProjectsModal({ onClose }: ToronProjectsModalProps)
             placeholder="New project name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="flex-1 px-3 py-2 rounded-xl bg-[var(--panel-strong)] 
-                       border border-[var(--border-soft)] text-[var(--text-primary)]"
+            className="flex-1 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-strong)] px-3 py-2 text-[var(--text-primary)] transition focus:border-[color-mix(in_srgb,var(--accent-primary),transparent_25%)] focus:outline-none"
           />
 
           <button
             onClick={handleCreate}
-            className="px-4 py-2 rounded-xl bg-[var(--accent-primary)] 
-                       text-black font-semibold"
+            className="rounded-xl bg-[var(--accent-primary)] px-4 py-2 text-black shadow-sm transition hover:-translate-y-[1px] hover:shadow-md"
           >
             Add
           </button>
@@ -79,8 +86,7 @@ export default function ToronProjectsModal({ onClose }: ToronProjectsModalProps)
 
         <button
           onClick={onClose}
-          className="mt-6 w-full py-2 rounded-xl bg-[var(--panel-strong)] 
-                     border border-[var(--border-soft)] text-[var(--text-secondary)]"
+          className="mt-6 w-full rounded-xl border border-[var(--border-soft)] bg-[var(--panel-strong)] py-2 text-[var(--text-secondary)] transition hover:-translate-y-[1px] hover:shadow-md"
         >
           Close
         </button>
