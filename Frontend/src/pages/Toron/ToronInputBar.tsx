@@ -3,19 +3,15 @@ import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import { useRyuzenClient } from "@/api/useRyuzenClient";
+import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
-  const {
-    addMessage,
-    appendToMessage,
-    setStreaming,
-    setLoading,
-    streaming,
-    loading,
-    activeProjectId,
-  } = useToronStore();
+  const { activeSessionId, addMessage, autoGenerateTitleFromFirstToronReply } =
+    useToronStore();
+  const { ask } = useRyuzenClient();
   const [value, setValue] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const glassStyles = useMemo(
     () => ({
@@ -25,75 +21,50 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = !value.trim() || streaming || loading;
-
-  const simulateStream = useCallback(
-    async (output: string, projectId: string, messageId: string) => {
-      for (const char of output) {
-        appendToMessage(projectId, messageId, char);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 12));
-      }
-    },
-    [appendToMessage],
-  );
+  const disabled = isSending || !value.trim() || !activeSessionId;
 
   const handleSend = useCallback(async () => {
     const prompt = value.trim();
-    if (!prompt || streaming) return;
+    if (!prompt || !activeSessionId) return;
 
-    const userMessageId = nanoid();
-    const toronMessageId = nanoid();
-    const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
+    const sessionId = activeSessionId;
 
-    addMessage({
-      id: userMessageId,
+    addMessage(sessionId, {
+      id: nanoid(),
       sender: "user",
       text: prompt,
       timestamp: Date.now(),
     });
 
-    addMessage({
-      id: toronMessageId,
-      sender: "toron",
-      text: "",
-      timestamp: Date.now(),
-    });
-
     setValue("");
-    setLoading(true);
-    setStreaming(true);
+    setIsSending(true);
 
     try {
-      const res = await fetch("/api/v1/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+      const response = await ask<{ result?: string }>({ prompt });
+      const toronMessage = response?.result ?? "Toron couldn’t generate a response.";
+
+      addMessage(sessionId, {
+        id: nanoid(),
+        sender: "toron",
+        text: toronMessage,
+        timestamp: Date.now(),
       });
 
-      const data = await res.json().catch(() => null);
-      const outputString = data?.answer ?? `Toron received: "${prompt}"`;
-
-      await simulateStream(outputString, projectId, toronMessageId);
+      autoGenerateTitleFromFirstToronReply(sessionId);
     } catch (error) {
-      await simulateStream(
-        "Toron is warming up. Let's try that again in a moment.",
-        projectId,
-        toronMessageId,
-      );
+      const fallback =
+        error instanceof Error ? error.message : "Unable to reach Toron at the moment.";
+
+      addMessage(sessionId, {
+        id: nanoid(),
+        sender: "toron",
+        text: fallback,
+        timestamp: Date.now(),
+      });
     } finally {
-      setStreaming(false);
-      setLoading(false);
+      setIsSending(false);
     }
-  }, [
-    activeProjectId,
-    addMessage,
-    setLoading,
-    setStreaming,
-    simulateStream,
-    streaming,
-    value,
-  ]);
+  }, [activeSessionId, addMessage, ask, autoGenerateTitleFromFirstToronReply, value]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">
@@ -116,11 +87,6 @@ export default function ToronInputBar() {
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
-          {(streaming || loading) && (
-            <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
-              <span className="animate-pulse">Toron is thinking…</span>
-            </div>
-          )}
         </div>
         <button
           onClick={handleSend}
