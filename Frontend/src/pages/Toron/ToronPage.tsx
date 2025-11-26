@@ -8,6 +8,9 @@ import { useToronStore } from "@/state/toron/toronStore";
 import ToronInputBar from "./ToronInputBar";
 import ToronMessageList from "./ToronMessageList";
 import ToronProjectsModal from "./ToronProjectsModal";
+import MicroAgentRunner from "./components/MicroAgentRunner";
+import ToronPlanPreview from "./modals/ToronPlanPreview";
+import type { DecisionBlock, MicroAgentResult } from "./toronTypes";
 
 export default function ToronPage() {
   const { activeProjectId, projects, setProject, clearChat, messages } = useToronStore();

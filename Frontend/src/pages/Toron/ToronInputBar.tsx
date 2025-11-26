@@ -1,14 +1,20 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
 import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import type { DecisionBlock } from "./toronTypes";
 
-export default function ToronInputBar() {
+type Props = {
+  onPlanReady: (plan: DecisionBlock, context: { toronMessageId: string; projectId: string }) => void;
+  onPlanError: (context: { toronMessageId: string; projectId: string }, message: string) => void;
+  onPlanPreparing?: () => void;
+};
+
+export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparing }: Props) {
   const {
     addMessage,
-    appendToMessage,
     setStreaming,
     setLoading,
     streaming,
@@ -27,17 +33,6 @@ export default function ToronInputBar() {
 
   const disabled = !value.trim() || streaming || loading;
 
-  const simulateStream = useCallback(
-    async (output: string, projectId: string, messageId: string) => {
-      for (const char of output) {
-        appendToMessage(projectId, messageId, char);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 12));
-      }
-    },
-    [appendToMessage],
-  );
-
   const handleSend = useCallback(async () => {
     const prompt = value.trim();
     if (!prompt || streaming) return;
@@ -45,42 +40,42 @@ export default function ToronInputBar() {
     const userMessageId = nanoid();
     const toronMessageId = nanoid();
     const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
+    const sessionId = nanoid();
 
     addMessage({
       id: userMessageId,
       sender: "user",
-      text: prompt,
+      text: inputValue,
       timestamp: Date.now(),
     });
 
     addMessage({
       id: toronMessageId,
       sender: "toron",
-      text: "",
+      text: "Toron is preparing a plan…\n",
       timestamp: Date.now(),
     });
 
     setValue("");
     setLoading(true);
     setStreaming(true);
+    onPlanPreparing?.();
 
     try {
-      const res = await fetch("/api/v1/ask", {
+      const res = await fetch("/api/v1/toron/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ user_prompt: prompt }),
       });
 
       const data = await res.json().catch(() => null);
-      const outputString = data?.answer ?? `Toron received: "${prompt}"`;
+      if (!data?.id) {
+        throw new Error("Plan generation failed");
+      }
 
-      await simulateStream(outputString, projectId, toronMessageId);
+      onPlanReady(data as DecisionBlock, { toronMessageId, projectId });
     } catch (error) {
-      await simulateStream(
-        "Toron is warming up. Let's try that again in a moment.",
-        projectId,
-        toronMessageId,
-      );
+      onPlanError({ toronMessageId, projectId }, "Unable to generate plan right now.");
     } finally {
       setStreaming(false);
       setLoading(false);
@@ -88,11 +83,14 @@ export default function ToronInputBar() {
   }, [
     activeProjectId,
     addMessage,
+    appendToMessage,
     setLoading,
     setStreaming,
-    simulateStream,
     streaming,
     value,
+    onPlanReady,
+    onPlanError,
+    onPlanPreparing,
   ]);
 
   return (
@@ -103,27 +101,27 @@ export default function ToronInputBar() {
       >
         <div className="flex-1">
           <TextareaAutosize
-            value={value}
+            value={inputValue}
             minRows={1}
             maxRows={6}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSend();
+                void sendMessage();
               }
             }}
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
-          {(streaming || loading) && (
+          {sending && (
             <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
               <span className="animate-pulse">Toron is thinking…</span>
             </div>
           )}
         </div>
         <button
-          onClick={handleSend}
+          onClick={() => void sendMessage()}
           disabled={disabled}
           className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[var(--toron-cosmic-primary)] to-[var(--toron-cosmic-secondary)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,225,255,0.35)] transition-all duration-150 ease-out enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(154,77,255,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
         >

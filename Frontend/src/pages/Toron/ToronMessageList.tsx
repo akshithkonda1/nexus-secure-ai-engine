@@ -10,7 +10,11 @@ import type { ToronMessage } from "./toronTypes";
 type StableMessage = ToronMessage & { id: string };
 
 export default function ToronMessageList() {
-  const { messages, welcomeShown, streaming } = useToronStore();
+  const { sessions, activeSessionId } = useToronStore();
+
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const messages = activeSession?.messages || [];
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
@@ -20,7 +24,10 @@ export default function ToronMessageList() {
         (message): message is ToronMessage =>
           typeof message?.text === "string" && Boolean(message?.sender),
       )
-      .map((message) => ({ ...message, id: message.id ?? crypto.randomUUID() }));
+      .map((message) => ({
+        ...message,
+        id: message.id ?? `${message.sender}-${message.timestamp}`,
+      }));
   }, [messages]);
 
   useEffect(() => {
@@ -29,13 +36,13 @@ export default function ToronMessageList() {
     requestAnimationFrame(() => {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     });
-  }, [safeMessages, streaming]);
+  }, [safeMessages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [safeMessages.length, streaming]);
+  }, [safeMessages.length]);
 
-  const showWelcome = welcomeShown && safeMessages.length === 0;
+  const showWelcome = safeMessages.length === 0;
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -56,7 +63,6 @@ export default function ToronMessageList() {
                 <ToronMessageBubble
                   message={message}
                   index={index}
-                  isStreaming={streaming && index === safeMessages.length - 1 && message.sender === "toron"}
                 />
               </motion.div>
             ))}
