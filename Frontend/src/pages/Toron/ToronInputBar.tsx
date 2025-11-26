@@ -4,11 +4,17 @@ import TextareaAutosize from "react-textarea-autosize";
 import { nanoid } from "nanoid";
 
 import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import type { DecisionBlock } from "./toronTypes";
 
-export default function ToronInputBar() {
+type Props = {
+  onPlanReady: (plan: DecisionBlock, context: { toronMessageId: string; projectId: string }) => void;
+  onPlanError: (context: { toronMessageId: string; projectId: string }, message: string) => void;
+  onPlanPreparing?: () => void;
+};
+
+export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparing }: Props) {
   const {
     addMessage,
-    appendToMessage,
     setStreaming,
     setLoading,
     streaming,
@@ -26,17 +32,6 @@ export default function ToronInputBar() {
   );
 
   const disabled = !value.trim() || streaming || loading;
-
-  const simulateStream = useCallback(
-    async (output: string, projectId: string, messageId: string) => {
-      for (const char of output) {
-        appendToMessage(projectId, messageId, char);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 12));
-      }
-    },
-    [appendToMessage],
-  );
 
   const handleSend = useCallback(async () => {
     const prompt = value.trim();
@@ -56,31 +51,30 @@ export default function ToronInputBar() {
     addMessage({
       id: toronMessageId,
       sender: "toron",
-      text: "",
+      text: "Toron is preparing a plan…\n",
       timestamp: Date.now(),
     });
 
     setValue("");
     setLoading(true);
     setStreaming(true);
+    onPlanPreparing?.();
 
     try {
-      const res = await fetch("/api/v1/ask", {
+      const res = await fetch("/api/v1/toron/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ user_prompt: prompt }),
       });
 
       const data = await res.json().catch(() => null);
-      const outputString = data?.answer ?? `Toron received: "${prompt}"`;
+      if (!data?.id) {
+        throw new Error("Plan generation failed");
+      }
 
-      await simulateStream(outputString, projectId, toronMessageId);
+      onPlanReady(data as DecisionBlock, { toronMessageId, projectId });
     } catch (error) {
-      await simulateStream(
-        "Toron is warming up. Let's try that again in a moment.",
-        projectId,
-        toronMessageId,
-      );
+      onPlanError({ toronMessageId, projectId }, "Unable to generate plan right now.");
     } finally {
       setStreaming(false);
       setLoading(false);
@@ -90,9 +84,11 @@ export default function ToronInputBar() {
     addMessage,
     setLoading,
     setStreaming,
-    simulateStream,
     streaming,
     value,
+    onPlanReady,
+    onPlanError,
+    onPlanPreparing,
   ]);
 
   return (
