@@ -1,8 +1,7 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { ToronMessage, ToronProject, ToronSender } from "@/pages/Toron/toronTypes";
+import type { ToronMessage, ToronProject } from "@/pages/Toron/toronTypes";
 
 export const DEFAULT_PROJECT: ToronProject = { id: "toron-default", name: "Personal Space" };
 
@@ -10,6 +9,13 @@ type MessagePayload = Partial<ToronMessage> & { sender: ToronSender; text: strin
 
 type ToronState = {
   messages: ToronMessage[];
+  createdAt: number;
+  updatedAt: number;
+};
+
+type ToronStore = {
+  sessions: ToronSession[];
+  activeSessionId: string | null;
   projects: ToronProject[];
   activeProjectId: string | null;
   activeSessionId: string | null;
@@ -35,9 +41,9 @@ type ToronActions = {
   autoGenerateTitleFromFirstToronReply: (sessionId: string) => void;
 };
 
-export const useToronStore = create<ToronState & ToronActions>()(
-  persist(
-    (set, get) => ({
+    const session: ToronSession = {
+      id,
+      title: "New Session",
       messages: [],
       projects: [DEFAULT_PROJECT],
       activeProjectId: DEFAULT_PROJECT.id,
