@@ -1,21 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
-  const {
-    addMessage,
-    appendToMessage,
-    setStreaming,
-    setLoading,
-    streaming,
-    loading,
-    activeProjectId,
-  } = useToronStore();
-  const [value, setValue] = useState("");
+  const { activeSessionId, addMessage, autoGenerateTitleFromFirstToronReply } =
+    useToronStore();
+  const [inputValue, setInputValue] = useState("");
+  const [sending, setSending] = useState(false);
 
   const glassStyles = useMemo(
     () => ({
@@ -25,22 +19,10 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = !value.trim() || streaming || loading;
+  const disabled = !inputValue.trim() || sending || !activeSessionId;
 
-  const simulateStream = useCallback(
-    async (output: string, projectId: string, messageId: string) => {
-      for (const char of output) {
-        appendToMessage(projectId, messageId, char);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 12));
-      }
-    },
-    [appendToMessage],
-  );
-
-  const handleSend = useCallback(async () => {
-    const prompt = value.trim();
-    if (!prompt || streaming) return;
+  async function sendMessage() {
+    if (!inputValue.trim() || !activeSessionId) return;
 
     const userMessageId = nanoid();
     const toronMessageId = nanoid();
@@ -50,20 +32,13 @@ export default function ToronInputBar() {
     addMessage({
       id: userMessageId,
       sender: "user",
-      text: prompt,
+      text: inputValue,
       timestamp: Date.now(),
     });
 
-    addMessage({
-      id: toronMessageId,
-      sender: "toron",
-      text: "",
-      timestamp: Date.now(),
-    });
-
-    setValue("");
-    setLoading(true);
-    setStreaming(true);
+    const msg = inputValue;
+    setInputValue("");
+    setSending(true);
 
     const finishStreaming = () => {
       setStreaming(false);
@@ -167,27 +142,27 @@ export default function ToronInputBar() {
       >
         <div className="flex-1">
           <TextareaAutosize
-            value={value}
+            value={inputValue}
             minRows={1}
             maxRows={6}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSend();
+                void sendMessage();
               }
             }}
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
-          {(streaming || loading) && (
+          {sending && (
             <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
               <span className="animate-pulse">Toron is thinking…</span>
             </div>
           )}
         </div>
         <button
-          onClick={handleSend}
+          onClick={() => void sendMessage()}
           disabled={disabled}
           className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[var(--toron-cosmic-primary)] to-[var(--toron-cosmic-secondary)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,225,255,0.35)] transition-all duration-150 ease-out enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(154,77,255,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
         >
