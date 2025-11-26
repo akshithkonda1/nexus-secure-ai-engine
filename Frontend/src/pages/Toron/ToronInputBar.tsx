@@ -3,18 +3,10 @@ import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronInputBar() {
-  const {
-    addMessage,
-    appendToMessage,
-    setStreaming,
-    setLoading,
-    streaming,
-    loading,
-    activeProjectId,
-  } = useToronStore();
+  const { activeSessionId, addMessage } = useToronStore();
   const [value, setValue] = useState("");
 
   const glassStyles = useMemo(
@@ -25,75 +17,21 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = !value.trim() || streaming || loading;
+  const disabled = !value.trim() || !activeSessionId;
 
-  const simulateStream = useCallback(
-    async (output: string, projectId: string, messageId: string) => {
-      for (const char of output) {
-        appendToMessage(projectId, messageId, char);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 12));
-      }
-    },
-    [appendToMessage],
-  );
-
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     const prompt = value.trim();
-    if (!prompt || streaming) return;
+    if (!prompt || !activeSessionId) return;
 
-    const userMessageId = nanoid();
-    const toronMessageId = nanoid();
-    const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
-
-    addMessage({
-      id: userMessageId,
+    addMessage(activeSessionId, {
+      id: nanoid(),
       sender: "user",
       text: prompt,
       timestamp: Date.now(),
     });
 
-    addMessage({
-      id: toronMessageId,
-      sender: "toron",
-      text: "",
-      timestamp: Date.now(),
-    });
-
     setValue("");
-    setLoading(true);
-    setStreaming(true);
-
-    try {
-      const res = await fetch("/api/v1/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const data = await res.json().catch(() => null);
-      const outputString = data?.answer ?? `Toron received: "${prompt}"`;
-
-      await simulateStream(outputString, projectId, toronMessageId);
-    } catch (error) {
-      await simulateStream(
-        "Toron is warming up. Let's try that again in a moment.",
-        projectId,
-        toronMessageId,
-      );
-    } finally {
-      setStreaming(false);
-      setLoading(false);
-    }
-  }, [
-    activeProjectId,
-    addMessage,
-    setLoading,
-    setStreaming,
-    simulateStream,
-    streaming,
-    value,
-  ]);
+  }, [activeSessionId, addMessage, value]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-6">
@@ -116,11 +54,6 @@ export default function ToronInputBar() {
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
-          {(streaming || loading) && (
-            <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
-              <span className="animate-pulse">Toron is thinking…</span>
-            </div>
-          )}
         </div>
         <button
           onClick={handleSend}
