@@ -8,87 +8,69 @@ import type { ToronMessage } from "./toronTypes";
 
 type ToronMessageBubbleProps = {
   message: ToronMessage;
+  index: number;
+  isStreaming?: boolean;
 };
 
-const bubbleVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-};
+const avatarSrc = "/src/assets/branding/ryuzen-logo.png";
 
-export function ToronMessageBubble({ message }: ToronMessageBubbleProps) {
-  if (!message) {
-    console.warn("ToronMessageBubble received null/undefined message.");
-    return null;
-  }
-
-  if (typeof message.text !== "string") {
-    console.warn("ToronMessageBubble skipped invalid text:", message);
-    return null;
-  }
-
-  if (!message.sender || typeof message.sender !== "string") {
-    console.warn("ToronMessageBubble skipped invalid sender:", message);
-    return null;
-  }
-
+export default function ToronMessageBubble({ message, index, isStreaming = false }: ToronMessageBubbleProps) {
   const isUser = message.sender === "user";
 
-  const userBg = `
-  linear-gradient(
-    135deg,
-    rgba(10,132,255,0.95) 0%,
-    rgba(30,144,255,0.92) 40%,
-    rgba(0,102,255,0.92) 100%
-  )
-`;
+  const userStyle = {
+    background: "var(--toron-bubble-user)",
+    color: "#fff",
+    boxShadow: "0 18px 40px rgba(0,122,255,0.25)",
+  } as const;
 
-  const toronBg =
-    "linear-gradient(150deg, rgba(99,102,241,0.28), rgba(56,189,248,0.22), rgba(16,185,129,0.24))";
+  const toronStyle = {
+    background:
+      "linear-gradient(135deg, color-mix(in srgb, var(--toron-cosmic-primary) 80%, rgba(255,255,255,0.12)) 0%, color-mix(in srgb, var(--toron-cosmic-secondary) 80%, rgba(255,255,255,0.12)) 45%, rgba(255,255,255,0.18) 100%)",
+    color: "var(--text-primary)",
+    border: "1px solid rgba(255,255,255,0.35)",
+    backdropFilter: "blur(16px) saturate(140%)",
+    WebkitBackdropFilter: "blur(16px) saturate(140%)",
+    boxShadow: "0 20px 60px rgba(15,23,42,0.28)",
+  } as const;
 
   return (
     <motion.div
-      variants={bubbleVariants}
-      initial="hidden"
-      animate="visible"
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut", delay: Math.min(index * 0.02, 0.25) }}
       className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}
     >
-      <div className="relative w-full max-w-[720px]">
+      <div className={`flex max-w-[720px] items-start gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+        {!isUser && (
+          <motion.div
+            className="relative mt-1 h-10 w-10 overflow-hidden rounded-full border border-white/30 bg-white/70 shadow-lg backdrop-blur-md dark:border-white/20 dark:bg-white/10"
+            animate={isStreaming ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+            transition={{ duration: 2.8, repeat: isStreaming ? Infinity : 0, ease: "easeInOut" }}
+          >
+            <div className="absolute inset-[-14px] bg-[radial-gradient(circle_at_50%_40%,rgba(0,225,255,0.22),transparent_45%),radial-gradient(circle_at_60%_70%,rgba(154,77,255,0.16),transparent_50%)] blur-md" />
+            <img src={avatarSrc} alt="Toron" className="relative h-full w-full object-contain p-2" />
+          </motion.div>
+        )}
+
         <div
-          className={`group relative w-fit max-w-full rounded-3xl border px-4 py-3 shadow-lg transition-all duration-150 ease-out ${
-            isUser
-              ? "ml-auto"
-              : "mr-auto"
+          className={`relative w-full max-w-[720px] rounded-3xl px-4 py-3 text-base leading-relaxed ${
+            isUser ? "ml-auto text-white" : "mr-auto text-[var(--text-primary)]"
           }`}
-          style={{
-            background: isUser ? userBg : toronBg,
-            color: isUser ? "#fff" : "var(--text-primary)",
-            borderColor: isUser
-              ? "rgba(255,255,255,0.35)"
-              : "rgba(255,255,255,0.18)",
-            boxShadow: isUser
-              ? "0 18px 40px rgba(10,132,255,0.35)"
-              : "0 18px 38px rgba(15,23,42,0.28)",
-          }}
+          style={isUser ? userStyle : toronStyle}
         >
           {!isUser && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_48%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_35%,rgba(56,189,248,0.14),transparent_55%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_70%,rgba(99,102,241,0.14),transparent_50%)]" />
-              <div className="absolute inset-[-14%] blur-3xl bg-[radial-gradient(circle_at_60%_40%,rgba(14,165,233,0.12),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.14),transparent_50%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(0,225,255,0.12),transparent_45%)]" />
+              <div className="absolute inset-[-18%] bg-[radial-gradient(circle_at_60%_60%,rgba(154,77,255,0.14),transparent_55%)] blur-3xl" />
             </div>
           )}
-          {isUser && (
-            <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent_60%)]" />
-          )}
 
-          <div className="relative whitespace-pre-wrap text-base leading-relaxed">
+          <div className={`relative whitespace-pre-wrap text-base ${isStreaming ? "animate-pulse" : ""}`}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeHighlight]}
-              linkTarget="_blank"
-              className="prose prose-sm max-w-none text-[inherit] prose-headings:text-[inherit] prose-p:text-[inherit] prose-strong:text-[inherit] prose-em:text-[inherit] prose-code:text-[inherit]"
+              className="prose prose-sm max-w-none text-[inherit] prose-headings:text-[inherit] prose-p:text-[inherit] prose-strong:text-[inherit] prose-em:text-[inherit] prose-code:rounded-md prose-code:bg-black/10 prose-code:px-1 prose-code:py-[2px] prose-pre:bg-slate-900 prose-pre:text-white"
             >
               {message.text}
             </ReactMarkdown>
@@ -98,5 +80,3 @@ export function ToronMessageBubble({ message }: ToronMessageBubbleProps) {
     </motion.div>
   );
 }
-
-export default ToronMessageBubble;

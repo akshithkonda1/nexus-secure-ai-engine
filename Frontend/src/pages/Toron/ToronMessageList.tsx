@@ -7,68 +7,63 @@ import ToronMessageBubble from "./ToronMessageBubble";
 import ToronWelcome from "./ToronWelcome";
 import type { ToronMessage } from "./toronTypes";
 
-type NormalizedMessage = ToronMessage & { id: string; sender: string; text: string };
+type StableMessage = ToronMessage & { id: string };
 
-const normalizeMessage = (message: ToronMessage): NormalizedMessage | null => {
-  if (!message) return null;
-
-  if (typeof message.text !== "string") {
-    console.warn("ToronMessageList skipped message with invalid text:", message);
-    return null;
-  }
-
-  if (!message.sender || typeof message.sender !== "string") {
-    console.warn("ToronMessageList skipped message with invalid sender:", message);
-    return null;
-  }
-
-  const id = message.id ?? crypto.randomUUID();
-
-  return { ...message, id, sender: message.sender, text: message.text };
-};
-
-export function ToronMessageList() {
-  const { messages, initialWelcomeShown } = useToronStore();
+export default function ToronMessageList() {
+  const { messages, welcomeShown, streaming } = useToronStore();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const safeMessages = useMemo(() => {
+  const safeMessages = useMemo<StableMessage[]>(() => {
     return (messages ?? [])
-      .map(normalizeMessage)
-      .filter((message): message is NormalizedMessage => message !== null);
+      .filter(
+        (message): message is ToronMessage =>
+          typeof message?.text === "string" && Boolean(message?.sender),
+      )
+      .map((message) => ({ ...message, id: message.id ?? crypto.randomUUID() }));
   }, [messages]);
 
-  const hasUserMessage = useMemo(
-    () => safeMessages.some((msg) => msg.sender === "user"),
-    [safeMessages],
-  );
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
+  }, [safeMessages, streaming]);
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 20);
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [safeMessages.length, streaming]);
 
-    return () => clearTimeout(id);
-  }, [safeMessages]);
+  const showWelcome = welcomeShown && safeMessages.length === 0;
 
   return (
     <div className="relative flex-1 overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[color-mix(in_srgb,var(--background),transparent_0%)] to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-[color-mix(in_srgb,var(--background),transparent_0%)] to-transparent" />
 
-      <div className="relative h-full overflow-y-auto px-4 pb-28 pt-6" style={{ scrollBehavior: "smooth" }}>
-        {!initialWelcomeShown && !hasUserMessage && <ToronWelcome />}
-
-        <AnimatePresence initial={false}>
-          {safeMessages.map((message) => (
-            <motion.div key={message.id} layout className="mb-3 last:mb-6">
-              <ToronMessageBubble message={message} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div
+        ref={containerRef}
+        className="relative h-full overflow-y-auto px-4 pb-28 pt-6"
+        style={{ scrollBehavior: "smooth" }}
+      >
+        {showWelcome ? (
+          <ToronWelcome />
+        ) : (
+          <AnimatePresence initial={false}>
+            {safeMessages.map((message, index) => (
+              <motion.div key={message.id} layout className="mb-3 last:mb-6">
+                <ToronMessageBubble
+                  message={message}
+                  index={index}
+                  isStreaming={streaming && index === safeMessages.length - 1 && message.sender === "toron"}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
         <div ref={endRef} />
       </div>
     </div>
   );
 }
-
-export default ToronMessageList;

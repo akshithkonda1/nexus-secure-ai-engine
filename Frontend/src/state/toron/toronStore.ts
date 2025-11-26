@@ -1,134 +1,170 @@
 import { nanoid } from "nanoid";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { ToronMessage, ToronProject } from "@/pages/Toron/toronTypes";
+import type { ToronMessage, ToronProject, ToronSender } from "@/pages/Toron/toronTypes";
 
-type ToronStore = {
+export const DEFAULT_PROJECT: ToronProject = { id: "toron-default", name: "Personal Space" };
+
+type ToronState = {
   messages: ToronMessage[];
   projects: ToronProject[];
   activeProjectId: string | null;
-  projectContext: string;
+  welcomeShown: boolean;
+  streaming: boolean;
   loading: boolean;
-  initialWelcomeShown: boolean;
-  addMessage: (msg: ToronMessage) => void;
-  appendToMessage: (id: string, chunk: string) => void;
-  clearChat: () => void;
-  setProjectContext: (context: string) => void;
-  setActiveProjectId: (id: string | null) => void;
-  setLoading: (loading: boolean) => void;
-  createProject: (name: string, summary?: string) => void;
-  deleteProject: (id: string) => void;
+  projectMessages: Record<string, ToronMessage[]>;
 };
 
-export const useToronStore = create<ToronStore>((set, get) => ({
-  messages: [],
-  projects: [],
-  activeProjectId: null,
-  projectContext: "",
-  loading: false,
-  initialWelcomeShown: false,
+type ToronActions = {
+  addMessage: (message: Partial<ToronMessage> & { sender: ToronSender; text: string }) => void;
+  appendToMessage: (projectId: string, messageId: string, chunk: string) => void;
+  clearChat: () => void;
+  createProject: (name: string) => void;
+  renameProject: (id: string, name: string) => void;
+  deleteProject: (id: string) => void;
+  setProject: (id: string | null) => void;
+  setStreaming: (streaming: boolean) => void;
+  setLoading: (loading: boolean) => void;
+};
 
-  addMessage: (msg) => {
-    if (!msg) return;
+export const useToronStore = create<ToronState & ToronActions>()(
+  persist(
+    (set, get) => ({
+      messages: [],
+      projects: [DEFAULT_PROJECT],
+      activeProjectId: DEFAULT_PROJECT.id,
+      welcomeShown: true,
+      streaming: false,
+      loading: false,
+      projectMessages: { [DEFAULT_PROJECT.id]: [] },
 
-    const sender =
-      msg.sender === "user" || msg.sender === "toron" ? msg.sender : "toron";
+      addMessage: (message) => {
+        const projectId = get().activeProjectId ?? DEFAULT_PROJECT.id;
+        const msg: ToronMessage = {
+          id: message.id ?? nanoid(),
+          sender: message.sender,
+          text: message.text ?? "",
+          timestamp: message.timestamp ?? Date.now(),
+        };
 
-    const safeMessage: ToronMessage = {
-      id: msg.id ?? nanoid(),
-      text: typeof msg.text === "string" ? msg.text : "",
-      timestamp: msg.timestamp ?? Date.now(),
-      sender,
-      tokens: msg.tokens,
-    };
+        set((state) => ({
+          messages: [...state.messages, msg],
+          projectMessages: {
+            ...state.projectMessages,
+            [projectId]: [...(state.projectMessages[projectId] ?? []), msg],
+          },
+          welcomeShown: message.sender === "user" ? false : state.welcomeShown,
+        }));
+      },
 
-    set((state) => {
-      const projects = state.activeProjectId
-        ? state.projects.map((project) =>
-            project.id === state.activeProjectId
-              ? {
-                  ...project,
-                  messages: [...(project.messages ?? []), safeMessage],
-                }
-              : project,
-          )
-        : state.projects;
+      appendToMessage: (projectId, messageId, chunk) =>
+        set((state) => {
+          const targetProjectId = projectId ?? DEFAULT_PROJECT.id;
+          const updateList = (list: ToronMessage[]) => {
+            if (!list.length) return list;
+            const targetIndex = list.findIndex((message) => message.id === messageId);
+            if (targetIndex === -1) return list;
 
-      return {
-        messages: [...state.messages, safeMessage],
-        projects,
-        initialWelcomeShown: true,
-      };
-    });
-  },
+            const updated = [...list];
+            updated[targetIndex] = {
+              ...updated[targetIndex],
+              text: `${updated[targetIndex].text}${chunk}`,
+            };
+            return updated;
+          };
 
-  appendToMessage: (id, chunk) =>
-    set((state) => {
-      const appendChunk = (messageList: ToronMessage[]) =>
-        messageList.map((message) =>
-          message.id === id
-            ? { ...message, text: `${message.text ?? ""}${chunk}` }
-            : message,
-        );
+          const updatedProjectMessages = updateList(state.projectMessages[targetProjectId] ?? []);
 
-      const projects = state.activeProjectId
-        ? state.projects.map((project) =>
-            project.id === state.activeProjectId
-              ? { ...project, messages: appendChunk(project.messages ?? []) }
-              : project,
-          )
-        : state.projects;
+          return {
+            messages:
+              state.activeProjectId === targetProjectId
+                ? updateList(state.messages)
+                : state.messages,
+            projectMessages: {
+              ...state.projectMessages,
+              [targetProjectId]: updatedProjectMessages,
+            },
+          };
+        }),
 
-      return {
-        messages: appendChunk(state.messages),
-        projects,
-      };
+      clearChat: () =>
+        set((state) => {
+          const projectId = state.activeProjectId ?? DEFAULT_PROJECT.id;
+          return {
+            messages: [],
+            projectMessages: { ...state.projectMessages, [projectId]: [] },
+            streaming: false,
+            loading: false,
+            welcomeShown: true,
+          };
+        }),
+
+      createProject: (name) =>
+        set((state) => {
+          const project: ToronProject = { id: nanoid(), name: name.trim() || "Untitled" };
+          return {
+            projects: [...state.projects, project],
+            activeProjectId: project.id,
+            messages: [],
+            projectMessages: { ...state.projectMessages, [project.id]: [] },
+            welcomeShown: true,
+          };
+        }),
+
+      renameProject: (id, name) =>
+        set((state) => ({
+          projects: state.projects.map((project) =>
+            project.id === id ? { ...project, name: name.trim() || project.name } : project,
+          ),
+        })),
+
+      deleteProject: (id) =>
+        set((state) => {
+          const nextProjects = state.projects.filter((project) => project.id !== id);
+          const projectMessages = { ...state.projectMessages };
+          delete projectMessages[id];
+
+          const nextActive =
+            state.activeProjectId === id
+              ? nextProjects[0]?.id ?? DEFAULT_PROJECT.id
+              : state.activeProjectId ?? DEFAULT_PROJECT.id;
+
+          const ensuredProjects = nextProjects.length ? nextProjects : [DEFAULT_PROJECT];
+          if (!projectMessages[nextActive]) {
+            projectMessages[nextActive] = [];
+          }
+
+          return {
+            projects: ensuredProjects,
+            activeProjectId: nextActive,
+            messages: projectMessages[nextActive],
+            projectMessages,
+            welcomeShown: projectMessages[nextActive].length === 0,
+            streaming: false,
+            loading: false,
+          };
+        }),
+
+      setProject: (id) =>
+        set((state) => {
+          const target = id ?? DEFAULT_PROJECT.id;
+          const messages = state.projectMessages[target] ?? [];
+          return {
+            activeProjectId: target,
+            messages,
+            welcomeShown: messages.length === 0 ? true : state.welcomeShown,
+            streaming: false,
+          };
+        }),
+
+      setStreaming: (streaming) => set({ streaming }),
+
+      setLoading: (loading) => set({ loading }),
     }),
-
-  clearChat: () =>
-    set((state) => {
-      const projects = state.activeProjectId
-        ? state.projects.map((project) =>
-            project.id === state.activeProjectId
-              ? { ...project, messages: [] }
-              : project,
-          )
-        : state.projects;
-
-      return {
-        messages: [],
-        projects,
-        projectContext: "",
-        initialWelcomeShown: false,
-      };
-    }),
-
-  setProjectContext: (context) => set({ projectContext: context ?? "" }),
-
-  setActiveProjectId: (id) => {
-    const target = id ? get().projects.find((project) => project.id === id) : null;
-    set({
-      activeProjectId: id ?? null,
-      messages: target?.messages ?? [],
-      projectContext: target?.summary ?? get().projectContext ?? "",
-    });
-  },
-
-  setLoading: (loading) => set({ loading }),
-
-  createProject: (name, summary = "") =>
-    set((state) => ({
-      projects: [
-        ...state.projects,
-        { id: nanoid(), name, summary, messages: [] },
-      ],
-    })),
-
-  deleteProject: (id) =>
-    set((state) => ({
-      projects: state.projects.filter((p) => p.id !== id),
-      ...(state.activeProjectId === id
-        ? { activeProjectId: null, messages: [], projectContext: "" }
-        : {}),
-    })),
-}));
+    {
+      name: "toron-store",
+      storage: createJSONStorage(() => localStorage),
+    },
+  ),
+);

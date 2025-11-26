@@ -19,7 +19,7 @@ export function App() {
     <Routes>
       <Route element={<ProjectProvider><RootLayout /></ProjectProvider>}>
         <Route index element={<Home />} />
-        <Route path="toron" element={<ToronPage />} />
+        <Route path="/toron" element={<ToronPage />} />
         <Route path="workspace" element={<Workspace />} />
         <Route path="projects" element={<ProjectDashboard />} />
         <Route path="projects/:id" element={<ProjectView />} />
