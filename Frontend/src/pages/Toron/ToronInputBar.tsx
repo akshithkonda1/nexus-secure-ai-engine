@@ -3,13 +3,25 @@ import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
 
-import { useToronStore } from "@/state/toron/toronStore";
+import { DEFAULT_PROJECT, useToronStore } from "@/state/toron/toronStore";
+import type { DecisionBlock } from "./toronTypes";
 
-export default function ToronInputBar() {
-  const { activeSessionId, addMessage, autoGenerateTitleFromFirstToronReply } =
-    useToronStore();
-  const [inputValue, setInputValue] = useState("");
-  const [sending, setSending] = useState(false);
+type Props = {
+  onPlanReady: (plan: DecisionBlock, context: { toronMessageId: string; projectId: string }) => void;
+  onPlanError: (context: { toronMessageId: string; projectId: string }, message: string) => void;
+  onPlanPreparing?: () => void;
+};
+
+export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparing }: Props) {
+  const {
+    addMessage,
+    setStreaming,
+    setLoading,
+    streaming,
+    loading,
+    activeProjectId,
+  } = useToronStore();
+  const [value, setValue] = useState("");
 
   const glassStyles = useMemo(
     () => ({
@@ -19,10 +31,11 @@ export default function ToronInputBar() {
     [],
   );
 
-  const disabled = !inputValue.trim() || sending || !activeSessionId;
+  const disabled = !value.trim() || streaming || loading;
 
-  async function sendMessage() {
-    if (!inputValue.trim() || !activeSessionId) return;
+  const handleSend = useCallback(async () => {
+    const prompt = value.trim();
+    if (!prompt || streaming) return;
 
     const userMessageId = nanoid();
     const toronMessageId = nanoid();
@@ -36,92 +49,36 @@ export default function ToronInputBar() {
       timestamp: Date.now(),
     });
 
-    const msg = inputValue;
-    setInputValue("");
-    setSending(true);
+    addMessage({
+      id: toronMessageId,
+      sender: "toron",
+      text: "Toron is preparing a plan…\n",
+      timestamp: Date.now(),
+    });
 
-    const finishStreaming = () => {
-      setStreaming(false);
-      setLoading(false);
-    };
-
-    const fallback = async () => {
-      try {
-        const res = await fetch("/api/v1/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-
-        const data = await res.json().catch(() => null);
-        const outputString = data?.answer ?? `Toron received: "${prompt}"`;
-
-        await simulateStream(outputString, projectId, toronMessageId);
-      } catch (error) {
-        await simulateStream(
-          "Toron is warming up. Let's try that again in a moment.",
-          projectId,
-          toronMessageId,
-        );
-      } finally {
-        finishStreaming();
-      }
-    };
-
-    let streamClosed = false;
-    let fallbackTriggered = false;
-    const stream = new EventSource(`/api/v1/toron/stream/${sessionId}`);
-
-    const closeStream = () => {
-      if (streamClosed) return;
-      streamClosed = true;
-      stream.close();
-    };
-
-    stream.onmessage = (event) => {
-      const parsed = (() => {
-        try {
-          return JSON.parse(event.data);
-        } catch (error) {
-          return null;
-        }
-      })();
-
-      if (parsed?.done || event.data === "[DONE]") {
-        fallbackTriggered = true;
-        closeStream();
-        finishStreaming();
-        return;
-      }
-
-      const chunk = parsed?.delta ?? parsed?.token ?? event.data ?? "";
-      if (chunk) {
-        appendToMessage(projectId, toronMessageId, chunk);
-      }
-    };
-
-    stream.onerror = () => {
-      closeStream();
-      if (!fallbackTriggered) {
-        fallbackTriggered = true;
-        void fallback();
-      }
-    };
+    setValue("");
+    setLoading(true);
+    setStreaming(true);
+    onPlanPreparing?.();
 
     try {
-      const res = await fetch(`/api/v1/toron/stream/${sessionId}`, {
+      const res = await fetch("/api/v1/toron/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt, sessionId }),
+        body: JSON.stringify({ user_prompt: prompt }),
       });
 
-      if (!res.ok) throw new Error("Toron stream failed to start");
-    } catch (error) {
-      closeStream();
-      if (!fallbackTriggered) {
-        fallbackTriggered = true;
-        await fallback();
+      const data = await res.json().catch(() => null);
+      if (!data?.id) {
+        throw new Error("Plan generation failed");
       }
+
+      onPlanReady(data as DecisionBlock, { toronMessageId, projectId });
+    } catch (error) {
+      onPlanError({ toronMessageId, projectId }, "Unable to generate plan right now.");
+    } finally {
+      setStreaming(false);
+      setLoading(false);
     }
   }, [
     activeProjectId,
@@ -129,9 +86,11 @@ export default function ToronInputBar() {
     appendToMessage,
     setLoading,
     setStreaming,
-    simulateStream,
     streaming,
     value,
+    onPlanReady,
+    onPlanError,
+    onPlanPreparing,
   ]);
 
   return (
