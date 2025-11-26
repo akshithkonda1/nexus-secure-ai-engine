@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
 import { nanoid } from "nanoid";
@@ -40,11 +40,12 @@ export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparin
     const userMessageId = nanoid();
     const toronMessageId = nanoid();
     const projectId = activeProjectId ?? DEFAULT_PROJECT.id;
+    const sessionId = nanoid();
 
     addMessage({
       id: userMessageId,
       sender: "user",
-      text: prompt,
+      text: inputValue,
       timestamp: Date.now(),
     });
 
@@ -82,6 +83,7 @@ export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparin
   }, [
     activeProjectId,
     addMessage,
+    appendToMessage,
     setLoading,
     setStreaming,
     streaming,
@@ -99,27 +101,27 @@ export default function ToronInputBar({ onPlanReady, onPlanError, onPlanPreparin
       >
         <div className="flex-1">
           <TextareaAutosize
-            value={value}
+            value={inputValue}
             minRows={1}
             maxRows={6}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSend();
+                void sendMessage();
               }
             }}
             placeholder="Ask Toron anything..."
             className="w-full resize-none bg-transparent text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
           />
-          {(streaming || loading) && (
+          {sending && (
             <div className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
               <span className="animate-pulse">Toron is thinking…</span>
             </div>
           )}
         </div>
         <button
-          onClick={handleSend}
+          onClick={() => void sendMessage()}
           disabled={disabled}
           className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[var(--toron-cosmic-primary)] to-[var(--toron-cosmic-secondary)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,225,255,0.35)] transition-all duration-150 ease-out enabled:hover:-translate-y-0.5 enabled:hover:shadow-[0_18px_46px_rgba(154,77,255,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
         >
