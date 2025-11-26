@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDistanceToNow as baseFormatDistanceToNow } from "date-fns";
 import { cn } from "@/shared/lib/cn";
 import { useToronSessionStore } from "@/state/toron/toronSessionStore";
 
@@ -11,25 +12,16 @@ type ToronSession = {
 
 type FormatDistanceToNow = (date: Date | number, options?: { addSuffix?: boolean }) => string;
 
-const safeFormatDistanceToNow: FormatDistanceToNow = (() => {
+const safeFormatDistanceToNow: FormatDistanceToNow = (date, options) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
-    const dateFns = require("date-fns") as { formatDistanceToNow?: FormatDistanceToNow };
-    if (dateFns && typeof dateFns.formatDistanceToNow === "function") {
-      return (date, options) => {
-        try {
-          return dateFns.formatDistanceToNow?.(date, options) ?? "some time ago";
-        } catch (error) {
-          console.error("ToronSessionSidebar: failed to format date", error);
-          return "some time ago";
-        }
-      };
+    if (typeof baseFormatDistanceToNow === "function") {
+      return baseFormatDistanceToNow(date, options) ?? "some time ago";
     }
   } catch (error) {
-    console.error("ToronSessionSidebar: date-fns import failed", error);
+    console.error("ToronSessionSidebar: failed to format date", error);
   }
-  return () => "some time ago";
-})();
+  return "some time ago";
+};
 
 function getSafeSessions(rawSessions: unknown): ToronSession[] {
   if (!rawSessions || typeof rawSessions !== "object") return [];
@@ -56,7 +48,7 @@ export function ToronSessionSidebar() {
   let storeSessions: unknown = [];
   let activeSessionId: string | null | undefined = null;
   let setActiveSession: ((id: string) => void) | undefined;
-  let createSession: ((title: string) => Promise<void>) | undefined;
+  let createSession: ((initialTitle?: string) => Promise<string>) | undefined;
   let deleteSession: ((id: string) => Promise<void>) | undefined;
   let renameSession: ((id: string, title: string) => Promise<void>) | undefined;
 
