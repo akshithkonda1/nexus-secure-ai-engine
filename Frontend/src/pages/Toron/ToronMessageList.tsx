@@ -7,7 +7,11 @@ import { useToronStore } from "@/state/toron/toronStore";
 import { ToronMessageBubble } from "./ToronMessageBubble";
 import { ToronWelcome } from "./ToronWelcome";
 
-const List = () => {
+interface ToronMessageListProps {
+  onSaveToProject?: (content: string) => void;
+}
+
+const List = ({ onSaveToProject }: ToronMessageListProps) => {
   const telemetry = useToronTelemetry();
   const { sessions, activeSessionId, getActiveSession } = useToronStore();
   const session = useMemo(() => getActiveSession(), [getActiveSession, sessions, activeSessionId]);
@@ -21,7 +25,11 @@ const List = () => {
     return (
       <section className="flex flex-1 flex-col gap-2 overflow-y-auto bg-[var(--panel-main)] p-4" data-testid="toron-message-list">
         {messages.map((message) => (
-          <ToronMessageBubble key={message.id} message={message} />
+          <ToronMessageBubble
+            key={message.id}
+            message={message}
+            onSaveToProject={onSaveToProject}
+          />
         ))}
       </section>
     );

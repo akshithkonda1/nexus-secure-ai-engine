@@ -6,9 +6,10 @@ import type { ToronMessage } from "@/state/toron/toronSessionTypes";
 
 interface ToronMessageBubbleProps {
   message: ToronMessage;
+  onSaveToProject?: (content: string) => void;
 }
 
-const Bubble = ({ message }: ToronMessageBubbleProps) => {
+const Bubble = ({ message, onSaveToProject }: ToronMessageBubbleProps) => {
   const telemetry = useToronTelemetry();
   const safe = safeMessage(message);
 
@@ -23,8 +24,20 @@ const Bubble = ({ message }: ToronMessageBubbleProps) => {
         data-testid="toron-message-bubble"
       >
         <div className="text-[var(--text-primary)]">{safe.content || "(empty message)"}</div>
-        <div className="text-xs text-[var(--text-secondary)]">
-          {safe.model} · {safeFormatDistance(safe.timestamp)}
+        <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
+          <span>
+            {safe.model} · {safeFormatDistance(safe.timestamp)}
+          </span>
+          {onSaveToProject && (
+            <button
+              type="button"
+              className="rounded px-2 py-1 text-[var(--text-secondary)] transition hover:bg-[var(--panel-elevated)]"
+              onClick={() => onSaveToProject(safe.content)}
+              aria-label="Save message to project"
+            >
+              📁
+            </button>
+          )}
         </div>
       </div>
     );
