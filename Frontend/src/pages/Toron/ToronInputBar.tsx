@@ -4,20 +4,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToronTelemetry } from "@/hooks/useToronTelemetry";
 import { safeRender } from "@/shared/lib/safeRender";
 import { safeMessage, safeString } from "@/shared/lib/toronSafe";
-import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { useToronStore } from "@/state/toron/toronStore";
 import type { ToronMessage } from "@/state/toron/toronSessionTypes";
-
-interface ToronInputBarProps {
-  sessionId: string | null;
-}
 
 const API_CHAT = "/api/v1/toron/chat";
 
-export function ToronInputBar({ sessionId }: ToronInputBarProps) {
+export function ToronInputBar() {
   const telemetry = useToronTelemetry();
-  const { addMessage } = useToronSessionStore();
+  const { addMessage, activeSessionId, getActiveSession } = useToronStore();
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const sessionId = useMemo(() => getActiveSession()?.sessionId ?? activeSessionId, [activeSessionId, getActiveSession]);
 
   useEffect(() => {
     if (!sessionId) setText("");
@@ -37,7 +34,7 @@ export function ToronInputBar({ sessionId }: ToronInputBarProps) {
       model: "user",
       timestamp: new Date().toISOString(),
     });
-    addMessage(sessionId, userMessage);
+    addMessage(userMessage, sessionId);
     resetField();
 
     try {
@@ -51,7 +48,7 @@ export function ToronInputBar({ sessionId }: ToronInputBarProps) {
       const assistantMessages = Array.isArray(data.messages)
         ? data.messages.map((m: unknown) => safeMessage({ ...m, role: "assistant" }))
         : [];
-      assistantMessages.forEach((m) => addMessage(sessionId, m));
+      assistantMessages.forEach((m) => addMessage(m, sessionId));
     } catch (error) {
       telemetry("network_error", { action: "send_message", error: (error as Error).message });
       const errorMessage: ToronMessage = safeMessage({
@@ -61,7 +58,7 @@ export function ToronInputBar({ sessionId }: ToronInputBarProps) {
         model: "system",
         timestamp: new Date().toISOString(),
       });
-      addMessage(sessionId, errorMessage);
+      addMessage(errorMessage, sessionId);
     } finally {
       setSending(false);
     }

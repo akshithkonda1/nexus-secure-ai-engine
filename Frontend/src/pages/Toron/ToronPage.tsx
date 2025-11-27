@@ -6,35 +6,20 @@ import { ToronInputBar } from "@/pages/Toron/ToronInputBar";
 import { ToronMessageList } from "@/pages/Toron/ToronMessageList";
 import { ToronSessionSidebar } from "@/pages/Toron/ToronSessionSidebar";
 import { safeRender } from "@/shared/lib/safeRender";
-import { safeSession } from "@/shared/lib/toronSafe";
-import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { useToronStore } from "@/state/toron/toronStore";
 
 export default function ToronPage() {
   const telemetry = useToronTelemetry();
-  const { sessions, activeSessionId, hydrateSessions, createSession, selectSession } = useToronSessionStore();
+  const { sessions, activeSessionId, createSession, switchSession, getActiveSession } = useToronStore();
 
   useEffect(() => {
-    const controller = new AbortController();
-    const load = async () => {
-      try {
-        await hydrateSessions();
-        const hasSessions = Object.keys(useToronSessionStore.getState().sessions).length > 0;
-        if (!hasSessions) {
-          await createSession("New Toron Session");
-        }
-      } catch (error) {
-        telemetry("network_error", { action: "hydrate_on_mount", error: (error as Error).message });
-      }
-    };
-    void load();
-    return () => controller.abort();
-  }, [hydrateSessions, createSession, telemetry]);
+    if (sessions.length === 0) {
+      const newId = createSession("New Toron Session");
+      switchSession(newId);
+    }
+  }, [sessions.length, createSession, switchSession]);
 
-  const activeSession = useMemo(() => {
-    if (!activeSessionId) return null;
-    const session = sessions[activeSessionId];
-    return session ? safeSession(session) : null;
-  }, [activeSessionId, sessions]);
+  const activeSession = useMemo(() => getActiveSession(), [getActiveSession, sessions, activeSessionId]);
 
   return (
     <main className="relative flex h-full min-h-screen flex-row">
@@ -42,15 +27,15 @@ export default function ToronPage() {
         {safeRender(() => (
           <ToronHeader
             title={activeSession?.title ?? "Toron"}
-            onNewChat={() => createSession("New Toron Session").then((id) => selectSession(id))}
+            onNewChat={() => switchSession(createSession("New Toron Session"))}
             onOpenProjects={() => telemetry("interaction", { action: "open_projects" })}
           />
         ))}
         {safeRender(() => (
-          <ToronMessageList session={activeSession} />
+          <ToronMessageList />
         ))}
         {safeRender(() => (
-          <ToronInputBar sessionId={activeSession?.sessionId ?? null} />
+          <ToronInputBar />
         ))}
       </section>
       <aside className="hidden w-72 border-l border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] lg:block">
