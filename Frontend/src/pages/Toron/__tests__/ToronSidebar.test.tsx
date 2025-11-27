@@ -2,41 +2,38 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { ToronSessionSidebar } from "@/pages/Toron/ToronSessionSidebar";
-import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { useToronStore } from "@/state/toron/toronStore";
 
 describe("ToronSessionSidebar", () => {
   beforeEach(() => {
-    useToronSessionStore.setState({
-      sessions: {
-        a: {
+    useToronStore.setState({
+      sessions: [
+        {
           sessionId: "a",
           title: "First",
           createdAt: "2020-01-01T00:00:00.000Z",
           updatedAt: "2020-01-02T00:00:00.000Z",
           messages: [],
         },
-        b: {
+        {
           sessionId: "b",
           title: "",
           createdAt: undefined,
           updatedAt: undefined,
           messages: [],
         },
-      },
+      ],
       activeSessionId: "a",
-      loading: false,
-      error: null,
-      hydrateSessions: async () => {},
-      selectSession: () => {},
+      createSession: () => "", 
+      switchSession: () => {},
+      deleteSession: () => {},
       addMessage: () => {},
-      updateTitle: () => {},
-      createSession: async () => "",
-      deleteSession: async () => {},
+      getActiveSession: () => null,
     });
   });
 
   afterEach(() => {
-    useToronSessionStore.setState({ sessions: {}, activeSessionId: null });
+    useToronStore.setState({ sessions: [], activeSessionId: null });
   });
 
   it("renders sessions safely", () => {

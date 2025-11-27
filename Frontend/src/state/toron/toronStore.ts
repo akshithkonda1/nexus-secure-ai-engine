@@ -1,118 +1,91 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type { ToronMessage } from "@/state/toron/toronSessionTypes";
-import { safeArray, safeMessage, safeSessionRecord } from "@/shared/lib/toronSafe";
-import { useToronTelemetry } from "@/hooks/useToronTelemetry";
+import type { ToronMessage, ToronSession } from "@/state/toron/toronSessionTypes";
+import { safeArray, safeMessage, safeSession, safeString, safeTimestamp } from "@/shared/lib/toronSafe";
 
-interface ToronState {
-  messages: ToronMessage[];
+interface ToronStore {
+  sessions: ToronSession[];
   activeSessionId: string | null;
-  sessions: Record<string, ToronMessage[]>;
-  addMessage: (msg: ToronMessage) => void;
-  createSession: () => void;
+  createSession: (title?: string) => string;
+  switchSession: (id: string) => void;
   deleteSession: (id: string) => void;
-  setActiveSession: (id: string | null) => void;
-  clearMessages: () => void;
+  addMessage: (message: ToronMessage, sessionId?: string) => void;
+  getActiveSession: () => ToronSession | null;
 }
 
-const useTelemetry = useToronTelemetry;
+const createEmptySession = (title?: string): ToronSession => {
+  const now = new Date().toISOString();
+  return safeSession({
+    sessionId: crypto.randomUUID(),
+    title: safeString(title, "New Chat"),
+    createdAt: now,
+    updatedAt: now,
+    messages: [],
+  });
+};
 
-export const useToronStore = create<ToronState>()(
+export const useToronStore = create<ToronStore>()(
   persist(
     (set, get) => ({
-      messages: [],
+      sessions: [],
       activeSessionId: null,
-      sessions: {},
 
-      addMessage: (msg) => {
-        const telemetry = useTelemetry();
-        try {
-          const safeMsg = safeMessage(msg);
-          set((state) => {
-            const sessionId = state.activeSessionId;
-            if (!sessionId) return state;
-            const current = safeArray(state.sessions[sessionId], []);
-            return {
-              sessions: {
-                ...state.sessions,
-                [sessionId]: [...current, safeMsg],
-              },
-              messages: [...current, safeMsg],
-            };
-          });
-          telemetry("message_send", { sessionId: get().activeSessionId ?? "none" });
-        } catch (error) {
-          telemetry("state_anomaly", { action: "addMessage", error: (error as Error).message });
-        }
+      createSession: (title) => {
+        const nextSession = createEmptySession(title);
+        set((state) => ({
+          sessions: [...safeArray(state.sessions), nextSession],
+          activeSessionId: nextSession.sessionId,
+        }));
+        return nextSession.sessionId;
       },
 
-      createSession: () => {
-        const telemetry = useTelemetry();
-        try {
-          const newId = crypto.randomUUID();
-          set((state) => ({
-            activeSessionId: newId,
-            sessions: { ...state.sessions, [newId]: [] },
-            messages: [],
-          }));
-        } catch (error) {
-          telemetry("state_anomaly", { action: "createSession", error: (error as Error).message });
-        }
+      switchSession: (id) => {
+        const exists = safeArray(get().sessions).some((s) => s.sessionId === id);
+        set({ activeSessionId: exists ? id : null });
       },
 
       deleteSession: (id) => {
-        const telemetry = useTelemetry();
-        try {
-          set((state) => {
-            const next = { ...state.sessions };
-            delete next[id];
-            return {
-              sessions: next,
-              activeSessionId: state.activeSessionId === id ? null : state.activeSessionId,
-              messages: [],
-            };
-          });
-        } catch (error) {
-          telemetry("state_anomaly", { action: "deleteSession", error: (error as Error).message });
-        }
+        set((state) => {
+          const remaining = safeArray(state.sessions).filter((session) => session.sessionId !== id);
+          const nextActive = state.activeSessionId === id ? remaining[0]?.sessionId ?? null : state.activeSessionId;
+          return {
+            sessions: remaining,
+            activeSessionId: nextActive,
+          };
+        });
       },
 
-      setActiveSession: (id) => {
-        const telemetry = useTelemetry();
-        try {
-          set((state) => ({
-            activeSessionId: id,
-            messages: safeArray(state.sessions[id ?? ""], []),
-          }));
-        } catch (error) {
-          telemetry("state_anomaly", { action: "setActiveSession", error: (error as Error).message });
-        }
+      addMessage: (message, sessionId) => {
+        const targetId = sessionId ?? get().activeSessionId;
+        if (!targetId) return;
+        const safeMsg = safeMessage(message);
+        set((state) => {
+          const updatedSessions = safeArray(state.sessions).map((session) => {
+            if (session.sessionId !== targetId) return session;
+            const messages = [...safeArray(session.messages), safeMsg];
+            return safeSession({
+              ...session,
+              messages,
+              updatedAt: safeTimestamp(safeMsg.timestamp),
+            });
+          });
+          return {
+            sessions: updatedSessions,
+            activeSessionId: targetId,
+          };
+        });
       },
 
-      clearMessages: () => {
-        const telemetry = useTelemetry();
-        try {
-          set((state) => {
-            const id = state.activeSessionId;
-            if (!id) return state;
-            return {
-              sessions: { ...state.sessions, [id]: [] },
-              messages: [],
-            };
-          });
-        } catch (error) {
-          telemetry("state_anomaly", { action: "clearMessages", error: (error as Error).message });
-        }
+      getActiveSession: () => {
+        const { activeSessionId, sessions } = get();
+        if (!activeSessionId) return null;
+        const found = safeArray(sessions).find((session) => session.sessionId === activeSessionId);
+        return found ? safeSession(found) : null;
       },
     }),
     {
       name: "toron-store",
-      version: 2,
-      partialize: (state) => ({
-        sessions: safeSessionRecord(state.sessions),
-        activeSessionId: state.activeSessionId,
-      }),
     },
   ),
 );

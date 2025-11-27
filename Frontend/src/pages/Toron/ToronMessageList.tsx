@@ -2,17 +2,15 @@ import { memo, useMemo } from "react";
 
 import { useToronTelemetry } from "@/hooks/useToronTelemetry";
 import { safeArray, safeMessage } from "@/shared/lib/toronSafe";
-import type { ToronSession } from "@/state/toron/toronSessionTypes";
+import { useToronStore } from "@/state/toron/toronStore";
 
 import { ToronMessageBubble } from "./ToronMessageBubble";
 import { ToronWelcome } from "./ToronWelcome";
 
-interface ToronMessageListProps {
-  session: ToronSession | null;
-}
-
-const List = ({ session }: ToronMessageListProps) => {
+const List = () => {
   const telemetry = useToronTelemetry();
+  const { sessions, activeSessionId, getActiveSession } = useToronStore();
+  const session = useMemo(() => getActiveSession(), [getActiveSession, sessions, activeSessionId]);
   const messages = useMemo(() => safeArray(session?.messages, []).map(safeMessage), [session?.messages]);
 
   try {

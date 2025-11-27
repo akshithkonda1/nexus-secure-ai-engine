@@ -2,14 +2,14 @@ import { memo, useMemo } from "react";
 
 import { useToronTelemetry } from "@/hooks/useToronTelemetry";
 import { safeArray, safeFormatDistance, safeSession } from "@/shared/lib/toronSafe";
-import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { useToronStore } from "@/state/toron/toronStore";
 
 export const ToronSessionSidebar = memo(() => {
   const telemetry = useToronTelemetry();
-  const { sessions, activeSessionId, selectSession, createSession } = useToronSessionStore();
+  const { sessions, activeSessionId, switchSession, createSession } = useToronStore();
 
   const sessionList = useMemo(() => {
-    const arr = safeArray(Object.values(sessions).map(safeSession));
+    const arr = safeArray(sessions.map(safeSession));
     try {
       return arr.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
     } catch (error) {
@@ -24,7 +24,7 @@ export const ToronSessionSidebar = memo(() => {
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">Sessions</h2>
         <button
           type="button"
-          onClick={() => createSession("New Toron Session")}
+          onClick={() => switchSession(createSession("New Toron Session"))}
           className="rounded border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-primary)] hover:bg-[var(--panel-soft)]"
         >
           New
@@ -35,7 +35,7 @@ export const ToronSessionSidebar = memo(() => {
           <button
             type="button"
             key={session.sessionId}
-            onClick={() => selectSession(session.sessionId)}
+            onClick={() => switchSession(session.sessionId)}
             className={`flex w-full flex-col gap-1 rounded-lg border px-3 py-2 text-left text-sm transition ${
               session.sessionId === activeSessionId
                 ? "border-[var(--accent)] bg-[var(--accent)]/10"
