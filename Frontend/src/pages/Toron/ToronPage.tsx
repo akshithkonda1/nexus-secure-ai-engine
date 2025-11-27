@@ -1,135 +1,62 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
 import { ToronHeader } from "@/components/toron/ToronHeader";
-import { ToronMessageList } from "@/pages/Toron/ToronMessageList";
+import { useToronTelemetry } from "@/hooks/useToronTelemetry";
 import { ToronInputBar } from "@/pages/Toron/ToronInputBar";
-import { useToronSessionStore } from "@/state/toron/toronSessionStore";
+import { ToronMessageList } from "@/pages/Toron/ToronMessageList";
 import { ToronSessionSidebar } from "@/pages/Toron/ToronSessionSidebar";
+import { safeRender } from "@/shared/lib/safeRender";
+import { safeSession } from "@/shared/lib/toronSafe";
+import { useToronSessionStore } from "@/state/toron/toronSessionStore";
 
 export default function ToronPage() {
-  const {
-    sessions,
-    activeSessionId,
-    hydrateSessions,
-    createSession,
-  } = useToronSessionStore();
+  const telemetry = useToronTelemetry();
+  const { sessions, activeSessionId, hydrateSessions, createSession, selectSession } = useToronSessionStore();
 
   useEffect(() => {
-    // initial load
-    hydrateSessions().then(async () => {
-      // if no sessions exist, create the first one
-      const hasAny = Object.keys(useToronSessionStore.getState().sessions).length > 0;
-      if (!hasAny) {
-        await createSession("New Toron Session");
-      }
-    });
-  }, [hydrateSessions, createSession]);
-
-  const activeSession = activeSessionId
-    ? sessions[activeSessionId]
-    : null;
-
-  const prepareWebAccess = useCallback(
-    async (url: string, reason: string) => {
+    const controller = new AbortController();
+    const load = async () => {
       try {
-        const res = await fetch("/api/v1/web/prepare", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, reason }),
-        });
-
-        const data = await res.json();
-        setConsentData(data);
-        setConsentReason(reason);
-        setShowConsent(true);
-      } catch (err) {
-        console.error("Failed to prepare web access", err);
+        await hydrateSessions();
+        const hasSessions = Object.keys(useToronSessionStore.getState().sessions).length > 0;
+        if (!hasSessions) {
+          await createSession("New Toron Session");
+        }
+      } catch (error) {
+        telemetry("network_error", { action: "hydrate_on_mount", error: (error as Error).message });
       }
-    },
-    [],
-  );
+    };
+    void load();
+    return () => controller.abort();
+  }, [hydrateSessions, createSession, telemetry]);
 
-  useEffect(() => {
-    if (!messages.length) return;
-
-    const latestUser = [...messages].reverse().find((msg) => msg.sender === "user");
-    if (!latestUser) return;
-
-    const match = latestUser.text.match(/https?:\/\/[^\s>]+/);
-    if (!match) return;
-
-    const candidateUrl = match[0].replace(/[),.;]+$/, "");
-
-    if (candidateUrl !== detectedUrl && candidateUrl !== lastApprovedUrl) {
-      setDetectedUrl(candidateUrl);
-      prepareWebAccess(candidateUrl, `User requested web context for ${candidateUrl}`);
-    }
-  }, [messages, detectedUrl, lastApprovedUrl, prepareWebAccess]);
-
-  const handleApproval = useCallback(
-    async (allowOnce: boolean) => {
-      if (!consentData) return;
-      setWebLoading(true);
-      try {
-        const res = await fetch("/api/v1/web/approve", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url: consentData.url,
-            session_id: consentData.session_id,
-            allow_once: allowOnce,
-          }),
-        });
-
-        const data = await res.json();
-        setExtractedData(data.extracted);
-        setSessionId(data.session_id);
-        setShowConsent(false);
-        setLastApprovedUrl(consentData.url);
-        const headings = data.extracted?.headings?.length ?? 0;
-        const paragraphs = data.extracted?.paragraphs?.length ?? 0;
-        const tables = data.extracted?.tables?.length ?? 0;
-        const links = data.extracted?.links?.length ?? 0;
-        setDecisionBlock({
-          planName: "Extract Web Data",
-          steps: [
-            { action: "web_fetch", params: { url: consentData.url } },
-            { action: "web_extract", params: {} },
-          ],
-          reversible: true,
-          risk: "Low",
-          reflection: `Captured ${headings} headings, ${paragraphs} paragraphs, ${tables} tables, and ${links} links to enrich reasoning.`,
-          reason: consentReason,
-        });
-      } catch (err) {
-        console.error("Web approval failed", err);
-      } finally {
-        setWebLoading(false);
-      }
-    },
-    [consentData, consentReason],
-  );
-
-  const clearExtraction = useCallback(() => {
-    setExtractedData(null);
-    setDecisionBlock(null);
-    setSessionId(null);
-  }, []);
+  const activeSession = useMemo(() => {
+    if (!activeSessionId) return null;
+    const session = sessions[activeSessionId];
+    return session ? safeSession(session) : null;
+  }, [activeSessionId, sessions]);
 
   return (
     <main className="relative flex h-full min-h-screen flex-row">
       <section className="flex min-h-screen flex-1 flex-col">
-        <ToronHeader />
-        <ToronMessageList
-          session={activeSession}
-        />
-        <ToronInputBar
-          sessionId={activeSession?.sessionId ?? null}
-        />
+        {safeRender(() => (
+          <ToronHeader
+            title={activeSession?.title ?? "Toron"}
+            onNewChat={() => createSession("New Toron Session").then((id) => selectSession(id))}
+            onOpenProjects={() => telemetry("interaction", { action: "open_projects" })}
+          />
+        ))}
+        {safeRender(() => (
+          <ToronMessageList session={activeSession} />
+        ))}
+        {safeRender(() => (
+          <ToronInputBar sessionId={activeSession?.sessionId ?? null} />
+        ))}
       </section>
-
-      {/* Right-hand session list, ChatGPT-style */}
       <aside className="hidden w-72 border-l border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] lg:block">
-        <ToronSessionSidebar />
+        {safeRender(() => (
+          <ToronSessionSidebar />
+        ))}
       </aside>
     </main>
   );

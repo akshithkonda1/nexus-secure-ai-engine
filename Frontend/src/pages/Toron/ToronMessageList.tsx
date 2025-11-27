@@ -1,73 +1,42 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef } from "react";
+import { memo, useMemo } from "react";
 
-import { ToronSession, ToronMessage } from "@/state/toron/toronSessionTypes";
+import { useToronTelemetry } from "@/hooks/useToronTelemetry";
+import { safeArray, safeMessage } from "@/shared/lib/toronSafe";
+import type { ToronSession } from "@/state/toron/toronSessionTypes";
 
-import ToronMessageBubble from "./ToronMessageBubble";
-import ToronWelcome from "./ToronWelcome";
-type StableMessage = ToronMessage & { id: string };
+import { ToronMessageBubble } from "./ToronMessageBubble";
+import { ToronWelcome } from "./ToronWelcome";
 
-type ToronMessageListProps = {
+interface ToronMessageListProps {
   session: ToronSession | null;
+}
+
+const List = ({ session }: ToronMessageListProps) => {
+  const telemetry = useToronTelemetry();
+  const messages = useMemo(() => safeArray(session?.messages, []).map(safeMessage), [session?.messages]);
+
+  try {
+    if (!session || messages.length === 0) {
+      return <ToronWelcome />;
+    }
+
+    return (
+      <section className="flex flex-1 flex-col gap-2 overflow-y-auto bg-[var(--panel-main)] p-4" data-testid="toron-message-list">
+        {messages.map((message) => (
+          <ToronMessageBubble key={message.id} message={message} />
+        ))}
+      </section>
+    );
+  } catch (error) {
+    telemetry("render_error", { component: "ToronMessageList", error: (error as Error).message });
+    return (
+      <section className="flex flex-1 flex-col items-center justify-center bg-[var(--panel-main)] p-4 text-sm text-[var(--text-secondary)]">
+        Messages temporarily unavailable.
+      </section>
+    );
+  }
 };
 
-export function ToronMessageList({ session }: ToronMessageListProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const endRef = useRef<HTMLDivElement | null>(null);
-
-  const safeMessages = useMemo<StableMessage[]>(() => {
-    const messages = session?.messages ?? [];
-    return messages
-      .filter(
-        (message): message is ToronMessage =>
-          typeof message?.text === "string" && Boolean(message?.sender),
-      )
-      .map((message) => ({ ...message, id: message.id ?? crypto.randomUUID() }));
-  }, [session?.messages]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    requestAnimationFrame(() => {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    });
-  }, [safeMessages]);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [safeMessages.length]);
-
-  const showWelcome = safeMessages.length === 0;
-
-  return (
-    <div className="relative flex-1 overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[color-mix(in_srgb,var(--background),transparent_0%)] to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-[color-mix(in_srgb,var(--background),transparent_0%)] to-transparent" />
-
-      <div
-        ref={containerRef}
-        className="relative h-full overflow-y-auto px-4 pb-28 pt-6"
-        style={{ scrollBehavior: "smooth" }}
-      >
-        {showWelcome ? (
-          <ToronWelcome />
-        ) : (
-          <AnimatePresence initial={false}>
-            {safeMessages.map((message, index) => (
-              <motion.div key={message.id} layout className="mb-3 last:mb-6">
-                <ToronMessageBubble
-                  message={message}
-                  index={index}
-                  isStreaming={false}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-        <div ref={endRef} />
-      </div>
-    </div>
-  );
-}
+export const ToronMessageList = memo(List);
 
 export default ToronMessageList;

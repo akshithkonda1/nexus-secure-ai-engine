@@ -1,9 +1,10 @@
-export type ToronSender = "user" | "toron";
+export type ToronRole = "user" | "assistant" | "system";
 
 export interface ToronMessage {
   id: string;
-  sender: ToronSender;
-  text: string;
+  role: ToronRole;
+  content: string;
+  model: string;
   timestamp: string;
 }
 
