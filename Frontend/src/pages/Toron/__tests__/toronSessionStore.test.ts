@@ -13,4 +13,20 @@ describe("toron session store", () => {
     useToronStore.setState({ sessions: [], activeSessionId: null });
     expect(() => useToronStore.getState().switchSession("missing")).not.toThrow();
   });
+
+  it("auto-generates a title for the first user message", () => {
+    useToronStore.setState({ sessions: [], activeSessionId: null });
+    const id = useToronStore.getState().createSession();
+    useToronStore.getState().switchSession(id);
+    useToronStore.getState().addMessage({
+      id: "msg-1",
+      role: "user",
+      content: "an example prompt to capture",
+      model: "user",
+      timestamp: new Date().toISOString(),
+    });
+    const session = useToronStore.getState().getActiveSession();
+    expect(session?.titleAutoLocked).toBe(true);
+    expect(session?.title).toContain("An Example Prompt");
+  });
 });

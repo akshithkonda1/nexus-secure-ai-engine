@@ -9,7 +9,12 @@ import type { ToronMessage } from "@/state/toron/toronSessionTypes";
 
 const API_CHAT = "/api/v1/toron/chat";
 
-export function ToronInputBar() {
+interface ToronInputBarProps {
+  onOpenProjects?: () => void;
+  onSendToProject?: (content: string) => void;
+}
+
+export function ToronInputBar({ onOpenProjects, onSendToProject }: ToronInputBarProps) {
   const telemetry = useToronTelemetry();
   const { addMessage, activeSessionId, getActiveSession } = useToronStore();
   const [text, setText] = useState("");
@@ -20,7 +25,7 @@ export function ToronInputBar() {
     if (!sessionId) setText("");
   }, [sessionId]);
 
-  const resetField = useCallback(() => setText("") , []);
+  const resetField = useCallback(() => setText(""), []);
 
   const handleSend = useCallback(async () => {
     if (!sessionId || sending) return;
@@ -83,6 +88,16 @@ export function ToronInputBar() {
     [sessionId],
   );
 
+  const sendToProject = useCallback(() => {
+    const trimmed = safeString(text, "").trim();
+    if (trimmed && onSendToProject) {
+      onSendToProject(trimmed);
+      telemetry("interaction", { action: "send_to_project" });
+    } else {
+      onOpenProjects?.();
+    }
+  }, [onOpenProjects, onSendToProject, telemetry, text]);
+
   return safeRender(
     () => (
       <div className="sticky bottom-0 z-20 px-4 pb-4 pt-2" data-testid="toron-input-bar">
@@ -97,14 +112,30 @@ export function ToronInputBar() {
           />
           <div className="mt-2 flex items-center justify-between gap-3">
             <p className="text-[0.7rem] text-[var(--text-tertiary)]">Toron will use this session’s context to keep track of your work.</p>
-            <button
-              type="button"
-              onClick={() => void handleSend()}
-              disabled={!sessionId || sending || !text.trim()}
-              className="flex items-center gap-1 rounded-2xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)] px-4 py-1.5 text-xs font-semibold text-[var(--text-primary)] shadow-[0_12px_40px_rgba(56,189,248,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {sending ? "Thinking…" : "Send"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenProjects}
+                className="rounded-2xl border border-[var(--border-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]"
+              >
+                Open Projects
+              </button>
+              <button
+                type="button"
+                onClick={sendToProject}
+                className="rounded-2xl border border-[var(--border-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]"
+              >
+                Send to Project
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSend()}
+                disabled={!sessionId || sending || !text.trim()}
+                className="flex items-center gap-1 rounded-2xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)] px-4 py-1.5 text-xs font-semibold text-[var(--text-primary)] shadow-[0_12px_40px_rgba(56,189,248,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sending ? "Thinking…" : "Send"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

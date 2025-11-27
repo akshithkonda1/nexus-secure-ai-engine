@@ -84,11 +84,17 @@ export const safeMessage = (raw: unknown): ToronMessage => {
 export const safeSession = (raw: unknown): ToronSession => {
   const fallbackId = nanoid();
   const obj = safeObject(raw as Record<string, unknown>, { sessionId: fallbackId } as Record<string, unknown>);
+  const normalizedFirstMessageTitle =
+    typeof obj.firstMessageTitle === "string" && obj.firstMessageTitle.trim().length > 0
+      ? obj.firstMessageTitle.trim()
+      : null;
   return {
     sessionId: safeString(obj.sessionId, fallbackId),
     title: safeString(obj.title, "Untitled Session"),
     createdAt: safeTimestamp(obj.createdAt ?? obj.created_at),
     updatedAt: safeTimestamp(obj.updatedAt ?? obj.updated_at),
+    firstMessageTitle: normalizedFirstMessageTitle,
+    titleAutoLocked: safeBool(obj.titleAutoLocked, false),
     messages: safeArray(obj.messages, []).map(safeMessage),
   };
 };

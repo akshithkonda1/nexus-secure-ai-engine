@@ -13,6 +13,8 @@ export interface ToronSessionSummary {
   title: string;
   createdAt?: string;
   updatedAt?: string;
+  firstMessageTitle?: string | null;
+  titleAutoLocked?: boolean;
 }
 
 export interface ToronSession extends ToronSessionSummary {
