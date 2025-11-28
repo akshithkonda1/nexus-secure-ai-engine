@@ -1,6 +1,12 @@
-"""Lightweight Flask server for the Toron engine demo."""
+"""ASGI FastAPI server for the Toron engine demo."""
 
-from flask import Flask, jsonify
+from __future__ import annotations
+
+import asyncio
+
+import uvloop
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from toron import (
     CloudProviderAdapter,
@@ -12,11 +18,16 @@ from toron import (
     ToronEngine,
 )
 
+uvloop.install()
 
-def create_app() -> Flask:
-    app = Flask(__name__)
+app = FastAPI(title="Toron Engine", version="1.6")
+
+engine: ToronEngine | None = None
+
+
+async def _build_engine() -> ToronEngine:
     config = EngineConfig()
-    engine = ToronEngine(
+    return ToronEngine(
         config=config,
         connectors=ConnectorRegistry.default(),
         adapter=CloudProviderAdapter(),
@@ -25,17 +36,41 @@ def create_app() -> Flask:
         rate_limiter=TokenBucket(capacity=100, fill_rate=10),
     )
 
-    @app.route("/health", methods=["GET"])
-    def health() -> tuple[dict, int]:
-        return {"status": "ok", "version": engine.metadata.get("version", "1.6")}, 200
 
-    @app.route("/bootstrap", methods=["GET"])
-    def bootstrap() -> tuple[dict, int]:
-        return jsonify(engine.bootstrap()), 200
+@app.on_event("startup")
+async def startup_event() -> None:
+    global engine
+    if engine is None:
+        engine = await _build_engine()
 
+
+@app.get("/health")
+async def health() -> JSONResponse:
+    assert engine is not None
+    payload = await asyncio.to_thread(
+        lambda: {"status": "ok", "version": engine.metadata.get("version", "1.6")}
+    )
+    return JSONResponse(content=payload)
+
+
+@app.get("/bootstrap")
+async def bootstrap() -> JSONResponse:
+    assert engine is not None
+    payload = await asyncio.to_thread(engine.bootstrap)
+    return JSONResponse(content=payload)
+
+
+def create_app() -> FastAPI:
     return app
 
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(host="0.0.0.0", port=EngineConfig().port)
+    import uvicorn
+
+    uvicorn.run(
+        "backend.server:app",
+        host="0.0.0.0",
+        port=EngineConfig().port,
+        factory=False,
+        reload=False,
+    )
