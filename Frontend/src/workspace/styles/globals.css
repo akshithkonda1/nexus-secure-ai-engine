@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #020202;
+}
+
+.typing-ripple {
+  background-image: radial-gradient(circle at 50% 0, rgba(16, 185, 129, 0.1), transparent 25%);
+}
+
+.fade-in {
+  animation: fadeIn var(--fade-in);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,19 @@
+:root {
+  --fade-in: 120ms ease-out;
+  --fade-out: 100ms ease-in;
+
+  --slide-up: 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
+  --slide-down: 180ms ease-in;
+
+  --scale-tap: 80ms ease-out;
+  --scale-hover: 120ms ease-out;
+
+  --pulse-workspace: 800ms ease-in-out;
+  --pulse-system: 1200ms ease-in-out;
+
+  --switch-slide: 180ms cubic-bezier(0.38, 0.8, 0.2, 1);
+  --switch-bounce: 70ms ease-out;
+
+  --dim-corners: 400ms ease-out;
+  --brighten-page: 300ms ease-out;
+}
