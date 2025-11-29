@@ -18,15 +18,15 @@ export function App() {
   return (
     <Routes>
       <Route element={<ProjectProvider><RootLayout /></ProjectProvider>}>
-        <Route index element={<Home />} />
+        <Route path="/" element={<Home />} />
         <Route path="/toron" element={<ToronPage />} />
-        <Route path="workspace" element={<Workspace />} />
-        <Route path="projects" element={<ProjectDashboard />} />
-        <Route path="projects/:id" element={<ProjectView />} />
-        <Route path="documents" element={<Documents />} />
-        <Route path="history" element={<History />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="feedback-dashboard" element={<FeedbackDashboard />} />
+        <Route path="/workspace" element={<Workspace />} />
+        <Route path="/projects" element={<ProjectDashboard />} />
+        <Route path="/projects/:id" element={<ProjectView />} />
+        <Route path="/documents" element={<Documents />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/feedback-dashboard" element={<FeedbackDashboard />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
