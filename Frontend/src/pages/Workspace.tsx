@@ -1,8 +1,8 @@
-import React from 'react';
-import WorkspaceShell from '../components/workspace/WorkspaceShell';
+import React from "react";
+import RyuzenWorkspace from "@/routes/workspace/RyuzenWorkspace";
 
 const Workspace: React.FC = () => {
-  return <WorkspaceShell />;
+  return <RyuzenWorkspace />;
 };
 
 export default Workspace;
