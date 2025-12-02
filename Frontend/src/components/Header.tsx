@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Sparkles, SunMedium, MonitorSmartphone, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { useProfile } from "@/features/profile/ProfileProvider";
 import { NotificationBell } from "@/components/shell/NotificationBell";
 import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
@@ -14,8 +15,20 @@ import { useUI } from "@/state/ui";
 // ------------------------------------------------------------
 export default function Header() {
   const navigate = useNavigate();
+  const { profile } = useProfile();
   const { theme, setTheme } = useTheme();
   const { openCommandCenter } = useUI();
+
+  const initials = useMemo(() => {
+    const name = profile?.fullName;
+    if (!name) return "AI";
+    return name
+      .split(" ")
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [profile?.fullName]);
 
   const themeOptions: { value: ThemeMode; label: string; icon: JSX.Element }[] = [
     { value: "light", label: "Light", icon: <SunMedium className="h-4 w-4" /> },
@@ -49,7 +62,7 @@ export default function Header() {
             </div>
           </div>
 
-          {/* RIGHT — THEME, NOTIFICATIONS, COMMAND CENTER */}
+          {/* RIGHT — THEME, COMMAND CENTER, PROFILE */}
           <div className="flex items-center gap-3">
 
             {/* Theme Switch */}
@@ -82,11 +95,6 @@ export default function Header() {
               })}
             </div>
 
-            <NotificationBell
-              onClick={() => navigate("/notifications")}
-              className="border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_86%,transparent)]"
-            />
-
             {/* COMMAND CENTER BUTTON */}
             <motion.button
               whileHover={{
@@ -107,6 +115,21 @@ export default function Header() {
                 aria-hidden="true"
               />
             </motion.button>
+
+            {/* PROFILE ICON */}
+            <button
+              className="relative h-11 w-11 overflow-hidden rounded-full border 
+                border-[var(--border-strong)]
+                bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)]
+                shadow-lg shadow-black/30 transition hover:-translate-y-[1px] 
+                hover:shadow-cyan-500/20"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/30 via-transparent to-purple-500/25" />
+              <span className="relative flex h-full w-full items-center justify-center 
+                text-[var(--text-primary)]">
+                {initials}
+              </span>
+            </button>
           </div>
         </div>
       </header>
