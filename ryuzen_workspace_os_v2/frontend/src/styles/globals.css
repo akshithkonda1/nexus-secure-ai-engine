@@ -1,0 +1,19 @@
+@import "./theme.css";
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 10% 20%, #f4f7ff, #e8edf8 35%, #f8fbff);
+  color: var(--text);
+  margin: 0;
+}
+
+.quadrants-grid,
+.osbar,
+.dynamic-workspace,
+.widget-card,
+.toron-insights {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
