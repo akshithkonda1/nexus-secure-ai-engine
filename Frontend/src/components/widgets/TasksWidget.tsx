@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { AlarmClock, Pencil, Plus } from "lucide-react";
-import { TaskItem, WorkspaceSchedule } from "@/types/workspace";
+import React from "react";
+import { AlarmClock } from "lucide-react";
+import { WorkspaceSchedule } from "@/types/workspace";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface TasksWidgetProps {
   schedule: WorkspaceSchedule[];
@@ -8,100 +9,71 @@ interface TasksWidgetProps {
   onExpand: () => void;
 }
 
-const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onChange, onExpand }) => {
-  const [editing, setEditing] = useState<Record<string, string>>({});
-
-  const updateTask = (hour: string, task: TaskItem, value: string) => {
-    const next = schedule.map((block) =>
-      block.hour === hour
-        ? {
-            ...block,
-            items: block.items.map((item) => (item.id === task.id ? { ...item, title: value } : item)),
-          }
-        : block,
-    );
-    onChange(next);
-  };
-
-  const addTask = (hour: string) => {
-    const text = editing[hour]?.trim();
-    if (!text) return;
-    const next = schedule.map((block) =>
-      block.hour === hour
-        ? { ...block, items: [...block.items, { id: crypto.randomUUID(), title: text, source: "Manual" }] }
-        : block,
-    );
-    onChange(next);
-    setEditing((prev) => ({ ...prev, [hour]: "" }));
-    window.dispatchEvent(new CustomEvent("toron-signal", { detail: { tasks: next } }));
-  };
+const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onExpand }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const now = new Date();
   const currentHour = `${String(now.getHours()).padStart(2, "0")}:00`;
 
   return (
-    <div
-      className="ryuzen-card relative bg-[var(--bg-widget)] p-4 text-[var(--text-primary)]"
+    <button
+      type="button"
       onClick={onExpand}
+      className={`w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] ${
+        isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+      }`}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[var(--border-card)]" />
-      <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[var(--text-secondary)]">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
           <AlarmClock className="h-4 w-4" /> Tasks
         </div>
-        <span className="rounded-full bg-[var(--bg-card)] px-3 py-1 text-xs text-[var(--text-secondary)]">AI schedule</span>
+        <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">AI timeline</span>
       </div>
-      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="space-y-3 px-5 py-4">
         {schedule.map((block) => (
           <div
             key={block.hour}
-            className={`rounded-2xl border px-3 py-2 ${
+            className={`rounded-2xl border px-4 py-3 shadow-sm ${
               block.hour === currentHour
-                ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-900 shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:text-emerald-50"
-                : "border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-primary)] shadow-[0_4px_18px_rgba(0,0,0,0.08)]"
+                ? isDark
+                  ? "border-emerald-400 bg-neutral-800 text-white"
+                  : "border-emerald-300 bg-emerald-50 text-black"
+                : isDark
+                  ? "border-white/10 bg-neutral-800"
+                  : "border-black/5 bg-neutral-50"
             }`}
           >
-            <div className="flex items-center justify-between text-sm font-semibold">
+            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--text-secondary)]">{block.hour}</span>
+                <span className="text-xs text-neutral-700 dark:text-neutral-300">{block.hour}</span>
                 <span>{block.focus}</span>
               </div>
-              {block.hour === currentHour && <span className="text-[11px] text-emerald-700 dark:text-emerald-200">Current</span>}
+              {block.hour === currentHour && (
+                <span className="rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-semibold text-white">Now</span>
+              )}
             </div>
-            <div className="mt-2 space-y-1 text-xs text-[var(--text-primary)]">
-              {block.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-xl bg-[var(--bg-card)] px-2 py-1">
-                  <input
-                    className="w-full bg-transparent text-[var(--text-primary)] focus:outline-none"
-                    value={item.title}
-                    onChange={(e) => updateTask(block.hour, item, e.target.value)}
-                  />
-                  <span className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)]">
-                    <Pencil className="h-3 w-3" />
-                    {item.source}
-                  </span>
+            <div className="mt-2 space-y-2 text-sm text-neutral-900 dark:text-neutral-100">
+              {block.items.slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className={`rounded-xl px-3 py-2 ${isDark ? "bg-neutral-900 text-white" : "bg-white text-black"}`}
+                >
+                  <p className="font-semibold">{item.title}</p>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300">{item.source}</p>
                 </div>
               ))}
-              <div className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] px-2 py-1">
-                <input
-                  value={editing[block.hour] || ""}
-                  onChange={(e) => setEditing((prev) => ({ ...prev, [block.hour]: e.target.value }))}
-                  onKeyDown={(e) => e.key === "Enter" && addTask(block.hour)}
-                  placeholder="Add task"
-                  className="w-full bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
-                />
-                <button
-                  className="rounded-full bg-[var(--bg-widget)] p-1 text-[var(--text-primary)] transition hover:opacity-80"
-                  onClick={() => addTask(block.hour)}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
+              {!block.items.length && (
+                <p className="text-xs text-neutral-700 dark:text-neutral-300">No tasks scheduled.</p>
+              )}
             </div>
           </div>
         ))}
       </div>
-    </div>
+      <div className={`rounded-b-3xl px-5 py-3 text-sm ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+        <p className="text-neutral-700 dark:text-neutral-300">Drag, reorder, and build AI assisted blocks in the full task view.</p>
+      </div>
+    </button>
   );
 };
 

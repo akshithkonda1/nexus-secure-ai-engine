@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { CalendarEvent } from "@/types/workspace";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface CalendarPanelProps {
   events: CalendarEvent[];
@@ -17,30 +18,42 @@ const eventColors: Record<CalendarEvent["type"], string> = {
 };
 
 const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onSelectDate, close }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const changeDay = (delta: number) => {
     const next = new Date(selectedDate);
     next.setDate(selectedDate.getDate() + delta);
     onSelectDate(next);
   };
 
+  const border = isDark ? "border-white/10" : "border-black/5";
+  const surface = isDark ? "bg-neutral-900" : "bg-white";
+  const textPrimary = isDark ? "text-neutral-100" : "text-neutral-900";
+  const textSecondary = isDark ? "text-neutral-300" : "text-neutral-700";
+
   return (
-    <div className="rounded-[32px] border border-[var(--border)] bg-[var(--glass)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
-          <CalendarIcon className="h-4 w-4" /> Calendar Panel
+    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${border} ${surface} p-6 shadow-xl`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
+          <CalendarIcon className="h-4 w-4" /> Calendar Hub
         </div>
-        <div className="flex items-center gap-2 text-sm text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
+        <div className="flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100">
           <button
-            className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] p-1 transition hover:bg-[color-mix(in_oklab,var(--glass)_90%,transparent)]"
+            className={`rounded-full p-2 font-semibold ${
+              isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+            }`}
             onClick={() => changeDay(-1)}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="font-semibold">
+          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
             {selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
           </span>
           <button
-            className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] p-1 transition hover:bg-[color-mix(in_oklab,var(--glass)_90%,transparent)]"
+            className={`rounded-full p-2 font-semibold ${
+              isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+            }`}
             onClick={() => changeDay(1)}
           >
             <ChevronRight className="h-4 w-4" />
@@ -48,7 +61,9 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
           {close && (
             <button
               onClick={close}
-              className="ml-2 rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-1 text-xs uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]"
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+              }`}
             >
               Close
             </button>
@@ -59,20 +74,24 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
         {events.map((evt) => (
           <div
             key={evt.title}
-            className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-2 text-sm"
+            className={`flex items-center justify-between rounded-2xl border ${border} px-4 py-3 shadow-sm ${surface}`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color-mix(in_oklab,var(--glass)_60%,transparent)]">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isDark ? "bg-neutral-800" : "bg-neutral-100"}`}>
                 <span className={`h-3 w-3 rounded-full ${eventColors[evt.type]}`} />
               </div>
               <div>
-                <p className="font-medium text-[var(--text)]">{evt.title}</p>
-                <p className="flex items-center gap-1 text-xs text-[color-mix(in_oklab,var(--text)_65%,transparent)]">
+                <p className={`font-semibold ${textPrimary}`}>{evt.title}</p>
+                <p className={`flex items-center gap-1 text-xs ${textSecondary}`}>
                   <Clock className="h-3 w-3" /> {evt.date}
                 </p>
               </div>
             </div>
-            <span className="rounded-full bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-[11px] uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
+            <span
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase ${
+                isDark ? "bg-neutral-800 text-white" : "bg-neutral-100 text-black"
+              }`}
+            >
               {evt.type}
             </span>
           </div>

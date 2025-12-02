@@ -1,6 +1,7 @@
 import React from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { CalendarEvent } from "@/types/workspace";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface CalendarWidgetProps {
   events: CalendarEvent[];
@@ -16,98 +17,72 @@ const COLORS: Record<CalendarEvent["type"], string> = {
 };
 
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, onSelectDate }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
-  const start = new Date(year, month, 1);
   const end = new Date(year, month + 1, 0);
-  const days = Array.from({ length: end.getDate() }, (_, i) => new Date(year, month, i + 1));
-
-  const changeMonth = (delta: number) => {
-    const next = new Date(year, month + delta, 1);
-    onSelectDate(next);
-  };
-
-  const indicator = (day: Date) => events.filter((evt) => evt.date === day.toISOString().slice(0, 10));
+  const days = Array.from({ length: end.getDate() }, (_, i) => i + 1);
 
   return (
-    <div
-      className="ryuzen-card relative bg-[var(--bg-widget)] p-4 text-[var(--text-primary)]"
+    <button
+      type="button"
       onClick={() => onSelectDate(selectedDate)}
+      className={`w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] ${
+        isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+      }`}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[var(--border-card)]" />
-      <div className="mb-3 flex items-center justify-between text-sm text-[var(--text-secondary)]">
-        <div className="flex items-center gap-2 uppercase tracking-[0.2em]">
+      <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
           <CalendarIcon className="h-4 w-4" /> Calendar
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="rounded-full border border-[var(--border-card)] bg-[var(--bg-card)] p-1 text-[var(--text-primary)] transition hover:opacity-80"
-            onClick={(e) => {
-              e.stopPropagation();
-              changeMonth(-1);
-            }}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="text-xs font-medium text-[var(--text-secondary)]">
-            {selectedDate.toLocaleString("default", { month: "long" })} {year}
-          </div>
-          <button
-            className="rounded-full border border-[var(--border-card)] bg-[var(--bg-card)] p-1 text-[var(--text-primary)] transition hover:opacity-80"
-            onClick={(e) => {
-              e.stopPropagation();
-              changeMonth(1);
-            }}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+          {selectedDate.toLocaleString("default", { month: "long" })} {year}
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-2 text-center text-xs text-[var(--text-secondary)]">
-        {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-          <div key={d}>{d}</div>
-        ))}
-        {Array.from({ length: start.getDay() }).map((_, idx) => (
-          <div key={`empty-${idx}`} />
-        ))}
-        {days.map((day) => {
-          const dots = indicator(day);
-          const isSelected = day.toDateString() === selectedDate.toDateString();
-          return (
-            <button
-              key={day.toISOString()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelectDate(day);
-              }}
-              className={`relative flex h-10 flex-col items-center justify-center rounded-2xl border text-[var(--text-primary)] transition hover:border-[var(--border-card)] hover:bg-[var(--bg-widget)] ${
-                isSelected
-                  ? "border-[var(--border-card)] bg-[var(--bg-card)]"
-                  : "border-[var(--border-card)] bg-[var(--bg-widget)]"
+      <div className="px-5 py-4">
+        <div className="grid grid-cols-7 gap-2 text-center text-xs text-neutral-700 dark:text-neutral-300">
+          {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+            <div key={d}>{d}</div>
+          ))}
+          {days.map((day) => {
+            const matchingEvents = events.filter((evt) => evt.date === new Date(year, month, day).toISOString().slice(0, 10));
+            return (
+              <div
+                key={day}
+                className={`relative flex h-10 flex-col items-center justify-center rounded-xl border text-sm font-semibold ${
+                  isDark ? "border-white/10 bg-neutral-800 text-white" : "border-black/5 bg-neutral-50 text-black"
+                }`}
+              >
+                <span>{day}</span>
+                <div className="mt-1 flex gap-1">
+                  {matchingEvents.slice(0, 3).map((evt) => (
+                    <span key={evt.title} className={`h-1.5 w-1.5 rounded-full ${COLORS[evt.type]}`} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 space-y-2 text-xs text-neutral-800 dark:text-neutral-200">
+          {events.map((evt) => (
+            <div
+              key={evt.title}
+              className={`flex items-center justify-between rounded-2xl border px-3 py-2 ${
+                isDark ? "border-white/10 bg-neutral-800" : "border-black/5 bg-neutral-50"
               }`}
             >
-              <span className="text-sm font-semibold">{day.getDate()}</span>
-              <div className="mt-1 flex gap-1">
-                {dots.map((evt) => (
-                  <span key={evt.title} className={`h-1.5 w-1.5 rounded-full ${COLORS[evt.type]}`} />
-                ))}
+              <div className="flex items-center gap-2">
+                <span className={`h-2.5 w-2.5 rounded-full ${COLORS[evt.type]}`} />
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">{evt.title}</span>
               </div>
-            </button>
-          );
-        })}
+              <span className="text-neutral-700 dark:text-neutral-300">{evt.date}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[var(--text-secondary)]">
-        {events.map((evt) => (
-          <div
-            key={evt.title}
-            className="flex items-center gap-1 rounded-full border border-[var(--border-card)] bg-[var(--bg-card)] px-2 py-1"
-          >
-            <span className={`h-2 w-2 rounded-full ${COLORS[evt.type]}`} />
-            <span>{evt.title}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    </button>
   );
 };
 

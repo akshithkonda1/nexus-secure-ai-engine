@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import { WorkspaceList } from "@/types/workspace";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface ListsPanelProps {
   lists: WorkspaceList[];
@@ -10,6 +11,8 @@ interface ListsPanelProps {
 
 const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
   const [newTitle, setNewTitle] = useState("");
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const addList = () => {
     const title = newTitle.trim();
@@ -19,11 +22,16 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
     setNewTitle("");
   };
 
+  const containerBorder = isDark ? "border-white/10" : "border-black/5";
+  const cardSurface = isDark ? "bg-neutral-900" : "bg-white";
+  const cardBorder = isDark ? "border-white/10" : "border-black/5";
+  const textSecondary = isDark ? "text-neutral-300" : "text-neutral-700";
+
   return (
-    <div className="relative rounded-[32px] border border-[var(--border)] bg-[var(--glass)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
-          <ClipboardList className="h-4 w-4" /> Lists Panel
+    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${containerBorder} bg-white dark:bg-neutral-900 p-6 shadow-xl`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
+          <ClipboardList className="h-4 w-4" /> Lists Control Center
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -31,10 +39,18 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addList()}
             placeholder="New list"
-            className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-4 py-2 text-sm text-[var(--text)] placeholder:text-[color-mix(in_oklab,var(--text)_60%,transparent)] focus:outline-none"
+            className={`rounded-full border px-4 py-2 text-sm ${
+              isDark
+                ? "border-white/10 bg-neutral-800 text-white placeholder:text-neutral-400"
+                : "border-black/5 bg-neutral-50 text-black placeholder:text-neutral-500"
+            } focus:outline-none`}
           />
           <button
-            className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_75%,transparent)] px-3 py-2 text-sm text-[var(--text)] transition hover:bg-[color-mix(in_oklab,var(--glass)_90%,transparent)]"
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              isDark
+                ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                : "bg-emerald-300 text-black hover:bg-emerald-400"
+            }`}
             onClick={addList}
           >
             <Plus className="h-4 w-4" />
@@ -42,7 +58,9 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
           {close && (
             <button
               onClick={close}
-              className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-2 text-xs uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)] hover:bg-[color-mix(in_oklab,var(--glass)_80%,transparent)]"
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+              }`}
             >
               Close
             </button>
@@ -51,19 +69,24 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {lists.map((list) => (
-          <div key={list.id} className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] p-4">
-            <div className="flex items-center justify-between text-sm font-semibold text-[var(--text)]">
+          <div key={list.id} className={`rounded-2xl border ${cardBorder} ${cardSurface} p-4 shadow-sm`}>
+            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               {list.title}
-              <span className="text-xs text-[color-mix(in_oklab,var(--text)_65%,transparent)]">{list.items.length} items</span>
+              <span className={`text-xs ${textSecondary}`}>{list.items.length} items</span>
             </div>
-            <div className="mt-2 space-y-1 text-sm text-[var(--text)]">
+            <div className="mt-2 space-y-2 text-sm">
               {list.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-xl bg-[color-mix(in_oklab,var(--glass)_50%,transparent)] px-3 py-2">
-                  <span>{item.text}</span>
-                  {item.done && <span className="text-[11px] uppercase text-emerald-600 dark:text-emerald-200">done</span>}
+                <div
+                  key={item.id}
+                  className={`flex items-center justify-between rounded-xl border px-3 py-2 ${
+                    isDark ? "border-white/10 bg-neutral-800 text-white" : "border-black/5 bg-neutral-50 text-black"
+                  }`}
+                >
+                  <span className={item.done ? "line-through" : ""}>{item.text}</span>
+                  {item.done && <span className="text-[11px] uppercase text-emerald-500">Done</span>}
                 </div>
               ))}
-              {!list.items.length && <p className="text-xs text-[color-mix(in_oklab,var(--text)_60%,transparent)]">No items yet.</p>}
+              {!list.items.length && <p className={`text-xs ${textSecondary}`}>No items yet. Add from the list toolbar.</p>}
             </div>
           </div>
         ))}
