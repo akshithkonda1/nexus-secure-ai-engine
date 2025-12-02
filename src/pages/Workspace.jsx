@@ -1,9 +1,9 @@
 import React from "react";
 import WorkspaceShell from "../components/workspace/WorkspaceShell";
 
-const Workspace: React.FC = () => {
+const Workspace = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-white">
+    <div className="min-h-screen text-white">
       <WorkspaceShell />
     </div>
   );
