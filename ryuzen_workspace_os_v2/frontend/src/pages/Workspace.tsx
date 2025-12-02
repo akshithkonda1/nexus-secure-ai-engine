@@ -1,8 +1,8 @@
 import React from "react";
-import WorkspaceSurface from "../components/workspace/WorkspaceSurface";
+import WorkspaceShell from "../components/workspace/WorkspaceShell";
 
 const Workspace: React.FC = () => {
-  return <WorkspaceSurface />;
+  return <WorkspaceShell />;
 };
 
 export default Workspace;
