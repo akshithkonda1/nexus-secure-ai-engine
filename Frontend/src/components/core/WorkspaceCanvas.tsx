@@ -13,7 +13,7 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, chil
       {!active && (
         <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-white/70">
           <p className="text-sm uppercase tracking-[0.35em] text-white/50">Ryuzеn Workspace Canvas</p>
-          <p className="max-w-md text-lg text-white/80">Use the LiquidOS Bar to summon a floating glass panel.</p>
+          <p className="max-w-md text-lg text-white/80">Select a widget or tool to open a floating panel.</p>
         </div>
       )}
       {active && (
@@ -26,7 +26,7 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, chil
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="relative z-10 flex h-full w-full items-center justify-center overflow-y-auto p-6">{children}</div>
+          <div className="relative z-10 h-full overflow-y-auto p-6">{children}</div>
         </div>
       )}
     </div>
