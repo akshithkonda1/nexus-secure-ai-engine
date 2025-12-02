@@ -1,26 +1,37 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 
-const baseClasses =
-  "flex items-center gap-2 rounded-[32px] border border-black/10 bg-black/5 px-3 py-2 text-sm font-medium text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export default function ThemeToggle() {
-  const { resolvedTheme, setTheme, theme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
-
-  const current = (resolvedTheme ?? theme ?? "light") as "light" | "dark";
-  const nextTheme = current === "dark" ? "light" : "dark";
-
   if (!mounted) return null;
 
+  // FIXED: remove TypeScript syntax
+  const current = resolvedTheme ?? theme ?? "light";
+  const nextTheme = current === "dark" ? "light" : "dark";
+
   return (
-    <button className={baseClasses} onClick={() => setTheme(nextTheme)} aria-label="Toggle theme">
-      {current === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-      <span className="text-xs uppercase tracking-[0.2em]">{nextTheme}</span>
+    <button
+      onClick={() => setTheme(nextTheme)}
+      aria-label="Toggle Theme"
+      className="
+        w-10 h-10 flex items-center justify-center
+        rounded-full backdrop-blur-xl transition-all duration-200
+        hover:scale-105 active:scale-95
+        bg-black/5 border border-black/10 text-black/80
+        dark:bg-white/10 dark:border-white/10 dark:text-white/80
+      "
+    >
+      {current === "dark" ? (
+        <Sun size={18} strokeWidth={2} />
+      ) : (
+        <Moon size={18} strokeWidth={2} />
+      )}
     </button>
   );
 }

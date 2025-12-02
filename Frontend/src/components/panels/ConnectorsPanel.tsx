@@ -5,6 +5,7 @@ import { WorkspaceConnector } from "@/types/workspace";
 interface ConnectorsPanelProps {
   connectors: WorkspaceConnector[];
   onChange: (next: WorkspaceConnector[]) => void;
+  close?: () => void;
 }
 
 const statusStyles: Record<WorkspaceConnector["status"], string> = {
@@ -13,7 +14,7 @@ const statusStyles: Record<WorkspaceConnector["status"], string> = {
   error: "bg-red-500/20 text-red-800 border-red-500/40 dark:text-red-100",
 };
 
-const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange }) => {
+const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange, close }) => {
   const reconnect = (id: string) => {
     const updated = connectors.map((connector) =>
       connector.id === id
@@ -24,20 +25,30 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange 
   };
 
   return (
-    <div className="rounded-[32px] border border-black/10 bg-black/5 p-6 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-      <div className="mb-4 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-black/70 dark:text-white/70">
+    <div className="rounded-[32px] border border-[var(--border)] bg-[var(--glass)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      <div className="mb-4 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
         <div className="flex items-center gap-2">
           <PlugZap className="h-4 w-4" /> Connectors Panel
         </div>
-        <span className="rounded-full bg-black/10 px-3 py-1 text-xs text-black/70 dark:bg-white/10 dark:text-white/70">{connectors.length} integrations</span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-xs text-[color-mix(in_oklab,var(--text)_70%,transparent)]">{connectors.length} integrations</span>
+          {close && (
+            <button
+              onClick={close}
+              className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-[11px] uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]"
+            >
+              Close
+            </button>
+          )}
+        </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {connectors.map((connector) => (
           <div
             key={connector.id}
-            className="rounded-2xl border border-black/10 bg-black/5 p-4 dark:border-white/10 dark:bg-white/5"
+            className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] p-4"
           >
-            <div className="flex items-center justify-between text-sm font-semibold text-black dark:text-white">
+            <div className="flex items-center justify-between text-sm font-semibold text-[var(--text)]">
               {connector.name}
               {connector.status === "connected" ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -47,7 +58,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange 
                 <AlertTriangle className="h-4 w-4 text-red-500" />
               )}
             </div>
-            <p className="mt-1 text-xs text-black/60 dark:text-white/60">Last sync {connector.lastSync}</p>
+            <p className="mt-1 text-xs text-[color-mix(in_oklab,var(--text)_65%,transparent)]">Last sync {connector.lastSync}</p>
             <div
               className={`mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${statusStyles[connector.status]}`}
             >
@@ -56,7 +67,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange 
             </div>
             {connector.status !== "connected" && (
               <button
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-black/10 px-3 py-2 text-xs text-black/80 transition hover:bg-black/15 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/20"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-2 text-xs text-[var(--text)] transition hover:bg-[color-mix(in_oklab,var(--glass)_85%,transparent)]"
                 onClick={() => reconnect(connector.id)}
               >
                 <RefreshCcw className="h-4 w-4" /> Reconnect

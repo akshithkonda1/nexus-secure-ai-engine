@@ -9,18 +9,18 @@ interface WorkspaceCanvasProps {
 
 const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, children }) => {
   return (
-    <div className="relative h-full min-h-[420px] rounded-[32px] border border-black/10 bg-black/5 text-black/70 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/10 dark:text-white/70 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+    <div className="relative h-full min-h-[420px] rounded-[32px] border border-[var(--border)] bg-[var(--glass)] text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
       {!active && (
         <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm uppercase tracking-[0.35em] text-black/60 dark:text-white/50">Ryuzеn Workspace Canvas</p>
-          <p className="max-w-md text-lg text-black/70 dark:text-white/80">Select a widget or tool to open a floating panel.</p>
+          <p className="text-sm uppercase tracking-[0.35em] text-[color-mix(in_oklab,var(--text)_70%,transparent)]">Ryuzеn Workspace Canvas</p>
+          <p className="max-w-md text-lg text-[color-mix(in_oklab,var(--text)_80%,transparent)]">Select a widget or tool to open a floating panel.</p>
         </div>
       )}
       {active && (
-        <div className="absolute inset-0 overflow-hidden rounded-[32px] border border-black/10 bg-black/10 shadow-inner dark:border-white/10 dark:bg-white/10">
+        <div className="absolute inset-0 overflow-hidden rounded-[32px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] shadow-inner">
           <div className="absolute right-4 top-4 z-20">
             <button
-              className="rounded-full border border-black/10 bg-black/5 p-2 text-black/70 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-2xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+              className="rounded-full border border-[var(--border)] bg-[var(--glass)] p-2 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-2xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
