@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { CalendarEvent } from "@/types/workspace";
-import { Calendar, Clock, Notebook } from "lucide-react";
 
 interface CalendarPanelProps {
   events: CalendarEvent[];
@@ -8,77 +8,66 @@ interface CalendarPanelProps {
   onSelectDate: (date: Date) => void;
 }
 
-const VIEW_MODES = ["Day", "Week", "Month"] as const;
-type ViewMode = (typeof VIEW_MODES)[number];
+const eventColors: Record<CalendarEvent["type"], string> = {
+  urgent: "bg-red-500",
+  meeting: "bg-emerald-500",
+  event: "bg-amber-400",
+  multi: "bg-blue-500",
+};
 
 const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onSelectDate }) => {
-  const [mode, setMode] = useState<ViewMode>("Week");
-
-  const filtered = useMemo(() => {
-    if (mode === "Month") return events;
-    if (mode === "Week") {
-      const start = new Date(selectedDate);
-      start.setDate(start.getDate() - start.getDay());
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      return events.filter((evt) => {
-        const date = new Date(evt.date);
-        return date >= start && date <= end;
-      });
-    }
-    return events.filter((evt) => evt.date === selectedDate.toISOString().slice(0, 10));
-  }, [events, mode, selectedDate]);
+  const changeDay = (delta: number) => {
+    const next = new Date(selectedDate);
+    next.setDate(selectedDate.getDate() + delta);
+    onSelectDate(next);
+  };
 
   return (
-    <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 text-white shadow-[0_8px_32px_rgba(0,0,0,0.32)] backdrop-blur-3xl">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-white/70">
-          <Calendar className="h-4 w-4" /> Calendar Panel
+    <div className="rounded-[32px] border border-black/10 bg-black/5 p-6 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-black/70 dark:text-white/70">
+          <CalendarIcon className="h-4 w-4" /> Calendar Panel
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-white/10 p-1">
-          {VIEW_MODES.map((view) => (
-            <button
-              key={view}
-              onClick={() => setMode(view)}
-              className={`rounded-full px-3 py-1 text-sm transition ${mode === view ? "bg-white/20" : "text-white/70"}`}
-            >
-              {view} View
-            </button>
-          ))}
+        <div className="flex items-center gap-2 text-sm text-black/70 dark:text-white/70">
+          <button
+            className="rounded-full border border-black/10 bg-black/10 p-1 transition hover:bg-black/20 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20"
+            onClick={() => changeDay(-1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="font-semibold">
+            {selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+          </span>
+          <button
+            className="rounded-full border border-black/10 bg-black/10 p-1 transition hover:bg-black/20 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20"
+            onClick={() => changeDay(1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {filtered.map((evt) => (
-          <div key={evt.title} className="rounded-2xl border border-white/10 bg-black/30 p-4">
-            <div className="flex items-center justify-between text-sm font-semibold text-white/90">
-              {evt.title}
-              <span className="text-xs uppercase text-white/60">{evt.type}</span>
+      <div className="space-y-3">
+        {events.map((evt) => (
+          <div
+            key={evt.title}
+            className="flex items-center justify-between rounded-2xl border border-black/10 bg-black/5 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-black/10 dark:bg-white/10">
+                <span className={`h-3 w-3 rounded-full ${eventColors[evt.type]}`} />
+              </div>
+              <div>
+                <p className="font-medium text-black dark:text-white">{evt.title}</p>
+                <p className="flex items-center gap-1 text-xs text-black/60 dark:text-white/60">
+                  <Clock className="h-3 w-3" /> {evt.date}
+                </p>
+              </div>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-xs text-white/70">
-              <Clock className="h-4 w-4" />
-              {new Date(evt.date).toDateString()}
-            </div>
+            <span className="rounded-full bg-black/10 px-3 py-1 text-[11px] uppercase tracking-wide text-black/70 dark:bg-white/10 dark:text-white/70">
+              {evt.type}
+            </span>
           </div>
         ))}
-      </div>
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-          <Notebook className="h-4 w-4" /> Notes for {selectedDate.toDateString()}
-        </div>
-        <textarea
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 p-3 text-sm text-white/80 focus:outline-none"
-          placeholder="Add context or agenda for this day"
-          onChange={(e) =>
-            window.dispatchEvent(new CustomEvent("toron-signal", { detail: { calendarNotes: e.target.value } }))
-          }
-        />
-        <div className="mt-3 text-xs text-white/60">Day view highlights sync with Toron when edited.</div>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-white/60">
-        <span className="rounded-full bg-red-500/20 px-3 py-1 text-red-100">Urgent</span>
-        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-100">Meetings</span>
-        <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-yellow-100">Events</span>
-        <span className="rounded-full bg-blue-500/20 px-3 py-1 text-blue-100">Multi-person</span>
       </div>
     </div>
   );

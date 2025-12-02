@@ -4,16 +4,16 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import { App } from "./App";
 import { RyuzenErrorBoundary } from "./components/errors/RyuzenErrorBoundary";
-import { ThemeProvider } from "./theme/ThemeProvider";
+import { Providers } from "./app/providers";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ThemeProvider>
+    <Providers>
       <BrowserRouter>
         <RyuzenErrorBoundary>
           <App />
         </RyuzenErrorBoundary>
       </BrowserRouter>
-    </ThemeProvider>
+    </Providers>
   </React.StrictMode>,
 );
