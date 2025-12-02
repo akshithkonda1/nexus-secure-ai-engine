@@ -17,6 +17,7 @@ import BoardsPanel from "@/components/panels/BoardsPanel";
 import FlowsPanel from "@/components/panels/FlowsPanel";
 import ToronPromptPanel from "@/components/panels/ToronPromptPanel";
 import ProfilePanel from "@/components/panels/ProfilePanel";
+import ThemeToggle from "@/components/core/ThemeToggle";
 import { WorkspaceConnector, WorkspaceList, WorkspaceSchedule } from "@/types/workspace";
 
 export type PanelKey =
@@ -167,23 +168,24 @@ const RyuzenWorkspace: React.FC = () => {
   }, [activePanel, connectors, events, lists, schedule, selectedDate]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#0f1117] via-[#0c0f1a] to-[#101421] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(88,118,255,0.12),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(120,67,233,0.12),transparent_32%),radial-gradient(circle_at_50%_80%,rgba(16,185,129,0.08),transparent_30%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-100 text-black/80 dark:from-[#0f1117] dark:via-[#0c0f1a] dark:to-[#101421] dark:text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(88,118,255,0.12),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(120,67,233,0.12),transparent_32%),radial-gradient(circle_at_50%_80%,rgba(16,185,129,0.08),transparent_30%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(88,118,255,0.12),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(120,67,233,0.12),transparent_32%),radial-gradient(circle_at_50%_80%,rgba(16,185,129,0.12),transparent_30%)]" />
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col px-6 pb-32 pt-10 lg:px-10">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-white/60">Ryuzen</p>
-            <h1 className="text-3xl font-semibold tracking-tight">Workspace OS</h1>
+            <p className="text-sm uppercase tracking-[0.3em] text-black/60 dark:text-white/60">Ryuzen</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white">Workspace OS</h1>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white/80 shadow-lg backdrop-blur-xl transition hover:scale-105 hover:border-white/20"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-black/5 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
               onClick={() => openPanel("notifications")}
             >
               <Bell className="h-5 w-5" />
             </button>
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/15 via-white/10 to-white/5 text-white shadow-lg backdrop-blur-xl transition hover:scale-105 hover:border-white/25"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-gradient-to-br from-black/10 via-black/5 to-transparent text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-gradient-to-br dark:from-white/20 dark:via-white/10 dark:to-white/5 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
               onClick={() => openPanel("profile")}
             >
               <User className="h-5 w-5" />
