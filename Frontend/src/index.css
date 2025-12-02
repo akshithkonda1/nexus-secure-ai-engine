@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/ryuzenTokens.css";
 @import "./theme/themes.css";
 @import "./theme/motion.css";
 

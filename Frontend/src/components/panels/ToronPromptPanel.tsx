@@ -7,9 +7,10 @@ interface ToronPromptPanelProps {
   events: CalendarEvent[];
   connectors: WorkspaceConnector[];
   schedule: WorkspaceSchedule[];
+  close?: () => void;
 }
 
-const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, connectors, schedule }) => {
+const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, connectors, schedule, close }) => {
   const [signals, setSignals] = useState<ToronSignal[]>([]);
   const [prompt, setPrompt] = useState("Analyze intent signals and propose actions.");
   const [analysis, setAnalysis] = useState("Toron is ready to synthesize workspace signals.");
@@ -40,20 +41,30 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
   };
 
   return (
-    <div className="rounded-[32px] border border-black/10 bg-black/5 p-6 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-black/70 dark:text-white/70">
+    <div className="rounded-[32px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-[var(--border)] dark:bg-[var(--glass)] dark:text-[var(--text)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
           <Bot className="h-4 w-4" /> Toron Prompt Panel
         </div>
-        <span className="rounded-full bg-purple-500/15 px-3 py-1 text-xs text-purple-800 dark:text-purple-100">Listening</span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-purple-500/15 px-3 py-1 text-xs text-purple-800 dark:text-purple-100">Listening</span>
+          {close && (
+            <button
+              onClick={close}
+              className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-[11px] uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]"
+            >
+              Close
+            </button>
+          )}
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-3">
-          <div className="rounded-2xl border border-black/10 bg-black/5 p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="text-sm font-semibold text-black/80 dark:text-white/80">Live signals</div>
-            <div className="mt-2 space-y-2 text-xs text-black/70 dark:text-white/70">
+          <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+            <div className="text-sm font-semibold text-[var(--text)] dark:text-[var(--text)]">Live signals</div>
+            <div className="mt-2 space-y-2 text-xs text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
               {signals.slice(-4).map((signal) => (
-                <div key={signal.id} className="flex items-center justify-between rounded-xl bg-black/10 px-3 py-2 dark:bg-white/10">
+                <div key={signal.id} className="flex items-center justify-between rounded-xl bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-2 dark:bg-[var(--glass)]">
                   <span className="flex items-center gap-2">
                     <Signal className="h-3.5 w-3.5" />
                     {Object.keys(signal.payload).join(", ") || "payload"}
@@ -63,24 +74,24 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
                   </span>
                 </div>
               ))}
-              {!signals.length && <p className="text-black/60 dark:text-white/60">Waiting for toron-signal events.</p>}
+              {!signals.length && <p className="text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">Waiting for toron-signal events.</p>}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm text-black/80 dark:text-white/80">
-            <div className="rounded-2xl border border-black/10 bg-black/5 p-3 dark:border-white/10 dark:bg-white/5">
-              <div className="text-xs uppercase text-black/60 dark:text-white/60">Lists</div>
+          <div className="grid grid-cols-2 gap-2 text-sm text-[var(--text)] dark:text-[var(--text)]">
+            <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-3 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+              <div className="text-xs uppercase text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">Lists</div>
               <div className="text-xl font-semibold">{aggregated.lists}</div>
             </div>
-            <div className="rounded-2xl border border-black/10 bg-black/5 p-3 dark:border-white/10 dark:bg-white/5">
-              <div className="text-xs uppercase text-black/60 dark:text-white/60">Tasks</div>
+            <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-3 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+              <div className="text-xs uppercase text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">Tasks</div>
               <div className="text-xl font-semibold">{aggregated.tasks}</div>
             </div>
-            <div className="rounded-2xl border border-black/10 bg-black/5 p-3 dark:border-white/10 dark:bg-white/5">
-              <div className="text-xs uppercase text-black/60 dark:text-white/60">Connectors</div>
+            <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-3 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+              <div className="text-xs uppercase text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">Connectors</div>
               <div className="text-xl font-semibold">{aggregated.connectors}</div>
             </div>
-            <div className="rounded-2xl border border-black/10 bg-black/5 p-3 dark:border-white/10 dark:bg-white/5">
-              <div className="text-xs uppercase text-black/60 dark:text-white/60">Calendar</div>
+            <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-3 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+              <div className="text-xs uppercase text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">Calendar</div>
               <div className="text-xl font-semibold">{aggregated.events}</div>
             </div>
           </div>
@@ -89,7 +100,7 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
           <div className="rounded-2xl border border-purple-400/30 bg-purple-500/10 p-4 shadow-inner">
             <label className="text-xs uppercase text-purple-800 dark:text-purple-100">Analyze with Toron</label>
             <textarea
-              className="mt-2 h-28 w-full rounded-2xl border border-black/10 bg-black/5 p-3 text-sm text-black/80 focus:outline-none dark:border-white/10 dark:bg-white/10 dark:text-white/80"
+              className="mt-2 h-28 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-3 text-sm text-[var(--text)] focus:outline-none dark:border-[var(--border)] dark:bg-[var(--glass)] dark:text-[var(--text)]"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
@@ -100,9 +111,9 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
               Generate insight
             </button>
           </div>
-          <div className="rounded-2xl border border-black/10 bg-black/5 p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="text-sm font-semibold text-black/80 dark:text-white/80">Toron response</div>
-            <p className="mt-2 text-sm text-black/70 dark:text-white/70">{analysis}</p>
+          <div className="rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+            <div className="text-sm font-semibold text-[var(--text)] dark:text-[var(--text)]">Toron response</div>
+            <p className="mt-2 text-sm text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">{analysis}</p>
           </div>
         </div>
       </div>

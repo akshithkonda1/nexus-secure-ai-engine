@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Bell, User } from "lucide-react";
 import ListsWidget from "@/components/widgets/ListsWidget";
 import CalendarWidget from "@/components/widgets/CalendarWidget";
@@ -32,7 +32,7 @@ export type PanelKey =
   | "toron"
   | "profile"
   | "notifications"
-  | null;
+  | "workspace-home";
 
 const initialLists: WorkspaceList[] = [
   {
@@ -98,12 +98,19 @@ const initialSchedule: WorkspaceSchedule[] = [
 ];
 
 const RyuzenWorkspace: React.FC = () => {
-  const [activePanel, setActivePanel] = useState<PanelKey>(null);
+  const [activePanel, setActivePanel] = useState<PanelKey>("workspace-home");
   const [lists, setLists] = useState<WorkspaceList[]>(initialLists);
   const [events, setEvents] = useState(initialEvents);
   const [connectors, setConnectors] = useState<WorkspaceConnector[]>(initialConnectors);
   const [schedule, setSchedule] = useState<WorkspaceSchedule[]>(initialSchedule);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  useEffect(() => {
+    const saved = localStorage.getItem("ryuzen-last-panel");
+    if (saved) {
+      setActivePanel(saved as PanelKey);
+    }
+  }, []);
 
   const broadcastToron = (payload: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
@@ -127,12 +134,13 @@ const RyuzenWorkspace: React.FC = () => {
 
   const handleDayOpen = (day: Date) => {
     setSelectedDate(day);
-    setActivePanel("calendar");
+    openPanel("calendar");
     broadcastToron({ calendar: day.toISOString() });
   };
 
   const openPanel = (panel: PanelKey) => {
     setActivePanel(panel);
+    localStorage.setItem("ryuzen-last-panel", panel);
     if (panel === "toron") {
       broadcastToron({ lists, events, connectors, schedule });
     }
@@ -141,29 +149,49 @@ const RyuzenWorkspace: React.FC = () => {
   const renderPanel = useMemo(() => {
     switch (activePanel) {
       case "lists":
-        return <ListsPanel lists={lists} onChange={handleListChange} />;
+        return <ListsPanel lists={lists} onChange={handleListChange} close={() => openPanel("workspace-home")} />;
       case "calendar":
-        return <CalendarPanel events={events} selectedDate={selectedDate} onSelectDate={setSelectedDate} />;
+        return (
+          <CalendarPanel
+            events={events}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            close={() => openPanel("workspace-home")}
+          />
+        );
       case "connectors":
-        return <ConnectorsPanel connectors={connectors} onChange={handleConnectorChange} />;
+        return <ConnectorsPanel connectors={connectors} onChange={handleConnectorChange} close={() => openPanel("workspace-home")} />;
       case "tasks":
-        return <TasksPanel schedule={schedule} onChange={handleScheduleChange} />;
+        return <TasksPanel schedule={schedule} onChange={handleScheduleChange} close={() => openPanel("workspace-home")} />;
       case "pages":
-        return <PagesPanel />;
+        return <PagesPanel close={() => openPanel("workspace-home")} />;
       case "notes":
-        return <NotesPanel />;
+        return <NotesPanel close={() => openPanel("workspace-home")} />;
       case "boards":
-        return <BoardsPanel />;
+        return <BoardsPanel close={() => openPanel("workspace-home")} />;
       case "flows":
-        return <FlowsPanel />;
+        return <FlowsPanel close={() => openPanel("workspace-home")} />;
       case "toron":
-        return <ToronPromptPanel lists={lists} events={events} connectors={connectors} schedule={schedule} />;
+        return (
+          <ToronPromptPanel
+            lists={lists}
+            events={events}
+            connectors={connectors}
+            schedule={schedule}
+            close={() => openPanel("workspace-home")}
+          />
+        );
       case "notifications":
-        return <NotificationsPanel open={true} onClose={() => setActivePanel(null)} />;
+        return <NotificationsPanel open={true} onClose={() => openPanel("workspace-home")} />;
       case "profile":
-        return <ProfilePanel />;
+        return <ProfilePanel close={() => openPanel("workspace-home")} />;
       default:
-        return null;
+        return (
+          <div className="text-center text-[var(--text)] mt-16 opacity-70">
+            <h2 className="text-2xl font-semibold">Workspace Ready</h2>
+            <p>Select a widget, tool, or Toron to continue.</p>
+          </div>
+        );
     }
   }, [activePanel, connectors, events, lists, schedule, selectedDate]);
 
@@ -179,7 +207,7 @@ const RyuzenWorkspace: React.FC = () => {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-black/5 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--glass)] text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
               onClick={() => openPanel("notifications")}
             >
               <Bell className="h-5 w-5" />
@@ -195,21 +223,21 @@ const RyuzenWorkspace: React.FC = () => {
 
         <div className="mt-8 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="xl:col-span-1">
-            <ListsWidget data={lists} onChange={handleListChange} onExpand={() => setActivePanel("lists")} />
+            <ListsWidget data={lists} onChange={handleListChange} onExpand={() => openPanel("lists")} />
           </div>
           <div className="xl:col-span-1 xl:col-start-4">
             <CalendarWidget events={events} selectedDate={selectedDate} onSelectDate={handleDayOpen} />
           </div>
           <div className="xl:col-span-2 xl:col-start-2 xl:row-span-3">
-            <WorkspaceCanvas active={!!renderPanel} onClose={() => setActivePanel(null)}>
+            <WorkspaceCanvas active={activePanel !== "workspace-home"} onClose={() => openPanel("workspace-home")}>
               {renderPanel}
             </WorkspaceCanvas>
           </div>
           <div className="xl:col-span-1 xl:row-start-3">
-            <ConnectorsWidget connectors={connectors} onChange={handleConnectorChange} onExpand={() => setActivePanel("connectors")} />
+            <ConnectorsWidget connectors={connectors} onChange={handleConnectorChange} onExpand={() => openPanel("connectors")} />
           </div>
           <div className="xl:col-span-1 xl:col-start-4 xl:row-start-3">
-            <TasksWidget schedule={schedule} onChange={handleScheduleChange} onExpand={() => setActivePanel("tasks")} />
+            <TasksWidget schedule={schedule} onChange={handleScheduleChange} onExpand={() => openPanel("tasks")} />
           </div>
         </div>
       </div>
