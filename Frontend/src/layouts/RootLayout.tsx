@@ -21,7 +21,7 @@ export default function RootLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-base)] text-[var(--text-primary)]">
+    <div className="relative min-h-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-primary)] transition-all">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(140%_120%_at_20%_-10%,rgba(124,93,255,0.2),transparent_40%),radial-gradient(140%_120%_at_90%_0%,rgba(34,211,238,0.16),transparent_40%)] opacity-80" />
       <div className="pointer-events-none fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[var(--noise-opacity)]" />
 

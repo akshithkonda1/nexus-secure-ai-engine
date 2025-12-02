@@ -1,24 +1,19 @@
-import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes";
-import { useMemo, type PropsWithChildren } from "react";
+import { PropsWithChildren, useMemo } from "react";
 
-import "./RyuzenTokens.css";
+import { RyuzenThemeProvider, useRyuzenTheme } from "./RyuzenThemeProvider";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
 export function ThemeProvider({ children }: PropsWithChildren) {
-  return (
-    <NextThemesProvider attribute="class" defaultTheme="light" enableSystem>
-      {children}
-    </NextThemesProvider>
-  );
+  return <RyuzenThemeProvider>{children}</RyuzenThemeProvider>;
 }
 
 export function useThemeContext() {
-  const { theme, resolvedTheme, setTheme } = useNextTheme();
+  const { theme, setTheme, resolvedTheme } = useRyuzenTheme();
 
-  const safeResolved = (resolvedTheme ?? "light") as ResolvedTheme;
-  const safeTheme = (theme ?? "system") as ThemeMode;
+  const safeResolved = (resolvedTheme ?? "dark") as ResolvedTheme;
+  const safeTheme = (theme ?? "dark") as ThemeMode;
 
   const toggleTheme = () => setTheme(safeResolved === "dark" ? "light" : "dark");
 

@@ -1,33 +1,21 @@
-import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
+import { useRyuzenTheme } from "../../theme/RyuzenThemeProvider";
 
-export default function ThemeToggle({ theme, setTheme, resolvedTheme }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
-
-  // Pure JavaScript, no TypeScript
-  const current = resolvedTheme || theme || "light";
-  const nextTheme = current === "dark" ? "light" : "dark";
+export default function ThemeToggle() {
+  const { theme, setTheme } = useRyuzenTheme();
+  const nextTheme = theme === "dark" ? "light" : "dark";
 
   return (
     <button
       onClick={() => setTheme(nextTheme)}
       aria-label="Toggle Theme"
       className="
-        w-10 h-10 flex items-center justify-center
-        rounded-full backdrop-blur-xl transition-all duration-200
-        hover:scale-105 active:scale-95
-        bg-black/5 border border-black/10 text-black/80
-        dark:bg-white/10 dark:border-white/10 dark:text-white/80
+        w-10 h-10 flex items-center justify-center rounded-full
+        backdrop-blur-xl transition-all duration-300 hover:scale-105 active:scale-95
+        bg-[var(--btn-bg)] border border-[var(--btn-border)] text-[var(--btn-text)]
       "
     >
-      {current === "dark" ? (
-        <Sun size={18} strokeWidth={2} />
-      ) : (
-        <Moon size={18} strokeWidth={2} />
-      )}
+      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 }

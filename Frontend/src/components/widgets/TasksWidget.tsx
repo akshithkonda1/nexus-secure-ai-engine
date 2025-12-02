@@ -41,15 +41,15 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onChange, onExpand 
 
   return (
     <div
-      className="relative rounded-[32px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl transition hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-[var(--border)] dark:bg-[var(--glass)] dark:text-[var(--text)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+      className="ryuzen-card relative bg-[var(--bg-widget)] p-4 text-[var(--text-primary)]"
       onClick={onExpand}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-black/10 dark:ring-white/10" />
-      <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">
+      <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[var(--border-card)]" />
+      <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[var(--text-secondary)]">
         <div className="flex items-center gap-2">
           <AlarmClock className="h-4 w-4" /> Tasks
         </div>
-        <span className="rounded-full bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-1 text-xs text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:bg-[var(--glass)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">AI schedule</span>
+        <span className="rounded-full bg-[var(--bg-card)] px-3 py-1 text-xs text-[var(--text-secondary)]">AI schedule</span>
       </div>
       <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
         {schedule.map((block) => (
@@ -58,40 +58,40 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onChange, onExpand 
             className={`rounded-2xl border px-3 py-2 ${
               block.hour === currentHour
                 ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-900 shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:text-emerald-50"
-                : "border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:border-white/15 dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)] dark:text-[var(--text)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+                : "border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-primary)] shadow-[0_4px_18px_rgba(0,0,0,0.08)]"
             }`}
           >
             <div className="flex items-center justify-between text-sm font-semibold">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">{block.hour}</span>
+                <span className="text-xs text-[var(--text-secondary)]">{block.hour}</span>
                 <span>{block.focus}</span>
               </div>
               {block.hour === currentHour && <span className="text-[11px] text-emerald-700 dark:text-emerald-200">Current</span>}
             </div>
-            <div className="mt-2 space-y-1 text-xs text-[var(--text)] dark:text-[var(--text)]">
+            <div className="mt-2 space-y-1 text-xs text-[var(--text-primary)]">
               {block.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-xl bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-2 py-1 dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+                <div key={item.id} className="flex items-center justify-between rounded-xl bg-[var(--bg-card)] px-2 py-1">
                   <input
-                    className="w-full bg-transparent text-[var(--text)] focus:outline-none dark:text-[var(--text)]"
+                    className="w-full bg-transparent text-[var(--text-primary)] focus:outline-none"
                     value={item.title}
                     onChange={(e) => updateTask(block.hour, item, e.target.value)}
                   />
-                  <span className="flex items-center gap-1 text-[10px] text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">
+                  <span className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)]">
                     <Pencil className="h-3 w-3" />
                     {item.source}
                   </span>
                 </div>
               ))}
-              <div className="flex items-center gap-2 rounded-xl bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-2 py-1 dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
+              <div className="flex items-center gap-2 rounded-xl bg-[var(--bg-card)] px-2 py-1">
                 <input
                   value={editing[block.hour] || ""}
                   onChange={(e) => setEditing((prev) => ({ ...prev, [block.hour]: e.target.value }))}
                   onKeyDown={(e) => e.key === "Enter" && addTask(block.hour)}
                   placeholder="Add task"
-                  className="w-full bg-transparent text-[var(--text)] placeholder:text-black/50 focus:outline-none dark:text-[var(--text)] dark:placeholder:text-white/50"
+                  className="w-full bg-transparent text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus:outline-none"
                 />
                 <button
-                  className="rounded-full bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] p-1 text-[var(--text)] transition hover:bg-black/20 dark:bg-[var(--glass)] dark:text-[var(--text)] dark:hover:bg-[color-mix(in_oklab,var(--glass)_85%,transparent)]"
+                  className="rounded-full bg-[var(--bg-widget)] p-1 text-[var(--text-primary)] transition hover:opacity-80"
                   onClick={() => addTask(block.hour)}
                 >
                   <Plus className="h-4 w-4" />
