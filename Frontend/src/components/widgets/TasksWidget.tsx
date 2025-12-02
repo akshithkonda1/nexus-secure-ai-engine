@@ -41,55 +41,57 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onChange, onExpand 
 
   return (
     <div
-      className="relative rounded-[32px] border border-white/10 bg-white/10 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.32)] backdrop-blur-3xl transition hover:scale-[1.02] hover:border-white/20"
+      className="relative rounded-[32px] border border-black/10 bg-black/5 p-4 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl transition hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] dark:border-white/10 dark:bg-white/10 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
       onClick={onExpand}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-white/10" />
-      <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-white/60">
+      <div className="pointer-events-none absolute inset-0 rounded-[32px] ring-1 ring-black/10 dark:ring-white/10" />
+      <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-black/60 dark:text-white/60">
         <div className="flex items-center gap-2">
           <AlarmClock className="h-4 w-4" /> Tasks
         </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70">AI schedule</span>
+        <span className="rounded-full bg-black/10 px-3 py-1 text-xs text-black/70 dark:bg-white/10 dark:text-white/70">AI schedule</span>
       </div>
       <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
         {schedule.map((block) => (
           <div
             key={block.hour}
             className={`rounded-2xl border px-3 py-2 ${
-              block.hour === currentHour ? "border-emerald-400/50 bg-emerald-500/10" : "border-white/10 bg-white/5"
+              block.hour === currentHour
+                ? "border-emerald-400/60 bg-emerald-500/10 text-emerald-900 shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:text-emerald-50"
+                : "border-black/10 bg-black/5 text-black/80 shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:border-white/15 dark:bg-white/5 dark:text-white/80 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
             }`}
           >
-            <div className="flex items-center justify-between text-sm font-semibold text-white/90">
+            <div className="flex items-center justify-between text-sm font-semibold">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white/60">{block.hour}</span>
+                <span className="text-xs text-black/60 dark:text-white/60">{block.hour}</span>
                 <span>{block.focus}</span>
               </div>
-              {block.hour === currentHour && <span className="text-[11px] text-emerald-200">Current</span>}
+              {block.hour === currentHour && <span className="text-[11px] text-emerald-700 dark:text-emerald-200">Current</span>}
             </div>
-            <div className="mt-2 space-y-1 text-xs text-white/80">
+            <div className="mt-2 space-y-1 text-xs text-black/80 dark:text-white/80">
               {block.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-xl bg-black/30 px-2 py-1">
+                <div key={item.id} className="flex items-center justify-between rounded-xl bg-black/5 px-2 py-1 dark:bg-white/5">
                   <input
-                    className="w-full bg-transparent focus:outline-none"
+                    className="w-full bg-transparent text-black/80 focus:outline-none dark:text-white/80"
                     value={item.title}
                     onChange={(e) => updateTask(block.hour, item, e.target.value)}
                   />
-                  <span className="flex items-center gap-1 text-[10px] text-white/60">
+                  <span className="flex items-center gap-1 text-[10px] text-black/60 dark:text-white/60">
                     <Pencil className="h-3 w-3" />
                     {item.source}
                   </span>
                 </div>
               ))}
-              <div className="flex items-center gap-2 rounded-xl bg-white/5 px-2 py-1">
+              <div className="flex items-center gap-2 rounded-xl bg-black/5 px-2 py-1 dark:bg-white/5">
                 <input
                   value={editing[block.hour] || ""}
                   onChange={(e) => setEditing((prev) => ({ ...prev, [block.hour]: e.target.value }))}
                   onKeyDown={(e) => e.key === "Enter" && addTask(block.hour)}
                   placeholder="Add task"
-                  className="w-full bg-transparent text-white/80 placeholder:text-white/40 focus:outline-none"
+                  className="w-full bg-transparent text-black/80 placeholder:text-black/50 focus:outline-none dark:text-white/80 dark:placeholder:text-white/50"
                 />
                 <button
-                  className="rounded-full bg-white/10 p-1 text-white/80 transition hover:bg-white/20"
+                  className="rounded-full bg-black/10 p-1 text-black/80 transition hover:bg-black/20 dark:bg-white/10 dark:text-white/80 dark:hover:bg-white/20"
                   onClick={() => addTask(block.hour)}
                 >
                   <Plus className="h-4 w-4" />
