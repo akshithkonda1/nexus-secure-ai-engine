@@ -37,7 +37,6 @@ const OSBar: React.FC<OSBarProps> = ({ activeMode, onSelect }) => {
           Analyze with Toron
         </button>
         <button className="h-10 w-10 rounded-2xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/15">🔔</button>
-        <button className="h-10 w-10 rounded-2xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/15">👤</button>
       </div>
     </div>
   );

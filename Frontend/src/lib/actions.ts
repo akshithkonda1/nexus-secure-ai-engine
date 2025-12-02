@@ -62,7 +62,3 @@ export function requestDocumentsView(filter?: string) {
 export function requestSignOut() {
   emitCommand({ type: "auth:signOut" });
 }
-
-export function requestProfileOpen() {
-  emitCommand({ type: "profile:open" });
-}

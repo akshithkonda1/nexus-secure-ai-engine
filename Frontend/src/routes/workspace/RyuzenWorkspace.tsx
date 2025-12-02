@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Bell, User } from "lucide-react";
+import { Bell } from "lucide-react";
 import ListsWidget from "@/components/widgets/ListsWidget";
 import CalendarWidget from "@/components/widgets/CalendarWidget";
 import ConnectorsWidget from "@/components/widgets/ConnectorsWidget";
@@ -16,7 +16,6 @@ import NotesPanel from "@/components/panels/NotesPanel";
 import BoardsPanel from "@/components/panels/BoardsPanel";
 import FlowsPanel from "@/components/panels/FlowsPanel";
 import ToronPromptPanel from "@/components/panels/ToronPromptPanel";
-import ProfilePanel from "@/components/panels/ProfilePanel";
 import ThemeToggle from "@/components/core/ThemeToggle";
 import { WorkspaceConnector, WorkspaceList, WorkspaceSchedule } from "@/types/workspace";
 
@@ -30,7 +29,6 @@ export type PanelKey =
   | "boards"
   | "flows"
   | "toron"
-  | "profile"
   | "notifications"
   | "workspace-home";
 
@@ -183,8 +181,6 @@ const RyuzenWorkspace: React.FC = () => {
         );
       case "notifications":
         return <NotificationsPanel open={true} onClose={() => openPanel("workspace-home")} />;
-      case "profile":
-        return <ProfilePanel close={() => openPanel("workspace-home")} />;
       default:
         return (
           <div className="mt-16 text-center text-[var(--text-secondary)]">
@@ -210,12 +206,6 @@ const RyuzenWorkspace: React.FC = () => {
               onClick={() => openPanel("notifications")}
             >
               <Bell className="h-5 w-5" />
-            </button>
-            <button
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--border-card)] bg-[var(--bg-widget)] text-[var(--text-primary)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-xl transition hover:scale-105 hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
-              onClick={() => openPanel("profile")}
-            >
-              <User className="h-5 w-5" />
             </button>
           </div>
         </div>
