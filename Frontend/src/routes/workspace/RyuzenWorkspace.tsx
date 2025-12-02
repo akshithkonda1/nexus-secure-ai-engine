@@ -16,6 +16,7 @@ import NotesPanel from "@/components/panels/NotesPanel";
 import BoardsPanel from "@/components/panels/BoardsPanel";
 import FlowsPanel from "@/components/panels/FlowsPanel";
 import ToronPromptPanel from "@/components/panels/ToronPromptPanel";
+import ProfilePanel from "@/components/panels/ProfilePanel";
 import { WorkspaceConnector, WorkspaceList, WorkspaceSchedule } from "@/types/workspace";
 
 export type PanelKey =
@@ -28,6 +29,7 @@ export type PanelKey =
   | "boards"
   | "flows"
   | "toron"
+  | "profile"
   | "notifications"
   | null;
 
@@ -101,7 +103,6 @@ const RyuzenWorkspace: React.FC = () => {
   const [connectors, setConnectors] = useState<WorkspaceConnector[]>(initialConnectors);
   const [schedule, setSchedule] = useState<WorkspaceSchedule[]>(initialSchedule);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const broadcastToron = (payload: Record<string, unknown>) => {
     if (typeof window === "undefined") return;
@@ -130,14 +131,13 @@ const RyuzenWorkspace: React.FC = () => {
   };
 
   const openPanel = (panel: PanelKey) => {
-    setActivePanel(panel === "notifications" ? null : panel);
-    setNotificationsOpen(panel === "notifications");
+    setActivePanel(panel);
     if (panel === "toron") {
       broadcastToron({ lists, events, connectors, schedule });
     }
   };
 
-  const floatingPanel = useMemo(() => {
+  const renderPanel = useMemo(() => {
     switch (activePanel) {
       case "lists":
         return <ListsPanel lists={lists} onChange={handleListChange} />;
@@ -157,6 +157,10 @@ const RyuzenWorkspace: React.FC = () => {
         return <FlowsPanel />;
       case "toron":
         return <ToronPromptPanel lists={lists} events={events} connectors={connectors} schedule={schedule} />;
+      case "notifications":
+        return <NotificationsPanel open={true} onClose={() => setActivePanel(null)} />;
+      case "profile":
+        return <ProfilePanel />;
       default:
         return null;
     }
@@ -178,7 +182,10 @@ const RyuzenWorkspace: React.FC = () => {
             >
               <Bell className="h-5 w-5" />
             </button>
-            <button className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/15 via-white/10 to-white/5 text-white shadow-lg backdrop-blur-xl transition hover:scale-105 hover:border-white/25">
+            <button
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-white/15 via-white/10 to-white/5 text-white shadow-lg backdrop-blur-xl transition hover:scale-105 hover:border-white/25"
+              onClick={() => openPanel("profile")}
+            >
               <User className="h-5 w-5" />
             </button>
           </div>
@@ -192,8 +199,8 @@ const RyuzenWorkspace: React.FC = () => {
             <CalendarWidget events={events} selectedDate={selectedDate} onSelectDate={handleDayOpen} />
           </div>
           <div className="xl:col-span-2 xl:col-start-2 xl:row-span-3">
-            <WorkspaceCanvas active={!!floatingPanel} onClose={() => setActivePanel(null)}>
-              {floatingPanel}
+            <WorkspaceCanvas active={!!renderPanel} onClose={() => setActivePanel(null)}>
+              {renderPanel}
             </WorkspaceCanvas>
           </div>
           <div className="xl:col-span-1 xl:row-start-3">
@@ -205,14 +212,7 @@ const RyuzenWorkspace: React.FC = () => {
         </div>
       </div>
 
-      <LiquidOSBar
-        active={activePanel}
-        onSelect={openPanel}
-        onToron={() => openPanel("toron")}
-        onNotifications={() => openPanel("notifications")}
-      />
-
-      <NotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <LiquidOSBar active={activePanel} openPanel={openPanel} />
     </div>
   );
 };
