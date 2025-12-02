@@ -3,6 +3,62 @@
 @import "./theme/themes.css";
 @import "./theme/motion.css";
 
+/* Ryuzen Theme Tokens */
+
+/* LIGHT MODE */
+:root.light {
+  --bg-main: linear-gradient(to bottom right, #ffffff, #f3f4f7);
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-widget: rgba(255, 255, 255, 0.6);
+  --bg-osbar: rgba(240, 240, 240, 0.55);
+
+  --border-card: rgba(0, 0, 0, 0.1);
+  --border-osbar: rgba(0, 0, 0, 0.15);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #3b3b3b;
+  --text-faded: rgba(0, 0, 0, 0.6);
+
+  --btn-bg: rgba(0,0,0,0.05);
+  --btn-border: rgba(0,0,0,0.12);
+  --btn-text: #000;
+
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --glass-blur: 20px;
+}
+
+/* DARK MODE */
+:root.dark {
+  --bg-main: linear-gradient(to bottom right, #0e1014, #171b22);
+  --bg-card: rgba(22, 22, 30, 0.6);
+  --bg-widget: rgba(20, 20, 28, 0.55);
+  --bg-osbar: rgba(26, 26, 33, 0.45);
+
+  --border-card: rgba(255,255,255,0.1);
+  --border-osbar: rgba(255,255,255,0.12);
+
+  --text-primary: #fff;
+  --text-secondary: #d0d0d0;
+  --text-faded: rgba(255,255,255,0.65);
+
+  --btn-bg: rgba(255,255,255,0.07);
+  --btn-border: rgba(255,255,255,0.12);
+  --btn-text: #fff;
+
+  --shadow-soft: 0 4px 30px rgba(0,0,0,0.4);
+  --glass-blur: 30px;
+}
+
+/* UNIVERSAL */
+.ryuzen-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(var(--glass-blur));
+  transition: all 0.3s ease;
+}
+
 * {
   box-sizing: border-box;
 }

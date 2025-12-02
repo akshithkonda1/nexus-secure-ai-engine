@@ -17,7 +17,7 @@ const buttons: { key: PanelKey; label: string; icon: React.ReactNode }[] = [
 const LiquidOSBar: React.FC<LiquidOSBarProps> = ({ active, openPanel }) => {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-8 z-30 flex items-center justify-center px-6">
-      <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between rounded-[32px] border border-[var(--border)] bg-[var(--glass)] px-4 py-3 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+      <div className="pointer-events-auto flex w-full max-w-4xl items-center justify-between rounded-[32px] border border-[var(--border-osbar)] bg-[var(--bg-osbar)] px-4 py-3 text-[var(--text-primary)] shadow-[0_4px_18px_rgba(0,0,0,0.12)] backdrop-blur-xl">
         <div className="flex items-center gap-2">
           {buttons.map((btn) => (
             <button
@@ -25,9 +25,9 @@ const LiquidOSBar: React.FC<LiquidOSBarProps> = ({ active, openPanel }) => {
               onClick={() => openPanel(btn.key)}
               className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition hover:scale-[1.02] ${
                 active === btn.key
-                  ? "border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_85%,transparent)] text-[var(--text)]"
-                  : "border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_65%,transparent)] text-[var(--text)]"
-              } shadow-[0_4px_18px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]`}
+                  ? "border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-primary)]"
+                  : "border-[var(--border-card)] bg-[var(--bg-widget)] text-[var(--text-primary)]"
+              } shadow-[0_4px_18px_rgba(0,0,0,0.08)]`}
             >
               {btn.icon}
               {btn.label}
@@ -43,13 +43,13 @@ const LiquidOSBar: React.FC<LiquidOSBarProps> = ({ active, openPanel }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => openPanel("notifications")}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_65%,transparent)] text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] transition hover:scale-105 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-card)] bg-[var(--bg-widget)] text-[var(--text-primary)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] transition hover:scale-105"
           >
             <Bell className="h-5 w-5" />
           </button>
           <button
             onClick={() => openPanel("profile")}
-            className="h-10 w-10 rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_65%,transparent)] ring-0 transition hover:scale-105"
+            className="h-10 w-10 rounded-full border border-[var(--border-card)] bg-[var(--bg-widget)] ring-0 transition hover:scale-105"
           />
         </div>
       </div>
