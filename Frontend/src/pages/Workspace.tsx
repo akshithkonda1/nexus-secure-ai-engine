@@ -1,9 +1,8 @@
-import React from "react";
-
-import WorkspaceGrid from "@/components/workspace/WorkspaceGrid";
+import React from 'react';
+import WorkspaceShell from '../components/workspace/WorkspaceShell';
 
 const Workspace: React.FC = () => {
-  return <WorkspaceGrid />;
+  return <WorkspaceShell />;
 };
 
 export default Workspace;
