@@ -1,18 +1,14 @@
-"use client";
-
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export default function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+export default function ThemeToggle({ theme, setTheme, resolvedTheme }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
-  // FIXED: remove TypeScript syntax
-  const current = resolvedTheme ?? theme ?? "light";
+  // Pure JavaScript, no TypeScript
+  const current = resolvedTheme || theme || "light";
   const nextTheme = current === "dark" ? "light" : "dark";
 
   return (
