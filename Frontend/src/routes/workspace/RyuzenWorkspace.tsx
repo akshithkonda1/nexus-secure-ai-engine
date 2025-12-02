@@ -17,6 +17,7 @@ import BoardsPanel from "@/components/panels/BoardsPanel";
 import FlowsPanel from "@/components/panels/FlowsPanel";
 import ToronPromptPanel from "@/components/panels/ToronPromptPanel";
 import ThemeToggle from "@/components/core/ThemeToggle";
+import WidgetExpansionModal from "@/components/widgets/WidgetExpansionModal";
 import { WorkspaceConnector, WorkspaceList, WorkspaceSchedule } from "@/types/workspace";
 
 export type PanelKey =
@@ -144,7 +145,12 @@ const RyuzenWorkspace: React.FC = () => {
     }
   };
 
-  const renderPanel = useMemo(() => {
+  const isCanvasMode = useMemo(
+    () => ["pages", "notes", "boards", "flows"].includes(activePanel),
+    [activePanel],
+  );
+
+  const modalPanel = useMemo(() => {
     switch (activePanel) {
       case "lists":
         return <ListsPanel lists={lists} onChange={handleListChange} close={() => openPanel("workspace-home")} />;
@@ -161,14 +167,6 @@ const RyuzenWorkspace: React.FC = () => {
         return <ConnectorsPanel connectors={connectors} onChange={handleConnectorChange} close={() => openPanel("workspace-home")} />;
       case "tasks":
         return <TasksPanel schedule={schedule} onChange={handleScheduleChange} close={() => openPanel("workspace-home")} />;
-      case "pages":
-        return <PagesPanel close={() => openPanel("workspace-home")} />;
-      case "notes":
-        return <NotesPanel close={() => openPanel("workspace-home")} />;
-      case "boards":
-        return <BoardsPanel close={() => openPanel("workspace-home")} />;
-      case "flows":
-        return <FlowsPanel close={() => openPanel("workspace-home")} />;
       case "toron":
         return (
           <ToronPromptPanel
@@ -182,14 +180,30 @@ const RyuzenWorkspace: React.FC = () => {
       case "notifications":
         return <NotificationsPanel open={true} onClose={() => openPanel("workspace-home")} />;
       default:
+        return null;
+    }
+  }, [activePanel, connectors, events, handleConnectorChange, handleListChange, handleScheduleChange, lists, openPanel, schedule, selectedDate]);
+
+  const canvasPanel = useMemo(() => {
+    switch (activePanel) {
+      case "pages":
+        return <PagesPanel close={() => openPanel("workspace-home")} />;
+      case "notes":
+        return <NotesPanel close={() => openPanel("workspace-home")} />;
+      case "boards":
+        return <BoardsPanel close={() => openPanel("workspace-home")} />;
+      case "flows":
+        return <FlowsPanel close={() => openPanel("workspace-home")} />;
+      case "workspace-home":
+      default:
         return (
-          <div className="mt-16 text-center text-[var(--text-secondary)]">
-            <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Workspace Ready</h2>
-            <p>Select a widget, tool, or Toron to continue.</p>
+          <div className="mt-16 text-center text-neutral-700 dark:text-neutral-300">
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">Workspace Ready</h2>
+            <p>Pages, notes, boards, and flows stay inside this canvas.</p>
           </div>
         );
     }
-  }, [activePanel, connectors, events, lists, schedule, selectedDate]);
+  }, [activePanel, openPanel]);
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[var(--bg-main)] text-[var(--text-primary)] transition-all">
@@ -218,8 +232,11 @@ const RyuzenWorkspace: React.FC = () => {
             <CalendarWidget events={events} selectedDate={selectedDate} onSelectDate={handleDayOpen} />
           </div>
           <div className="xl:col-span-2 xl:col-start-2 xl:row-span-3">
-            <WorkspaceCanvas active={activePanel !== "workspace-home"} onClose={() => openPanel("workspace-home")}>
-              {renderPanel}
+            <WorkspaceCanvas
+              active={isCanvasMode}
+              onClose={() => openPanel("workspace-home")}
+            >
+              {canvasPanel}
             </WorkspaceCanvas>
           </div>
           <div className="xl:col-span-1 xl:row-start-3">
@@ -232,6 +249,25 @@ const RyuzenWorkspace: React.FC = () => {
       </div>
 
       <LiquidOSBar active={activePanel} openPanel={openPanel} />
+      <WidgetExpansionModal
+        open={!isCanvasMode && !!modalPanel}
+        title={
+          activePanel === "lists"
+            ? "Lists"
+            : activePanel === "calendar"
+              ? "Calendar"
+              : activePanel === "connectors"
+                ? "Connectors"
+                : activePanel === "tasks"
+                  ? "Tasks"
+                  : activePanel === "toron"
+                    ? "Toron AI"
+                    : "Notifications"
+        }
+        onClose={() => openPanel("workspace-home")}
+      >
+        {modalPanel}
+      </WidgetExpansionModal>
     </div>
   );
 };

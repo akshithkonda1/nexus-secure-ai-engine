@@ -1,6 +1,7 @@
 import React from "react";
-import { AlertTriangle, CheckCircle2, PlugZap, RefreshCcw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, PlugZap } from "lucide-react";
 import { WorkspaceConnector } from "@/types/workspace";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface ConnectorsWidgetProps {
   connectors: WorkspaceConnector[];
@@ -9,72 +10,60 @@ interface ConnectorsWidgetProps {
 }
 
 const statusStyles: Record<WorkspaceConnector["status"], string> = {
-  connected: "bg-emerald-500/15 text-emerald-800 border-emerald-500/30 dark:text-emerald-100",
-  warning: "bg-yellow-400/20 text-yellow-800 border-yellow-500/40 dark:text-yellow-100",
-  error: "bg-red-500/20 text-red-800 border-red-500/40 dark:text-red-100",
+  connected: "bg-emerald-300 text-black dark:bg-emerald-600 dark:text-white",
+  warning: "bg-amber-300 text-black dark:bg-amber-500 dark:text-white",
+  error: "bg-red-300 text-black dark:bg-red-600 dark:text-white",
 };
 
-const ConnectorsWidget: React.FC<ConnectorsWidgetProps> = ({ connectors, onChange, onExpand }) => {
-  const reconnect = (id: string) => {
-    const updated = connectors.map((connector) =>
-      connector.id === id
-        ? { ...connector, status: "connected", lastSync: "Just now" }
-        : connector,
-    );
-    onChange(updated);
-    window.dispatchEvent(new CustomEvent("toron-signal", { detail: { connectors: updated } }));
-  };
+const ConnectorsWidget: React.FC<ConnectorsWidgetProps> = ({ connectors, onExpand }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <div
-      className="ryuzen-card relative overflow-hidden bg-[var(--bg-widget)] p-4 text-[var(--text-primary)]"
+    <button
+      type="button"
       onClick={onExpand}
+      className={`w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] ${
+        isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+      }`}
     >
-      <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-[var(--border-card)]" />
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-[var(--text-secondary)]">
+      <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
           <PlugZap className="h-4 w-4" /> Connectors
         </div>
-        <span className="rounded-full bg-[var(--bg-card)] px-3 py-1 text-xs text-[var(--text-secondary)]">{connectors.length} linked</span>
+        <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">{connectors.length} linked</span>
       </div>
-      <div
-        className="flex gap-3 overflow-x-auto pb-3 pr-2"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        {connectors.map((connector) => (
+      <div className="space-y-3 px-5 py-4">
+        {connectors.slice(0, 4).map((connector) => (
           <div
             key={connector.id}
-            className="min-w-[140px] rounded-2xl border border-[var(--border-card)] bg-[var(--bg-card)] p-3 shadow-inner"
+            className={`rounded-2xl border px-4 py-3 shadow-sm ${
+              isDark ? "border-white/10 bg-neutral-800" : "border-black/5 bg-neutral-50"
+            }`}
           >
-            <div className="flex items-center justify-between text-sm font-semibold text-[var(--text-primary)]">
-              {connector.name}
+            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+              <span>{connector.name}</span>
               {connector.status === "connected" ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              ) : connector.status === "warning" ? (
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
               ) : (
-                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
               )}
             </div>
-            <div className={`mt-2 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${statusStyles[connector.status]}`}>
-              <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-              {connector.status}
+            <div className="mt-2 flex items-center justify-between text-xs text-neutral-700 dark:text-neutral-300">
+              <span>Last sync {connector.lastSync}</span>
+              <span className={`rounded-full px-3 py-1 font-semibold ${statusStyles[connector.status]}`}>
+                {connector.status}
+              </span>
             </div>
-            <p className="mt-2 text-xs text-[var(--text-secondary)]">Last sync {connector.lastSync}</p>
-            {connector.status !== "connected" && (
-              <button
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--bg-widget)] px-3 py-2 text-xs text-[var(--text-primary)] transition hover:opacity-80"
-                onClick={() => reconnect(connector.id)}
-              >
-                <RefreshCcw className="h-4 w-4" /> Reconnect
-              </button>
-            )}
           </div>
         ))}
       </div>
-    </div>
+      <div className={`rounded-b-3xl px-5 py-3 text-sm ${isDark ? "bg-neutral-900" : "bg-white"}`}>
+        <p className="text-neutral-700 dark:text-neutral-300">
+          OAuth, PATs, and sync logs are available in the fullscreen connector hub.
+        </p>
+      </div>
+    </button>
   );
 };
 
