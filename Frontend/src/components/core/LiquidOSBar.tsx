@@ -47,6 +47,10 @@ const LiquidOSBar: React.FC<LiquidOSBarProps> = ({ active, openPanel }) => {
           >
             <Bell className="h-5 w-5" />
           </button>
+          <button
+            onClick={() => openPanel("profile")}
+            className="h-10 w-10 rounded-full border border-[var(--border-card)] bg-[var(--bg-widget)] ring-0 transition hover:scale-105"
+          />
         </div>
       </div>
     </div>

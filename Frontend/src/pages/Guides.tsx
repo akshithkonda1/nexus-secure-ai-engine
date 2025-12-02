@@ -9,7 +9,16 @@
 ============================================================================ */
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Brain, LayoutDashboard, FolderKanban } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Brain,
+  LayoutDashboard,
+  FolderKanban,
+} from "lucide-react";
+
+import { useProfile } from "@/features/profile/ProfileProvider";
+import { getFirstName } from "@/lib/userName";
 
 /* ============================================================================
    FAQ DATA  
@@ -196,7 +205,9 @@ function FAQGroup({ title, icon: Icon, items }: any) {
 ============================================================================ */
 
 export default function Guides() {
-  const who = "Operator";
+  const { profile } = useProfile();
+  const userName = getFirstName(profile);
+  const who = profile?.fullName || profile?.handle || userName || "there";
 
   return (
     <div className="flex flex-col gap-10 px-[var(--page-padding)] py-8">
