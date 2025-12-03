@@ -1,9 +1,30 @@
 /* === Global theme tokens ===================================== */
 @import "tailwindcss";
 
-/* Light theme – Alabaster, Azure Radiance, Cod Gray */
+/* ----------------------------- */
+/* RYŪZEN GLASS DESIGN SYSTEM   */
+/* ----------------------------- */
+
+/* LIGHT MODE TOKENS */
 :root {
   color-scheme: light;
+  /* text tokens */
+  --text-primary: #0A0A0A;
+  --text-secondary: #3D3D3D;
+  --text-muted: #7A7A7A;
+
+  /* glass surfaces */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.92);
+
+  /* borders */
+  --glass-border: rgba(20, 20, 20, 0.16);
+  --glass-border-strong: rgba(20, 20, 20, 0.22);
+
+  /* shadows */
+  --glass-shadow: 0 6px 24px rgba(0,0,0,0.06);
+  --glass-shadow-strong: 0 8px 32px rgba(0,0,0,0.10);
+
   --bg: 249 250 252;
   --surface: 255 255 255;
   --panel: 250 251 253;
@@ -26,14 +47,26 @@
   --glow-blue: 0 133 255;
   --glow-purple: 139 92 246;
   --glass-alpha: .82;
-  --glass-border: .6;
   --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 1) 0%, rgba(56, 189, 248, 0.92) 45%, rgba(129, 140, 248, 0.85) 100%);
 }
 
-/* Dark theme */
+/* DARK MODE TOKENS */
 :root[data-theme="dark"],
 [data-theme="dark"] {
   color-scheme: dark;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E9E9E9;
+  --text-muted: #A0A0A0;
+
+  --glass-bg: rgba(22, 22, 28, 0.55);
+  --glass-bg-heavy: rgba(22, 22, 28, 0.70);
+
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-strong: rgba(255, 255, 255, 0.14);
+
+  --glass-shadow: 0 6px 24px rgba(0,0,0,0.45);
+  --glass-shadow-strong: 0 8px 32px rgba(0,0,0,0.65);
+
   --bg: 15 23 42;
   --surface: 15 23 42;
   --panel: 30 41 59;
@@ -53,8 +86,7 @@
   --glow-blue: 0 133 255;
   --glow-purple: 139 92 246;
   --glass-alpha: .58;
-  --glass-border: .45;
-  --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 0.92) 0%, rgba(96, 165, 250, 0.85) 45%, rgba(56, 189, 248, 0.78) 100%);
+  --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 0.92) 0%, rgba(96, 165, 250, 0.85) 45%, rgba(56, 189, 248, 0.78)100%);
 }
 
 /* Base */

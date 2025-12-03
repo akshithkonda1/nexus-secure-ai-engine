@@ -1,25 +1,30 @@
 import React from "react";
 import { Route as RouteIcon, Zap } from "lucide-react";
 
+const glassPanelClass =
+  "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
+
 const FlowsPanel: React.FC<{ close?: () => void }> = ({ close }) => (
-  <div className="rounded-[32px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-[var(--border)] dark:bg-[var(--glass)] dark:text-[var(--text)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-    <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
-      <span className="flex items-center gap-2"><RouteIcon className="h-4 w-4" /> Flows</span>
+  <div className={`${glassPanelClass} flex flex-col gap-4`}>
+    <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-textSecondary">
+      <span className="flex items-center gap-2 text-textPrimary">
+        <RouteIcon className="h-4 w-4" /> Flows
+      </span>
       {close && (
         <button
           onClick={close}
-          className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-[11px] uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]"
+          className="rounded-full border border-glassBorder px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-textPrimary transition hover:border-glassBorderStrong"
         >
           Close
         </button>
       )}
     </div>
-    <p className="text-sm text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">Design orchestration paths for live collaborations.</p>
-    <div className="mt-4 space-y-2">
+    <p className="text-sm text-textMuted">Design orchestration paths for live collaborations.</p>
+    <div className="space-y-2">
       {["Collect signals", "Draft insights", "Ship with Toron"].map((flow) => (
-        <div key={flow} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-2 dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)]">
-          <span className="text-[var(--text)] dark:text-[var(--text)]">{flow}</span>
-          <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-emerald-600 dark:text-emerald-200">
+        <div key={flow} className={`${glassPanelClass} flex items-center justify-between p-3 shadow-none`}>
+          <span className="text-textPrimary">{flow}</span>
+          <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-emerald-500">
             <Zap className="h-3 w-3" /> Auto
           </span>
         </div>

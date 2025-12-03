@@ -8,8 +8,10 @@ interface ConnectorsPanelProps {
   close?: () => void;
 }
 
-const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange, close }) => {
+const glassPanelClass =
+  "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
 
+const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange, close }) => {
   const reconnect = (id: string) => {
     const updated = connectors.map((connector) =>
       connector.id === id
@@ -19,25 +21,20 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
     onChange(updated);
   };
 
-  const border = "border border-borderLight";
-  const surface = "bg-bgSecondary";
-  const textPrimary = "text-textPrimary";
-  const textSecondary = "text-textSecondary";
-
   return (
-    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${border} ${surface} p-6 shadow-xl`}>
+    <div className={`flex h-full flex-col gap-4 ${glassPanelClass}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm uppercase tracking-[0.2em]">
-        <h2 className={`flex items-center gap-2 font-semibold ${textPrimary}`}>
+        <h2 className="flex items-center gap-2 font-semibold text-textPrimary">
           <PlugZap className="h-4 w-4" /> Connectors Control
         </h2>
         <div className="flex items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${textSecondary}`}>
+          <span className="rounded-full border border-glassBorder px-3 py-1 text-xs font-semibold text-textSecondary">
             {connectors.length} integrations
           </span>
           {close && (
             <button
               onClick={close}
-              className="rounded-full border border-borderLight bg-bgElevated px-4 py-2 text-sm font-semibold text-textPrimary transition hover:bg-bgSecondary"
+              className="rounded-full border border-glassBorder px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
             >
               Close
             </button>
@@ -46,9 +43,9 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {connectors.map((connector) => (
-          <div key={connector.id} className={`rounded-2xl ${border} ${surface} p-4 shadow-sm`}>
+          <div key={connector.id} className={`${glassPanelClass} p-4 shadow-none`}>
             <div className="flex items-center justify-between text-sm">
-              <p className={`font-semibold ${textPrimary}`}>{connector.name}</p>
+              <p className="font-semibold text-textPrimary">{connector.name}</p>
               {connector.status === "connected" ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               ) : connector.status === "warning" ? (
@@ -57,8 +54,8 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
                 <AlertTriangle className="h-4 w-4 text-red-500" />
               )}
             </div>
-            <p className={`mt-1 text-sm ${textSecondary}`}>Last sync {connector.lastSync}</p>
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-borderLight bg-bgElevated px-3 py-1 text-xs font-semibold text-textPrimary">
+            <p className="mt-1 text-sm text-textMuted">Last sync {connector.lastSync}</p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-glassBorder bg-glass px-3 py-1 text-xs font-semibold text-textPrimary">
               <span
                 className={`h-2 w-2 rounded-full ${
                   connector.status === "connected"
@@ -72,7 +69,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
             </div>
             {connector.status !== "connected" && (
               <button
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-borderLight bg-bgElevated px-3 py-2 text-xs font-semibold text-textPrimary transition hover:bg-bgSecondary"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-glassBorder bg-glass px-3 py-2 text-xs font-semibold text-textPrimary transition hover:border-glassBorderStrong"
                 onClick={() => reconnect(connector.id)}
               >
                 <RefreshCcw className="h-4 w-4" /> Reconnect

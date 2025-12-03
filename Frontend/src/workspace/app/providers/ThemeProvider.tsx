@@ -12,6 +12,7 @@ export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) =
 
   useEffect(() => {
     document.documentElement.dataset.workspaceTheme = theme;
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme]);

@@ -1,22 +1,27 @@
 import React from "react";
 import { StickyNote } from "lucide-react";
 
+const glassPanelClass =
+  "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
+
 const NotesPanel: React.FC<{ close?: () => void }> = ({ close }) => (
-  <div className="rounded-[32px] border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-6 text-[var(--text)] shadow-[0_4px_18px_rgba(0,0,0,0.1)] backdrop-blur-3xl dark:border-[var(--border)] dark:bg-[var(--glass)] dark:text-[var(--text)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-    <div className="mb-3 flex items-center justify-between text-sm uppercase tracking-[0.2em] text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">
-      <span className="flex items-center gap-2"><StickyNote className="h-4 w-4" /> Notes</span>
+  <div className={`${glassPanelClass} flex flex-col gap-4`}>
+    <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-textSecondary">
+      <span className="flex items-center gap-2 text-textPrimary">
+        <StickyNote className="h-4 w-4" /> Notes
+      </span>
       {close && (
         <button
           onClick={close}
-          className="rounded-full border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] px-3 py-1 text-[11px] uppercase tracking-wide text-[color-mix(in_oklab,var(--text)_70%,transparent)]"
+          className="rounded-full border border-glassBorder px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-textPrimary transition hover:border-glassBorderStrong"
         >
           Close
         </button>
       )}
     </div>
-    <p className="text-sm text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">Capture scratchpad ideas and micro-notes.</p>
+    <p className="text-sm text-textMuted">Capture scratchpad ideas and micro-notes.</p>
     <textarea
-      className="mt-4 h-40 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 text-sm text-[var(--text)] placeholder:text-textPrimary/50 focus:outline-none dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)] dark:text-[var(--text)] dark:placeholder:text-textPrimary/50"
+      className="mt-2 h-40 w-full rounded-2xl border border-glassBorder bg-glass px-4 py-3 text-sm text-textPrimary placeholder:text-textMuted focus:border-glassBorderStrong focus:outline-none"
       placeholder="Stream of consciousness..."
       onChange={(e) => window.dispatchEvent(new CustomEvent("toron-signal", { detail: { notes: e.target.value } }))}
     />

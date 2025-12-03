@@ -1,7 +1,6 @@
 import React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { CalendarEvent } from "@/types/workspace";
-import { useTheme } from "@/theme/ThemeProvider";
 
 interface CalendarWidgetProps {
   events: CalendarEvent[];
@@ -16,10 +15,10 @@ const COLORS: Record<CalendarEvent["type"], string> = {
   multi: "bg-blue-500",
 };
 
-const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, onSelectDate }) => {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+const glassPanelClass =
+  "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
 
+const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, onSelectDate }) => {
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth();
   const end = new Date(year, month + 1, 0);
@@ -29,20 +28,18 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
     <button
       type="button"
       onClick={() => onSelectDate(selectedDate)}
-      className={`w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] ${
-        isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
-      }`}
+      className={`w-full text-left focus:outline-none ${glassPanelClass}`}
     >
-      <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
+      <div className="flex items-center justify-between border-b border-glassBorder pb-3 text-sm">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <CalendarIcon className="h-4 w-4" /> Calendar
         </div>
-        <div className="text-xs font-semibold text-textSecondary dark:text-textMuted">
+        <div className="text-xs font-semibold text-textSecondary">
           {selectedDate.toLocaleString("default", { month: "long" })} {year}
         </div>
       </div>
-      <div className="px-5 py-4">
-        <div className="grid grid-cols-7 gap-2 text-center text-xs text-textSecondary dark:text-textMuted">
+      <div className="pt-3">
+        <div className="grid grid-cols-7 gap-2 text-center text-xs text-textSecondary">
           {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
             <div key={d}>{d}</div>
           ))}
@@ -51,9 +48,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
             return (
               <div
                 key={day}
-                className={`relative flex h-10 flex-col items-center justify-center rounded-xl border text-sm font-semibold ${
-                  isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
-                }`}
+                className="relative flex h-10 flex-col items-center justify-center rounded-xl border border-glassBorder bg-glass text-sm font-semibold text-textPrimary"
               >
                 <span>{day}</span>
                 <div className="mt-1 flex gap-1">
@@ -65,19 +60,14 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
             );
           })}
         </div>
-        <div className="mt-4 space-y-2 text-xs text-textPrimary dark:text-textMuted">
+        <div className="mt-4 space-y-2 text-xs text-textPrimary">
           {events.map((evt) => (
-            <div
-              key={evt.title}
-              className={`flex items-center justify-between rounded-2xl border px-3 py-2 ${
-                isDark ? "border-borderLight/10 bg-bgElevated" : "border-borderLight/5 bg-bgPrimary"
-              }`}
-            >
+            <div key={evt.title} className="flex items-center justify-between rounded-2xl border border-glassBorder bg-glass px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${COLORS[evt.type]}`} />
-                <span className="font-semibold text-textPrimary dark:text-textMuted">{evt.title}</span>
+                <span className="font-semibold text-textPrimary">{evt.title}</span>
               </div>
-              <span className="text-textSecondary dark:text-textMuted">{evt.date}</span>
+              <span className="text-textMuted">{evt.date}</span>
             </div>
           ))}
         </div>

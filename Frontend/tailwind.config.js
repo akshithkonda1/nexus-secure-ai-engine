@@ -3,11 +3,20 @@ export default {
   darkMode: 'class',
   content: [
     './index.html',
-    './src/**/*.{ts,tsx,js,jsx}',
+    './src/**/*.{js,jsx,ts,tsx}',
   ],
   theme: {
     extend: {
       colors: {
+        textPrimary: "var(--text-primary)",
+        textSecondary: "var(--text-secondary)",
+        textMuted: "var(--text-muted)",
+
+        glass: "var(--glass-bg)",
+        glassHeavy: "var(--glass-bg-heavy)",
+        glassBorder: "var(--glass-border)",
+        glassBorderStrong: "var(--glass-border-strong)",
+
         background: 'rgb(var(--bg) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         panel: 'rgb(var(--panel) / <alpha-value>)',
@@ -57,6 +66,9 @@ export default {
         'zora-xl': '24px',
       },
       boxShadow: {
+        glass: "var(--glass-shadow)",
+        glassStrong: "var(--glass-shadow-strong)",
+
         ambient: 'var(--shadow-soft)',
         soft: 'var(--shadow-soft)',
         lift: 'var(--shadow-lift)',
