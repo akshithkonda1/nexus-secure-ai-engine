@@ -9,20 +9,13 @@ const BoardsPanel: React.FC = () => {
         {["Backlog", "In Progress", "Review"].map((column) => (
           <div
             key={column}
-            className="space-y-2 rounded-2xl border p-4 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}
+            className="space-y-2 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 text-[var(--rz-text)]"
           >
             <p className="text-sm font-semibold text-[var(--rz-text)]">{column}</p>
-            <div
-              className="rounded-xl border p-3 text-xs text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
-            >
+            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-3 text-xs text-[var(--rz-text)]">
               Card A
             </div>
-            <div
-              className="rounded-xl border p-3 text-xs text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
-            >
+            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-3 text-xs text-[var(--rz-text)]">
               Card B
             </div>
           </div>

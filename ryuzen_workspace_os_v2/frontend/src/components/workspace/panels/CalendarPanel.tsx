@@ -40,6 +40,14 @@ const CalendarPanel: React.FC = () => {
     syncStatus: "Pending",
   });
 
+  const controlClass =
+    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+  const actionButtonClass =
+    "rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const compactActionButtonClass =
+    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+
   const upcoming = useMemo(() => [...events].sort((a, b) => a.date.localeCompare(b.date)), [events]);
 
   const updateEvent = (id: string, payload: Partial<CalendarEvent> & { tags?: string }) => {
@@ -93,8 +101,7 @@ const CalendarPanel: React.FC = () => {
         <input
           value={calendarName}
           onChange={(event) => setCalendarName(event.target.value)}
-          className="rounded-full border px-4 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={`${controlClass} w-auto rounded-full`}
           aria-label="Rename calendar"
         />
       </div>
@@ -103,31 +110,27 @@ const CalendarPanel: React.FC = () => {
         <input
           value={newEvent.title}
           onChange={(event) => setNewEvent((prev) => ({ ...prev, title: event.target.value }))}
-          className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={controlClass}
           placeholder="Event title"
         />
         <input
           type="date"
           value={newEvent.date}
           onChange={(event) => setNewEvent((prev) => ({ ...prev, date: event.target.value }))}
-          className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={controlClass}
         />
         <input
           type="time"
           value={newEvent.time}
           onChange={(event) => setNewEvent((prev) => ({ ...prev, time: event.target.value }))}
-          className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={controlClass}
         />
         <input
           value={newEvent.tags.join(", ")}
           onChange={(event) =>
             setNewEvent((prev) => ({ ...prev, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) }))
           }
-          className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={controlClass}
           placeholder="Tags"
         />
       </div>
@@ -135,8 +138,7 @@ const CalendarPanel: React.FC = () => {
         <select
           value={newEvent.syncStatus}
           onChange={(event) => setNewEvent((prev) => ({ ...prev, syncStatus: event.target.value as CalendarEvent["syncStatus"] }))}
-          className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-          style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+          className={`${controlClass} w-auto`}
         >
           <option value="Synced">Synced</option>
           <option value="Pending">Pending</option>
@@ -144,8 +146,7 @@ const CalendarPanel: React.FC = () => {
         </select>
         <button
           type="button"
-          className="rounded-full px-4 py-2 text-[var(--rz-text)]"
-          style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+          className={actionButtonClass}
           onClick={addEvent}
         >
           Add event
@@ -156,22 +157,19 @@ const CalendarPanel: React.FC = () => {
         {upcoming.map((event, index) => (
           <div
             key={event.id}
-            className="space-y-2 rounded-2xl border p-4 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}
+            className="space-y-2 rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
           >
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 value={event.title}
                 onChange={(e) => updateEvent(event.id, { title: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <input
                 type="date"
                 value={event.date}
                 onChange={(e) => updateEvent(event.id, { date: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
             </div>
             <div className="grid gap-2 md:grid-cols-3">
@@ -179,20 +177,17 @@ const CalendarPanel: React.FC = () => {
                 type="time"
                 value={event.time}
                 onChange={(e) => updateEvent(event.id, { time: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <input
                 value={event.tags.join(", ")}
                 onChange={(e) => updateEvent(event.id, { tags: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <select
                 value={event.syncStatus}
                 onChange={(e) => updateEvent(event.id, { syncStatus: e.target.value as CalendarEvent["syncStatus"] })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               >
                 <option value="Synced">Synced</option>
                 <option value="Pending">Pending</option>
@@ -200,37 +195,34 @@ const CalendarPanel: React.FC = () => {
               </select>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {calendarName}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {event.tags.length ? event.tags.join(", ") : "No tags"}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {event.syncStatus}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderEvent(event.id, -1)}
               >
                 Move up
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderEvent(event.id, 1)}
               >
                 Move down
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => deleteEvent(event.id)}
               >
                 Delete

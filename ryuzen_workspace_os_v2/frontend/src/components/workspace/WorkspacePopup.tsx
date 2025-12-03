@@ -53,15 +53,15 @@ const WorkspacePopup: React.FC<WorkspacePopupProps> = ({ mode, onClose }) => {
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="absolute inset-0 flex"
         >
-          <div className="relative w-full h-full bg-white/10 border border-white/15 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
+          <div className="relative w-full h-full bg-white dark:bg-[#0b0f19] rounded-3xl shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden text-[var(--rz-text)]">
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-3 right-3 px-3 py-1.5 text-sm rounded-full bg-white/10 border border-white/20 hover:bg-white/15 transition"
+              className="absolute top-3 right-3 px-3 py-1.5 text-sm rounded-full bg-white dark:bg-[#0e121b] border border-black/10 dark:border-white/10 transition"
             >
               Close
             </button>
-            <div className="h-full w-full overflow-auto p-6">{renderPanel()}</div>
+            <div className="h-full w-full overflow-auto p-6 bg-white dark:bg-[#0e121b]">{renderPanel()}</div>
           </div>
         </motion.div>
       )}

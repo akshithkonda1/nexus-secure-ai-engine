@@ -36,6 +36,14 @@ const TasksPanel: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(defaultTasks);
   const [newTask, setNewTask] = useState({ title: "", time: "", tags: "", syncStatus: "Pending" as Task["syncStatus"] });
 
+  const controlClass =
+    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+  const actionButtonClass =
+    "rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const compactActionButtonClass =
+    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+
   const addTask = () => {
     if (!newTask.title.trim()) return;
     setTasks((current) => [
@@ -89,29 +97,25 @@ const TasksPanel: React.FC = () => {
           <input
             value={newTask.title}
             onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
             placeholder="Task title"
           />
           <input
             value={newTask.time}
             onChange={(e) => setNewTask((prev) => ({ ...prev, time: e.target.value }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
             placeholder="When"
           />
           <input
             value={newTask.tags}
             onChange={(e) => setNewTask((prev) => ({ ...prev, tags: e.target.value }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
             placeholder="Tags"
           />
           <select
             value={newTask.syncStatus}
             onChange={(e) => setNewTask((prev) => ({ ...prev, syncStatus: e.target.value as Task["syncStatus"] }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
           >
             <option value="Synced">Synced</option>
             <option value="Pending">Pending</option>
@@ -120,8 +124,7 @@ const TasksPanel: React.FC = () => {
         </div>
         <button
           type="button"
-          className="rounded-full px-4 py-2 text-[var(--rz-text)]"
-          style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+          className={actionButtonClass}
           onClick={addTask}
         >
           Add task
@@ -132,33 +135,28 @@ const TasksPanel: React.FC = () => {
         {tasks.map((task, index) => (
           <div
             key={task.id}
-            className="rounded-2xl border p-4 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}
+            className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
           >
             <div className="grid gap-3 md:grid-cols-4 md:items-center">
               <input
                 value={task.title}
                 onChange={(e) => updateTask(task.id, { title: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <input
                 value={task.time}
                 onChange={(e) => updateTask(task.id, { time: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <input
                 value={task.tags.join(", ")}
                 onChange={(e) => updateTask(task.id, { tags: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <select
                 value={task.syncStatus}
                 onChange={(e) => updateTask(task.id, { syncStatus: e.target.value as Task["syncStatus"] })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               >
                 <option value="Synced">Synced</option>
                 <option value="Pending">Pending</option>
@@ -166,37 +164,34 @@ const TasksPanel: React.FC = () => {
               </select>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {task.tags.length ? task.tags.join(", ") : "No tags"}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {task.time}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {task.syncStatus}
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderTask(task.id, -1)}
               >
                 Move up
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderTask(task.id, 1)}
               >
                 Move down
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => deleteTask(task.id)}
               >
                 Delete

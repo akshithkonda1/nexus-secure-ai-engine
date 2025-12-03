@@ -28,22 +28,9 @@ const WidgetModalFrame: React.FC<WidgetModalFrameProps> = ({ title, children }) 
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 12 }}
           transition={{ duration: 0.24 }}
-          className="relative flex h-[calc(100vh-32px)] w-[calc(100vw-32px)] flex-col overflow-hidden"
-          style={{
-            background: "var(--rz-surface)",
-            border: `1px solid var(--rz-border)` ,
-            borderRadius: "var(--rz-radius)",
-            boxShadow: `0 14px 40px var(--rz-shadow)` ,
-            color: "var(--rz-text)",
-          }}
+          className="relative flex h-[calc(100vh-32px)] w-[calc(100vw-32px)] flex-col overflow-hidden bg-white dark:bg-[#0b0f19] shadow-2xl rounded-3xl border border-black/10 dark:border-white/10 text-[var(--rz-text)]"
         >
-          <div
-            className="flex items-center justify-between px-6 py-4"
-            style={{
-              borderBottom: `1px solid var(--rz-border)` ,
-              background: "var(--rz-surface-glass)",
-            }}
-          >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]">
             <div className="space-y-1 text-[var(--rz-text)]">
               <p className="text-sm text-[var(--rz-text)]">Ryuzen Widget</p>
               <h2 className="text-xl font-semibold text-[var(--rz-text)]">{title}</h2>
@@ -51,17 +38,12 @@ const WidgetModalFrame: React.FC<WidgetModalFrameProps> = ({ title, children }) 
             <button
               type="button"
               onClick={closeWidget}
-              className="rounded-full px-4 py-2 text-sm text-[var(--rz-text)]"
-              style={{
-                border: `1px solid var(--rz-border)` ,
-                background: "var(--rz-surface-glass)",
-                transition: `all var(--rz-duration) ease`,
-              }}
+              className="rounded-full px-4 py-2 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] transition-all"
             >
               Close
             </button>
           </div>
-          <div className="h-full overflow-auto px-6 pb-6 text-[var(--rz-text)]">{children}</div>
+          <div className="h-full overflow-auto px-6 pb-6 text-[var(--rz-text)] bg-white dark:bg-[#0e121b]">{children}</div>
         </motion.div>
       </motion.div>
     </AnimatePresence>,

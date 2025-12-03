@@ -68,6 +68,14 @@ const ListsPanel: React.FC = () => {
   const [selectedListId, setSelectedListId] = useState<string>(defaultLists[0].id);
   const [newItem, setNewItem] = useState({ title: "", time: "", tags: "", syncStatus: "Pending" as const });
 
+  const controlClass =
+    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+  const actionButtonClass =
+    "rounded-full px-3 py-2 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const compactActionButtonClass =
+    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+
   const activeList = useMemo(() => lists.find((list) => list.id === selectedListId) ?? lists[0], [lists, selectedListId]);
 
   const updateListName = (id: string, name: string) => {
@@ -165,16 +173,14 @@ const ListsPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded-full px-3 py-2 text-sm text-[var(--rz-text)]"
-            style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+            className={actionButtonClass}
             onClick={() => reorderList(-1)}
           >
             Move list up
           </button>
           <button
             type="button"
-            className="rounded-full px-3 py-2 text-sm text-[var(--rz-text)]"
-            style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+            className={actionButtonClass}
             onClick={() => reorderList(1)}
           >
             Move list down
@@ -188,19 +194,14 @@ const ListsPanel: React.FC = () => {
             type="button"
             key={list.id}
             onClick={() => setSelectedListId(list.id)}
-            className="w-full rounded-2xl border text-left text-[var(--rz-text)]"
-            style={{
-              borderColor: selectedListId === list.id ? "var(--rz-accent)" : "var(--rz-border)",
-              background: selectedListId === list.id ? "var(--rz-surface-glass)" : "var(--rz-surface)",
-              boxShadow: `0 10px 24px var(--rz-shadow)`,
-              padding: "16px",
-              transition: `all var(--rz-duration)` ,
-            }}
+            className={`w-full rounded-2xl border text-left text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10 p-4 shadow-sm transition ${
+              selectedListId === list.id ? "ring-2 ring-black/10 dark:ring-white/10" : ""
+            }`}
           >
             <input
               value={list.name}
               onChange={(event) => updateListName(list.id, event.target.value)}
-              className="w-full border-none bg-transparent text-lg font-semibold text-[var(--rz-text)] focus:outline-none"
+              className={`${controlClass} text-lg font-semibold focus:outline-none`}
               aria-label={`Rename ${list.name}`}
             />
             <p className="text-sm text-[var(--rz-text)]">{list.items.length} items</p>
@@ -209,34 +210,30 @@ const ListsPanel: React.FC = () => {
       </div>
 
       {activeList && (
-        <div className="space-y-3 rounded-2xl border p-4" style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}>
+        <div className="space-y-3 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 shadow-sm">
           <div className="grid gap-3 md:grid-cols-4">
             <input
               value={newItem.title}
               onChange={(event) => setNewItem((prev) => ({ ...prev, title: event.target.value }))}
-              className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+              className={controlClass}
               placeholder="New item"
             />
             <input
               value={newItem.time}
               onChange={(event) => setNewItem((prev) => ({ ...prev, time: event.target.value }))}
-              className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+              className={controlClass}
               placeholder="When (Today 5pm)"
             />
             <input
               value={newItem.tags}
               onChange={(event) => setNewItem((prev) => ({ ...prev, tags: event.target.value }))}
-              className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+              className={controlClass}
               placeholder="Tags (comma separated)"
             />
             <select
               value={newItem.syncStatus}
               onChange={(event) => setNewItem((prev) => ({ ...prev, syncStatus: event.target.value as ListItem["syncStatus"] }))}
-              className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-              style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+              className={controlClass}
             >
               <option value="Synced">Synced</option>
               <option value="Pending">Pending</option>
@@ -246,8 +243,7 @@ const ListsPanel: React.FC = () => {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded-full px-4 py-2 text-[var(--rz-text)]"
-              style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+              className="rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]"
               onClick={addItem}
             >
               Add item
@@ -258,37 +254,28 @@ const ListsPanel: React.FC = () => {
             {activeList.items.map((item, index) => (
               <div
                 key={item.id}
-                className="rounded-2xl border p-4 text-[var(--rz-text)]"
-                style={{
-                  borderColor: "var(--rz-border)",
-                  background: "var(--rz-surface-glass)",
-                  boxShadow: `0 6px 18px var(--rz-shadow)`,
-                }}
+                className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
               >
                 <div className="grid gap-3 md:grid-cols-4 md:items-center">
                   <input
                     value={item.title}
                     onChange={(event) => updateItem(item.id, { title: event.target.value })}
-                    className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                    style={{ borderColor: "var(--rz-border)", background: "transparent" }}
+                    className={controlClass}
                   />
                   <input
                     value={item.time}
                     onChange={(event) => updateItem(item.id, { time: event.target.value })}
-                    className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                    style={{ borderColor: "var(--rz-border)", background: "transparent" }}
+                    className={controlClass}
                   />
                   <input
                     value={item.tags.join(", ")}
                     onChange={(event) => updateItem(item.id, { tags: event.target.value })}
-                    className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                    style={{ borderColor: "var(--rz-border)", background: "transparent" }}
+                    className={controlClass}
                   />
                   <select
                     value={item.syncStatus}
                     onChange={(event) => updateItem(item.id, { syncStatus: event.target.value as ListItem["syncStatus"] })}
-                    className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                    style={{ borderColor: "var(--rz-border)", background: "transparent" }}
+                    className={controlClass}
                   >
                     <option value="Synced">Synced</option>
                     <option value="Pending">Pending</option>
@@ -296,37 +283,34 @@ const ListsPanel: React.FC = () => {
                   </select>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
-                  <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+                  <span className={pillClass}>
                     {item.tags.length ? item.tags.join(", ") : "No tags"}
                   </span>
-                  <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+                  <span className={pillClass}>
                     {item.syncStatus}
                   </span>
-                  <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+                  <span className={pillClass}>
                     {item.time}
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                    style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface)" }}
+                    className={compactActionButtonClass}
                     onClick={() => reorderItem(item.id, -1)}
                   >
                     Move up
                   </button>
                   <button
                     type="button"
-                    className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                    style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface)" }}
+                    className={compactActionButtonClass}
                     onClick={() => reorderItem(item.id, 1)}
                   >
                     Move down
                   </button>
                   <button
                     type="button"
-                    className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                    style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface)" }}
+                    className={compactActionButtonClass}
                     onClick={() => deleteItem(item.id)}
                   >
                     Delete

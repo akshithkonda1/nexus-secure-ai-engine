@@ -10,18 +10,7 @@ const ConnectorsWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left"
-      style={{
-        background: "var(--rz-surface)",
-        border: `1px solid var(--rz-border)`,
-        color: "var(--rz-text)",
-        backdropFilter: "blur(20px)",
-        borderRadius: "var(--rz-radius)",
-        boxShadow: `0 8px 24px var(--rz-shadow)` ,
-        transition: `background var(--rz-duration), color var(--rz-duration), border var(--rz-duration)` ,
-        padding: "16px",
-        ...(active ? { background: "var(--rz-surface-glass)" } : {}),
-      }}
+      className={`w-full text-left bg-white/90 dark:bg-[#0b0f19]/90 backdrop-blur-xl border border-black/5 dark:border-white/5 rounded-2xl px-4 py-4 text-[var(--rz-text)] shadow-xl transition ${active ? "ring-2 ring-black/10 dark:ring-white/10" : ""}`}
     >
       <p className="text-sm text-[var(--rz-text)]">
         Connectors
