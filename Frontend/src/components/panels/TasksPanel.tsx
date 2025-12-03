@@ -26,10 +26,10 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
     setDraft((prev) => ({ ...prev, [hour]: "" }));
   };
 
-  const border = isDark ? "border-borderLight/10" : "border-borderLight/5";
-  const surface = isDark ? "bg-bgElevated" : "bg-bgPrimary";
-  const textPrimary = isDark ? "text-textMuted" : "text-textPrimary";
-  const textSecondary = isDark ? "text-textMuted" : "text-textSecondary";
+  const border = isDark ? "border-white/10" : "border-black/5";
+  const surface = isDark ? "bg-neutral-900" : "bg-white";
+  const textPrimary = isDark ? "text-neutral-100" : "text-neutral-900";
+  const textSecondary = isDark ? "text-neutral-300" : "text-neutral-700";
 
   return (
     <div className={`flex h-full flex-col gap-4 rounded-3xl border ${border} ${surface} p-6 shadow-xl`}>
@@ -43,7 +43,7 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
             <button
               onClick={close}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
+                isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
               }`}
             >
               Close
@@ -57,7 +57,7 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
             key={block.hour}
             className={`rounded-2xl border ${border} ${surface} p-4 shadow-sm`}
           >
-            <div className="flex items-center justify-between text-sm font-semibold text-textPrimary dark:text-textMuted">
+            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               <span>{block.hour}</span>
               <span className={`text-xs ${textSecondary}`}>{block.focus}</span>
             </div>
@@ -66,7 +66,7 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
                 <div
                   key={item.id}
                   className={`rounded-xl border px-3 py-2 ${
-                    isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
+                    isDark ? "border-white/10 bg-neutral-800 text-white" : "border-black/5 bg-neutral-50 text-black"
                   }`}
                 >
                   <p className="font-semibold">{item.title}</p>
@@ -75,7 +75,7 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
               ))}
               <div
                 className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${
-                  isDark ? "border-borderLight/10 bg-bgElevated" : "border-borderLight/5 bg-bgPrimary"
+                  isDark ? "border-white/10 bg-neutral-800" : "border-black/5 bg-neutral-50"
                 }`}
               >
                 <input
@@ -85,13 +85,13 @@ const TasksPanel: React.FC<TasksPanelProps> = ({ schedule, onChange, close }) =>
                   placeholder="Add task"
                   className={`w-full bg-transparent text-sm ${
                     isDark
-                      ? "text-textPrimary placeholder:text-textMuted"
-                      : "text-textPrimary placeholder:text-textSecondary"
+                      ? "text-white placeholder:text-neutral-400"
+                      : "text-black placeholder:text-neutral-500"
                   } focus:outline-none`}
                 />
                 <button
                   className={`rounded-full p-2 transition ${
-                    isDark ? "bg-emerald-600 text-textPrimary hover:bg-emerald-500" : "bg-emerald-300 text-textPrimary hover:bg-emerald-400"
+                    isDark ? "bg-emerald-600 text-white hover:bg-emerald-500" : "bg-emerald-300 text-black hover:bg-emerald-400"
                   }`}
                   onClick={() => addTask(block.hour)}
                 >

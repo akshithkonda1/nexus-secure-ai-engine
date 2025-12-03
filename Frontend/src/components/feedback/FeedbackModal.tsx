@@ -97,7 +97,7 @@ export function FeedbackModal() {
         aria-modal="true"
       >
         <motion.div
-          className="absolute inset-0 bg-bgElevated/60 backdrop-blur-md"
+          className="absolute inset-0 bg-black/60 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

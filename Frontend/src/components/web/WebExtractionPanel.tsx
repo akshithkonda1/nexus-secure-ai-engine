@@ -10,7 +10,7 @@ const tagClasses = "rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibo
 
 function renderTable(table: string[][], index: number) {
   return (
-    <div key={`table-${index}`} className="overflow-hidden rounded-xl border border-borderLight/10 bg-bgPrimary/5 dark:bg-bgPrimary/5">
+    <div key={`table-${index}`} className="overflow-hidden rounded-xl border border-white/10 bg-white/5 dark:bg-white/5">
       <table className="min-w-full divide-y divide-white/10 text-sm text-[var(--text-primary)]">
         <tbody>
           {table.map((row, rowIdx) => (
@@ -41,7 +41,7 @@ export default function WebExtractionPanel({ data, onClear, sourceUrl }: WebExtr
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="mt-4 space-y-4 rounded-2xl border border-borderLight/10 bg-[var(--panel-bg)] p-6 shadow-lg"
+      className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-[var(--panel-bg)] p-6 shadow-lg"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className={tagClasses}>Verified</span>
@@ -60,9 +60,9 @@ export default function WebExtractionPanel({ data, onClear, sourceUrl }: WebExtr
               {headings.map((heading: any, idx: number) => (
                 <div
                   key={`heading-${idx}`}
-                  className="rounded-xl border border-borderLight/10 bg-bgPrimary/5 px-3 py-2 text-sm text-[var(--text-primary)] dark:bg-bgPrimary/5"
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] dark:bg-white/5"
                 >
-                  <span className="mr-2 rounded-lg bg-bgElevated/30 px-2 py-1 text-xs uppercase tracking-wide text-[var(--text-secondary)] dark:bg-bgPrimary/10">
+                  <span className="mr-2 rounded-lg bg-black/30 px-2 py-1 text-xs uppercase tracking-wide text-[var(--text-secondary)] dark:bg-white/10">
                     {heading.level}
                   </span>
                   {heading.text}
@@ -78,7 +78,7 @@ export default function WebExtractionPanel({ data, onClear, sourceUrl }: WebExtr
             {paragraphs.map((para: string, idx: number) => (
               <p
                 key={`paragraph-${idx}`}
-                className="rounded-xl border border-borderLight/5 bg-bgPrimary/5 p-3 text-sm leading-relaxed text-[var(--text-secondary)] shadow-inner dark:border-borderLight/10 dark:bg-bgPrimary/5"
+                className="rounded-xl border border-white/5 bg-white/5 p-3 text-sm leading-relaxed text-[var(--text-secondary)] shadow-inner dark:border-white/10 dark:bg-white/5"
               >
                 {para}
               </p>
@@ -102,7 +102,7 @@ export default function WebExtractionPanel({ data, onClear, sourceUrl }: WebExtr
               {links.map((link: any, idx: number) => (
                 <span
                   key={`link-${idx}`}
-                  className="rounded-full border border-borderLight/10 bg-bgPrimary/5 px-3 py-1 text-xs text-[var(--text-secondary)]"
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-[var(--text-secondary)]"
                 >
                   {link.text}
                 </span>

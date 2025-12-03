@@ -26,7 +26,7 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-bgElevated/60 p-4 backdrop-blur"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -87,7 +87,7 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_85%,var(--accent-secondary))] px-4 py-2 text-sm font-semibold text-textPrimary shadow-[0_12px_30px_rgba(124,93,255,0.32)] transition hover:-translate-y-[1px] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_85%,var(--accent-secondary))] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(124,93,255,0.32)] transition hover:-translate-y-[1px] disabled:opacity-60"
                 >
                   <Plus className="h-4 w-4" />
                   {saving ? "Encrypting…" : "Create project"}

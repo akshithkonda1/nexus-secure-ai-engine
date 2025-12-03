@@ -22,15 +22,15 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
     setNewTitle("");
   };
 
-  const containerBorder = isDark ? "border-borderLight/10" : "border-borderLight/5";
-  const cardSurface = isDark ? "bg-bgElevated" : "bg-bgPrimary";
-  const cardBorder = isDark ? "border-borderLight/10" : "border-borderLight/5";
-  const textSecondary = isDark ? "text-textMuted" : "text-textSecondary";
+  const containerBorder = isDark ? "border-white/10" : "border-black/5";
+  const cardSurface = isDark ? "bg-neutral-900" : "bg-white";
+  const cardBorder = isDark ? "border-white/10" : "border-black/5";
+  const textSecondary = isDark ? "text-neutral-300" : "text-neutral-700";
 
   return (
-    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${containerBorder} bg-bgPrimary dark:bg-bgElevated p-6 shadow-xl`}>
+    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${containerBorder} bg-white dark:bg-neutral-900 p-6 shadow-xl`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
           <ClipboardList className="h-4 w-4" /> Lists Control Center
         </div>
         <div className="flex items-center gap-2">
@@ -41,15 +41,15 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
             placeholder="New list"
             className={`rounded-full border px-4 py-2 text-sm ${
               isDark
-                ? "border-borderLight/10 bg-bgElevated text-textPrimary placeholder:text-textMuted"
-                : "border-borderLight/5 bg-bgPrimary text-textPrimary placeholder:text-textSecondary"
+                ? "border-white/10 bg-neutral-800 text-white placeholder:text-neutral-400"
+                : "border-black/5 bg-neutral-50 text-black placeholder:text-neutral-500"
             } focus:outline-none`}
           />
           <button
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
               isDark
-                ? "bg-emerald-600 text-textPrimary hover:bg-emerald-500"
-                : "bg-emerald-300 text-textPrimary hover:bg-emerald-400"
+                ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                : "bg-emerald-300 text-black hover:bg-emerald-400"
             }`}
             onClick={addList}
           >
@@ -59,7 +59,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
             <button
               onClick={close}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
+                isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
               }`}
             >
               Close
@@ -70,7 +70,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
       <div className="grid gap-3 md:grid-cols-2">
         {lists.map((list) => (
           <div key={list.id} className={`rounded-2xl border ${cardBorder} ${cardSurface} p-4 shadow-sm`}>
-            <div className="flex items-center justify-between text-sm font-semibold text-textPrimary dark:text-textMuted">
+            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               {list.title}
               <span className={`text-xs ${textSecondary}`}>{list.items.length} items</span>
             </div>
@@ -79,7 +79,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
                 <div
                   key={item.id}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2 ${
-                    isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
+                    isDark ? "border-white/10 bg-neutral-800 text-white" : "border-black/5 bg-neutral-50 text-black"
                   }`}
                 >
                   <span className={item.done ? "line-through" : ""}>{item.text}</span>

@@ -57,11 +57,11 @@ const WorkspacePopup: React.FC<WorkspacePopupProps> = ({ mode, onClose, setMode 
           <div className="relative w-full max-w-4xl pointer-events-auto">
             <button
               onClick={onClose}
-              className="absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full bg-bgPrimary/10 border border-borderLight/20 text-textPrimary hover:bg-bgPrimary/20 active:bg-bgPrimary/30 backdrop-blur-xl shadow-lg"
+              className="absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 active:bg-white/30 backdrop-blur-xl shadow-lg"
             >
               ✕
             </button>
-            <div className="rounded-3xl bg-bgPrimary/10 border border-borderLight/20 backdrop-blur-xl shadow-2xl p-6">
+            <div className="rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl p-6">
               {renderPanel(mode, setMode)}
             </div>
           </div>

@@ -14,10 +14,10 @@ const FocusWidget: React.FC = () => {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button className="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-textPrimary shadow-md shadow-emerald-500/25 transition hover:shadow-lg hover:shadow-emerald-500/35">
+        <button className="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:shadow-lg hover:shadow-emerald-500/35">
           Start 25m Session
         </button>
-        <button className="rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:text-textPrimary">
+        <button className="rounded-full border border-[var(--border-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--border-strong)] hover:text-white">
           Create Routine
         </button>
       </div>

@@ -92,12 +92,12 @@ const colors = ["#38bdf8", "#818cf8", "#22d3ee", "#c084fc", "#67e8f9"];
 
 export default function TelemetryDashboard() {
   return (
-    <div className="min-h-screen bg-bgElevated/60 bg-aurora-edge px-6 py-10 text-textPrimary backdrop-blur-3xl">
+    <div className="min-h-screen bg-black/60 bg-aurora-edge px-6 py-10 text-white backdrop-blur-3xl">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="space-y-2">
           <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Nimbus Telemetry</p>
           <h1 className="text-3xl font-semibold">Model Performance</h1>
-          <p className="text-sm text-textMuted">Frontend-only visuals for latency, cadence, drift, and engine allocation.</p>
+          <p className="text-sm text-slate-200">Frontend-only visuals for latency, cadence, drift, and engine allocation.</p>
         </header>
 
         <div className="grid gap-5 lg:grid-cols-3">
@@ -187,7 +187,7 @@ export default function TelemetryDashboard() {
               {divergenceHeatmap.flat().map((value, index) => (
                 <div
                   key={index}
-                  className="flex h-20 items-center justify-center rounded-2xl border border-borderLight/10 bg-bgPrimary/5 text-sm font-semibold"
+                  className="flex h-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-sm font-semibold"
                   style={{
                     background: `linear-gradient(135deg, rgba(56,189,248,${0.35 + value / 40}), rgba(99,102,241,${0.25 + value / 40}))`,
                     boxShadow: "0 0 30px rgba(56,189,248,0.25)",
@@ -214,11 +214,11 @@ export default function TelemetryDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
-            <div className="mt-3 flex flex-wrap gap-2 text-sm text-textMuted">
+            <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-200">
               {engineDistribution.map((engine, index) => (
                 <span
                   key={engine.label}
-                  className="rounded-full border border-borderLight/10 px-3 py-1"
+                  className="rounded-full border border-white/10 px-3 py-1"
                   style={{ background: `${colors[index % colors.length]}22` }}
                 >
                   {engine.label}: {engine.value}%
@@ -268,21 +268,21 @@ export default function TelemetryDashboard() {
 
         <div className="grid gap-5 md:grid-cols-[1.2fr_1fr]">
           <TelemetryCard title="Hallucination Count" subtitle="Guardrail surface" className="fade-slide-up">
-            <div className="flex h-full items-center justify-between rounded-2xl border border-borderLight/10 bg-bgPrimary/5 px-6 py-5">
+            <div className="flex h-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-6 py-5">
               <div>
-                <p className="text-sm text-textMuted">Last 24h</p>
-                <p className="text-4xl font-semibold text-textPrimary">3</p>
+                <p className="text-sm text-slate-200">Last 24h</p>
+                <p className="text-4xl font-semibold text-white">3</p>
               </div>
               <div className="h-24 w-24 rounded-full bg-gradient-to-br from-cyan-400/30 via-slate-900 to-indigo-500/30 shadow-[0_0_40px_rgba(56,189,248,0.4)]" />
             </div>
           </TelemetryCard>
 
           <TelemetryCard title="Active Engines" subtitle="Command center sync" className="fade-slide-up">
-            <div className="flex h-full flex-wrap items-center gap-3 rounded-2xl border border-borderLight/10 bg-bgPrimary/5 p-4 text-sm text-textMuted">
+            <div className="flex h-full flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
               {engineDistribution.map((engine, index) => (
                 <span
                   key={engine.label}
-                  className="rounded-full border border-borderLight/10 px-3 py-1"
+                  className="rounded-full border border-white/10 px-3 py-1"
                   style={{
                     background: `${colors[index % colors.length]}22`,
                     boxShadow: "0 0 25px rgba(56,189,248,0.3)",
@@ -316,7 +316,7 @@ function TelemetryCard({
       <div className="relative flex flex-col gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">{subtitle}</p>
-          <h3 className="text-lg font-semibold text-textPrimary">{title}</h3>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
         </div>
         {children}
       </div>
@@ -325,7 +325,7 @@ function TelemetryCard({
 }
 
 function ChartContainer({ children }: { children: React.ReactNode }) {
-  return <div className="h-56 w-full overflow-hidden rounded-2xl border border-borderLight/10 bg-bgPrimary/5 p-3">{children}</div>;
+  return <div className="h-56 w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3">{children}</div>;
 }
 
 const tooltipStyle = {

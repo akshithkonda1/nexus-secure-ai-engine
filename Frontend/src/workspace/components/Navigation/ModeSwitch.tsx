@@ -9,12 +9,12 @@ export const ModeSwitch: React.FC = () => {
     <button
       aria-label="Toggle workspace mode"
       onClick={toggleMode}
-      className={`relative flex h-10 w-20 items-center rounded-full bg-bgElevated p-1 transition duration-[var(--switch-slide)] ease-linear ${
+      className={`relative flex h-10 w-20 items-center rounded-full bg-neutral-800 p-1 transition duration-[var(--switch-slide)] ease-linear ${
         isAdvanced ? "justify-end" : "justify-start"
       }`}
     >
       <span
-        className={`h-8 w-8 rounded-full bg-bgPrimary shadow transition duration-[var(--switch-bounce)] ${
+        className={`h-8 w-8 rounded-full bg-white shadow transition duration-[var(--switch-bounce)] ${
           isAdvanced ? "translate-x-0 bg-emerald-500" : "translate-x-0"
         }`}
       />

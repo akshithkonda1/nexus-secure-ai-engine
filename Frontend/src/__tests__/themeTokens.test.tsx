@@ -67,10 +67,10 @@ describe("theme tokens", () => {
 
   it("flags hardcoded tailwind color usage", () => {
     const bannedPatterns = [
-      /text-textPrimary/,
+      /text-white/,
       /text-(gray|neutral|slate|zinc)/,
-      /bg-bgPrimary/,
-      /bg-bgSecondary/,
+      /bg-white/,
+      /bg-neutral/,
     ];
 
     const targetDirs = ["theme", "styles", "__tests__"];

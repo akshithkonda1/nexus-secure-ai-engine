@@ -25,17 +25,17 @@ export default function NavItem({ to, icon, label, onNavigate }: NavItemProps) {
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
             collapsed ? "justify-center px-0" : "justify-start",
             isActive
-              ? "border border-borderLight/10 bg-bgPrimary/4 text-[rgb(var(--text))] shadow-[0_0_0_1px_rgba(148,163,184,0.25)] hover:bg-bgPrimary/6 hover:text-[rgb(var(--text))]"
-              : "text-[rgba(var(--subtle),0.85)] hover:bg-bgPrimary/4 hover:text-[rgb(var(--text))]"
+              ? "border border-white/10 bg-white/4 text-[rgb(var(--text))] shadow-[0_0_0_1px_rgba(148,163,184,0.25)] hover:bg-white/6 hover:text-[rgb(var(--text))]"
+              : "text-[rgba(var(--subtle),0.85)] hover:bg-white/4 hover:text-[rgb(var(--text))]"
           )
         }
         aria-label={label}
       >
         <span
           className={cn(
-            "inline-flex h-9 w-9 items-center justify-center rounded-[1.05rem] border border-zora-border/70 bg-bgPrimary/5 text-[rgba(var(--subtle),0.8)] shadow-[0_14px_30px_rgba(8,15,35,0.45)] backdrop-blur-xl transition-colors transition-transform duration-200",
-            "group-hover:border-borderLight/15 group-hover:bg-bgPrimary/12 group-hover:text-[rgb(var(--text))]",
-            "group-aria-[current=page]:border-borderLight/20 group-aria-[current=page]:bg-bgPrimary/16 group-aria-[current=page]:text-[rgb(var(--text))] group-aria-[current=page]:shadow-zora-glow"
+            "inline-flex h-9 w-9 items-center justify-center rounded-[1.05rem] border border-zora-border/70 bg-white/5 text-[rgba(var(--subtle),0.8)] shadow-[0_14px_30px_rgba(8,15,35,0.45)] backdrop-blur-xl transition-colors transition-transform duration-200",
+            "group-hover:border-white/15 group-hover:bg-white/12 group-hover:text-[rgb(var(--text))]",
+            "group-aria-[current=page]:border-white/20 group-aria-[current=page]:bg-white/16 group-aria-[current=page]:text-[rgb(var(--text))] group-aria-[current=page]:shadow-zora-glow"
           )}
         >
           {icon}

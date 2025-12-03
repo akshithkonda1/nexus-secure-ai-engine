@@ -8,7 +8,7 @@ const tasks = [
 
 const statusStyles: Record<string, string> = {
   "In Progress": "bg-amber-500/15 text-amber-400",
-  Todo: "bg-bgSecondary/20 text-textMuted",
+  Todo: "bg-slate-500/20 text-slate-200",
   Blocked: "bg-rose-500/15 text-rose-400",
 };
 
@@ -24,7 +24,7 @@ const TasksWidget: React.FC = () => {
         {tasks.map((task) => (
           <div
             key={task.title}
-            className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-bgElevated/10 px-4 py-3 text-sm text-[var(--text-primary)]"
+            className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-black/10 px-4 py-3 text-sm text-[var(--text-primary)]"
           >
             <span className="font-medium">{task.title}</span>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[task.status]}`}>

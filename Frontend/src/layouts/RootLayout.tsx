@@ -35,7 +35,7 @@ export default function RootLayout() {
       <AnimatePresence>
         {mobileNavOpen && (
           <motion.div
-            className="fixed inset-0 z-20 bg-bgElevated/60 lg:hidden"
+            className="fixed inset-0 z-20 bg-black/60 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

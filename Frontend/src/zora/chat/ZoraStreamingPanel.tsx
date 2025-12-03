@@ -17,15 +17,15 @@ const Section: React.FC<{ title: string; answer?: DebateAnswer | null }> = ({
   title,
   answer,
 }) => (
-  <div className="rounded-2xl border border-borderLight/20 bg-bgPrimary/5 p-4 text-sm text-textPrimary shadow-inner backdrop-blur-xl dark:border-borderStrong/40 dark:bg-bgElevated/40 dark:text-textMuted">
-    <p className="text-[11px] uppercase tracking-wide text-textSecondary dark:text-textMuted">
+  <div className="rounded-2xl border border-white/20 bg-white/5 p-4 text-sm text-slate-900 shadow-inner backdrop-blur-xl dark:border-slate-700/40 dark:bg-slate-900/40 dark:text-slate-100">
+    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
       {title}
     </p>
-    <p className="mt-2 text-sm leading-relaxed text-textPrimary dark:text-textMuted">
+    <p className="mt-2 text-sm leading-relaxed text-slate-800 dark:text-slate-100">
       {answer?.text?.length ? answer.text : "Waiting for signal…"}
     </p>
     {answer?.sources?.length ? (
-      <ul className="mt-2 list-inside list-disc text-xs text-textSecondary dark:text-textMuted">
+      <ul className="mt-2 list-inside list-disc text-xs text-slate-500 dark:text-slate-300">
         {answer.sources.slice(0, 4).map((source) => (
           <li key={`${source.url}-${source.title ?? source.snippet}`} className="truncate">
             <a
@@ -63,12 +63,12 @@ export function ToronStreamingPanel({
       : "Aurora complete";
 
   return (
-    <div className="rounded-3xl border border-borderLight/70 bg-bgPrimary/10 p-4 text-textPrimary shadow-lg backdrop-blur-2xl dark:border-borderStrong/70 dark:bg-bgElevated/40 dark:text-textMuted">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wide text-textSecondary dark:text-textMuted">
+    <div className="rounded-3xl border border-slate-200/70 bg-white/10 p-4 text-slate-900 shadow-lg backdrop-blur-2xl dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-50">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
         <span>{status}</span>
         <span>{pct}%</span>
       </div>
-      <div className="mt-3 h-2 w-full rounded-full bg-bgPrimary/40 dark:bg-bgSecondary/40">
+      <div className="mt-3 h-2 w-full rounded-full bg-slate-200/40 dark:bg-slate-700/40">
         <div
           className="h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400"
           style={{ width: `${pct}%`, transition: "width 200ms ease" }}

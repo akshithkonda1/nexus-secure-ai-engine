@@ -33,7 +33,7 @@ export function ModuleTile({
         className="absolute inset-0 bg-gradient-to-br from-cyan-500/12 via-purple-600/6 to-emerald-500/12 pointer-events-none"
         aria-hidden
       />
-      <div className="absolute top-0 left-0 right-0 h-1/3 bg-bgPrimary/5 blur-2xl" aria-hidden />
+      <div className="absolute top-0 left-0 right-0 h-1/3 bg-white/5 blur-2xl" aria-hidden />
       {status && (
         <span className="absolute right-5 top-5 rounded-full border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_80%,transparent)] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-secondary)]">
           {status}

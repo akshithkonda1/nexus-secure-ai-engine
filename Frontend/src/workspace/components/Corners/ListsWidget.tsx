@@ -9,33 +9,33 @@ export const ListsWidget: React.FC = () => {
 
   return (
     <div
-      className={`rounded-2xl border border-borderStrong bg-bgElevated/70 p-4 shadow-lg transition ${
+      className={`rounded-2xl border border-neutral-800 bg-neutral-900/70 p-4 shadow-lg transition ${
         glow ? "ring-2 ring-emerald-500" : ""
       } fade-in`}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Lists</p>
-          <p className="text-sm text-textMuted">Tasks detected from Pages</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-neutral-400">Lists</p>
+          <p className="text-sm text-neutral-200">Tasks detected from Pages</p>
         </div>
-        <span className="text-xs text-textSecondary">{mode === "advanced" ? "Advanced" : "Basic"}</span>
+        <span className="text-xs text-neutral-500">{mode === "advanced" ? "Advanced" : "Basic"}</span>
       </div>
       <div className="mt-3 space-y-2">
-        {tasks.length === 0 && <p className="text-sm text-textSecondary">No tasks yet.</p>}
+        {tasks.length === 0 && <p className="text-sm text-neutral-500">No tasks yet.</p>}
         {tasks.map((task) => (
           <div key={task.id} className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={task.completed}
               onChange={() => toggleTask(task.id)}
-              className="h-4 w-4 rounded border-borderStrong bg-bgElevated"
+              className="h-4 w-4 rounded border-neutral-700 bg-neutral-800"
             />
-            <span className={`flex-1 text-sm ${task.completed ? "line-through text-textSecondary" : "text-textMuted"}`}>
+            <span className={`flex-1 text-sm ${task.completed ? "line-through text-neutral-500" : "text-neutral-100"}`}>
               {task.title}
             </span>
             {mode === "advanced" && (
               <button
-                className="text-xs text-textSecondary hover:text-textMuted"
+                className="text-xs text-neutral-500 hover:text-neutral-200"
                 onClick={() => removeTask(task.id)}
               >
                 Delete
@@ -49,10 +49,10 @@ export const ListsWidget: React.FC = () => {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Add task"
-          className="flex-1 rounded-lg bg-bgElevated px-3 py-2 text-sm text-textMuted outline-none ring-1 ring-transparent focus:ring-emerald-500"
+          className="flex-1 rounded-lg bg-neutral-800 px-3 py-2 text-sm text-neutral-50 outline-none ring-1 ring-transparent focus:ring-emerald-500"
         />
         <button
-          className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-textPrimary transition hover:bg-emerald-500"
+          className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white transition hover:bg-emerald-500"
           onClick={() => {
             if (!draft.trim()) return;
             addTask(draft.trim());

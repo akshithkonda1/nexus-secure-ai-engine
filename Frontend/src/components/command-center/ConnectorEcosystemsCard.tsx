@@ -28,36 +28,36 @@ function statusBar(status: Connector["status"]) {
 
 export function ConnectorEcosystemsCard() {
   return (
-    <div className="card-aurora p-4 lg:p-5 text-textPrimary/90">
+    <div className="card-aurora p-4 lg:p-5 text-white/90">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-indigo-300">Ecosystems</p>
-          <h3 className="text-lg font-semibold text-textPrimary">Connectors</h3>
+          <h3 className="text-lg font-semibold text-white">Connectors</h3>
         </div>
-        <span className="rounded-full border border-borderLight/10 bg-bgPrimary/10 px-3 py-1 text-[11px] text-textMuted">8 linked</span>
+        <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] text-slate-200">8 linked</span>
       </div>
 
       <div className="space-y-2">
         {connectors.map((connector) => (
           <div
             key={connector.name}
-            className="flex items-center gap-3 rounded-2xl border border-borderLight/5 bg-bgPrimary/5 p-3 transition hover:border-cyan-400/40 hover:bg-bgPrimary/10"
+            className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 transition hover:border-cyan-400/40 hover:bg-white/10"
           >
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-white/15 to-cyan-500/20 text-sm font-semibold uppercase text-textPrimary/90">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-white/15 to-cyan-500/20 text-sm font-semibold uppercase text-white/90">
               {connector.name[0]}
             </div>
             <div className="flex-1">
-              <div className="flex items-center justify-between text-sm text-textPrimary">
+              <div className="flex items-center justify-between text-sm text-white">
                 <span className="font-medium">{connector.name}</span>
-                <span className="flex items-center gap-1 text-xs text-textMuted">
+                <span className="flex items-center gap-1 text-xs text-slate-200">
                   {statusIcon(connector.status)}
                   <span className="capitalize">{connector.status}</span>
                 </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-bgPrimary/10">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
                 <div className={`h-full rounded-full ${statusBar(connector.status)} shadow-[0_0_18px_rgba(56,189,248,0.35)]`} />
               </div>
-              <p className="mt-1 text-[11px] text-textMuted">Last sync: {connector.lastSync}</p>
+              <p className="mt-1 text-[11px] text-slate-400">Last sync: {connector.lastSync}</p>
             </div>
           </div>
         ))}

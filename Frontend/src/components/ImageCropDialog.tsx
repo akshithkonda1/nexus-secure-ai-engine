@@ -56,7 +56,7 @@ export default function ImageCropDialog({ open, src, onClose, onCropped, square 
             enter="ease-out duration-200" enterFrom="translate-y-6 opacity-0" enterTo="translate-y-0 opacity-100"
             leave="ease-in duration-150"  leaveFrom="translate-y-0 opacity-100" leaveTo="translate-y-4 opacity-0">
             <Dialog.Panel className="panel panel--glassy panel--hover w-full max-w-2xl overflow-hidden p-0">
-              <div className="relative h-[420px] bg-bgElevated/40">
+              <div className="relative h-[420px] bg-black/40">
                 <Cropper
                   image={src}
                   aspect={aspect}

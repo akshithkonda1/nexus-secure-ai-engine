@@ -28,7 +28,7 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <ModeProvider>
         <WorkspaceProvider>
-          <div className="min-h-screen bg-bgElevated text-textMuted">
+          <div className="min-h-screen bg-neutral-950 text-neutral-50">
             {!hasStarted ? (
               <WelcomeScreen onStart={() => setHasStarted(true)} />
             ) : (
@@ -64,38 +64,38 @@ export const App: React.FC = () => {
                 {isModalOpen && (
                   <div
                     role="presentation"
-                    className="fixed inset-0 z-40 flex items-center justify-center bg-bgElevated/70"
+                    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
                     onClick={closeToron}
                   >
                     <div className="max-w-4xl w-full px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="rounded-2xl bg-bgElevated/90 p-6 shadow-2xl ring-1 ring-neutral-800">
+                      <div className="rounded-2xl bg-neutral-900/90 p-6 shadow-2xl ring-1 ring-neutral-800">
                         <h2 className="text-xl font-semibold">Toron Analysis</h2>
-                        <p className="mt-2 text-sm text-textMuted">
+                        <p className="mt-2 text-sm text-neutral-300">
                           Toron surfaces reasoning-backed cards to keep your workspace organized.
                         </p>
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
                           {cards.map((card) => (
                             <div
                               key={card.id}
-                              className="rounded-xl border border-borderStrong bg-bgElevated p-4 shadow hover:shadow-lg transition"
+                              className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 shadow hover:shadow-lg transition"
                             >
-                              <div className="text-sm font-semibold text-textMuted">{card.title}</div>
-                              <p className="mt-2 text-sm text-textMuted">{card.reason}</p>
+                              <div className="text-sm font-semibold text-neutral-100">{card.title}</div>
+                              <p className="mt-2 text-sm text-neutral-300">{card.reason}</p>
                               <div className="mt-4 flex gap-2 text-sm">
                                 <button
-                                  className="rounded-full bg-emerald-600 px-3 py-1 text-textPrimary transition hover:bg-emerald-500"
+                                  className="rounded-full bg-emerald-600 px-3 py-1 text-white transition hover:bg-emerald-500"
                                   onClick={() => card.onAccept?.(card.id)}
                                 >
                                   Accept
                                 </button>
                                 <button
-                                  className="rounded-full border border-borderStrong px-3 py-1 text-textMuted transition hover:bg-bgElevated"
+                                  className="rounded-full border border-neutral-700 px-3 py-1 text-neutral-200 transition hover:bg-neutral-800"
                                   onClick={() => card.onIgnore?.(card.id)}
                                 >
                                   Ignore
                                 </button>
                                 <button
-                                  className="rounded-full border border-borderStrong px-3 py-1 text-textMuted transition hover:bg-bgElevated"
+                                  className="rounded-full border border-neutral-700 px-3 py-1 text-neutral-200 transition hover:bg-neutral-800"
                                   onClick={() => card.onExplain?.(card.id)}
                                 >
                                   Explain

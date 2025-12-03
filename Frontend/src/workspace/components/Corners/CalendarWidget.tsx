@@ -14,11 +14,11 @@ export const CalendarWidget: React.FC = () => {
   const { mode } = useModeStore();
 
   return (
-    <div className="fade-in rounded-2xl border border-borderStrong bg-bgElevated/70 p-4 shadow-lg">
+    <div className="fade-in rounded-2xl border border-neutral-800 bg-neutral-900/70 p-4 shadow-lg">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Calendar</p>
-          <p className="text-sm text-textMuted">Availability + time horizons</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-neutral-400">Calendar</p>
+          <p className="text-sm text-neutral-200">Availability + time horizons</p>
         </div>
         <div className="flex gap-1">
           {horizons.map((option) => (
@@ -26,7 +26,7 @@ export const CalendarWidget: React.FC = () => {
               key={option.value}
               onClick={() => setHorizon(option.value)}
               className={`rounded-full px-2 py-1 text-xs ${
-                horizon === option.value ? "bg-emerald-600 text-textPrimary" : "bg-bgElevated text-textMuted"
+                horizon === option.value ? "bg-emerald-600 text-white" : "bg-neutral-800 text-neutral-300"
               }`}
             >
               {option.label}
@@ -35,17 +35,17 @@ export const CalendarWidget: React.FC = () => {
         </div>
       </div>
       <div className="mt-3 space-y-2">
-        {entries.length === 0 && <p className="text-sm text-textSecondary">No calendar entries yet.</p>}
+        {entries.length === 0 && <p className="text-sm text-neutral-500">No calendar entries yet.</p>}
         {entries.map((entry) => (
-          <div key={entry.id} className="rounded-lg bg-bgElevated/60 p-3 text-sm text-textMuted">
+          <div key={entry.id} className="rounded-lg bg-neutral-800/60 p-3 text-sm text-neutral-100">
             <div className="font-semibold">{entry.title}</div>
-            <p className="text-xs text-textMuted">{new Date(entry.date).toDateString()}</p>
+            <p className="text-xs text-neutral-400">{new Date(entry.date).toDateString()}</p>
           </div>
         ))}
       </div>
       {mode === "advanced" && (
-        <div className="mt-3 rounded-xl bg-bgElevated/50 p-3 text-xs text-textMuted">
-          <p className="font-semibold text-textMuted">Availability</p>
+        <div className="mt-3 rounded-xl bg-neutral-800/50 p-3 text-xs text-neutral-300">
+          <p className="font-semibold text-neutral-100">Availability</p>
           <p className="mt-1">You have 2 free hours Friday.</p>
         </div>
       )}

@@ -11,26 +11,26 @@ const connectors = [
 
 const ConnectorsPanel: React.FC = () => {
   return (
-    <div className="space-y-6 text-textPrimary">
+    <div className="space-y-6 text-white">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-semibold">Connectors</h3>
-          <p className="text-textPrimary/70">Authenticate and link external tools.</p>
+          <p className="text-white/70">Authenticate and link external tools.</p>
         </div>
-        <button className="px-4 py-2 rounded-2xl bg-bgPrimary/10 border border-borderLight/20 hover:bg-bgPrimary/15">Manage Tokens</button>
+        <button className="px-4 py-2 rounded-2xl bg-white/10 border border-white/20 hover:bg-white/15">Manage Tokens</button>
       </div>
 
       <div className="space-y-3">
         {connectors.map((connector) => (
           <div
             key={connector.name}
-            className="flex items-center justify-between rounded-2xl border border-borderLight/10 bg-bgPrimary/5 p-4 backdrop-blur-xl hover:bg-bgPrimary/10"
+            className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl hover:bg-white/10"
           >
             <div>
               <div className="font-semibold">{connector.name}</div>
-              <div className="text-textPrimary/60 text-sm">{connector.description}</div>
+              <div className="text-white/60 text-sm">{connector.description}</div>
             </div>
-            <button className="px-4 py-2 rounded-xl bg-bgPrimary/10 border border-borderLight/20 text-sm hover:bg-bgPrimary/15">Connect</button>
+            <button className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-sm hover:bg-white/15">Connect</button>
           </div>
         ))}
       </div>
