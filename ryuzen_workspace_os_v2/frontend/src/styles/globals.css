@@ -3,7 +3,7 @@
 body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   background: var(--rz-bg);
-  color: var(--rz-text-primary);
+  color: var(--rz-text);
   margin: 0;
   min-height: 100vh;
   transition: background var(--rz-duration) ease, color var(--rz-duration) ease;
@@ -13,7 +13,7 @@ main {
   background: var(--rz-bg-secondary);
   border-radius: var(--rz-radius);
   backdrop-filter: blur(30px);
-  color: var(--rz-text-primary);
+  color: var(--rz-text);
 }
 
 .quadrants-grid,
@@ -25,7 +25,7 @@ main {
   background: var(--rz-surface);
   border-radius: var(--rz-radius);
   box-shadow: 0 10px 30px var(--rz-shadow);
-  color: var(--rz-text-primary);
+  color: var(--rz-text);
   transition: background var(--rz-duration), color var(--rz-duration), border var(--rz-duration);
 }
 

@@ -18,6 +18,7 @@ export default {
         "brand-soft": "rgb(var(--brand-soft) / <alpha-value>)",
         border: "rgb(var(--border) / <alpha-value>)",
         ring: "rgb(var(--ring) / <alpha-value>)",
+        "rz-text": "var(--rz-text)",
         "zora-night": "var(--zora-night)",
         "zora-deep": "var(--zora-deep)",
         "zora-space": "var(--zora-space)",
