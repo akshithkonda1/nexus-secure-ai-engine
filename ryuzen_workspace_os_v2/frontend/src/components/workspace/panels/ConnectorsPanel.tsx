@@ -19,6 +19,14 @@ const ConnectorsPanel: React.FC = () => {
   const [connectors, setConnectors] = useState<Connector[]>(defaultConnectors);
   const [newConnector, setNewConnector] = useState({ name: "", status: "Ready" as Connector["status"], tags: "" });
 
+  const controlClass =
+    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+  const actionButtonClass =
+    "rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const compactActionButtonClass =
+    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+
   const addConnector = () => {
     if (!newConnector.name.trim()) return;
     setConnectors((current) => [
@@ -72,22 +80,19 @@ const ConnectorsPanel: React.FC = () => {
           <input
             value={newConnector.name}
             onChange={(e) => setNewConnector((prev) => ({ ...prev, name: e.target.value }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
             placeholder="Connector name"
           />
           <input
             value={newConnector.tags}
             onChange={(e) => setNewConnector((prev) => ({ ...prev, tags: e.target.value }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={controlClass}
             placeholder="Tags"
           />
           <select
             value={newConnector.status}
             onChange={(e) => setNewConnector((prev) => ({ ...prev, status: e.target.value as Connector["status"] }))}
-            className="rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+            className={`${controlClass} w-auto`}
           >
             <option value="Ready">Ready</option>
             <option value="Syncing">Syncing</option>
@@ -95,8 +100,7 @@ const ConnectorsPanel: React.FC = () => {
           </select>
           <button
             type="button"
-            className="rounded-full px-4 py-2 text-[var(--rz-text)]"
-            style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+            className={actionButtonClass}
             onClick={addConnector}
           >
             Add connector
@@ -108,27 +112,23 @@ const ConnectorsPanel: React.FC = () => {
         {connectors.map((connector, index) => (
           <div
             key={connector.id}
-            className="rounded-2xl border p-4 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}
+            className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
           >
             <div className="grid gap-3 md:grid-cols-4 md:items-center">
               <input
                 value={connector.name}
                 onChange={(e) => updateConnector(connector.id, { name: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <input
                 value={connector.tags.join(", ")}
                 onChange={(e) => updateConnector(connector.id, { tags: e.target.value })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               />
               <select
                 value={connector.status}
                 onChange={(e) => updateConnector(connector.id, { status: e.target.value as Connector["status"] })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               >
                 <option value="Ready">Ready</option>
                 <option value="Syncing">Syncing</option>
@@ -137,8 +137,7 @@ const ConnectorsPanel: React.FC = () => {
               <select
                 value={connector.syncStatus}
                 onChange={(e) => updateConnector(connector.id, { syncStatus: e.target.value as Connector["syncStatus"] })}
-                className="w-full rounded-xl border px-3 py-2 text-[var(--rz-text)]"
-                style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface-glass)" }}
+                className={controlClass}
               >
                 <option value="Synced">Synced</option>
                 <option value="Pending">Pending</option>
@@ -146,37 +145,34 @@ const ConnectorsPanel: React.FC = () => {
               </select>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {connector.tags.length ? connector.tags.join(", ") : "No tags"}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {connector.status}
               </span>
-              <span className="rounded-full border px-3 py-1 text-xs text-[var(--rz-text)]" style={{ borderColor: "var(--rz-border)" }}>
+              <span className={pillClass}>
                 {connector.syncStatus}
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderConnector(connector.id, -1)}
               >
                 Move up
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => reorderConnector(connector.id, 1)}
               >
                 Move down
               </button>
               <button
                 type="button"
-                className="rounded-full px-3 py-1 text-sm text-[var(--rz-text)]"
-                style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
+                className={compactActionButtonClass}
                 onClick={() => deleteConnector(connector.id)}
               >
                 Delete

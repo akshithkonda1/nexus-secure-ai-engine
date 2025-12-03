@@ -9,14 +9,10 @@ const FlowsPanel: React.FC = () => {
         {["Intake → Review", "Signals → Alerts", "Research → Toron"].map((flow) => (
           <div
             key={flow}
-            className="flex items-center justify-between rounded-2xl border p-4 text-[var(--rz-text)]"
-            style={{ borderColor: "var(--rz-border)", background: "var(--rz-surface)" }}
+            className="flex items-center justify-between rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 text-[var(--rz-text)]"
           >
             <span>{flow}</span>
-            <span
-              className="rounded-full px-3 py-1 text-xs text-[var(--rz-text)]"
-              style={{ border: `1px solid var(--rz-border)`, background: "var(--rz-surface-glass)" }}
-            >
+            <span className="rounded-full border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] px-3 py-1 text-xs text-[var(--rz-text)]">
               Flow Draft
             </span>
           </div>

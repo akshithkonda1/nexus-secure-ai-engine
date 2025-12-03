@@ -1,8 +1,8 @@
 :root {
   --rz-bg: linear-gradient(145deg, #f7f8fa 0%, #eef1f4 100%);
-  --rz-bg-secondary: rgba(255, 255, 255, 0.65);
-  --rz-surface: #ffffff;
-  --rz-surface-glass: rgba(255, 255, 255, 0.45);
+  --rz-bg-secondary: #ffffff;
+  --rz-surface: rgba(255, 255, 255, 0.9);
+  --rz-surface-glass: rgba(255, 255, 255, 0.9);
   --rz-text: #000000;
   --rz-text-primary: var(--rz-text);
   --rz-text-secondary: var(--rz-text);
@@ -16,9 +16,9 @@
 :root[data-theme="dark"],
 .dark {
   --rz-bg: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
-  --rz-bg-secondary: rgba(255, 255, 255, 0.08);
-  --rz-surface: rgba(30, 30, 40, 0.55);
-  --rz-surface-glass: rgba(255, 255, 255, 0.06);
+  --rz-bg-secondary: #0e121b;
+  --rz-surface: rgba(11, 15, 25, 0.9);
+  --rz-surface-glass: rgba(11, 15, 25, 0.9);
   --rz-text: #ffffff;
   --rz-text-primary: var(--rz-text);
   --rz-text-secondary: var(--rz-text);
