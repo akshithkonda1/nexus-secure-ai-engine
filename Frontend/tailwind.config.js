@@ -14,6 +14,7 @@ export default {
 
         glass: "var(--glass-bg)",
         glassHeavy: "var(--glass-bg-heavy)",
+        glassInner: "var(--glass-inner)",
         glassBorder: "var(--glass-border)",
         glassBorderStrong: "var(--glass-border-strong)",
 
