@@ -1,33 +1,57 @@
 import React from "react";
-import type { WorkspaceMode } from "./WorkspaceShell";
+import PagesPanel from "./panels/PagesPanel";
+import NotesPanel from "./panels/NotesPanel";
+import BoardsPanel from "./panels/BoardsPanel";
+import FlowsPanel from "./panels/FlowsPanel";
+import ToronPanel from "./panels/ToronPanel";
+
+export type WorkspaceMode = "pages" | "notes" | "boards" | "flows" | "toron" | null;
 
 interface WorkspaceCanvasProps {
   mode: WorkspaceMode;
-  onOpenTasks: () => void;
-  children?: React.ReactNode;
 }
 
-const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ mode, onOpenTasks, children }) => {
-  return (
-    <div className="relative w-full min-h-[60vh] bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl p-8 overflow-hidden shadow-2xl">
-      {!mode && (
-        <div className="flex flex-col items-center justify-center text-center text-slate-200/80 gap-3 pointer-events-none">
-          <p className="text-lg font-semibold text-white">Workspace Canvas</p>
-          <p className="max-w-xl text-sm">
-            Select a widget or OS tool to open a focused workspace panel. Everything stays contained inside this glass canvas.
-          </p>
-          <div className="pointer-events-auto">
-            <button
-              type="button"
-              onClick={onOpenTasks}
-              className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md text-white hover:bg-white/15 transition"
-            >
-              Open Tasks Panel
-            </button>
+const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ mode }) => {
+  const renderPanel = () => {
+    switch (mode) {
+      case "pages":
+        return <PagesPanel />;
+      case "notes":
+        return <NotesPanel />;
+      case "boards":
+        return <BoardsPanel />;
+      case "flows":
+        return <FlowsPanel />;
+      case "toron":
+        return <ToronPanel />;
+      default:
+        return (
+          <div className="flex flex-col gap-2 text-center items-center justify-center h-full">
+            <p className="text-lg font-semibold" style={{ color: "var(--rz-text-primary)" }}>
+              Workspace Canvas
+            </p>
+            <p className="max-w-xl text-sm" style={{ color: "var(--rz-text-secondary)" }}>
+              Select a workspace view from the OS bar to focus on pages, notes, boards, flows, or Toron analysis. Widgets open as
+              fullscreen modals for clarity.
+            </p>
           </div>
-        </div>
-      )}
-      {children}
+        );
+    }
+  };
+
+  return (
+    <div
+      className="relative w-full min-h-[60vh] p-8 overflow-hidden"
+      style={{
+        background: "var(--rz-bg-secondary)",
+        color: "var(--rz-text-secondary)",
+        borderRadius: "var(--rz-radius)",
+        backdropFilter: "blur(30px)",
+        border: `1px solid var(--rz-border)`,
+        boxShadow: `0 10px 30px var(--rz-shadow)` ,
+      }}
+    >
+      {renderPanel()}
     </div>
   );
 };
