@@ -1,6 +1,29 @@
 :root {
-  --surface: rgba(255, 255, 255, 0.9);
-  --border: rgba(255, 255, 255, 0.5);
-  --accent: #5b8def;
-  --text: #0c1c3f;
+  --rz-bg: linear-gradient(145deg, #f7f8fa 0%, #eef1f4 100%);
+  --rz-bg-secondary: rgba(255, 255, 255, 0.65);
+  --rz-surface: #ffffff;
+  --rz-surface-glass: rgba(255, 255, 255, 0.45);
+  --rz-text-primary: #111;
+  --rz-text-secondary: #555;
+  --rz-border: rgba(0, 0, 0, 0.08);
+  --rz-accent: #5b8def;
+  --rz-shadow: rgba(6, 23, 52, 0.18);
+  --rz-radius: 22px;
+  --rz-duration: 180ms;
+}
+
+:root[data-theme="dark"] {
+  --rz-bg: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
+  --rz-bg-secondary: rgba(255, 255, 255, 0.08);
+  --rz-surface: rgba(30, 30, 40, 0.55);
+  --rz-surface-glass: rgba(255, 255, 255, 0.06);
+  --rz-text-primary: #f2f5ff;
+  --rz-text-secondary: #b4b7c5;
+  --rz-border: rgba(255, 255, 255, 0.12);
+  --rz-accent: #6ba8ff;
+  --rz-shadow: rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
 }

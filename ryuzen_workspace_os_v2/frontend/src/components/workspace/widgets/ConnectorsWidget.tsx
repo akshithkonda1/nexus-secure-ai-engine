@@ -10,12 +10,25 @@ const ConnectorsWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-3 rounded-2xl border border-white/10 backdrop-blur-xl transition hover:bg-white/10 text-left min-w-[160px] ${
-        active ? "bg-white/15" : "bg-white/5"
-      }`}
+      className="w-full text-left"
+      style={{
+        background: "var(--rz-surface)",
+        border: `1px solid var(--rz-border)`,
+        color: "var(--rz-text-primary)",
+        backdropFilter: "blur(20px)",
+        borderRadius: "var(--rz-radius)",
+        boxShadow: `0 8px 24px var(--rz-shadow)` ,
+        transition: `background var(--rz-duration), color var(--rz-duration), border var(--rz-duration)` ,
+        padding: "16px",
+        ...(active ? { background: "var(--rz-surface-glass)" } : {}),
+      }}
     >
-      <p className="text-sm text-white/80">Connectors</p>
-      <p className="text-lg font-semibold text-white">Integrate</p>
+      <p className="text-sm" style={{ color: "var(--rz-text-secondary)" }}>
+        Connectors
+      </p>
+      <p className="text-lg font-semibold" style={{ color: "var(--rz-text-primary)" }}>
+        Integrate
+      </p>
     </button>
   );
 };

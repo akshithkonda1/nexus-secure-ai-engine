@@ -2,9 +2,18 @@
 
 body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at 10% 20%, #f4f7ff, #e8edf8 35%, #f8fbff);
-  color: var(--text);
+  background: var(--rz-bg);
+  color: var(--rz-text-primary);
   margin: 0;
+  min-height: 100vh;
+  transition: background var(--rz-duration) ease, color var(--rz-duration) ease;
+}
+
+main {
+  background: var(--rz-bg-secondary);
+  border-radius: var(--rz-radius);
+  backdrop-filter: blur(30px);
+  color: var(--rz-text-primary);
 }
 
 .quadrants-grid,
@@ -12,8 +21,14 @@ body {
 .dynamic-workspace,
 .widget-card,
 .toron-insights {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--rz-border);
+  background: var(--rz-surface);
+  border-radius: var(--rz-radius);
+  box-shadow: 0 10px 30px var(--rz-shadow);
+  color: var(--rz-text-primary);
+  transition: background var(--rz-duration), color var(--rz-duration), border var(--rz-duration);
+}
+
+a {
+  color: inherit;
 }
