@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import { WorkspaceList } from "@/types/workspace";
-import { useTheme } from "@/theme/ThemeProvider";
 
 interface ListsPanelProps {
   lists: WorkspaceList[];
@@ -11,8 +10,11 @@ interface ListsPanelProps {
 
 const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
   const [newTitle, setNewTitle] = useState("");
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+
+  const panelShell =
+    "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
+  const textSecondary = "text-textSecondary";
+  const textMuted = "text-textMuted";
 
   const addList = () => {
     const title = newTitle.trim();
@@ -22,15 +24,10 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
     setNewTitle("");
   };
 
-  const containerBorder = isDark ? "border-borderLight/10" : "border-borderLight/5";
-  const cardSurface = isDark ? "bg-bgElevated" : "bg-bgPrimary";
-  const cardBorder = isDark ? "border-borderLight/10" : "border-borderLight/5";
-  const textSecondary = isDark ? "text-textMuted" : "text-textSecondary";
-
   return (
-    <div className={`flex h-full flex-col gap-4 rounded-3xl border ${containerBorder} bg-bgPrimary dark:bg-bgElevated p-6 shadow-xl`}>
+    <div className={`flex h-full flex-col gap-4 ${panelShell}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <ClipboardList className="h-4 w-4" /> Lists Control Center
         </div>
         <div className="flex items-center gap-2">
@@ -39,18 +36,10 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addList()}
             placeholder="New list"
-            className={`rounded-full border px-4 py-2 text-sm ${
-              isDark
-                ? "border-borderLight/10 bg-bgElevated text-textPrimary placeholder:text-textMuted"
-                : "border-borderLight/5 bg-bgPrimary text-textPrimary placeholder:text-textSecondary"
-            } focus:outline-none`}
+            className="rounded-full border border-glassBorder bg-glass px-4 py-2 text-sm text-textPrimary placeholder:text-textMuted focus:border-glassBorderStrong focus:outline-none"
           />
           <button
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              isDark
-                ? "bg-emerald-600 text-textPrimary hover:bg-emerald-500"
-                : "bg-emerald-300 text-textPrimary hover:bg-emerald-400"
-            }`}
+            className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-textPrimary transition hover:bg-emerald-400"
             onClick={addList}
           >
             <Plus className="h-4 w-4" />
@@ -58,9 +47,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
           {close && (
             <button
               onClick={close}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
-              }`}
+              className="rounded-full border border-glassBorder px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
             >
               Close
             </button>
@@ -69,8 +56,8 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {lists.map((list) => (
-          <div key={list.id} className={`rounded-2xl border ${cardBorder} ${cardSurface} p-4 shadow-sm`}>
-            <div className="flex items-center justify-between text-sm font-semibold text-textPrimary dark:text-textMuted">
+          <div key={list.id} className={`${panelShell} p-4 shadow-none`}>
+            <div className="flex items-center justify-between text-sm font-semibold text-textPrimary">
               {list.title}
               <span className={`text-xs ${textSecondary}`}>{list.items.length} items</span>
             </div>
@@ -78,15 +65,15 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
               {list.items.map((item) => (
                 <div
                   key={item.id}
-                  className={`flex items-center justify-between rounded-xl border px-3 py-2 ${
-                    isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
+                  className={`flex items-center justify-between rounded-xl border border-glassBorder bg-glass px-3 py-2 text-textPrimary ${
+                    item.done ? "line-through decoration-textMuted" : ""
                   }`}
                 >
-                  <span className={item.done ? "line-through" : ""}>{item.text}</span>
+                  <span>{item.text}</span>
                   {item.done && <span className="text-[11px] uppercase text-emerald-500">Done</span>}
                 </div>
               ))}
-              {!list.items.length && <p className={`text-xs ${textSecondary}`}>No items yet. Add from the list toolbar.</p>}
+              {!list.items.length && <p className={`text-xs ${textMuted}`}>No items yet. Add from the list toolbar.</p>}
             </div>
           </div>
         ))}
