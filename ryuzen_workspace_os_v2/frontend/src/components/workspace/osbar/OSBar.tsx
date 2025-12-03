@@ -14,7 +14,7 @@ const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
   const buttonStyle = (active: boolean) => ({
     border: `1px solid var(--rz-border)`,
     background: active ? "var(--rz-surface-glass)" : "var(--rz-surface)",
-    color: "var(--rz-text-primary)",
+    color: "var(--rz-text)",
     transition: `all var(--rz-duration) ease`,
   });
 

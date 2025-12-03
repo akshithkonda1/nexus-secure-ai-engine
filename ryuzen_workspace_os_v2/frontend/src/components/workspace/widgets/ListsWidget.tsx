@@ -14,7 +14,7 @@ const ListsWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
       style={{
         background: "var(--rz-surface)",
         border: `1px solid var(--rz-border)`,
-        color: "var(--rz-text-primary)",
+        color: "var(--rz-text)",
         backdropFilter: "blur(20px)",
         borderRadius: "var(--rz-radius)",
         boxShadow: `0 8px 24px var(--rz-shadow)` ,
@@ -23,10 +23,10 @@ const ListsWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
         ...(active ? { background: "var(--rz-surface-glass)" } : {}),
       }}
     >
-      <p className="text-sm" style={{ color: "var(--rz-text-secondary)" }}>
+      <p className="text-sm text-[var(--rz-text)]">
         Lists
       </p>
-      <p className="text-lg font-semibold" style={{ color: "var(--rz-text-primary)" }}>
+      <p className="text-lg font-semibold text-[var(--rz-text)]">
         Organize
       </p>
     </button>

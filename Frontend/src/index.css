@@ -3,6 +3,14 @@
 @import "./theme/themes.css";
 @import "./theme/motion.css";
 
+:root {
+  --rz-text: #000000;
+}
+
+.dark {
+  --rz-text: #ffffff;
+}
+
 /* Ryuzen Theme Tokens */
 
 /* LIGHT MODE */

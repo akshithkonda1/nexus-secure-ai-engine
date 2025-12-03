@@ -20,47 +20,48 @@ const WidgetModalFrame: React.FC<WidgetModalFrameProps> = ({ title, children }) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
         style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(12px)" }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
-          transition={{ duration: 0.2 }}
-          className="w-11/12 h-[90vh] max-w-5xl relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.98, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 12 }}
+          transition={{ duration: 0.24 }}
+          className="relative flex h-[calc(100vh-32px)] w-[calc(100vw-32px)] flex-col overflow-hidden"
           style={{
             background: "var(--rz-surface)",
             border: `1px solid var(--rz-border)` ,
             borderRadius: "var(--rz-radius)",
             boxShadow: `0 14px 40px var(--rz-shadow)` ,
-            color: "var(--rz-text-primary)",
+            color: "var(--rz-text)",
           }}
         >
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid var(--rz-border)` }}>
-            <div>
-              <p className="text-sm" style={{ color: "var(--rz-text-secondary)" }}>
-                Ryuzen Widget
-              </p>
-              <h2 className="text-xl font-semibold" style={{ color: "var(--rz-text-primary)" }}>
-                {title}
-              </h2>
+          <div
+            className="flex items-center justify-between px-6 py-4"
+            style={{
+              borderBottom: `1px solid var(--rz-border)` ,
+              background: "var(--rz-surface-glass)",
+            }}
+          >
+            <div className="space-y-1 text-[var(--rz-text)]">
+              <p className="text-sm text-[var(--rz-text)]">Ryuzen Widget</p>
+              <h2 className="text-xl font-semibold text-[var(--rz-text)]">{title}</h2>
             </div>
             <button
               type="button"
               onClick={closeWidget}
-              className="px-3 py-1.5 rounded-full text-sm"
+              className="rounded-full px-4 py-2 text-sm text-[var(--rz-text)]"
               style={{
                 border: `1px solid var(--rz-border)` ,
                 background: "var(--rz-surface-glass)",
-                color: "var(--rz-text-primary)",
                 transition: `all var(--rz-duration) ease`,
               }}
             >
               Close
             </button>
           </div>
-          <div className="h-full overflow-auto px-5 pb-5">{children}</div>
+          <div className="h-full overflow-auto px-6 pb-6 text-[var(--rz-text)]">{children}</div>
         </motion.div>
       </motion.div>
     </AnimatePresence>,

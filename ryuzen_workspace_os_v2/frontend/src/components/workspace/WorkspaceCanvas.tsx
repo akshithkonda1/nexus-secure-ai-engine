@@ -24,18 +24,18 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ mode }) => {
         return <FlowsPanel />;
       case "toron":
         return <ToronPanel />;
-      default:
-        return (
-          <div className="flex flex-col gap-2 text-center items-center justify-center h-full">
-            <p className="text-lg font-semibold" style={{ color: "var(--rz-text-primary)" }}>
-              Workspace Canvas
-            </p>
-            <p className="max-w-xl text-sm" style={{ color: "var(--rz-text-secondary)" }}>
-              Select a workspace view from the OS bar to focus on pages, notes, boards, flows, or Toron analysis. Widgets open as
-              fullscreen modals for clarity.
-            </p>
-          </div>
-        );
+          default:
+            return (
+              <div className="flex flex-col gap-2 text-center items-center justify-center h-full">
+                <p className="text-lg font-semibold text-[var(--rz-text)]">
+                  Workspace Canvas
+                </p>
+                <p className="max-w-xl text-sm text-[var(--rz-text)]">
+                  Select a workspace view from the OS bar to focus on pages, notes, boards, flows, or Toron analysis. Widgets open as
+                  fullscreen modals for clarity.
+                </p>
+              </div>
+            );
     }
   };
 
@@ -44,7 +44,7 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ mode }) => {
       className="relative w-full min-h-[60vh] p-8 overflow-hidden"
       style={{
         background: "var(--rz-bg-secondary)",
-        color: "var(--rz-text-secondary)",
+        color: "var(--rz-text)",
         borderRadius: "var(--rz-radius)",
         backdropFilter: "blur(30px)",
         border: `1px solid var(--rz-border)`,

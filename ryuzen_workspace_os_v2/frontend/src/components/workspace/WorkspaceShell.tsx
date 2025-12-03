@@ -27,15 +27,15 @@ const WorkspaceContent: React.FC = () => {
   return (
     <div
       className="min-h-screen px-6 py-8"
-      style={{ background: "var(--rz-bg)", color: "var(--rz-text-primary)" }}
+      style={{ background: "var(--rz-bg)", color: "var(--rz-text)" }}
     >
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm" style={{ color: "var(--rz-text-secondary)" }}>
+            <p className="text-sm text-[var(--rz-text)]">
               Ryuzen Workspace OS
             </p>
-            <h1 className="text-2xl font-bold" style={{ color: "var(--rz-text-primary)" }}>
+            <h1 className="text-2xl font-bold text-[var(--rz-text)]">
               Control Center
             </h1>
           </div>
@@ -46,7 +46,7 @@ const WorkspaceContent: React.FC = () => {
             style={{
               border: `1px solid var(--rz-border)`,
               background: "var(--rz-surface-glass)",
-              color: "var(--rz-text-primary)",
+              color: "var(--rz-text)",
               transition: `all var(--rz-duration) ease`,
             }}
           >
