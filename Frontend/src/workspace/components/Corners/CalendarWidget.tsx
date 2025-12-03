@@ -13,11 +13,14 @@ export const CalendarWidget: React.FC = () => {
   const { entries, horizon, setHorizon } = useCalendarStore();
   const { mode } = useModeStore();
 
+  const glassPanel =
+    "relative bg-glass backdrop-blur-3xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.015] before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none";
+
   return (
-    <div className="fade-in rounded-2xl border border-borderStrong bg-bgElevated/70 p-4 shadow-lg">
+    <div className={`${glassPanel} fade-in`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Calendar</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-textSecondary">Calendar</p>
           <p className="text-sm text-textMuted">Availability + time horizons</p>
         </div>
         <div className="flex gap-1">
@@ -37,15 +40,15 @@ export const CalendarWidget: React.FC = () => {
       <div className="mt-3 space-y-2">
         {entries.length === 0 && <p className="text-sm text-textSecondary">No calendar entries yet.</p>}
         {entries.map((entry) => (
-          <div key={entry.id} className="rounded-lg bg-bgElevated/60 p-3 text-sm text-textMuted">
-            <div className="font-semibold">{entry.title}</div>
+          <div key={entry.id} className={`${glassPanel} text-sm text-textMuted`}>
+            <div className="font-semibold text-textPrimary">{entry.title}</div>
             <p className="text-xs text-textMuted">{new Date(entry.date).toDateString()}</p>
           </div>
         ))}
       </div>
       {mode === "advanced" && (
-        <div className="mt-3 rounded-xl bg-bgElevated/50 p-3 text-xs text-textMuted">
-          <p className="font-semibold text-textMuted">Availability</p>
+        <div className={`${glassPanel} mt-3 text-xs text-textMuted`}>
+          <p className="font-semibold text-textPrimary">Availability</p>
           <p className="mt-1">You have 2 free hours Friday.</p>
         </div>
       )}

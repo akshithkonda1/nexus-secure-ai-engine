@@ -1,12 +1,27 @@
-import { PropsWithChildren, useMemo } from "react";
+import { PropsWithChildren, useEffect, useMemo } from "react";
 
 import { RyuzenThemeProvider, useRyuzenTheme } from "./RyuzenThemeProvider";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
+function ThemeAttributeSync({ children }: PropsWithChildren) {
+  const { resolvedTheme } = useRyuzenTheme();
+
+  useEffect(() => {
+    const nextTheme = (resolvedTheme ?? "dark") as ResolvedTheme;
+    document.documentElement.setAttribute("data-theme", nextTheme);
+  }, [resolvedTheme]);
+
+  return <>{children}</>;
+}
+
 export function ThemeProvider({ children }: PropsWithChildren) {
-  return <RyuzenThemeProvider>{children}</RyuzenThemeProvider>;
+  return (
+    <RyuzenThemeProvider>
+      <ThemeAttributeSync>{children}</ThemeAttributeSync>
+    </RyuzenThemeProvider>
+  );
 }
 
 export function useThemeContext() {

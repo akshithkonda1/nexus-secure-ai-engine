@@ -2,28 +2,26 @@
 @import "tailwindcss";
 
 /* ----------------------------- */
-/* RYŪZEN GLASS DESIGN SYSTEM   */
+/* RYŪZEN FUTURE GLASS SYSTEM v2 */
 /* ----------------------------- */
 
-/* LIGHT MODE TOKENS */
+/* LIGHT MODE */
 :root {
   color-scheme: light;
-  /* text tokens */
   --text-primary: #0A0A0A;
-  --text-secondary: #3D3D3D;
-  --text-muted: #7A7A7A;
+  --text-secondary: #2F2F2F;
+  --text-muted: #707070;
 
-  /* glass surfaces */
-  --glass-bg: rgba(255, 255, 255, 0.82);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.92);
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.97);
 
-  /* borders */
-  --glass-border: rgba(20, 20, 20, 0.16);
-  --glass-border-strong: rgba(20, 20, 20, 0.22);
+  --glass-inner: rgba(255, 255, 255, 0.45);
 
-  /* shadows */
-  --glass-shadow: 0 6px 24px rgba(0,0,0,0.06);
-  --glass-shadow-strong: 0 8px 32px rgba(0,0,0,0.10);
+  --glass-border: rgba(0, 0, 0, 0.15);
+  --glass-border-strong: rgba(0, 0, 0, 0.25);
+
+  --glass-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  --glass-shadow-strong: 0 10px 40px rgba(0,0,0,0.18);
 
   --bg: 249 250 252;
   --surface: 255 255 255;
@@ -50,22 +48,23 @@
   --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 1) 0%, rgba(56, 189, 248, 0.92) 45%, rgba(129, 140, 248, 0.85) 100%);
 }
 
-/* DARK MODE TOKENS */
-:root[data-theme="dark"],
+/* DARK MODE */
 [data-theme="dark"] {
   color-scheme: dark;
-  --text-primary: #FFFFFF;
-  --text-secondary: #E9E9E9;
-  --text-muted: #A0A0A0;
+  --text-primary: #FBFBFB;
+  --text-secondary: #E0E0E0;
+  --text-muted: #9A9A9A;
 
-  --glass-bg: rgba(22, 22, 28, 0.55);
-  --glass-bg-heavy: rgba(22, 22, 28, 0.70);
+  --glass-bg: rgba(32, 32, 40, 0.65);
+  --glass-bg-heavy: rgba(32, 32, 40, 0.78);
 
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-strong: rgba(255, 255, 255, 0.14);
+  --glass-inner: rgba(255, 255, 255, 0.08);
 
-  --glass-shadow: 0 6px 24px rgba(0,0,0,0.45);
-  --glass-shadow-strong: 0 8px 32px rgba(0,0,0,0.65);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-strong: rgba(255, 255, 255, 0.18);
+
+  --glass-shadow: 0 8px 40px rgba(0,0,0,0.55);
+  --glass-shadow-strong: 0 10px 55px rgba(0,0,0,0.75);
 
   --bg: 15 23 42;
   --surface: 15 23 42;

@@ -2,8 +2,10 @@ import React from "react";
 import { ToronCard as ToronCardType } from "../../state/toronStore";
 
 export const ToronCard: React.FC<{ card: ToronCardType }> = ({ card }) => (
-  <div className="rounded-xl border border-borderStrong bg-bgElevated p-4 shadow hover:shadow-lg transition">
-    <div className="text-sm font-semibold text-textMuted">{card.title}</div>
+  <div
+    className="relative bg-glass backdrop-blur-3xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.015] before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none"
+  >
+    <div className="text-sm font-semibold text-textPrimary">{card.title}</div>
     <p className="mt-2 text-sm text-textMuted">{card.reason}</p>
     <div className="mt-4 flex gap-2 text-sm">
       <button
