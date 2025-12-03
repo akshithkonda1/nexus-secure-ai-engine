@@ -2,41 +2,44 @@
 @import "tailwindcss";
 
 /* ----------------------------- */
-/* RYŪZEN FUTURE GLASS SYSTEM v2.3 */
-/* (More opaque + stronger identity) */
+/* RYŪZEN DEEP-GLASS TILE v3     */
+/* (Fully opaque, sci-fi density) */
 /* ----------------------------- */
 
-/* LIGHT MODE */
 :root {
-  color-scheme: light;
-  --text-primary: #0A0A0A;
-  --text-secondary: #262626;
-  --text-muted: #686868;
+  --tile-bg: rgba(20, 20, 26, 0.96); /* nearly opaque */
+  --tile-bg-strong: rgba(20, 20, 26, 0.985);
 
-  /* HIGH-OPACITY GLASS */
-  --glass-bg: rgba(255, 255, 255, 0.95);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.985);
+  --tile-gradient: linear-gradient(
+    135deg,
+    rgba(70, 30, 140, 0.35),
+    rgba(0, 180, 150, 0.30),
+    rgba(25, 25, 32, 0.40)
+  );
 
-  /* Inner glow — more subtle now */
-  --glass-inner: rgba(255, 255, 255, 0.25);
+  --tile-border: rgba(255, 255, 255, 0.08);
+  --tile-border-strong: rgba(255, 255, 255, 0.14);
 
-  /* Borders */
-  --glass-border: rgba(0, 0, 0, 0.20);
-  --glass-border-strong: rgba(0, 0, 0, 0.30);
+  --tile-inner: rgba(255, 255, 255, 0.04);
 
-  /* Stronger shadows for physicality */
-  --glass-shadow: 0 12px 32px rgba(0,0,0,0.12);
-  --glass-shadow-strong: 0 18px 48px rgba(0,0,0,0.18);
+  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --tile-shadow-strong: 0 28px 65px rgba(0, 0, 0, 0.75);
 
-  --bg: 249 250 252;
-  --surface: 255 255 255;
-  --panel: 250 251 253;
-  --text: 15 23 42;
-  --subtle: 100 116 139;
-  --border: 226 232 240;
+  --text-primary: #FFFFFF;
+  --text-secondary: #D8D8D8;
+  --text-muted: #909090;
+
+  color-scheme: dark;
+
+  --bg: 16 16 22;
+  --surface: 20 20 26;
+  --panel: 24 24 32;
+  --text: 255 255 255;
+  --subtle: 168 168 186;
+  --border: 60 60 72;
 
   --brand: 0 133 255;
-  --brand-soft: 56 189 248;
+  --brand-soft: 96 165 250;
   --on-accent: 255 255 255;
 
   --ring: 0 133 255;
@@ -44,55 +47,109 @@
   --radius-button: 18px;
   --radius-input: 20px;
 
-  --shadow-soft: 0 16px 44px rgba(15, 23, 42, 0.14);
-  --shadow-lift: 0 18px 40px rgba(15, 23, 42, 0.16);
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --shadow-lift: 0 22px 70px rgba(0, 0, 0, 0.48);
 
   --glow-blue: 0 133 255;
   --glow-purple: 139 92 246;
   --glass-alpha: .82;
-  --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 1) 0%, rgba(56, 189, 248, 0.92) 45%, rgba(129, 140, 248, 0.85) 100%);
+  --aurora-gradient: linear-gradient(135deg, rgba(70, 30, 140, 0.55), rgba(0, 180, 150, 0.42), rgba(25, 25, 32, 0.85));
+
+  --bg-primary: #0f1016;
+  --bg-secondary: #111423;
+  --bg-elevated: #151828;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Legacy glass tokens mapped to tile values for backward compatibility */
+  --glass-bg: var(--tile-bg);
+  --glass-bg-heavy: var(--tile-bg-strong);
+  --glass-inner: var(--tile-inner);
+  --glass-border: var(--tile-border);
+  --glass-border-strong: var(--tile-border-strong);
+  --glass-shadow: var(--tile-shadow);
+  --glass-shadow-strong: var(--tile-shadow-strong);
 }
 
-/* DARK MODE */
+[data-theme="light"] {
+  --tile-bg: rgba(255, 255, 255, 0.95);
+  --tile-bg-strong: rgba(255, 255, 255, 0.98);
+
+  --tile-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.70),
+    rgba(240, 240, 255, 0.65),
+    rgba(245, 245, 255, 0.55)
+  );
+
+  --tile-border: rgba(0, 0, 0, 0.12);
+  --tile-border-strong: rgba(0, 0, 0, 0.18);
+
+  --tile-inner: rgba(255, 255, 255, 0.25);
+
+  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  --tile-shadow-strong: 0 24px 55px rgba(0, 0, 0, 0.25);
+
+  --text-primary: #0A0A0A;
+  --text-secondary: #2A2A2A;
+  --text-muted: #6A6A6A;
+
+  color-scheme: light;
+
+  --bg: 249 250 252;
+  --surface: 255 255 255;
+  --panel: 245 245 250;
+  --text: 15 23 42;
+  --subtle: 100 116 139;
+  --border: 226 232 240;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
+  --bg-elevated: #ffffff;
+  --border-light: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.18);
+
+  --shadow-soft: 0 16px 44px rgba(15, 23, 42, 0.14);
+  --shadow-lift: 0 18px 40px rgba(15, 23, 42, 0.18);
+
+  --aurora-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.70), rgba(240, 240, 255, 0.65), rgba(245, 245, 255, 0.80));
+}
+
 [data-theme="dark"] {
   color-scheme: dark;
-  --text-primary: #FDFDFD;
-  --text-secondary: #DADADA;
+  --tile-bg: rgba(20, 20, 26, 0.96);
+  --tile-bg-strong: rgba(20, 20, 26, 0.985);
+  --tile-gradient: linear-gradient(
+    135deg,
+    rgba(70, 30, 140, 0.35),
+    rgba(0, 180, 150, 0.30),
+    rgba(25, 25, 32, 0.40)
+  );
+  --tile-border: rgba(255, 255, 255, 0.08);
+  --tile-border-strong: rgba(255, 255, 255, 0.14);
+  --tile-inner: rgba(255, 255, 255, 0.04);
+  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --tile-shadow-strong: 0 28px 65px rgba(0, 0, 0, 0.75);
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #D8D8D8;
   --text-muted: #909090;
 
-  /* Dark-mode glass needs depth — not translucency */
-  --glass-bg: rgba(28, 28, 34, 0.80);
-  --glass-bg-heavy: rgba(28, 28, 34, 0.90);
+  --bg: 16 16 22;
+  --surface: 20 20 26;
+  --panel: 24 24 32;
+  --text: 255 255 255;
+  --subtle: 168 168 186;
+  --border: 60 60 72;
 
-  --glass-inner: rgba(255, 255, 255, 0.06);
+  --bg-primary: #0f1016;
+  --bg-secondary: #111423;
+  --bg-elevated: #151828;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
 
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-border-strong: rgba(255, 255, 255, 0.22);
-
-  /* Deep sci-fi shadows */
-  --glass-shadow: 0 12px 48px rgba(0,0,0,0.55);
-  --glass-shadow-strong: 0 20px 65px rgba(0,0,0,0.75);
-
-  --bg: 15 23 42;
-  --surface: 15 23 42;
-  --panel: 30 41 59;
-  --text: 248 250 252;
-  --subtle: 148 163 184;
-  --border: 51 65 85;
-
-  --brand: 0 133 255;
-  --brand-soft: 96 165 250;
-  --on-accent: 255 255 255;
-
-  --ring: 0 133 255;
-
-  --shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.45);
-  --shadow-lift: 0 22px 60px rgba(0, 0, 0, 0.5);
-
-  --glow-blue: 0 133 255;
-  --glow-purple: 139 92 246;
-  --glass-alpha: .58;
-  --aurora-gradient: linear-gradient(135deg, rgba(0, 133, 255, 0.92) 0%, rgba(96, 165, 250, 0.85) 45%, rgba(56, 189, 248, 0.78)100%);
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --shadow-lift: 0 22px 70px rgba(0, 0, 0, 0.48);
 }
 
 /* Base */
