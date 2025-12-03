@@ -8,9 +8,9 @@ export const ToronModal: React.FC = () => {
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bgElevated/70" onClick={closeToron}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={closeToron}>
       <div
-        className="fade-in max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-bgElevated/90 p-6 shadow-2xl ring-1 ring-neutral-800"
+        className="fade-in relative max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-tileBorder bg-tile bg-tileGradient p-6 text-textSecondary shadow-tile before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="flex items-center justify-between">
@@ -18,7 +18,7 @@ export const ToronModal: React.FC = () => {
             <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Toron</p>
             <h2 className="text-xl font-semibold text-textMuted">Reasoning-backed insights</h2>
           </div>
-          <button className="text-sm text-textMuted hover:text-textMuted" onClick={closeToron}>
+          <button className="text-sm text-textSecondary hover:text-textPrimary" onClick={closeToron}>
             Close
           </button>
         </header>

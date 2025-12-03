@@ -9,6 +9,12 @@ export default {
   theme: {
     extend: {
       colors: {
+        tile: "var(--tile-bg)",
+        tileStrong: "var(--tile-bg-strong)",
+        tileInner: "var(--tile-inner)",
+        tileBorder: "var(--tile-border)",
+        tileBorderStrong: "var(--tile-border-strong)",
+
         textPrimary: "var(--text-primary)",
         textSecondary: "var(--text-secondary)",
         textMuted: "var(--text-muted)",
@@ -41,9 +47,12 @@ export default {
         "zora-border": "var(--zora-border)",
       },
       backgroundImage: {
+        tileGradient: "var(--tile-gradient)",
         "zora-aurora": "var(--zora-gradient)",
       },
       boxShadow: {
+        tile: "var(--tile-shadow)",
+        tileStrong: "var(--tile-shadow-strong)",
         glass: "var(--glass-shadow)",
         glassStrong: "var(--glass-shadow-strong)",
         soft: "var(--shadow-soft)",

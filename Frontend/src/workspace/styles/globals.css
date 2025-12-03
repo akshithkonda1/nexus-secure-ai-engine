@@ -4,6 +4,46 @@
 
 :root {
   color-scheme: dark;
+
+  --tile-bg: rgba(20, 20, 26, 0.96);
+  --tile-bg-strong: rgba(20, 20, 26, 0.985);
+  --tile-gradient: linear-gradient(
+    135deg,
+    rgba(70, 30, 140, 0.35),
+    rgba(0, 180, 150, 0.3),
+    rgba(25, 25, 32, 0.4)
+  );
+  --tile-border: rgba(255, 255, 255, 0.08);
+  --tile-border-strong: rgba(255, 255, 255, 0.14);
+  --tile-inner: rgba(255, 255, 255, 0.04);
+  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --tile-shadow-strong: 0 28px 65px rgba(0, 0, 0, 0.75);
+
+  --text-primary: #ffffff;
+  --text-secondary: #d8d8d8;
+  --text-muted: #909090;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --tile-bg: rgba(255, 255, 255, 0.95);
+  --tile-bg-strong: rgba(255, 255, 255, 0.98);
+  --tile-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7),
+    rgba(240, 240, 255, 0.65),
+    rgba(245, 245, 255, 0.55)
+  );
+  --tile-border: rgba(0, 0, 0, 0.12);
+  --tile-border-strong: rgba(0, 0, 0, 0.18);
+  --tile-inner: rgba(255, 255, 255, 0.25);
+  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  --tile-shadow-strong: 0 24px 55px rgba(0, 0, 0, 0.25);
+
+  --text-primary: #0a0a0a;
+  --text-secondary: #2a2a2a;
+  --text-muted: #6a6a6a;
 }
 
 body {

@@ -50,14 +50,14 @@ export const PageSurface: React.FC<PageSurfaceProps> = ({ onFirstKeystroke, show
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-neutral-900 via-neutral-950 to-black p-6 shadow-2xl ring-1 ring-neutral-800">
+    <section className="relative overflow-hidden rounded-3xl bg-tile bg-tileGradient border border-tileBorder px-6 py-5 shadow-tile before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:shadow-tileStrong hover:border-tileBorderStrong">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-textMuted">Pages</p>
           <h1 className="mt-1 text-2xl font-semibold text-textMuted">Root interaction surface</h1>
         </div>
         <button
-          className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-textPrimary shadow-lg transition hover:scale-[1.02] hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-textPrimary shadow-tile transition hover:scale-[1.02] hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400"
           onClick={onAnalyze}
         >
           Analyze with Toron
