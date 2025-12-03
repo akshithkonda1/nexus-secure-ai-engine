@@ -32,20 +32,20 @@ const ToronStreamingBlock: React.FC<Props> = ({
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">Toron reasoning stream</p>
-          <p className="text-[11px] text-[color-mix(in_srgb,var(--text-muted)_80%,transparent)]">
-            Toron is debating models, checking sources, and settling on the most
-            best answer it can provide.
+        <p className="text-xs font-semibold">Toron reasoning stream</p>
+          <p className="text-[11px] text-textMuted/80">
+          Toron is debating models, checking sources, and settling on the most
+          best answer it can provide.
           </p>
         </div>
-        <div className="text-right text-[11px] text-[color-mix(in_srgb,var(--text-muted)_80%,transparent)]">
+        <div className="text-right text-[11px] text-textMuted/80">
           <span className="font-medium">
             {isStreaming ? "In progress" : "Done"}
           </span>
           <span className="ml-1 text-textMuted">· {progressPercent}%</span>
         </div>
       </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--bg-elevated)_60%,transparent)]">
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bgElevated/60">
         <div
           className="h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 transition-all duration-200"
           style={{ width: `${progressPercent}%` }}
