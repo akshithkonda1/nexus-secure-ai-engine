@@ -9,6 +9,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        textPrimary: "var(--text-primary)",
+        textSecondary: "var(--text-secondary)",
+        textMuted: "var(--text-muted)",
+        bgPrimary: "var(--bg-primary)",
+        bgSecondary: "var(--bg-secondary)",
+        bgElevated: "var(--bg-elevated)",
+        borderLight: "var(--border-light)",
+        borderStrong: "var(--border-strong)",
         background: "rgb(var(--bg) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
         panel: "rgb(var(--panel) / <alpha-value>)",

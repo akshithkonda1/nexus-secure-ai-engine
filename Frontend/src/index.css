@@ -4,6 +4,32 @@
 @import "./theme/motion.css";
 
 :root {
+  --text-primary: #0a0a0a;
+  --text-secondary: #3b3b3b;
+  --text-muted: #5a5a5a;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
+  --bg-elevated: #ffffff;
+
+  --border-light: #e5e5e5;
+  --border-strong: #c8c8c8;
+}
+
+[data-theme="dark"] {
+  --text-primary: #ffffff;
+  --text-secondary: #dddddd;
+  --text-muted: #a3a3a3;
+
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #11121a;
+  --bg-elevated: #1a1b24;
+
+  --border-light: #20202a;
+  --border-strong: #3a3a42;
+}
+
+:root {
   --rz-text: #000000;
 }
 

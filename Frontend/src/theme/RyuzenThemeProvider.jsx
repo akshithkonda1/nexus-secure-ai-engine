@@ -27,6 +27,7 @@ export function RyuzenThemeProvider({ children }) {
     localStorage.setItem("ryuzen-theme", theme);
 
     root.dataset.theme = targetTheme;
+    root.setAttribute("data-theme", targetTheme);
     if (targetTheme === "dark") {
       root.classList.add("dark");
       root.classList.remove("light");
