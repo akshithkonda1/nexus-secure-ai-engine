@@ -15,7 +15,7 @@ export class ErrorBoundary extends React.Component<
       <main className="min-h-screen grid place-items-center p-8">
         <div className="panel panel--glassy panel--hover p-8 max-w-xl text-center space-y-4">
           <h1 className="text-2xl font-semibold">We hit a snag</h1>
-          <p className="mt-1 text-xs text-slate-300">
+          <p className="mt-1 text-xs text-textMuted">
             Ryuzen ran into an issue while loading this view. Try going back to Overview or
             refreshing the page.
           </p>

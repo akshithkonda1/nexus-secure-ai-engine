@@ -772,7 +772,7 @@ export function ToronChatShell() {
   return (
     <section className="flex h-full w-full flex-col">
       <div className="flex h-full w-full flex-col px-4 py-4 md:px-8 md:py-6">
-        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/10 px-4 py-4 shadow-xl backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/40 md:px-6 md:py-6">
+        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-borderLight/70 bg-bgPrimary/10 px-4 py-4 shadow-xl backdrop-blur-2xl dark:border-borderStrong/70 dark:bg-bgElevated/40 md:px-6 md:py-6">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-[-30%] -top-40 h-72 rounded-[999px] bg-gradient-to-r from-sky-500/40 via-cyan-400/40 to-emerald-400/40 blur-3xl"
@@ -787,14 +787,14 @@ export function ToronChatShell() {
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Sparkles className="h-5 w-5 text-sky-500" aria-hidden="true" />
-                <h1 className="text-base font-semibold text-slate-900 dark:text-white">
+                <h1 className="text-base font-semibold text-textPrimary dark:text-textPrimary">
                   Toron Prime · Aurora Chat
                 </h1>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${toronStatus.classes}`}>
                   {toronStatus.label}
                 </span>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
+              <p className="text-sm text-textSecondary dark:text-textMuted">
                 Full-spectrum reasoning with glass-shell focus. Keep it grounded, keep it fast.
               </p>
             </div>
@@ -802,7 +802,7 @@ export function ToronChatShell() {
               ref={settingsButtonRef}
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/60 text-slate-600 shadow-sm transition hover:bg-white/90 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-borderLight/80 bg-bgPrimary/60 text-textSecondary shadow-sm transition hover:bg-bgPrimary/90 hover:text-textPrimary focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-borderStrong/70 dark:bg-bgElevated/60 dark:text-textMuted"
               aria-label="Chat settings"
               aria-expanded={settingsOpen}
             >
@@ -814,22 +814,22 @@ export function ToronChatShell() {
             <button
               type="button"
               onClick={() => setIsCollapsed(false)}
-              className="relative z-10 inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white/90 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200"
+              className="relative z-10 inline-flex items-center gap-2 rounded-full border border-borderLight/70 bg-bgPrimary/70 px-4 py-2 text-xs font-semibold text-textSecondary shadow-sm transition hover:bg-bgPrimary/90 dark:border-borderStrong/70 dark:bg-bgElevated/60 dark:text-textMuted"
             >
               <ChevronDown className="h-3 w-3" /> Expand
             </button>
           ) : (
             <>
-              <div className="relative z-10 flex flex-col gap-3 border-t border-white/20 pt-3 lg:flex-row lg:items-center">
-                <div className="flex-1 rounded-full border border-slate-200/70 bg-white/70 px-4 py-2 text-sm shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/50">
+              <div className="relative z-10 flex flex-col gap-3 border-t border-borderLight/20 pt-3 lg:flex-row lg:items-center">
+                <div className="flex-1 rounded-full border border-borderLight/70 bg-bgPrimary/70 px-4 py-2 text-sm shadow-sm backdrop-blur dark:border-borderStrong/70 dark:bg-bgElevated/50">
                   <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                    <Search className="h-4 w-4 text-textMuted" aria-hidden="true" />
                     <input
                       type="search"
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
                       placeholder="Search sessions"
-                      className="h-8 flex-1 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white"
+                      className="h-8 flex-1 bg-transparent text-sm text-textPrimary placeholder:text-textMuted focus:outline-none dark:text-textPrimary"
                     />
                   </div>
                 </div>
@@ -837,29 +837,29 @@ export function ToronChatShell() {
                   <button
                     type="button"
                     onClick={createNewSession}
-                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 px-4 py-2 text-sm font-semibold text-textPrimary shadow-sm transition hover:brightness-110"
                   >
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20">+</span>
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-bgPrimary/20">+</span>
                     New session
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsCollapsed(true)}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 px-3 py-2 text-xs text-slate-600 transition hover:bg-white/60 dark:border-slate-700/70 dark:text-slate-200"
+                    className="inline-flex items-center gap-1 rounded-full border border-borderLight/70 px-3 py-2 text-xs text-textSecondary transition hover:bg-bgPrimary/60 dark:border-borderStrong/70 dark:text-textMuted"
                   >
                     <ChevronUp className="h-3 w-3" /> Collapse
                   </button>
                 </div>
               </div>
 
-              <div className="relative z-10 flex items-center gap-3 overflow-x-auto pb-1 text-xs text-slate-700 dark:text-slate-200">
+              <div className="relative z-10 flex items-center gap-3 overflow-x-auto pb-1 text-xs text-textSecondary dark:text-textMuted">
                 {filteredSessions.map((session) => {
                   const isActive = session.id === activeSession?.id;
                   const tooltip = `${session.title}\n${formatPreview(session.messages)}\nCreated ${new Date(session.createdAt).toLocaleString()}`;
                   return (
                     <div
                       key={session.id}
-                      className="group inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/60 px-3 py-1.5 shadow-sm backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/50"
+                      className="group inline-flex items-center gap-1 rounded-full border border-borderLight/20 bg-bgPrimary/60 px-3 py-1.5 shadow-sm backdrop-blur dark:border-borderStrong/50 dark:bg-bgElevated/50"
                       title={tooltip}
                     >
                       <button
@@ -869,7 +869,7 @@ export function ToronChatShell() {
                           setTimeout(() => composerRef.current?.focus(), 0);
                         }}
                         onDoubleClick={() => beginRenameSession(session)}
-                        className={`inline-flex items-center gap-2 text-xs font-medium ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-200"}`}
+                        className={`inline-flex items-center gap-2 text-xs font-medium ${isActive ? "text-textPrimary dark:text-textPrimary" : "text-textSecondary dark:text-textMuted"}`}
                       >
                         {renamingSessionId === session.id ? (
                           <input
@@ -886,19 +886,19 @@ export function ToronChatShell() {
                               }
                             }}
                             autoFocus
-                            className="w-32 rounded-full border border-slate-200/80 bg-white/80 px-2 py-0.5 text-xs text-slate-900 focus:outline-none"
+                            className="w-32 rounded-full border border-borderLight/80 bg-bgPrimary/80 px-2 py-0.5 text-xs text-textPrimary focus:outline-none"
                           />
                         ) : (
                           <span className="max-w-[160px] truncate">{session.title}</span>
                         )}
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-textMuted">
                           {new Date(session.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                         </span>
                       </button>
                       <button
                         type="button"
                         onClick={() => togglePinSession(session.id)}
-                        className={`rounded-full p-1 text-slate-400 transition hover:text-sky-500 dark:text-slate-500 dark:hover:text-sky-300 ${session.pinned ? "text-sky-500" : ""}`}
+                        className={`rounded-full p-1 text-textMuted transition hover:text-sky-500 dark:text-textSecondary dark:hover:text-sky-300 ${session.pinned ? "text-sky-500" : ""}`}
                         aria-label={session.pinned ? "Unpin session" : "Pin session"}
                       >
                         {session.pinned ? <Star className="h-3.5 w-3.5 fill-current" /> : <StarOff className="h-3.5 w-3.5" />}
@@ -906,7 +906,7 @@ export function ToronChatShell() {
                       <button
                         type="button"
                         onClick={() => handleDeleteSession(session.id)}
-                        className="rounded-full p-1 text-slate-400 opacity-0 transition hover:text-rose-500 focus:opacity-100 group-hover:opacity-100"
+                        className="rounded-full p-1 text-textMuted opacity-0 transition hover:text-rose-500 focus:opacity-100 group-hover:opacity-100"
                         aria-label="Delete session"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -917,20 +917,20 @@ export function ToronChatShell() {
               </div>
 
               {settingsOpen && (
-                <div className="relative z-10 rounded-3xl border border-slate-200/60 bg-white/60 p-4 text-sm text-slate-900 shadow-lg backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-100">
+                <div className="relative z-10 rounded-3xl border border-borderLight/60 bg-bgPrimary/60 p-4 text-sm text-textPrimary shadow-lg backdrop-blur-xl dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary">
                         Personalize
                       </p>
-                      <p className="text-sm text-slate-600 dark:text-slate-300">
+                      <p className="text-sm text-textSecondary dark:text-textMuted">
                         Align tone, context, and integrations.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSettingsOpen(false)}
-                      className="rounded-full border border-slate-200/80 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-white/70 dark:border-slate-700/70 dark:text-slate-200"
+                      className="rounded-full border border-borderLight/80 px-4 py-1.5 text-xs font-semibold text-textSecondary hover:bg-bgPrimary/70 dark:border-borderStrong/70 dark:text-textMuted"
                     >
                       Close
                     </button>
@@ -941,11 +941,11 @@ export function ToronChatShell() {
                       return (
                         <div
                           key={key}
-                          className="flex items-center justify-between gap-4 rounded-2xl border border-white/40 bg-white/40 px-3 py-3 shadow-sm backdrop-blur dark:border-slate-700/40 dark:bg-slate-900/40"
+                          className="flex items-center justify-between gap-4 rounded-2xl border border-borderLight/40 bg-bgPrimary/40 px-3 py-3 shadow-sm backdrop-blur dark:border-borderStrong/40 dark:bg-bgElevated/40"
                         >
                           <div>
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">{description}</p>
+                            <p className="text-sm font-semibold text-textPrimary dark:text-textPrimary">{label}</p>
+                            <p className="text-xs text-textSecondary dark:text-textMuted">{description}</p>
                           </div>
                           <button
                             ref={focusRef}
@@ -955,10 +955,10 @@ export function ToronChatShell() {
                             onClick={() =>
                               updateSettings({ [key]: !enabled } as Partial<SettingsState>)
                             }
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full border transition ${enabled ? "border-sky-500 bg-sky-500" : "border-slate-300 bg-slate-200"}`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full border transition ${enabled ? "border-sky-500 bg-sky-500" : "border-borderLight bg-bgPrimary"}`}
                           >
                             <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition ${enabled ? "translate-x-5" : "translate-x-1"}`}
+                              className={`inline-block h-5 w-5 transform rounded-full bg-bgPrimary shadow-sm transition ${enabled ? "translate-x-5" : "translate-x-1"}`}
                             />
                           </button>
                         </div>
@@ -974,7 +974,7 @@ export function ToronChatShell() {
                     <button
                       type="button"
                       onClick={handleClearAllSessions}
-                      className="mt-2 rounded-full border border-rose-200/70 px-3 py-1 font-semibold text-rose-700 hover:bg-white/40 dark:border-rose-500/40 dark:text-rose-100"
+                      className="mt-2 rounded-full border border-rose-200/70 px-3 py-1 font-semibold text-rose-700 hover:bg-bgPrimary/40 dark:border-rose-500/40 dark:text-rose-100"
                     >
                       Clear history
                     </button>
@@ -995,7 +995,7 @@ export function ToronChatShell() {
                 error={streamError}
               />
             )}
-            <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/60 shadow-inner backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/50">
+            <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-3xl border border-borderLight/70 bg-bgPrimary/60 shadow-inner backdrop-blur-xl dark:border-borderStrong/70 dark:bg-bgElevated/50">
               <div
                 ref={messagesContainerRef}
                 className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-4"
@@ -1003,7 +1003,7 @@ export function ToronChatShell() {
                 aria-live="polite"
               >
                 {timelineLabel && (
-                  <span className="mx-auto rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/50 dark:text-slate-300">
+                  <span className="mx-auto rounded-full border border-borderLight/70 bg-bgPrimary/70 px-3 py-1 text-[11px] font-medium text-textSecondary shadow-sm dark:border-borderStrong/70 dark:bg-bgElevated/50 dark:text-textMuted">
                     {timelineLabel}
                   </span>
                 )}
@@ -1065,7 +1065,7 @@ export function ToronChatShell() {
                 <button
                   type="button"
                   onClick={scrollToTop}
-                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-white/80 text-slate-600 shadow-sm transition hover:bg-white/95 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300"
+                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-borderLight/70 bg-bgPrimary/80 text-textSecondary shadow-sm transition hover:bg-bgPrimary/95 hover:text-textPrimary focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted"
                   aria-label="Jump to top"
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -1076,7 +1076,7 @@ export function ToronChatShell() {
                     scrollToBottom();
                     composerRef.current?.focus();
                   }}
-                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-white/80 text-slate-600 shadow-sm transition hover:bg-white/95 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-300"
+                  className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-borderLight/70 bg-bgPrimary/80 text-textSecondary shadow-sm transition hover:bg-bgPrimary/95 hover:text-textPrimary focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted"
                   aria-label="Jump to bottom"
                 >
                   <ArrowDown className="h-4 w-4" />
@@ -1084,12 +1084,12 @@ export function ToronChatShell() {
               </div>
               {isThinking && (
                 <div className="pointer-events-none absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center">
-                  <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-4 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-200">
+                  <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-borderLight/70 bg-bgPrimary/80 px-4 py-1 text-xs font-semibold text-textSecondary shadow-sm dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted">
                     Composing a reply…
                     <button
                       type="button"
                       onClick={stopPendingReply}
-                      className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2 py-0.5 text-white"
+                      className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2 py-0.5 text-textPrimary"
                     >
                       <Square className="h-3 w-3" /> Stop
                     </button>
@@ -1100,14 +1100,14 @@ export function ToronChatShell() {
 
             <form
               onSubmit={handleSubmit}
-              className="rounded-3xl border border-slate-200/70 bg-white/10 p-4 shadow-xl backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/50"
+              className="rounded-3xl border border-borderLight/70 bg-bgPrimary/10 p-4 shadow-xl backdrop-blur-xl dark:border-borderStrong/70 dark:bg-bgElevated/50"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-textSecondary dark:text-textMuted">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={triggerFilePicker}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-600 shadow-sm transition hover:bg-white/95 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-200"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-borderLight/80 bg-bgPrimary/80 text-textSecondary shadow-sm transition hover:bg-bgPrimary/95 hover:text-textPrimary focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted"
                     title="Add attachment"
                   >
                     <MoreHorizontal className="h-4 w-4" />
@@ -1119,7 +1119,7 @@ export function ToronChatShell() {
                         prev === "slow" ? "normal" : prev === "normal" ? "fast" : "slow",
                       )
                     }
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white/95 hover:text-slate-900 dark:border-slate-700/70 dark:bg-slate-900/70 dark:text-slate-200"
+                    className="inline-flex items-center gap-1 rounded-full border border-borderLight/80 bg-bgPrimary/80 px-3 py-1.5 text-xs font-semibold text-textSecondary transition hover:bg-bgPrimary/95 hover:text-textPrimary dark:border-borderStrong/70 dark:bg-bgElevated/70 dark:text-textMuted"
                   >
                     <Zap className="h-3.5 w-3.5" />
                     {speed === "slow" ? "Slow" : speed === "normal" ? "Normal" : "Fast"}
@@ -1129,7 +1129,7 @@ export function ToronChatShell() {
                   <button
                     type="button"
                     onClick={() => (isRecording ? stopDictation() : startDictation())}
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${isRecording ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-slate-200/80 bg-white/80 text-slate-600"}`}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${isRecording ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-borderLight/80 bg-bgPrimary/80 text-textSecondary"}`}
                     aria-pressed={isRecording}
                     aria-label={isRecording ? "Stop dictation" : "Start dictation"}
                   >
@@ -1142,7 +1142,7 @@ export function ToronChatShell() {
                     </span>
                   )}
                   {voiceSupported === false && !voiceWarning && (
-                    <span className="rounded-full border border-slate-200/70 bg-white/70 px-2 py-0.5 text-[11px] text-slate-500 dark:border-slate-700/70 dark:bg-slate-900/70">
+                    <span className="rounded-full border border-borderLight/70 bg-bgPrimary/70 px-2 py-0.5 text-[11px] text-textSecondary dark:border-borderStrong/70 dark:bg-bgElevated/70">
                       Voice capture unavailable
                     </span>
                   )}
@@ -1157,7 +1157,7 @@ export function ToronChatShell() {
                 onChange={(event) => handleFileChange(event.target.files)}
               />
 
-              <div className="mt-3 flex items-end gap-3 rounded-3xl border border-slate-200/70 bg-white/95 px-4 py-3 shadow-sm dark:border-slate-700/70 dark:bg-slate-950/80">
+              <div className="mt-3 flex items-end gap-3 rounded-3xl border border-borderLight/70 bg-bgPrimary/95 px-4 py-3 shadow-sm dark:border-borderStrong/70 dark:bg-bgElevated/80">
                 <textarea
                   ref={composerRef}
                   value={inputValue}
@@ -1165,11 +1165,11 @@ export function ToronChatShell() {
                   onKeyDown={handleTextareaKeyDown}
                   rows={2}
                   placeholder={composerPlaceholder}
-                  className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white"
+                  className="max-h-32 flex-1 resize-none bg-transparent text-sm text-textPrimary placeholder:text-textMuted focus:outline-none dark:text-textPrimary"
                 />
                 <button
                   type="submit"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 text-textPrimary shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!inputValue.trim() && pendingAttachments.length === 0}
                   aria-label="Send"
                 >
@@ -1178,11 +1178,11 @@ export function ToronChatShell() {
               </div>
 
               {pendingAttachments.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                <div className="mt-2 flex flex-wrap gap-1 text-[11px] text-textSecondary dark:text-textMuted">
                   {pendingAttachments.map((name) => (
                     <span
                       key={name}
-                      className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 dark:border-slate-700/70 dark:bg-slate-900/70"
+                      className="rounded-full border border-borderLight/70 bg-bgPrimary/80 px-2 py-0.5 dark:border-borderStrong/70 dark:bg-bgElevated/70"
                     >
                       {name}
                     </span>
@@ -1190,7 +1190,7 @@ export function ToronChatShell() {
                   <button
                     type="button"
                     onClick={() => handleFileChange(null)}
-                    className="text-[11px] font-semibold text-slate-500 underline"
+                    className="text-[11px] font-semibold text-textSecondary underline"
                   >
                     Clear
                   </button>

@@ -29,7 +29,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ open, onClose }
             <BellRing className="h-4 w-4" /> Notifications
           </div>
           <button
-            className="rounded-full bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-1 text-xs text-[color-mix(in_oklab,var(--text)_70%,transparent)] transition hover:bg-black/20 dark:bg-[var(--glass)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--glass)_85%,transparent)]"
+            className="rounded-full bg-[color-mix(in_oklab,var(--glass)_70%,transparent)] px-3 py-1 text-xs text-[color-mix(in_oklab,var(--text)_70%,transparent)] transition hover:bg-bgElevated/20 dark:bg-[var(--glass)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--glass)_85%,transparent)]"
             onClick={onClose}
           >
             Close
@@ -43,7 +43,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ open, onClose }
                   {note.type === "success" ? <CheckCircle2 className="h-5 w-5" /> : <BellRing className="h-5 w-5" />}
                 </div>
                 <div>
-                  <p className="font-medium text-black dark:text-white">{note.title}</p>
+                  <p className="font-medium text-textPrimary dark:text-textPrimary">{note.title}</p>
                   <p className="flex items-center gap-1 text-xs text-[color-mix(in_oklab,var(--text)_60%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_60%,transparent)]">
                     <Clock className="h-3 w-3" /> {note.time}
                   </p>

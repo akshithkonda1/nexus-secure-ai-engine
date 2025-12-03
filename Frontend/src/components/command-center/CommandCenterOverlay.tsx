@@ -9,26 +9,26 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-bgElevated/70 backdrop-blur-sm">
       <div className="pointer-events-none flex w-full justify-center px-4">
-        <div className="pointer-events-auto w-full max-w-6xl rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-950 via-slate-950/95 to-slate-900 shadow-[0_32px_120px_rgba(0,0,0,0.9)] p-6 md:p-8">
+        <div className="pointer-events-auto w-full max-w-6xl rounded-[32px] border border-borderLight/10 bg-gradient-to-br from-slate-950 via-slate-950/95 to-slate-900 shadow-[0_32px_120px_rgba(0,0,0,0.9)] p-6 md:p-8">
           {/* HEADER */}
           <div className="flex items-start justify-between gap-4 mb-4 md:mb-6">
             <div>
-              <p className="text-[11px] tracking-[0.32em] text-slate-400 uppercase">
+              <p className="text-[11px] tracking-[0.32em] text-textMuted uppercase">
                 Command Center
               </p>
-              <h1 className="mt-1 text-xl md:text-2xl font-semibold text-slate-50">
+              <h1 className="mt-1 text-xl md:text-2xl font-semibold text-textMuted">
                 One place to see what Ryuzen is doing for you.
               </h1>
-              <p className="mt-2 text-xs md:text-sm text-slate-300">
+              <p className="mt-2 text-xs md:text-sm text-textMuted">
                 Lightweight overview of modes, connectors, signals and your next best action.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-slate-900/90 text-slate-200 hover:bg-slate-800 hover:text-white transition"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-borderLight/15 bg-bgElevated/90 text-textMuted hover:bg-bgElevated hover:text-textPrimary transition"
             >
               <span className="sr-only">Close</span>
               ×
@@ -40,8 +40,8 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
             {/* LEFT COLUMN — MODES + CONNECTORS */}
             <div className="space-y-4">
               {/* Modes */}
-              <div className="rounded-2xl bg-slate-900/95 border border-white/10 px-4 py-3">
-                <p className="text-xs font-semibold text-slate-100 mb-2">Modes</p>
+              <div className="rounded-2xl bg-bgElevated/95 border border-borderLight/10 px-4 py-3">
+                <p className="text-xs font-semibold text-textMuted mb-2">Modes</p>
                 <div className="flex flex-wrap gap-2 text-[11px]">
                   <ModePill label="Safe Mode" active />
                   <ModePill label="Study Mode" />
@@ -50,8 +50,8 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
               </div>
 
               {/* Connectors */}
-              <div className="rounded-2xl bg-slate-900/95 border border-white/10 px-4 py-3 space-y-2">
-                <p className="text-xs font-semibold text-slate-100">Connectors</p>
+              <div className="rounded-2xl bg-bgElevated/95 border border-borderLight/10 px-4 py-3 space-y-2">
+                <p className="text-xs font-semibold text-textMuted">Connectors</p>
                 <ConnectorRow name="Google Drive" status="Synced" tone="emerald" />
                 <ConnectorRow name="Canvas / LMS" status="Monitoring" tone="sky" />
                 <ConnectorRow name="GitHub" status="Idle" tone="amber" />
@@ -80,23 +80,23 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
               </div>
 
               {/* Continue working — single wide card */}
-              <div className="rounded-3xl bg-slate-900/95 border border-white/10 px-5 py-4 flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="flex h-20 w-full md:w-32 items-center justify-center rounded-2xl bg-slate-800/80 border border-white/10 text-[11px] text-slate-200">
+              <div className="rounded-3xl bg-bgElevated/95 border border-borderLight/10 px-5 py-4 flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="flex h-20 w-full md:w-32 items-center justify-center rounded-2xl bg-bgElevated/80 border border-borderLight/10 text-[11px] text-textMuted">
                   <span className="text-center leading-tight">
                     Resume<br />last thread
                   </span>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <p className="text-xs font-semibold text-slate-100">
+                  <p className="text-xs font-semibold text-textMuted">
                     Continue working: RDS incident recap.
                   </p>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-[11px] text-textMuted">
                     Ryuzen can summarize logs, extract root causes, and draft a clean incident note.
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="self-start md:self-center rounded-full bg-sky-500 px-4 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-sky-400 transition"
+                  className="self-start md:self-center rounded-full bg-sky-500 px-4 py-1.5 text-[11px] font-semibold text-textPrimary hover:bg-sky-400 transition"
                 >
                   Open in Workspace
                 </button>
@@ -106,8 +106,8 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
             {/* RIGHT COLUMN — SIGNALS */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-100">Signals</p>
-                <button className="text-[11px] text-slate-400 hover:text-slate-200">
+                <p className="text-xs font-semibold text-textMuted">Signals</p>
+                <button className="text-[11px] text-textMuted hover:text-textMuted">
                   View all
                 </button>
               </div>
@@ -131,7 +131,7 @@ export function CommandCenterOverlay({ open, onClose }: CommandCenterOverlayProp
               />
               <button
                 type="button"
-                className="mt-1 w-full rounded-full border border-white/15 bg-slate-900/90 px-3 py-2 text-[11px] font-medium text-slate-200 hover:bg-slate-800 transition"
+                className="mt-1 w-full rounded-full border border-borderLight/15 bg-bgElevated/90 px-3 py-2 text-[11px] font-medium text-textMuted hover:bg-bgElevated transition"
               >
                 Customize in Settings
               </button>
@@ -152,7 +152,7 @@ function ModePill({ label, active }: { label: string; active?: boolean }) {
     return (
       <button
         type="button"
-        className={`${base} border-sky-400/60 bg-slate-900 text-sky-100`}
+        className={`${base} border-sky-400/60 bg-bgElevated text-sky-100`}
       >
         {label}
       </button>
@@ -161,7 +161,7 @@ function ModePill({ label, active }: { label: string; active?: boolean }) {
   return (
     <button
       type="button"
-      className={`${base} border-white/10 bg-slate-900/80 text-slate-200 hover:bg-slate-800`}
+      className={`${base} border-borderLight/10 bg-bgElevated/80 text-textMuted hover:bg-bgElevated`}
     >
       {label}
     </button>
@@ -185,7 +185,7 @@ function ConnectorRow({
     amber: "text-amber-300",
   };
   return (
-    <div className="flex items-center justify-between text-[11px] text-slate-200">
+    <div className="flex items-center justify-between text-[11px] text-textMuted">
       <span>{name}</span>
       <span className={toneClass[tone]}>{status}</span>
     </div>
@@ -202,11 +202,11 @@ function QuickTile({
   accent: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 px-4 py-3">
+    <div className="relative overflow-hidden rounded-2xl border border-borderLight/10 bg-bgElevated/95 px-4 py-3">
       <div className={`absolute inset-0 opacity-40 bg-gradient-to-br ${accent}`} />
       <div className="relative space-y-1">
-        <p className="text-xs font-semibold text-slate-50">{label}</p>
-        <p className="text-[11px] text-slate-200">{description}</p>
+        <p className="text-xs font-semibold text-textMuted">{label}</p>
+        <p className="text-[11px] text-textMuted">{description}</p>
       </div>
     </div>
   );
@@ -231,14 +231,14 @@ function SignalCard({
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/90 px-4 py-3 text-[11px] text-slate-200">
+    <div className="rounded-2xl border border-borderLight/10 bg-bgElevated/90 px-4 py-3 text-[11px] text-textMuted">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="font-medium text-slate-50">{label}</p>
+        <p className="font-medium text-textMuted">{label}</p>
         <span className={`rounded-full border px-2 py-0.5 text-[10px] ${pillMap[tone]}`}>
           {badge}
         </span>
       </div>
-      <p className="text-slate-300">{detail}</p>
+      <p className="text-textMuted">{detail}</p>
     </div>
   );
 }

@@ -20,17 +20,17 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
       type="button"
       onClick={onExpand}
       className={`group relative w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] focus:outline-none ${
-        isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+        isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
       }`}
     >
       <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
           <ClipboardList className="h-4 w-4" />
           Lists
         </div>
         <span
           className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            isDark ? "bg-emerald-500 text-white" : "bg-emerald-300 text-black"
+            isDark ? "bg-emerald-500 text-textPrimary" : "bg-emerald-300 text-textPrimary"
           }`}
         >
           {data.length} boards
@@ -41,19 +41,19 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
           <div
             key={list.id}
             className={`rounded-2xl border px-4 py-3 shadow-sm ${
-              isDark ? "border-white/10 bg-neutral-800" : "border-black/5 bg-neutral-50"
+              isDark ? "border-borderLight/10 bg-bgElevated" : "border-borderLight/5 bg-bgPrimary"
             }`}
           >
-            <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+            <div className="flex items-center justify-between text-sm font-semibold text-textPrimary dark:text-textMuted">
               <span>{list.title}</span>
-              <span className="text-xs text-neutral-700 dark:text-neutral-300">{list.items.length} items</span>
+              <span className="text-xs text-textSecondary dark:text-textMuted">{list.items.length} items</span>
             </div>
-            <div className="mt-2 grid gap-2 text-sm text-neutral-900 dark:text-neutral-100">
+            <div className="mt-2 grid gap-2 text-sm text-textPrimary dark:text-textMuted">
               {list.items.slice(0, 3).map((item) => (
                 <div
                   key={item.id}
                   className={`flex items-center gap-2 rounded-xl px-3 py-2 ${
-                    isDark ? "bg-neutral-900 text-white" : "bg-white text-black"
+                    isDark ? "bg-bgElevated text-textPrimary" : "bg-bgPrimary text-textPrimary"
                   }`}
                 >
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -61,7 +61,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
                 </div>
               ))}
               {!list.items.length && (
-                <p className="text-xs text-neutral-700 dark:text-neutral-300">No entries yet. Tap to expand and add.</p>
+                <p className="text-xs text-textSecondary dark:text-textMuted">No entries yet. Tap to expand and add.</p>
               )}
             </div>
           </div>
@@ -69,7 +69,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
       </div>
       <div
         className={`rounded-b-3xl px-5 py-3 text-sm ${
-          isDark ? "bg-neutral-900 text-neutral-200" : "bg-white text-neutral-700"
+          isDark ? "bg-bgElevated text-textMuted" : "bg-bgPrimary text-textSecondary"
         }`}
       >
         {previewItems.length ? (
@@ -78,7 +78,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
               <span
                 key={item.id}
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  isDark ? "bg-neutral-800 text-white" : "bg-neutral-100 text-black"
+                  isDark ? "bg-bgElevated text-textPrimary" : "bg-bgPrimary text-textPrimary"
                 }`}
               >
                 {item.text}
@@ -86,7 +86,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-neutral-700 dark:text-neutral-300">Draft ideas are ready to organize.</p>
+          <p className="text-sm text-textSecondary dark:text-textMuted">Draft ideas are ready to organize.</p>
         )}
       </div>
     </button>

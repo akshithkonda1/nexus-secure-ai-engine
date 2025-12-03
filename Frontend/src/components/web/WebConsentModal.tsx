@@ -37,7 +37,7 @@ export default function WebConsentModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-bgElevated/50 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -51,7 +51,7 @@ export default function WebConsentModal({
               leaveFrom="opacity-100 translate-y-0 scale-100"
               leaveTo="opacity-0 translate-y-4 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[var(--panel-bg)] p-6 text-left shadow-2xl ring-1 ring-white/10">
+              <Dialog.Panel className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-borderLight/10 bg-[var(--panel-bg)] p-6 text-left shadow-2xl ring-1 ring-white/10">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -67,7 +67,7 @@ export default function WebConsentModal({
                     Toron needs your approval to view a public webpage in a read-only sandbox. No scripts will execute and links will not be followed.
                   </p>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 dark:bg-white/5">
+                  <div className="rounded-xl border border-borderLight/10 bg-bgPrimary/5 p-4 dark:bg-bgPrimary/5">
                     <div className="mb-2 flex items-center justify-between">
                       <div className="text-sm font-semibold text-[var(--text-primary)]">{pageTitle || "Untitled page"}</div>
                       <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
@@ -75,7 +75,7 @@ export default function WebConsentModal({
                       </span>
                     </div>
                     <div className="text-xs text-[var(--text-secondary)]">{url}</div>
-                    <div className="mt-3 rounded-lg bg-black/30 p-3 text-xs text-[var(--text-secondary)] shadow-inner dark:bg-white/5">
+                    <div className="mt-3 rounded-lg bg-bgElevated/30 p-3 text-xs text-[var(--text-secondary)] shadow-inner dark:bg-bgPrimary/5">
                       <div className="text-[var(--text-primary)]">Purpose</div>
                       <div className="text-[var(--text-secondary)]">{purpose}</div>
                       <div className="mt-2 text-[var(--text-primary)]">Scope</div>
@@ -100,7 +100,7 @@ export default function WebConsentModal({
                     </button>
                     <button
                       onClick={onDeny}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-0.5"
+                      className="rounded-xl border border-borderLight/10 bg-bgPrimary/5 px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:-translate-y-0.5"
                     >
                       Deny
                     </button>

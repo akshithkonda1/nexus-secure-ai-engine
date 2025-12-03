@@ -57,7 +57,7 @@ export default function RyuzenCommandCenterOverlay() {
     <AnimatePresence>
       {showCommandCenter && (
         <motion.div
-          className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-xl"
+          className="fixed inset-0 z-[999] bg-bgElevated/40 backdrop-blur-xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -73,8 +73,8 @@ export default function RyuzenCommandCenterOverlay() {
             <button
               onClick={closeCommandCenter}
               className="absolute top-8 right-8 h-10 w-10 flex items-center justify-center rounded-full
-              bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 
-              text-white shadow-xl transition"
+              bg-bgPrimary/10 hover:bg-bgPrimary/20 backdrop-blur-md border border-borderLight/20 
+              text-textPrimary shadow-xl transition"
             >
               <X className="h-5 w-5" />
             </button>
@@ -87,28 +87,28 @@ export default function RyuzenCommandCenterOverlay() {
                     key={i}
                     whileHover={{ scale: 1.03, y: -4 }}
                     transition={{ type: "spring", stiffness: 260, damping: 16 }}
-                    className="rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl
+                    className="rounded-3xl border border-borderLight/10 bg-bgPrimary/[0.05] backdrop-blur-xl
                     shadow-[0_18px_60px_rgba(0,0,0,0.45)] p-6 relative overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/10 pointer-events-none" />
 
                     <div className="flex items-start gap-4">
-                      <Icon className="h-10 w-10 text-white" />
+                      <Icon className="h-10 w-10 text-textPrimary" />
 
                       <div>
-                        <p className="text-xs uppercase tracking-[0.28em] text-white/40">
+                        <p className="text-xs uppercase tracking-[0.28em] text-textPrimary/40">
                           MODULE
                         </p>
-                        <p className="text-xl font-semibold text-white">
+                        <p className="text-xl font-semibold text-textPrimary">
                           {module.title}
                         </p>
-                        <p className="text-sm text-white/60 mt-1">
+                        <p className="text-sm text-textPrimary/60 mt-1">
                           {module.description}
                         </p>
 
                         {module.footerButton && (
-                          <button className="mt-4 rounded-xl bg-white/10 hover:bg-white/20
-                          px-4 py-2 text-sm text-white border border-white/20 transition">
+                          <button className="mt-4 rounded-xl bg-bgPrimary/10 hover:bg-bgPrimary/20
+                          px-4 py-2 text-sm text-textPrimary border border-borderLight/20 transition">
                             Open Dashboard →
                           </button>
                         )}

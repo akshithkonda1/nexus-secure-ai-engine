@@ -99,18 +99,18 @@ export const ProjectsModal: React.FC<ProjectsModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bgElevated/50 p-4">
+      <div className="flex h-[80vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-bgPrimary shadow-2xl dark:bg-bgElevated">
+        <div className="flex items-center justify-between border-b border-borderLight px-6 py-4 dark:border-borderStrong">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Projects</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-lg font-semibold text-textPrimary dark:text-textPrimary">Projects</h2>
+            <p className="text-xs text-textSecondary">
               Organize sanitized threads and open them directly in Chat.
               {loading ? " Loading..." : ""}
             </p>
           </div>
           <button
-            className="rounded border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+            className="rounded border border-borderLight px-3 py-2 text-xs font-semibold text-textSecondary transition hover:bg-bgPrimary dark:border-borderStrong dark:text-textMuted dark:hover:bg-bgElevated"
             type="button"
             onClick={onClose}
           >

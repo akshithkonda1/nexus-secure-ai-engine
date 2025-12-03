@@ -72,7 +72,7 @@ export default function ToronPage() {
         ))}
       </aside>
       {projectsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bgElevated/40 p-4">
           <ProjectsModal
             prefillContent={pendingProjectContent ?? undefined}
             onClose={closeProjects}

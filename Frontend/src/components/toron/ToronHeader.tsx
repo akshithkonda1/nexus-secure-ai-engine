@@ -43,7 +43,7 @@ const HeaderComponent = ({ onOpenProjects, onNewChat, title }: ToronHeaderProps)
           <button
             type="button"
             onClick={() => fallbackButtonHandler(onNewChat, telemetry)}
-            className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-textPrimary shadow-sm transition hover:opacity-90"
           >
             New Chat
           </button>

@@ -25,7 +25,7 @@ export default function ProjectDashboard() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_85%,var(--accent-secondary))] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(124,93,255,0.28)] transition hover:-translate-y-[1px]"
+          className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--accent-primary)_85%,var(--accent-secondary))] px-4 py-2 text-sm font-semibold text-textPrimary shadow-[0_12px_32px_rgba(124,93,255,0.28)] transition hover:-translate-y-[1px]"
         >
           <Plus className="h-4 w-4" /> New project
         </button>

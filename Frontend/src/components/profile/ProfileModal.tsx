@@ -26,7 +26,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 
+          <div className="w-16 h-16 rounded-full bg-bgPrimary/10 border border-borderLight/20 
                           flex items-center justify-center overflow-hidden">
             <User size={32} className="text-[var(--text-primary)] opacity-80" />
           </div>
@@ -70,7 +70,7 @@ function MenuItem({ icon, label }: { icon: JSX.Element; label: string }) {
     <button
       className="
         w-full flex items-center justify-between px-2 py-2.5 rounded-xl
-        text-[var(--text-primary)] hover:bg-white/10 dark:hover:bg-white/5
+        text-[var(--text-primary)] hover:bg-bgPrimary/10 dark:hover:bg-bgPrimary/5
         transition
       "
     >

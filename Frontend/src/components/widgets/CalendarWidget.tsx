@@ -30,19 +30,19 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
       type="button"
       onClick={() => onSelectDate(selectedDate)}
       className={`w-full rounded-3xl border text-left shadow-sm transition hover:scale-[1.01] ${
-        isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+        isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
       }`}
     >
       <div className="flex items-center justify-between border-b px-5 py-4 text-sm">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
           <CalendarIcon className="h-4 w-4" /> Calendar
         </div>
-        <div className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+        <div className="text-xs font-semibold text-textSecondary dark:text-textMuted">
           {selectedDate.toLocaleString("default", { month: "long" })} {year}
         </div>
       </div>
       <div className="px-5 py-4">
-        <div className="grid grid-cols-7 gap-2 text-center text-xs text-neutral-700 dark:text-neutral-300">
+        <div className="grid grid-cols-7 gap-2 text-center text-xs text-textSecondary dark:text-textMuted">
           {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
             <div key={d}>{d}</div>
           ))}
@@ -52,7 +52,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
               <div
                 key={day}
                 className={`relative flex h-10 flex-col items-center justify-center rounded-xl border text-sm font-semibold ${
-                  isDark ? "border-white/10 bg-neutral-800 text-white" : "border-black/5 bg-neutral-50 text-black"
+                  isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
                 }`}
               >
                 <span>{day}</span>
@@ -65,19 +65,19 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
             );
           })}
         </div>
-        <div className="mt-4 space-y-2 text-xs text-neutral-800 dark:text-neutral-200">
+        <div className="mt-4 space-y-2 text-xs text-textPrimary dark:text-textMuted">
           {events.map((evt) => (
             <div
               key={evt.title}
               className={`flex items-center justify-between rounded-2xl border px-3 py-2 ${
-                isDark ? "border-white/10 bg-neutral-800" : "border-black/5 bg-neutral-50"
+                isDark ? "border-borderLight/10 bg-bgElevated" : "border-borderLight/5 bg-bgPrimary"
               }`}
             >
               <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${COLORS[evt.type]}`} />
-                <span className="font-semibold text-neutral-900 dark:text-neutral-100">{evt.title}</span>
+                <span className="font-semibold text-textPrimary dark:text-textMuted">{evt.title}</span>
               </div>
-              <span className="text-neutral-700 dark:text-neutral-300">{evt.date}</span>
+              <span className="text-textSecondary dark:text-textMuted">{evt.date}</span>
             </div>
           ))}
         </div>

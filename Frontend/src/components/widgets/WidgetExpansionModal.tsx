@@ -18,7 +18,7 @@ const WidgetExpansionModal: React.FC<WidgetExpansionModalProps> = ({ open, title
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-3xl dark:bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-bgElevated/40 backdrop-blur-3xl dark:bg-bgElevated/60"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -33,25 +33,25 @@ const WidgetExpansionModal: React.FC<WidgetExpansionModalProps> = ({ open, title
           >
             <div
               className={`flex h-full w-full flex-col overflow-hidden rounded-3xl border shadow-xl transition-all duration-300 ${
-                isDark ? "border-white/10 bg-neutral-900 text-white" : "border-black/5 bg-white text-black"
+                isDark ? "border-borderLight/10 bg-bgElevated text-textPrimary" : "border-borderLight/5 bg-bgPrimary text-textPrimary"
               }`}
             >
               <div
                 className={`flex items-center justify-between border-b px-6 py-4 ${
-                  isDark ? "border-white/10" : "border-black/5"
+                  isDark ? "border-borderLight/10" : "border-borderLight/5"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
+                  <h2 className="text-lg font-semibold text-textPrimary dark:text-textMuted">{title}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
                   className={`inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold transition ${
                     isDark
-                      ? "bg-white/10 text-white hover:bg-white/20"
-                      : "bg-neutral-200 text-black hover:bg-neutral-300"
+                      ? "bg-bgPrimary/10 text-textPrimary hover:bg-bgPrimary/20"
+                      : "bg-bgPrimary text-textPrimary hover:bg-bgSecondary"
                   }`}
                 >
                   <X className="mr-2 h-4 w-4" />

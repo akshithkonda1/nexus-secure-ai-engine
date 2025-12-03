@@ -16,7 +16,7 @@ const NotesPanel: React.FC<{ close?: () => void }> = ({ close }) => (
     </div>
     <p className="text-sm text-[color-mix(in_oklab,var(--text)_70%,transparent)] dark:text-[color-mix(in_oklab,var(--text)_70%,transparent)]">Capture scratchpad ideas and micro-notes.</p>
     <textarea
-      className="mt-4 h-40 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 text-sm text-[var(--text)] placeholder:text-black/50 focus:outline-none dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)] dark:text-[var(--text)] dark:placeholder:text-white/50"
+      className="mt-4 h-40 w-full rounded-2xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--glass)_60%,transparent)] p-4 text-sm text-[var(--text)] placeholder:text-textPrimary/50 focus:outline-none dark:border-[var(--border)] dark:bg-[color-mix(in_oklab,var(--glass)_55%,transparent)] dark:text-[var(--text)] dark:placeholder:text-textPrimary/50"
       placeholder="Stream of consciousness..."
       onChange={(e) => window.dispatchEvent(new CustomEvent("toron-signal", { detail: { notes: e.target.value } }))}
     />

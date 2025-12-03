@@ -27,32 +27,32 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
     onSelectDate(next);
   };
 
-  const border = isDark ? "border-white/10" : "border-black/5";
-  const surface = isDark ? "bg-neutral-900" : "bg-white";
-  const textPrimary = isDark ? "text-neutral-100" : "text-neutral-900";
-  const textSecondary = isDark ? "text-neutral-300" : "text-neutral-700";
+  const border = isDark ? "border-borderLight/10" : "border-borderLight/5";
+  const surface = isDark ? "bg-bgElevated" : "bg-bgPrimary";
+  const textPrimary = isDark ? "text-textMuted" : "text-textPrimary";
+  const textSecondary = isDark ? "text-textMuted" : "text-textSecondary";
 
   return (
     <div className={`flex h-full flex-col gap-4 rounded-3xl border ${border} ${surface} p-6 shadow-xl`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary dark:text-textMuted">
           <CalendarIcon className="h-4 w-4" /> Calendar Hub
         </div>
-        <div className="flex items-center gap-2 text-sm text-neutral-900 dark:text-neutral-100">
+        <div className="flex items-center gap-2 text-sm text-textPrimary dark:text-textMuted">
           <button
             className={`rounded-full p-2 font-semibold ${
-              isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+              isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
             }`}
             onClick={() => changeDay(-1)}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+          <span className="font-semibold text-textPrimary dark:text-textMuted">
             {selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
           </span>
           <button
             className={`rounded-full p-2 font-semibold ${
-              isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+              isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
             }`}
             onClick={() => changeDay(1)}
           >
@@ -62,7 +62,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
             <button
               onClick={close}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                isDark ? "bg-neutral-800 text-white hover:bg-neutral-700" : "bg-neutral-100 text-black hover:bg-neutral-200"
+                isDark ? "bg-bgElevated text-textPrimary hover:bg-bgSecondary" : "bg-bgPrimary text-textPrimary hover:bg-bgPrimary"
               }`}
             >
               Close
@@ -77,7 +77,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
             className={`flex items-center justify-between rounded-2xl border ${border} px-4 py-3 shadow-sm ${surface}`}
           >
             <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isDark ? "bg-neutral-800" : "bg-neutral-100"}`}>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isDark ? "bg-bgElevated" : "bg-bgPrimary"}`}>
                 <span className={`h-3 w-3 rounded-full ${eventColors[evt.type]}`} />
               </div>
               <div>
@@ -89,7 +89,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
             </div>
             <span
               className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase ${
-                isDark ? "bg-neutral-800 text-white" : "bg-neutral-100 text-black"
+                isDark ? "bg-bgElevated text-textPrimary" : "bg-bgPrimary text-textPrimary"
               }`}
             >
               {evt.type}
