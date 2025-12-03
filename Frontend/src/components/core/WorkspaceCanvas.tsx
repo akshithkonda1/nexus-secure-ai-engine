@@ -8,7 +8,7 @@ interface WorkspaceCanvasProps {
 }
 
 const glassPanelClass =
-  "bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong";
+  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
 
 const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, children }) => {
   return (
@@ -22,7 +22,7 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, chil
         </div>
       )}
       {active && (
-        <div className="absolute inset-0 overflow-hidden rounded-2xl border border-glassBorder bg-glass backdrop-blur-2xl">
+        <div className="absolute inset-0 overflow-hidden rounded-3xl border border-glassBorder bg-glass backdrop-blur-2xl">
           <div className="absolute right-4 top-4 z-20">
             <button
               className="rounded-full border border-glassBorder px-3 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"

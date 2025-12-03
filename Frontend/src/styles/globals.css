@@ -2,26 +2,31 @@
 @import "tailwindcss";
 
 /* ----------------------------- */
-/* RYŪZEN FUTURE GLASS SYSTEM v2 */
+/* RYŪZEN FUTURE GLASS SYSTEM v2.3 */
+/* (More opaque + stronger identity) */
 /* ----------------------------- */
 
 /* LIGHT MODE */
 :root {
   color-scheme: light;
   --text-primary: #0A0A0A;
-  --text-secondary: #2F2F2F;
-  --text-muted: #707070;
+  --text-secondary: #262626;
+  --text-muted: #686868;
 
-  --glass-bg: rgba(255, 255, 255, 0.92);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.97);
+  /* HIGH-OPACITY GLASS */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.985);
 
-  --glass-inner: rgba(255, 255, 255, 0.45);
+  /* Inner glow — more subtle now */
+  --glass-inner: rgba(255, 255, 255, 0.25);
 
-  --glass-border: rgba(0, 0, 0, 0.15);
-  --glass-border-strong: rgba(0, 0, 0, 0.25);
+  /* Borders */
+  --glass-border: rgba(0, 0, 0, 0.20);
+  --glass-border-strong: rgba(0, 0, 0, 0.30);
 
-  --glass-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  --glass-shadow-strong: 0 10px 40px rgba(0,0,0,0.18);
+  /* Stronger shadows for physicality */
+  --glass-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  --glass-shadow-strong: 0 18px 48px rgba(0,0,0,0.18);
 
   --bg: 249 250 252;
   --surface: 255 255 255;
@@ -51,20 +56,22 @@
 /* DARK MODE */
 [data-theme="dark"] {
   color-scheme: dark;
-  --text-primary: #FBFBFB;
-  --text-secondary: #E0E0E0;
-  --text-muted: #9A9A9A;
+  --text-primary: #FDFDFD;
+  --text-secondary: #DADADA;
+  --text-muted: #909090;
 
-  --glass-bg: rgba(32, 32, 40, 0.65);
-  --glass-bg-heavy: rgba(32, 32, 40, 0.78);
+  /* Dark-mode glass needs depth — not translucency */
+  --glass-bg: rgba(28, 28, 34, 0.80);
+  --glass-bg-heavy: rgba(28, 28, 34, 0.90);
 
-  --glass-inner: rgba(255, 255, 255, 0.08);
+  --glass-inner: rgba(255, 255, 255, 0.06);
 
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-strong: rgba(255, 255, 255, 0.18);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-strong: rgba(255, 255, 255, 0.22);
 
-  --glass-shadow: 0 8px 40px rgba(0,0,0,0.55);
-  --glass-shadow-strong: 0 10px 55px rgba(0,0,0,0.75);
+  /* Deep sci-fi shadows */
+  --glass-shadow: 0 12px 48px rgba(0,0,0,0.55);
+  --glass-shadow-strong: 0 20px 65px rgba(0,0,0,0.75);
 
   --bg: 15 23 42;
   --surface: 15 23 42;
