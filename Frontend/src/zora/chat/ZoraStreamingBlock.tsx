@@ -27,25 +27,25 @@ const ToronStreamingBlock: React.FC<Props> = ({
 }) => {
   return (
     <div
-      className="rounded-xl border border-sky-500/40 bg-sky-900/30 p-3 text-xs text-slate-50 shadow-sm backdrop-blur-xl animate-aurora-pulse"
+      className="rounded-xl border border-sky-500/40 bg-sky-900/30 p-3 text-xs text-textMuted shadow-sm backdrop-blur-xl animate-aurora-pulse"
       aria-live="polite"
     >
       <div className="flex items-center justify-between gap-3">
         <div>
         <p className="text-xs font-semibold">Toron reasoning stream</p>
-          <p className="text-[11px] text-slate-200/80">
+          <p className="text-[11px] text-textMuted/80">
           Toron is debating models, checking sources, and settling on the most
           best answer it can provide.
           </p>
         </div>
-        <div className="text-right text-[11px] text-slate-200/80">
+        <div className="text-right text-[11px] text-textMuted/80">
           <span className="font-medium">
             {isStreaming ? "In progress" : "Done"}
           </span>
-          <span className="ml-1 text-slate-400">· {progressPercent}%</span>
+          <span className="ml-1 text-textMuted">· {progressPercent}%</span>
         </div>
       </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-900/60">
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bgElevated/60">
         <div
           className="h-full rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-400 transition-all duration-200"
           style={{ width: `${progressPercent}%` }}
@@ -58,14 +58,14 @@ const ToronStreamingBlock: React.FC<Props> = ({
       )}
       {firstAnswer && (
         <div className="mt-3 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-textMuted">
             First pass
           </p>
-          <p className="whitespace-pre-wrap text-xs text-slate-50">
+          <p className="whitespace-pre-wrap text-xs text-textMuted">
             {firstAnswer.text}
           </p>
           {firstAnswer.model && (
-            <p className="text-[10px] text-slate-300">
+            <p className="text-[10px] text-textMuted">
               from {firstAnswer.model}
             </p>
           )}
@@ -73,25 +73,25 @@ const ToronStreamingBlock: React.FC<Props> = ({
       )}
       {partialAnswer && (
         <div className="mt-3 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-textMuted">
             Still refining
           </p>
-          <p className="whitespace-pre-wrap text-xs text-slate-50">
+          <p className="whitespace-pre-wrap text-xs text-textMuted">
             {partialAnswer.text}
           </p>
         </div>
       )}
       {finalAnswer && (
         <div className="mt-3 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-textMuted">
             Final summary
           </p>
-          <p className="whitespace-pre-wrap text-xs text-slate-50">
+          <p className="whitespace-pre-wrap text-xs text-textMuted">
             {finalAnswer.text}
           </p>
           {finalAnswer.sources && finalAnswer.sources.length > 0 && (
             <div className="mt-2 space-y-1">
-              <p className="text-[10px] font-semibold text-slate-300">
+              <p className="text-[10px] font-semibold text-textMuted">
                 Sources Toron leaned on
               </p>
               <div className="space-y-1">

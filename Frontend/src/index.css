@@ -5,8 +5,8 @@
 
 :root {
   --text-primary: #0a0a0a;
-  --text-secondary: #3b3b3b;
-  --text-muted: #5a5a5a;
+  --text-secondary: #3f3f3f;
+  --text-muted: #7a7a7a;
 
   --bg-primary: #ffffff;
   --bg-secondary: #f7f7f7;
@@ -18,15 +18,15 @@
 
 [data-theme="dark"] {
   --text-primary: #ffffff;
-  --text-secondary: #dddddd;
-  --text-muted: #a3a3a3;
+  --text-secondary: #e5e5e5;
+  --text-muted: #a0a0a0;
 
   --bg-primary: #0a0a0f;
   --bg-secondary: #11121a;
   --bg-elevated: #1a1b24;
 
-  --border-light: #20202a;
-  --border-strong: #3a3a42;
+  --border-light: #24242f;
+  --border-strong: #3a3a45;
 }
 
 :root {
@@ -50,7 +50,7 @@
   --border-osbar: rgba(0, 0, 0, 0.15);
 
   --text-primary: #0a0a0a;
-  --text-secondary: #3b3b3b;
+  --text-secondary: #3f3f3f;
   --text-faded: rgba(0, 0, 0, 0.6);
 
   --btn-bg: rgba(0,0,0,0.05);
@@ -72,7 +72,7 @@
   --border-osbar: rgba(255,255,255,0.12);
 
   --text-primary: #fff;
-  --text-secondary: #d0d0d0;
+  --text-secondary: #e5e5e5;
   --text-faded: rgba(255,255,255,0.65);
 
   --btn-bg: rgba(255,255,255,0.07);

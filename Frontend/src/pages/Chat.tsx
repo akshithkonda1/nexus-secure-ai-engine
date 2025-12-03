@@ -119,12 +119,12 @@ const IOSSwitch = React.forwardRef<
       "relative inline-flex h-6 w-11 items-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500",
       checked
         ? "border-sky-500 bg-sky-500"
-        : "border-slate-300 bg-slate-200 dark:border-slate-700 dark:bg-slate-800",
+        : "border-borderLight bg-bgPrimary dark:border-borderStrong dark:bg-bgElevated",
     ].join(" ")}
   >
     <span
       className={[
-        "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
+        "inline-block h-5 w-5 transform rounded-full bg-bgPrimary shadow-sm transition-transform",
         checked ? "translate-x-5" : "translate-x-1",
       ].join(" ")}
     />
@@ -855,7 +855,7 @@ function ChatInner() {
     <section className="flex h-full w-full flex-col">
       <div className="flex h-full w-full flex-col px-4 py-4 md:px-8 md:py-6">
         {/* Shell */}
-        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/70 bg-slate-950/90 px-4 py-4 shadow-lg backdrop-blur-2xl dark:border-slate-800 dark:bg-slate-950/95 md:px-6 md:py-5">
+        <div className="relative flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-3xl border border-borderLight/70 bg-bgElevated/90 px-4 py-4 shadow-lg backdrop-blur-2xl dark:border-borderStrong dark:bg-bgElevated/95 md:px-6 md:py-5">
           {/* Soft Toron background */}
           <div
             aria-hidden="true"
@@ -878,7 +878,7 @@ function ChatInner() {
               <button
                 type="button"
                 onClick={() => setIsCollapsed((value) => !value)}
-                className="inline-flex items-center rounded-full border border-slate-700/70 bg-slate-900/70 px-2.5 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="inline-flex items-center rounded-full border border-borderStrong/70 bg-bgElevated/70 px-2.5 py-1 text-[11px] font-medium text-textMuted shadow-sm transition hover:bg-bgElevated/80 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 aria-pressed={!isCollapsed}
                 aria-label={isCollapsed ? "Expand Toron chat" : "Collapse Toron chat"}
               >
@@ -894,7 +894,7 @@ function ChatInner() {
               </button>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-semibold text-slate-50">
+                  <h1 className="text-sm font-semibold text-textMuted">
                     Toron Chat
                   </h1>
                   <span
@@ -923,7 +923,7 @@ function ChatInner() {
                     {toronStatus.label}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[11px] text-slate-300">
+                <p className="mt-0.5 text-[11px] text-textMuted">
                   Ask what you need — Toron pulls from AI Models and the internet as well as the Command Center and your Workspace,
                   then explains things as needed.
                 </p>
@@ -931,12 +931,12 @@ function ChatInner() {
             </div>
             <div className="flex items-center gap-2">
               {activeProject && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/60 px-3 py-1 text-[11px] font-semibold text-slate-100">
+                <span className="inline-flex items-center gap-2 rounded-full border border-borderStrong/70 bg-bgElevated/60 px-3 py-1 text-[11px] font-semibold text-textMuted">
                   <Folder className="h-4 w-4" /> {activeProject.name}
                 </span>
               )}
               <button
-                className="inline-flex items-center gap-2 rounded-full border border-slate-700/70 bg-slate-900/70 px-3 py-1 text-[11px] font-semibold text-slate-100 transition hover:-translate-y-[1px] hover:border-sky-500 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-full border border-borderStrong/70 bg-bgElevated/70 px-3 py-1 text-[11px] font-semibold text-textMuted transition hover:-translate-y-[1px] hover:border-sky-500 hover:text-textPrimary"
                 onClick={() => setShowProjects(true)}
                 title="Open in Project"
                 type="button"
@@ -949,7 +949,7 @@ function ChatInner() {
               ref={settingsButtonRef}
               type="button"
               onClick={() => setSettingsOpen((value) => !value)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 shadow-sm transition hover:bg-slate-800 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-borderStrong bg-bgElevated/80 text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500"
               aria-label="Toron chat settings"
               aria-expanded={settingsOpen}
             >
@@ -960,11 +960,11 @@ function ChatInner() {
           {isCollapsed ? null : (
             <>
               {/* SEARCH + NEW CHAT */}
-              <div className="relative z-10 mt-1 flex flex-col gap-3 border-t border-slate-800/70 pt-3 md:flex-row md:items-center">
-                <div className="flex-1 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 shadow-sm">
+              <div className="relative z-10 mt-1 flex flex-col gap-3 border-t border-borderStrong/70 pt-3 md:flex-row md:items-center">
+                <div className="flex-1 rounded-full border border-borderStrong bg-bgElevated/80 px-3 py-2 text-xs text-textMuted shadow-sm">
                   <div className="flex items-center gap-2">
                     <Search
-                      className="h-4 w-4 text-slate-500"
+                      className="h-4 w-4 text-textSecondary"
                       aria-hidden="true"
                     />
                     <input
@@ -974,7 +974,7 @@ function ChatInner() {
                         setSearchQuery(event.target.value)
                       }
                       placeholder="Search your Toron chats…"
-                      className="h-7 flex-1 bg-transparent text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                      className="h-7 flex-1 bg-transparent text-xs text-textMuted placeholder:text-textSecondary focus:outline-none"
                       aria-label="Search Toron chats"
                     />
                   </div>
@@ -983,10 +983,10 @@ function ChatInner() {
                   <button
                     type="button"
                     onClick={createNewSession}
-                    className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-xs font-semibold text-textPrimary shadow-sm transition hover:bg-sky-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                     aria-label="Create new chat"
                   >
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-[13px]">
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-bgPrimary/10 text-[13px]">
                       +
                     </span>
                     New Chat
@@ -995,7 +995,7 @@ function ChatInner() {
               </div>
 
               {/* SESSIONS STRIP */}
-              <div className="relative z-10 flex items-center gap-3 overflow-x-auto pt-1 text-xs text-slate-100">
+              <div className="relative z-10 flex items-center gap-3 overflow-x-auto pt-1 text-xs text-textMuted">
                 {filteredSessions.map((session) => {
                   const isActive = session.id === activeSession?.id;
                   const tooltip = `${session.title}\n${formatPreview(
@@ -1022,8 +1022,8 @@ function ChatInner() {
                         className={[
                           "inline-flex items-center gap-2 rounded-full px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-sky-500",
                           isActive
-                            ? "bg-slate-100 text-slate-900"
-                            : "bg-slate-900/80 text-slate-100 hover:bg-slate-800",
+                            ? "bg-bgPrimary text-textPrimary"
+                            : "bg-bgElevated/80 text-textMuted hover:bg-bgElevated",
                         ].join(" ")}
                         aria-pressed={isActive}
                         aria-label={`Open Chat ${session.title}`}
@@ -1050,7 +1050,7 @@ function ChatInner() {
                               }
                             }}
                             autoFocus
-                            className="w-32 rounded-full bg-white px-2 py-0.5 text-xs text-slate-900 focus:outline-none"
+                            className="w-32 rounded-full bg-bgPrimary px-2 py-0.5 text-xs text-textPrimary focus:outline-none"
                             aria-label="Rename Toron chat"
                           />
                         ) : (
@@ -1061,7 +1061,7 @@ function ChatInner() {
                             {session.title}
                           </span>
                         )}
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-textSecondary">
                           {formatTime(session.createdAt)}
                         </span>
                       </button>
@@ -1069,10 +1069,10 @@ function ChatInner() {
                         type="button"
                         onClick={() => togglePinSession(session.id)}
                         className={[
-                          "rounded-full p-1 text-slate-500 transition focus:outline-none focus:ring-2 focus:ring-sky-500",
+                          "rounded-full p-1 text-textSecondary transition focus:outline-none focus:ring-2 focus:ring-sky-500",
                           session.pinned
                             ? "text-sky-400"
-                            : "group-hover:text-slate-200",
+                            : "group-hover:text-textMuted",
                         ].join(" ")}
                         aria-label={
                           session.pinned ? "Unpin chat" : "Pin chat"
@@ -1087,7 +1087,7 @@ function ChatInner() {
                       <button
                         type="button"
                         onClick={() => handleShareSessionHeader(session)}
-                        className="rounded-full p-1 text-slate-500 opacity-0 transition hover:text-sky-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
+                        className="rounded-full p-1 text-textSecondary opacity-0 transition hover:text-sky-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
                         aria-label="Copy chat summary"
                       >
                         <Share2 className="h-3.5 w-3.5" />
@@ -1095,7 +1095,7 @@ function ChatInner() {
                       <button
                         type="button"
                         onClick={() => handleDeleteSession(session.id)}
-                        className="rounded-full p-1 text-slate-500 opacity-0 transition hover:text-rose-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
+                        className="rounded-full p-1 text-textSecondary opacity-0 transition hover:text-rose-400 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-sky-500 group-hover:opacity-100"
                         aria-label="Delete chat"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -1107,31 +1107,31 @@ function ChatInner() {
 
               {/* SETTINGS PANEL */}
               {settingsOpen && (
-                <div className="relative z-10 rounded-2xl border border-slate-700 bg-slate-950/95 p-4 text-xs text-slate-100 shadow-sm">
+                <div className="relative z-10 rounded-2xl border border-borderStrong bg-bgElevated/95 p-4 text-xs text-textMuted shadow-sm">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-textMuted">
                         Toron settings
                       </span>
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[11px] text-textSecondary">
                         Nudge how serious, playful, or technical Toron should be.
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSettingsOpen(false)}
-                      className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-[11px] text-slate-200 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      className="rounded-full border border-borderStrong bg-bgElevated px-3 py-1 text-[11px] text-textMuted transition hover:bg-bgElevated focus:outline-none focus:ring-2 focus:ring-sky-500"
                     >
                       Close
                     </button>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-borderStrong bg-bgElevated px-3 py-3">
                       <div>
-                        <p className="text-xs font-medium text-slate-100">
+                        <p className="text-xs font-medium text-textMuted">
                           Allow NSFW topics
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-textMuted">
                           Off by default. Turn on only if you’re okay with it.
                         </p>
                       </div>
@@ -1144,12 +1144,12 @@ function ChatInner() {
                         label="Allow NSFW topics"
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-borderStrong bg-bgElevated px-3 py-3">
                       <div>
-                        <p className="text-xs font-medium text-slate-100">
+                        <p className="text-xs font-medium text-textMuted">
                           Light jokes
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-textMuted">
                           Let Toron sprinkle in gentle humor when it’s helpful.
                         </p>
                       </div>
@@ -1161,12 +1161,12 @@ function ChatInner() {
                         label="Enable light jokes"
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-borderStrong bg-bgElevated px-3 py-3">
                       <div>
-                        <p className="text-xs font-medium text-slate-100">
+                        <p className="text-xs font-medium text-textMuted">
                           Technical mode
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-textMuted">
                           More structure, less fluff, more deep-dive.
                         </p>
                       </div>
@@ -1178,12 +1178,12 @@ function ChatInner() {
                         label="Technical mode"
                       />
                     </div>
-                    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                    <div className="flex items-center justify-between gap-4 rounded-xl border border-borderStrong bg-bgElevated px-3 py-3">
                       <div>
-                        <p className="text-xs font-medium text-slate-100">
+                        <p className="text-xs font-medium text-textMuted">
                           Connected apps
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-textMuted">
                           Let Toron weave in context from Workspace, Outbox, and
                           Docs (when wired).
                         </p>
@@ -1232,7 +1232,7 @@ function ChatInner() {
                 )}
 
                 {/* MESSAGE LIST */}
-                <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-800/80 bg-slate-950/90">
+                <div className="relative flex min-h-0 flex-1 flex-col rounded-2xl border border-borderStrong/80 bg-bgElevated/90">
                   <div
                     ref={messagesContainerRef}
                     className="flex h-full flex-col gap-4 overflow-y-auto px-6 py-5"
@@ -1240,7 +1240,7 @@ function ChatInner() {
                     aria-live="polite"
                   >
                     {timelineLabel && (
-                      <span className="mx-auto mb-1 inline-flex items-center rounded-full border border-slate-700 bg-slate-900/95 px-3 py-1 text-[11px] font-medium text-slate-300">
+                      <span className="mx-auto mb-1 inline-flex items-center rounded-full border border-borderStrong bg-bgElevated/95 px-3 py-1 text-[11px] font-medium text-textMuted">
                         {timelineLabel}
                       </span>
                     )}
@@ -1319,7 +1319,7 @@ function ChatInner() {
                                 }
                               />
                             </div>
-                            <span className="mt-1 text-[10px] text-slate-500">
+                            <span className="mt-1 text-[10px] text-textSecondary">
                               {formatTime(message.createdAt)}
                               {message.status === "error"
                                 ? " · delivery issue"
@@ -1336,7 +1336,7 @@ function ChatInner() {
                     <button
                       type="button"
                       onClick={scrollToTop}
-                      className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      className="pointer-events-auto mb-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-borderStrong bg-bgElevated/95 text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500"
                       aria-label="Jump to top"
                     >
                       <ArrowUp className="h-4 w-4" />
@@ -1347,7 +1347,7 @@ function ChatInner() {
                         scrollToBottom();
                         composerRef.current?.focus();
                       }}
-                      className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      className="pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border border-borderStrong bg-bgElevated/95 text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500"
                       aria-label="Jump to latest"
                     >
                       <ArrowDown className="h-4 w-4" />
@@ -1356,12 +1356,12 @@ function ChatInner() {
 
                   {isThinking && (
                     <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-                      <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/95 px-4 py-1.5 text-[11px] text-slate-200 shadow-sm animate-aurora-pulse">
+                      <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-borderStrong bg-bgElevated/95 px-4 py-1.5 text-[11px] text-textMuted shadow-sm animate-aurora-pulse">
                         <span>Toron is composing a reply…</span>
                         <button
                           type="button"
                           onClick={stopPendingReply}
-                          className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          className="inline-flex items-center gap-1 rounded-full bg-sky-500 px-2 py-0.5 text-[11px] font-semibold text-textPrimary shadow-sm hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500"
                           aria-label="Stop generating reply"
                         >
                           <Square className="h-3 w-3" /> Pause
@@ -1374,15 +1374,15 @@ function ChatInner() {
                 {/* COMPOSER */}
                 <form
                   onSubmit={handleSubmit}
-                  className="relative z-10 flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/90 px-4 py-3"
+                  className="relative z-10 flex flex-col gap-3 rounded-2xl border border-borderStrong bg-bgElevated/90 px-4 py-3"
                 >
                   {/* Toolbar */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-300">
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-textMuted">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={triggerFilePicker}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-borderStrong bg-bgElevated/95 text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500"
                         title="Add attachments"
                         aria-label="Add attachments"
                       >
@@ -1399,7 +1399,7 @@ function ChatInner() {
                               : "slow",
                           )
                         }
-                        className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950/95 px-2.5 py-1 text-[11px] text-slate-200 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        className="inline-flex items-center gap-1 rounded-full border border-borderStrong bg-bgElevated/95 px-2.5 py-1 text-[11px] text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500"
                         aria-label="Toggle response speed"
                       >
                         <Zap className="h-3 w-3" />
@@ -1409,9 +1409,9 @@ function ChatInner() {
                           ? "Normal"
                           : "Fast"}
                       </button>
-                      <span className="hidden text-[10px] text-slate-500 md:inline">
+                      <span className="hidden text-[10px] text-textSecondary md:inline">
                         Tip:{" "}
-                        <kbd className="rounded border border-slate-600 bg-slate-900 px-1 text-[9px]">
+                        <kbd className="rounded border border-borderStrong bg-bgElevated px-1 text-[9px]">
                           ⌘ / Ctrl + K
                         </kbd>{" "}
                         focuses the composer.
@@ -1428,7 +1428,7 @@ function ChatInner() {
                             "inline-flex h-7 w-7 items-center justify-center rounded-full border text-[11px] shadow-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500",
                             isRecording
                               ? "border-emerald-400 bg-emerald-500/10 text-emerald-300 animate-pulse"
-                              : "border-slate-700 bg-slate-950/95 text-slate-300 hover:bg-slate-900 hover:text-slate-50",
+                              : "border-borderStrong bg-bgElevated/95 text-textMuted hover:bg-bgElevated hover:text-textMuted",
                           ].join(" ")}
                           aria-pressed={isRecording}
                           aria-label={
@@ -1451,7 +1451,7 @@ function ChatInner() {
                         </span>
                       )}
                       {voiceSupported === false && !voiceWarning && (
-                        <span className="rounded-full border border-slate-700 bg-slate-950/95 px-2 py-0.5 text-[10px] text-slate-400">
+                        <span className="rounded-full border border-borderStrong bg-bgElevated/95 px-2 py-0.5 text-[10px] text-textMuted">
                           Voice isn’t supported in this browser.
                         </span>
                       )}
@@ -1470,7 +1470,7 @@ function ChatInner() {
                   />
 
                   {/* Textarea + Send */}
-                  <div className="flex items-end gap-3 rounded-xl border border-slate-700 bg-slate-950/95 px-4 py-2 shadow-sm">
+                  <div className="flex items-end gap-3 rounded-xl border border-borderStrong bg-bgElevated/95 px-4 py-2 shadow-sm">
                     <textarea
                       ref={composerRef}
                       value={inputValue}
@@ -1478,12 +1478,12 @@ function ChatInner() {
                       onKeyDown={handleTextareaKeyDown}
                       rows={2}
                       placeholder="Talk to Toron about your ideas, tasks, or anything you’re figuring out…"
-                      className="max-h-32 flex-1 resize-none bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+                      className="max-h-32 flex-1 resize-none bg-transparent text-sm text-textMuted placeholder:text-textSecondary focus:outline-none"
                       aria-label="Toron composer"
                     />
                     <button
                       type="submit"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm transition hover:bg-sky-600 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-50 disabled:shadow-none"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-textPrimary shadow-sm transition hover:bg-sky-600 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:opacity-50 disabled:shadow-none"
                       disabled={
                         !inputValue.trim() &&
                         pendingAttachments.length === 0
@@ -1495,11 +1495,11 @@ function ChatInner() {
                   </div>
 
                   {pendingAttachments.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-slate-200">
+                    <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-textMuted">
                       {pendingAttachments.map((name) => (
                         <span
                           key={name}
-                          className="rounded-full border border-slate-700 bg-slate-950/95 px-2 py-0.5"
+                          className="rounded-full border border-borderStrong bg-bgElevated/95 px-2 py-0.5"
                         >
                           {name}
                         </span>
@@ -1507,7 +1507,7 @@ function ChatInner() {
                       <button
                         type="button"
                         onClick={() => handleFileChange(null)}
-                        className="ml-1 text-[10px] text-slate-400 underline decoration-dotted hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                        className="ml-1 text-[10px] text-textMuted underline decoration-dotted hover:text-textMuted focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                       >
                         Clear attachments
                       </button>

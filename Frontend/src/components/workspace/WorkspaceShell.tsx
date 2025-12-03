@@ -22,7 +22,7 @@ const WorkspaceShell: React.FC = () => {
   const [mode, setMode] = useState<WorkspaceMode>(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-white flex flex-col px-6 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black text-textPrimary flex flex-col px-6 py-8">
       <div className="flex items-center justify-between gap-4 max-w-5xl w-full mx-auto mb-6">
         <ListsWidget active={mode === 'lists'} onClick={() => setMode('lists')} />
         <CalendarWidget active={mode === 'calendar'} onClick={() => setMode('calendar')} />

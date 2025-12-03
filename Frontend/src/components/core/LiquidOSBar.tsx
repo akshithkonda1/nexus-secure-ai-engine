@@ -35,7 +35,7 @@ const LiquidOSBar: React.FC<LiquidOSBarProps> = ({ active, openPanel }) => {
           ))}
           <button
             onClick={() => openPanel("toron")}
-            className="flex items-center gap-2 rounded-full border border-[#6d4aff] bg-[#6d4aff] px-3 py-2 text-sm text-white shadow-[0_4px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
+            className="flex items-center gap-2 rounded-full border border-[#6d4aff] bg-[#6d4aff] px-3 py-2 text-sm text-textPrimary shadow-[0_4px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.02]"
           >
             <Bot className="h-4 w-4" /> Analyze with Toron
           </button>

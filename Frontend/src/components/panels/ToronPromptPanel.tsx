@@ -69,7 +69,7 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
                     <Signal className="h-3.5 w-3.5" />
                     {Object.keys(signal.payload).join(", ") || "payload"}
                   </span>
-                  <span className="text-[10px] uppercase text-black/50 dark:text-white/50">
+                  <span className="text-[10px] uppercase text-textPrimary/50 dark:text-textPrimary/50">
                     {new Date(signal.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
@@ -105,7 +105,7 @@ const ToronPromptPanel: React.FC<ToronPromptPanelProps> = ({ lists, events, conn
               onChange={(e) => setPrompt(e.target.value)}
             />
             <button
-              className="mt-3 rounded-full bg-[#6d4aff] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.01]"
+              className="mt-3 rounded-full bg-[#6d4aff] px-4 py-2 text-sm font-semibold text-textPrimary shadow-[0_4px_18px_rgba(0,0,0,0.18)] transition hover:scale-[1.01]"
               onClick={runAnalysis}
             >
               Generate insight

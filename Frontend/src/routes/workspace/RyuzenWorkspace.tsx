@@ -197,8 +197,8 @@ const RyuzenWorkspace: React.FC = () => {
       case "workspace-home":
       default:
         return (
-          <div className="mt-16 text-center text-neutral-700 dark:text-neutral-300">
-            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">Workspace Ready</h2>
+          <div className="mt-16 text-center text-textSecondary dark:text-textMuted">
+            <h2 className="text-2xl font-semibold text-textPrimary dark:text-textMuted">Workspace Ready</h2>
             <p>Pages, notes, boards, and flows stay inside this canvas.</p>
           </div>
         );

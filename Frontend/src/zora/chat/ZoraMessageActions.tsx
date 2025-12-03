@@ -9,7 +9,7 @@ type Props = {
 };
 
 const baseButton =
-  "inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-950/95 text-slate-300 shadow-sm transition hover:bg-slate-900 hover:text-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500";
+  "inline-flex h-7 w-7 items-center justify-center rounded-full border border-borderStrong bg-bgElevated/95 text-textMuted shadow-sm transition hover:bg-bgElevated hover:text-textMuted focus:outline-none focus:ring-2 focus:ring-sky-500";
 
 export const ToronMessageActions: React.FC<Props> = ({
   onThumbsUp,
@@ -18,7 +18,7 @@ export const ToronMessageActions: React.FC<Props> = ({
   onShare,
 }) => {
   return (
-    <div className="flex items-center gap-1 text-slate-400">
+    <div className="flex items-center gap-1 text-textMuted">
       {onThumbsUp && (
         <button
           type="button"
