@@ -46,5 +46,3 @@ class CacheLayer:
         decrypted = self._decrypt(encrypted.decode(), aal)
         decompressed = brotli.decompress(decrypted)
         return json.loads(decompressed.decode())
-
-
