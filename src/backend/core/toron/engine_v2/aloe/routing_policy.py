@@ -1,27 +1,45 @@
 """
-Routing Policy — selects best model mix based on:
+Routing Policy — intelligent model selection.
 
-- User tier
-- Reliability
-- Latency
-- Cost limits
-- Model availability
+Selects models based on:
+- user tier
+- budget constraints
+- diversity between clouds
+- reliability scores
 """
+
+import random
+
 
 class RoutingPolicy:
     def __init__(self, config):
         self.config = config
 
-    def select_models(self, request: dict):
+    def select_models(self, request):
         tier = request.get("tier", "free")
 
+        # Basic starter model sets by tier
         if tier == "free":
-            return ["gpt-4o-mini", "claude-3-5-haiku"]
-        if tier == "student":
-            return ["gpt-4o-mini", "claude-3-5-sonnet"]
-        if tier == "pro":
-            return ["gpt-4o", "claude-3-5-sonnet"]
-        if tier == "enterprise":
-            return ["gpt-4o", "claude-3-5-sonnet", "gemini-1.5-pro"]
+            # Cheapest / smallest models
+            return ["gpt-4o-mini", "claude-3-5-haiku-20241022"]
 
-        return ["gpt-4o-mini"]
+        if tier == "student":
+            return ["gpt-4o-mini", "claude-3-5-haiku-20241022", "gemini-1.5-flash"]
+
+        if tier == "pro":
+            return [
+                "gpt-4o",
+                "claude-3-5-sonnet-20241022",
+                "gemini-1.5-pro",
+            ]
+
+        if tier == "ultra":
+            return [
+                "gpt-4o",
+                "claude-3-5-sonnet-20241022",
+                "gemini-1.5-pro",
+                "llama3-70b-8192",
+            ]
+
+        # Enterprise tier uses all available connectors
+        return self.config.enterprise_model_list
