@@ -13,7 +13,7 @@ export const PageEditor: React.FC<PageEditorProps> = ({ value, onChange, onBlur 
       onChange={(event) => onChange(event.target.value)}
       onBlur={onBlur}
       placeholder="Start typing to ripple across your workspace..."
-      className="min-h-[320px] w-full rounded-3xl border border-tileBorder bg-tileStrong px-6 py-5 text-lg text-textMuted shadow-tile outline-none transition focus:border-tileBorderStrong focus:shadow-tileStrong typing-ripple"
+      className="min-h-[320px] w-full rounded-3xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-6 md:p-8 text-lg text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl outline-none transition focus:border-white/20 focus:shadow-[0_4px_24px_rgba(0,0,0,0.18)]"
     />
   );
 };
