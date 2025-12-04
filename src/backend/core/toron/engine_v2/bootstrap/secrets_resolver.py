@@ -1,26 +1,44 @@
 """
-Secrets Resolver for Toron Engine v2.0.
-Resolves AWS, Azure, GCP, and Direct API credentials
-in correct priority order for multi-cloud orchestration.
+SecretsResolver — loads secrets from:
+- AWS Secrets Manager
+- environment variables (fallback)
 """
 
 import os
+import json
 import boto3
 
+
 class SecretsResolver:
-
-    def resolve_aws(self) -> bool:
-        session = boto3.Session()
-        return session.get_credentials() is not None
-
-    def resolve_azure(self) -> bool:
-        return bool(os.getenv("AZURE_OPENAI_ENDPOINT") and os.getenv("AZURE_OPENAI_KEY"))
-
-    def resolve_gcp(self) -> bool:
-        return bool(
-            os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-            or os.getenv("GOOGLE_CLOUD_PROJECT")
+    def __init__(self):
+        self.client = boto3.client(
+            "secretsmanager",
+            region_name=os.getenv("AWS_REGION", "us-east-1")
         )
 
-    def resolve_direct_api(self, key_name: str):
-        return os.getenv(key_name)
+    def get(self, key):
+        """
+        Attempts to load key from:
+        1. AWS Secrets Manager
+        2. Local environment variables
+        """
+
+        # Try environment first
+        env_val = os.getenv(key)
+        if env_val:
+            return env_val
+
+        # Try AWS Secrets Manager
+        try:
+            resp = self.client.get_secret_value(SecretId=key)
+            payload = resp.get("SecretString")
+            if payload:
+                try:
+                    j = json.loads(payload)
+                    return j.get(key, payload)
+                except Exception:
+                    return payload
+        except Exception:
+            pass
+
+        return None
