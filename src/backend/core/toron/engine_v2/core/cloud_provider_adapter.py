@@ -25,11 +25,13 @@ class CloudProviderAdapter:
                     continue
         return {"error": "All providers failed."}, {}
 
-    def list_all_models(self):
+    async def list_all_models(self):
         all_models = []
         for c in self.connectors.values():
             try:
-                all_models.extend(c.list_models())
-            except:
+                models = await c.list_models()
+                if models:
+                    all_models.extend(models)
+            except Exception:
                 pass
         return all_models
