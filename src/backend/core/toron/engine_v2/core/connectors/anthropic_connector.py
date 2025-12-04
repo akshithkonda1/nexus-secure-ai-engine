@@ -7,6 +7,7 @@ from anthropic import AsyncAnthropic
 import os
 import asyncio
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class AnthropicConnector(BaseConnector):
@@ -15,12 +16,14 @@ class AnthropicConnector(BaseConnector):
 
     async def infer(self, messages, model, **kwargs):
         retries = 3
+        system, normalized = MessageNormalizer.to_anthropic_format(messages)
 
         for attempt in range(retries):
             try:
                 resp = await self.client.messages.create(
                     model=model,
-                    messages=messages,
+                    system=system,
+                    messages=normalized,
                     max_tokens=kwargs.get("max_tokens", 2048),
                     temperature=kwargs.get("temperature", 0.7),
                 )

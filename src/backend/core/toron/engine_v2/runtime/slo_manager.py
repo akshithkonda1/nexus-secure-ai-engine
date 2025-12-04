@@ -58,3 +58,27 @@ class SLOManager:
             "latency_ok": latency_good,
             "slo_pass": success_good and latency_good,
         }
+
+    def record(self, success: bool | None = None, latency_ms: float | None = None):
+        if success is True:
+            self.record_success()
+        elif success is False:
+            self.record_failure()
+        if latency_ms is not None:
+            self.record_latency(latency_ms)
+
+    def emit(self):
+        return self.check_slo()
+
+    def health(self):
+        data = self.check_slo()
+        data["status"] = "ok" if data.get("slo_pass") else "degraded"
+        return data
+
+    def serialize(self):
+        return {
+            "window_size": self.window_size,
+            "target_success_rate": self.target_success_rate,
+            "latency_slo_ms": self.latency_slo_ms,
+            "current": self.check_slo(),
+        }

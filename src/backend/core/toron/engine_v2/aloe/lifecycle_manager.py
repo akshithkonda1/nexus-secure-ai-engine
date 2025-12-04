@@ -41,6 +41,8 @@ class LifecycleManager:
         # 3. Routing
         selected = self.routing.select_models(request)
         context["selected_models"] = selected
+        if not context["selected_models"]:
+            context["selected_models"] = ["gpt-4o-mini"]
 
         # 4. Prepare sub-engines
         context["debate_engine"] = DebateEngine(self.adapter)
@@ -55,7 +57,16 @@ class LifecycleManager:
         # 6. Graph Execution
         graph = ExecutionGraph()
         graph.build(request, context, self.routing)
-        result = await graph.execute(context)
+        try:
+            result = await graph.execute(context)
+        except Exception as e:
+            import traceback
+            return {
+                "status": "error",
+                "error_message": str(e),
+                "traceback": traceback.format_exc(),
+                "confidence": 0.0
+            }
 
         # 7. Final validation
         result = await self.validation.evaluate(request, result, context)

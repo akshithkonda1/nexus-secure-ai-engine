@@ -6,6 +6,7 @@ import httpx
 import os
 import asyncio
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class MistralConnector(BaseConnector):
@@ -15,6 +16,7 @@ class MistralConnector(BaseConnector):
 
     async def infer(self, messages, model, **kwargs):
         retries = 3
+        normalized = MessageNormalizer.normalize_for_provider(messages, "mistral")
 
         for attempt in range(retries):
             try:
@@ -24,7 +26,7 @@ class MistralConnector(BaseConnector):
                         headers={"Authorization": f"Bearer {self.api_key}"},
                         json={
                             "model": model,
-                            "messages": messages,
+                            "messages": normalized,
                             "max_tokens": kwargs.get("max_tokens", 2048)
                         }
                     )

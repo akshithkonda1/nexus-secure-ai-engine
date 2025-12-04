@@ -7,6 +7,7 @@ from openai import AsyncOpenAI
 import os
 import asyncio
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class OpenAIConnector(BaseConnector):
@@ -15,12 +16,13 @@ class OpenAIConnector(BaseConnector):
 
     async def infer(self, messages, model, **kwargs):
         retries = 3
+        normalized = MessageNormalizer.normalize_for_provider(messages, "openai")
 
         for attempt in range(retries):
             try:
                 resp = await self.client.chat.completions.create(
                     model=model,
-                    messages=messages,
+                    messages=normalized,
                     max_tokens=kwargs.get("max_tokens", 2048),
                     temperature=kwargs.get("temperature", 0.7),
                     timeout=kwargs.get("timeout", 30.0)
