@@ -1,15 +1,5 @@
 """
-ALOE Lifecycle Manager — 8-stage orchestrator for Toron Engine v2.0
-Follows QGC (Quality, Growth, Cost) in every stage:
-
-1. Signal Intake
-2. Consent Evaluation
-3. Execution Graph Planning
-4. Model Routing
-5. Context Assembly
-6. Action Execution (DAG)
-7. Validation & Reflection
-8. State Persistence
+ALOE Lifecycle Manager — executes the 8-stage request pipeline.
 """
 
 from .execution_graph import ExecutionGraph
@@ -18,72 +8,60 @@ from .state_manager import StateManager
 from .routing_policy import RoutingPolicy
 from .validation_policy import ValidationPolicy
 
+from ..core.debate_engine import DebateEngine
+from ..core.fact_extractor import FactExtractor
+from ..core.web_search import WebSearch
+from ..core.web_validator import WebValidator
+from ..core.consensus_integrator import ConsensusIntegrator
+
 
 class LifecycleManager:
     def __init__(self, config, adapter):
         self.config = config
         self.adapter = adapter
-        self.graph = ExecutionGraph()
+
         self.consent = ConsentManager()
         self.state = StateManager()
         self.routing = RoutingPolicy(config)
         self.validation = ValidationPolicy(config)
 
-    async def run(self, request: dict, context: dict):
-        # -----------------------------
-        # Stage 1 — Signal Intake
-        # -----------------------------
-        context["raw_request"] = request
+    async def run(self, request, context):
+        # 1. Intake
         context["prompt"] = request.get("prompt", "")
         context["adapter"] = self.adapter
-        context["config"] = self.config
 
-        # -----------------------------
-        # Stage 2 — Consent Check
-        # -----------------------------
+        # 2. Consent
         if not self.consent.allowed(request):
             return {
                 "status": "error",
                 "error_message": "User consent required.",
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
-        # -----------------------------
-        # Stage 3 — Build Execution Graph
-        # -----------------------------
-        self.graph.build(request, context, routing=self.routing)
+        # 3. Routing
+        selected = self.routing.select_models(request)
+        context["selected_models"] = selected
 
-        # -----------------------------
-        # Stage 4 — Model Routing
-        # -----------------------------
-        context["selected_models"] = self.routing.select_models(request)
+        # 4. Prepare sub-engines
+        context["debate_engine"] = DebateEngine(self.adapter)
+        context["fact_extractor"] = FactExtractor(self.adapter)
+        context["web_search"] = WebSearch()
+        context["validator"] = WebValidator(self.adapter)
+        context["consensus_engine"] = ConsensusIntegrator()
 
-        # -----------------------------
-        # Stage 5 — Context Assembly
-        # -----------------------------
+        # 5. Attach state
         context = self.state.attach_user_preferences(context)
 
-        # -----------------------------
-        # Stage 6 — Action Execution (DAG)
-        # -----------------------------
-        try:
-            result = await self.graph.execute(context)
-        except Exception as e:
-            return {
-                "status": "error",
-                "error_message": f"DAG Execution failed: {str(e)}",
-                "confidence": 0.0
-            }
+        # 6. Graph Execution
+        graph = ExecutionGraph()
+        graph.build(request, context, self.routing)
+        result = await graph.execute(context)
 
-        # -----------------------------
-        # Stage 7 — Validation & Reflection
-        # -----------------------------
-        validated = await self.validation.evaluate(request, result, context)
+        # 7. Final validation
+        result = await self.validation.evaluate(request, result, context)
 
-        # -----------------------------
-        # Stage 8 — State Persistence
-        # -----------------------------
-        self.state.update_model_reliability(validated)
+        # 8. Persistence
+        self.state.update_model_reliability(result)
         self.state.update_preferences(context)
 
-        return validated
+        return result

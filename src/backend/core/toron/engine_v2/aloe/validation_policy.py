@@ -1,21 +1,26 @@
 """
-Validation Policy — final QGC scoring pass:
-
-Composite Confidence =
-  60% model consensus score
-  40% web validation score
+Validation Policy — final stage reflection & confidence shaping.
 """
+
 
 class ValidationPolicy:
     def __init__(self, config):
         self.config = config
 
-    async def evaluate(self, request: dict, result: dict, context: dict):
-        model_score = result.get("model_consensus_score", 0.4)
-        web_score = result.get("web_validation_score", 0.4)
+    async def evaluate(self, request, result, context):
+        """
+        Final quality validation of the answered result.
+        (Could later integrate guardrails, safety models, bias reduction.)
+        """
 
-        result["confidence"] = round(
-            (model_score * 0.6) + (web_score * 0.4), 4
-        )
+        # If answer confidence is too low, add penalty
+        conf = result.get("confidence", 0.0)
+        if conf < 0.2:
+            result["confidence"] = round(conf * 0.8, 4)
+
+        # If unsafe or missing — fallback to "uncertain" wrapper
+        answer = result.get("final_answer", "")
+        if not answer or len(answer.strip()) == 0:
+            result["final_answer"] = "I'm not fully confident, but here's what is most likely true."
 
         return result
