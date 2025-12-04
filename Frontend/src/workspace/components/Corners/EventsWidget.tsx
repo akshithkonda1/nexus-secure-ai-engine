@@ -7,8 +7,8 @@ export const EventsWidget: React.FC = () => {
   const { mode } = useModeStore();
 
   const tilePanel =
-    "relative rounded-3xl bg-tile bg-tileGradient border border-tileBorder shadow-tile px-6 py-5 before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:shadow-tileStrong hover:border-tileBorderStrong";
-  const innerTile = "rounded-xl bg-tileStrong border border-tileBorder px-4 py-3 shadow-tile";
+    "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl px-6 py-5 transition-all duration-300 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2)]";
+  const innerTile = "rounded-xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 px-4 py-3 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
 
   return (
     <div className={`${tilePanel} fade-in`}>
@@ -19,17 +19,17 @@ export const EventsWidget: React.FC = () => {
         </div>
         <span className="text-xs text-textSecondary">{mode === "advanced" ? "Advanced" : "Basic"}</span>
       </div>
-      <div className="mt-3 space-y-2 text-sm text-textMuted">
-        {events.length === 0 && <p className="text-textSecondary">No events yet.</p>}
+      <div className="mt-3 space-y-2 text-sm text-neutral-800 dark:text-neutral-200">
+        {events.length === 0 && <p className="text-neutral-700 dark:text-neutral-300">No events yet.</p>}
         {events.map((event) => (
           <div key={event.id} className={innerTile}>
-            <p>{event.description}</p>
-            <p className="text-xs text-textSecondary">{new Date(event.timestamp).toLocaleString()}</p>
+            <p className="text-neutral-800 dark:text-neutral-100">{event.description}</p>
+            <p className="text-xs text-neutral-700 dark:text-neutral-300">{new Date(event.timestamp).toLocaleString()}</p>
           </div>
         ))}
       </div>
       {mode === "advanced" && (
-        <div className={`${innerTile} mt-3 text-xs text-textMuted`}>
+        <div className={`${innerTile} mt-3 text-xs`}>
           Auto-updates whenever Pages saves.
         </div>
       )}

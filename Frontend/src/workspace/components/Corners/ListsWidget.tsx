@@ -8,9 +8,9 @@ export const ListsWidget: React.FC = () => {
   const [draft, setDraft] = useState("");
 
   const tilePanel =
-    "relative z-[10] overflow-hidden rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]";
+    "relative z-[10] overflow-hidden rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]";
   const innerTile =
-    "relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-5 md:p-6 text-neutral-700 dark:text-neutral-300 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)]";
+    "relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-5 md:p-6 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl";
 
   return (
     <div
@@ -33,7 +33,7 @@ export const ListsWidget: React.FC = () => {
               type="checkbox"
               checked={task.completed}
               onChange={() => toggleTask(task.id)}
-              className="h-4 w-4 rounded border-white/10 dark:border-neutral-700/20 bg-transparent"
+              className="h-4 w-4 rounded border border-neutral-300/50 dark:border-neutral-700/50 bg-transparent"
             />
             <span className={`relative flex-1 text-sm ${task.completed ? "line-through text-neutral-500 dark:text-neutral-400" : "text-neutral-800 dark:text-neutral-100"}`}>
               {task.title}
@@ -54,7 +54,7 @@ export const ListsWidget: React.FC = () => {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Add task"
-          className="flex-1 rounded-2xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-5 md:p-6 text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl outline-none transition focus:border-white/20 focus:shadow-[0_4px_24px_rgba(0,0,0,0.18)]"
+          className="flex-1 rounded-2xl border border-neutral-300/50 dark:border-neutral-700/50 bg-white/85 dark:bg-neutral-900/85 p-5 md:p-6 text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl outline-none transition focus:border-neutral-400/70 focus:shadow-[0_4px_24px_rgba(0,0,0,0.18)] dark:focus:border-neutral-500/70"
         />
         <button
           className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm text-neutral-50 shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01] hover:bg-emerald-500"

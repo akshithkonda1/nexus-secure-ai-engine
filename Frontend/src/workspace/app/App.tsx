@@ -33,7 +33,7 @@ export const App: React.FC = () => {
               <WelcomeScreen onStart={() => setHasStarted(true)} />
             ) : (
               <div className="relative flex min-h-screen flex-col">
-                <header className="relative z-[10] mx-6 mt-4 flex items-center justify-between rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]">
+                <header className="relative z-[10] mx-6 mt-4 flex items-center justify-between rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]">
                   <div className="absolute inset-0 pointer-events-none rounded-3xl backdrop-blur-xl" />
                   <div className="text-lg font-semibold tracking-tight">Workspace</div>
                   <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export const App: React.FC = () => {
                     onClick={closeToron}
                   >
                     <div className="max-w-4xl w-full px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative z-[30] rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_8px_40px_rgba(0,0,0,0.25)] scale-[1.01] animate-[fadeIn_120ms_ease-out]">
+                      <div className="relative z-[30] rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_8px_40px_rgba(0,0,0,0.25)] scale-[1.01] animate-[fadeIn_120ms_ease-out]">
                         <div className="absolute inset-0 pointer-events-none rounded-3xl backdrop-blur-xl" />
                         <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100">Toron Analysis</h2>
                         <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -79,7 +79,7 @@ export const App: React.FC = () => {
                           {cards.map((card) => (
                             <div
                               key={card.id}
-                              className="relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-5 md:p-6 text-neutral-700 dark:text-neutral-300 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01] backdrop-blur-xl"
+                              className="relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-5 md:p-6 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01] backdrop-blur-xl"
                             >
                               <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
                               <div className="relative text-sm font-semibold text-neutral-800 dark:text-neutral-100">{card.title}</div>
@@ -92,13 +92,13 @@ export const App: React.FC = () => {
                                   Accept
                                 </button>
                                 <button
-                                  className="rounded-full border border-white/10 dark:border-neutral-700/20 px-3 py-1 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 hover:scale-[1.01]"
+                                  className="rounded-full border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-1 text-neutral-800 dark:text-neutral-200 transition-transform duration-300 hover:scale-[1.01]"
                                   onClick={() => card.onIgnore?.(card.id)}
                                 >
                                   Ignore
                                 </button>
                                 <button
-                                  className="rounded-full border border-white/10 dark:border-neutral-700/20 px-3 py-1 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 hover:scale-[1.01]"
+                                  className="rounded-full border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-1 text-neutral-800 dark:text-neutral-200 transition-transform duration-300 hover:scale-[1.01]"
                                   onClick={() => card.onExplain?.(card.id)}
                                 >
                                   Explain
