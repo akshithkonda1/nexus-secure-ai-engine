@@ -1,10 +1,92 @@
 """
-Debate Engine — multi-model parallel debate
+Debate Engine — Toron v2.0
+Two-round multi-model debate:
+  • Round 1: Parallel responses
+  • Round 2: Mutual critique
+Ultra-fast, ALOE/QGC compliant.
 """
 
+import asyncio
+
+
 class DebateEngine:
+    def __init__(self, adapter):
+        self.adapter = adapter
+
     async def run(self, context):
         models = context["selected_models"]
-        # Placeholder logic (actual connectors added in Set 2)
-        responses = {m: f"Response from {m}" for m in models}
-        return {"model_outputs": responses}
+        prompt = context["prompt"]
+
+        messages = context.get(
+            "messages",
+            [{"role": "user", "content": prompt}]
+        )
+
+        # -----------------------------
+        # ROUND 1 — PARALLEL RESPONSES
+        # -----------------------------
+        tasks = [
+            self.adapter.dispatch(messages, model)
+            for model in models
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        model_outputs = {}
+        for model, result in zip(models, results):
+            if isinstance(result, Exception):
+                model_outputs[model] = f"[Error: {str(result)}]"
+            else:
+                output, meta = result
+                model_outputs[model] = self._extract_text(output)
+
+        # -----------------------------
+        # ROUND 2 — CRITIQUE
+        # -----------------------------
+        critiques = {}
+
+        for model in models:
+            others = "\n\n".join([
+                f"Model {m}:\n{txt}"
+                for m, txt in model_outputs.items()
+                if m != model
+            ])
+
+            critique_prompt = f"""
+You are participating in a multi-model debate.
+
+Review the following responses analytically and constructively.
+Identify factual issues, unclear reasoning, and which segments appear strongest.
+
+{others}
+
+Summarize your critique clearly.
+"""
+
+            critique_messages = [
+                {"role": "user", "content": critique_prompt}
+            ]
+
+            try:
+                critique_output, _ = await self.adapter.dispatch(
+                    critique_messages, model
+                )
+                critiques[model] = self._extract_text(critique_output)
+            except Exception as e:
+                critiques[model] = f"[Critique error: {str(e)}]"
+
+        return {
+            "model_outputs": model_outputs,
+            "critiques": critiques,
+            "models_used": models
+        }
+
+    def _extract_text(self, resp):
+        if hasattr(resp, "content"):
+            c = resp.content
+            if isinstance(c, list):
+                return c[0].text
+            return c
+        if isinstance(resp, dict):
+            return resp.get("content", str(resp))
+        return str(resp)
