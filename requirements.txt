@@ -9,3 +9,36 @@ pytest>=8.2.0
 pytest-html>=4.1.1
 pytest-cov>=4.1.0
 coverage>=7.5.0
+
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+aiohttp>=3.9.0
+httpx>=0.25.0
+
+# AWS
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Azure
+openai>=1.10.0
+azure-identity>=1.15.0
+
+# GCP
+google-cloud-aiplatform>=1.40.0
+google-auth>=2.26.0
+
+# Direct API
+anthropic>=0.18.0
+cohere>=4.40.0
+mistralai>=0.1.0
+groq>=0.4.0
+
+# Caching & Compression
+redis[hiredis]>=5.0.0
+brotli>=1.1.0
+
+# Security
+cryptography>=41.0.0
+
+beautifulsoup4>=4.12.0
+
