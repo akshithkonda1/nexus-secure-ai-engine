@@ -40,18 +40,11 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ mode }) => {
   };
 
   return (
-    <div
-      className="relative w-full min-h-[60vh] p-8 overflow-hidden"
-      style={{
-        background: "var(--rz-bg-secondary)",
-        color: "var(--rz-text)",
-        borderRadius: "var(--rz-radius)",
-        backdropFilter: "blur(30px)",
-        border: `1px solid var(--rz-border)`,
-        boxShadow: `0 10px 30px var(--rz-shadow)` ,
-      }}
-    >
-      {renderPanel()}
+    <div className="relative w-full min-h-[60vh] overflow-hidden rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]">
+      <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
+      <div className="relative h-full w-full p-8 leading-relaxed text-neutral-800 dark:text-neutral-200">
+        {renderPanel()}
+      </div>
     </div>
   );
 };

@@ -41,12 +41,12 @@ const CalendarPanel: React.FC = () => {
   });
 
   const controlClass =
-    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+    "w-full rounded-xl border px-3 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 border-white/10 dark:border-neutral-700/20";
   const actionButtonClass =
-    "rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+    "rounded-full px-4 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
   const compactActionButtonClass =
-    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
-  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+    "rounded-full px-3 py-1 text-sm leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
+  const pillClass = "rounded-full border px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 border-white/10 dark:border-neutral-700/20";
 
   const upcoming = useMemo(() => [...events].sort((a, b) => a.date.localeCompare(b.date)), [events]);
 
@@ -92,11 +92,11 @@ const CalendarPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 text-[var(--rz-text)]">
+    <div className="space-y-4 leading-relaxed text-neutral-800 dark:text-neutral-200">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold text-[var(--rz-text)]">Calendar</h2>
-          <p className="text-[var(--rz-text)]">Events live in a full-screen floating window for focus.</p>
+          <h2 className="text-2xl font-semibold">Calendar</h2>
+          <p>Events live in a full-screen floating window for focus.</p>
         </div>
         <input
           value={calendarName}
@@ -157,8 +157,9 @@ const CalendarPanel: React.FC = () => {
         {upcoming.map((event, index) => (
           <div
             key={event.id}
-            className="space-y-2 rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
+            className="relative space-y-2 rounded-3xl border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
           >
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 value={event.title}

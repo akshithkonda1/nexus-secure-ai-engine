@@ -2,17 +2,18 @@ import React from "react";
 
 const FlowsPanel: React.FC = () => {
   return (
-    <div className="space-y-3 text-[var(--rz-text)]">
-      <h2 className="text-2xl font-semibold text-[var(--rz-text)]">Flows</h2>
-      <p className="text-[var(--rz-text)]">Design automations and handoffs across the workspace.</p>
-      <div className="space-y-2">
+    <div className="space-y-4 leading-relaxed text-neutral-800 dark:text-neutral-200">
+      <h2 className="text-2xl font-semibold">Flows</h2>
+      <p>Design automations and handoffs across the workspace.</p>
+      <div className="space-y-3">
         {["Intake → Review", "Signals → Alerts", "Research → Toron"].map((flow) => (
           <div
             key={flow}
-            className="flex items-center justify-between rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 text-[var(--rz-text)]"
+            className="relative flex items-center justify-between rounded-3xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-6 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
           >
-            <span>{flow}</span>
-            <span className="rounded-full border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] px-3 py-1 text-xs text-[var(--rz-text)]">
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
+            <span className="relative">{flow}</span>
+            <span className="relative rounded-full border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 px-3 py-1 text-xs leading-relaxed">
               Flow Draft
             </span>
           </div>

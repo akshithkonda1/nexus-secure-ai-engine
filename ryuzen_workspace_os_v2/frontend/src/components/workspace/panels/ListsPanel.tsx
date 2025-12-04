@@ -69,12 +69,12 @@ const ListsPanel: React.FC = () => {
   const [newItem, setNewItem] = useState({ title: "", time: "", tags: "", syncStatus: "Pending" as const });
 
   const controlClass =
-    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+    "w-full rounded-xl border px-3 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 border-white/10 dark:border-neutral-700/20";
   const actionButtonClass =
-    "rounded-full px-3 py-2 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+    "rounded-full px-3 py-2 text-sm leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
   const compactActionButtonClass =
-    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
-  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+    "rounded-full px-3 py-1 text-sm leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
+  const pillClass = "rounded-full border px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 border-white/10 dark:border-neutral-700/20";
 
   const activeList = useMemo(() => lists.find((list) => list.id === selectedListId) ?? lists[0], [lists, selectedListId]);
 
@@ -164,11 +164,11 @@ const ListsPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 text-[var(--rz-text)]">
+    <div className="space-y-4 leading-relaxed text-neutral-800 dark:text-neutral-200">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold text-[var(--rz-text)]">Lists</h2>
-          <p className="text-[var(--rz-text)]">Organize workstreams with flexible lists.</p>
+          <h2 className="text-2xl font-semibold">Lists</h2>
+          <p>Organize workstreams with flexible lists.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -194,23 +194,25 @@ const ListsPanel: React.FC = () => {
             type="button"
             key={list.id}
             onClick={() => setSelectedListId(list.id)}
-            className={`w-full rounded-2xl border text-left text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10 p-4 shadow-sm transition ${
+            className={`relative w-full rounded-3xl border text-left leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 border-white/10 dark:border-neutral-700/20 p-6 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10] hover:scale-[1.01] transition-transform duration-300 ${
               selectedListId === list.id ? "ring-2 ring-black/10 dark:ring-white/10" : ""
             }`}
           >
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <input
               value={list.name}
               onChange={(event) => updateListName(list.id, event.target.value)}
               className={`${controlClass} text-lg font-semibold focus:outline-none`}
               aria-label={`Rename ${list.name}`}
             />
-            <p className="text-sm text-[var(--rz-text)]">{list.items.length} items</p>
+            <p className="text-sm">{list.items.length} items</p>
           </button>
         ))}
       </div>
 
       {activeList && (
-        <div className="space-y-3 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 shadow-sm">
+        <div className="relative space-y-3 rounded-3xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-6 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]">
+          <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
           <div className="grid gap-3 md:grid-cols-4">
             <input
               value={newItem.title}
@@ -240,13 +242,13 @@ const ListsPanel: React.FC = () => {
               <option value="Syncing">Syncing</option>
             </select>
           </div>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]"
-              onClick={addItem}
-            >
-              Add item
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="rounded-full px-4 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85"
+            onClick={addItem}
+          >
+            Add item
             </button>
           </div>
 
@@ -254,8 +256,9 @@ const ListsPanel: React.FC = () => {
             {activeList.items.map((item, index) => (
               <div
                 key={item.id}
-                className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
+                className="relative rounded-3xl border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
               >
+                <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
                 <div className="grid gap-3 md:grid-cols-4 md:items-center">
                   <input
                     value={item.title}
@@ -282,7 +285,7 @@ const ListsPanel: React.FC = () => {
                     <option value="Syncing">Syncing</option>
                   </select>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className={pillClass}>
                     {item.tags.length ? item.tags.join(", ") : "No tags"}
                   </span>
@@ -315,7 +318,7 @@ const ListsPanel: React.FC = () => {
                   >
                     Delete
                   </button>
-                  <span className="ml-auto text-xs text-[var(--rz-text)]">Item {index + 1} of {activeList.items.length}</span>
+                  <span className="ml-auto text-xs">Item {index + 1} of {activeList.items.length}</span>
                 </div>
               </div>
             ))}

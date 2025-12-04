@@ -1,12 +1,12 @@
 :root {
   --rz-bg: linear-gradient(145deg, #f7f8fa 0%, #eef1f4 100%);
   --rz-bg-secondary: #ffffff;
-  --rz-surface: rgba(255, 255, 255, 0.9);
-  --rz-surface-glass: rgba(255, 255, 255, 0.9);
-  --rz-text: #000000;
+  --rz-surface: rgba(255, 255, 255, 0.85);
+  --rz-surface-glass: rgba(255, 255, 255, 0.85);
+  --rz-text: #1f2937;
   --rz-text-primary: var(--rz-text);
   --rz-text-secondary: var(--rz-text);
-  --rz-border: rgba(0, 0, 0, 0.08);
+  --rz-border: rgba(255, 255, 255, 0.1);
   --rz-accent: #5b8def;
   --rz-shadow: rgba(6, 23, 52, 0.18);
   --rz-radius: 22px;
@@ -17,12 +17,12 @@
 .dark {
   --rz-bg: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
   --rz-bg-secondary: #0e121b;
-  --rz-surface: rgba(11, 15, 25, 0.9);
-  --rz-surface-glass: rgba(11, 15, 25, 0.9);
-  --rz-text: #ffffff;
+  --rz-surface: rgba(17, 24, 39, 0.85);
+  --rz-surface-glass: rgba(17, 24, 39, 0.85);
+  --rz-text: #e5e7eb;
   --rz-text-primary: var(--rz-text);
   --rz-text-secondary: var(--rz-text);
-  --rz-border: rgba(255, 255, 255, 0.12);
+  --rz-border: rgba(55, 65, 81, 0.2);
   --rz-accent: #6ba8ff;
   --rz-shadow: rgba(0, 0, 0, 0.35);
 }
