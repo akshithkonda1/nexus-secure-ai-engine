@@ -1,25 +1,35 @@
 """
-State Manager — supports growth tracking & reliability evolution
+State Manager — tracks:
+
+- User preferences
+- Model reliability scores
+- Drift accumulation
+- QGC reinforcement signals
 """
 
 class StateManager:
     def __init__(self):
-        self.model_reliability = {}
-        self.user_preferences = {}
+        self.user_prefs = {}
+        self.model_reliability = {}   # simple EWMA reliability
 
-    def attach_user_preferences(self, context):
+    def attach_user_preferences(self, context: dict):
         user = context.get("user_id")
-        context["preferences"] = self.user_preferences.get(user, {})
+        if not user:
+            return context
+        context["preferences"] = self.user_prefs.get(user, {})
         return context
 
-    def update_preferences(self, context):
+    def update_preferences(self, context: dict):
         user = context.get("user_id")
-        if user:
-            self.user_preferences[user] = context.get("preferences", {})
+        if not user:
+            return
+        prefs = context.get("preferences", {})
+        self.user_prefs[user] = prefs
 
-    def update_model_reliability(self, result):
-        model = result.get("model_used")
-        score = result.get("confidence", 0.5)
-        if model:
-            prev = self.model_reliability.get(model, 0.5)
-            self.model_reliability[model] = prev * 0.9 + score * 0.1
+    def update_model_reliability(self, validated: dict):
+        model = validated.get("model_used")
+        if not model:
+            return
+        score = validated.get("confidence", 0.5)
+        old = self.model_reliability.get(model, 0.5)
+        self.model_reliability[model] = (old * 0.9) + (score * 0.1)
