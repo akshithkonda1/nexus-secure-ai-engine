@@ -1,27 +1,29 @@
 """
-AES-GCM Encryption for Toron Engine v2.0
+AES-GCM Encryption/Decryption for Toron API.
 """
 
-import base64
 import os
+import json
+import base64
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-class EncryptionEngine:
-    def __init__(self, key: bytes = None):
-        self.key = key or AESGCM.generate_key(bit_length=256)
+
+class ToronEncryptor:
+    def __init__(self):
+        key_env = os.getenv("TORON_AES_KEY")
+        self.key = base64.b64decode(key_env) if key_env else os.urandom(32)
         self.aes = AESGCM(self.key)
 
-    def encrypt(self, plaintext: bytes, aad: bytes) -> dict:
+    def encrypt(self, data: dict, aad: str) -> str:
+        raw = json.dumps(data).encode()
         nonce = os.urandom(12)
-        ciphertext = self.aes.encrypt(nonce, plaintext, aad)
-        return {
-            "nonce": base64.b64encode(nonce).decode(),
-            "ciphertext": base64.b64encode(ciphertext).decode()
-        }
+        ciphertext = self.aes.encrypt(nonce, raw, aad.encode())
+        blob = base64.b64encode(nonce + ciphertext).decode()
+        return blob
 
-    def decrypt(self, nonce: str, ciphertext: str, aad: bytes) -> bytes:
-        nonce_bytes = base64.b64decode(nonce)
-        cipher_bytes = base64.b64decode(ciphertext)
-        return self.aes.decrypt(nonce_bytes, cipher_bytes, aad)
-
-
+    def decrypt(self, blob: str, aad: str) -> dict:
+        raw = base64.b64decode(blob.encode())
+        nonce = raw[:12]
+        ciphertext = raw[12:]
+        plaintext = self.aes.decrypt(nonce, ciphertext, aad.encode())
+        return json.loads(plaintext.decode())
