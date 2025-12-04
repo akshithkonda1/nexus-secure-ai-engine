@@ -1,37 +1,63 @@
 """
-CloudProviderAdapter — unified multi-cloud orchestrator.
+Cloud Provider Adapter — Multi-cloud Failover
 Handles:
-- provider failover
-- model registry
-- cost optimization
-- diversity routing
+  • Async connector calls
+  • Per-provider priority
+  • Timeout
+  • Graceful fallback
 """
 
-class CloudProviderAdapter:
+import asyncio
 
+
+class CloudProviderAdapter:
     def __init__(self, connectors, config):
         self.connectors = connectors
         self.config = config
 
     async def dispatch(self, messages, model):
-        """
-        Primary call handler with failover.
-        """
+        errors = []
+
         for provider in self.config.provider_priority:
-            if provider in self.connectors:
-                try:
-                    return await self.connectors[provider].infer(messages, model)
-                except Exception:
-                    continue
-        return {"error": "All providers failed."}, {}
+            if provider not in self.connectors:
+                continue
+
+            try:
+                response, meta = await asyncio.wait_for(
+                    self.connectors[provider].infer(messages, model),
+                    timeout=self.config.model_timeout_seconds
+                )
+                return response, meta
+
+            except asyncio.TimeoutError:
+                errors.append(f"{provider} timeout")
+            except Exception as e:
+                errors.append(f"{provider} {str(e)}")
+
+        raise Exception("All providers failed: " + "; ".join(errors))
 
     async def list_all_models(self):
-        all_models = []
-        for c in self.connectors.values():
-            try:
-                models = await c.list_models()
-                if models:
-                    all_models.extend(models)
-            except Exception:
-                pass
-        return all_models
+        out = []
+        tasks = [
+            c.list_models()
+            for c in self.connectors.values()
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for r in results:
+            if not isinstance(r, Exception):
+                out.extend(r)
+
+        return out
+
+    async def health_check_all(self):
+        statuses = {}
+        tasks = [
+            c.health_check() for c in self.connectors.values()
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for (name, _), res in zip(self.connectors.items(), results):
+            statuses[name] = bool(res) and not isinstance(res, Exception)
+
+        return statuses
