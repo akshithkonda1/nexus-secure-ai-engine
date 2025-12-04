@@ -12,6 +12,9 @@ from ..runtime.execution_policy import ExecutionPolicy
 from ..runtime.response_builder import ResponseBuilder
 from ..runtime.error_shaper import ErrorShaper
 from ..runtime.session_context import SessionContext
+from ..runtime.slo_manager import SLOManager
+from ..runtime.cost_guardrails import CostGuardrails
+from ..runtime.alert_manager import AlertManager
 from ..core.connectors.connector_factory import ConnectorFactory
 from ..core.cloud_provider_adapter import CloudProviderAdapter
 from ..core.debate_engine import DebateEngine
@@ -45,6 +48,9 @@ class ToronEngine:
         self.policy = ExecutionPolicy(self.config)
         self.builder = ResponseBuilder()
         self.errors = ErrorShaper()
+        self.slo = SLOManager()
+        self.cost = CostGuardrails()
+        self.alerts = AlertManager()
 
         # ALOE lifecycle
         self.lifecycle = LifecycleManager(self.config)
@@ -73,9 +79,28 @@ class ToronEngine:
             # Run ALOE lifecycle
             result = await self.lifecycle.run(clean_req, context)
 
-            # Build response
-            resp = self.builder.build(result, context)
+            latency_ms = (time.time() - start) * 1000
+            self.slo.record_latency(latency_ms)
 
+            req_cost = result.get("usage_cost", 0.0)
+            self.cost.register_cost(req_cost)
+
+            if result.get("status") == "error":
+                self.slo.record_failure()
+
+                check = self.slo.check_slo()
+                if not check["slo_pass"]:
+                    self.alerts.alert("Toron SLO Violation", check)
+
+                return self.errors.shape(result)
+
+            self.slo.record_success()
+
+            check = self.slo.check_slo()
+            if not check["slo_pass"]:
+                self.alerts.alert("Toron SLO Violation", check)
+
+            resp = self.builder.build(result, context)
             resp["session_id"] = context["session_id"]
             resp["timestamp"] = str(time.time())
 
