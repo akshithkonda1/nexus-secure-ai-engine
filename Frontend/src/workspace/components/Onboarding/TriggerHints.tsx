@@ -15,29 +15,34 @@ export const TriggerHints: React.FC<TriggerHintsProps> = ({
   clusters,
   showCorners,
 }) => {
-  const hintTile = "rounded-xl bg-tileStrong border border-tileBorder px-4 py-3 text-textMuted shadow-tile";
+  const hintTile =
+    "relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-5 md:p-6 leading-relaxed text-neutral-700 dark:text-neutral-300 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]";
 
   return (
-    <div className="mt-4 space-y-2 text-sm text-textMuted">
+    <div className="mt-4 space-y-3 text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
       {tasksDetected && (
-        <p className={`${hintTile} text-emerald-300 ring-1 ring-emerald-600/40`}>
-          Tasks detected → Lists glow.
-        </p>
+        <div className={`${hintTile} ring-1 ring-emerald-500/30`}>
+          <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
+          <p className="relative text-neutral-800 dark:text-neutral-100">Tasks detected → Lists glow.</p>
+        </div>
       )}
       {datesDetected && (
-        <p className={`${hintTile} text-sky-300 ring-1 ring-sky-600/40`}>
-          Dates detected → Calendar glow.
-        </p>
+        <div className={`${hintTile} ring-1 ring-sky-500/30`}>
+          <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
+          <p className="relative text-neutral-800 dark:text-neutral-100">Dates detected → Calendar glow.</p>
+        </div>
       )}
       {questionsDetected && (
-        <p className={`${hintTile} text-amber-300 ring-1 ring-amber-600/40`}>
-          Question found → Workspace Bell pulses.
-        </p>
+        <div className={`${hintTile} ring-1 ring-amber-500/30`}>
+          <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
+          <p className="relative text-neutral-800 dark:text-neutral-100">Question found → Workspace Bell pulses.</p>
+        </div>
       )}
       {showCorners && clusters.length > 0 && (
-        <p className={`${hintTile} ring-1 ring-tileBorder`}>
-          Semantic clusters: {clusters.join(", ")}
-        </p>
+        <div className={`${hintTile} ring-1 ring-white/10 dark:ring-neutral-700/20`}>
+          <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
+          <p className="relative text-neutral-800 dark:text-neutral-100">Semantic clusters: {clusters.join(", ")}</p>
+        </div>
       )}
     </div>
   );

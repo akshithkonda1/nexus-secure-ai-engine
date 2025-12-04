@@ -18,15 +18,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onAnalyze }) => {
   };
 
   return (
-    <nav className="relative fixed bottom-4 left-1/2 z-30 flex w-[calc(100%-3rem)] max-w-4xl -translate-x-1/2 items-center justify-between rounded-full border border-tileBorder bg-tile bg-tileGradient px-4 py-3 text-sm text-textSecondary shadow-tile before:absolute before:inset-0 before:rounded-full before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:border-tileBorderStrong hover:shadow-tileStrong">
+    <nav className="relative fixed bottom-4 left-1/2 z-[10] flex w-[calc(100%-3rem)] max-w-4xl -translate-x-1/2 items-center justify-between rounded-full border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 px-6 md:px-8 py-3 text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]">
+      <div className="absolute inset-0 pointer-events-none rounded-full backdrop-blur-xl" />
       {workspaceRoutes.map((item) => (
         <button
           key={item.key}
           onClick={() => handleClick(item.key)}
-          className={`flex-1 rounded-full px-3 py-2 transition ${
+          className={`relative flex-1 rounded-full px-3 py-2 transition-transform duration-300 ${
             route === item.key
-              ? "bg-emerald-600 text-textPrimary shadow-tile"
-              : "bg-transparent text-textSecondary hover:bg-tileInner"
+              ? "bg-emerald-600 text-neutral-50 shadow-[0_4px_20px_rgba(0,0,0,0.15)] scale-[1.01]"
+              : "bg-transparent text-neutral-700 dark:text-neutral-300 hover:scale-[1.01]"
           }`}
         >
           {item.label}

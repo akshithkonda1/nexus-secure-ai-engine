@@ -28,12 +28,13 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <ModeProvider>
         <WorkspaceProvider>
-          <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-black to-neutral-900 text-textPrimary">
+          <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-black to-neutral-900 text-neutral-200 leading-relaxed">
             {!hasStarted ? (
               <WelcomeScreen onStart={() => setHasStarted(true)} />
             ) : (
               <div className="relative flex min-h-screen flex-col">
-                <header className="relative mx-6 mt-4 flex items-center justify-between rounded-3xl bg-tile bg-tileGradient border border-tileBorder px-6 py-4 text-textPrimary shadow-tile before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:border-tileBorderStrong hover:shadow-tileStrong">
+                <header className="relative z-[10] mx-6 mt-4 flex items-center justify-between rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]">
+                  <div className="absolute inset-0 pointer-events-none rounded-3xl backdrop-blur-xl" />
                   <div className="text-lg font-semibold tracking-tight">Workspace</div>
                   <div className="flex items-center gap-3">
                     <ModeSwitch />
@@ -64,38 +65,40 @@ export const App: React.FC = () => {
                 {isModalOpen && (
                   <div
                     role="presentation"
-                    className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
+                    className="fixed inset-0 z-[30] flex items-center justify-center bg-black/70 backdrop-blur-sm"
                     onClick={closeToron}
                   >
                     <div className="max-w-4xl w-full px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative rounded-3xl bg-tile bg-tileGradient border border-tileBorder p-6 text-textPrimary shadow-tile before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:border-tileBorderStrong hover:shadow-tileStrong">
-                        <h2 className="text-xl font-semibold">Toron Analysis</h2>
-                        <p className="mt-2 text-sm text-textSecondary">
+                      <div className="relative z-[30] rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_8px_40px_rgba(0,0,0,0.25)] scale-[1.01] animate-[fadeIn_120ms_ease-out]">
+                        <div className="absolute inset-0 pointer-events-none rounded-3xl backdrop-blur-xl" />
+                        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100">Toron Analysis</h2>
+                        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
                           Toron surfaces reasoning-backed cards to keep your workspace organized.
                         </p>
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
                           {cards.map((card) => (
                             <div
                               key={card.id}
-                              className="rounded-xl bg-tileStrong border border-tileBorder px-4 py-3 text-textMuted shadow-tile transition hover:border-tileBorderStrong"
+                              className="relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-5 md:p-6 text-neutral-700 dark:text-neutral-300 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01] backdrop-blur-xl"
                             >
-                              <div className="text-sm font-semibold text-textPrimary">{card.title}</div>
-                              <p className="mt-2 text-sm text-textMuted">{card.reason}</p>
-                              <div className="mt-4 flex gap-2 text-sm">
+                              <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
+                              <div className="relative text-sm font-semibold text-neutral-800 dark:text-neutral-100">{card.title}</div>
+                              <p className="relative mt-2 text-sm text-neutral-700 dark:text-neutral-300">{card.reason}</p>
+                              <div className="relative mt-4 flex gap-2 text-sm">
                                 <button
-                                  className="rounded-full bg-emerald-600 px-3 py-1 text-textPrimary shadow-tile transition hover:bg-emerald-500"
+                                  className="rounded-full bg-emerald-600 px-3 py-1 text-neutral-50 shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01] hover:bg-emerald-500"
                                   onClick={() => card.onAccept?.(card.id)}
                                 >
                                   Accept
                                 </button>
                                 <button
-                                  className="rounded-full border border-tileBorder px-3 py-1 text-textMuted transition hover:border-tileBorderStrong"
+                                  className="rounded-full border border-white/10 dark:border-neutral-700/20 px-3 py-1 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 hover:scale-[1.01]"
                                   onClick={() => card.onIgnore?.(card.id)}
                                 >
                                   Ignore
                                 </button>
                                 <button
-                                  className="rounded-full border border-tileBorder px-3 py-1 text-textMuted transition hover:border-tileBorderStrong"
+                                  className="rounded-full border border-white/10 dark:border-neutral-700/20 px-3 py-1 text-neutral-700 dark:text-neutral-300 transition-transform duration-300 hover:scale-[1.01]"
                                   onClick={() => card.onExplain?.(card.id)}
                                 >
                                   Explain

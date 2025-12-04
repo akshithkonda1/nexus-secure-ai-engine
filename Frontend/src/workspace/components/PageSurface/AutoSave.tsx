@@ -26,7 +26,7 @@ export const AutoSave: React.FC<AutoSaveProps> = ({ content, onSave }) => {
   }, [content, onSave]);
 
   return (
-    <div className="mt-2 text-xs text-textMuted" aria-live="polite">
+    <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed" aria-live="polite">
       Auto-saving... (every 2 seconds or on blur)
     </div>
   );
