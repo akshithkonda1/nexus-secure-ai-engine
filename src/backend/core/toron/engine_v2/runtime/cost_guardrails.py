@@ -64,3 +64,26 @@ class CostGuardrails:
             raise Exception("Emergency Stop: Daily budget exceeded. Pausing Toron.")
 
         return True
+
+    # Telemetry/compat helpers
+    def record(self, cost: float):
+        return self.register_cost(cost)
+
+    def emit(self):
+        return {
+            "hourly_spend": round(self.cost_hour, 4),
+            "daily_spend": round(self.cost_day, 4),
+            "hourly_cap": self.hourly_cap,
+            "daily_cap": self.daily_cap,
+            "per_request_cap": self.per_request_cap,
+        }
+
+    def health(self):
+        try:
+            self._reset_if_needed()
+            return {"status": "ok", "limits": self.emit()}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
+    def serialize(self):
+        return self.emit()

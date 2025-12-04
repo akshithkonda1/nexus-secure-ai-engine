@@ -6,6 +6,7 @@ import os
 import asyncio
 from google.cloud import aiplatform
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class VertexConnector(BaseConnector):
@@ -17,10 +18,12 @@ class VertexConnector(BaseConnector):
         self.region = region
 
     async def infer(self, messages, model, **kwargs):
+        normalized = MessageNormalizer.normalize_for_provider(messages, "gcp-vertex")
+
         def call():
             from vertexai.generative_models import GenerativeModel
             m = GenerativeModel(model)
-            prompt = messages[-1]["content"]
+            prompt = normalized
             return m.generate_content(prompt).text
 
         try:

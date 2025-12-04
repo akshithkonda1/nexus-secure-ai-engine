@@ -6,6 +6,7 @@ import os
 import asyncio
 from openai import AsyncAzureOpenAI
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class AzureConnector(BaseConnector):
@@ -19,12 +20,13 @@ class AzureConnector(BaseConnector):
 
     async def infer(self, messages, model, **kwargs):
         retries = 3
+        normalized = MessageNormalizer.normalize_for_provider(messages, "azure")
 
         for attempt in range(retries):
             try:
                 resp = await self.client.chat.completions.create(
                     model=self.deployment,
-                    messages=messages,
+                    messages=normalized,
                     max_tokens=kwargs.get("max_tokens", 2048),
                 )
 

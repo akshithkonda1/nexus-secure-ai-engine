@@ -7,6 +7,7 @@ import aioboto3
 import json
 import asyncio
 from .base_connector import BaseConnector
+from ..message_normalizer import MessageNormalizer
 
 
 class BedrockConnector(BaseConnector):
@@ -16,6 +17,7 @@ class BedrockConnector(BaseConnector):
 
     async def infer(self, messages, model, **kwargs):
         retries = 3
+        system, normalized = MessageNormalizer.to_anthropic_format(messages)
 
         for attempt in range(retries):
             try:
@@ -26,7 +28,8 @@ class BedrockConnector(BaseConnector):
 
                     body = {
                         "anthropic_version": "bedrock-2023-05-31",
-                        "messages": messages,
+                        "system": system,
+                        "messages": normalized,
                         "max_tokens": kwargs.get("max_tokens", 2048),
                         "temperature": kwargs.get("temperature", 0.7)
                     }
@@ -49,6 +52,7 @@ class BedrockConnector(BaseConnector):
                 await asyncio.sleep(2 ** attempt)
 
     async def stream(self, messages, model, **kwargs):
+        system, normalized = MessageNormalizer.to_anthropic_format(messages)
         async with self.session.client(
             "bedrock-runtime",
             region_name=self.region
@@ -56,7 +60,8 @@ class BedrockConnector(BaseConnector):
 
             body = {
                 "anthropic_version": "bedrock-2023-05-31",
-                "messages": messages,
+                "system": system,
+                "messages": normalized,
                 "max_tokens": kwargs.get("max_tokens", 2048)
             }
 

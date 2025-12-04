@@ -2,6 +2,9 @@
 Toron Engine v2.0 — Main Engine Entry Point.
 """
 
+import asyncio
+import time
+
 from ..bootstrap.engine_bootstrap import EngineBootstrap
 from ..bootstrap.env_config import EngineConfig
 from ..runtime.response_builder import ResponseBuilder
@@ -10,6 +13,9 @@ from ..runtime.session_context import SessionContext
 from ..runtime.slo_manager import SLOManager
 from ..runtime.cost_guardrails import CostGuardrails
 from ..runtime.alert_manager import AlertManager
+from ..runtime.tracing_manager import TracingManager
+from ..runtime.replay_store import ReplayStore
+from ..runtime.execution_policy import ExecutionPolicy
 from ..core.connectors.connector_factory import ConnectorFactory
 from ..core.cloud_provider_adapter import CloudProviderAdapter
 from ..core.debate_engine import DebateEngine
@@ -17,6 +23,7 @@ from ..core.fact_extractor import FactExtractor
 from ..core.web_search import WebSearch
 from ..core.web_validator import WebValidator
 from ..core.consensus_integrator import ConsensusIntegrator
+from ..aloe.lifecycle_manager import LifecycleManager
 from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 from .request_schema import ToronRequest
@@ -30,34 +37,53 @@ class ToronEngine:
     """
 
     def __init__(self, config=None):
+        # a. load config
         self.config = config or EngineConfig()
 
-        # Bootstrap cloud providers
+        # initialize attributes
+        self.provider_adapter = None
+        self.policy = None
+        self.health = None
+        self.slo = None
+        self.cost = None
+        self.alerts = None
+        self.replay = None
+        self.trace = None
+
+        # b. run bootstrap
         bootstrap = EngineBootstrap()
         self.providers = bootstrap.initialize()
-        self.config = bootstrap.config
         self.telemetry = CloudWatchTelemetry()
 
-        connectors = ConnectorFactory.discover(providers)
+        # c. discover connectors
+        connectors = ConnectorFactory.discover(self.providers)
         if not connectors:
             raise RuntimeError("No model providers available.")
 
-        # Core Engines
+        # d. build provider_adapter
+        self.provider_adapter = CloudProviderAdapter(connectors, self.config)
+
+        # e. init runtime systems
+        self.slo = SLOManager()
+        self.cost = CostGuardrails()
+        self.alerts = AlertManager()
+        self.replay = ReplayStore()
+        self.trace = TracingManager()
+        self.health = HealthCheck(self.provider_adapter)
+
+        # f. init core engines
         self.debate_engine = DebateEngine(self.provider_adapter)
         self.fact_extractor = FactExtractor(self.provider_adapter)
         self.web_search = WebSearch()
         self.validator = WebValidator(self.provider_adapter)
         self.consensus = ConsensusIntegrator()
 
-        # Runtime
+        # g. init execution policy
         self.policy = ExecutionPolicy(self.config)
+
+        # h. init ALOE lifecycle
         self.builder = ResponseBuilder()
         self.errors = ErrorShaper()
-        self.slo = SLOManager()
-        self.cost = CostGuardrails()
-        self.alerts = AlertManager()
-
-        # ALOE lifecycle
         self.lifecycle = LifecycleManager(self.config, self.provider_adapter)
 
     async def process(self, request_dict: dict):
@@ -66,6 +92,8 @@ class ToronEngine:
         Validates → executes → builds response.
         """
 
+        start = time.time()
+        request = None
         try:
             # Validate request
             request = ToronRequest(**request_dict)
@@ -111,15 +139,15 @@ class ToronEngine:
                 "ToronEngineError",
                 {
                     "error": str(e),
-                    "session_id": request.session_id,
+                    "session_id": getattr(request, "session_id", None),
                 },
             )
             return self.errors.shape(e)
 
 
     def run_sync(self, request):
-        return asyncio.run(self.run(request))
+        return asyncio.run(self.process(request))
 
 
     async def health_check(self):
-        return await self.health.status()
+        return await self.provider_adapter.health_check_all()
