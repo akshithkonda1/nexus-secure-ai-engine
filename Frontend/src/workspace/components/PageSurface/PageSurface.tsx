@@ -51,7 +51,7 @@ export const PageSurface: React.FC<PageSurfaceProps> = ({ onFirstKeystroke, show
 
   return (
     <section
-      className="relative z-[10] overflow-hidden rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]"
+      className="relative z-[10] overflow-hidden rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-6 md:p-8 text-neutral-800 dark:text-neutral-200 leading-relaxed shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-[1.01]"
     >
       <div className="absolute inset-0 pointer-events-none rounded-3xl backdrop-blur-xl" />
       <div className="flex items-center justify-between">

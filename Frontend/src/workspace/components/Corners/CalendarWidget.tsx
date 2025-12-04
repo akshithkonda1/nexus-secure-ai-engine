@@ -14,8 +14,8 @@ export const CalendarWidget: React.FC = () => {
   const { mode } = useModeStore();
 
   const tilePanel =
-    "relative rounded-3xl bg-tile bg-tileGradient border border-tileBorder shadow-tile px-6 py-5 before:absolute before:inset-0 before:rounded-3xl before:bg-tileInner before:content-[''] before:pointer-events-none transition-all duration-300 hover:shadow-tileStrong hover:border-tileBorderStrong";
-  const innerTile = "rounded-xl bg-tileStrong border border-tileBorder px-4 py-3 shadow-tile";
+    "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl px-6 py-5 transition-all duration-300 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2)]";
+  const innerTile = "rounded-xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 px-4 py-3 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
 
   return (
     <div className={`${tilePanel} fade-in`}>
@@ -30,7 +30,9 @@ export const CalendarWidget: React.FC = () => {
               key={option.value}
               onClick={() => setHorizon(option.value)}
               className={`rounded-full px-2 py-1 text-xs ${
-                horizon === option.value ? "bg-emerald-600 text-textPrimary shadow-tile" : "bg-tileStrong text-textMuted shadow-tile"
+                horizon === option.value
+                  ? "bg-emerald-600 text-neutral-50 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+                  : "bg-white/85 dark:bg-neutral-900/85 text-neutral-800 dark:text-neutral-200 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
               }`}
             >
               {option.label}
@@ -39,17 +41,17 @@ export const CalendarWidget: React.FC = () => {
         </div>
       </div>
       <div className="mt-3 space-y-2">
-        {entries.length === 0 && <p className="text-sm text-textSecondary">No calendar entries yet.</p>}
+        {entries.length === 0 && <p className="text-sm text-neutral-700 dark:text-neutral-300">No calendar entries yet.</p>}
         {entries.map((entry) => (
-          <div key={entry.id} className={`${innerTile} text-sm text-textMuted`}>
-            <div className="font-semibold text-textPrimary">{entry.title}</div>
-            <p className="text-xs text-textMuted">{new Date(entry.date).toDateString()}</p>
+          <div key={entry.id} className={`${innerTile} text-sm`}>
+            <div className="font-semibold text-neutral-800 dark:text-neutral-100">{entry.title}</div>
+            <p className="text-xs text-neutral-700 dark:text-neutral-300">{new Date(entry.date).toDateString()}</p>
           </div>
         ))}
       </div>
       {mode === "advanced" && (
-        <div className={`${innerTile} mt-3 text-xs text-textMuted`}>
-          <p className="font-semibold text-textPrimary">Availability</p>
+        <div className={`${innerTile} mt-3 text-xs`}>
+          <p className="font-semibold text-neutral-800 dark:text-neutral-100">Availability</p>
           <p className="mt-1">You have 2 free hours Friday.</p>
         </div>
       )}

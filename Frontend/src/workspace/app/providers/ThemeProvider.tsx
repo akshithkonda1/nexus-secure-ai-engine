@@ -7,13 +7,27 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+const getRootTheme = () => {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+};
+
 export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">(getRootTheme);
 
   useEffect(() => {
-    document.documentElement.dataset.workspaceTheme = theme;
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+
+    const syncTheme = () => setTheme(root.classList.contains("dark") ? "dark" : "light");
+
+    syncTheme();
+
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+    return () => observer.disconnect();
+  }, []);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme]);
 

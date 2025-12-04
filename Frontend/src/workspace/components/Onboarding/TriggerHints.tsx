@@ -16,10 +16,10 @@ export const TriggerHints: React.FC<TriggerHintsProps> = ({
   showCorners,
 }) => {
   const hintTile =
-    "relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 p-5 md:p-6 leading-relaxed text-neutral-700 dark:text-neutral-300 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]";
+    "relative overflow-hidden rounded-2xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 p-5 md:p-6 leading-relaxed text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]";
 
   return (
-    <div className="mt-4 space-y-3 text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+    <div className="mt-4 space-y-3 text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed">
       {tasksDetected && (
         <div className={`${hintTile} ring-1 ring-emerald-500/30`}>
           <div className="absolute inset-0 pointer-events-none rounded-2xl backdrop-blur-xl" />
