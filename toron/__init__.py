@@ -2,6 +2,16 @@
 
 from toron.config import EngineConfig
 from toron.crypto import CrypterAES256, generate_key
+from toron.errors import (
+    ConfigurationError,
+    ErrorCategory,
+    ErrorSeverity,
+    ProviderError,
+    RateLimitError,
+    TimeoutError,
+    ToronException,
+    ValidationError,
+)
 from toron.pii import PIIPipeline
 from toron.connectors import ConnectorRegistry, Connector
 from toron.retriever import Retriever
@@ -20,4 +30,12 @@ __all__ = [
     "TokenBucket",
     "CloudProviderAdapter",
     "ToronEngine",
+    "ConfigurationError",
+    "ErrorCategory",
+    "ErrorSeverity",
+    "ProviderError",
+    "RateLimitError",
+    "TimeoutError",
+    "ToronException",
+    "ValidationError",
 ]
