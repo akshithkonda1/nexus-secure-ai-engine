@@ -41,12 +41,13 @@ const CalendarPanel: React.FC = () => {
   });
 
   const controlClass =
-    "w-full rounded-xl border px-3 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 border-white/10 dark:border-neutral-700/20";
+    "w-full rounded-xl border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-2 leading-relaxed bg-white/85 dark:bg-neutral-900/85 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
   const actionButtonClass =
-    "rounded-full px-4 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
+    "rounded-full px-4 py-2 leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
   const compactActionButtonClass =
-    "rounded-full px-3 py-1 text-sm leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
-  const pillClass = "rounded-full border px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 border-white/10 dark:border-neutral-700/20";
+    "rounded-full px-3 py-1 text-sm leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
+  const pillClass =
+    "rounded-full border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
 
   const upcoming = useMemo(() => [...events].sort((a, b) => a.date.localeCompare(b.date)), [events]);
 
@@ -157,7 +158,7 @@ const CalendarPanel: React.FC = () => {
         {upcoming.map((event, index) => (
           <div
             key={event.id}
-            className="relative space-y-2 rounded-3xl border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
+            className="relative space-y-2 rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl p-6 md:p-8 z-[10]"
           >
             <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <div className="grid gap-2 md:grid-cols-2">

@@ -69,11 +69,11 @@ const ListsPanel: React.FC = () => {
   const [newItem, setNewItem] = useState({ title: "", time: "", tags: "", syncStatus: "Pending" as const });
 
   const controlClass =
-    "w-full rounded-xl border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-2 leading-relaxed bg-white/85 dark:bg-neutral-900/85 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl";
+    "w-full rounded-xl border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-2 leading-relaxed bg-white/85 dark:bg-neutral-900/85 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
   const actionButtonClass =
-    "rounded-full px-3 py-2 text-sm leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl";
+    "rounded-full px-3 py-2 text-sm leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
   const compactActionButtonClass =
-    "rounded-full px-3 py-1 text-sm leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl";
+    "rounded-full px-3 py-1 text-sm leading-relaxed bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl";
   const pillClass = "rounded-full border border-neutral-300/50 dark:border-neutral-700/50 px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 backdrop-blur-xl";
 
   const activeList = useMemo(() => lists.find((list) => list.id === selectedListId) ?? lists[0], [lists, selectedListId]);
@@ -199,7 +199,7 @@ const ListsPanel: React.FC = () => {
               bg-white/85 dark:bg-neutral-900/85
               border border-neutral-300/50 dark:border-neutral-700/50
               text-neutral-800 dark:text-neutral-200
-              shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+              shadow-[0_4px_20px_rgba(0,0,0,0.12)]
               backdrop-blur-xl
               p-6 md:p-8 z-[10]
               hover:scale-[1.01] transition-transform duration-300
@@ -225,7 +225,7 @@ const ListsPanel: React.FC = () => {
             bg-white/85 dark:bg-neutral-900/85
             border border-neutral-300/50 dark:border-neutral-700/50
             text-neutral-800 dark:text-neutral-200
-            shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+            shadow-[0_4px_20px_rgba(0,0,0,0.12)]
             backdrop-blur-xl
             p-6 md:p-8 z-[10]
           "
@@ -279,7 +279,7 @@ const ListsPanel: React.FC = () => {
                   bg-white/85 dark:bg-neutral-900/85
                   border border-neutral-300/50 dark:border-neutral-700/50
                   text-neutral-800 dark:text-neutral-200
-                  shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+                  shadow-[0_4px_20px_rgba(0,0,0,0.12)]
                   backdrop-blur-xl
                   p-6 md:p-8 z-[10]
                 "
