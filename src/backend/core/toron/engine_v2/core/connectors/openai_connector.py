@@ -1,28 +1,70 @@
 """
-OpenAI API Connector — GPT-4o, 4o-mini
+OpenAI Connector — GPT-4o, GPT-4o-mini, GPT-4 Turbo
+Uses AsyncOpenAI client.
 """
 
-import openai
+from openai import AsyncOpenAI
 import os
+import asyncio
 from .base_connector import BaseConnector
 
-class OpenAIConnector(BaseConnector):
 
+class OpenAIConnector(BaseConnector):
     def __init__(self):
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     async def infer(self, messages, model, **kwargs):
-        response = openai.chat.completions.create(
-            model=model,
-            messages=messages
-        )
-        return response.choices[0].message, {"provider": "openai", "model": model}
+        retries = 3
+
+        for attempt in range(retries):
+            try:
+                resp = await self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=kwargs.get("max_tokens", 2048),
+                    temperature=kwargs.get("temperature", 0.7),
+                    timeout=kwargs.get("timeout", 30.0)
+                )
+
+                data = resp.choices[0].message
+
+                return data, {
+                    "provider": "openai",
+                    "model": model,
+                    "usage": {
+                        "prompt_tokens": resp.usage.prompt_tokens,
+                        "completion_tokens": resp.usage.completion_tokens,
+                        "total_tokens": resp.usage.total_tokens
+                    }
+                }
+
+            except Exception as e:
+                if attempt == retries - 1:
+                    raise Exception(f"OpenAI error: {str(e)}")
+                await asyncio.sleep(2 ** attempt)
 
     async def stream(self, messages, model, **kwargs):
-        yield {"streaming": False}
+        stream = await self.client.chat.completions.create(
+            model=model,
+            messages=messages,
+            stream=True,
+            max_tokens=kwargs.get("max_tokens", 2048)
+        )
+
+        async for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
 
     async def list_models(self):
-        return [{"model_id": "gpt-4o"}, {"model_id": "gpt-4o-mini"}]
+        return [
+            {"model_id": "gpt-4o"},
+            {"model_id": "gpt-4o-mini"},
+            {"model_id": "gpt-4-turbo"},
+        ]
 
     async def health_check(self):
-        return True
+        try:
+            await self.client.models.list()
+            return True
+        except Exception:
+            return False

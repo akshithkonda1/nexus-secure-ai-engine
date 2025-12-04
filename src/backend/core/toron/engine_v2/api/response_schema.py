@@ -1,16 +1,17 @@
 """
-Toron Response Schema — final structured output from engine
+Toron Response Schema.
 """
 
-from pydantic import BaseModel, Field
-from typing import Dict, Any, List
+from pydantic import BaseModel
+from typing import Dict, List
 
-class ToronResponse(BaseModel):
+
+class ToronResponseSchema(BaseModel):
     final_answer: str
-    models_considered: List[str]
     confidence: float
-    reasoning_trace: Dict[str, Any]
+    model_used: str
+    models_considered: List[str]
+    evidence_used: Dict[str, str]
+    reasoning_trace: Dict[str, any]
     session_id: str
     timestamp: str
-
-

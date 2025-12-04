@@ -1,17 +1,14 @@
 """
-Toron Engine v2.0 — API entry point
-Wires Bootstrap → ALOE → Cloud Providers → Runtime → ResponseBuilder
+Toron Engine v2.0 — Main Engine Entry Point.
 """
 
-import time
-import asyncio
-
 from ..bootstrap.engine_bootstrap import EngineBootstrap
-from ..aloe.lifecycle_manager import LifecycleManager
-from ..runtime.execution_policy import ExecutionPolicy
+from ..bootstrap.env_config import EngineConfig
 from ..runtime.response_builder import ResponseBuilder
 from ..runtime.error_shaper import ErrorShaper
-from ..runtime.session_context import SessionContext
+from ..runtime.execution_policy import ExecutionPolicy
+
+from ..aloe.lifecycle_manager import LifecycleManager
 from ..core.connectors.connector_factory import ConnectorFactory
 from ..core.cloud_provider_adapter import CloudProviderAdapter
 from ..core.debate_engine import DebateEngine
@@ -19,69 +16,88 @@ from ..core.fact_extractor import FactExtractor
 from ..core.web_search import WebSearch
 from ..core.web_validator import WebValidator
 from ..core.consensus_integrator import ConsensusIntegrator
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
-from .response_schema import ToronResponse
+from .request_schema import ToronRequest
+from .response_schema import ToronResponseSchema
+from .health_check import HealthCheck
 
 
 class ToronEngine:
+    """
+    The heart of Toron — full ALOE pipeline exposed through a clean API.
+    """
 
-    def __init__(self):
+    def __init__(self, config=None):
+        self.config = config or EngineConfig()
+
+        # Bootstrap cloud providers
         bootstrap = EngineBootstrap()
         self.providers = bootstrap.initialize()
         self.config = bootstrap.config
+        self.telemetry = CloudWatchTelemetry()
 
-        # Discover connectors
-        connectors = ConnectorFactory.discover(self.providers)
-        self.provider_adapter = CloudProviderAdapter(connectors, self.config)
+        connectors = ConnectorFactory.discover(providers)
+        if not connectors:
+            raise RuntimeError("No model providers available.")
 
         # Core Engines
-        self.debate_engine = DebateEngine()
-        self.fact_extractor = FactExtractor()
+        self.debate_engine = DebateEngine(self.provider_adapter)
+        self.fact_extractor = FactExtractor(self.provider_adapter)
         self.web_search = WebSearch()
-        self.validator = WebValidator()
+        self.validator = WebValidator(self.provider_adapter)
         self.consensus = ConsensusIntegrator()
 
-        # Runtime
-        self.policy = ExecutionPolicy(self.config)
-        self.builder = ResponseBuilder()
-        self.errors = ErrorShaper()
+        # ALOE pipeline brain
+        self.lifecycle = LifecycleManager(self.config, self.adapter)
 
         # ALOE lifecycle
-        self.lifecycle = LifecycleManager(self.config)
+        self.lifecycle = LifecycleManager(self.config, self.provider_adapter)
 
+    async def process(self, request_dict: dict):
+        """
+        Main request handler.
+        Validates → executes → builds response.
+        """
 
-    async def run(self, request):
         try:
-            start = time.time()
+            # Validate request
+            request = ToronRequest(**request_dict)
 
-            # Create per-request context
-            context = {
-                "config": self.config,
-                "provider_adapter": self.provider_adapter,
-                "debate_engine": self.debate_engine,
-                "fact_extractor": self.fact_extractor,
-                "web_search": self.web_search,
-                "validator": self.validator,
-                "consensus_engine": self.consensus,
-                "user_id": request.user_id,
-                "session_id": request.session_id or "sess-" + str(int(time.time()))
-            }
+            # Session context
+            context = SessionContext(request_dict).as_dict()
 
-            # Apply policy
-            clean_req = self.policy.enforce(request.model_dump())
+            # Policy enforcement
+            self.policy.validate(request_dict)
 
-            # Run ALOE lifecycle
-            result = await self.lifecycle.run(clean_req, context)
+            # Run full ALOE pipeline
+            result = await self.lifecycle.run(request_dict, context)
 
-            # Build response
-            resp = self.builder.build(result, context)
+            # Error-style payload
+            if result.get("status") == "error":
+                return self.error_shaper.shape(result)
 
-            resp["session_id"] = context["session_id"]
-            resp["timestamp"] = str(time.time())
+            latency_ms = (time.time() - start) * 1000
+            self.telemetry.metric("EngineTotalLatency", latency_ms)
+            self.telemetry.log(
+                "ToronEngineCompleted",
+                {
+                    "session_id": context["session_id"],
+                    "latency_ms": latency_ms,
+                    "status": result.get("status", "ok"),
+                },
+            )
 
             return resp
 
         except Exception as e:
+            self.telemetry.log(
+                "ToronEngineError",
+                {
+                    "error": str(e),
+                    "session_id": request.session_id,
+                },
+            )
             return self.errors.shape(e)
 
 
@@ -89,3 +105,5 @@ class ToronEngine:
         return asyncio.run(self.run(request))
 
 
+    async def health_check(self):
+        return await self.health.status()

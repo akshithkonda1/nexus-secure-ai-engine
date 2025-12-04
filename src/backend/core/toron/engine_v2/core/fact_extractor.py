@@ -5,13 +5,17 @@ Extracts structured, verifiable claims from debate output.
 
 import json
 import re
+import time
 
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 class FactExtractor:
     def __init__(self, adapter):
         self.adapter = adapter
+        self.telemetry = CloudWatchTelemetry()
 
     async def extract(self, context):
+        start = time.time()
         debate = context.get("debate_result") or {}
         outputs = debate.get("model_outputs", {})
 
@@ -57,8 +61,6 @@ JSON:
                         "confidence": float(f.get("confidence", 0.5))
                     })
 
-            return {"facts": valid[:10]}
-
         except Exception:
             # fallback: naive sentence split
             sentences = re.split(r"[.!?]", combined)
@@ -67,7 +69,21 @@ JSON:
                 for s in sentences
                 if len(s.strip()) > 30
             ]
-            return {"facts": fallback[:10]}
+            result = {"facts": fallback[:10]}
+        else:
+            result = {"facts": valid[:10]}
+
+        latency_ms = (time.time() - start) * 1000
+        self.telemetry.metric("FactExtractionLatency", latency_ms)
+        self.telemetry.log(
+            "FactExtractionCompleted",
+            {
+                "facts_extracted": len(result.get("facts", [])),
+                "latency_ms": latency_ms,
+            },
+        )
+
+        return result
 
     def _extract_text(self, resp):
         if hasattr(resp, "content"):

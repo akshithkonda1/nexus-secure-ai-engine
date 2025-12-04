@@ -1,23 +1,17 @@
 """
-Toron Request Schemas — validated via Pydantic v2
+Toron Request Schema — validated input format.
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from pydantic import BaseModel
+from typing import Optional
+
 
 class ToronRequest(BaseModel):
-    prompt: str = Field(...)
-    tier: str = Field(default="free")
-
+    prompt: str
+    tier: str = "free"
     allow_web: bool = True
-    allow_memory: bool = False
-    allow_storage: bool = False
+    allow_memory: bool = True
+    allow_storage: bool = True
 
-    user_id: Optional[str] = None
+    user_id: Optional[str] = "anonymous"
     session_id: Optional[str] = None
-    metadata: Optional[Dict] = None
-
-    max_tokens: Optional[int] = 3000
-    temperature: float = 0.7
-    
-
