@@ -11,13 +11,15 @@ const CalendarWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
       type="button"
       onClick={onClick}
       className={`
-        relative w-full text-left rounded-3xl
+        relative w-full text-left
+        rounded-3xl
         bg-white/85 dark:bg-neutral-900/85
         border border-neutral-300/50 dark:border-neutral-700/50
         text-neutral-800 dark:text-neutral-200
-        shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+        shadow-[0_4px_20px_rgba(0,0,0,0.12)]
         backdrop-blur-xl
-        p-6 z-10 md:p-8
+        p-6
+        z-10 md:p-8
         hover:scale-[1.01] transition-transform duration-300
         ${active ? "ring-2 ring-black/10 dark:ring-white/10" : ""}
       `}

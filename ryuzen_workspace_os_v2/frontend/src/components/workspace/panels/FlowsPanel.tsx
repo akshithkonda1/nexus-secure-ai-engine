@@ -14,14 +14,14 @@ const FlowsPanel: React.FC = () => {
               bg-white/85 dark:bg-neutral-900/85
               border border-neutral-300/50 dark:border-neutral-700/50
               text-neutral-800 dark:text-neutral-200
-              shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+              shadow-[0_4px_20px_rgba(0,0,0,0.12)]
               backdrop-blur-xl
               p-6 md:p-8 z-[10]
             "
           >
             <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <span className="relative">{flow}</span>
-            <span className="relative rounded-full border border-neutral-300/50 dark:border-neutral-700/50 bg-white/85 dark:bg-neutral-900/85 px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+            <span className="relative rounded-full border border-neutral-300/50 dark:border-neutral-700/50 bg-white/85 dark:bg-neutral-900/85 px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl">
               Flow Draft
             </span>
           </div>
