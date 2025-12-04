@@ -8,8 +8,8 @@ interface TasksWidgetProps {
   onExpand: () => void;
 }
 
-const glassPanelClass =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
 const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onExpand }) => {
   const now = new Date();
@@ -19,9 +19,9 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onExpand }) => {
     <button
       type="button"
       onClick={onExpand}
-      className={`w-full text-left focus:outline-none ${glassPanelClass}`}
+      className={`w-full text-left focus:outline-none ${surfaceClass}`}
     >
-      <div className="flex items-center justify-between border-b border-glassBorder pb-3 text-sm">
+      <div className="flex items-center justify-between border-b border-neutral-300/60 pb-3 text-sm dark:border-neutral-700/60">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <AlarmClock className="h-4 w-4" /> Tasks
         </div>
@@ -31,8 +31,8 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onExpand }) => {
         {schedule.map((block) => (
           <div
             key={block.hour}
-            className={`${glassPanelClass} p-4 shadow-none ${
-              block.hour === currentHour ? "border-emerald-300 shadow-glassStrong" : ""
+            className={`${surfaceClass} p-4 ${
+              block.hour === currentHour ? "border-emerald-300" : ""
             }`}
           >
             <div className="flex items-center justify-between text-sm font-semibold text-textPrimary">
@@ -46,7 +46,10 @@ const TasksWidget: React.FC<TasksWidgetProps> = ({ schedule, onExpand }) => {
             </div>
             <div className="mt-2 space-y-2 text-sm text-textPrimary">
               {block.items.slice(0, 2).map((item) => (
-                <div key={item.id} className="rounded-xl border border-glassBorder bg-glass px-3 py-2">
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-neutral-300/50 bg-white/85 px-3 py-2 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85"
+                >
                   <p className="font-semibold">{item.title}</p>
                   <p className="text-xs text-textMuted">{item.source}</p>
                 </div>

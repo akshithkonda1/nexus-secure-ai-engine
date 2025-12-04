@@ -8,8 +8,8 @@ interface ListsWidgetProps {
   onExpand: () => void;
 }
 
-const glassPanelClass =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
 const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
   const previewItems = useMemo(() => data.flatMap((list) => list.items.slice(0, 2)).slice(0, 4), [data]);
@@ -18,9 +18,9 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
     <button
       type="button"
       onClick={onExpand}
-      className={`group relative w-full text-left focus:outline-none ${glassPanelClass}`}
+      className={`group relative w-full text-left focus:outline-none ${surfaceClass}`}
     >
-      <div className="flex items-center justify-between border-b border-glassBorder pb-3 text-sm">
+      <div className="flex items-center justify-between border-b border-neutral-300/60 pb-3 text-sm dark:border-neutral-700/60">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <ClipboardList className="h-4 w-4" />
           Lists
@@ -29,7 +29,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
       </div>
       <div className="space-y-3 pt-3">
         {data.map((list) => (
-          <div key={list.id} className={`${glassPanelClass} p-4 shadow-none`}>
+          <div key={list.id} className={`${surfaceClass} p-4`}>
             <div className="flex items-center justify-between text-sm font-semibold text-textPrimary">
               <span>{list.title}</span>
               <span className="text-xs text-textSecondary">{list.items.length} items</span>
@@ -38,7 +38,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
               {list.items.slice(0, 3).map((item) => (
                 <div
                   key={item.id}
-                  className={`flex items-center gap-2 rounded-xl border border-glassBorder bg-glass px-3 py-2 ${
+                  className={`flex items-center gap-2 rounded-xl border border-neutral-300/50 bg-white/85 px-3 py-2 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85 ${
                     item.done ? "line-through decoration-textMuted" : ""
                   }`}
                 >
@@ -59,7 +59,7 @@ const ListsWidget: React.FC<ListsWidgetProps> = ({ data, onExpand }) => {
             {previewItems.map((item) => (
               <span
                 key={item.id}
-                className="rounded-full border border-glassBorder bg-glass px-3 py-1 text-xs font-semibold text-textPrimary"
+                className="rounded-full border border-neutral-300/50 bg-white/85 px-3 py-1 text-xs font-semibold text-textPrimary backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85"
               >
                 {item.text}
               </span>

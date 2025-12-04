@@ -11,8 +11,8 @@ interface ListsPanelProps {
 const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
   const [newTitle, setNewTitle] = useState("");
 
-  const panelShell =
-    "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+  const surfaceClass =
+    "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
   const textSecondary = "text-textSecondary";
   const textMuted = "text-textMuted";
 
@@ -25,7 +25,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
   };
 
   return (
-    <div className={`flex h-full flex-col gap-4 ${panelShell}`}>
+    <div className={`flex h-full flex-col gap-4 ${surfaceClass}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <ClipboardList className="h-4 w-4" /> Lists Control Center
@@ -36,7 +36,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addList()}
             placeholder="New list"
-            className="rounded-full border border-glassBorder bg-glass px-4 py-2 text-sm text-textPrimary placeholder:text-textMuted focus:border-glassBorderStrong focus:outline-none"
+            className="rounded-full border border-neutral-300/50 bg-white/85 px-4 py-2 text-sm text-textPrimary placeholder:text-textMuted focus:border-neutral-400 focus:outline-none backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85 dark:focus:border-neutral-600"
           />
           <button
             className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-textPrimary transition hover:bg-emerald-400"
@@ -47,7 +47,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
           {close && (
             <button
               onClick={close}
-              className="rounded-full border border-glassBorder px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+              className="rounded-full border border-neutral-300/50 px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-neutral-400 dark:border-neutral-700/50 dark:hover:border-neutral-600"
             >
               Close
             </button>
@@ -56,7 +56,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {lists.map((list) => (
-          <div key={list.id} className={`${panelShell} p-4 shadow-none`}>
+          <div key={list.id} className={`${surfaceClass} p-4`}>
             <div className="flex items-center justify-between text-sm font-semibold text-textPrimary">
               {list.title}
               <span className={`text-xs ${textSecondary}`}>{list.items.length} items</span>
@@ -65,7 +65,7 @@ const ListsPanel: React.FC<ListsPanelProps> = ({ lists, onChange, close }) => {
               {list.items.map((item) => (
                 <div
                   key={item.id}
-                  className={`flex items-center justify-between rounded-xl border border-glassBorder bg-glass px-3 py-2 text-textPrimary ${
+                  className={`flex items-center justify-between rounded-xl border border-neutral-300/50 bg-white/85 px-3 py-2 text-textPrimary backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85 ${
                     item.done ? "line-through decoration-textMuted" : ""
                   }`}
                 >

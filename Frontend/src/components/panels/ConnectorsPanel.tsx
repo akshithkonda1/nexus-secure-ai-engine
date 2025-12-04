@@ -8,11 +8,10 @@ interface ConnectorsPanelProps {
   close?: () => void;
 }
 
-const outerPanel =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
-const innerCard =
-  "rounded-2xl border border-glassBorder bg-glassHeavy px-4 py-4 shadow-glass transition hover:shadow-glassStrong";
+const innerCard = `${surfaceClass} px-4 py-4`;
 
 const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange, close }) => {
   const reconnect = (id: string) => {
@@ -25,7 +24,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
   };
 
   return (
-    <div className={`${outerPanel} flex h-full flex-col gap-4`}>
+    <div className={`${surfaceClass} flex h-full flex-col gap-4`}>
 
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm uppercase tracking-[0.2em]">
@@ -34,14 +33,14 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
         </h2>
 
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-glassBorder bg-glassHeavy px-3 py-1 text-xs font-semibold text-textSecondary">
+          <span className="rounded-full border border-neutral-300/50 bg-white/85 px-3 py-1 text-xs font-semibold text-textSecondary backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
             {connectors.length} integrations
           </span>
 
           {close && (
             <button
               onClick={close}
-              className="rounded-full border border-glassBorder bg-glassHeavy px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+              className="rounded-full border border-neutral-300/50 bg-white/85 px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-neutral-400 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85 dark:hover:border-neutral-600"
             >
               Close
             </button>
@@ -73,7 +72,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
             </p>
 
             {/* Row 3 — Status Badge */}
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-glassBorder bg-glass px-3 py-1 text-xs font-semibold text-textPrimary">
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-neutral-300/50 bg-white/85 px-3 py-1 text-xs font-semibold text-textPrimary backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
               <span
                 className={`h-2 w-2 rounded-full ${
                   connector.status === "connected"
@@ -89,7 +88,7 @@ const ConnectorsPanel: React.FC<ConnectorsPanelProps> = ({ connectors, onChange,
             {/* Row 4 — Reconnect Button */}
             {connector.status !== "connected" && (
               <button
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-glassBorder bg-glassHeavy px-3 py-2 text-xs font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-300/50 bg-white/85 px-3 py-2 text-xs font-semibold text-textPrimary transition hover:border-neutral-400 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85 dark:hover:border-neutral-600"
                 onClick={() => reconnect(connector.id)}
               >
                 <RefreshCcw className="h-4 w-4" /> Reconnect

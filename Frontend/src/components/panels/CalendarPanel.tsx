@@ -17,8 +17,8 @@ const eventColors: Record<CalendarEvent["type"], string> = {
 };
 
 const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onSelectDate, close }) => {
-  const panelShell =
-    "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+  const surfaceClass =
+    "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
   const changeDay = (delta: number) => {
     const next = new Date(selectedDate);
@@ -27,14 +27,14 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
   };
 
   return (
-    <div className={`flex h-full flex-col gap-4 ${panelShell}`}>
+    <div className={`flex h-full flex-col gap-4 ${surfaceClass}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <CalendarIcon className="h-4 w-4" /> Calendar Hub
         </div>
         <div className="flex items-center gap-2 text-sm text-textPrimary">
           <button
-            className="rounded-full border border-glassBorder p-2 font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+            className="rounded-full border border-neutral-300/50 p-2 font-semibold text-textPrimary transition hover:border-neutral-400 dark:border-neutral-700/50 dark:hover:border-neutral-600"
             onClick={() => changeDay(-1)}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -43,7 +43,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
             {selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
           </span>
           <button
-            className="rounded-full border border-glassBorder p-2 font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+            className="rounded-full border border-neutral-300/50 p-2 font-semibold text-textPrimary transition hover:border-neutral-400 dark:border-neutral-700/50 dark:hover:border-neutral-600"
             onClick={() => changeDay(1)}
           >
             <ChevronRight className="h-4 w-4" />
@@ -51,7 +51,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
           {close && (
             <button
               onClick={close}
-              className="rounded-full border border-glassBorder px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+              className="rounded-full border border-neutral-300/50 px-4 py-2 text-sm font-semibold text-textPrimary transition hover:border-neutral-400 dark:border-neutral-700/50 dark:hover:border-neutral-600"
             >
               Close
             </button>
@@ -62,10 +62,10 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
         {events.map((evt) => (
           <div
             key={evt.title}
-            className={`flex items-center justify-between ${panelShell} px-4 py-3 shadow-none`}
+            className={`flex items-center justify-between ${surfaceClass} px-4 py-3`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-glassBorder bg-glass">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-neutral-300/50 bg-white/85 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
                 <span className={`h-3 w-3 rounded-full ${eventColors[evt.type]}`} />
               </div>
               <div>
@@ -76,7 +76,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ events, selectedDate, onS
               </div>
             </div>
             <span
-              className="rounded-full border border-glassBorder px-3 py-1 text-[11px] font-semibold uppercase text-textPrimary"
+              className="rounded-full border border-neutral-300/50 px-3 py-1 text-[11px] font-semibold uppercase text-textPrimary dark:border-neutral-700/50"
             >
               {evt.type}
             </span>
