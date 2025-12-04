@@ -1,37 +1,35 @@
 """
-Environment configuration for Toron Engine v2.0.
-Handles multi-cloud, debate parameters, validation preferences,
-timeouts, and growth/cost/quality tuning knobs.
+EngineConfig — runtime configuration for Toron Engine v2.0.
+
+Controls:
+- timeouts
+- max tokens
+- provider priority
+- parallel debate limits
+- enterprise model set
 """
 
-from pydantic import BaseModel, Field
-from typing import List
+import os
 
-class EngineConfig(BaseModel):
-    # QUALITY PARAMETERS
-    max_debate_rounds: int = 2
-    max_execution_time_ms: int = 4000
-    enable_web_validation: bool = True
 
-    # GROWTH PARAMETERS
-    enable_state_tracking: bool = True
-    reliability_decay_rate: float = 0.02
-    reliability_growth_rate: float = 0.05
+class EngineConfig:
+    def __init__(self):
+        self.max_tokens = int(os.getenv("TORON_MAX_TOKENS", "2048"))
+        self.model_timeout_seconds = int(os.getenv("TORON_MODEL_TIMEOUT", "30"))
+        self.max_parallel_models = int(os.getenv("TORON_MAX_PARALLEL_MODELS", "3"))
 
-    # COST PARAMETERS
-    max_token_budget: int = 8000
-    prefer_low_cost_models: bool = True
-    cache_ttl_seconds: int = 86400
+        # Provider priority (affects failover behavior)
+        priority_raw = os.getenv(
+            "TORON_PROVIDER_PRIORITY",
+            "aws-bedrock,openai,anthropic,azure,gcp-vertex,mistral,groq"
+        )
+        self.provider_priority = [p.strip() for p in priority_raw.split(",")]
 
-    # CLOUD PROVIDERS
-    enable_aws_bedrock: bool = True
-    enable_azure_openai: bool = True
-    enable_gcp_vertex: bool = True
-    enable_direct_apis: bool = True
-
-    provider_priority: List[str] = [
-        "aws", "azure", "gcp", "openai", "anthropic"
-    ]
-
-    model_timeout_seconds: int = 12
-    web_timeout_seconds: int = 8
+        # Enterprise level model set (full power)
+        self.enterprise_model_list = [
+            "gpt-4o",
+            "claude-3-5-sonnet-20241022",
+            "gemini-1.5-pro",
+            "llama3-70b-8192",
+            "mistral-large-latest",
+        ]

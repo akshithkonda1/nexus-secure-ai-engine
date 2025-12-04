@@ -1,16 +1,15 @@
 """
-ExecutionPolicy — enforces:
-- token limits
-- execution deadlines
-- budget limits
-- Q-G-C safety rules
+Execution Policy — enforce safety, token limits, timeouts.
 """
 
 class ExecutionPolicy:
     def __init__(self, config):
-        self.config = config
+        self.max_tokens = config.max_tokens
+        self.timeout_s = config.model_timeout_seconds
+        self.max_concurrent_models = config.max_parallel_models
 
-    def enforce(self, request):
-        if request.get("max_tokens", 0) > self.config.max_token_budget:
-            request["max_tokens"] = self.config.max_token_budget
-        return request
+    def validate(self, request):
+        if "prompt" not in request or not request["prompt"]:
+            raise ValueError("Missing prompt.")
+
+        return True

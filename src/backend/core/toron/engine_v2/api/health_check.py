@@ -1,14 +1,13 @@
 """
-Health Check — readiness and liveness probes
+Toron Health Check — ensures adapters + connectors are alive.
 """
 
 class HealthCheck:
-    @staticmethod
-    def status():
+    def __init__(self, adapter):
+        self.adapter = adapter
+
+    async def status(self):
         return {
-            "engine": "Toron v2.0",
-            "status": "healthy",
-            "version": "2.0",
+            "status": "ok",
+            "providers": await self.adapter.health_check_all()
         }
-
-

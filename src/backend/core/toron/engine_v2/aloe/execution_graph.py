@@ -1,66 +1,45 @@
 """
-Execution Graph — DAG orchestrator for Toron Engine v2.0
-Responsible for:
-
-- Debate
-- Fact Extraction
-- Web Search
-- Validation
-- Consensus
-
-All chained in dynamic dependency graph (QGC optimized).
+ExecutionGraph — Directed Acyclic Graph execution engine.
 """
 
 import asyncio
-from typing import Dict, Callable, List, Any
 
 
 class ExecutionGraph:
     def __init__(self):
         self.nodes = {}
-        self.deps = {}
+        self.edges = {}
 
-    def add_node(self, node_id: str, executor: Callable, depends: List[str] = None):
+    def add_node(self, node_id, executor, deps=None):
         self.nodes[node_id] = executor
-        self.deps[node_id] = depends or []
+        self.edges[node_id] = deps or []
 
-    def build(self, request: dict, context: dict, routing):
+    def build(self, request, context, routing):
         """
-        Construct DAG dynamically based on request properties.
+        Builds a static graph for now:
+            INPUT → DEBATE → FACTS → WEB SEARCH → VALIDATE → CONSENSUS
         """
 
-        # Debate always required
         self.add_node("debate", context["debate_engine"].run)
+        self.add_node("facts", context["fact_extractor"].extract, ["debate"])
+        self.add_node("web_search", context["web_search"].run, ["facts"])
+        self.add_node("validation", context["validator"].validate, ["web_search"])
+        self.add_node("consensus", context["consensus_engine"].integrate, ["validation"])
 
-        # Fact extraction
-        self.add_node("extract_facts", context["fact_extractor"].extract, ["debate"])
-
-        # Web search only with consent
-        if request.get("allow_web", False):
-            self.add_node("web_search", context["web_search"].run, ["extract_facts"])
-            validation_deps = ["extract_facts", "web_search"]
-        else:
-            validation_deps = ["extract_facts"]
-
-        # Validation
-        self.add_node("validate", context["validator"].validate, validation_deps)
-
-        # Consensus
-        self.add_node("consensus", context["consensus_engine"].integrate, ["validate"])
-
-    async def execute(self, context: dict) -> dict:
-        """
-        Execute DAG in correct dependency order.
-        """
-
+    async def execute(self, context):
         results = {}
 
-        async def run(node_id):
-            for d in self.deps[node_id]:
-                if d not in results:
-                    await run(d)
-            results[node_id] = await self.nodes[node_id](context)
+        async def run_node(node):
+            deps = self.edges.get(node, [])
+            dep_results = {d: results[d] for d in deps}
 
-        # Always end with consensus
-        await run("consensus")
+            result = await self.nodes[node](context)
+            results[node] = result
+            context[node] = result
+            return result
+
+        # Execute nodes in dependency order
+        for node in ["debate", "facts", "web_search", "validation", "consensus"]:
+            await run_node(node)
+
         return results["consensus"]

@@ -4,61 +4,81 @@ Consensus — TF-IDF scoring + validation boost/penalty.
 
 from collections import Counter
 import math
+import time
+
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 
 class ConsensusIntegrator:
+    def __init__(self):
+        self.telemetry = CloudWatchTelemetry()
+
     async def integrate(self, context):
+        start = time.time()
         debate = context.get("debate_result", {})
         validation = context.get("validation", {})
 
         outputs = debate.get("model_outputs", {})
         if not outputs:
-            return {
+            result = {
                 "final_answer": "No responses.",
                 "model_consensus_score": 0.0,
                 "web_validation_score": 0.0,
                 "confidence": 0.0
             }
+        else:
+            tfidf = self._tfidf(outputs)
+            web_score = validation.get("confidence", 0.5)
 
-        tfidf = self._tfidf(outputs)
-        web_score = validation.get("confidence", 0.5)
+            supported_sources = {
+                f["source_model"] for f in validation.get("supported", [])
+            }
+            contradicted_sources = {
+                f["source_model"] for f in validation.get("contradicted", [])
+            }
 
-        supported_sources = {
-            f["source_model"] for f in validation.get("supported", [])
-        }
-        contradicted_sources = {
-            f["source_model"] for f in validation.get("contradicted", [])
-        }
+            for m in supported_sources:
+                if m in tfidf:
+                    tfidf[m] *= 1.15
 
-        for m in supported_sources:
-            if m in tfidf:
-                tfidf[m] *= 1.15
+            for m in contradicted_sources:
+                if m in tfidf:
+                    tfidf[m] *= 0.85
 
-        for m in contradicted_sources:
-            if m in tfidf:
-                tfidf[m] *= 0.85
+            winner = max(tfidf.items(), key=lambda x: x[1])[0]
+            winner_score = min(tfidf[winner], 1.0)
 
-        winner = max(tfidf.items(), key=lambda x: x[1])[0]
-        winner_score = min(tfidf[winner], 1.0)
+            composite = (winner_score * 0.6) + (web_score * 0.4)
 
-        composite = (winner_score * 0.6) + (web_score * 0.4)
+            result = {
+                "final_answer": outputs[winner],
+                "model_used": winner,
+                "model_consensus_score": round(winner_score, 4),
+                "web_validation_score": round(web_score, 4),
+                "confidence": round(composite, 4),
+                "models_considered": list(outputs.keys()),
+                "contradicting_models": list(contradicted_sources),
+                "evidence_used": validation.get("web_evidence", {}),
+                "reasoning_trace": {
+                    "tfidf_scores": {k: round(v, 4) for k, v in tfidf.items()},
+                    "supported_facts": len(validation.get("supported", [])),
+                    "contradicted_facts": len(validation.get("contradicted", [])),
+                    "unknown_facts": len(validation.get("unknown", [])),
+                },
+            }
 
-        return {
-            "final_answer": outputs[winner],
-            "model_used": winner,
-            "model_consensus_score": round(winner_score, 4),
-            "web_validation_score": round(web_score, 4),
-            "confidence": round(composite, 4),
-            "models_considered": list(outputs.keys()),
-            "contradicting_models": list(contradicted_sources),
-            "evidence_used": validation.get("web_evidence", {}),
-            "reasoning_trace": {
-                "tfidf_scores": {k: round(v, 4) for k, v in tfidf.items()},
-                "supported_facts": len(validation.get("supported", [])),
-                "contradicted_facts": len(validation.get("contradicted", [])),
-                "unknown_facts": len(validation.get("unknown", [])),
+        latency_ms = (time.time() - start) * 1000
+        self.telemetry.metric("ConsensusLatency", latency_ms)
+        self.telemetry.log(
+            "ConsensusCompleted",
+            {
+                "model_used": result.get("model_used"),
+                "confidence": result.get("confidence"),
+                "latency_ms": latency_ms,
             },
-        }
+        )
+
+        return result
 
     def _tfidf(self, outputs):
         tokens_all = []
