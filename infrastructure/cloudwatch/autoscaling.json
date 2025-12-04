@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "ResourceId": "service/toron/primary",
+      "ScalableDimension": "ecs:service:DesiredCount",
+      "MinCapacity": 2,
+      "MaxCapacity": 15,
+      "Policies": [
+        {
+          "PolicyName": "ToronScaleOnLatency",
+          "TargetValue": 2500,
+          "PredefinedMetricType": "ECSServiceAverageResponseTime"
+        },
+        {
+          "PolicyName": "ToronScaleOnRPS",
+          "TargetValue": 200,
+          "PredefinedMetricType": "ECSServiceAverageRequestsPerTarget"
+        }
+      ]
+    }
+  ]
+}
