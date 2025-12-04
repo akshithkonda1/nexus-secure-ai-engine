@@ -42,7 +42,7 @@ const WorkspaceContent: React.FC = () => {
           <button
             type="button"
             onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
-            className="relative px-4 py-2 rounded-full text-sm bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] text-neutral-800 dark:text-neutral-200 hover:scale-[1.01] transition-transform duration-300"
+            className="relative px-4 py-2 rounded-full text-sm bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] text-neutral-800 dark:text-neutral-200 backdrop-blur-xl hover:scale-[1.01] transition-transform duration-300"
           >
             <span className="absolute inset-0 rounded-full pointer-events-none backdrop-blur-xl" />
             Toggle {theme === "light" ? "Dark" : "Light"}
