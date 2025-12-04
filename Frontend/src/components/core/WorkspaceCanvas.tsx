@@ -7,12 +7,12 @@ interface WorkspaceCanvasProps {
   children: React.ReactNode;
 }
 
-const glassPanelClass =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
 const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, children }) => {
   return (
-    <div className={`relative h-full min-h-[420px] ${glassPanelClass}`}>
+    <div className={`relative h-full min-h-[420px] ${surfaceClass}`}>
       {!active && (
         <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.35em] text-textSecondary">Ryuzen Workspace Canvas</p>
@@ -22,10 +22,10 @@ const WorkspaceCanvas: React.FC<WorkspaceCanvasProps> = ({ active, onClose, chil
         </div>
       )}
       {active && (
-        <div className="absolute inset-0 overflow-hidden rounded-3xl border border-glassBorder bg-glass backdrop-blur-2xl">
+        <div className="absolute inset-0 overflow-hidden rounded-3xl border border-neutral-300/50 bg-white/90 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/90">
           <div className="absolute right-4 top-4 z-20">
             <button
-              className="rounded-full border border-glassBorder px-3 py-2 text-sm font-semibold text-textPrimary transition hover:border-glassBorderStrong"
+              className="rounded-full border border-neutral-300/50 px-3 py-2 text-sm font-semibold text-textPrimary transition hover:border-neutral-400 dark:border-neutral-700/50 dark:hover:border-neutral-600"
               onClick={onClose}
             >
               <X className="h-4 w-4" />

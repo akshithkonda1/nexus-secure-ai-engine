@@ -14,17 +14,17 @@ const statusStyles: Record<WorkspaceConnector["status"], string> = {
   error: "bg-red-500 text-textPrimary",
 };
 
-const glassPanelClass =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
 const ConnectorsWidget: React.FC<ConnectorsWidgetProps> = ({ connectors, onExpand }) => {
   return (
     <button
       type="button"
       onClick={onExpand}
-      className={`w-full text-left focus:outline-none ${glassPanelClass}`}
+      className={`w-full text-left focus:outline-none ${surfaceClass}`}
     >
-      <div className="flex items-center justify-between border-b border-glassBorder pb-3 text-sm">
+      <div className="flex items-center justify-between border-b border-neutral-300/60 pb-3 text-sm dark:border-neutral-700/60">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <PlugZap className="h-4 w-4" /> Connectors
         </div>
@@ -32,7 +32,7 @@ const ConnectorsWidget: React.FC<ConnectorsWidgetProps> = ({ connectors, onExpan
       </div>
       <div className="space-y-3 pt-3">
         {connectors.slice(0, 4).map((connector) => (
-          <div key={connector.id} className={`${glassPanelClass} p-4 shadow-none`}>
+          <div key={connector.id} className={`${surfaceClass} p-4`}>
             <div className="flex items-center justify-between text-sm font-semibold text-textPrimary">
               <span>{connector.name}</span>
               {connector.status === "connected" ? (

@@ -15,8 +15,8 @@ const COLORS: Record<CalendarEvent["type"], string> = {
   multi: "bg-blue-500",
 };
 
-const glassPanelClass =
-  "relative bg-glass backdrop-blur-2xl border border-glassBorder shadow-glass rounded-3xl px-6 py-5 transition-all duration-300 before:absolute before:inset-0 before:rounded-3xl before:bg-glassInner before:blur-xl before:pointer-events-none hover:bg-glassHeavy hover:border-glassBorderStrong hover:shadow-glassStrong hover:scale-[1.01]";
+const surfaceClass =
+  "relative rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl p-6 z-10";
 
 const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, onSelectDate }) => {
   const year = selectedDate.getFullYear();
@@ -28,9 +28,9 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
     <button
       type="button"
       onClick={() => onSelectDate(selectedDate)}
-      className={`w-full text-left focus:outline-none ${glassPanelClass}`}
+      className={`w-full text-left focus:outline-none ${surfaceClass}`}
     >
-      <div className="flex items-center justify-between border-b border-glassBorder pb-3 text-sm">
+      <div className="flex items-center justify-between border-b border-neutral-300/60 pb-3 text-sm dark:border-neutral-700/60">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-textPrimary">
           <CalendarIcon className="h-4 w-4" /> Calendar
         </div>
@@ -48,7 +48,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
             return (
               <div
                 key={day}
-                className="relative flex h-10 flex-col items-center justify-center rounded-xl border border-glassBorder bg-glass text-sm font-semibold text-textPrimary"
+                className="relative flex h-10 flex-col items-center justify-center rounded-xl border border-neutral-300/50 bg-white/85 text-sm font-semibold text-textPrimary backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85"
               >
                 <span>{day}</span>
                 <div className="mt-1 flex gap-1">
@@ -62,7 +62,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ events, selectedDate, o
         </div>
         <div className="mt-4 space-y-2 text-xs text-textPrimary">
           {events.map((evt) => (
-            <div key={evt.title} className="flex items-center justify-between rounded-2xl border border-glassBorder bg-glass px-3 py-2">
+            <div
+              key={evt.title}
+              className="flex items-center justify-between rounded-2xl border border-neutral-300/50 bg-white/85 px-3 py-2 backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85"
+            >
               <div className="flex items-center gap-2">
                 <span className={`h-2.5 w-2.5 rounded-full ${COLORS[evt.type]}`} />
                 <span className="font-semibold text-textPrimary">{evt.title}</span>

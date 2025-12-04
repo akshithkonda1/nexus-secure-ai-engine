@@ -59,8 +59,8 @@ export function RightRail() {
   const navigate = useNavigate();
 
   return (
-    <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.65)] px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl lg:flex xl:max-w-sm">
-      <section className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-3xl border border-[rgba(var(--border),0.8)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
+    <aside className="hidden w-full max-w-xs flex-col gap-6 border-l border-neutral-200/80 bg-white/85 px-6 pb-10 pt-8 text-[rgb(var(--text))] backdrop-blur-xl dark:border-neutral-800/80 dark:bg-neutral-900/85 lg:flex xl:max-w-sm">
+      <section className="relative rounded-3xl border border-neutral-300/50 bg-white/85 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-[rgb(var(--subtle))]">
@@ -81,7 +81,7 @@ export function RightRail() {
           {featuredProjects.map((project) => (
             <li
               key={project.id}
-              className="panel panel--glassy panel--hover panel--immersive panel--alive rounded-2xl border border-[rgba(var(--border),0.9)] bg-[rgba(var(--panel),0.6)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+              className="relative rounded-2xl border border-neutral-300/50 bg-white/85 p-4 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.12)] dark:border-neutral-700/50 dark:bg-neutral-900/85"
               role="button"
               tabIndex={0}
               onClick={() => {
@@ -117,25 +117,25 @@ export function RightRail() {
         </ul>
       </section>
 
-      <section className="panel panel--glassy panel--hover panel--immersive rounded-3xl border border-[rgba(var(--border),0.7)] bg-[rgba(var(--surface),0.9)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="relative rounded-3xl border border-neutral-300/50 bg-white/85 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <CalendarClock className="size-4" /> Upcoming
         </p>
         <div className="mt-4 space-y-3 text-sm text-[rgb(var(--text))]">
-          <div className="panel panel--glassy panel--hover panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
+          <div className="relative rounded-2xl border border-neutral-300/50 bg-white/85 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
             <p className="font-medium">Roadmap sync</p>
             <p className="text-xs text-[rgb(var(--subtle))]">
               Tomorrow • 9:30am
             </p>
           </div>
-          <div className="panel panel--glassy panel--hover panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3">
+          <div className="relative rounded-2xl border border-neutral-300/50 bg-white/85 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
             <p className="font-medium">Data retention review</p>
             <p className="text-xs text-[rgb(var(--subtle))]">Thu • 2:00pm</p>
           </div>
         </div>
       </section>
 
-      <section className="panel panel--glassy panel--hover panel--immersive rounded-3xl border border-[rgba(var(--border),0.6)] bg-[rgba(var(--surface),0.95)] p-5 shadow-[var(--shadow-soft)]">
+      <section className="relative rounded-3xl border border-neutral-300/50 bg-white/85 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85">
         <header className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-[rgb(var(--subtle))]">
           <Lightbulb className="size-4 text-brand" /> Research signals
         </header>
@@ -143,7 +143,7 @@ export function RightRail() {
           {researchSignals.map((signal) => (
             <li
               key={signal.id}
-              className="panel panel--glassy panel--hover panel--immersive rounded-2xl bg-[rgba(var(--panel),0.55)] p-3"
+              className="relative rounded-2xl border border-neutral-300/50 bg-white/85 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur-xl dark:border-neutral-700/50 dark:bg-neutral-900/85"
             >
               <p className="font-semibold text-[rgb(var(--text))]">
                 {signal.title}
