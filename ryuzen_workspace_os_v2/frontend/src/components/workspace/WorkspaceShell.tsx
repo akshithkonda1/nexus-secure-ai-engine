@@ -26,7 +26,7 @@ const WorkspaceContent: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen px-6 py-8"
+      className="min-h-screen px-6 py-8 leading-relaxed text-neutral-800 dark:text-neutral-200"
       style={{ background: "var(--rz-bg)", color: "var(--rz-text)" }}
     >
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -42,14 +42,9 @@ const WorkspaceContent: React.FC = () => {
           <button
             type="button"
             onClick={() => setTheme((prev) => (prev === "light" ? "dark" : "light"))}
-            className="px-4 py-2 rounded-full text-sm"
-            style={{
-              border: `1px solid var(--rz-border)`,
-              background: "var(--rz-surface-glass)",
-              color: "var(--rz-text)",
-              transition: `all var(--rz-duration) ease`,
-            }}
+            className="relative px-4 py-2 rounded-full text-sm bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] text-neutral-800 dark:text-neutral-200 hover:scale-[1.01] transition-transform duration-300"
           >
+            <span className="absolute inset-0 rounded-full pointer-events-none backdrop-blur-xl" />
             Toggle {theme === "light" ? "Dark" : "Light"}
           </button>
         </div>

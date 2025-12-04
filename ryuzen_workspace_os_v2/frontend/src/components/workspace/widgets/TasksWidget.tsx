@@ -10,14 +10,13 @@ const TasksWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left bg-white/90 dark:bg-[#0b0f19]/90 backdrop-blur-xl border border-black/5 dark:border-white/5 rounded-2xl px-4 py-4 text-[var(--rz-text)] shadow-xl transition ${active ? "ring-2 ring-black/10 dark:ring-white/10" : ""}`}
+      className={`relative w-full text-left rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10] hover:scale-[1.01] transition-transform duration-300 ${active ? "ring-2 ring-black/10 dark:ring-white/10" : ""}`}
     >
-      <p className="text-sm text-[var(--rz-text)]">
-        Tasks
-      </p>
-      <p className="text-lg font-semibold text-[var(--rz-text)]">
-        Timeline
-      </p>
+      <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
+      <div className="relative space-y-2 p-6 md:p-8 leading-relaxed text-neutral-800 dark:text-neutral-200">
+        <p className="text-sm">Tasks</p>
+        <p className="text-lg font-semibold">Timeline</p>
+      </div>
     </button>
   );
 };

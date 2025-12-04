@@ -20,14 +20,9 @@ const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
 
   return (
     <div
-      className="w-full px-4 py-3"
-      style={{
-        borderRadius: "var(--rz-radius)",
-        background: "var(--rz-surface)",
-        border: `1px solid var(--rz-border)`,
-        boxShadow: `0 10px 30px var(--rz-shadow)` ,
-      }}
+      className="relative w-full px-4 py-3 rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-white/10 dark:border-neutral-700/20 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
     >
+      <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           {["pages", "notes", "boards", "flows"].map((item) => (
@@ -35,7 +30,7 @@ const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
               key={item}
               type="button"
               onClick={() => handleSelect(item as WorkspaceMode)}
-              className="px-4 py-2 rounded-xl capitalize"
+              className="relative px-4 py-2 rounded-xl capitalize leading-relaxed text-neutral-800 dark:text-neutral-200"
               style={buttonStyle(mode === item)}
             >
               {item}
@@ -46,14 +41,14 @@ const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
           <button
             type="button"
             onClick={() => handleSelect("toron")}
-            className="px-4 py-2 rounded-xl"
+            className="relative px-4 py-2 rounded-xl leading-relaxed text-neutral-800 dark:text-neutral-200"
             style={buttonStyle(mode === "toron")}
           >
             Analyze with Toron
           </button>
           <button
             type="button"
-            className="px-3 py-2 rounded-xl"
+            className="relative px-3 py-2 rounded-xl leading-relaxed text-neutral-800 dark:text-neutral-200"
             style={buttonStyle(false)}
             aria-label="Notifications"
           >

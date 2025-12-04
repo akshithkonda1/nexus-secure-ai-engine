@@ -2,20 +2,21 @@ import React from "react";
 
 const BoardsPanel: React.FC = () => {
   return (
-    <div className="space-y-3 text-[var(--rz-text)]">
-      <h2 className="text-2xl font-semibold text-[var(--rz-text)]">Boards</h2>
-      <p className="text-[var(--rz-text)]">Visualize workflows in lanes.</p>
+    <div className="space-y-4 leading-relaxed text-neutral-800 dark:text-neutral-200">
+      <h2 className="text-2xl font-semibold">Boards</h2>
+      <p>Visualize workflows in lanes.</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {["Backlog", "In Progress", "Review"].map((column) => (
           <div
             key={column}
-            className="space-y-2 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-4 text-[var(--rz-text)]"
+            className="relative space-y-3 rounded-3xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-6 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
           >
-            <p className="text-sm font-semibold text-[var(--rz-text)]">{column}</p>
-            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-3 text-xs text-[var(--rz-text)]">
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
+            <p className="relative text-sm font-semibold">{column}</p>
+            <div className="relative rounded-xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-3 text-xs leading-relaxed">
               Card A
             </div>
-            <div className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b] p-3 text-xs text-[var(--rz-text)]">
+            <div className="relative rounded-xl border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85 p-3 text-xs leading-relaxed">
               Card B
             </div>
           </div>

@@ -37,12 +37,12 @@ const TasksPanel: React.FC = () => {
   const [newTask, setNewTask] = useState({ title: "", time: "", tags: "", syncStatus: "Pending" as Task["syncStatus"] });
 
   const controlClass =
-    "w-full rounded-xl border px-3 py-2 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] border-black/10 dark:border-white/10";
+    "w-full rounded-xl border px-3 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 border-white/10 dark:border-neutral-700/20";
   const actionButtonClass =
-    "rounded-full px-4 py-2 text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
+    "rounded-full px-4 py-2 leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
   const compactActionButtonClass =
-    "rounded-full px-3 py-1 text-sm text-[var(--rz-text)] border border-black/10 dark:border-white/10 bg-white dark:bg-[#0e121b]";
-  const pillClass = "rounded-full border px-3 py-1 text-xs text-[var(--rz-text)] border-black/10 dark:border-white/10";
+    "rounded-full px-3 py-1 text-sm leading-relaxed text-neutral-800 dark:text-neutral-200 border border-white/10 dark:border-neutral-700/20 bg-white/85 dark:bg-neutral-900/85";
+  const pillClass = "rounded-full border px-3 py-1 text-xs leading-relaxed text-neutral-800 dark:text-neutral-200 border-white/10 dark:border-neutral-700/20";
 
   const addTask = () => {
     if (!newTask.title.trim()) return;
@@ -87,11 +87,11 @@ const TasksPanel: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 text-[var(--rz-text)]">
+    <div className="space-y-4 leading-relaxed text-neutral-800 dark:text-neutral-200">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold text-[var(--rz-text)]">Tasks</h2>
-          <p className="text-[var(--rz-text)]">Add, edit, delete, and reorder tasks with tags and sync states.</p>
+          <h2 className="text-2xl font-semibold">Tasks</h2>
+          <p>Add, edit, delete, and reorder tasks with tags and sync states.</p>
         </div>
         <div className="grid gap-2 md:grid-cols-4">
           <input
@@ -135,8 +135,9 @@ const TasksPanel: React.FC = () => {
         {tasks.map((task, index) => (
           <div
             key={task.id}
-            className="rounded-2xl border border-black/10 dark:border-white/10 p-4 text-[var(--rz-text)] bg-white dark:bg-[#0e121b] shadow-sm"
+            className="relative rounded-3xl border border-white/10 dark:border-neutral-700/20 p-6 md:p-8 leading-relaxed text-neutral-800 dark:text-neutral-200 bg-white/85 dark:bg-neutral-900/85 shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-[10]"
           >
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <div className="grid gap-3 md:grid-cols-4 md:items-center">
               <input
                 value={task.title}
@@ -163,7 +164,7 @@ const TasksPanel: React.FC = () => {
                 <option value="Syncing">Syncing</option>
               </select>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[var(--rz-text)]">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className={pillClass}>
                 {task.tags.length ? task.tags.join(", ") : "No tags"}
               </span>
@@ -196,7 +197,7 @@ const TasksPanel: React.FC = () => {
               >
                 Delete
               </button>
-              <span className="ml-auto text-xs text-[var(--rz-text)]">Task {index + 1} of {tasks.length}</span>
+              <span className="ml-auto text-xs">Task {index + 1} of {tasks.length}</span>
             </div>
           </div>
         ))}

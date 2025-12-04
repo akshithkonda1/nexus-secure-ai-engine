@@ -48,20 +48,21 @@ const WorkspacePopup: React.FC<WorkspacePopupProps> = ({ mode, onClose }) => {
         <motion.div
           key={mode}
           initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1, scale: 1.01 }}
           exit={{ opacity: 0, scale: 0.92 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="absolute inset-0 flex"
+          className="absolute inset-0 flex z-[20]"
         >
-          <div className="relative w-full h-full bg-white dark:bg-[#0b0f19] rounded-3xl shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden text-[var(--rz-text)]">
+          <div className="relative w-full h-full rounded-3xl bg-white/92 dark:bg-neutral-900/92 border border-white/20 dark:border-neutral-700/30 shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden text-neutral-800 dark:text-neutral-200 animate-[fadeIn_120ms_ease-out]">
+            <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-3 right-3 px-3 py-1.5 text-sm rounded-full bg-white dark:bg-[#0e121b] border border-black/10 dark:border-white/10 transition"
+              className="absolute top-3 right-3 px-3 py-1.5 text-sm rounded-full bg-white/85 dark:bg-neutral-900/85 border border-white/20 dark:border-neutral-700/30 transition"
             >
               Close
             </button>
-            <div className="h-full w-full overflow-auto p-6 bg-white dark:bg-[#0e121b]">{renderPanel()}</div>
+            <div className="relative h-full w-full overflow-auto p-6 md:p-8 leading-relaxed bg-white/92 dark:bg-neutral-900/92 text-neutral-800 dark:text-neutral-200">{renderPanel()}</div>
           </div>
         </motion.div>
       )}
