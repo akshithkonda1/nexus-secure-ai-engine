@@ -19,6 +19,7 @@ from ..core.fact_extractor import FactExtractor
 from ..core.web_search import WebSearch
 from ..core.web_validator import WebValidator
 from ..core.consensus_integrator import ConsensusIntegrator
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 from .response_schema import ToronResponse
 
@@ -29,16 +30,17 @@ class ToronEngine:
         bootstrap = EngineBootstrap()
         self.providers = bootstrap.initialize()
         self.config = bootstrap.config
+        self.telemetry = CloudWatchTelemetry()
 
         # Discover connectors
         connectors = ConnectorFactory.discover(self.providers)
         self.provider_adapter = CloudProviderAdapter(connectors, self.config)
 
         # Core Engines
-        self.debate_engine = DebateEngine()
-        self.fact_extractor = FactExtractor()
+        self.debate_engine = DebateEngine(self.provider_adapter)
+        self.fact_extractor = FactExtractor(self.provider_adapter)
         self.web_search = WebSearch()
-        self.validator = WebValidator()
+        self.validator = WebValidator(self.provider_adapter)
         self.consensus = ConsensusIntegrator()
 
         # Runtime
@@ -47,7 +49,7 @@ class ToronEngine:
         self.errors = ErrorShaper()
 
         # ALOE lifecycle
-        self.lifecycle = LifecycleManager(self.config)
+        self.lifecycle = LifecycleManager(self.config, self.provider_adapter)
 
 
     async def run(self, request):
@@ -79,9 +81,27 @@ class ToronEngine:
             resp["session_id"] = context["session_id"]
             resp["timestamp"] = str(time.time())
 
+            latency_ms = (time.time() - start) * 1000
+            self.telemetry.metric("EngineTotalLatency", latency_ms)
+            self.telemetry.log(
+                "ToronEngineCompleted",
+                {
+                    "session_id": context["session_id"],
+                    "latency_ms": latency_ms,
+                    "status": result.get("status", "ok"),
+                },
+            )
+
             return resp
 
         except Exception as e:
+            self.telemetry.log(
+                "ToronEngineError",
+                {
+                    "error": str(e),
+                    "session_id": request.session_id,
+                },
+            )
             return self.errors.shape(e)
 
 

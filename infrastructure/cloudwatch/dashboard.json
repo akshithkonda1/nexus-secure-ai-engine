@@ -1,0 +1,28 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["Ryuzen/Toron", "ProviderSuccess", "Provider", "openai"],
+          ["Ryuzen/Toron", "ProviderFailure", "Provider", "openai"],
+          ["Ryuzen/Toron", "ProviderLatency", "Provider", "openai"]
+        ],
+        "title": "OpenAI Provider Health",
+        "region": "us-east-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          ["Ryuzen/Toron", "EngineTotalLatency"],
+          ["Ryuzen/Toron", "DebateLatency"],
+          ["Ryuzen/Toron", "ConsensusLatency"]
+        ],
+        "title": "Toron Engine Performance",
+        "region": "us-east-1"
+      }
+    }
+  ]
+}
