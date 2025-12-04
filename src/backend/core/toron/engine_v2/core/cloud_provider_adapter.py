@@ -101,19 +101,27 @@ class CloudProviderAdapter:
         tasks = [c.list_models() for c in self.connectors.values()]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for r in results:
-            if not isinstance(r, Exception):
-                out.extend(r)
+        for result in results:
+            if not isinstance(result, Exception) and result:
+                all_models.extend(result)
 
-        return out
+        return all_models
 
     async def health_check_all(self):
         statuses = {}
         tasks = [c.health_check() for c in self.connectors.values()]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for (name, _), res in zip(self.connectors.items(), results):
-            statuses[name] = bool(res) and not isinstance(res, Exception)
+        for (name, _), result in zip(tasks.items(), results):
+            if isinstance(result, Exception):
+                self.health_monitor.mark_failure(name, reason="health_check_failed")
+                health_status[name] = False
+            else:
+                if result:
+                    self.health_monitor.mark_success(name)
+                else:
+                    self.health_monitor.mark_failure(name, reason="reported_unhealthy")
+                health_status[name] = bool(result)
 
         self.telemetry.log("HealthCheck", statuses)
         return statuses
