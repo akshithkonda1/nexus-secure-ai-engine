@@ -7,13 +7,18 @@ Ultra-fast, ALOE/QGC compliant.
 """
 
 import asyncio
+import time
+
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 
 class DebateEngine:
     def __init__(self, adapter):
         self.adapter = adapter
+        self.telemetry = CloudWatchTelemetry()
 
     async def run(self, context):
+        start = time.time()
         models = context["selected_models"]
         prompt = context["prompt"]
 
@@ -75,11 +80,24 @@ Summarize your critique clearly.
             except Exception as e:
                 critiques[model] = f"[Critique error: {str(e)}]"
 
-        return {
+        result = {
             "model_outputs": model_outputs,
             "critiques": critiques,
             "models_used": models
         }
+
+        latency_ms = (time.time() - start) * 1000
+        self.telemetry.metric("DebateLatency", latency_ms)
+        self.telemetry.log(
+            "DebateCompleted",
+            {
+                "models": models,
+                "latency_ms": latency_ms,
+                "prompt_length": len(prompt or ""),
+            },
+        )
+
+        return result
 
     def _extract_text(self, resp):
         if hasattr(resp, "content"):

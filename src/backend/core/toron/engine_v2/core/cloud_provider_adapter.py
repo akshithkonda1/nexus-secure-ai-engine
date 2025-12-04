@@ -1,51 +1,27 @@
 """
-CloudProviderAdapter — unified multi-cloud orchestrator with self-healing.
-
-Responsibilities:
-
-* Route requests across providers in priority order
-* Respect provider health (via HealthMonitor)
-* Apply timeouts and collect error traces
-  """
+Cloud Provider Adapter — Multi-cloud Failover with CloudWatch telemetry.
+"""
 
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, Optional
+import time
+from typing import Any, Dict, Iterable
 
 from .health_monitor import HealthMonitor
+from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
 
 
 class CloudProviderAdapter:
-    def __init__(
-        self,
-        connectors: Dict[str, Any],
-        config: Any,
-        health_monitor: Optional[HealthMonitor] = None,
-    ) -> None:
-        """
-        :param connectors: mapping provider_name -> connector instance
-        :param config: EngineConfig instance
-        :param health_monitor: optional shared HealthMonitor
-        """
+    def __init__(self, connectors: Dict[str, Any], config, health_monitor: HealthMonitor | None = None):
         self.connectors = connectors
         self.config = config
         self.health_monitor = health_monitor or HealthMonitor(
-            list(connectors.keys()),
-            failure_threshold=3,
-            cooldown_seconds=60,
+            list(connectors.keys()), failure_threshold=3, cooldown_seconds=60
         )
+        self.telemetry = CloudWatchTelemetry()
 
-    async def dispatch(self, messages, model: str):
-        """
-        Dispatch a single inference request across providers.
-
-        Behavior:
-        - Follows config.provider_priority
-        - Skips providers marked unhealthy by HealthMonitor
-        - On failure/timeout: marks provider as failed and tries next
-        - On success: marks provider as healthy and returns immediately
-        """
+    async def dispatch(self, messages: Iterable[dict], model: str):
         errors = []
 
         for provider in self.config.provider_priority:
@@ -53,40 +29,76 @@ class CloudProviderAdapter:
                 continue
 
             if not self.health_monitor.can_use(provider):
-                errors.append(f"{provider}: skipped (marked unhealthy)")
+                self.telemetry.log(
+                    "ProviderSkippedUnhealthy",
+                    {"provider": provider},
+                )
                 continue
 
             connector = self.connectors[provider]
+            start = time.time()
 
             try:
                 response, metadata = await asyncio.wait_for(
                     connector.infer(messages, model),
                     timeout=self.config.model_timeout_seconds,
                 )
-                # mark success + return
+
+                latency = (time.time() - start) * 1000
                 self.health_monitor.mark_success(provider)
+
+                self.telemetry.metric(
+                    "ProviderSuccess",
+                    1,
+                    unit="Count",
+                    dims=[{"Name": "Provider", "Value": provider}],
+                )
+                self.telemetry.metric(
+                    "ProviderLatency",
+                    latency,
+                    dims=[{"Name": "Provider", "Value": provider}],
+                )
+                self.telemetry.log(
+                    "ProviderSuccessEvent",
+                    {
+                        "provider": provider,
+                        "model": model,
+                        "latency_ms": latency,
+                        "metadata": metadata,
+                    },
+                )
+
                 return response, metadata
 
             except asyncio.TimeoutError:
-                self.health_monitor.mark_failure(provider, reason="timeout")
-                errors.append(
-                    f"{provider}: timeout after {self.config.model_timeout_seconds}s"
-                )
+                latency = (time.time() - start) * 1000
+                self.health_monitor.mark_failure(provider, "timeout")
+
+                self._record_failure(provider, latency, "timeout")
+                errors.append(f"{provider}: timeout")
                 continue
 
-            except Exception as e:  # noqa: BLE001
-                self.health_monitor.mark_failure(provider, reason=str(e))
+            except Exception as e:
+                latency = (time.time() - start) * 1000
+                self.health_monitor.mark_failure(provider, str(e))
+
+                self._record_failure(provider, latency, str(e))
+
+                snapshot = self.health_monitor.snapshot().get(provider, {})
+                if snapshot and not snapshot.get("healthy", True):
+                    self.telemetry.log(
+                        "CircuitBreakerTriggered",
+                        {"provider": provider, "error": snapshot.get("last_error")},
+                    )
+
                 errors.append(f"{provider}: {str(e)}")
                 continue
 
-        # If we got here, everything failed or was unhealthy
         raise Exception(f"All providers failed. Errors: {'; '.join(errors)}")
 
     async def list_all_models(self):
-        """List models from all available providers."""
-        all_models = []
-
-        tasks = [connector.list_models() for connector in self.connectors.values()]
+        out = []
+        tasks = [c.list_models() for c in self.connectors.values()]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result in results:
@@ -96,13 +108,9 @@ class CloudProviderAdapter:
         return all_models
 
     async def health_check_all(self):
-        """
-        Check health of all providers and sync into HealthMonitor.
-        """
-        health_status = {}
-
-        tasks = {name: conn.health_check() for name, conn in self.connectors.items()}
-        results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+        statuses = {}
+        tasks = [c.health_check() for c in self.connectors.values()]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for (name, _), result in zip(tasks.items(), results):
             if isinstance(result, Exception):
@@ -115,7 +123,29 @@ class CloudProviderAdapter:
                     self.health_monitor.mark_failure(name, reason="reported_unhealthy")
                 health_status[name] = bool(result)
 
-        return {
-            "providers": health_status,
-            "monitor_state": self.health_monitor.snapshot(),
-        }
+        self.telemetry.log("HealthCheck", statuses)
+        return statuses
+
+    # ---------------------------
+    # Internal helpers
+    # ---------------------------
+    def _record_failure(self, provider: str, latency: float, error: str) -> None:
+        self.telemetry.metric(
+            "ProviderFailure",
+            1,
+            unit="Count",
+            dims=[{"Name": "Provider", "Value": provider}],
+        )
+        self.telemetry.metric(
+            "ProviderLatency",
+            latency,
+            dims=[{"Name": "Provider", "Value": provider}],
+        )
+        self.telemetry.log(
+            "ProviderError",
+            {
+                "provider": provider,
+                "error": error,
+                "latency_ms": latency,
+            },
+        )
