@@ -1,33 +1,33 @@
-"""Wrapper around the Toron debate engine with safe fallbacks."""
-from __future__ import annotations
-
-import importlib
-import logging
-import sys
-from pathlib import Path
-from typing import Any, Dict
-
-SRC_PATH = Path(__file__).resolve().parents[2] / "src"
-if str(SRC_PATH) not in sys.path:
-    sys.path.append(str(SRC_PATH))
-
-_debate_engine_spec = importlib.util.find_spec("backend.core.toron.engine_v2.core.debate_engine")
-CoreDebateEngine = None
-if _debate_engine_spec:
-    CoreDebateEngine = importlib.import_module("backend.core.toron.engine_v2.core.debate_engine").DebateEngine
-
-logger = logging.getLogger(__name__)
+import asyncio
+from typing import List, Dict, Any
 
 
 class DebateEngine:
-    def __init__(self, adapter: Any | None = None):
-        self.adapter = adapter
-        self._impl = CoreDebateEngine(adapter) if CoreDebateEngine else None
+    def __init__(self, providers: List[Any], rounds: int = 2):
+        self.providers = providers
+        self.rounds = max(1, rounds)
 
-    async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        if self._impl is None:
-            logger.warning("Core debate engine unavailable; returning passthrough context")
-            prompt = context.get("prompt") if isinstance(context, dict) else None
-            return {"summary": prompt or "", "model_outputs": {}}
+    async def _gather_round(self, prompt: str) -> List[Dict[str, Any]]:
+        tasks = [provider.generate(prompt) for provider in self.providers]
+        return await asyncio.gather(*tasks)
 
-        return await self._impl.run(context)
+    async def run(self, prompt: str) -> Dict[str, Any]:
+        responses: List[Dict[str, Any]] = []
+        prior_outputs: List[str] = []
+
+        for round_index in range(self.rounds):
+            if round_index == 0:
+                round_prompt = prompt
+            else:
+                round_prompt = (
+                    f"Rebuttal round {round_index}: refine considering prior outputs: {prior_outputs}"
+                )
+
+            round_responses = await self._gather_round(round_prompt)
+            for resp in round_responses:
+                resp["round"] = round_index + 1
+            responses.extend(round_responses)
+
+            prior_outputs = [resp.get("output", "") for resp in round_responses if resp]
+
+        return {"responses": responses}

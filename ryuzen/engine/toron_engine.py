@@ -15,6 +15,7 @@ from ryuzen.trust.mock_lineage import MockLineage
 from ryuzen.enterprise.compliance.mock_compliance import MockCompliance
 from ryuzen.engine.debate_engine import DebateEngine
 from ryuzen.engine.consensus import ConsensusIntegrator
+from ryuzen.engine.fusion_utils import FusionUtils
 
 import asyncio
 import importlib
@@ -57,6 +58,9 @@ class ToronEngine:
         self.guard = None
         self.lineage = None
         self.compliance = None
+        self.consensus = ConsensusIntegrator()
+        self.utils = FusionUtils()
+        self.debate_engine: Optional[DebateEngine] = None
 
         if SimulationMode.is_enabled():
             # Load mock providers & mock trust/lineage/compliance
@@ -127,55 +131,93 @@ class ToronEngine:
         from ryuzen.enterprise.compliance.mock_compliance import MockCompliance
 
         self.providers = [
-            MockProvider("Anthropic-Opus", style="harmonious", latency_ms=420, jitter_ms=60, error_rate=0.02),
-            MockProvider("ChatGPT-5.1", style="balanced", latency_ms=300, jitter_ms=45, error_rate=0.015),
-            MockProvider("Perplexity-Sonar", style="search", latency_ms=250, jitter_ms=40, error_rate=0.01),
-            MockProvider("Gemini-3", style="creative", latency_ms=350, jitter_ms=55, error_rate=0.018),
-            MockProvider("Mistral-Large", style="precise", latency_ms=280, jitter_ms=35, error_rate=0.012),
-            MockProvider("DeepSeek-R1", style="reasoning", latency_ms=500, jitter_ms=75, error_rate=0.025),
-            MockProvider("Meta-Llama-3", style="technical", latency_ms=320, jitter_ms=50, error_rate=0.017),
+            MockProvider(
+                "Anthropic-Opus", style="harmonious", signature="contextual-humane", latency_ms=420, jitter_ms=60, error_rate=0.02
+            ),
+            MockProvider(
+                "ChatGPT-5.1", style="balanced", signature="concise-adaptive", latency_ms=300, jitter_ms=45, error_rate=0.015
+            ),
+            MockProvider(
+                "Perplexity-Sonar", style="search", signature="retrieval-forward", latency_ms=250, jitter_ms=40, error_rate=0.01
+            ),
+            MockProvider(
+                "Gemini-3", style="creative", signature="imaginative-flow", latency_ms=350, jitter_ms=55, error_rate=0.018
+            ),
+            MockProvider(
+                "Mistral-Large", style="precise", signature="deterministic-trace", latency_ms=280, jitter_ms=35, error_rate=0.012
+            ),
+            MockProvider(
+                "DeepSeek-R1", style="reasoning", signature="chain-of-thought", latency_ms=500, jitter_ms=75, error_rate=0.025
+            ),
+            MockProvider(
+                "Meta-Llama-3", style="technical", signature="systems-rigor", latency_ms=320, jitter_ms=50, error_rate=0.017
+            ),
         ]
 
         # install mock guard, lineage, compliance
         self.guard = MockTrustLayer()
         self.lineage = MockLineage()
         self.compliance = MockCompliance()
+        self.debate_engine = DebateEngine(self.providers, rounds=2)
 
     async def simulate_debate(self, prompt: str) -> Dict[str, Any]:
-        """Run all providers in parallel and return consensus."""
-        tasks = [provider.generate(prompt) for provider in self.providers]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        """Run the debate engine and annotate responses with reliability metrics."""
+        if not self.debate_engine:
+            self.debate_engine = DebateEngine(self.providers, rounds=2)
 
-        responses = []
-        for provider, result in zip(self.providers, results):
-            if isinstance(result, Exception):
-                logger.warning("Provider %s failed in simulation: %s", provider.name, result)
+        debate_result = await self.debate_engine.run(prompt)
+        responses: List[Dict[str, Any]] = []
+
+        for response in debate_result.get("responses", []):
+            if not isinstance(response, dict):
                 continue
-            responses.append(result)
 
-        consensus = None
-        if responses:
-            consensus = min(responses, key=lambda r: len(str(r.get("output", ""))))
+            if response.get("error"):
+                response.setdefault("confidence", 0.0)
+                response.setdefault("output", "")
 
-        return {"responses": responses, "consensus": consensus}
+            tfidf_alignment = self.utils.tfidf_score(prompt, response.get("output", ""))
+            hallucination = self.utils.hallucination_score(response.get("output", ""), prompt)
+            reliability = self.utils.update_reliability(
+                response.get("confidence", 0.5), tfidf_alignment, hallucination
+            )
+
+            response.update(
+                {
+                    "tfidf_alignment": tfidf_alignment,
+                    "hallucination_risk": hallucination,
+                    "reliability": reliability,
+                }
+            )
+
+            responses.append(response)
+
+        return {"responses": responses}
 
     async def generate(self, prompt: str, memory: Optional[Iterable[Any]] = None) -> Dict[str, Any]:
         """Simulation-first generate path."""
         if SimulationMode.is_enabled() and self.providers:
             debate_result = await self.simulate_debate(prompt)
-            final = debate_result.get("consensus")
+            final = self.consensus.integrate(debate_result["responses"])
+
+            disagreement = self.utils.disagreement_vector(
+                [r.get("output", "") for r in debate_result["responses"] if r.get("output")]
+            )
+
+            if disagreement > 0.75:
+                final["representative_output"] = "Consensus unstable — models disagree strongly."
 
             validation = None
             if self.guard and final:
                 validation_fn = getattr(self.guard, "evaluate", None)
                 if callable(validation_fn):
-                    validation = validation_fn(final.get("output", ""))
+                    validation = validation_fn(final.get("representative_output", ""))
 
             compliance_results = {}
             for check in ("hipaa", "pii", "govcloud"):
                 fn = getattr(self.compliance, check, None)
                 if callable(fn):
-                    compliance_results[check] = fn(final.get("output", ""))
+                    compliance_results[check] = fn(final.get("representative_output", ""))
 
             lineage_block = None
             if self.lineage and debate_result["responses"]:
@@ -187,14 +229,29 @@ class ToronEngine:
                 "prompt": prompt,
                 "responses": debate_result["responses"],
                 "consensus": final,
-                "response": final.get("output") if final else None,
+                "response": final.get("representative_output") if final else None,
                 "validation": validation,
                 "lineage": lineage_block,
                 "compliance": compliance_results,
+                "agreement_count": final.get("agreement_count", 0) if final else 0,
+                "workspace_payload": {
+                    "consensus": final,
+                    "raw_models": debate_result["responses"],
+                    "stability": 1 - disagreement,
+                    "risk": disagreement,
+                },
             }
 
         # fallback to production engine (run)
         return await self.run(prompt, memory)
+
+    def generate_sync(self, prompt: str, memory: Optional[Iterable[Any]] = None) -> Dict[str, Any]:
+        """Synchronous helper for environments without explicit event loop control."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self.generate(prompt, memory))
+        raise RuntimeError("generate_sync cannot be called from a running event loop")
 
 _ask_toron_path = SRC_PATH / "backend" / "toron" / "askToron.py"
 ask_toron = None
