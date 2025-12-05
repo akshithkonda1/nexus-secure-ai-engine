@@ -1,54 +1,156 @@
-name: Ryuzen CI/CD
+name: Ryuzen Backend CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      - dev
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
+      - dev
 
 jobs:
-  build:
+  backend-ci:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install Backend Dependencies
-      run: |
-        pip install -r requirements.txt
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: >-
+            ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Install Node for Frontend
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - name: Upgrade pip tooling
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
 
-    - name: Install Frontend Dependencies
-      run: |
-        cd Frontend
-        npm install
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install \
+            yamllint flake8 mypy bandit safety pytest pytest-asyncio \
+            pytest-cov coverage
 
-    - name: Run Backend Tests
-      run: |
-        pytest --maxfail=1 --disable-warnings
+      - name: Validate workflow syntax
+        id: yamllint
+        continue-on-error: true
+        run: |
+          yamllint .github/workflows/ci.yml
 
-    - name: Run Frontend Build
-      run: |
-        cd Frontend
-        npm run build
+      - name: Lint with flake8
+        id: flake8
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flake8 . | tee flake8.log
 
-    - name: Docker Build
-      run: |
-        docker build -t ryuzen-engine:latest .
+      - name: Type check with mypy
+        id: mypy
+        continue-on-error: true
+        run: |
+          mypy .
 
-    - name: Push Docker Image
-      run: echo "Pushing to registry disabled for demo"
+      - name: Run Bandit scan
+        id: bandit
+        continue-on-error: true
+        run: |
+          bandit -r . -f json -o bandit.json
 
-    - name: Deploy to Kubernetes
-      if: github.ref == 'refs/heads/main'
-      run: |
-        echo "k8s deploy example"
+      - name: Run Safety scan
+        id: safety
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          safety check --output json --file requirements.txt \
+            --full-report --disable-telemetry | tee safety.json
+
+      - name: Run Ryuzen Master Test Suite
+        id: master_test
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python tests/master_test.py | tee master_test_output.txt
+
+      - name: Run pytest with coverage
+        id: pytest
+        continue-on-error: true
+        env:
+          PYTEST_ADDOPTS: "--asyncio-mode=auto"
+        run: |
+          pytest --cov=. --cov-report=xml:coverage.xml
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ryuzen-ci-artifacts
+          path: |
+            master_test_output.txt
+            coverage.xml
+            .pytest_cache
+            .mypy_cache
+            bandit.json
+            safety.json
+            flake8.log
+          if-no-files-found: ignore
+
+      - name: Self-Diagnostic summary
+        id: self_diagnostic
+        if: always()
+        run: |
+          workflow_result="${{ steps.yamllint.outcome }}"
+          lint_result="${{ steps.flake8.outcome }}"
+          type_result="${{ steps.mypy.outcome }}"
+          bandit_result="${{ steps.bandit.outcome }}"
+          safety_result="${{ steps.safety.outcome }}"
+          pytest_result="${{ steps.pytest.outcome }}"
+          coverage_result="$pytest_result"
+          master_result="${{ steps.master_test.outcome }}"
+
+          if [[ ! -f coverage.xml ]]; then
+            coverage_result="failure"
+          fi
+
+          if grep -Eq '"failed": [1-9]' master_test_output.txt 2>/dev/null
+          then
+            master_result="failure"
+          fi
+
+          echo "Workflow syntax result: ${workflow_result}"
+          echo "Lint result: ${lint_result}"
+          echo "Type check result: ${type_result}"
+          echo "Bandit result: ${bandit_result}"
+          echo "Safety result: ${safety_result}"
+          echo "Pytest result: ${pytest_result}"
+          echo "Coverage result: ${coverage_result}"
+          echo "Master Test Suite result: ${master_result}"
+
+          failures=0
+          for result in \ 
+            "$workflow_result" "$lint_result" "$type_result" \ 
+            "$bandit_result" "$safety_result" "$pytest_result" \ 
+            "$coverage_result" "$master_result"
+          do
+            if [[ "$result" != "success" ]]; then
+              failures=$((failures + 1))
+            fi
+          done
+
+          if [[ "$failures" -gt 0 ]]; then
+            echo "Detected failures: ${failures}"
+            exit 1
+          fi
+
+          echo "All checks passed."
