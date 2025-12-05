@@ -1,0 +1,23 @@
+policies:
+  - id: admin-all
+    description: Full administrative control
+    effect: allow
+    actions: ["*"]
+    resources: ["*"]
+    condition: {}
+  - id: team-read
+    description: Team level read access
+    effect: allow
+    actions: ["read"]
+    resources: ["team/*"]
+    condition:
+      attribute: "team_visibility"
+      equals: "org"
+  - id: deny-suspended
+    description: Deny any action for suspended orgs
+    effect: deny
+    actions: ["*"]
+    resources: ["*"]
+    condition:
+      attribute: "org_suspended"
+      equals: true
