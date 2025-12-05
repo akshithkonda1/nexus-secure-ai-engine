@@ -1,41 +1,43 @@
-"""In-memory Bring Your Own Key manager."""
+"""Bring-your-own-key manager with optional secure backends."""
 from __future__ import annotations
 
-from typing import Dict
-import base64
-import hashlib
-import secrets
+import importlib
+import logging
+from typing import Dict, Optional
+
+_dbk_spec = importlib.util.find_spec("enterprise.encryption.device_bound_keys")
+DeviceBoundKeyManager = None
+if _dbk_spec:
+    DeviceBoundKeyManager = importlib.import_module("enterprise.encryption.device_bound_keys").DeviceBoundKeyManager
+
+logger = logging.getLogger(__name__)
 
 
 class BYOKManager:
-    """Manages symmetric keys and provides deterministic reversible transforms."""
+    def __init__(self):
+        self._impl = DeviceBoundKeyManager() if DeviceBoundKeyManager else None
+        self._in_memory_keys: Dict[str, str] = {}
 
-    def __init__(self) -> None:
-        self._keys: Dict[str, bytes] = {}
+    def provision_key(self, tenant_id: str, key_material: Optional[str] = None) -> str:
+        if self._impl:
+            return self._impl.create_key(tenant_id, key_material)
+        material = key_material or f"key-{tenant_id}"
+        self._in_memory_keys[tenant_id] = material
+        logger.debug("Provisioned in-memory key for %s", tenant_id)
+        return material
 
-    def create_key(self, key_id: str | None = None, key_material: bytes | None = None) -> str:
-        key_id = key_id or f"key-{len(self._keys) + 1}"
-        if key_id in self._keys:
-            raise ValueError(f"Key '{key_id}' already exists")
-        key_material = key_material or secrets.token_bytes(32)
-        self._keys[key_id] = bytes(key_material)
-        return key_id
+    def get_key(self, tenant_id: str) -> Optional[str]:
+        if self._impl:
+            try:
+                return self._impl.get_key(tenant_id)
+            except Exception:
+                logger.exception("Failed to fetch key from BYOK backend")
+        return self._in_memory_keys.get(tenant_id)
 
-    def _derive_stream(self, key_id: str, length: int) -> bytes:
-        if key_id not in self._keys:
-            raise KeyError(f"Unknown key id '{key_id}'")
-        key_material = self._keys[key_id]
-        digest = hashlib.sha256(key_material).digest()
-        stream = (digest * ((length // len(digest)) + 1))[:length]
-        return stream
-
-    def encrypt(self, key_id: str, plaintext: str) -> str:
-        stream = self._derive_stream(key_id, len(plaintext.encode("utf-8")))
-        cipher_bytes = bytes(b ^ stream[i] for i, b in enumerate(plaintext.encode("utf-8")))
-        return base64.urlsafe_b64encode(cipher_bytes).decode("ascii")
-
-    def decrypt(self, key_id: str, ciphertext: str) -> str:
-        cipher_bytes = base64.urlsafe_b64decode(ciphertext.encode("ascii"))
-        stream = self._derive_stream(key_id, len(cipher_bytes))
-        plain_bytes = bytes(b ^ stream[i] for i, b in enumerate(cipher_bytes))
-        return plain_bytes.decode("utf-8")
+    def revoke_key(self, tenant_id: str) -> None:
+        if self._impl:
+            try:
+                return self._impl.revoke_key(tenant_id)
+            except Exception:
+                logger.exception("Failed to revoke BYOK key")
+        self._in_memory_keys.pop(tenant_id, None)
