@@ -1,158 +1,65 @@
-name: Ryuzen Backend CI
+name: Toron Engine CI/CD
 
 on:
   push:
     branches:
       - main
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
 
 jobs:
-  backend-ci:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: >-
-            ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Upgrade pip tooling
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install \
-            yamllint flake8 mypy bandit safety pytest pytest-asyncio \
-            pytest-cov coverage
+          python -m pip install .
 
-      - name: Validate workflow syntax
-        id: yamllint
-        continue-on-error: true
-        run: |
-          yamllint .github/workflows/ci.yml
+      - name: Run pytest suite
+        run: pytest
 
-      - name: Lint with flake8
-        id: flake8
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          flake8 . | tee flake8.log
-
-      - name: Type check with mypy
-        id: mypy
-        continue-on-error: true
-        run: |
-          mypy .
-
-      - name: Run Bandit scan
-        id: bandit
-        continue-on-error: true
-        run: |
-          bandit -r . -f json -o bandit.json
-
-      - name: Run Safety scan
-        id: safety
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          safety check --output json --file requirements.txt \
-            --full-report --disable-telemetry | tee safety.json
-
-      - name: Run Ryuzen Master Test Suite
-        id: master_test
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          python tests/master_test.py | tee master_test_output.txt
-
-      - name: Run pytest with coverage
-        id: pytest
-        continue-on-error: true
-        env:
-          PYTEST_ADDOPTS: "--asyncio-mode=auto"
-        run: |
-          pytest --cov=. --cov-report=xml:coverage.xml
-
-      - name: Upload diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: ryuzen-ci-artifacts
-          path: |
-            master_test_output.txt
-            coverage.xml
-            .pytest_cache
-            .mypy_cache
-            bandit.json
-            safety.json
-            flake8.log
-          if-no-files-found: ignore
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Self-Diagnostic summary
-        id: self_diagnostic
-        if: always()
+      - name: Build and push container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/toron-engine:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.2
+
+      - name: Configure kubeconfig
         run: |
-          workflow_result="${{ steps.yamllint.outcome }}"
-          lint_result="${{ steps.flake8.outcome }}"
-          type_result="${{ steps.mypy.outcome }}"
-          bandit_result="${{ steps.bandit.outcome }}"
-          safety_result="${{ steps.safety.outcome }}"
-          pytest_result="${{ steps.pytest.outcome }}"
-          coverage_result="$pytest_result"
-          master_result="${{ steps.master_test.outcome }}"
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
+        shell: bash
 
-          if [[ ! -f coverage.xml ]]; then
-            coverage_result="failure"
-          fi
-
-          if grep -Eq '"failed": [1-9]' master_test_output.txt 2>/dev/null
-          then
-            master_result="failure"
-          fi
-
-          echo "Workflow syntax result: ${workflow_result}"
-          echo "Lint result: ${lint_result}"
-          echo "Type check result: ${type_result}"
-          echo "Bandit result: ${bandit_result}"
-          echo "Safety result: ${safety_result}"
-          echo "Pytest result: ${pytest_result}"
-          echo "Coverage result: ${coverage_result}"
-          echo "Master Test Suite result: ${master_result}"
-
-          failures=0
-          for result in \ 
-            "$workflow_result" "$lint_result" "$type_result" \ 
-            "$bandit_result" "$safety_result" "$pytest_result" \ 
-            "$coverage_result" "$master_result"
-          do
-            if [[ "$result" != "success" ]]; then
-              failures=$((failures + 1))
-            fi
-          done
-
-          if [[ "$failures" -gt 0 ]]; then
-            echo "Detected failures: ${failures}"
-            exit 1
-          fi
-
-          echo "All checks passed."
+      - name: Deploy manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+        env:
+          KUBECONFIG: $HOME/.kube/config

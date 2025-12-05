@@ -2,17 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: toron-engine
-  namespace: toron-prod
   labels:
     app: toron-engine
 spec:
-  replicas: 3
-  revisionHistoryLimit: 10
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+  replicas: 2
   selector:
     matchLabels:
       app: toron-engine
@@ -20,67 +13,46 @@ spec:
     metadata:
       labels:
         app: toron-engine
-        version: v2
-        istio: enabled
     spec:
-      serviceAccountName: toron-engine
       containers:
         - name: toron-engine
-          image: IMAGE_PLACEHOLDER
+          image: toron:latest
           imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8080
-              name: http
           env:
-            - name: ENVIRONMENT
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: PROVIDER_PRIORITY
+            - name: SIMULATION_MODE
               valueFrom:
                 configMapKeyRef:
                   name: toron-config
-                  key: provider_priority
-            - name: CACHE_STRATEGY
+                  key: RYU_SIM
+            - name: LOG_LEVEL
               valueFrom:
                 configMapKeyRef:
                   name: toron-config
-                  key: cache_strategy
-            - name: SECRET_STORE_ARN
+                  key: LOG_LEVEL
+            - name: ENGINE_VERSION
               valueFrom:
-                secretKeyRef:
-                  name: toron-secrets
-                  key: secrets_manager_arn
+                configMapKeyRef:
+                  name: toron-config
+                  key: ENGINE_VERSION
+          ports:
+            - name: http
+              containerPort: 8080
           resources:
             requests:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: "250m"
+              memory: "512Mi"
             limits:
               cpu: "1"
-              memory: "2Gi"
+              memory: "1Gi"
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /ready
               port: 8080
+            initialDelaySeconds: 5
             periodSeconds: 10
-            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /livez
+              path: /live
               port: 8080
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 20
-          startupProbe:
-            httpGet:
-              path: /startup
-              port: 8080
-            failureThreshold: 30
-            periodSeconds: 5
-          volumeMounts:
-            - name: config
-              mountPath: /etc/toron
-      volumes:
-        - name: config
-          configMap:
-            name: toron-config
-      terminationGracePeriodSeconds: 30

@@ -1,32 +1,20 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: toron-engine-hpa
-  namespace: toron-prod
+  name: toron-engine
+  labels:
+    app: toron-engine
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: toron-engine
-  minReplicas: 3
-  maxReplicas: 12
+  minReplicas: 2
+  maxReplicas: 10
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 65
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 75
-    - type: Pods
-      pods:
-        metric:
-          name: latency_p95
-        target:
-          type: AverageValue
-          averageValue: 250
+          averageUtilization: 70
