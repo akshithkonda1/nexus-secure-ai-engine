@@ -1,0 +1,36 @@
+{
+  "start": "-PT6H",
+  "periodOverride": "inherit",
+  "widgets": [
+    {
+      "type": "metric",
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Latency p50/p95/p99",
+        "metrics": [
+          ["Toron/Service", "latency_p50", "Environment", "prod", {"stat": "Average"}],
+          ["Toron/Service", "latency_p95", "Environment", "prod", {"stat": "Average"}],
+          ["Toron/Service", "latency_p99", "Environment", "prod", {"stat": "Average"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Queue Depth",
+        "metrics": [
+          ["Toron/Service", "queue_depth", "Environment", "prod", {"stat": "Maximum"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    }
+  ]
+}

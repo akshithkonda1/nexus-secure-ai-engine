@@ -1,0 +1,146 @@
+name: CD - Blue Green Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ release/* ]
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image-ref.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Tests
+        run: pytest --maxfail=1 --disable-warnings
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$REGISTRY/toron-engine:${TAG}" .
+          docker push "$REGISTRY/toron-engine:${TAG}"
+          echo "${REGISTRY}/toron-engine:${TAG}" > /tmp/image-ref.txt
+      - name: Record image ref
+        id: image-ref
+        run: echo "image=$(cat /tmp/image-ref.txt)" >> "$GITHUB_OUTPUT"
+
+  deploy-blue:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: toron-blue
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          python -m pip install --upgrade pip
+          pip install yq
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Setup kubectl
+        uses: aws-actions/eks-setup-kubectl@v1
+        with:
+          version: '1.29.0'
+      - name: Login to EKS
+        uses: aws-actions/eks-login@v1
+        with:
+          cluster-name: toron-prod
+          region: us-east-1
+      - name: Render blue manifest
+        env:
+          IMAGE: ${{ needs.build.outputs.image }}
+        run: |
+          sed "s@IMAGE_PLACEHOLDER@${IMAGE}@" k8s/deployment.yaml > /tmp/deployment-blue.yaml
+          yq e '.metadata.namespace = "toron-blue"' -i /tmp/deployment-blue.yaml
+      - name: Deploy blue stack
+        run: |
+          kubectl create namespace toron-blue --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f /tmp/deployment-blue.yaml
+          kubectl apply -f k8s/service.yaml -n toron-blue
+          kubectl apply -f k8s/istio_destination_rule.yaml -n toron-blue
+          kubectl apply -f k8s/istio_virtual_service.yaml -n toron-blue
+      - name: Integration tests
+        run: |
+          kubectl rollout status deployment/toron-engine -n toron-blue --timeout=300s
+          kubectl -n toron-blue exec deploy/toron-engine -- curl -fsS http://localhost:8080/healthz
+
+  shift-traffic:
+    needs: deploy-blue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Switch traffic to blue
+        env:
+          ALB_LISTENER_ARN: ${{ secrets.ALB_LISTENER_ARN }}
+          BLUE_TG_ARN: ${{ secrets.BLUE_TG_ARN }}
+          GREEN_TG_ARN: ${{ secrets.GREEN_TG_ARN }}
+          CLOUDFRONT_DIST_ID: ${{ secrets.CLOUDFRONT_DIST_ID }}
+          ROUTE53_ZONE_ID: ${{ secrets.ROUTE53_ZONE_ID }}
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          ./deploy/blue_green/traffic_shift.sh blue 100
+
+  health-verification:
+    needs: shift-traffic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Verify blue health
+        run: |
+          aws cloudwatch put-metric-data --namespace Toron/Deployments --metric-name blue_cutover_start --value 1
+          kubectl rollout status deployment/toron-engine -n toron-blue --timeout=300s
+          kubectl -n toron-blue exec deploy/toron-engine -- curl -fsS http://localhost:8080/healthz
+      - name: Emit event
+        run: |
+          aws events put-events --entries "[{\"Source\":\"toron.deploy\",\"DetailType\":\"blue-promoted\",\"Detail\":\"{\\\"commit\\\":\\\"${{ github.sha }}\\\"}\"}]"
+
+  rollback-on-failure:
+    needs: [deploy-blue, shift-traffic]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Execute rollback
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          ./deploy/blue_green/traffic_shift.sh green 100
+          aws cloudwatch put-metric-data --namespace Toron/Deployments --metric-name bluegreen_failure --value 1

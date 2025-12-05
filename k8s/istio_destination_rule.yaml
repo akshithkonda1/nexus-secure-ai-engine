@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: toron-engine
+  namespace: toron-prod
+spec:
+  host: toron-engine
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+    - name: stable
+      labels:
+        version: v2
+    - name: canary
+      labels:
+        version: v2-canary
+    - name: blue
+      labels:
+        color: blue
+    - name: green
+      labels:
+        color: green

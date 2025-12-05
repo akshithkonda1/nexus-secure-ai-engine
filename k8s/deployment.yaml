@@ -1,32 +1,86 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nexus
+  name: toron-engine
+  namespace: toron-prod
+  labels:
+    app: toron-engine
 spec:
-  replicas: 2
+  replicas: 3
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
-    matchLabels: { app: nexus }
+    matchLabels:
+      app: toron-engine
   template:
     metadata:
-      labels: { app: nexus }
+      labels:
+        app: toron-engine
+        version: v2
+        istio: enabled
     spec:
+      serviceAccountName: toron-engine
       containers:
-        - name: nexus
-          image: ghcr.io/OWNER/REPO:latest
-          ports: [{ containerPort: 8080 }]
+        - name: toron-engine
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
           env:
-            - { name: NEXUS_ENV, value: "prod" }
-            - { name: NEXUS_DATA_KEY_B64, valueFrom: { secretKeyRef: { name: nexus-secrets, key: data_key_b64 } } }
-            - { name: NEXUS_ALLOWED_MODEL_DOMAINS, valueFrom: { configMapKeyRef: { name: nexus-config, key: allowed_model_domains } } }
-            - { name: NEXUS_SCRAPE_ALLOW_DOMAINS, valueFrom: { configMapKeyRef: { name: nexus-config, key: scrape_allow } } }
-            - { name: NEXUS_ALLOW_THIRD_PARTY_SEARCH, value: "1" }
+            - name: ENVIRONMENT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PROVIDER_PRIORITY
+              valueFrom:
+                configMapKeyRef:
+                  name: toron-config
+                  key: provider_priority
+            - name: CACHE_STRATEGY
+              valueFrom:
+                configMapKeyRef:
+                  name: toron-config
+                  key: cache_strategy
+            - name: SECRET_STORE_ARN
+              valueFrom:
+                secretKeyRef:
+                  name: toron-secrets
+                  key: secrets_manager_arn
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
           readinessProbe:
-            httpGet: { path: /readyz, port: 8080 }
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 12
-          livenessProbe:
-            httpGet: { path: /healthz, port: 8080 }
-            initialDelaySeconds: 10
+            httpGet:
+              path: /healthz
+              port: 8080
             periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /etc/toron
+      volumes:
+        - name: config
+          configMap:
+            name: toron-config
+      terminationGracePeriodSeconds: 30

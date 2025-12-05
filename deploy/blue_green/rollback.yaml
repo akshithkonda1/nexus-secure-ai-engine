@@ -1,0 +1,75 @@
+name: Automatic Blue/Green Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      failed_env:
+        description: "Environment experiencing failure (blue|green)"
+        required: true
+  workflow_run:
+    workflows: ["Switch Traffic Between Blue and Green"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  evaluate-and-rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+
+      - name: Detect alarm state
+        id: alarms
+        run: |
+          export AWS_PAGER=""
+          high_latency=$(aws cloudwatch get-metric-statistics --namespace Toron/Service --metric-name latency_p95 --statistics Average --period 60 --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ) --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --dimensions Name=Environment,Value=${{ github.event.inputs.failed_env }} | jq -r '.Datapoints[0].Average // 0')
+          error_rate=$(aws cloudwatch get-metric-statistics --namespace Toron/Service --metric-name error_rate --statistics Average --period 60 --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ) --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --dimensions Name=Environment,Value=${{ github.event.inputs.failed_env }} | jq -r '.Datapoints[0].Average // 0')
+          echo "high_latency=${high_latency}" >> "$GITHUB_OUTPUT"
+          echo "error_rate=${error_rate}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide rollback
+        id: decision
+        env:
+          FAILED_ENV: ${{ github.event.inputs.failed_env }}
+          LATENCY: ${{ steps.alarms.outputs.high_latency }}
+          ERRORS: ${{ steps.alarms.outputs.error_rate }}
+        run: |
+          THRESHOLD_LATENCY=400
+          THRESHOLD_ERROR=2.0
+          if (( $(echo "$LATENCY > $THRESHOLD_LATENCY" | bc -l) )) || (( $(echo "$ERRORS > $THRESHOLD_ERROR" | bc -l) )); then
+            echo "should_rollback=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_rollback=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Execute rollback
+        if: steps.decision.outputs.should_rollback == 'true'
+        env:
+          FAILED_ENV: ${{ github.event.inputs.failed_env }}
+          ALB_LISTENER_ARN: ${{ secrets.ALB_LISTENER_ARN }}
+          BLUE_TG_ARN: ${{ secrets.BLUE_TG_ARN }}
+          GREEN_TG_ARN: ${{ secrets.GREEN_TG_ARN }}
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          if [[ "$FAILED_ENV" == "green" ]]; then
+            ./deploy/blue_green/traffic_shift.sh blue 100
+          else
+            ./deploy/blue_green/traffic_shift.sh green 100
+          fi
+
+      - name: Notify PagerDuty
+        if: always()
+        run: |
+          curl -X POST "${{ secrets.PAGERDUTY_WEBHOOK }}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"summary\":\"Auto rollback triggered for ${{ github.event.inputs.failed_env }}\",\"severity\":\"critical\",\"source\":\"github-actions\"}"

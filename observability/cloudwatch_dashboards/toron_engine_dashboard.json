@@ -1,0 +1,65 @@
+{
+  "start": "-PT6H",
+  "periodOverride": "inherit",
+  "widgets": [
+    {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Toron Engine Request Volume",
+        "metrics": [
+          ["Toron/Service", "request_count", "Environment", "prod", {"stat": "Sum"}]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "CPU / Memory",
+        "metrics": [
+          ["EKS/ContainerInsights", "pod_cpu_utilization", "ClusterName", "toron-prod", "PodName", "toron-engine"],
+          ["EKS/ContainerInsights", "pod_memory_utilization", "ClusterName", "toron-prod", "PodName", "toron-engine"]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Cache Hit Ratios",
+        "metrics": [
+          ["Toron/Cache", "hit_ratio", "tier", "L1"],
+          ["Toron/Cache", "hit_ratio", "tier", "L2"],
+          ["Toron/Cache", "hit_ratio", "tier", "L3"]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Circuit Breaker State",
+        "metrics": [
+          ["Toron/Service", "circuit_open", "Environment", "prod", {"stat": "Maximum"}]
+        ],
+        "view": "singleValue",
+        "stacked": false
+      }
+    }
+  ]
+}

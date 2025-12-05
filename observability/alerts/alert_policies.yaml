@@ -1,0 +1,73 @@
+alerts:
+  - name: High latency
+    metric: latency_p95
+    namespace: Toron/Service
+    threshold: 350
+    comparison: '>'
+    period: 60
+    evaluation_periods: 3
+    sns_topic: toron-alerts
+    pagerduty_route: critical
+    severity: P1
+  - name: Error spike
+    metric: error_rate
+    namespace: Toron/Service
+    threshold: 0.05
+    comparison: '>'
+    period: 60
+    evaluation_periods: 2
+    sns_topic: toron-alerts
+    pagerduty_route: critical
+    severity: P1
+  - name: Provider outage
+    metric: provider_down
+    namespace: Toron/Providers
+    dimensions:
+      provider: '*'
+    threshold: 1
+    comparison: '=='
+    period: 60
+    evaluation_periods: 1
+    sns_topic: toron-alerts
+    pagerduty_route: high
+    severity: P1
+  - name: Redis outage
+    metric: redis_unreachable
+    namespace: Toron/Cache
+    threshold: 1
+    comparison: '=='
+    period: 60
+    evaluation_periods: 1
+    sns_topic: toron-alerts
+    pagerduty_route: high
+    severity: P1
+  - name: DynamoDB error rate
+    metric: dynamodb_error_rate
+    namespace: Toron/Service
+    threshold: 0.02
+    comparison: '>'
+    period: 60
+    evaluation_periods: 3
+    sns_topic: toron-alerts
+    pagerduty_route: medium
+    severity: P2
+  - name: Canary failure alert
+    metric: canary_failure
+    namespace: Toron/Deployments
+    threshold: 1
+    comparison: '>='
+    period: 60
+    evaluation_periods: 1
+    sns_topic: toron-alerts
+    pagerduty_route: critical
+    severity: P1
+  - name: Blue/green health failure
+    metric: bluegreen_failure
+    namespace: Toron/Deployments
+    threshold: 1
+    comparison: '>='
+    period: 60
+    evaluation_periods: 1
+    sns_topic: toron-alerts
+    pagerduty_route: critical
+    severity: P1

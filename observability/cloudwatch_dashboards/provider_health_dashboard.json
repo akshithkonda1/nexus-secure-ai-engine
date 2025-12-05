@@ -1,0 +1,40 @@
+{
+  "start": "-PT6H",
+  "periodOverride": "inherit",
+  "widgets": [
+    {
+      "type": "metric",
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Provider Success Rate",
+        "metrics": [
+          ["Toron/Providers", "success_rate", "provider", "openai"],
+          ["Toron/Providers", "success_rate", "provider", "anthropic"],
+          ["Toron/Providers", "success_rate", "provider", "bedrock"],
+          ["Toron/Providers", "success_rate", "provider", "azure-openai"]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    },
+    {
+      "type": "metric",
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "region": "us-east-1",
+        "title": "Provider Latency",
+        "metrics": [
+          ["Toron/Providers", "latency_p95", "provider", "openai"],
+          ["Toron/Providers", "latency_p95", "provider", "anthropic"],
+          ["Toron/Providers", "latency_p95", "provider", "bedrock"],
+          ["Toron/Providers", "latency_p95", "provider", "azure-openai"]
+        ],
+        "view": "timeSeries",
+        "stacked": false
+      }
+    }
+  ]
+}

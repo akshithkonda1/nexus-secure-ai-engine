@@ -1,0 +1,129 @@
+name: CD - Canary Deployment
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image-ref.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.ref_name }}
+        run: |
+          docker build -t "$ECR_REGISTRY/toron-engine:${IMAGE_TAG}" .
+          docker push "$ECR_REGISTRY/toron-engine:${IMAGE_TAG}"
+          echo "${ECR_REGISTRY}/toron-engine:${IMAGE_TAG}" > /tmp/image-ref.txt
+      - name: Record image ref
+        id: image-ref
+        run: echo "image=$(cat /tmp/image-ref.txt)" >> "$GITHUB_OUTPUT"
+      - name: Upload image reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-ref
+          path: /tmp/image-ref.txt
+
+  deploy-canary:
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          python -m pip install --upgrade pip
+          pip install yq
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Setup kubectl
+        uses: aws-actions/eks-setup-kubectl@v1
+        with:
+          version: '1.29.0'
+      - name: Login to EKS
+        uses: aws-actions/eks-login@v1
+        with:
+          cluster-name: toron-prod
+          region: us-east-1
+      - name: Render canary manifest
+        env:
+          IMAGE: ${{ needs.build-push.outputs.image }}
+        run: |
+          sed "s@IMAGE_PLACEHOLDER@${IMAGE}@" k8s/deployment.yaml > /tmp/deployment-canary.yaml
+          yq e '.metadata.namespace = "toron-green"' -i /tmp/deployment-canary.yaml
+          yq e '.spec.template.metadata.labels.version = "v2-canary"' -i /tmp/deployment-canary.yaml
+      - name: Deploy canary subset
+        run: |
+          kubectl create namespace toron-green --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f /tmp/deployment-canary.yaml
+          kubectl apply -f k8s/service.yaml -n toron-green
+          kubectl apply -f k8s/istio_destination_rule.yaml -n toron-green
+          kubectl apply -f k8s/istio_virtual_service.yaml -n toron-green
+      - name: Smoke test canary
+        run: |
+          kubectl rollout status deployment/toron-engine -n toron-green --timeout=300s
+          kubectl -n toron-green exec deploy/toron-engine -- curl -fsS http://localhost:8080/healthz
+
+  monitor-and-promote:
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+      - name: Monitor CloudWatch metrics
+        id: monitor
+        run: |
+          export AWS_PAGER=""
+          error=$(aws cloudwatch get-metric-statistics --namespace Toron/Service --metric-name error_rate --statistics Average --period 60 --start-time $(date -u -d '10 minutes ago' +%Y-%m-%dT%H:%M:%SZ) --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --dimensions Name=Environment,Value=green | jq -r '.Datapoints[0].Average // 0')
+          latency=$(aws cloudwatch get-metric-statistics --namespace Toron/Service --metric-name latency_p95 --statistics Average --period 60 --start-time $(date -u -d '10 minutes ago' +%Y-%m-%dT%H:%M:%SZ) --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) --dimensions Name=Environment,Value=green | jq -r '.Datapoints[0].Average // 0')
+          if (( $(echo "$error > 0.03" | bc -l) )) || (( $(echo "$latency > 400" | bc -l) )); then
+            echo "metrics_unhealthy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "metrics_unhealthy=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Auto-rollback
+        if: steps.monitor.outputs.metrics_unhealthy == 'true'
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          ./deploy/blue_green/traffic_shift.sh blue 100
+          aws cloudwatch put-metric-data --namespace Toron/Deployments --metric-name canary_failure --value 1
+          exit 1
+      - name: Promote canary to full
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          ./deploy/blue_green/traffic_shift.sh green 100
+          aws cloudwatch put-metric-data --namespace Toron/Deployments --metric-name promotion_success --value 1

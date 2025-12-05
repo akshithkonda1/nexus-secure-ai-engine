@@ -1,0 +1,23 @@
+{
+  "Version": "2010-08-01",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"Service": "events.amazonaws.com"},
+      "Action": "sts:AssumeRole",
+      "Sid": "AllowEventBridgeToInvokePagerDuty"
+    }
+  ],
+  "PagerDuty": {
+    "IntegrationKey": "0123456789abcdef0123456789abcdef",
+    "EventsApi": "https://events.pagerduty.com/v2/enqueue",
+    "Route": "toron-engine"
+  },
+  "SnsTopic": {
+    "Name": "toron-alerts",
+    "Subscription": {
+      "Protocol": "https",
+      "Endpoint": "https://events.pagerduty.com/integration/PAGERDUTY_INTEGRATION_KEY/enqueue"
+    }
+  }
+}
