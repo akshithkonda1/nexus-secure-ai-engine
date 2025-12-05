@@ -29,13 +29,6 @@ SRC_PATH = Path(__file__).resolve().parents[2] / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.append(str(SRC_PATH))
 
-try:
-    from ryuzen.engine.mock_provider import MockModelProvider
-    from ryuzen.engine.simulation_mode import SimulationMode
-except Exception:  # pragma: no cover - fallback for environments without src path
-    MockModelProvider = None
-    SimulationMode = None
-
 _hallucination_guard_spec = importlib.util.find_spec("ryuzen.trust.hallucination_guard")
 HallucinationGuard = None
 if _hallucination_guard_spec:
@@ -44,6 +37,9 @@ if _hallucination_guard_spec:
 _response_lineage_spec = importlib.util.find_spec("ryuzen.trust.response_lineage")
 ResponseLineage = None
 if _response_lineage_spec:
+    ResponseLineage = importlib.import_module("ryuzen.trust.response_lineage").ResponseLineage
+
+
 class ToronEngine:
     """Adapter that wires Toron processing with optional trust signals."""
 
@@ -68,7 +64,7 @@ class ToronEngine:
         else:
             # Production fallback setup (legacy Toron v1.0 logic)
             self.guard = trust_layer or (HallucinationGuard() if enable_trust else None)
-            self.lineage = lineage_tracker or ResponseLineage()
+            self.lineage = lineage_tracker or (ResponseLineage() if ResponseLineage else None)
             self.compliance = compliance_suite
 
         # Legacy ask_toron loading remains as fallback
@@ -199,7 +195,6 @@ class ToronEngine:
 
         # fallback to production engine (run)
         return await self.run(prompt, memory)
-    ResponseLineage = importlib.import_module("ryuzen.trust.response_lineage").ResponseLineage
 
 _ask_toron_path = SRC_PATH / "backend" / "toron" / "askToron.py"
 ask_toron = None

@@ -2,11 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: toron-config
-  namespace: toron-prod
   labels:
     app: toron-engine
 data:
-  provider_priority: "openai,anthropic,bedrock,azure"
-  cache_strategy: "l1-l2-l3"
-  circuit_breaker_open: "false"
-  request_timeout_ms: "12000"
+  RYU_SIM: "true"
+  LOG_LEVEL: "INFO"
+  ENGINE_VERSION: "1.6.0"

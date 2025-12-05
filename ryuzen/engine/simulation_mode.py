@@ -6,13 +6,14 @@ backends.
 """
 from __future__ import annotations
 
+import os
 from typing import ClassVar
 
 
 class SimulationMode:
     """Simple global toggle for simulation behavior."""
 
-    _enabled: ClassVar[bool] = False
+    _enabled: ClassVar[bool] = os.getenv("SIMULATION_MODE", "").lower() == "true"
 
     @classmethod
     def enable(cls) -> None:
@@ -23,6 +24,11 @@ class SimulationMode:
     def disable(cls) -> None:
         """Disable simulation mode."""
         cls._enabled = False
+
+    @classmethod
+    def configure_from_env(cls) -> None:
+        """Align the toggle with the SIMULATION_MODE environment variable."""
+        cls._enabled = os.getenv("SIMULATION_MODE", "").lower() == "true"
 
     @classmethod
     def is_enabled(cls) -> bool:

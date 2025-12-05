@@ -1,52 +1,26 @@
-# syntax=docker/dockerfile:1.6
-
-FROM python:3.11-slim AS builder
-
-ENV PIP_NO_CACHE_DIR=1 \
-    PYTHONDONTWRITEBYTECODE=1
-
-WORKDIR /app
-
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y build-essential gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt ./
-COPY requirements/ requirements/
-COPY nexus/ai/requirements.txt nexus/ai/requirements.txt
-
-RUN pip install --upgrade pip setuptools wheel \
-    && pip wheel --wheel-dir /wheels -r requirements.txt
-
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UMASK=027 \
-    APP_HOME=/app
+    PIP_NO_CACHE_DIR=1
 
-WORKDIR ${APP_HOME}
+WORKDIR /app
 
-RUN addgroup --system nexus \
-    && adduser --system --ingroup nexus nexus
-
-COPY --from=builder /wheels /tmp/wheels
 COPY requirements.txt ./
+COPY requirements ./requirements
 
-RUN pip install --no-index --find-links /tmp/wheels -r requirements.txt \
-    && rm -rf /tmp/wheels
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential curl \
+    && pip install --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y build-essential \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --chown=nexus:nexus nexus ./nexus
-COPY --chown=nexus:nexus api ./api
-COPY --chown=nexus:nexus gunicorn.conf.py ./
-COPY --chown=nexus:nexus engine.py ./engine.py
-COPY --chown=nexus:nexus requirements/ ./requirements
+COPY . .
 
-USER nexus
+RUN pip install --no-cache-dir .
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=5).status == 200 else 1)"
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--config", "gunicorn.conf.py", "nexus.ai.nexus_flask_app:app"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
