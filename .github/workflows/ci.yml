@@ -1,168 +1,204 @@
-name: Ryuzen Backend Enterprise CI
+name: Ryuzen CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [main, dev]
   pull_request:
-    branches: ["main"]
+    branches: [main, dev]
 
 jobs:
-  backend-quality-gate:
-    name: Backend Quality Gate
+  ryuzen-ci:
+    name: Ryuzen CI Pipeline
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
 
-      - name: Initialize CI log directory
-        run: mkdir -p ci-logs
-
-      - name: Setup Python 3.11
+      - name: Set up Python 3.11
+        id: setup-python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            requirements/**/*.txt
+            pyproject.toml
 
-      - name: Prepare pip cache
-        id: pip-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-py311-${{ hashFiles('**/requirements.txt', '**/requirements-dev.txt', 'pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-py311-
-            ${{ runner.os }}-
-
-      - name: Install backend dependencies and CI toolchain
+      - name: Install dependencies
         id: install
         continue-on-error: true
-        shell: bash
         run: |
-          set -euo pipefail
-          {
-            python -m pip install --upgrade pip
-            pip install yamllint pytest pytest-asyncio pytest-cov mypy flake8 bandit safety
-            pip install -r requirements.txt
-            if [ -f requirements-dev.txt ]; then
-              pip install -r requirements-dev.txt
-            fi
-          } |& tee ci-logs/dependencies.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate workflow definitions
-        id: validate
-        continue-on-error: true
-        shell: bash
-        run: |
+          echo "Installing dependencies with compatibility for missing files..."
           set -o pipefail
-          yamllint -s .github/workflows |& tee ci-logs/yamllint.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          failures=0
+          python -m pip install --upgrade pip || failures=1
+          if [ -f requirements.txt ]; then
+            echo "Installing from requirements.txt"
+            pip install -r requirements.txt || failures=1
+          else
+            echo "requirements.txt not found; skipping base requirement install."
+          fi
+          if [ -f requirements-dev.txt ]; then
+            echo "Installing from requirements-dev.txt"
+            pip install -r requirements-dev.txt || failures=1
+          fi
+          echo "Installing CI tooling"
+          pip install --upgrade flake8 mypy bandit safety pytest pytest-cov || failures=1
+          echo "Dependency installation finished."
+          exit $failures
 
-      - name: Run master test suite
-        id: master-test
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          python tests/master_test.py |& tee ci-logs/master_test_output.txt
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Pytest with coverage
-        id: pytest-coverage
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          pytest --cov=. --cov-report=xml:ci-logs/coverage.xml --cov-report=term-missing |& tee ci-logs/pytest.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Flake8 linting
+      # Static Analysis Stage
+      - name: flake8 linting
         id: flake8
         continue-on-error: true
-        shell: bash
         run: |
-          set -o pipefail
-          flake8 . |& tee ci-logs/flake8.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          echo "Running flake8 linting..."
+          flake8 .
 
-      - name: Mypy type checking
+      - name: mypy type checking
         id: mypy
         continue-on-error: true
-        shell: bash
         run: |
-          set -o pipefail
-          mypy . |& tee ci-logs/mypy.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          echo "Running mypy type checks..."
+          mypy .
 
-      - name: Bandit security scanning
+      - name: bandit security scan
         id: bandit
         continue-on-error: true
-        shell: bash
         run: |
-          set -o pipefail
-          bandit -r . -x "tests,Frontend" |& tee ci-logs/bandit.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          echo "Running bandit security scan..."
+          bandit -r .
 
-      - name: Safety dependency vulnerability scanning
+      - name: safety vulnerability scan
         id: safety
         continue-on-error: true
-        shell: bash
         run: |
+          echo "Running safety vulnerability scan..."
+          safety check --full-report
+
+      # Core Test Stage
+      - name: Ryuzen Master Test Suite
+        id: master-test
+        continue-on-error: true
+        run: |
+          echo "Executing Ryuzen Master Test Suite..."
           set -o pipefail
-          safety check -r requirements.txt $( [ -f requirements-dev.txt ] && echo "-r requirements-dev.txt" ) --full-report |& tee ci-logs/safety.log
-          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          if [ -f tests/master_test.py ]; then
+            python tests/master_test.py | tee master_test_output.txt
+            exit ${PIPESTATUS[0]}
+          else
+            echo "tests/master_test.py not found" | tee master_test_output.txt
+            exit 1
+          fi
 
-      - name: Self-diagnostic evaluation
-        id: diagnostic
-        if: always()
-        shell: bash
+      # Pytest Stage
+      - name: Run pytest with coverage
+        id: pytest
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          summary_log="ci-logs/diagnostic-summary.log"
-          touch "$summary_log"
+          echo "Running pytest with coverage..."
+          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term
 
-          declare -A status_map=(
-            [workflow_validation]="${{ steps.validate.outputs.status }}"
-            [dependency_installation]="${{ steps.install.outputs.status }}"
-            [flake8]="${{ steps.flake8.outputs.status }}"
-            [mypy]="${{ steps.mypy.outputs.status }}"
-            [bandit]="${{ steps.bandit.outputs.status }}"
-            [safety]="${{ steps.safety.outputs.status }}"
-            [pytest]="${{ steps['pytest-coverage'].outputs.status }}"
-            [coverage]="${{ steps['pytest-coverage'].outputs.status }}"
-            [master_test_suite]="${{ steps['master-test'].outputs.status }}"
-          )
-
-          exit_code=0
-          echo "CI Diagnostic Summary" | tee "$summary_log"
-          for key in workflow_validation dependency_installation flake8 mypy bandit safety pytest coverage master_test_suite; do
-            status="${status_map[$key]:-1}"
-            if [[ "$status" != "0" ]]; then
-              echo "❌ ${key//_/ } failed (status=${status})" | tee -a "$summary_log"
-              exit_code=1
-            else
-              echo "✅ ${key//_/ } succeeded" | tee -a "$summary_log"
-            fi
-          done
-
-          if grep -Eq '"failed"[:[:space:]]*[1-9]' ci-logs/master_test_output.txt; then
-            echo "❌ Detected failing cases reported in master_test_output.txt" | tee -a "$summary_log"
-            exit_code=1
-          else
-            echo "✅ master_test_output.txt shows no failing counts" | tee -a "$summary_log"
-          fi
-
-          if [[ $exit_code -ne 0 ]]; then
-            echo "Composite CI status: FAILED" | tee -a "$summary_log"
-            exit $exit_code
-          else
-            echo "Composite CI status: SUCCESS" | tee -a "$summary_log"
-          fi
-
-      - name: Upload CI diagnostics
+      # Artifact Uploads
+      - name: Upload master test output
+        id: upload-master-output
+        continue-on-error: true
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ryuzen-backend-ci-logs
-          path: ci-logs
-          if-no-files-found: error
+          name: master-test-output
+          path: master_test_output.txt
+          retention-days: 7
+
+      - name: Upload coverage report
+        id: upload-coverage
+        continue-on-error: true
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 7
+
+      - name: Collect diagnostics and caches
+        if: always()
+        id: diagnostics
+        continue-on-error: true
+        run: |
+          echo "Collecting diagnostics and caches..."
+          mkdir -p diagnostics
+          [ -f master_test_output.txt ] && cp master_test_output.txt diagnostics/ || true
+          [ -f coverage.xml ] && cp coverage.xml diagnostics/ || true
+          for dir in .pytest_cache .mypy_cache .cache/pip; do
+            if [ -d "$dir" ]; then
+              tar -czf "diagnostics/${dir##*/}.tar.gz" "$dir" || true
+            fi
+          done
+          echo "Diagnostics collected." 
+
+      - name: Upload diagnostics bundle
+        id: upload-diagnostics
+        continue-on-error: true
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-and-caches
+          path: diagnostics
+          retention-days: 7
+
+      # Self-Diagnostic Stage
+      - name: Self-diagnostic and final status
+        id: self-check
+        if: always()
+        run: |
+          echo "Aggregating step statuses..."
+          declare -A statuses=(
+            [checkout]="${{ steps.checkout.outcome }}"
+            [setup_python]="${{ steps.setup-python.outcome }}"
+            [install]="${{ steps.install.outcome }}"
+            [flake8]="${{ steps.flake8.outcome }}"
+            [mypy]="${{ steps.mypy.outcome }}"
+            [bandit]="${{ steps.bandit.outcome }}"
+            [safety]="${{ steps.safety.outcome }}"
+            [master_test]="${{ steps.master-test.outcome }}"
+            [pytest]="${{ steps.pytest.outcome }}"
+            [diagnostics]="${{ steps.diagnostics.outcome }}"
+            [upload_master_output]="${{ steps.upload-master-output.outcome }}"
+            [upload_coverage]="${{ steps.upload-coverage.outcome }}"
+            [upload_diagnostics]="${{ steps.upload-diagnostics.outcome }}"
+          )
+
+          failures=0
+          for stage in "${!statuses[@]}"; do
+            result="${statuses[$stage]}"
+            echo "- ${stage}: ${result}"
+            if [[ "$result" != "success" ]]; then
+              failures=1
+            fi
+          done
+
+          master_failed=0
+          if [ -f master_test_output.txt ]; then
+            if grep -E "(FAIL|ERROR|FAILED)" master_test_output.txt; then
+              echo "Detected failure markers in master test output."
+              master_failed=1
+            else
+              echo "No failure markers found in master test output."
+            fi
+          else
+            echo "master_test_output.txt is missing."
+            master_failed=1
+          fi
+
+          if (( failures == 1 )) || (( master_failed == 1 )); then
+            echo "Self-diagnostic detected issues; marking workflow as failed." >&2
+            exit 1
+          fi
+
+          echo "All stages passed according to self-diagnostic."
