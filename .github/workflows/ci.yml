@@ -13,7 +13,9 @@ on:
 jobs:
   backend-ci:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
