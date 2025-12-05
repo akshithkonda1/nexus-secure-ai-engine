@@ -25,6 +25,10 @@ from ..core.web_validator import WebValidator
 from ..core.consensus_integrator import ConsensusIntegrator
 from ..aloe.lifecycle_manager import LifecycleManager
 from ..runtime.cloudwatch_telemetry import CloudWatchTelemetry
+from ..performance.cache.multi_layer_cache import MultiLayerCache
+from ..routing.query_optimizer import QueryOptimizer
+from ..routing.router import Router
+from ..tracing.tracer import ToronTracer
 
 from .request_schema import ToronRequest
 from .response_schema import ToronResponseSchema
@@ -49,11 +53,18 @@ class ToronEngine:
         self.alerts = None
         self.replay = None
         self.trace = None
+        self.cache = None
+        self.tracer = None
+        self.query_optimizer = None
 
         # b. run bootstrap
         bootstrap = EngineBootstrap()
         self.providers = bootstrap.initialize()
         self.telemetry = CloudWatchTelemetry()
+
+        self.cache = MultiLayerCache()
+        self.tracer = ToronTracer()
+        self.query_optimizer = QueryOptimizer()
 
         # c. discover connectors
         connectors = ConnectorFactory.discover(self.providers)
@@ -78,6 +89,15 @@ class ToronEngine:
         self.validator = WebValidator(self.provider_adapter)
         self.consensus = ConsensusIntegrator()
 
+        self.router = Router(
+            cache=self.cache,
+            tracer=self.tracer,
+            query_optimizer=self.query_optimizer,
+            debate_engine=self.debate_engine,
+            consensus_integrator=self.consensus,
+            provider_adapter=self.provider_adapter,
+        )
+
         # g. init execution policy
         self.policy = ExecutionPolicy(self.config)
 
@@ -95,44 +115,43 @@ class ToronEngine:
         start = time.time()
         request = None
         try:
-            # Validate request
-            request = ToronRequest(**request_dict)
+            with self.tracer.span("toron.engine.process", {"request_id": request_dict.get("request_id") } ):
+                request = ToronRequest(**request_dict)
 
-            # Session context
-            context = SessionContext(request_dict).as_dict()
+                context = SessionContext(request_dict).as_dict()
 
-            # Policy enforcement
-            self.policy.validate(request_dict)
+                with self.tracer.span("toron.engine.policy"):
+                    self.policy.validate(request_dict)
 
-            # Run full ALOE pipeline
-            result = await self.lifecycle.run(request_dict, context)
+                with self.tracer.span("toron.router.resolve"):
+                    result = await self.router.resolve(request_dict, context)
 
-            latency_ms = (time.time() - start) * 1000
-            self.slo.record_latency(latency_ms)
+                latency_ms = (time.time() - start) * 1000
+                self.slo.record_latency(latency_ms)
 
-            req_cost = result.get("usage_cost", 0.0)
-            self.cost.register_cost(req_cost)
+                req_cost = result.get("usage_cost", 0.0)
+                self.cost.register_cost(req_cost)
 
-            if result.get("status") == "error":
-                self.slo.record_failure()
+                if result.get("status") == "error":
+                    self.slo.record_failure()
+
+                    check = self.slo.check_slo()
+                    if not check["slo_pass"]:
+                        self.alerts.alert("Toron SLO Violation", check)
+
+                    return self.errors.shape(result)
+
+                self.slo.record_success()
 
                 check = self.slo.check_slo()
                 if not check["slo_pass"]:
                     self.alerts.alert("Toron SLO Violation", check)
 
-                return self.errors.shape(result)
+                resp = self.builder.build(result, context)
+                resp["session_id"] = context["session_id"]
+                resp["timestamp"] = str(time.time())
 
-            self.slo.record_success()
-
-            check = self.slo.check_slo()
-            if not check["slo_pass"]:
-                self.alerts.alert("Toron SLO Violation", check)
-
-            resp = self.builder.build(result, context)
-            resp["session_id"] = context["session_id"]
-            resp["timestamp"] = str(time.time())
-
-            return resp
+                return resp
 
         except Exception as e:
             self.telemetry.log(
