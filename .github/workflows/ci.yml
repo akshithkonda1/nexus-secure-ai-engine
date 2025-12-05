@@ -1,4 +1,4 @@
-name: Ryuzen CI/CD
+name: Ryuzen Backend Enterprise CI
 
 on:
   push:
@@ -7,48 +7,162 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
+  backend-quality-gate:
+    name: Backend Quality Gate
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Initialize CI log directory
+        run: mkdir -p ci-logs
 
-    - name: Install Backend Dependencies
-      run: |
-        pip install -r requirements.txt
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install Node for Frontend
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - name: Prepare pip cache
+        id: pip-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-py311-${{ hashFiles('**/requirements.txt', '**/requirements-dev.txt', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-py311-
+            ${{ runner.os }}-
 
-    - name: Install Frontend Dependencies
-      run: |
-        cd Frontend
-        npm install
+      - name: Install backend dependencies and CI toolchain
+        id: install
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            python -m pip install --upgrade pip
+            pip install yamllint pytest pytest-asyncio pytest-cov mypy flake8 bandit safety
+            pip install -r requirements.txt
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
+          } |& tee ci-logs/dependencies.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-    - name: Run Backend Tests
-      run: |
-        pytest --maxfail=1 --disable-warnings
+      - name: Validate workflow definitions
+        id: validate
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          yamllint -s .github/workflows |& tee ci-logs/yamllint.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-    - name: Run Frontend Build
-      run: |
-        cd Frontend
-        npm run build
+      - name: Run master test suite
+        id: master-test
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python tests/master_test.py |& tee ci-logs/master_test_output.txt
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-    - name: Docker Build
-      run: |
-        docker build -t ryuzen-engine:latest .
+      - name: Pytest with coverage
+        id: pytest-coverage
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pytest --cov=. --cov-report=xml:ci-logs/coverage.xml --cov-report=term-missing |& tee ci-logs/pytest.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-    - name: Push Docker Image
-      run: echo "Pushing to registry disabled for demo"
+      - name: Flake8 linting
+        id: flake8
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flake8 . |& tee ci-logs/flake8.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
-    - name: Deploy to Kubernetes
-      if: github.ref == 'refs/heads/main'
-      run: |
-        echo "k8s deploy example"
+      - name: Mypy type checking
+        id: mypy
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mypy . |& tee ci-logs/mypy.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Bandit security scanning
+        id: bandit
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          bandit -r . -x "tests,Frontend" |& tee ci-logs/bandit.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Safety dependency vulnerability scanning
+        id: safety
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          safety check -r requirements.txt $( [ -f requirements-dev.txt ] && echo "-r requirements-dev.txt" ) --full-report |& tee ci-logs/safety.log
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Self-diagnostic evaluation
+        id: diagnostic
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          summary_log="ci-logs/diagnostic-summary.log"
+          touch "$summary_log"
+
+          declare -A status_map=(
+            [workflow_validation]="${{ steps.validate.outputs.status }}"
+            [dependency_installation]="${{ steps.install.outputs.status }}"
+            [flake8]="${{ steps.flake8.outputs.status }}"
+            [mypy]="${{ steps.mypy.outputs.status }}"
+            [bandit]="${{ steps.bandit.outputs.status }}"
+            [safety]="${{ steps.safety.outputs.status }}"
+            [pytest]="${{ steps['pytest-coverage'].outputs.status }}"
+            [coverage]="${{ steps['pytest-coverage'].outputs.status }}"
+            [master_test_suite]="${{ steps['master-test'].outputs.status }}"
+          )
+
+          exit_code=0
+          echo "CI Diagnostic Summary" | tee "$summary_log"
+          for key in workflow_validation dependency_installation flake8 mypy bandit safety pytest coverage master_test_suite; do
+            status="${status_map[$key]:-1}"
+            if [[ "$status" != "0" ]]; then
+              echo "❌ ${key//_/ } failed (status=${status})" | tee -a "$summary_log"
+              exit_code=1
+            else
+              echo "✅ ${key//_/ } succeeded" | tee -a "$summary_log"
+            fi
+          done
+
+          if grep -Eq '"failed"[:[:space:]]*[1-9]' ci-logs/master_test_output.txt; then
+            echo "❌ Detected failing cases reported in master_test_output.txt" | tee -a "$summary_log"
+            exit_code=1
+          else
+            echo "✅ master_test_output.txt shows no failing counts" | tee -a "$summary_log"
+          fi
+
+          if [[ $exit_code -ne 0 ]]; then
+            echo "Composite CI status: FAILED" | tee -a "$summary_log"
+            exit $exit_code
+          else
+            echo "Composite CI status: SUCCESS" | tee -a "$summary_log"
+          fi
+
+      - name: Upload CI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ryuzen-backend-ci-logs
+          path: ci-logs
+          if-no-files-found: error
