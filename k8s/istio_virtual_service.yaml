@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: toron-engine
+  namespace: toron-prod
+spec:
+  hosts:
+    - toron-engine
+  gateways:
+    - toron-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: toron-engine
+            subset: stable
+          weight: 90
+        - destination:
+            host: toron-engine
+            subset: canary
+          weight: 10
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+      timeout: 15s

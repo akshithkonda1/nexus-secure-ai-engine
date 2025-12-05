@@ -1,0 +1,81 @@
+name: Deploy Toron Engine Green
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'toron/**'
+      - 'deploy/blue_green/**'
+      - 'k8s/**'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy-green:
+    runs-on: ubuntu-latest
+    environment: toron-green
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run unit tests
+        run: |
+          pytest --maxfail=1 --disable-warnings --cov=toron --cov-report=xml
+
+      - name: Authenticate to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/toron-engine:${IMAGE_TAG}" .
+          docker push "$ECR_REGISTRY/toron-engine:${IMAGE_TAG}"
+
+      - name: Configure kubectl
+        uses: aws-actions/eks-setup-kubectl@v1
+        with:
+          version: '1.29.0'
+
+      - name: Update kubeconfig
+        uses: aws-actions/eks-login@v1
+        with:
+          cluster-name: toron-prod
+          region: us-east-1
+
+      - name: Render manifests
+        run: |
+          sed "s@IMAGE_PLACEHOLDER@${{ steps.login-ecr.outputs.registry }}/toron-engine:${{ github.sha }}@" k8s/deployment.yaml > /tmp/deployment-green.yaml
+          yq e '.metadata.namespace = "toron-green"' -i /tmp/deployment-green.yaml
+
+      - name: Deploy to green namespace
+        run: |
+          kubectl create namespace toron-green --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f /tmp/deployment-green.yaml
+          kubectl apply -f k8s/service.yaml -n toron-green
+          kubectl apply -f k8s/istio_destination_rule.yaml -n toron-green
+          kubectl apply -f k8s/istio_virtual_service.yaml -n toron-green
+
+      - name: Smoke tests
+        run: |
+          kubectl rollout status deployment/toron-engine -n toron-green --timeout=300s
+          kubectl -n toron-green exec deploy/toron-engine -- curl -fsS http://localhost:8080/healthz
+
+      - name: Publish health metrics
+        run: |
+          aws cloudwatch put-metric-data --namespace "Toron/Deployments" --metric-name "GreenDeploySuccess" --value 1

@@ -1,11 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nexus
+  name: toron-engine
+  namespace: toron-prod
+  labels:
+    app: toron-engine
 spec:
-  type: LoadBalancer
-  selector: { app: nexus }
+  selector:
+    app: toron-engine
   ports:
     - name: http
-      port: 8080
+      port: 80
       targetPort: 8080
+  type: ClusterIP

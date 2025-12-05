@@ -1,0 +1,60 @@
+name: Switch Traffic Between Blue and Green
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Environment to receive 100% traffic (blue|green)"
+        required: true
+      percentage:
+        description: "Traffic percentage to shift to target"
+        required: false
+        default: '100'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  switch-traffic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Shift traffic
+        env:
+          TARGET_ENV: ${{ github.event.inputs.target_env }}
+          PERCENTAGE: ${{ github.event.inputs.percentage }}
+          ALB_LISTENER_ARN: ${{ secrets.ALB_LISTENER_ARN }}
+          BLUE_TG_ARN: ${{ secrets.BLUE_TG_ARN }}
+          GREEN_TG_ARN: ${{ secrets.GREEN_TG_ARN }}
+          CLOUDFRONT_DIST_ID: ${{ secrets.CLOUDFRONT_DIST_ID }}
+          ROUTE53_ZONE_ID: ${{ secrets.ROUTE53_ZONE_ID }}
+          ROUTE53_RECORD_NAME: api.toron.ai
+        run: |
+          chmod +x deploy/blue_green/traffic_shift.sh
+          ./deploy/blue_green/traffic_shift.sh "$TARGET_ENV" "$PERCENTAGE"
+
+      - name: Validate health endpoints
+        run: |
+          for ns in toron-blue toron-green; do
+            if kubectl get ns "$ns" >/dev/null 2>&1; then
+              kubectl -n "$ns" rollout status deployment/toron-engine --timeout=180s || exit 1
+              kubectl -n "$ns" exec deploy/toron-engine -- curl -fsS http://localhost:8080/healthz || exit 1
+            fi
+          done
+
+      - name: Emit CloudWatch deployment event
+        run: |
+          aws events put-events --entries "[{\"Source\":\"toron.deploy\",\"DetailType\":\"traffic-switch\",\"Detail\":\"{\\\"target\\\":\\\"${{ github.event.inputs.target_env }}\\\",\\\"percent\\\":${{ github.event.inputs.percentage }} }\"}]"

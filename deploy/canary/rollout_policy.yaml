@@ -1,0 +1,4 @@
+minimum_successful_requests: 5000
+success_score_threshold: 0.92
+canary_timeout_seconds: 7200
+protection_windows: 2

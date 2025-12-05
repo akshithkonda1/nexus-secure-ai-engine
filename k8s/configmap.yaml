@@ -1,7 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: nexus-config
+  name: toron-config
+  namespace: toron-prod
+  labels:
+    app: toron-engine
 data:
-  allowed_model_domains: "api.openai.com"
-  scrape_allow: "wikipedia.org,arxiv.org,bbc.co.uk,nytimes.com,ft.com,nature.com"
+  provider_priority: "openai,anthropic,bedrock,azure"
+  cache_strategy: "l1-l2-l3"
+  circuit_breaker_open: "false"
+  request_timeout_ms: "12000"
