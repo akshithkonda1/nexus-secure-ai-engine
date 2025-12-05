@@ -1,0 +1,7 @@
+regions:
+  - name: us-east
+    residency_enforced: false
+  - name: eu-central
+    residency_enforced: true
+  - name: gov-west
+    residency_enforced: true

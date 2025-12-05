@@ -1,0 +1,11 @@
+{
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+  "id": "User",
+  "name": "User",
+  "attributes": [
+    {"name": "userName", "type": "string", "required": true},
+    {"name": "displayName", "type": "string", "required": false},
+    {"name": "emails", "type": "complex", "multiValued": true},
+    {"name": "active", "type": "boolean", "required": false}
+  ]
+}
