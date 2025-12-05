@@ -1,0 +1,8 @@
+enterprise:
+  regulated:
+    mode: none
+    allowed_regions: ["us-east-1"]
+    zero_retention: false
+    pii_scrubbing: true
+    model_allowlist: ["bedrock.gov", "llama3-secure", "claude-opus-secure"]
+    boundary_strength: strict
