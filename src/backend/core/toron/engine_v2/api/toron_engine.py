@@ -3,6 +3,7 @@ Toron Engine v2.0 — Main Engine Entry Point.
 """
 
 import asyncio
+import logging
 import time
 
 from ..bootstrap.engine_bootstrap import EngineBootstrap
@@ -19,6 +20,9 @@ from ..runtime.execution_policy import ExecutionPolicy
 from ..core.connectors.connector_factory import ConnectorFactory
 from ..core.cloud_provider_adapter import CloudProviderAdapter
 from ..core.debate_engine import DebateEngine
+from ..core.evidence_scrubber import EvidenceScrubber
+from ..core.evidence_injector import EvidenceInjector
+from ..core.search_connector import SearchConnector
 from ..core.fact_extractor import FactExtractor
 from ..core.web_search import WebSearch
 from ..core.web_validator import WebValidator
@@ -84,6 +88,9 @@ class ToronEngine:
 
         # f. init core engines
         self.debate_engine = DebateEngine(self.provider_adapter)
+        self.evidence_scrubber = EvidenceScrubber()
+        self.search_connector = SearchConnector()
+        self.evidence_injector = EvidenceInjector()
         self.fact_extractor = FactExtractor(self.provider_adapter)
         self.web_search = WebSearch()
         self.validator = WebValidator(self.provider_adapter)
@@ -170,3 +177,95 @@ class ToronEngine:
 
     async def health_check(self):
         return await self.provider_adapter.health_check_all()
+
+    async def run_with_verification(self, query: str, models=None) -> dict:
+        """Run debate → evidence scrubbing → verification → consensus.
+
+        This method is defensive and attempts to return a structured payload
+        even when individual stages fail.
+        """
+
+        logger = logging.getLogger(__name__)
+        if not query or not str(query).strip():
+            return {"status": "error", "message": "Query is empty."}
+
+        selected_models = models or self.config.enterprise_model_list[: self.config.max_parallel_models]
+        if not selected_models:
+            return {"status": "error", "message": "No models configured."}
+
+        try:
+            debate_result = await self.debate_engine.run({
+                "selected_models": selected_models,
+                "prompt": query,
+            })
+        except Exception as exc:
+            logger.error("Debate stage failed: %s", exc)
+            return {"status": "error", "message": "Debate failed", "error": str(exc)}
+
+        model_outputs = list((debate_result.get("model_outputs") or {}).values())
+        claims = self.evidence_scrubber.extract_claims(model_outputs)
+
+        try:
+            verification_results = self.evidence_injector.verify_claims(
+                claims,
+                self.search_connector.search_claim,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Evidence verification failed: %s", exc)
+            verification_results = []
+
+        validation = self._build_validation_summary(verification_results)
+
+        try:
+            consensus_result = await self.consensus.integrate({
+                "debate_result": debate_result,
+                "validation": validation,
+            })
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Consensus stage failed: %s", exc)
+            consensus_result = {
+                "final_answer": "",
+                "confidence": 0.0,
+                "error": str(exc),
+            }
+
+        return {
+            "status": "ok",
+            "query": query,
+            "models": selected_models,
+            "debate_result": debate_result,
+            "claims": claims,
+            "evidence": verification_results,
+            "validation": validation,
+            "consensus": consensus_result,
+        }
+
+    def _build_validation_summary(self, evidence: list[dict]) -> dict:
+        if not evidence:
+            return {
+                "supported": [],
+                "contradicted": [],
+                "unknown": [],
+                "web_evidence": [],
+                "confidence": 0.0,
+            }
+
+        supported = [
+            {"claim": e.get("claim"), "source_model": "web"}
+            for e in evidence if e.get("verified")
+        ]
+        unknown = [
+            {"claim": e.get("claim"), "source_model": "web"}
+            for e in evidence if not e.get("verified")
+        ]
+
+        verified_ratio = len(supported) / max(len(evidence), 1)
+        confidence = round(0.2 + (verified_ratio * 0.8), 4)
+
+        return {
+            "supported": supported,
+            "contradicted": [],
+            "unknown": unknown,
+            "web_evidence": evidence,
+            "confidence": confidence,
+        }
