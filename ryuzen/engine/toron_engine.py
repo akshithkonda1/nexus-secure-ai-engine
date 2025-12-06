@@ -8,23 +8,22 @@ response lineage tracking while providing a fully simulated execution path
 for local testing.
 """
 from __future__ import annotations
-from ryuzen.engine.simulation_mode import SimulationMode
-from ryuzen.engine.mock_provider import MockProvider
-from ryuzen.trust.mock_trust_layer import MockTrustLayer
-from ryuzen.trust.mock_lineage import MockLineage
-from ryuzen.enterprise.compliance.mock_compliance import MockCompliance
-from ryuzen.engine.debate_engine import DebateEngine
-from ryuzen.engine.consensus import ConsensusIntegrator
-from ryuzen.engine.fusion_utils import FusionUtils
 
 import asyncio
 import importlib
 import logging
 import os
 import sys
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
+
+from ryuzen.engine.consensus import ConsensusIntegrator
+from ryuzen.engine.debate_engine import DebateEngine
+from ryuzen.engine.fusion_utils import FusionUtils
+from ryuzen.engine.simulation_mode import SimulationMode
+from ryuzen.search.search_connector import SearchConnector, SearchError
 
 SRC_PATH = Path(__file__).resolve().parents[2] / "src"
 if str(SRC_PATH) not in sys.path:
@@ -40,6 +39,8 @@ ResponseLineage = None
 if _response_lineage_spec:
     ResponseLineage = importlib.import_module("ryuzen.trust.response_lineage").ResponseLineage
 
+logger = logging.getLogger(__name__)
+
 
 class ToronEngine:
     """Adapter that wires Toron processing with optional trust signals."""
@@ -51,8 +52,10 @@ class ToronEngine:
         lineage_tracker: Optional[Any] = None,
         compliance_suite: Optional[Any] = None,
     ):
-        # --- FIRST: CHECK SIMULATION MODE BEFORE ANYTHING ELSE ---
-        from ryuzen.engine.simulation_mode import SimulationMode
+        self.enable_trust = enable_trust
+        self.trust_layer = trust_layer
+        self.lineage_tracker = lineage_tracker
+        self.compliance_suite = compliance_suite
 
         self.providers: List[Any] = []
         self.guard = None
@@ -61,21 +64,59 @@ class ToronEngine:
         self.consensus = ConsensusIntegrator()
         self.utils = FusionUtils()
         self.debate_engine: Optional[DebateEngine] = None
+        self.search_connector: Optional[SearchConnector] = None
 
-        if SimulationMode.is_enabled():
-            # Load mock providers & mock trust/lineage/compliance
-            self.load_simulation_providers()
-        else:
-            # Production fallback setup (legacy Toron v1.0 logic)
-            self.guard = trust_layer or (HallucinationGuard() if enable_trust else None)
-            self.lineage = lineage_tracker or (ResponseLineage() if ResponseLineage else None)
-            self.compliance = compliance_suite
+        self.initialized: bool = False
+        self._init_lock = threading.Lock()
 
-        # Legacy ask_toron loading remains as fallback
-        # Simulation bypasses this entirely
+    def initialize(self) -> None:
+        """Initialise providers, trust layers, and web connectors."""
+        if self.initialized:
+            return
+
+        with self._init_lock:
+            if self.initialized:
+                return
+
+            try:
+                if SimulationMode.is_enabled():
+                    self.load_simulation_providers()
+                else:
+                    self.guard = self.trust_layer or (HallucinationGuard() if self.enable_trust else None)
+                    self.lineage = self.lineage_tracker or (ResponseLineage() if ResponseLineage else None)
+                    self.compliance = self.compliance_suite
+
+                self.initialized = True
+                logger.info("Toron engine initialised (simulation=%s)", SimulationMode.is_enabled())
+                self._load_web_connectors()
+            except Exception:
+                logger.exception("Failed to initialise Toron engine")
+                self.initialized = False
+                raise
+
+    def _ensure_initialized(self) -> None:
+        if not self.initialized:
+            raise RuntimeError("ToronEngine has not been initialised")
+
+    def _load_web_connectors(self) -> None:
+        """Load web connectors after providers are ready."""
+        if not self.initialized:
+            logger.debug("Skipping web connector loading until engine initialises")
+            return
+
+        try:
+            self.search_connector = SearchConnector(engine=self)
+            logger.info("Web connectors loaded")
+        except SearchError:
+            logger.warning("Search connector could not be initialised; continuing without web search")
+        except Exception:
+            logger.exception("Unexpected failure while loading web connectors")
+
     async def run(self, message: str, memory: Optional[Iterable[Any]] = None) -> Dict[str, Any]:
         """Internal fallback when simulation is OFF."""
         global ask_toron
+
+        self._ensure_initialized()
 
         if SimulationMode.is_enabled():
             # NEVER run the legacy run() logic in simulation mode
@@ -126,11 +167,11 @@ class ToronEngine:
     def load_simulation_providers(self) -> None:
         """Register seven simulated providers for Toron."""
         from ryuzen.engine.mock_provider import MockProvider
-        from ryuzen.trust.mock_trust_layer import MockTrustLayer
-        from ryuzen.trust.mock_lineage import MockLineage
         from ryuzen.enterprise.compliance.mock_compliance import MockCompliance
+        from ryuzen.trust.mock_lineage import MockLineage
+        from ryuzen.trust.mock_trust_layer import MockTrustLayer
 
-        self.providers = [
+        providers: List[MockProvider] = [
             MockProvider(
                 "Anthropic-Opus", style="harmonious", signature="contextual-humane", latency_ms=420, jitter_ms=60, error_rate=0.02
             ),
@@ -153,6 +194,8 @@ class ToronEngine:
                 "Meta-Llama-3", style="technical", signature="systems-rigor", latency_ms=320, jitter_ms=50, error_rate=0.017
             ),
         ]
+
+        self.providers = providers
 
         # install mock guard, lineage, compliance
         self.guard = MockTrustLayer()
@@ -196,6 +239,8 @@ class ToronEngine:
 
     async def generate(self, prompt: str, memory: Optional[Iterable[Any]] = None) -> Dict[str, Any]:
         """Simulation-first generate path."""
+        self._ensure_initialized()
+
         if SimulationMode.is_enabled() and self.providers:
             debate_result = await self.simulate_debate(prompt)
             final = self.consensus.integrate(debate_result["responses"])
@@ -248,19 +293,16 @@ class ToronEngine:
     def generate_sync(self, prompt: str, memory: Optional[Iterable[Any]] = None) -> Dict[str, Any]:
         """Synchronous helper for environments without explicit event loop control."""
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             return asyncio.run(self.generate(prompt, memory))
         raise RuntimeError("generate_sync cannot be called from a running event loop")
 
+
 _ask_toron_path = SRC_PATH / "backend" / "toron" / "askToron.py"
 ask_toron = None
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ToronRequest:
     message: str
-
-
