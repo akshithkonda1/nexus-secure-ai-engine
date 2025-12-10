@@ -8,6 +8,7 @@ import uvloop
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from backend.toron_v25hplus import router as toron_v25hplus_router
 from toron import (
     CloudProviderAdapter,
     ConnectorRegistry,
@@ -21,6 +22,7 @@ from toron import (
 uvloop.install()
 
 app = FastAPI(title="Toron Engine", version="1.6")
+app.include_router(toron_v25hplus_router)
 
 engine: ToronEngine | None = None
 
