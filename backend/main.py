@@ -18,12 +18,11 @@ app.add_middleware(
 
 # Ensure required directories
 REQUIRED_DIRS = [
-    "logs/master",
-    "reports/master",
-    "load_results",
-    "warroom/master",
-    "snapshots",
-    "database",
+    "backend/logs/master",
+    "backend/reports/master",
+    "backend/load_results",
+    "backend/warroom/master",
+    "backend/snapshots",
 ]
 
 for d in REQUIRED_DIRS:
