@@ -9,6 +9,7 @@ from typing import Dict
 
 DATABASE_PATH = Path("database/tests_master.db")
 REPORT_BASE = Path("reports/master")
+REPORT_DIR = REPORT_BASE  # Backwards compatibility with previous constant name
 SNAPSHOT_DIR = Path("snapshots")
 LOAD_RESULTS_DIR = Path("load_results")
 LOG_DIR = Path("warroom/master")
@@ -124,6 +125,7 @@ __all__ = [
     "TestStore",
     "DATABASE_PATH",
     "REPORT_BASE",
+    "REPORT_DIR",
     "SNAPSHOT_DIR",
     "LOAD_RESULTS_DIR",
     "LOG_DIR",

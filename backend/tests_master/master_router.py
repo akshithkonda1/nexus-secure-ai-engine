@@ -7,11 +7,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
 from .master_runner import MasterRunner
-from .master_store import TestStore
 
 router = APIRouter()
 runner = MasterRunner()
-store: TestStore = runner.store
+store = runner.store
 
 
 @router.post("/tests/run_all")
