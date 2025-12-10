@@ -1,7 +1,8 @@
 import asyncio
 import uuid
-from tests_master.master_store import MasterStore
-from tests_master.warroom_logger import WarRoomLogger
+
+from backend.tests_master.master_store import MasterStore
+from backend.tests_master.warroom_logger import WarRoomLogger
 
 store = MasterStore()
 logger = WarRoomLogger()
