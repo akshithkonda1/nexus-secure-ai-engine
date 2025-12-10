@@ -10,6 +10,7 @@ import NotFound from "@/pages/NotFound";
 import ProjectDashboard from "@/pages/projects/ProjectDashboard";
 import ProjectView from "@/pages/projects/ProjectView";
 import Settings from "@/pages/Settings";
+import SimDashboard from "@/pages/SimDashboard";
 import ToronPage from "@/pages/Toron/ToronPage";
 import Workspace from "@/pages/Workspace";
 
@@ -27,6 +28,7 @@ export function App() {
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/feedback-dashboard" element={<FeedbackDashboard />} />
+        <Route path="/sim-dashboard" element={<SimDashboard />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

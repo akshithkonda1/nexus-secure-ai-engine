@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from hashlib import sha256
@@ -259,6 +260,22 @@ class StateSnapshot:
 
     def as_dict(self) -> SnapshotPayload:
         return cast(SnapshotPayload, dict(self.to_ordered_dict()))
+
+
+class SnapshotHasher:
+    """Deterministic hashing for snapshot payloads.
+
+    The hasher uses a canonical JSON representation to ensure stable
+    hashes across platforms and Python versions, making it suitable for
+    CI snapshot verification.
+    """
+
+    def __init__(self, snapshot: StateSnapshot) -> None:
+        self.snapshot = snapshot
+
+    def hexdigest(self) -> str:
+        payload = json.dumps(self.snapshot.as_dict(), sort_keys=True, separators=(',', ':'))
+        return sha256(payload.encode()).hexdigest()
 
 
 class RyuzenEngine:
