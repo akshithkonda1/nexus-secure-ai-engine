@@ -1,0 +1,49 @@
+name: Ryuzen CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main", "master", "develop"]
+
+jobs:
+  tests:
+    name: lint, type-check, and test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    env:
+      PYTHONHASHSEED: "0"
+      PYTHONWARNINGS: "error"
+      PYTHONPATH: "."
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort flake8 mypy pytest pytest-cov
+
+      - name: Black
+        run: black --check ryuzen/toron_v25hplus tests/test_toron_v25hplus.py tests/test_mal.py tests/test_psl.py tests/test_state_snapshot.py
+
+      - name: isort
+        run: isort --check-only ryuzen/toron_v25hplus tests/test_toron_v25hplus.py tests/test_mal.py tests/test_psl.py tests/test_state_snapshot.py
+
+      - name: flake8
+        run: flake8 ryuzen/toron_v25hplus tests/test_toron_v25hplus.py tests/test_mal.py tests/test_psl.py tests/test_state_snapshot.py
+
+      - name: mypy
+        run: mypy
+
+      - name: pytest with coverage
+        run: pytest tests/test_toron_v25hplus.py tests/test_mal.py tests/test_psl.py tests/test_state_snapshot.py
