@@ -1,48 +1,46 @@
-"""Snapshot determinism replay implementation."""
 from __future__ import annotations
 
 import hashlib
 import json
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
-from .master_models import SnapshotReplayResult
-from .master_store import SNAPSHOT_DIR
-
-
-def _checksum(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(8192):
-            digest.update(chunk)
-    return digest.hexdigest()
+SNAPSHOT_DIR = Path("snapshots")
 
 
-def replay_snapshot(run_id: str, snapshot_name: str = "state_snapshot.json") -> SnapshotReplayResult:
-    """Replay a snapshot file and compute determinism."""
+def replay_snapshot(run_id: str, snapshot_path: Path | str) -> Dict[str, Any]:
+    path = Path(snapshot_path)
+    if not path.exists():
+        return {
+            "run_id": run_id,
+            "matched": False,
+            "error": f"Snapshot missing at {path}",
+        }
 
-    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    original = SNAPSHOT_DIR / snapshot_name
-    if not original.exists():
-        # If the original snapshot is missing, create a tiny deterministic placeholder
-        original.write_text(json.dumps({"status": "seeded", "run_id": run_id}))
-    replayed_path = SNAPSHOT_DIR / f"{run_id}_replay.json"
-    replayed_path.write_bytes(original.read_bytes())
+    content = path.read_bytes()
+    sha = hashlib.sha256(content).hexdigest()
+    try:
+        parsed = json.loads(content.decode("utf-8"))
+    except Exception:
+        parsed = {}
 
-    original_hash = _checksum(original)
-    replay_hash = _checksum(replayed_path)
-    identical = original_hash == replay_hash
-    total_bytes = replayed_path.stat().st_size
-    mismatched_bytes = 0 if identical else max(1, total_bytes // 10)
-    score = 100.0 if identical else round(100.0 - (mismatched_bytes / max(total_bytes, 1) * 100), 2)
+    sorted_bytes = json.dumps(parsed, sort_keys=True, indent=2).encode("utf-8")
+    replay_hash = hashlib.sha256(sorted_bytes).hexdigest()
+    byte_match = content == sorted_bytes
 
-    return SnapshotReplayResult(
-        determinism_score=score,
-        mismatched_bytes=mismatched_bytes,
-        total_bytes=total_bytes,
-        identical=identical,
-        snapshot_path=str(replayed_path),
-    )
+    return {
+        "run_id": run_id,
+        "matched": byte_match,
+        "snapshot_path": str(path),
+        "sha256_bytes": sha,
+        "sha256_sorted": replay_hash,
+        "records": len(parsed) if isinstance(parsed, list) else len(parsed.keys()) if isinstance(parsed, dict) else 0,
+    }
 
 
-__all__ = ["replay_snapshot"]
+if __name__ == "__main__":
+    demo_path = SNAPSHOT_DIR / "state_snapshot.json"
+    if demo_path.exists():
+        print(json.dumps(replay_snapshot("demo", demo_path), indent=2))
+    else:
+        print("No snapshot to replay.")

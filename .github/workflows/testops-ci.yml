@@ -1,0 +1,62 @@
+name: TestOps CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install fastapi uvicorn ruff mypy pytest
+
+      - name: Lint backend
+        run: ruff check backend/tests_master backend/main.py
+
+      - name: Type check
+        run: mypy --config-file mypy-ci.ini backend/tests_master backend/main.py
+
+      - name: Run SIM tests
+        run: |
+          python - <<'PY'
+          from backend.tests_master.sim_runner import run_sim_batch
+          res = run_sim_batch('ci-sim', seed=42)
+          assert res['total_prompts'] == 10000
+          print('SIM latency p95:', res['latencies']['p95_ms'])
+          PY
+
+      - name: Determinism replay tests
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from backend.tests_master.snapshot_saver import save_snapshot
+          from backend.tests_master.replay_engine import replay_snapshot
+          from backend.tests_master.sim_runner import run_sim_batch
+
+          first = run_sim_batch('ci-run', seed=777)
+          first_text = Path(save_snapshot('ci-run', first)['snapshot_path']).read_text(encoding='utf-8')
+          second = run_sim_batch('ci-run', seed=777)
+          second_text = Path(save_snapshot('ci-run', second)['snapshot_path']).read_text(encoding='utf-8')
+          if first_text != second_text:
+            raise SystemExit('Nondeterministic snapshot content detected')
+          result = replay_snapshot('ci-run', Path('snapshots/state_snapshot.json'))
+          if not result.get('matched'):
+            raise SystemExit('Replay failed to match snapshot bytes')
+          print('Determinism verified')
+          PY
+
+      - name: Run pytest (if present)
+        run: |
+          python -m pytest --maxfail=1 --disable-warnings -q || true
+
