@@ -11,7 +11,7 @@ from .master_store import TestStore
 
 router = APIRouter()
 runner = MasterRunner()
-store = TestStore()
+store: TestStore = runner.store
 
 
 @router.post("/tests/run_all")

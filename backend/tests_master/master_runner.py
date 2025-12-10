@@ -101,17 +101,9 @@ class MasterRunner:
         return run_full_engine_check(seed)
 
     def _write_report(self, run_id: str, summary: dict) -> dict:
-        report_dir = REPORT_BASE / run_id
-        report_dir.mkdir(parents=True, exist_ok=True)
         run_summary = self._build_run_summary(run_id, summary)
-        outputs = build_report(run_summary)
-        html_target = report_dir / "report.html"
-        json_target = report_dir / "report.json"
-        if outputs.get("html"):
-            Path(outputs["html"]).replace(html_target)
-        if outputs.get("json"):
-            Path(outputs["json"]).replace(json_target)
-        return {"html": str(html_target), "json": str(json_target)}
+        outputs = build_report(run_summary, base_dir=REPORT_BASE)
+        return {"html": str(outputs["html"]), "json": str(outputs["json"])}
 
     def _build_run_summary(self, run_id: str, metrics: dict):
         return self._run_summary_class()(run_id=run_id, status=RunStatus.completed, metrics=metrics)
