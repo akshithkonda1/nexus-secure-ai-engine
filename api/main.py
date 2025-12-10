@@ -14,6 +14,7 @@ from ryuzen.engine.logging_middleware import EngineLoggingMiddleware
 from ryuzen.engine.simulation_mode import SimulationMode
 from ryuzen.engine.toron_engine import ToronEngine
 from ryuzen.utils.toron_logger import get_logger
+from backend.tests_master.master_router import router as master_tests_router
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT_DIR / "VERSION"
@@ -34,6 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(EngineLoggingMiddleware)
+app.include_router(master_tests_router)
 
 toron_engine: Optional[ToronEngine] = None
 engine_ready: bool = False

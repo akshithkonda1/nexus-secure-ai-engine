@@ -12,6 +12,7 @@ import LibraryPage from "@/features/library/LibraryPage";
 import PricingPage from "@/features/pricing/PricingPage";
 import { SystemPage } from "@/features/system/SystemPage";
 import SettingsPage from "@/features/settings/SettingsPage";
+import TestDashboard from "@/pages/TestDashboard";
 export const router = createBrowserRouter([
   { path: "/auth", element: <AuthPage /> },
   { path: "/auth/callback", element: <AuthCallback /> },
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "pricing", element: <PricingPage /> },
       { path: "system", element: <SystemPage /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "tests/dashboard", element: <TestDashboard /> },
     ],
   },
 ]);
