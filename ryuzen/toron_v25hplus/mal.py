@@ -40,6 +40,7 @@ class ModelAssuranceLayer:
         self._fingerprint_cache: DeterministicCache[str] = DeterministicCache()
         self.token_estimator = TokenEstimator()
         self.api_calls = 0
+        self.retry_budget = 3
 
     def generate_latency(self, signature: str) -> int:
         def _factory() -> int:
@@ -66,3 +67,28 @@ class ModelAssuranceLayer:
 
     def record_api_call(self) -> None:
         self.api_calls += 1
+
+    def retry(self, signature: str, failure_budget: int = 0, max_attempts: int | None = None) -> Dict[str, object]:
+        """Simulate deterministic MAL retries with bounded attempts.
+
+        Args:
+            signature: unique key for caching latency generation.
+            failure_budget: number of initial attempts to treat as failures.
+            max_attempts: override the default retry budget when provided.
+        """
+
+        attempts = 0
+        latencies = []
+        limit = max_attempts or self.retry_budget
+        for attempt in range(limit):
+            attempts += 1
+            latency = self.generate_latency(f"{signature}:{attempt}")
+            latencies.append(latency)
+            self.record_api_call()
+            if attempt >= failure_budget:
+                return {
+                    "status": "ok",
+                    "attempts": attempts,
+                    "latency_trace": tuple(latencies),
+                }
+        return {"status": "failed", "attempts": attempts, "latency_trace": tuple(latencies)}
