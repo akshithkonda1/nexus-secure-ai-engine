@@ -1,48 +1,41 @@
-"""Snapshot determinism replay implementation."""
-from __future__ import annotations
-
-import hashlib
 import json
-from pathlib import Path
-from typing import Dict
-
-from .master_models import SnapshotReplayResult
-from .master_store import SNAPSHOT_DIR
+import hashlib
+import copy
+from .sim_runner import run_single_simulation
 
 
-def _checksum(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(8192):
-            digest.update(chunk)
-    return digest.hexdigest()
+class ReplayEngine:
+    def __init__(self):
+        pass
 
+    def _hash_snapshot(self, snap: dict) -> str:
+        text = json.dumps(snap, sort_keys=True)
+        return hashlib.sha256(text.encode()).hexdigest()
 
-def replay_snapshot(run_id: str, snapshot_name: str = "state_snapshot.json") -> SnapshotReplayResult:
-    """Replay a snapshot file and compute determinism."""
+    def replay(self, engine, snapshot: dict):
+        # Extract seed from prompt
+        prompt = snapshot["prompt"]
+        # prompt format: SIMTEST-<seed>-Explain...
+        seed = int(prompt.split("-")[1])
 
-    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    original = SNAPSHOT_DIR / snapshot_name
-    if not original.exists():
-        # If the original snapshot is missing, create a tiny deterministic placeholder
-        original.write_text(json.dumps({"status": "seeded", "run_id": run_id}))
-    replayed_path = SNAPSHOT_DIR / f"{run_id}_replay.json"
-    replayed_path.write_bytes(original.read_bytes())
+        rerun = run_single_simulation(engine, seed)
 
-    original_hash = _checksum(original)
-    replay_hash = _checksum(replayed_path)
-    identical = original_hash == replay_hash
-    total_bytes = replayed_path.stat().st_size
-    mismatched_bytes = 0 if identical else max(1, total_bytes // 10)
-    score = 100.0 if identical else round(100.0 - (mismatched_bytes / max(total_bytes, 1) * 100), 2)
+        h1 = self._hash_snapshot(snapshot)
+        h2 = self._hash_snapshot(rerun)
 
-    return SnapshotReplayResult(
-        determinism_score=score,
-        mismatched_bytes=mismatched_bytes,
-        total_bytes=total_bytes,
-        identical=identical,
-        snapshot_path=str(replayed_path),
-    )
+        same = h1 == h2
+        score = 100 if same else 0
 
+        diffs = []
+        if not same:
+            # Shallow structure comparison
+            for k in snapshot:
+                if snapshot[k] != rerun.get(k):
+                    diffs.append(k)
 
-__all__ = ["replay_snapshot"]
+        return {
+            "same": same,
+            "determinism_score": score,
+            "differences": diffs,
+            "rerun": rerun,
+        }
