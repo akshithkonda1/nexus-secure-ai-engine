@@ -1,7 +1,26 @@
 import json
 import hashlib
-import copy
-from .sim_runner import run_single_simulation
+
+
+def run_single_simulation(engine, seed: int):
+    """Execute a single simulation using the provided engine.
+
+    The previous implementation attempted to import this helper from a
+    non‑existent ``sim_runner`` module. To keep ``ReplayEngine`` self-contained
+    while remaining flexible, we first look for an engine-level helper
+    (``run_single_simulation``) and fall back to a generic ``run`` method. If
+    neither is available, a clear error is raised so callers know the engine
+    contract was not satisfied.
+    """
+
+    if hasattr(engine, "run_single_simulation"):
+        return engine.run_single_simulation(seed)
+    if hasattr(engine, "run"):
+        return engine.run(seed)
+
+    raise AttributeError(
+        "Engine does not implement run_single_simulation(seed) or run(seed)"
+    )
 
 
 class ReplayEngine:
