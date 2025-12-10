@@ -1,18 +1,28 @@
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Any
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 
 @dataclass
-class TestRunRecord:
+class RunStatus:
     run_id: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
+    timestamp: float
+    status: str  # "started", "running", "completed", "error"
+    progress: float = 0.0
 
 
 @dataclass
-class TestResult:
+class RunResult:
     run_id: str
-    result: Dict[str, Any]
-    created_at: datetime
+    started_at: float
+    completed_at: float
+    success: bool
+    summary: Dict[str, object]
+    report_path: str
+    snapshot_paths: List[str]
+
+
+@dataclass
+class TestArtifact:
+    name: str
+    passed: bool
+    details: Dict[str, object] = field(default_factory=dict)
