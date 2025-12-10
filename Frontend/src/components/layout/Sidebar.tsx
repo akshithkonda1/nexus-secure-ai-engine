@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { Activity, Camera, ChevronLeft, Gauge, History, PlayCircle, Shield, Swords } from "lucide-react";
 
 import logo from "@/assets/ryuzen-dragon.svg";
 import HomeIcon from "@/assets/icons/home.svg";
@@ -11,7 +11,9 @@ import HistoryIcon from "@/assets/icons/history.svg";
 import SettingsIcon from "@/assets/icons/settings.svg";
 import { useFeedback } from "@/state/feedback";
 
-const navItems = [
+type NavItem = { label: string; path: string; icon: string | JSX.Element };
+
+const navItems: NavItem[] = [
   { label: "Home", path: "/", icon: HomeIcon },
   { label: "Toron", path: "/toron", icon: ToronIcon },
   { label: "Workspace", path: "/workspace", icon: WorkspaceIcon },
@@ -19,6 +21,14 @@ const navItems = [
   { label: "Documents", path: "/documents", icon: DocumentsIcon },
   { label: "History", path: "/history", icon: HistoryIcon },
   { label: "Settings", path: "/settings", icon: SettingsIcon },
+  { label: "Control Dashboard", path: "/control/dashboard", icon: <Gauge className="h-5 w-5" /> },
+  { label: "Run Tests", path: "/control/run", icon: <PlayCircle className="h-5 w-5" /> },
+  { label: "Test History", path: "/control/test-history", icon: <History className="h-5 w-5" /> },
+  { label: "Snapshots", path: "/control/snapshots", icon: <Camera className="h-5 w-5" /> },
+  { label: "Load Tests", path: "/control/load", icon: <Swords className="h-5 w-5" /> },
+  { label: "Stability", path: "/control/stability", icon: <Shield className="h-5 w-5" /> },
+  { label: "War Room", path: "/control/war-room", icon: <Activity className="h-5 w-5" /> },
+  { label: "Replay Engine", path: "/control/replay", icon: <PlayCircle className="h-5 w-5" /> },
 ];
 
 export function Sidebar({
@@ -85,11 +95,11 @@ export function Sidebar({
                 }`}
               >
                 <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)]">
-                  <img
-                    src={item.icon}
-                    alt={item.label}
-                    className="w-6 h-6 opacity-90"
-                  />
+                  {typeof item.icon === "string" ? (
+                    <img src={item.icon} alt={item.label} className="h-6 w-6 opacity-90" />
+                  ) : (
+                    <span className="text-[var(--text-primary)]">{item.icon}</span>
+                  )}
                   {isActive && <GlowOverlay />}
                 </span>
                 <AnimatePresence initial={false}>
