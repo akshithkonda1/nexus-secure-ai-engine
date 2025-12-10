@@ -1,4 +1,4 @@
-ENGINE_PATH: "ryuzen.engine.toron_v25hplus.ToronEngine"
+ENGINE_PATH: "ryuzen.engine.toron_engine.ToronEngine"
 
 SIM_SETTINGS:
   DEFAULT_RUNS: 20
