@@ -16,3 +16,10 @@ class TestResult:
     run_id: str
     result: Dict[str, Any]
     created_at: datetime
+
+
+@dataclass
+class RunResult:
+    run_id: str
+    summary: Dict[str, Any]
+    created_at: datetime

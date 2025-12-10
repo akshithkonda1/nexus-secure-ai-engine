@@ -1,0 +1,5 @@
+SIM_SETTINGS:
+  BASE_SEED: 4242
+  MAX_RUNS: 2000
+  SNAPSHOT_DIR: snapshots
+  REPORT_DIR: reports/master
