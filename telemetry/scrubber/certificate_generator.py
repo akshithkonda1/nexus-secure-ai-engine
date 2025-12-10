@@ -1,30 +1,41 @@
-"""Certificate generation for sanitized telemetry batches."""
-
+"""Zero-PII certificate generation utilities."""
 from __future__ import annotations
 
-import hashlib
+from datetime import datetime, timezone
 import json
 import logging
-from datetime import datetime, timezone
-from typing import Dict, Any
+import os
+from typing import Dict, Tuple
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-def generate_zero_pii_certificate(event_batch_metadata: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate a certificate asserting zero PII after sanitization."""
+def generate_certificate(partner: str, month: str) -> Tuple[Dict[str, str], str]:
+    """Generate a Zero-PII certificate payload for a bundle.
 
-    serialized = json.dumps(event_batch_metadata, sort_keys=True).encode("utf-8")
-    batch_hash = hashlib.sha256(serialized).hexdigest()
+    Args:
+        partner: Partner identifier.
+        month: Target month in ``YYYY-MM`` format.
+
+    Returns:
+        A tuple of (certificate_payload, certificate_s3_ref).
+    """
+
+    certificate_bucket = os.getenv("RYZN_CERTIFICATE_BUCKET", "ryzn-telemetry-certificates")
+    certificate_prefix = os.getenv("RYZN_CERTIFICATE_PREFIX", "zero-pii")
+    certificate_ref = f"s3://{certificate_bucket}/{certificate_prefix}/{partner}/{month}/zero_pii_certificate.json"
+
     certificate = {
-        "telemetry_version": event_batch_metadata.get("telemetry_version", "unknown"),
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "sha256": batch_hash,
-        "zero_pii": True,
+        "partner": partner,
+        "month": month,
+        "sanitized": True,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "certificate_ref": certificate_ref,
+        "statement": "Dataset has been sanitized and is free of user PII.",
     }
-    logger.info("Generated zero PII certificate: %s", certificate)
-    return certificate
+    logger.info("Generated Zero-PII certificate for partner=%s month=%s", partner, month)
+    logger.debug("Certificate payload: %s", json.dumps(certificate, indent=2))
+    return certificate, certificate_ref
 
 
-__all__ = ["generate_zero_pii_certificate"]
+__all__ = ["generate_certificate"]
