@@ -14,3 +14,8 @@ class WarRoomLogger:
 
         with open(f"{self.LOG_DIR}/{run_id}.log", "a") as f:
             f.write(log_line)
+
+
+def log_error(run_id: str, message: str):
+    logger = WarRoomLogger()
+    logger.log(run_id, f"ERROR: {message}")
