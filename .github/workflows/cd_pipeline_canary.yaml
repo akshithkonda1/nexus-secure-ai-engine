@@ -16,9 +16,9 @@ jobs:
     outputs:
       image: ${{ steps.image-ref.outputs.image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install deps
@@ -42,7 +42,7 @@ jobs:
         id: image-ref
         run: echo "image=$(cat /tmp/image-ref.txt)" >> "$GITHUB_OUTPUT"
       - name: Upload image reference
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: image-ref
           path: /tmp/image-ref.txt
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install tooling
         run: |
           sudo apt-get update
@@ -60,7 +60,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install yq
       - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
           aws-region: us-east-1
@@ -96,11 +96,11 @@ jobs:
     needs: deploy-canary
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y jq bc
       - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
           aws-region: us-east-1
