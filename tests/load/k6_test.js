@@ -1,22 +1,30 @@
 import http from 'k6/http';
-import { sleep, check } from 'k6';
+import { sleep } from 'k6';
+
+const target = __ENV.TORON_TARGET_URL || 'http://localhost:8080/api/v1/ask';
+const payload = JSON.stringify({
+  prompt: 'Load test prompt for Toron v2.5H+ simulation.'
+});
+const params = { headers: { 'Content-Type': 'application/json' } };
 
 export let options = {
-  vus: 500,
-  duration: '60s',
+  scenarios: {
+    stress_test: {
+      executor: 'constant-arrival-rate',
+      rate: 30, // 30 requests per second
+      timeUnit: '1s',
+      duration: '2m', // 2 minutes
+      preAllocatedVUs: 1500,
+      maxVUs: 2000,
+    },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)<800'], // p95 under 800ms
+    http_req_failed: ['rate<0.01'], // <1% failures
+  },
 };
 
 export default function () {
-  let payload = JSON.stringify({
-    prompt: "k6 load test",
-    stream: false
-  });
-
-  let res = http.post("http://localhost:8080/api/v1/ask", payload, {
-    headers: { "Content-Type": "application/json" }
-  });
-
-  check(res, { "status 200": (r) => r.status === 200 });
-
-  sleep(1);
+  http.post(target, payload, params);
+  sleep(0.01);
 }
