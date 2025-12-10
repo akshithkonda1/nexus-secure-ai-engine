@@ -1,0 +1,18 @@
+ENGINE_PATH: "ryuzen.engine.toron_v25hplus.ToronEngine"
+
+SIM_SETTINGS:
+  DEFAULT_RUNS: 20
+  MAX_RUNS: 10000
+  BASE_SEED: 1337
+
+LOAD_TEST:
+  MAX_USERS: 1500
+  MAX_USERS_EXTREME: 10000
+  RPS: 30
+  DURATION: "2m"
+
+DIRECTORIES:
+  SNAPSHOTS: "backend/snapshots"
+  REPORTS: "backend/reports/master"
+  WARROOM: "backend/warroom/master"
+  LOGS: "backend/logs/master"
