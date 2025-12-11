@@ -1,28 +1,22 @@
-const baseUrl = () => window.location.origin;
+const BASE = "http://127.0.0.1:8000/tests";
 
-export async function startTest() {
-  const response = await fetch(`${baseUrl()}/tests/run_all`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  });
-  if (!response.ok) throw new Error('Failed to start tests');
-  return response.json();
+export async function runAllTests() {
+  const res = await fetch(`${BASE}/run_all`, { method: "POST" });
+  return await res.json();
 }
 
-export async function getStatus(runId) {
-  const response = await fetch(`${baseUrl()}/tests/status/${runId}`);
-  if (!response.ok) throw new Error('Failed to load status');
-  return response.json();
+export async function fetchStatus(run_id) {
+  const res = await fetch(`${BASE}/status/${run_id}`);
+  return await res.json();
 }
 
-export async function getReport(runId) {
-  const response = await fetch(`${baseUrl()}/tests/report/${runId}`);
-  if (!response.ok) throw new Error('Failed to load report');
-  return response.text();
+export function streamLogs(run_id, onMessage) {
+  const evtSource = new EventSource(`${BASE}/stream/${run_id}`);
+  evtSource.onmessage = (e) => onMessage(e.data);
+  return evtSource;
 }
 
-export async function getBundle(runId) {
-  const response = await fetch(`${baseUrl()}/tests/bundle/${runId}`);
-  if (!response.ok) throw new Error('Failed to download bundle');
-  return response.blob();
+export async function fetchResult(run_id) {
+  const res = await fetch(`${BASE}/result/${run_id}`);
+  return await res.json();
 }

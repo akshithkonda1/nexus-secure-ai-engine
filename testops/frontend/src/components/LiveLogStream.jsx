@@ -1,23 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-
-const LiveLogStream = ({ logs }) => {
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [logs]);
-
+export default function LiveLogStream({ logs }) {
   return (
-    <div className="log-window" ref={scrollRef}>
-      {logs.length === 0 ? <div className="placeholder">Awaiting stream…</div> : null}
-      {logs.map((line, idx) => (
-        <div className="log-line" key={`${idx}-${line.slice(0, 8)}`}>
-          {line}
-        </div>
-      ))}
+    <div className="log-window">
+      <h3>Live Logs</h3>
+      <pre>
+        {logs.map((l, i) => (
+          <div key={i}>{l}</div>
+        ))}
+      </pre>
     </div>
   );
-};
-
-export default LiveLogStream;
+}
