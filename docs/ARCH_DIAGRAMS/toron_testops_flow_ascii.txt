@@ -1,0 +1,9 @@
+Toron/TestOps Flow
+
+[Scenario Config] -> [Runner] -> [Toron v2.5H+ Engine]
+                               |           |
+                               v           v
+                        [Snapshots]    [Reports]
+                               \         /
+                                v       v
+                              [Warroom]

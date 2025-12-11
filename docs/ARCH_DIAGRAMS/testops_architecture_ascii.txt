@@ -1,0 +1,15 @@
+TestOps Architecture (ASCII)
+
+[UI]
+  |
+  v
+[SSE Gateway] --health--> [Observability]
+  |
+  v
+[API] --> [Runner] --> [Toron v2.5H+ Engine]
+                          |
+                    [Snapshot Store]
+                          |
+                        [Reports]
+                          |
+                        [Warroom]
