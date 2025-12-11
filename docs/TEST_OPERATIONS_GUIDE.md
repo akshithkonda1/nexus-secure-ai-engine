@@ -1,96 +1,68 @@
-# Ryuzen Toron v2.5H+ — Test Operations Guide
+# Ryuzen Toron v2.5H+ TestOps Guide
 
-This guide explains how to run the backend, launch the frontend test dashboard, trigger the full test suite, and interpret the outputs. Everything runs with Python 3.11 and Node 18+.
+## Overview
+This document describes the isolated TestOps harness for the Ryuzen Toron v2.5H+ Engine. The harness provides backend FastAPI services, a dedicated frontend dashboard, and offline synthetic suites for SIM, hardening phases 4–9, replay validation, and beta readiness.
 
 ## Running the backend
+1. Navigate to `testops/backend`.
+2. Install dependencies: `pip install -r requirements.txt`.
+3. Start the API: `uvicorn testops.backend.main:app --reload --port 8000`.
+4. Required directories (created automatically):
+   - `backend/logs/master`
+   - `backend/reports/master`
+   - `backend/snapshots`
+   - `backend/warroom/master`
+   - `backend/database`
 
-1. Install dependencies:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-2. Start the FastAPI service:
-   ```bash
-   uvicorn backend.main:app --reload --port 8088
-   ```
-3. Required directories are created automatically under `backend/` (logs, reports, load results, war room, snapshots).
+## Running the frontend dashboard
+1. Navigate to `testops/frontend-testdash`.
+2. Install dependencies: `npm install`.
+3. Run the Vite dev server: `npm run dev -- --host --port 4173`.
+4. The dashboard communicates only with the TestOps backend endpoints exposed under `/tests/*` and `/testops/run`.
 
-## Running the frontend
+## Integrating new Toron versions
+- Update `tests_master/engine_validator.py` to encode the new configuration signature.
+- Extend `tests_master/v3_migration` with additional migration checks and update `version_matrix.json` accordingly.
+- Ensure new modules expose a `run_tests(run_id)` function so they are auto-discovered by `master_runner.py`.
 
-1. Install Node dependencies:
-   ```bash
-   cd frontend-testdash
-   npm install
-   ```
-2. Launch the Vite dev server:
-   ```bash
-   npm run dev -- --host --port 5173
-   ```
-3. Set `VITE_TESTOPS_API` to the backend URL if different from `http://localhost:8088`.
+## Snapshot replay
+- Snapshots are written to `backend/snapshots/{run_id}.json` via `master_reporter.build_snapshot`.
+- `sim/sim_replay.py` revalidates determinism by comparing synthesized traces across runs.
+- Replay logs are added to `warroom/master/{run_id}.log` for auditability.
 
-## Triggering the full test suite
+## Determinism calculation
+- SIM determinism is derived from `sim/sim_assertions.py` by validating prompts against expected outputs.
+- Replay determinism (`determinism_score`) is reported in the replay phase metrics.
+- CDG integrity is checked in `engine_hardening/cdg_integrity_checker.py`.
 
-1. Open `http://localhost:5173` and land on the **Begin Testing** gate.
-2. Type **Begin testing** (case-insensitive) and submit; the UI will call `/engine_health` to ensure Toron v2.5H+ is loaded and ready.
-3. When the engine handshake returns `status: ok`, you are redirected to the dashboard.
-4. Wait for the **Engine validated** banner to show ✅ on the dashboard.
-5. Click **RUN FULL TEST SUITE** to trigger `/run_all` (aliased under `/tests/run_all`).
-6. Live logs stream via SSE from `/stream/{run_id}`; status bubbles show SIM Batch, Engine Check, Replay, and Load Test states.
+## Report structure
+Each run produces:
+- HTML report: `reports/master/report_{run_id}.html`
+- JSON summary: `reports/master/report_{run_id}.json`
+- Snapshot: `snapshots/{run_id}.json`
+- WAR ROOM log: `warroom/master/{run_id}.log`
 
-## Reading logs
+Reports include latency and chaos notes, readiness meters (public beta, controlled beta, determinism, PII), and a module matrix with PASS/FAIL status.
 
-- Live logs stream from `backend/warroom/master/{run_id}.log` and are mirrored over SSE in real time.
-- All failures are indexed in `backend/warroom/master/index.json` and surfaced on the War Room page.
+## WAR ROOM logs
+- Collected per run in `warroom/master/{run_id}.log`.
+- Populated via the same log feed used for SSE streaming.
+- Intended for coordination during incident-style reviews of synthetic failures.
 
-## Reading snapshots
+## Onboarding new models
+- Add new deterministic SIM cases to `sim/sim_dataset.json` and `sim/generator.py`.
+- Add PII and safety validations to `security_hardening` modules as needed.
+- Keep changes offline and deterministic; avoid external calls.
 
-- Snapshots are written to `backend/snapshots/state_snapshot.json`.
-- Each run bundles a text-only archive at `backend/snapshots/{run_id}_bundle.zip`.
+## PII compliance
+- `security_hardening/pii_scrubber_tester.py` asserts scrubber coverage for names, emails, phones, IPs, and related metadata.
+- `telemetry_quarantine_tester.py` ensures sensitive telemetry is quarantined with checksum validation.
 
-## Verifying determinism
+## Chaos testing
+- Load and chaos operations are mocked via `load_and_chaos` modules.
+- To run manually, trigger `/tests/run_all` or `/testops/run` after unlocking the backend with the exact phrase `Begin testing`.
 
-- The replay engine loads `state_snapshot.json` and compares outputs; status appears under the Replay bubble and in SSE logs.
-- Determinism scores from the SIM batch surface in the dashboard summary metrics and the HTML report.
-
-## Interpreting ASCII metrics
-
-- SIM latency and confidence trends are rendered as ASCII bar lines in `backend/reports/master/{run_id}.html`.
-- Higher density blocks (█) indicate higher values; empty or light symbols show lower values.
-
-## War Room triage
-
-- All errors funnel through `WarRoomLogger`, which writes severity-tagged entries.
-- The War Room page sorts by severity and timestamp using `backend/warroom/master/index.json`.
-- Critical or high-severity entries should be addressed before re-running the suite.
-
-## Engine Wiring & Upgrades (Toron v2.5H → v3+)
-
-The engine is configured through the `ENGINE_PATH` environment variable or `testops_config.yaml` entry:
-
-```yaml
-ENGINE_PATH: "ryuzen.engine.toron_v25hplus.ToronEngine"
-```
-
-To migrate to a new engine version (e.g., Toron v3):
-
-1. Implement the new engine class (e.g., `ryuzen.engine.toron_v3.ToronEngineV3`).
-2. Ensure it exposes at least one of: `process(prompt: str)`, `run(prompt: str)`, `handle_request(prompt: str)`, or `execute(prompt: str)`.
-3. Update `ENGINE_PATH` to the new dotted path.
-4. Run the TestOps frontend and use **Engine Validation** via `/tests/validate_engine` or the `/engine_health` gate.
-5. Proceed only when validation shows ✅, then type **Begin testing** on the gate and start the suite.
-
-### Engine Validation Flow
-
-- User opens TestOps Dashboard
-- TestOps calls `/engine_health` at the gate and `/tests/validate_engine` inside the dashboard
-- If OK → green banners
-- User types `Begin testing`
-- User clicks “RUN FULL TEST SUITE”
-- SSE stream + status view display progress
-
-## Extending TestOps
-
-- **v3 (multi-cloud):** add cloud-specific runners and extend `MasterRunner` to dispatch per-cloud workloads; store artifacts under `backend/reports/{cloud}`.
-- **v4 (cross-cluster testing):** introduce cluster selectors and orchestrate sequential runs per cluster; aggregate cluster snapshots before bundle creation.
-- **v5 (full LLM fleet orchestration):** plug fleet metadata into `engine_loader`, shard fuzzers per model, and fan-in reports for a fleet-level determinism score.
+## Extending for Toron v3
+- Add new migration scenarios under `v3_migration/`.
+- Update `engine_validator.py` to reflect v3 readiness gates.
+- Incorporate additional beta/public readiness modules; they will be auto-discovered by `master_runner.py`.

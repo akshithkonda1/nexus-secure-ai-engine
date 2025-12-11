@@ -6,7 +6,6 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
-from sse_starlette.sse import EventSourceResponse
 
 from .master_runner import master_runner
 
@@ -34,10 +33,10 @@ async def status(run_id: str, _: Any = Depends(require_unlocked)) -> Dict[str, A
 
 @router.get("/stream/{run_id}")
 async def stream(run_id: str, _: Any = Depends(require_unlocked)):
-    stream_generator = master_runner.stream(run_id)
-    if stream_generator is None:
+    stream_response = master_runner.stream(run_id)
+    if stream_response is None:
         raise HTTPException(status_code=404, detail="run_id not found")
-    return EventSourceResponse(stream_generator)
+    return stream_response
 
 
 @router.get("/result/{run_id}")
@@ -62,12 +61,12 @@ async def report(run_id: str, _: Any = Depends(require_unlocked)):
 @router.get("/bundle/{run_id}")
 async def bundle(run_id: str, _: Any = Depends(require_unlocked)):
     reports = master_runner.get_report_paths(run_id)
-    if not reports or not reports.get("bundle"):
+    if not reports or not reports.get("json"):
         raise HTTPException(status_code=404, detail="bundle not found")
-    bundle_path = Path(reports["bundle"])
-    if not bundle_path.exists():
+    json_path = Path(reports["json"])
+    if not json_path.exists():
         raise HTTPException(status_code=404, detail="bundle artifact missing")
-    return FileResponse(bundle_path, media_type="application/zip", filename=bundle_path.name)
+    return FileResponse(json_path, media_type="application/json", filename=json_path.name)
 
 
 __all__ = ["router"]

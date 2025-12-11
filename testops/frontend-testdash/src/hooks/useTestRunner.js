@@ -10,7 +10,7 @@ import {
   streamLogs,
 } from '../api/testAPI.js';
 
-const STATUS_KEYS = ['SIM', 'ENGINE', 'REPLAY', 'LOAD'];
+const STATUS_KEYS = ['sim_suite', 'engine_hardening', 'cloud_hardening', 'security_hardening', 'load_and_chaos', 'replay'];
 
 export default function useTestRunner() {
   const [runId, setRunId] = useState(null);
@@ -19,6 +19,7 @@ export default function useTestRunner() {
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const logStream = useRef(null);
 
   const updateHistory = useCallback((entry) => {
@@ -27,11 +28,12 @@ export default function useTestRunner() {
     localStorage.setItem('testRunHistory', JSON.stringify(next));
   }, []);
 
-  const begin = useCallback(async () => {
+  const begin = useCallback(async (phrase) => {
     setLoading(true);
     try {
       await checkEngineHealth();
-      await beginSession();
+      await beginSession(phrase);
+      setUnlocked(true);
     } finally {
       setLoading(false);
     }
@@ -121,5 +123,6 @@ export default function useTestRunner() {
     loading,
     actions,
     statusKeys: STATUS_KEYS,
+    unlocked,
   };
 }

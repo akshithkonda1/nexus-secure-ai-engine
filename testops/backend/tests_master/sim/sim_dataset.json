@@ -1,0 +1,6 @@
+{
+  "sessions": [
+    {"id": "s1", "tier": 1, "prompt": "alpha", "expected": "alpha"},
+    {"id": "s2", "tier": 2, "prompt": "beta", "expected": "beta"}
+  ]
+}
