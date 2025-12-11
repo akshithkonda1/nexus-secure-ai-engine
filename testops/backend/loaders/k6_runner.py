@@ -1,41 +1,60 @@
-"""Generate k6 load test scripts for Toron simulation endpoints."""
+"""Simulated k6 load test executor."""
 from __future__ import annotations
 
+import time
 from pathlib import Path
-from typing import Optional
+from random import Random
+from typing import Any, Dict
 
 
-def generate_k6_script(target_url: str) -> str:
-    """Return a k6 script configured for 1500 VUs, 30 RPS, 2 minutes."""
-    return f"""
+class K6Runner:
+    """Generates a deterministic k6 script and simulates execution results."""
+
+    def __init__(self, work_dir: Path) -> None:
+        self.work_dir = work_dir
+        self.work_dir.mkdir(parents=True, exist_ok=True)
+
+    def _write_script(self, run_id: str) -> Path:
+        script = """
 import http from 'k6/http';
 import { sleep } from 'k6';
 
-export const options = {{
-  scenarios: {{
-    toron_load: {{
-      executor: 'constant-arrival-rate',
-      rate: 30,
-      timeUnit: '1s',
-      duration: '2m',
-      preAllocatedVUs: 1500,
-      maxVUs: 1500,
-    }},
-  }},
-}};
+export const options = {
+  vus: 1500,
+  rps: 30,
+  duration: '2m',
+};
 
-export default function () {{
-  const response = http.get('{target_url}');
-  sleep(0.5);
-}}
+export default function () {
+  http.get('http://localhost:8000/health');
+  sleep(1);
+}
 """
+        script_path = self.work_dir / f"{run_id}_loadtest.js"
+        script_path.write_text(script.strip() + "\n", encoding="utf-8")
+        return script_path
+
+    def run(self, run_id: str, rng: Random) -> Dict[str, Any]:
+        script_path = self._write_script(run_id)
+        start = time.perf_counter()
+        # Simulated metrics derived from deterministic randomness
+        http_failures = int(rng.random() * 3)
+        reqs = 30 * 120
+        p95 = round(250 + rng.random() * 15, 2)
+        p99 = round(320 + rng.random() * 20, 2)
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        summary = {
+            "script": str(script_path),
+            "vus": 1500,
+            "rps": 30,
+            "duration": "2m",
+            "http_failures": http_failures,
+            "requests_sent": reqs,
+            "latency_p95_ms": p95,
+            "latency_p99_ms": p99,
+            "execution_ms": duration_ms,
+        }
+        return summary
 
 
-def save_k6_script(target_url: str, destination: Optional[Path] = None) -> Path:
-    """Write the generated script to disk and return its path."""
-    destination = destination or Path("k6_toron.js")
-    destination.write_text(generate_k6_script(target_url), encoding="utf-8")
-    return destination
-
-
-__all__ = ["generate_k6_script", "save_k6_script"]
+__all__ = ["K6Runner"]
