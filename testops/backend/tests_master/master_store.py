@@ -23,68 +23,105 @@ class MasterStore:
         with self._connect() as conn:
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS runs (
+                CREATE TABLE IF NOT EXISTS test_runs (
                     run_id TEXT PRIMARY KEY,
+                    started_at TEXT,
+                    finished_at TEXT,
                     status TEXT,
-                    started_at REAL,
-                    updated_at REAL,
-                    result_path TEXT,
-                    error TEXT
+                    result_json TEXT,
+                    report_path TEXT,
+                    snapshot_path TEXT
                 )
                 """
             )
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS results (
-                    run_id TEXT PRIMARY KEY,
-                    payload TEXT
+                CREATE TABLE IF NOT EXISTS test_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id TEXT,
+                    timestamp TEXT,
+                    message TEXT
                 )
                 """
             )
             conn.commit()
 
-    def record_run(self, run_id: str, status: str) -> None:
-        now = time.time()
+    def record_run(self, run_id: str, status: str, started_at: Optional[str] = None) -> None:
+        started_at = started_at or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         with self._connect() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO runs(run_id, status, started_at, updated_at) VALUES (?, ?, ?, ?)",
-                (run_id, status, now, now),
+                "INSERT OR REPLACE INTO test_runs(run_id, started_at, status) VALUES (?, ?, ?)",
+                (run_id, started_at, status),
             )
             conn.commit()
 
-    def update_status(self, run_id: str, status: str, error: Optional[str] = None, result_path: Optional[str] = None) -> None:
+    def update_status(
+        self,
+        run_id: str,
+        status: Optional[str] = None,
+        result_json: Optional[str] = None,
+        report_path: Optional[str] = None,
+        snapshot_path: Optional[str] = None,
+        finished_at: Optional[str] = None,
+    ) -> None:
+        finished_at = finished_at or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) if status in {"PASS", "FAIL"} else None
         with self._connect() as conn:
             conn.execute(
-                "UPDATE runs SET status = ?, updated_at = ?, error = COALESCE(?, error), result_path = COALESCE(?, result_path) WHERE run_id = ?",
-                (status, time.time(), error, result_path, run_id),
+                """
+                UPDATE test_runs
+                SET status = COALESCE(?, status),
+                    result_json = COALESCE(?, result_json),
+                    report_path = COALESCE(?, report_path),
+                    snapshot_path = COALESCE(?, snapshot_path),
+                    finished_at = COALESCE(?, finished_at)
+                WHERE run_id = ?
+                """,
+                (status, result_json, report_path, snapshot_path, finished_at, run_id),
+            )
+            conn.commit()
+
+    def log(self, run_id: str, message: str, timestamp: Optional[str] = None) -> None:
+        timestamp = timestamp or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO test_logs(run_id, timestamp, message) VALUES (?, ?, ?)",
+                (run_id, timestamp, message),
             )
             conn.commit()
 
     def save_result(self, run_id: str, payload: Dict[str, Any]) -> None:
         with self._connect() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO results(run_id, payload) VALUES (?, ?)",
-                (run_id, json.dumps(payload)),
+                "UPDATE test_runs SET result_json = ? WHERE run_id = ?",
+                (json.dumps(payload), run_id),
             )
             conn.commit()
 
     def fetch_run(self, run_id: str) -> Optional[Dict[str, Any]]:
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT run_id, status, started_at, updated_at, result_path, error FROM runs WHERE run_id = ?",
+                "SELECT run_id, started_at, finished_at, status, result_json, report_path, snapshot_path FROM test_runs WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             if not row:
                 return None
-            keys = ["run_id", "status", "started_at", "updated_at", "result_path", "error"]
-            return dict(zip(keys, row))
+            keys = ["run_id", "started_at", "finished_at", "status", "result_json", "report_path", "snapshot_path"]
+            payload = dict(zip(keys, row))
+            if payload.get("result_json"):
+                payload["result_json"] = json.loads(payload["result_json"])
+            return payload
 
     def fetch_result(self, run_id: str) -> Optional[Dict[str, Any]]:
+        record = self.fetch_run(run_id)
+        return record.get("result_json") if record else None
+
+    def fetch_logs(self, run_id: str) -> Any:
         with self._connect() as conn:
-            row = conn.execute("SELECT payload FROM results WHERE run_id = ?", (run_id,)).fetchone()
-            if not row:
-                return None
-            return json.loads(row[0])
+            rows = conn.execute(
+                "SELECT timestamp, message FROM test_logs WHERE run_id = ? ORDER BY id ASC",
+                (run_id,),
+            ).fetchall()
+        return [f"[{ts}] {msg}" for ts, msg in rows]
 
 
 __all__ = ["MasterStore", "DB_PATH"]

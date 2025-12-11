@@ -1,22 +1,17 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
-export default function LiveLogStream({ lines = [] }) {
-  const bottomRef = useRef(null);
-
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [lines]);
-
+export default function LiveLogStream({ logs }) {
   return (
-    <div className="live-log" aria-live="polite" aria-label="Live log stream">
-      {lines.map((line, idx) => (
-        <div key={idx} role="text">
-          {line}
-        </div>
-      ))}
-      <div ref={bottomRef} />
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h4 style={{ margin: 0 }}>Live Log Stream</h4>
+        <span style={{ color: '#22c55e', fontWeight: 700 }}>SSE</span>
+      </div>
+      <div className="log-console" aria-live="polite">
+        {logs.map((line, idx) => (
+          <div key={idx}>{line}</div>
+        ))}
+      </div>
     </div>
   );
 }

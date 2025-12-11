@@ -1,41 +1,33 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import StatusBubbles from './StatusBubbles.jsx';
+import LiveLogStream from './LiveLogStream.jsx';
+import TestResultSummary from './TestResultSummary.jsx';
 
-export default function TestRunCard({ run }) {
+export default function TestRunCard({
+  runId,
+  progress,
+  statuses,
+  logs,
+  summary,
+  onDownload,
+}) {
   return (
-    <div className="summary-item" aria-label={`Run ${run.id}`}>
-      <div className="grid-2">
+    <div className="card">
+      <div className="header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <strong>Run ID:</strong> {run.id}
+          <p style={{ margin: 0, color: '#475569' }}>Run ID</p>
+          <strong>{runId || 'Not started'}</strong>
         </div>
-        <div>
-          <strong>Status:</strong>{' '}
-          <span className={`badge ${run.status === 'ok' ? 'ok' : run.status === 'failed' ? 'err' : 'warn'}`}>
-            {run.status}
-          </span>
-        </div>
-        <div>
-          <strong>Started:</strong> {run.started}
-        </div>
-        <div>
-          <strong>Duration:</strong> {run.duration}
-        </div>
+        <button className="download-btn" onClick={onDownload} disabled={!runId}>
+          Download bundle
+        </button>
       </div>
-      <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <Link className="badge ok" to={`/runs/${run.id}`} aria-label={`View details for run ${run.id}`}>
-          Details
-        </Link>
-        {run.report && (
-          <a className="badge warn" href={run.report} target="_blank" rel="noreferrer">
-            Report
-          </a>
-        )}
-        {run.snapshot && (
-          <a className="badge warn" href={run.snapshot} target="_blank" rel="noreferrer">
-            Snapshot
-          </a>
-        )}
+      <div className="progress" aria-label="overall progress">
+        <div className="progress-bar" style={{ width: `${progress}%` }} />
       </div>
+      <StatusBubbles statuses={statuses} />
+      <LiveLogStream logs={logs} />
+      <TestResultSummary summary={summary} />
     </div>
   );
 }

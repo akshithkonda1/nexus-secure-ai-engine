@@ -12,16 +12,21 @@ const handleResponse = async (res) => {
 
 export const checkEngineHealth = () => fetch('/engine_health').then(handleResponse);
 
-export const beginSession = () => fetch('/begin', { method: 'POST' }).then(handleResponse);
+export const beginSession = (phrase) =>
+  fetch('/begin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phrase }),
+  }).then(handleResponse);
 
-export const startRunAll = () => fetch('/run_all', { method: 'POST' }).then(handleResponse);
+export const startRunAll = () => fetch('/tests/run_all', { method: 'POST' }).then(handleResponse);
 
-export const fetchStatus = (runId) => fetch(`/status/${runId}`).then(handleResponse);
+export const fetchStatus = (runId) => fetch(`/tests/status/${runId}`).then(handleResponse);
 
-export const streamLogs = (runId) => new EventSource(`/stream/${runId}`);
+export const streamLogs = (runId) => new EventSource(`/tests/stream/${runId}`);
 
-export const fetchResult = (runId) => fetch(`/result/${runId}`).then(handleResponse);
+export const fetchResult = (runId) => fetch(`/tests/result/${runId}`).then(handleResponse);
 
-export const fetchReport = (runId) => fetch(`/report/${runId}`).then(handleResponse);
+export const fetchReport = (runId) => fetch(`/tests/report/${runId}`).then(handleResponse);
 
-export const downloadBundle = (runId) => fetch(`/bundle/${runId}`).then(handleResponse);
+export const downloadBundle = (runId) => fetch(`/tests/bundle/${runId}`).then(handleResponse);
