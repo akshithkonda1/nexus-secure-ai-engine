@@ -5,7 +5,7 @@ import random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from testops.backend.routers.testops_router import router
+from .routers.testops_router import router
 
 # Deterministic seeding for consistent simulated outputs
 random.seed(42)
