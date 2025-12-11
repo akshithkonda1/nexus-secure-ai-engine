@@ -1,21 +1,18 @@
-"""FastAPI application for Ryuzen TestOps Suite backend."""
+"""FastAPI bootstrap for TestOps Section 1.
+
+This lightweight application exposes test execution endpoints and
+streams synthetic logs suitable for frontend dashboards.
+"""
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from testops.backend.engine_adapter.healthcheck import run_healthcheck
-from testops.backend.tests_master.engine_validator import validate_engine
-from testops.backend.tests_master.master_runner import master_runner
-from testops.backend.tests_master.master_router import router as master_router
+from testops.backend.routers.test_router import router as test_router
 
-BACKEND_ROOT = Path(__file__).resolve().parent
-
-app = FastAPI(title="Ryuzen TestOps Suite", version="2.5H+")
+app = FastAPI(title="Ryuzen TestOps Section 1", version="2.5H+")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,53 +20,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.state.testing_unlocked = False
 
 
-@app.on_event("startup")
-async def ensure_directories() -> None:
-    for path in [
-        BACKEND_ROOT / "logs" / "master",
-        BACKEND_ROOT / "reports" / "master",
-        BACKEND_ROOT / "snapshots",
-        BACKEND_ROOT / "warroom" / "master",
-        BACKEND_ROOT / "database",
-    ]:
-        path.mkdir(parents=True, exist_ok=True)
+@app.get("/")
+async def root() -> Dict[str, Any]:
+    """Return basic API metadata."""
+    return {"service": app.title, "version": app.version}
 
 
-async def require_unlocked():
-    if not getattr(app.state, "testing_unlocked", False):
-        raise HTTPException(status_code=403, detail="Testing is locked. Unlock with the phrase.")
+app.include_router(test_router, prefix="/tests", tags=["tests"])
 
 
-@app.post("/begin")
-async def begin(payload: Dict[str, str]):
-    phrase = payload.get("phrase") if payload else None
-    if phrase != "Begin testing":
-        raise HTTPException(status_code=403, detail="Invalid unlock phrase")
-    app.state.testing_unlocked = True
-    return {"status": "unlocked"}
+async def lifespan(app: FastAPI):
+    """Async context hook to start background housekeeping if needed."""
+    yield
 
 
-@app.get("/engine_health")
-async def engine_health():
-    result = await run_healthcheck()
-    if not result.get("engine_ok"):
-        raise HTTPException(status_code=503, detail=result)
-    return JSONResponse(content=result)
-
-
-@app.post("/testops/run", dependencies=[Depends(require_unlocked)])
-async def run_full_suite():
-    validation = validate_engine()
-    if not validation["engine_ready"]:
-        raise HTTPException(status_code=503, detail=validation)
-    run_id = await master_runner.start_run("testops_run")
-    return {"run_id": run_id, "status": "started", "validation": validation}
-
-
-app.include_router(master_router, prefix="/tests")
-
-
-__all__ = ["app"]
+__all__ = ["app", "lifespan"]

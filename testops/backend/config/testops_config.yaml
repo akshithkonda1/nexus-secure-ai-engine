@@ -1,0 +1,17 @@
+service:
+  name: "Ryuzen TestOps Section 1"
+  version: "2.5H+"
+api:
+  base_path: "/tests"
+  endpoints:
+    run_all: "/run_all"
+    status: "/status/{run_id}"
+    stream: "/stream/{run_id}"
+    validate_engine: "/validate_engine"
+simulation:
+  dataset: "sim_dataset.json"
+  default_threshold_ms: 300
+load_test:
+  vus: 1500
+  rps: 30
+  duration: "2m"
