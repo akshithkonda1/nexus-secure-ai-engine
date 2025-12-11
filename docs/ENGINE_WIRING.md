@@ -1,38 +1,34 @@
-# Engine Wiring for Ryuzen Toron v2.5H+
+# Engine Wiring — Ryuzen Toron v2.5H+
 
-## Wiring a New Engine Version
-1. Update `testops/backend/engine_adapter/version_lock.py` with the new Toron version tag.
-2. Ensure the adapter's healthcheck (`testops/backend/engine_adapter/healthcheck.py`) recognizes the new version response payloads.
-3. Validate the SIM dataset alignment under `testops/backend/tests_master/sim/` (dataset + assertions) to match new routing or tier changes.
-4. If the new engine introduces replay-specific signals, extend `ReplayEngine.validate` to consume them and adjust the determinism score calculation.
+This document explains how TestOps imports and validates the Toron engine for Wave 3.
 
-## Master Runner Orchestration
-- The Section 2 `MasterRunner` lives at `testops/backend/runners/master_runner.py` and is invoked via `/tests/run` in `test_router.py`.
-- It sequences the SIM runner, k6 load generator, and replay determinism validator, persisting a snapshot to `testops/snapshots/`.
-- Live log messages flow through the SSE broker embedded in the runner and surface via `/tests/stream/{run_id}`.
+## Importing Toron
+- Engine adapters live under `testops/backend/engine_adapter/`.
+- The adapter exposes a stable function (Wave 1) that TestOps calls before SIM/load/replay.
+- `engine_path` should point to the Toron build (container volume or local path). Keep it relative when possible.
 
-## Test Router and SSE Streaming
-- `testops/backend/routers/test_router.py` exposes the API surface. Every endpoint is guarded by the existing unlock flag on the FastAPI app.
-- `GET /tests/status/{run_id}` returns status + progress, while `GET /tests/result/{run_id}` surfaces the aggregated payload with replay metadata.
-- SSE is backed by `sse_starlette` and streams the same log lines persisted in memory, so router changes do not require additional infrastructure.
+## Updating `engine_path`
+- Edit the adapter configuration to reference the new binary or service URL.
+- For containerized deployments, mount the new engine into the backend image and update the path in config.
+- Persist the chosen path in config maps or environment variables so pipelines remain deterministic.
 
-## Replay and Snapshot Handling
-- Snapshots contain the SIM metrics, k6 metrics, and trigger metadata. They are written with deterministic ordering for reproducible hashing.
-- `ReplayEngine` computes a bounded jitter off the snapshot hash to detect drift; lowering `target_floor` can be used to relax acceptable change windows.
-- Warroom logs should be emitted when replay or snapshot parsing errors occur to help correlate run regressions with infrastructure events.
+## Supporting new Toron versions
+- Add version gating in the adapter to branch behavior per Toron release.
+- Keep backward-compatible shims so older snapshots still replay correctly.
+- Update `pipeline_checker` expectations if new tiers or evidence formats appear in future Toron drops.
 
-## Quick Smoke Test
-```bash
-python - <<'PY'
-from testops.backend.runners.master_runner import master_runner
-import asyncio
+## Offline simulation stubs
+- Provide a stub engine implementation in the adapter that mirrors expected responses for SIM/load tests.
+- Guard usage with a feature flag or environment variable (e.g., `TORON_OFFLINE=1`).
+- Use deterministic seeds so SIM snapshots and replay scores remain reproducible offline.
 
-async def demo():
-    run_id = await master_runner.start_run("doc_demo")
-    await asyncio.sleep(0.1)
-    print(master_runner.get_status(run_id))
+## Engine validation flow
+1. Adapter loads the engine handle or HTTP target and performs a health check.
+2. SIM suite invokes deterministic scenarios; failures trigger WAR ROOM events and mark subsystem WARN/FAIL.
+3. Load tester calls the engine health endpoint during k6 execution; p95/p99 are tracked for anomalies.
+4. Replay determinism reuses the adapter to assert consistent outputs from stored snapshots.
 
-asyncio.run(demo())
-PY
-```
-This validates wiring without needing the full UI loop.
+## Deterministic snapshot generation
+- Snapshots capture the engine version, configuration, SIM metrics, load metrics, and replay details.
+- Stored in `testops/backend/snapshots/<run_id>.json` and zipped in `reports/<run_id>/bundle.zip`.
+- Use the same adapter entry points during replay to ensure inputs and outputs match across runs.
