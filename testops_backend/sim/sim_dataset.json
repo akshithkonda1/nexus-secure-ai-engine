@@ -1,9 +1,10 @@
 {
   "samples": [
-    {"prompt": "tier-alpha: route"},
-    {"prompt": "tier-beta: fuse"},
-    {"prompt": "tier-gamma: escalate"},
-    {"prompt": "tier-alpha: audit"},
-    {"prompt": "tier-beta: resolve"}
+    {"prompt": "tier-alpha: route ingress", "tier": "alpha"},
+    {"prompt": "tier-beta: fuse outputs", "tier": "beta"},
+    {"prompt": "tier-gamma: escalate drift", "tier": "gamma"},
+    {"prompt": "tier-alpha: audit logs", "tier": "alpha"},
+    {"prompt": "tier-beta: resolve latent issue", "tier": "beta"},
+    {"prompt": "tier-gamma: contradiction! double-check", "tier": "gamma"}
   ]
 }
