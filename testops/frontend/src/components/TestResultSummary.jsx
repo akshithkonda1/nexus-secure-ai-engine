@@ -1,40 +1,52 @@
 import React from 'react';
 
-const rowStyle = {
-  display: 'grid',
-  gridTemplateColumns: '200px 1fr',
-  padding: '8px 0',
-  borderBottom: '1px solid #1f2937',
-  color: '#e2e8f0'
-};
-
-const labelStyle = {
-  color: '#94a3b8',
-  textTransform: 'uppercase',
-  fontSize: 12,
-  letterSpacing: '0.08em'
-};
-
-const TestResultSummary = ({ summary }) => {
-  if (!summary) return null;
-  const fields = [
-    ['Latency summary', summary.latency_summary ?? 'n/a'],
-    ['Determinism score', summary.determinism_score ?? 'n/a'],
-    ['Load test p95', summary.load_p95 ?? 'n/a'],
-    ['Confidence avg', summary.confidence_avg ?? 'n/a'],
-    ['Snapshot', summary.snapshot_metadata ?? 'n/a']
-  ];
-
+const TestResultSummary = ({ determinismScore, latencyP95, warRoomErrors = [], snapshotUrl, onDownload }) => {
   return (
-    <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px 14px' }}>
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>Results</div>
-      {fields.map(([label, value]) => (
-        <div key={label} style={rowStyle}>
-          <div style={labelStyle}>{label}</div>
-          <div>{typeof value === 'object' ? JSON.stringify(value, null, 2) : value}</div>
+    <section className="panel result-panel">
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Post-run analytics</p>
+          <h3 className="headline">Signal summary</h3>
         </div>
-      ))}
-    </div>
+        <button className="ghost-button" onClick={onDownload} disabled={!onDownload}>
+          Download Report Pack
+        </button>
+      </div>
+      <div className="panel-body grid-two">
+        <div>
+          <p className="label">Determinism score</p>
+          <div className="metric">{determinismScore ?? 'pending'}</div>
+        </div>
+        <div>
+          <p className="label">p95 latency</p>
+          <div className="metric">{latencyP95 ?? 'pending'}</div>
+        </div>
+      </div>
+      <div className="panel-body grid-two">
+        <div>
+          <p className="label">WAR ROOM errors</p>
+          {warRoomErrors.length === 0 ? (
+            <div className="placeholder">No escalations captured.</div>
+          ) : (
+            <ul className="error-list">
+              {warRoomErrors.map((item, idx) => (
+                <li key={`${idx}-${item.slice(0, 10)}`}>{item}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <p className="label">Snapshot viewer</p>
+          {snapshotUrl ? (
+            <div className="snapshot-frame">
+              <img src={snapshotUrl} alt="snapshot" />
+            </div>
+          ) : (
+            <div className="placeholder">Snapshot will appear after completion.</div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 };
 
