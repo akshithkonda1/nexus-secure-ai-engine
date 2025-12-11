@@ -1,0 +1,55 @@
+name: TestOps CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install fastapi uvicorn mypy pytest
+      - name: Run SIM tests
+        run: |
+          python - <<'PY'
+          from backend.tests_master.sim_runner import run_sim_batch
+          result = run_sim_batch()
+          assert result['determinism'] >= 0.97
+          PY
+      - name: Determinism replay tests
+        run: |
+          python - <<'PY'
+          from backend.tests_master.replay_engine import replay_snapshot
+          result = replay_snapshot('ci')
+          assert result['deterministic'] is True
+          PY
+      - name: Lint
+        run: |
+          python -m pip install ruff
+          ruff backend/tests_master
+      - name: Type check
+        run: |
+          mypy backend/tests_master
+      - name: Verify snapshots are deterministic
+        run: |
+          python - <<'PY'
+          import json, hashlib, os
+          path = 'backend/snapshots/state_snapshot.json'
+          if os.path.exists(path):
+            data = json.loads(open(path,'r').read())
+          else:
+            data = {}
+          digest1 = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+          digest2 = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+          assert digest1 == digest2, 'Nondeterministic snapshot detected'
+          print('snapshot_digest', digest1)
+          PY

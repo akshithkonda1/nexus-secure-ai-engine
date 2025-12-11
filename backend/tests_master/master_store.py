@@ -1,130 +1,91 @@
 from __future__ import annotations
 
-import asyncio
 import json
-import sqlite3
-import zipfile
+from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, Optional
 
-DATABASE_PATH = Path("database/tests_master.db")
-REPORT_BASE = Path("reports/master")
-SNAPSHOT_DIR = Path("snapshots")
-LOAD_RESULTS_DIR = Path("load_results")
-LOG_DIR = Path("warroom/master")
+BASE_DIR = Path("backend")
+LOG_DIR = BASE_DIR / "logs" / "master"
+LOAD_RESULTS_DIR = BASE_DIR / "load_results"
+REPORT_DIR = BASE_DIR / "reports" / "master"
+SNAPSHOT_DIR = BASE_DIR / "snapshots"
 
-
-class TestStore:
-    def __init__(self, db_path: Path | str = DATABASE_PATH):
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        REPORT_BASE.mkdir(parents=True, exist_ok=True)
-        SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        LOAD_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-        LOG_DIR.mkdir(parents=True, exist_ok=True)
-        self._init_db()
-        self.log_queues: Dict[str, asyncio.Queue] = {}
-
-    def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.db_path)
-
-    def _init_db(self) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS runs (
-                run_id TEXT PRIMARY KEY,
-                status TEXT,
-                progress INTEGER,
-                current_stage TEXT,
-                result_json TEXT
-            )
-            """
-        )
-        conn.commit()
-        conn.close()
-
-    def init_run(self, run_id: str) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO runs(run_id, status, progress, current_stage, result_json) VALUES (?, ?, ?, ?, ?)",
-            (run_id, "running", 0, "initializing", None),
-        )
-        conn.commit()
-        conn.close()
-        self.log_queues[run_id] = asyncio.Queue()
-
-    def add_log(self, run_id: str, message: str) -> None:
-        queue = self.log_queues.setdefault(run_id, asyncio.Queue())
-        queue.put_nowait(message)
-        log_file = LOG_DIR / f"{run_id}.log"
-        with log_file.open("a", encoding="utf-8") as handle:
-            handle.write(message + "\n")
-
-    def get_log_queue(self, run_id: str) -> asyncio.Queue:
-        return self.log_queues.setdefault(run_id, asyncio.Queue())
-
-    def update_progress(self, run_id: str, progress: int, stage: str) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE runs SET progress=?, current_stage=? WHERE run_id=?",
-            (progress, stage, run_id),
-        )
-        conn.commit()
-        conn.close()
-
-    def save_result(self, run_id: str, result: dict) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE runs SET status=?, result_json=? WHERE run_id=?",
-            ("finished", json.dumps(result), run_id),
-        )
-        conn.commit()
-        conn.close()
-
-    def get_status(self, run_id: str) -> dict:
-        conn = self._connect()
-        cur = conn.cursor()
-        row = cur.execute(
-            "SELECT status, progress, current_stage FROM runs WHERE run_id=?", (run_id,)
-        ).fetchone()
-        conn.close()
-        if not row:
-            return {"error": "run_id not found"}
-        return {"run_id": run_id, "status": row[0], "progress": row[1], "current_stage": row[2]}
-
-    def get_result(self, run_id: str) -> dict:
-        conn = self._connect()
-        cur = conn.cursor()
-        row = cur.execute("SELECT result_json FROM runs WHERE run_id=?", (run_id,)).fetchone()
-        conn.close()
-        if not row or row[0] is None:
-            return {"error": "not found"}
-        return json.loads(row[0])
-
-    def get_report_path(self, run_id: str) -> str:
-        return str(REPORT_BASE / run_id / "report.html")
-
-    def build_bundle(self, run_id: str) -> str:
-        base = REPORT_BASE / run_id
-        base.mkdir(parents=True, exist_ok=True)
-        bundle_path = base / "bundle.zip"
-        with zipfile.ZipFile(bundle_path, "w") as zf:
-            for file in base.glob("*"):
-                if file.name != "bundle.zip":
-                    zf.write(file, arcname=file.name)
-        return str(bundle_path)
+for directory in (LOG_DIR, LOAD_RESULTS_DIR, REPORT_DIR, SNAPSHOT_DIR):
+    directory.mkdir(parents=True, exist_ok=True)
 
 
-__all__ = [
-    "TestStore",
-    "DATABASE_PATH",
-    "REPORT_BASE",
-    "SNAPSHOT_DIR",
-    "LOAD_RESULTS_DIR",
-    "LOG_DIR",
-]
+class MasterStore:
+    def __init__(self):
+        self.state: Dict[str, Dict[str, Any]] = {}
+
+    def _path(self, run_id: str) -> Path:
+        return LOG_DIR / f"{run_id}.json"
+
+    def create_run(self, run_id: str):
+        now = datetime.utcnow().isoformat()
+        payload = {
+            "run_id": run_id,
+            "status": "started",
+            "progress": 0,
+            "steps": {},
+            "metrics": {},
+            "created_at": now,
+            "updated_at": now,
+        }
+        self.state[run_id] = payload
+        self._write(run_id)
+
+    def update_status(self, run_id: str, status: str, progress: Optional[float] = None, steps: Optional[Dict[str, str]] = None):
+        data = self._load(run_id)
+        data["status"] = status
+        if progress is not None:
+            data["progress"] = progress
+        if steps:
+            data.setdefault("steps", {}).update(steps)
+        data["updated_at"] = datetime.utcnow().isoformat()
+        self.state[run_id] = data
+        self._write(run_id)
+
+    def attach_metrics(self, run_id: str, metrics: Dict[str, Any]):
+        data = self._load(run_id)
+        data.setdefault("metrics", {}).update(metrics)
+        data["updated_at"] = datetime.utcnow().isoformat()
+        self.state[run_id] = data
+        self._write(run_id)
+
+    def attach_artifacts(self, run_id: str, **artifacts: str):
+        data = self._load(run_id)
+        data.update({k: v for k, v in artifacts.items() if v})
+        data["updated_at"] = datetime.utcnow().isoformat()
+        self.state[run_id] = data
+        self._write(run_id)
+
+    def save_result(self, run_id: str, result: Dict[str, Any]):
+        data = self._load(run_id)
+        data["result"] = result
+        data["updated_at"] = datetime.utcnow().isoformat()
+        self.state[run_id] = data
+        self._write(run_id)
+
+    def get_status(self, run_id: str) -> Optional[Dict[str, Any]]:
+        return self._load(run_id)
+
+    def _load(self, run_id: str) -> Dict[str, Any]:
+        if run_id in self.state:
+            return dict(self.state[run_id])
+        path = self._path(run_id)
+        if path.exists():
+            with path.open("r", encoding="utf-8") as handle:
+                data = json.load(handle)
+                self.state[run_id] = data
+                return dict(data)
+        return {}
+
+    def _write(self, run_id: str):
+        path = self._path(run_id)
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(self.state[run_id], handle, indent=2)
+
+
+__all__ = ["MasterStore", "LOG_DIR", "LOAD_RESULTS_DIR", "REPORT_DIR", "SNAPSHOT_DIR"]

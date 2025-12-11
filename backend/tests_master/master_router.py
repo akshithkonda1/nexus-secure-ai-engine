@@ -6,33 +6,36 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
-from .master_runner import MasterRunner
-from .master_store import TestStore
+from backend.tests_master.engine_validator import validate_engine
+from backend.tests_master.master_runner import MasterRunner
+from backend.tests_master.master_store import MasterStore
 
 router = APIRouter()
 runner = MasterRunner()
-store: TestStore = runner.store
+store = MasterStore()
 
 
 @router.post("/tests/run_all")
 async def run_all_tests():
-    run_id = str(uuid4())
-    store.init_run(run_id)
-    asyncio.create_task(runner.run_full_test(run_id))
+    run_id = await runner.start_run()
     return {"run_id": run_id, "status": "started"}
 
 
 @router.get("/tests/status/{run_id}")
 async def get_status(run_id: str):
     status = store.get_status(run_id)
-    return status
+    return status or {"error": "unknown run"}
+
+
+@router.get("/validate_engine")
+async def validate_engine_route():
+    result = validate_engine()
+    return result
 
 
 @router.get("/tests/stream/{run_id}")
 async def stream_logs(run_id: str):
-    queue = store.get_log_queue(run_id)
-    if queue is None:
-        raise HTTPException(status_code=404, detail="run_id not found")
+    log_path = os.path.join("backend", "warroom", "master", f"{run_id}.log")
 
     async def event_generator():
         while True:
