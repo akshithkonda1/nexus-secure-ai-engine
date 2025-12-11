@@ -14,7 +14,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(test_router)
+# Ensure required directories
+REQUIRED_DIRS = [
+    "backend/logs/master",
+    "backend/reports/master",
+    "backend/load_results",
+    "backend/warroom/master",
+    "backend/snapshots",
+]
 
 if __name__ == "__main__":
     import uvicorn

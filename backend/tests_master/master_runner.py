@@ -1,116 +1,93 @@
 from __future__ import annotations
 
 import asyncio
-import json
-import random
-from pathlib import Path
+import uuid
 
+from .engine_validator import validate_engine
+from .fuzzer import run_fuzzer
 from .k6_runner import run_load_test
-from .master_models import RunStatus
-from .master_reporter import build_report
-from .master_store import REPORT_BASE, SNAPSHOT_DIR, TestStore
-from .pipeline_checker import run_full_engine_check
+from .pipeline_checker import validate_pipeline
 from .replay_engine import replay_snapshot
+from .sim_reporter import generate_report
+from .sim_runner import run_sim_batch
+from .snapshot_saver import save_snapshot
 from .warroom_logger import WarRoomLogger
+from .master_store import MasterStore
 
 
 class MasterRunner:
     def __init__(self):
-        self.store = TestStore()
+        self.store = MasterStore()
         self.logger = WarRoomLogger()
 
-    async def run_full_test(self, run_id: str) -> None:
-        try:
-            self.store.update_progress(run_id, 0, "sim_batch")
-            self.store.add_log(run_id, "Starting SIM batch...")
-            sim_results = await asyncio.to_thread(self._run_sim_batch, run_id)
+    async def start_run(self) -> str:
+        """Create a new run and launch orchestration in the background.
 
-            self.store.update_progress(run_id, 25, "pipeline_checks")
-            self.store.add_log(run_id, "Running pipeline health checks...")
-            pipeline_result = await asyncio.to_thread(self._run_pipeline_checks, run_id)
+        Returns the run identifier immediately so the caller can poll status
+        and attach log streams without waiting for the full suite to finish.
+        """
 
-            self.store.update_progress(run_id, 45, "replay")
-            self.store.add_log(run_id, "Running determinism replay...")
-            replay_result = await asyncio.to_thread(
-                replay_snapshot, run_id, sim_results["snapshot_name"]
-            )
+        run_id = str(uuid.uuid4())
+        self.store.create_run(run_id)
+        asyncio.create_task(self.run_all(run_id))
+        return run_id
 
-            self.store.update_progress(run_id, 65, "load_test")
-            self.store.add_log(run_id, "Running load test (k6)...")
-            load_result = await asyncio.to_thread(run_load_test, run_id)
+    async def run_all(self, run_id: str) -> str:
+        self.logger.log(run_id, "RUN STARTED", severity="info")
 
-            self.store.update_progress(run_id, 80, "report")
-            self.store.add_log(run_id, "Generating report...")
-            summary = {
-                "avg_latency_ms": sim_results["avg_latency"],
-                "p95_latency_ms": load_result.p95_latency_ms,
-                "avg_confidence": sim_results["avg_confidence"],
-                "total_runs": sim_results["total"],
-                "flag_counts": pipeline_result.pipeline_path_distribution,
-                "determinism_score": replay_result.determinism_score,
-            }
+        # Engine validation gate
+        self.store.update_status(run_id, "validating", steps={"engine_check": "running"}, progress=5)
+        engine_check = validate_engine()
+        if not engine_check.get("ok", False):
+            self.logger.log(run_id, f"ENGINE VALIDATION FAILED: {engine_check}", severity="critical")
+            self.store.update_status(run_id, "failed", steps={"engine_check": "failed"}, progress=5)
+            return run_id
+        self.store.update_status(run_id, "running", steps={"engine_check": "ok"}, progress=10)
 
-            report_paths = await asyncio.to_thread(self._write_report, run_id, summary)
+        # SIM batch
+        sim_result = await asyncio.to_thread(run_sim_batch)
+        self.store.attach_metrics(run_id, {"avg_engine_latency": sim_result.get("avg_latency"), "determinism": sim_result.get("determinism")})
+        self.store.update_status(run_id, "running", steps={"sim_batch": "completed"}, progress=30)
 
-            self.store.update_progress(run_id, 100, "finished")
-            self.store.save_result(
-                run_id,
-                {
-                    "summary": summary,
-                    "report": report_paths,
-                    "replay": replay_result.dict(),
-                    "load": load_result.dict(),
-                    "pipeline": pipeline_result.dict(),
-                    "sim": sim_results,
-                },
-            )
-            self.store.add_log(run_id, "Test suite completed successfully.")
-        except Exception as exc:  # pragma: no cover - defensive logging
-            message = f"Unhandled exception: {exc}"
-            self.logger.log(run_id, message)
-            self.store.add_log(run_id, message)
-            self.store.save_result(run_id, {"error": str(exc)})
+        # Pipeline integrity
+        pipeline_result = validate_pipeline()
+        step_status = "completed" if pipeline_result.get("stable") else "failed"
+        self.store.update_status(run_id, "running", steps={"engine_check": "ok", "sim_batch": "completed", "pipeline": step_status}, progress=45)
+        if not pipeline_result.get("stable"):
+            self.logger.log(run_id, "PIPELINE INSTABILITY DETECTED", severity="warning")
 
-    def _run_sim_batch(self, run_id: str) -> dict:
-        rng = random.Random(run_id)
-        latencies = [rng.uniform(120, 280) for _ in range(10)]
-        confidences = [rng.uniform(0.7, 0.98) for _ in range(10)]
-        avg_latency = round(sum(latencies) / len(latencies), 3)
-        avg_confidence = round(sum(confidences) / len(confidences), 4)
+        # Fuzzer
+        fuzzer_result = run_fuzzer(run_id)
+        self.store.update_status(run_id, "running", steps={"fuzzer": "completed"}, progress=60)
 
-        snapshot_data = {
+        # Replay determinism
+        replay_result = replay_snapshot(run_id)
+        replay_state = "completed" if replay_result.get("deterministic") else "failed"
+        self.store.update_status(run_id, "running", steps={"replay": replay_state}, progress=70)
+
+        # Load test
+        load_result = run_load_test(run_id)
+        self.store.attach_metrics(run_id, {"p95_latency": load_result.get("p95"), "p99_latency": load_result.get("p99")})
+        self.store.update_status(run_id, "running", steps={"load_test": "completed"}, progress=85)
+
+        # Snapshot + report
+        snapshot_path, bundle_path = save_snapshot(run_id, {
             "run_id": run_id,
-            "latencies": latencies,
-            "confidences": confidences,
-        }
-        SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        snapshot_name = f"{run_id}_snapshot.json"
-        snapshot_path = SNAPSHOT_DIR / snapshot_name
-        snapshot_path.write_text(json.dumps(snapshot_data, indent=2), encoding="utf-8")
-
-        return {
-            "avg_latency": avg_latency,
-            "avg_confidence": avg_confidence,
-            "total": len(latencies),
-            "first_snapshot": str(snapshot_path),
-            "snapshot_name": snapshot_name,
-        }
-
-    def _run_pipeline_checks(self, run_id: str):
-        seed = abs(hash(run_id)) % (2**32)
-        return run_full_engine_check(seed)
-
-    def _write_report(self, run_id: str, summary: dict) -> dict:
-        run_summary = self._build_run_summary(run_id, summary)
-        outputs = build_report(run_summary, base_dir=REPORT_BASE)
-        return {"html": str(outputs["html"]), "json": str(outputs["json"])}
-
-    def _build_run_summary(self, run_id: str, metrics: dict):
-        return self._run_summary_class()(run_id=run_id, status=RunStatus.completed, metrics=metrics)
-
-    @staticmethod
-    def _run_summary_class():
-        # Lazy import to avoid circular dependency in typing
-        from .master_models import RunSummary
-
-        return RunSummary
+            "sim": sim_result,
+            "pipeline": pipeline_result,
+            "replay": replay_result,
+            "load": load_result,
+            "fuzzer": fuzzer_result,
+        })
+        report_path = generate_report(run_id, sim_result, load_result)
+        self.store.attach_artifacts(run_id, snapshot=snapshot_path, bundle=bundle_path, report=report_path)
+        self.store.save_result(run_id, {
+            "sim": sim_result,
+            "pipeline": pipeline_result,
+            "fuzzer": fuzzer_result,
+            "replay": replay_result,
+            "load": load_result,
+        })
+        self.store.update_status(run_id, "completed", progress=100)
+        self.logger.log(run_id, "RUN COMPLETE", severity="info")
+        return run_id

@@ -54,7 +54,7 @@ class RunSummary(BaseModel):
 
 
 @dataclass
-class TestRunRecord:
+class RunStatus:
     run_id: str
     status: str
     created_at: Any
@@ -62,7 +62,7 @@ class TestRunRecord:
 
 
 @dataclass
-class TestResult:
+class RunResult:
     run_id: str
     result: Dict[str, Any]
     created_at: Any
