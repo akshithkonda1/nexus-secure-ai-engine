@@ -31,15 +31,16 @@ This guide explains how to run the backend, launch the frontend test dashboard, 
 
 ## Triggering the full test suite
 
-1. Open the dashboard at `http://localhost:5173`.
-2. Wait for the **Engine validated** banner to show ✅.
-3. Type **exactly** `Begin testing` in the confirmation box.
-4. Click **RUN FULL TEST SUITE**.
-5. Live logs stream via SSE; status bubbles show SIM Batch, Engine Check, Replay, and Load Test states.
+1. Open `http://localhost:5173` and land on the **Begin Testing** gate.
+2. Type **Begin testing** (case-insensitive) and submit; the UI will call `/engine_health` to ensure Toron v2.5H+ is loaded and ready.
+3. When the engine handshake returns `status: ok`, you are redirected to the dashboard.
+4. Wait for the **Engine validated** banner to show ✅ on the dashboard.
+5. Click **RUN FULL TEST SUITE** to trigger `/run_all` (aliased under `/tests/run_all`).
+6. Live logs stream via SSE from `/stream/{run_id}`; status bubbles show SIM Batch, Engine Check, Replay, and Load Test states.
 
 ## Reading logs
 
-- Live logs stream from `backend/warroom/master/{run_id}.log`.
+- Live logs stream from `backend/warroom/master/{run_id}.log` and are mirrored over SSE in real time.
 - All failures are indexed in `backend/warroom/master/index.json` and surfaced on the War Room page.
 
 ## Reading snapshots
@@ -49,7 +50,7 @@ This guide explains how to run the backend, launch the frontend test dashboard, 
 
 ## Verifying determinism
 
-- The replay engine loads `state_snapshot.json` and compares outputs; status appears under the Replay bubble.
+- The replay engine loads `state_snapshot.json` and compares outputs; status appears under the Replay bubble and in SSE logs.
 - Determinism scores from the SIM batch surface in the dashboard summary metrics and the HTML report.
 
 ## Interpreting ASCII metrics
@@ -76,14 +77,14 @@ To migrate to a new engine version (e.g., Toron v3):
 1. Implement the new engine class (e.g., `ryuzen.engine.toron_v3.ToronEngineV3`).
 2. Ensure it exposes at least one of: `process(prompt: str)`, `run(prompt: str)`, `handle_request(prompt: str)`, or `execute(prompt: str)`.
 3. Update `ENGINE_PATH` to the new dotted path.
-4. Run the TestOps frontend and use **Engine Validation** via `/tests/validate_engine`.
-5. Proceed only when validation shows ✅, then type **Begin testing** and start the suite.
+4. Run the TestOps frontend and use **Engine Validation** via `/tests/validate_engine` or the `/engine_health` gate.
+5. Proceed only when validation shows ✅, then type **Begin testing** on the gate and start the suite.
 
 ### Engine Validation Flow
 
 - User opens TestOps Dashboard
-- TestOps calls `/tests/validate_engine`
-- If OK → green banner
+- TestOps calls `/engine_health` at the gate and `/tests/validate_engine` inside the dashboard
+- If OK → green banners
 - User types `Begin testing`
 - User clicks “RUN FULL TEST SUITE”
 - SSE stream + status view display progress

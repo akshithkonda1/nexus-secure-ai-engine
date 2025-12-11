@@ -7,7 +7,6 @@ import ReportViewer from '../components/ReportViewer';
 
 export default function TestDashboard() {
   const [engineStatus, setEngineStatus] = useState({ loading: true, ok: false, message: '' });
-  const [confirmation, setConfirmation] = useState('');
   const [runId, setRunId] = useState(null);
   const [logs, setLogs] = useState([]);
   const [status, setStatus] = useState(null);
@@ -53,7 +52,7 @@ export default function TestDashboard() {
     };
   }, [runId]);
 
-  const canStart = engineStatus.ok && !engineStatus.loading && confirmation.trim() === 'Begin testing';
+  const canStart = engineStatus.ok && !engineStatus.loading;
 
   async function handleStart() {
     if (!canStart) return;
@@ -76,19 +75,7 @@ export default function TestDashboard() {
 
       <section className="gate">
         <h2>Launch Suite</h2>
-        <p>Type <code>Begin testing</code> to unlock the suite.</p>
-        <label htmlFor="begin-input">Confirmation</label>
-        <input
-          id="begin-input"
-          value={confirmation}
-          onChange={(e) => setConfirmation(e.target.value)}
-          placeholder="Begin testing"
-          aria-required="true"
-          aria-describedby="gate-helper"
-        />
-        <p id="gate-helper" className="muted">
-          Engine must be validated and the phrase must match exactly.
-        </p>
+        <p>Engine validation must be green to run the full suite.</p>
         <button disabled={!canStart} onClick={handleStart} aria-label="Run full test suite">
           RUN FULL TEST SUITE
         </button>

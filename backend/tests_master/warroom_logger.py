@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Callable, Literal, Optional
 
 WARROOM_DIR = Path("backend/warroom/master")
 WARROOM_DIR.mkdir(parents=True, exist_ok=True)
@@ -11,8 +12,9 @@ INDEX_PATH = WARROOM_DIR / "index.json"
 
 
 class WarRoomLogger:
-    def __init__(self):
+    def __init__(self, queue_factory: Optional[Callable[[str], asyncio.Queue[str]]] = None):
         self.index = {"errors": []}
+        self.queue_factory = queue_factory
         if INDEX_PATH.exists():
             try:
                 self.index = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
@@ -25,6 +27,14 @@ class WarRoomLogger:
         log_path = WARROOM_DIR / f"{run_id}.log"
         with log_path.open("a", encoding="utf-8") as handle:
             handle.write(line)
+
+        if self.queue_factory:
+            try:
+                queue = self.queue_factory(run_id)
+                queue.put_nowait(line.strip())
+            except Exception:
+                # Queue streaming is best-effort; failures should not block logging.
+                pass
 
         entry = {"run_id": run_id, "timestamp": ts, "severity": severity, "message": message}
         self.index.setdefault("errors", []).append(entry)
