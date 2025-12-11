@@ -1,4 +1,1 @@
-"""
-Package initializer for TestOps.
-Required so Python recognizes this folder as a valid module.
-"""
+# Marks directory as Python package
