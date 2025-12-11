@@ -6,13 +6,11 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
-from backend.tests_master.engine_validator import validate_engine
-from backend.tests_master.master_runner import MasterRunner
-from backend.tests_master.master_store import MasterStore
+from .master_runner import MasterRunner
 
 router = APIRouter()
 runner = MasterRunner()
-store = MasterStore()
+store = runner.store
 
 
 @router.post("/tests/run_all")
