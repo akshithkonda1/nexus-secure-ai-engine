@@ -1,66 +1,64 @@
-# Ryuzen TestOps System — Test Operations Guide
+# TestOps System for Ryuzen Toron v2.5H+
 
-## Purpose
-This guide defines how to plan, run, and govern tests for the Ryuzen TestOps System and the Toron v2.5H+ Engine. It ensures deterministic, offline-friendly validation that meets enterprise release, security, and compliance gates.
+## Overview
+TestOps is the standalone DevOps testing platform for Toron v2.5H+. It validates the engine, executes SIM batches up to 10,000 simulated users, drives k6 load tests, performs determinism replays, and produces HTML/JSON reports with centralized logs and snapshots. The FastAPI backend and Vite + React frontend run independently of the consumer UI.
 
-## Architecture Overview
-- **UI Test Dashboard**: Orchestrates runs, visualizes states, and streams events via SSE.
-- **API Gateway**: Authenticates calls, validates payloads, and routes commands to the Runner service.
-- **Runner**: Schedules suites, injects fixtures, and delegates execution to the Toron engine.
-- **Toron v2.5H+ Engine**: Executes simulations, deterministic regression suites, and chaos/load probes.
-- **Snapshot Service**: Persists golden outputs for diffing and replay.
-- **Reports Service**: Consolidates coverage, performance, and determinism metrics.
-- **Warroom Hub**: Curates incidents, rollbacks, and postmortems.
+## Running the backend
+1. Ensure Python 3.11 is available.
+2. Install dependencies:
+   ```bash
+   pip install fastapi uvicorn jinja2
+   ```
+3. Start the service:
+   ```bash
+   uvicorn testops_backend.main:app --reload --port 8000
+   ```
+4. The SQLite database is stored at `testops_backend/database/tests_master.db` and is initialized automatically.
 
-### End-to-End Flow (UI → Warroom)
-```
-[UI] -> [SSE Stream] -> [TestOps API] -> [Runner] -> [Toron Engine]
-          -> [Snapshot Store] -> [Reports] -> [Warroom]
-```
+## Running the frontend
+1. Install Node.js 18+.
+2. From `testops_frontend`, install packages and start Vite:
+   ```bash
+   npm install
+   npm run dev -- --host --port 4173
+   ```
+3. Access the dashboard at `http://localhost:4173`.
 
-## Component Interactions
-1. UI raises a test run; SSE streams progress events.
-2. API validates the request, issues a run-id, and publishes to Runner.
-3. Runner orchestrates suites (lint, unit, sim, hardening, chaos/load) and emits events.
-4. Toron engine executes deterministic kernels; results flow to Snapshot service.
-5. Reports service aggregates KPIs (determinism ≥98%, coverage ≥90%).
-6. Warroom consumes reports for go/no-go.
+## Beginning a test
+1. Open the dashboard and type **BEGIN TESTING** in the unlock field.
+2. Click **RUN FULL TEST SUITE**. The button disables while the orchestrator runs.
+3. Watch live logs via Server-Sent Events. Status bubbles reflect SIM Batch, Engine Check, Replay, and Load Test phases.
+4. Progress and final summaries update automatically; report and bundle buttons become active once results are ready.
 
-## Exact API References
-- `POST /v1/test-runs` — create run with suite list and synthetic data set.
-- `GET /v1/test-runs/{id}/events` — SSE channel for status.
-- `POST /v1/snapshots/compare` — compare current vs golden snapshot.
-- `GET /v1/reports/{id}` — retrieve coverage/determinism artifacts.
-- `POST /v1/warroom/incidents` — open incident with failing gates.
+## Status bubbles
+- **SIM Batch**: Offline simulation of Toron reasoning tiers across up to 10k synthetic users.
+- **Engine Check**: Direct import and ping of `ryuzen.engine.toron_v25hplus.ToronEngine`.
+- **Replay**: Snapshot replay and checksum verification for determinism.
+- **Load Test**: k6-driven load generation (baseline 1,500 VUs, max 10,000).
 
-## Operational Playbooks
-- **Kick off regression**: `make testops-regression SUITE=full`.
-- **Replay snapshot**: `python tools/snapshot_replay.py --run-id <id> --offline`.
-- **Generate reports**: `make reports` then review `reports/index.html`.
-- **Trigger chaos smoke**: `make chaos-smoke MODE=mock`.
+## Report generation
+Master reports are rendered to `testops_backend/reports/master/` as both JSON and HTML. They include latency heatmaps, tier distribution, contradiction counts, Opus escalation frequency, determinism scores, and aggregated metrics. Additional k6 and SIM artifacts are stored alongside the master report.
 
-## Troubleshooting
-- **Run stuck in scheduled**: verify Runner queue health via `kubectl get pods -l app=runner`.
-- **Non-deterministic sim**: re-run with `SIM_SEED=42`; check drift in `reports/determinism.json`.
-- **Missing snapshot**: regenerate using `make snapshot-refresh`.
-- **PII violation**: inspect `logs/pii_scrubber.log` and rerun with `PII_STRICT=1`.
+## Determinism pipeline
+Snapshots are written to `testops_backend/snapshots/` for every run. The replay engine reloads these snapshots, replays the pipeline, and checks byte-for-byte payload equality plus checksum scoring to guarantee deterministic behavior.
 
-## Upgrade Paths
-- **Minor releases**: compatible with existing snapshots; refresh reports only.
-- **Toron engine bumps**: run `V3_MIGRATION_GUIDE` steps, re-baseline deterministic sims, and update version matrix.
-- **Dashboard UI**: rolling deploy with canary gated by hardening Phase 8/9.
+## Wiring new engine versions
+Update `tests_master/pipeline_checker.py` to import the new engine path and adjust any validation prompts. TestOps keeps the rest of the pipeline stable so newer engines can be validated without frontend changes.
 
-## Versioning Notes
-- Semantic versioning: TestOps `MAJOR.MINOR.PATCH` aligned to Toron engine minor releases.
-- Snapshots are tagged `run-<semver>-<timestamp>` for reproducibility.
+## Snapshot validation
+Each run writes a snapshot JSON file containing dataset hashes and scale parameters. The replay engine recomputes a checksum to ensure the replay matches the original SIM execution exactly.
 
-## Command Reference
-- `make lint && make format` — enforce style.
-- `pytest backend/tests_master --cov=backend --cov-report=xml` — regression coverage.
-- `python sim/run_suite.py --profile offline` — deterministic simulations.
-- `k6 run load/mock_scenarios.js` — offline load.
+## Scaling SIM batches to 10k
+`sim_config.yaml` sets a 10,000 user ceiling. The SIM runner respects this limit and derives deterministic metrics from the dataset and run identifier, ensuring stable results while exercising scaling logic.
 
-## Appendix: Roles
-- **Operators**: initiate runs, triage failures.
-- **Maintainers**: curate snapshots, author hardening gates.
-- **Security**: enforce PII scrubber policies and quarantine workflows.
+## WAR ROOM operations
+War room logs are mirrored under `testops_backend/warroom/master/` for incident triage. The master runner logs each phase, and the war room file aggregates key events for a single run.
+
+## CI/CD integration
+Trigger `/tests/run_all` during pipeline stages to validate Toron deployments. Collect artifacts from `/tests/report/{run_id}` and `/tests/bundle/{run_id}` for archiving. SQLite history enables promotion checks across environments.
+
+## Safe upgrades
+- Keep FastAPI and Vite dependencies pinned as declared.
+- Run backend and frontend locally after dependency updates.
+- Validate engine import paths in `pipeline_checker.py` before deployment.
+- Confirm reports and snapshots are emitted to the expected directories to preserve deterministic behavior.
