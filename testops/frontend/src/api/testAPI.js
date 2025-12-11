@@ -1,36 +1,45 @@
-const API_BASE =
-  import.meta.env.VITE_TESTOPS_API_BASE || "http://localhost:8000";
+const API_BASE = `${window.location.origin}/testops`;
 
-export async function runAllTests() {
-  const res = await fetch(`${API_BASE}/tests/run_all`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ reason: "full_suite" }),
+async function handleResponse(response) {
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || 'Request failed');
+  }
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+  return response.text();
+}
+
+export async function startTests() {
+  const response = await fetch(`${API_BASE}/run`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`run_all failed: ${res.status} ${text}`);
-  }
-
-  return res.json();
+  return handleResponse(response);
 }
 
-export async function getTestStatus(runId) {
-  const res = await fetch(`${API_BASE}/tests/status/${runId}`);
-
-  if (!res.ok) {
-    throw new Error("status failed");
-  }
-
-  return res.json();
+export async function getStatus(runId) {
+  const response = await fetch(`${API_BASE}/status/${runId}`);
+  return handleResponse(response);
 }
 
-export function streamLogs(runId, onMessage) {
-  const evt = new EventSource(`${API_BASE}/tests/stream/${runId}`);
+export function streamLogs(runId) {
+  const url = `${API_BASE}/stream/${runId}`;
+  return new EventSource(url);
+}
 
-  evt.onmessage = (ev) => onMessage(ev.data);
-  evt.onerror = () => evt.close();
+export async function getReport(runId) {
+  const response = await fetch(`${API_BASE}/report/${runId}`);
+  if (!response.ok) throw new Error('Unable to download report');
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('text/')) return response.text();
+  if (contentType.includes('application/json')) return response.text();
+  return response.blob();
+}
 
-  return evt;
+export async function getSnapshot(runId) {
+  const response = await fetch(`${API_BASE}/snapshot/${runId}`);
+  return handleResponse(response);
 }
