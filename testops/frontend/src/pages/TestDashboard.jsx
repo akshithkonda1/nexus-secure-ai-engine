@@ -1,63 +1,26 @@
-import React from 'react';
-import LiveLogStream from '../components/LiveLogStream.jsx';
-import StatusBubbles from '../components/StatusBubbles.jsx';
-import TestResultSummary from '../components/TestResultSummary.jsx';
-import TestRunCard from '../components/TestRunCard.jsx';
-import { useTestRunner } from '../hooks/useTestRunner.js';
+import useTestRunner from "../hooks/useTestRunner";
+import TestResultSummary from "../components/TestResultSummary";
+import LiveLogStream from "../components/LiveLogStream";
+import StatusBubbles from "../components/StatusBubbles";
 
-const TestDashboard = () => {
-  const {
-    start,
-    runId,
-    phase,
-    progress,
-    statuses,
-    logs,
-    determinismScore,
-    latencyP95,
-    warRoomErrors,
-    snapshotUrl,
-    downloadReport
-  } = useTestRunner();
-
-  const disabled = phase === 'running' || phase === 'launching';
+export default function TestDashboard() {
+  const { runId, status, logs, result, begin } = useTestRunner();
 
   return (
-    <div className="dashboard-grid">
-      <div className="grid-left">
-        <TestRunCard onStart={start} phase={phase} progress={progress} runId={runId} statuses={statuses} disabled={disabled} />
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">SSE · {runId ? `run ${runId}` : 'no run yet'}</p>
-              <h3 className="headline">Live log stream</h3>
-            </div>
-          </div>
-          <LiveLogStream logs={logs} />
-        </section>
-      </div>
-      <div className="grid-right">
-        <section className="panel secondary-panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Subsystem map</p>
-              <h3 className="headline">Execution flow</h3>
-            </div>
-          </div>
-          <div className="panel-body">
-            <StatusBubbles statuses={statuses} />
-          </div>
-        </section>
-        <TestResultSummary
-          determinismScore={determinismScore}
-          latencyP95={latencyP95}
-          warRoomErrors={warRoomErrors}
-          snapshotUrl={snapshotUrl}
-          onDownload={downloadReport}
-        />
-      </div>
+    <div className="testdash-container">
+      <h1>Ryuzen TestOps</h1>
+
+      {status === "idle" && (
+        <button className="begin-btn" onClick={begin}>
+          Begin Testing
+        </button>
+      )}
+
+      {status !== "idle" && <StatusBubbles status={status} />}
+
+      <LiveLogStream logs={logs} />
+
+      {result && <TestResultSummary result={result} />}
     </div>
   );
-};
-
-export default TestDashboard;
+}
