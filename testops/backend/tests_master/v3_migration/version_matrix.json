@@ -1,0 +1,9 @@
+{
+  "current": "v2.5H+",
+  "target": "v3.0",
+  "compatibility": {
+    "apis": "compatible",
+    "pipelines": "compatible",
+    "model_slots": "compatible"
+  }
+}

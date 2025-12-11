@@ -23,7 +23,8 @@ function TestDashboard() {
     };
   }, [runId, actions]);
 
-  const onRun = async () => {
+  const onRun = async (phrase) => {
+    await actions.begin(phrase);
     const newId = await actions.runAll();
     if (newId) {
       actions.listenToLogs(newId);

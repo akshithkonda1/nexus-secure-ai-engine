@@ -4,16 +4,18 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from testops.backend.engine_adapter.healthcheck import run_healthcheck
+from testops.backend.tests_master.engine_validator import validate_engine
+from testops.backend.tests_master.master_runner import master_runner
 from testops.backend.tests_master.master_router import router as master_router
 
 BACKEND_ROOT = Path(__file__).resolve().parent
 
-app = FastAPI(title="Ryuzen TestOps Suite", version="1.0.0")
+app = FastAPI(title="Ryuzen TestOps Suite", version="2.5H+")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,17 +32,21 @@ async def ensure_directories() -> None:
         BACKEND_ROOT / "logs" / "master",
         BACKEND_ROOT / "reports" / "master",
         BACKEND_ROOT / "snapshots",
-        BACKEND_ROOT / "load_results",
         BACKEND_ROOT / "warroom" / "master",
         BACKEND_ROOT / "database",
     ]:
         path.mkdir(parents=True, exist_ok=True)
 
 
+async def require_unlocked():
+    if not getattr(app.state, "testing_unlocked", False):
+        raise HTTPException(status_code=403, detail="Testing is locked. Unlock with the phrase.")
+
+
 @app.post("/begin")
 async def begin(payload: Dict[str, str]):
     phrase = payload.get("phrase") if payload else None
-    if phrase != "begin testing":
+    if phrase != "Begin testing":
         raise HTTPException(status_code=403, detail="Invalid unlock phrase")
     app.state.testing_unlocked = True
     return {"status": "unlocked"}
@@ -54,7 +60,16 @@ async def engine_health():
     return JSONResponse(content=result)
 
 
-app.include_router(master_router)
+@app.post("/testops/run", dependencies=[Depends(require_unlocked)])
+async def run_full_suite():
+    validation = validate_engine()
+    if not validation["engine_ready"]:
+        raise HTTPException(status_code=503, detail=validation)
+    run_id = await master_runner.start_run("testops_run")
+    return {"run_id": run_id, "status": "started", "validation": validation}
+
+
+app.include_router(master_router, prefix="/tests")
 
 
 __all__ = ["app"]
