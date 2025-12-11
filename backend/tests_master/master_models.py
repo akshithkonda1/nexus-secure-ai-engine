@@ -1,68 +1,68 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List
-
-from pydantic import BaseModel, Field
-
-
-class TestRunStatus(BaseModel):
-    run_id: str
-    status: str
-    progress: int
-    current_stage: str
+from typing import Any, Dict, List, Optional
 
 
 class RunStatus(str, Enum):
-    started = "started"
-    completed = "completed"
-    failed = "failed"
-
-
-class PipelineDiagnostics(BaseModel):
-    pipeline_path_distribution: Dict[str, float]
-    tier_stability: Dict[str, float]
-    confidence_distribution: Dict[str, float]
-    escalation_rate: float
-    contradiction_frequency: float
-
-
-class LoadTestResult(BaseModel):
-    p95_latency_ms: float
-    failure_rate: float
-    throughput_rps: float
-    duration_seconds: int
-    virtual_users: int
-    target_rps: int
-    result_path: str
-
-
-class SnapshotReplayResult(BaseModel):
-    determinism_score: float
-    mismatched_bytes: int
-    total_bytes: int
-    identical: bool
-    snapshot_path: str
-
-
-class RunSummary(BaseModel):
-    run_id: str
-    status: RunStatus
-    metrics: Dict[str, Any]
-    errors: List[str] = Field(default_factory=list)
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    PASS = "PASS"
+    FAIL = "FAIL"
 
 
 @dataclass
-class RunStatus:
-    run_id: str
+class PhaseResult:
+    name: str
     status: str
-    created_at: Any
-    updated_at: Any
+    metrics: Dict[str, Any] = field(default_factory=dict)
+    logs: List[str] = field(default_factory=list)
 
 
 @dataclass
-class RunResult:
+class TestRun:
     run_id: str
-    result: Dict[str, Any]
-    created_at: Any
+    started_at: datetime
+    finished_at: Optional[datetime] = None
+    status: RunStatus = RunStatus.PENDING
+    results: Dict[str, PhaseResult] = field(default_factory=dict)
+    snapshot_path: Optional[str] = None
+    report_path: Optional[str] = None
+
+    def to_record(self) -> Dict[str, Any]:
+        return {
+            "run_id": self.run_id,
+            "started_at": self.started_at.isoformat(),
+            "finished_at": self.finished_at.isoformat() if self.finished_at else None,
+            "status": self.status.value,
+            "result_json": {
+                phase: {
+                    "status": res.status,
+                    "metrics": res.metrics,
+                    "logs": res.logs,
+                }
+                for phase, res in self.results.items()
+            },
+            "report_path": self.report_path,
+            "snapshot_path": self.snapshot_path,
+        }
+
+
+@dataclass
+class StreamEvent:
+    timestamp: str
+    module: str
+    progress: float
+    status: str
+    message: str
+
+    def serialize(self) -> Dict[str, Any]:
+        return {
+            "timestamp": self.timestamp,
+            "module": self.module,
+            "progress": self.progress,
+            "status": self.status,
+            "message": self.message,
+        }

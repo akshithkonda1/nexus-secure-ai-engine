@@ -51,6 +51,14 @@ def engine_health():
 
 app.include_router(test_router)
 
+
+@app.post("/testops/run")
+async def testops_run():
+    from backend.tests_master.master_runner import run_all
+
+    run_id = await run_all({})
+    return {"run_id": run_id}
+
 if __name__ == "__main__":
     import uvicorn
 

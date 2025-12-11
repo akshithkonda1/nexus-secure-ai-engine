@@ -1,130 +1,125 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+import sqlite3
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 
-DATABASE_PATH = Path("database/tests_master.db")
-REPORT_BASE = Path("reports/master")
-REPORT_DIR = REPORT_BASE  # Backwards compatibility with previous constant name
-SNAPSHOT_DIR = Path("snapshots")
-LOAD_RESULTS_DIR = Path("load_results")
-LOG_DIR = Path("warroom/master")
+DATABASE_PATH = Path("backend/database/tests_master.db")
 
 
-class TestStore:
-    def __init__(self, db_path: Path | str = DATABASE_PATH):
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        REPORT_BASE.mkdir(parents=True, exist_ok=True)
-        SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        LOAD_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-        LOG_DIR.mkdir(parents=True, exist_ok=True)
-        self._init_db()
-        self.log_queues: Dict[str, asyncio.Queue] = {}
-
-    def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.db_path)
-
-    def _init_db(self) -> None:
-        conn = self._connect()
+def _ensure_schema() -> None:
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(DATABASE_PATH) as conn:
         cur = conn.cursor()
         cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS runs (
+            CREATE TABLE IF NOT EXISTS test_runs (
                 run_id TEXT PRIMARY KEY,
+                started_at TEXT,
+                finished_at TEXT,
                 status TEXT,
-                progress INTEGER,
-                current_stage TEXT,
-                result_json TEXT
+                result_json TEXT,
+                report_path TEXT,
+                snapshot_path TEXT
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS test_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id TEXT,
+                timestamp TEXT,
+                message TEXT
             )
             """
         )
         conn.commit()
-        conn.close()
 
-    def init_run(self, run_id: str) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "INSERT OR REPLACE INTO runs(run_id, status, progress, current_stage, result_json) VALUES (?, ?, ?, ?, ?)",
-            (run_id, "running", 0, "initializing", None),
+
+def create_run(run_id: str, started_at: str) -> None:
+    _ensure_schema()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO test_runs (run_id, started_at, status) VALUES (?, ?, ?)",
+            (run_id, started_at, "RUNNING"),
         )
         conn.commit()
-        conn.close()
-        self.log_queues[run_id] = asyncio.Queue()
 
-    def add_log(self, run_id: str, message: str) -> None:
-        queue = self.log_queues.setdefault(run_id, asyncio.Queue())
-        queue.put_nowait(message)
-        log_file = LOG_DIR / f"{run_id}.log"
-        with log_file.open("a", encoding="utf-8") as handle:
-            handle.write(message + "\n")
 
-    def get_log_queue(self, run_id: str) -> asyncio.Queue:
-        return self.log_queues.setdefault(run_id, asyncio.Queue())
-
-    def update_progress(self, run_id: str, progress: int, stage: str) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE runs SET progress=?, current_stage=? WHERE run_id=?",
-            (progress, stage, run_id),
+def update_run(
+    run_id: str,
+    *,
+    finished_at: Optional[str] = None,
+    status: Optional[str] = None,
+    result_json: Optional[Dict] = None,
+    report_path: Optional[str] = None,
+    snapshot_path: Optional[str] = None,
+) -> None:
+    _ensure_schema()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        current = conn.execute("SELECT result_json FROM test_runs WHERE run_id=?", (run_id,)).fetchone()
+        existing_json = json.loads(current[0]) if current and current[0] else {}
+        if result_json:
+            existing_json.update(result_json)
+        conn.execute(
+            """
+            UPDATE test_runs
+            SET finished_at = COALESCE(?, finished_at),
+                status = COALESCE(?, status),
+                result_json = ?,
+                report_path = COALESCE(?, report_path),
+                snapshot_path = COALESCE(?, snapshot_path)
+            WHERE run_id = ?
+            """,
+            (
+                finished_at,
+                status,
+                json.dumps(existing_json),
+                report_path,
+                snapshot_path,
+                run_id,
+            ),
         )
         conn.commit()
-        conn.close()
 
-    def save_result(self, run_id: str, result: dict) -> None:
-        conn = self._connect()
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE runs SET status=?, result_json=? WHERE run_id=?",
-            ("finished", json.dumps(result), run_id),
+
+def append_log(run_id: str, timestamp: str, message: str) -> None:
+    _ensure_schema()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute(
+            "INSERT INTO test_logs (run_id, timestamp, message) VALUES (?, ?, ?)",
+            (run_id, timestamp, message),
         )
         conn.commit()
-        conn.close()
 
-    def get_status(self, run_id: str) -> dict:
-        conn = self._connect()
-        cur = conn.cursor()
-        row = cur.execute(
-            "SELECT status, progress, current_stage FROM runs WHERE run_id=?", (run_id,)
+
+def get_run(run_id: str) -> Optional[Dict]:
+    _ensure_schema()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        row = conn.execute(
+            "SELECT run_id, started_at, finished_at, status, result_json, report_path, snapshot_path FROM test_runs WHERE run_id=?",
+            (run_id,),
         ).fetchone()
-        conn.close()
         if not row:
-            return {"error": "run_id not found"}
-        return {"run_id": run_id, "status": row[0], "progress": row[1], "current_stage": row[2]}
-
-    def get_result(self, run_id: str) -> dict:
-        conn = self._connect()
-        cur = conn.cursor()
-        row = cur.execute("SELECT result_json FROM runs WHERE run_id=?", (run_id,)).fetchone()
-        conn.close()
-        if not row or row[0] is None:
-            return {"error": "not found"}
-        return json.loads(row[0])
-
-    def get_report_path(self, run_id: str) -> str:
-        return str(REPORT_BASE / run_id / "report.html")
-
-    def build_bundle(self, run_id: str) -> str:
-        base = REPORT_BASE / run_id
-        base.mkdir(parents=True, exist_ok=True)
-        bundle_path = base / "bundle.zip"
-        with zipfile.ZipFile(bundle_path, "w") as zf:
-            for file in base.glob("*"):
-                if file.name != "bundle.zip":
-                    zf.write(file, arcname=file.name)
-        return str(bundle_path)
+            return None
+        return {
+            "run_id": row[0],
+            "started_at": row[1],
+            "finished_at": row[2],
+            "status": row[3],
+            "result_json": json.loads(row[4]) if row[4] else {},
+            "report_path": row[5],
+            "snapshot_path": row[6],
+        }
 
 
-__all__ = [
-    "TestStore",
-    "DATABASE_PATH",
-    "REPORT_BASE",
-    "REPORT_DIR",
-    "SNAPSHOT_DIR",
-    "LOAD_RESULTS_DIR",
-    "LOG_DIR",
-]
+def list_logs(run_id: str) -> List[Dict]:
+    _ensure_schema()
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        rows = conn.execute(
+            "SELECT timestamp, message FROM test_logs WHERE run_id=? ORDER BY id ASC",
+            (run_id,),
+        ).fetchall()
+        return [{"timestamp": ts, "message": msg} for ts, msg in rows]
