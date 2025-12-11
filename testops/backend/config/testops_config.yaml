@@ -1,4 +1,0 @@
-engine_path: ryuzen/engine/toron_v25hplus.py
-simulate_latency: true
-sim_seed: 1337
-fail_on_instability: true

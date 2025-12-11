@@ -1,0 +1,7 @@
+run_count: 1000
+seed: 42
+latency_tracking: true
+opus_tracking: true
+determinism_checks: true
+snapshot_compare_mode: strict
+max_prompts: 10000
