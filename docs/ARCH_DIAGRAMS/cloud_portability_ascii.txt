@@ -1,0 +1,12 @@
+Cloud Portability (Offline)
+
+[Helm Values]
+     |
+     v
+[K8s Manifests] -> [Runner/Engine Pods]
+        |                 |
+        v                 v
+ [Local Blob]         [Observability]
+        \                 /
+         v               v
+      [Snapshots/Reports]

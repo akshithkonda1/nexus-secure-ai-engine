@@ -1,0 +1,9 @@
+Load + Chaos Pipeline
+
+[k6 Mock Load] -> [Runner] -> [API] -> [Engine]
+      |                          |
+      v                          v
+[Chaos Controller]        [Metrics Sink]
+      \                          /
+       v                        v
+      [Reports] <----------- [Snapshots]
