@@ -1,42 +1,42 @@
-"""Assertion helpers for simulated Toron flows."""
+"""Deterministic validation utilities for the SIM suite."""
 from __future__ import annotations
 
-from statistics import mean
-from typing import Dict, List, Sequence
-
-Metrics = Dict[str, List[Dict[str, float]]]
+from typing import Any, Dict, Iterable, List
 
 
-def evaluate_assertions(metrics: Metrics, dataset: Dict[str, object]) -> List[Dict[str, object]]:
-    """Evaluate simple timing-based assertions against the dataset."""
-    assertions: List[Dict[str, object]] = []
-    responses: Sequence[Dict[str, float]] = metrics.get("responses", [])
-    avg_latency = mean([r["ms"] for r in responses]) if responses else 0.0
-    assertions.append(
-        {
-            "name": "average_latency_under_300ms",
-            "status": avg_latency <= 300,
-            "observed_ms": round(avg_latency, 2),
-        }
-    )
-
-    for scenario in dataset.get("scenarios", []):
-        threshold = scenario.get("threshold_ms", 0)
-        step_latencies = [
-            r["ms"]
-            for r in responses
-            if r.get("step") in {s.get("action") for s in scenario.get("steps", [])}
-        ]
-        scenario_avg = mean(step_latencies) if step_latencies else 0.0
-        assertions.append(
-            {
-                "name": f"{scenario.get('name')}_within_threshold",
-                "status": scenario_avg <= threshold if threshold else True,
-                "observed_ms": round(scenario_avg, 2),
-                "threshold_ms": threshold,
-            }
-        )
-    return assertions
+def assert_deterministic(outputs: Iterable[str]) -> bool:
+    first = None
+    for item in outputs:
+        if first is None:
+            first = item
+            continue
+        if item != first:
+            return False
+    return True
 
 
-__all__ = ["evaluate_assertions", "Metrics"]
+def assert_tier_shape(packet: Dict[str, Any]) -> bool:
+    required_keys = {"t1", "t2", "t3"}
+    if not required_keys.issubset(packet.keys()):
+        return False
+    if not isinstance(packet["t1"], dict) or not isinstance(packet["t2"], dict):
+        return False
+    return isinstance(packet["t3"], dict)
+
+
+def assert_confidence_bounds(confidence: float) -> bool:
+    return 0.0 <= confidence <= 1.0
+
+
+def assert_pipeline_path(path: List[str]) -> bool:
+    if not path:
+        return False
+    return path[0] == "PSL" and path[-1] == "Consensus"
+
+
+__all__ = [
+    "assert_confidence_bounds",
+    "assert_deterministic",
+    "assert_pipeline_path",
+    "assert_tier_shape",
+]

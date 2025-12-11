@@ -1,177 +1,208 @@
-"""Master runner orchestrating Section 2 of Ryuzen TestOps."""
+"""Master orchestrator for TestOps backend Wave 1."""
 from __future__ import annotations
 
 import asyncio
 import json
-import time
-from dataclasses import dataclass, field
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from random import Random
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from sse_starlette.sse import EventSourceResponse
-
+from testops.backend.loaders.k6_runner import K6Runner
 from testops.backend.replay.replay_engine import ReplayEngine
-from testops.backend.tests_master.k6_runner import run_k6_load
-from testops.backend.tests_master.sim.sim_runner import run_all as run_sim_suite
-from testops.backend.warroom.warroom_logger import WarroomLogger
-
-BASE_DIR = Path(__file__).resolve().parents[2]
-SNAPSHOT_DIR = BASE_DIR / "snapshots"
-SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-
-
-class SSEBroker:
-    """Minimal SSE manager for streaming run logs."""
-
-    def __init__(self) -> None:
-        self.queues: Dict[str, asyncio.Queue[str]] = {}
-
-    def create(self, run_id: str) -> asyncio.Queue[str]:
-        queue: asyncio.Queue[str] = asyncio.Queue()
-        self.queues[run_id] = queue
-        return queue
-
-    def push(self, run_id: str, message: str) -> None:
-        queue = self.queues.get(run_id)
-        if queue is None:
-            queue = self.create(run_id)
-        queue.put_nowait(message)
-
-    async def iterate(self, run_id: str):
-        queue = self.queues.get(run_id)
-        if queue is None:
-            return
-        while True:
-            message = await queue.get()
-            yield {"event": "log", "data": message}
+from testops.backend.runners.engine_validator import EngineValidator
+from testops.backend.simulators.sim_runner import SimRunner
+from testops.backend.snapshots.snapshot_store import SnapshotStore
+from testops.backend.warroom.warroom_logger import WarRoomLogger
 
 
 @dataclass
-class RunState:
+class RunRecord:
     run_id: str
-    status: str = "PENDING"
-    progress: float = 0.0
-    logs: list[str] = field(default_factory=list)
-    results: Dict[str, Any] = field(default_factory=dict)
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    status: str
+    started_at: str
+    ended_at: Optional[str]
+    result_path: Optional[str]
+    report_path: Optional[str]
+
+
+class RunEventBus:
+    """Lightweight per-run async event bus for SSE streaming."""
+
+    def __init__(self) -> None:
+        self.queues: Dict[str, asyncio.Queue] = {}
+
+    def publish(self, run_id: str, event: Dict[str, Any]) -> None:
+        queue = self.queues.setdefault(run_id, asyncio.Queue())
+        queue.put_nowait(event)
+
+    def subscribe(self, run_id: str) -> asyncio.Queue:
+        return self.queues.setdefault(run_id, asyncio.Queue())
+
+
+class ConfigLoader:
+    """Loads backend configuration from YAML."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def load(self) -> Dict[str, Any]:
+        import yaml
+
+        with self.path.open("r", encoding="utf-8") as handle:
+            return yaml.safe_load(handle) or {}
 
 
 class MasterRunner:
-    """Lightweight orchestrator for sim, k6, and replay stages."""
+    """Coordinates engine validation, SIM runs, load tests, and replay."""
 
-    def __init__(self) -> None:
-        self.states: Dict[str, RunState] = {}
-        self.sse = SSEBroker()
-        self.replay_engine = ReplayEngine()
-        self.warroom = WarroomLogger()
+    def __init__(
+        self,
+        db_path: Path,
+        config_path: Path,
+        snapshot_store: SnapshotStore,
+        event_bus: RunEventBus,
+        warroom: WarRoomLogger,
+    ) -> None:
+        self.db_path = db_path
+        self.config_path = config_path
+        self.snapshot_store = snapshot_store
+        self.event_bus = event_bus
+        self.warroom = warroom
+        self.base_dir = Path(__file__).resolve().parents[1]
+        self.reports_dir = self.base_dir / "reports"
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+        self._init_db()
 
-    def _log(self, run_id: str, message: str) -> None:
-        timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        line = f"[{timestamp}] {message}"
-        state = self.states.setdefault(run_id, RunState(run_id=run_id))
-        state.logs.append(line)
-        self.sse.push(run_id, line)
+    def _init_db(self) -> None:
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(self.db_path)
+        schema_path = self.base_dir / "db" / "schema.sql"
+        schema_sql = schema_path.read_text(encoding="utf-8")
+        with conn:
+            conn.executescript(schema_sql)
+        conn.close()
 
-    async def start_run(self, trigger: str = "api") -> str:
+    def _insert_run(self, run_id: str, started_at: str) -> None:
+        conn = sqlite3.connect(self.db_path)
+        with conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO test_runs(run_id, status, started_at, ended_at, result_path, report_path) VALUES (?, ?, ?, ?, ?, ?)",
+                (run_id, "running", started_at, None, None, None),
+            )
+        conn.close()
+
+    def _update_run(
+        self,
+        run_id: str,
+        status: str,
+        ended_at: Optional[str],
+        result_path: Optional[str],
+        report_path: Optional[str],
+    ) -> None:
+        conn = sqlite3.connect(self.db_path)
+        with conn:
+            conn.execute(
+                "UPDATE test_runs SET status = ?, ended_at = ?, result_path = ?, report_path = ? WHERE run_id = ?",
+                (status, ended_at, result_path, report_path, run_id),
+            )
+        conn.close()
+
+    def _record_event(self, run_id: str, message: str, payload: Optional[Dict[str, Any]] = None) -> None:
+        event = {"timestamp": datetime.utcnow().isoformat() + "Z", "message": message}
+        if payload:
+            event.update(payload)
+        self.event_bus.publish(run_id, event)
+
+    async def start_run(self) -> str:
         run_id = str(uuid4())
-        self.states[run_id] = RunState(run_id=run_id, status="RUNNING", progress=0.0, started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-        self.sse.create(run_id)
-        asyncio.create_task(self._execute(run_id, trigger))
+        started_at = datetime.utcnow().isoformat() + "Z"
+        self._insert_run(run_id, started_at)
+        self._record_event(run_id, "run_started", {"run_id": run_id})
+        asyncio.create_task(self._execute(run_id, started_at))
         return run_id
 
-    async def _execute(self, run_id: str, trigger: str) -> None:
-        state = self.states[run_id]
-        self._log(run_id, f"Run started via {trigger}")
-        try:
-            self._log(run_id, "Executing SIM runner")
-            sim_result = run_sim_suite(run_id)
-            state.progress = 25
-            state.results["sim_runner"] = sim_result
+    def _load_config(self) -> Dict[str, Any]:
+        return ConfigLoader(self.config_path).load()
 
-            self._log(run_id, "Executing k6 runner")
-            k6_result = run_k6_load(run_id)
-            state.progress = 55
-            state.results["k6_runner"] = k6_result
+    async def _execute(self, run_id: str, started_at: str) -> None:
+        config = self._load_config()
+        rng = Random(config.get("sim_seed", 1337))
+        validator = EngineValidator()
+        sim_runner = SimRunner(self.base_dir / "simulators" / "sim_dataset.json", self.snapshot_store)
+        k6_runner = K6Runner(self.base_dir / "loaders")
+        replay_engine = ReplayEngine(self.base_dir / "snapshots")
 
-            snapshot = {
-                "run_id": run_id,
-                "trigger": trigger,
-                "started_at": state.started_at,
-                "sim": sim_result,
-                "k6": k6_result,
-            }
-            snapshot_path = SNAPSHOT_DIR / f"{run_id}.json"
-            snapshot_path.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
-            state.results["snapshot_path"] = str(snapshot_path)
-            self._log(run_id, f"Snapshot written to {snapshot_path}")
+        self._record_event(run_id, "engine_validation_started")
+        validation = validator.validate()
+        self.snapshot_store.save(run_id, "engine_validation", validation)
+        if not validation.get("success") and config.get("fail_on_instability", True):
+            self._record_event(run_id, "engine_validation_failed", {"validation": validation, "final": True})
+            self._update_run(run_id, "failed", datetime.utcnow().isoformat() + "Z", None, None)
+            self.warroom.log(run_id, "ERROR", "engine_validator", "Engine validation failed", "Inspect engine dependencies.")
+            return
+        self._record_event(run_id, "engine_validation_completed", {"validation": validation})
 
-            self._log(run_id, "Executing replay determinism")
-            replay_result = self.replay_engine.validate(snapshot)
-            state.progress = 85
-            state.results["replay_engine"] = replay_result
+        self._record_event(run_id, "sim_runner_started")
+        sim_summary = sim_runner.run_suite(run_id, rng)
+        self._record_event(run_id, "sim_runner_completed", {"summary": sim_summary})
 
-            aggregated = {
-                "run_id": run_id,
-                "trigger": trigger,
-                "started_at": state.started_at,
-                "finished_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "results": {
-                    "sim_runner": sim_result,
-                    "k6_runner": k6_result,
-                },
-                "replay": replay_result,
-                "snapshot": str(snapshot_path),
-            }
-            state.finished_at = aggregated["finished_at"]
-            state.results["aggregated"] = aggregated
-            state.status = "PASS" if replay_result.get("determinism_score", 0) >= 90 else "WARN"
-            state.progress = 100
-            self._log(run_id, f"Run completed with status {state.status}")
-        except Exception as exc:  # pragma: no cover
-            state.status = "FAIL"
-            state.finished_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            state.results["error"] = str(exc)
-            self.warroom.log_error(
-                subsystem="master_runner",
-                severity="CRITICAL",
-                message=str(exc),
-                suggestion="Inspect snapshot and replay inputs for corrupt state.",
-            )
-            self._log(run_id, f"Run failed: {exc}")
-        finally:
-            self.states[run_id] = state
+        self._record_event(run_id, "k6_runner_started")
+        load_summary = k6_runner.run(run_id, rng)
+        self.snapshot_store.save(run_id, "load_test", load_summary)
+        self._record_event(run_id, "k6_runner_completed", {"summary": load_summary})
 
-    def get_status(self, run_id: str) -> Optional[Dict[str, Any]]:
-        state = self.states.get(run_id)
-        if not state:
-            return None
-        return {
+        aggregated_snapshot = {
             "run_id": run_id,
-            "status": state.status,
-            "progress": state.progress,
-            "logs": list(state.logs),
-            "started_at": state.started_at,
-            "finished_at": state.finished_at,
+            "validation": validation,
+            "sim": sim_summary,
+            "load": load_summary,
+            "started_at": started_at,
         }
+        replay_summary = replay_engine.replay(run_id, config.get("sim_seed", 1337), aggregated_snapshot)
+        self._record_event(run_id, "replay_completed", {"summary": replay_summary})
 
-    def get_results(self, run_id: str) -> Optional[Dict[str, Any]]:
-        state = self.states.get(run_id)
-        if not state or not state.results:
+        final = {
+            "run_id": run_id,
+            "validation": validation,
+            "sim": sim_summary,
+            "load": load_summary,
+            "replay": replay_summary,
+            "started_at": started_at,
+            "ended_at": datetime.utcnow().isoformat() + "Z",
+        }
+        result_path = self.reports_dir / f"{run_id}_result.json"
+        report_path = self.reports_dir / f"{run_id}_report.json"
+        result_path.write_text(json.dumps(final, indent=2, sort_keys=True), encoding="utf-8")
+        report_path.write_text(json.dumps({"metrics": final}, indent=2, sort_keys=True), encoding="utf-8")
+        self.snapshot_store.save(run_id, "final", final)
+
+        self._update_run(run_id, "completed", final["ended_at"], str(result_path), str(report_path))
+        self._record_event(run_id, "run_completed", {"final": True, "result_path": str(result_path)})
+
+    def status(self, run_id: str) -> Optional[RunRecord]:
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT run_id, status, started_at, ended_at, result_path, report_path FROM test_runs WHERE run_id = ?",
+            (run_id,),
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
             return None
-        return state.results
+        return RunRecord(*row)
 
-    def stream(self, run_id: str) -> Optional[EventSourceResponse]:
-        if run_id not in self.states:
+    def load_json(self, path: Optional[str]) -> Optional[Dict[str, Any]]:
+        if not path:
             return None
-        return EventSourceResponse(self.sse.iterate(run_id))
+        file_path = Path(path)
+        if not file_path.exists():
+            return None
+        return json.loads(file_path.read_text(encoding="utf-8"))
 
 
-def _build_runner() -> MasterRunner:
-    return MasterRunner()
-
-
-master_runner = _build_runner()
-
-__all__ = ["master_runner", "MasterRunner", "RunState", "SSEBroker"]
+__all__ = ["MasterRunner", "RunEventBus", "RunRecord"]

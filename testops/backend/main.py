@@ -1,18 +1,13 @@
-"""FastAPI bootstrap for TestOps Section 1.
-
-This lightweight application exposes test execution endpoints and
-streams synthetic logs suitable for frontend dashboards.
-"""
+"""FastAPI entrypoint for TestOps backend Wave 1."""
 from __future__ import annotations
-
-from typing import Any, Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from testops.backend.routers.test_router import router as test_router
 
-app = FastAPI(title="Ryuzen TestOps Section 1", version="2.5H+")
+app = FastAPI(title="Ryuzen TestOps Backend", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,19 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def root() -> Dict[str, Any]:
-    """Return basic API metadata."""
-    return {"service": app.title, "version": app.version}
+app.include_router(test_router)
 
 
-app.include_router(test_router, prefix="/tests", tags=["tests"])
+@app.get("/health", tags=["system"])
+async def health() -> dict:
+    return {"status": "ok"}
 
 
-async def lifespan(app: FastAPI):
-    """Async context hook to start background housekeeping if needed."""
-    yield
-
-
-__all__ = ["app", "lifespan"]
+__all__ = ["app"]
