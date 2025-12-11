@@ -2,16 +2,12 @@
 from __future__ import annotations
 
 import json
-import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
 from testops.backend.runners.master_store import MasterStore
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-WARROOM_DIR = BASE_DIR / "warroom"
-WARROOM_DIR.mkdir(parents=True, exist_ok=True)
-WARROOM_LOG = WARROOM_DIR / "warroom.log"
 
 SEVERITY_SCORES = {
     "CRITICAL": 100,
@@ -21,8 +17,9 @@ SEVERITY_SCORES = {
 }
 
 
-class WarroomLogger:
-    """Persists structured incident logs for post-run triage."""
+    def __init__(self, base_dir: Path) -> None:
+        self.base_dir = base_dir
+        self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def __init__(self, store: Optional[MasterStore] = None) -> None:
         self.path = WARROOM_LOG

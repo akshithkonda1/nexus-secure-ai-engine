@@ -1,34 +1,39 @@
 import React from 'react';
 
-const TestResultSummary = ({ result, status }) => {
-  const assertions = result?.assertions || [];
-  const metrics = result?.metrics || {};
-  const responses = metrics.responses || [];
+const rowStyle = {
+  display: 'grid',
+  gridTemplateColumns: '200px 1fr',
+  padding: '8px 0',
+  borderBottom: '1px solid #1f2937',
+  color: '#e2e8f0'
+};
+
+const labelStyle = {
+  color: '#94a3b8',
+  textTransform: 'uppercase',
+  fontSize: 12,
+  letterSpacing: '0.08em'
+};
+
+const TestResultSummary = ({ summary }) => {
+  if (!summary) return null;
+  const fields = [
+    ['Latency summary', summary.latency_summary ?? 'n/a'],
+    ['Determinism score', summary.determinism_score ?? 'n/a'],
+    ['Load test p95', summary.load_p95 ?? 'n/a'],
+    ['Confidence avg', summary.confidence_avg ?? 'n/a'],
+    ['Snapshot', summary.snapshot_metadata ?? 'n/a']
+  ];
 
   return (
-    <div className="panel summary">
-      <header className="panel-header">Test Result Summary</header>
-      <div className="panel-body">
-        <div className="summary-row">
-          <span className="label">Current Status:</span> {status}
+    <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: '12px', padding: '12px 14px' }}>
+      <div style={{ fontWeight: 700, marginBottom: 8 }}>Results</div>
+      {fields.map(([label, value]) => (
+        <div key={label} style={rowStyle}>
+          <div style={labelStyle}>{label}</div>
+          <div>{typeof value === 'object' ? JSON.stringify(value, null, 2) : value}</div>
         </div>
-        <div className="summary-row">
-          <span className="label">Total Steps:</span> {responses.length}
-        </div>
-        <div className="summary-row">
-          <span className="label">Assertions:</span>
-        </div>
-        <ul className="assertion-list">
-          {assertions.map((assertion) => (
-            <li key={assertion.name} className={assertion.status ? 'pass' : 'fail'}>
-              <span>{assertion.name}</span>
-              <span className="detail">Observed: {assertion.observed_ms} ms</span>
-              {assertion.threshold_ms && <span className="detail">Threshold: {assertion.threshold_ms} ms</span>}
-            </li>
-          ))}
-          {assertions.length === 0 && <li className="placeholder">No assertions yet.</li>}
-        </ul>
-      </div>
+      ))}
     </div>
   );
 };

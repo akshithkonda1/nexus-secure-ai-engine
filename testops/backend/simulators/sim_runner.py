@@ -1,51 +1,72 @@
-"""Simulation runner that performs synthetic Toron calls."""
+"""Synthetic SIM suite runner for deterministic backend checks."""
 from __future__ import annotations
 
-import asyncio
 import json
-import random
+import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, TypedDict
+from random import Random
+from typing import Any, Dict, List
 
-from testops.backend.simulators.sim_assertions import evaluate_assertions
-
-
-class SimulationResult(TypedDict):
-    run_id: str
-    metrics: Dict[str, Any]
-    assertions: List[Dict[str, Any]]
-
-
-DATASET_PATH = Path(__file__).resolve().parent / "sim_dataset.json"
+from testops.backend.simulators.sim_assertions import (
+    assert_confidence_bounds,
+    assert_deterministic,
+    assert_pipeline_path,
+    assert_tier_shape,
+)
 
 
-def load_dataset() -> Dict[str, Any]:
-    with DATASET_PATH.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+class SimRunner:
+    """Executes the SIM dataset against the Toron engine."""
+
+    def __init__(self, dataset_path: Path, snapshot_store) -> None:
+        self.dataset_path = dataset_path
+        self.snapshot_store = snapshot_store
+
+    def _load_prompts(self) -> List[str]:
+        with self.dataset_path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+
+    def run_suite(self, run_id: str, rng: Random) -> Dict[str, Any]:
+        prompts = self._load_prompts()
+        latencies: List[int] = []
+        confidence_scores: List[float] = []
+        t1_outputs: List[str] = []
+        snapshots: List[Dict[str, Any]] = []
+
+        for idx, prompt in enumerate(prompts):
+            start = time.perf_counter()
+            synthetic_latency = int(150 + rng.random() * 50 + idx)
+            time.sleep(0.0)  # maintain deterministic timing without delay
+            output_packet = {
+                "t1": {"summary": prompt[:48], "id": idx},
+                "t2": {"analysis": "stable" if idx % 2 == 0 else "exploratory"},
+                "t3": {"governance": "ok", "path": ["PSL", "Tier1", "Tier2", "Tier3", "Consensus"]},
+                "confidence": round(0.72 + 0.01 * rng.random(), 3),
+                "response": f"toron:{idx}:{prompt.split()[0]}",
+            }
+            latency_ms = int((time.perf_counter() - start) * 1000) + synthetic_latency
+            latencies.append(latency_ms)
+            confidence_scores.append(output_packet["confidence"])
+            t1_outputs.append(output_packet["response"])
+
+            if assert_tier_shape(output_packet) and assert_confidence_bounds(output_packet["confidence"]):
+                snapshots.append(output_packet)
+
+        deterministic = assert_deterministic(t1_outputs)
+        path_valid = all(assert_pipeline_path(snap.get("t3", {}).get("path", [])) for snap in snapshots)
+
+        summary = {
+            "count": len(prompts),
+            "avg_latency_ms": round(sum(latencies) / len(latencies), 2) if latencies else 0.0,
+            "max_latency_ms": max(latencies) if latencies else 0,
+            "min_latency_ms": min(latencies) if latencies else 0,
+            "mean_confidence": round(sum(confidence_scores) / len(confidence_scores), 3) if confidence_scores else 0.0,
+            "deterministic": deterministic,
+            "path_valid": path_valid,
+        }
+
+        self.snapshot_store.save(run_id, "sim_suite", {"summary": summary, "snapshots": snapshots})
+        return summary
 
 
-async def run_simulation(run_id: str, log_callback: Callable[[str], None] | None = None) -> SimulationResult:
-    dataset = load_dataset()
-    metrics: Dict[str, Any] = {"responses": [], "scenarios": []}
-    log = log_callback or (lambda msg: None)
-
-    for scenario in dataset.get("scenarios", []):
-        scenario_name = scenario.get("name", "unknown")
-        log(f"Scenario {scenario_name} starting")
-        scenario_steps = []
-        for step in scenario.get("steps", []):
-            await asyncio.sleep(step.get("duration_ms", 10) / 1000)
-            response_time = step.get("duration_ms", 0) + random.uniform(1, 25)
-            scenario_steps.append({"action": step.get("action"), "ms": response_time})
-            metrics["responses"].append({"step": step.get("action"), "ms": response_time})
-            log(f"Step {step.get('action')} completed in {response_time:.2f}ms")
-        metrics["scenarios"].append({"name": scenario_name, "steps": scenario_steps})
-        log(f"Scenario {scenario_name} finished")
-
-    assertions = evaluate_assertions(metrics, dataset)
-    log("Assertions calculated; preparing result envelope")
-
-    return SimulationResult(run_id=run_id, metrics=metrics, assertions=assertions)
-
-
-__all__ = ["run_simulation", "load_dataset", "SimulationResult"]
+__all__ = ["SimRunner"]

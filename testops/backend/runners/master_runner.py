@@ -7,6 +7,7 @@ import random
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from random import Random
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
@@ -49,16 +50,25 @@ class SSEBroker:
             event, message = await queue.get()
             yield {"event": event, "data": message}
 
+    def publish(self, run_id: str, event: Dict[str, Any]) -> None:
+        queue = self.queues.setdefault(run_id, asyncio.Queue())
+        queue.put_nowait(event)
 
-@dataclass
-class RunState:
-    run_id: str
-    status: str = "PENDING"
-    progress: float = 0.0
-    logs: list[str] = field(default_factory=list)
-    results: Dict[str, Any] = field(default_factory=dict)
-    started_at: Optional[str] = None
-    finished_at: Optional[str] = None
+    def subscribe(self, run_id: str) -> asyncio.Queue:
+        return self.queues.setdefault(run_id, asyncio.Queue())
+
+
+class ConfigLoader:
+    """Loads backend configuration from YAML."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def load(self) -> Dict[str, Any]:
+        import yaml
+
+        with self.path.open("r", encoding="utf-8") as handle:
+            return yaml.safe_load(handle) or {}
 
 
 class MasterRunner:
@@ -269,29 +279,52 @@ class MasterRunner:
             return None
         return {
             "run_id": run_id,
-            "status": state.status,
-            "progress": state.progress,
-            "logs": list(state.logs),
-            "started_at": state.started_at,
-            "finished_at": state.finished_at,
+            "validation": validation,
+            "sim": sim_summary,
+            "load": load_summary,
+            "started_at": started_at,
         }
+        replay_summary = replay_engine.replay(run_id, config.get("sim_seed", 1337), aggregated_snapshot)
+        self._record_event(run_id, "replay_completed", {"summary": replay_summary})
 
-    def get_results(self, run_id: str) -> Optional[Dict[str, Any]]:
-        state = self.states.get(run_id)
-        if not state or not state.results:
+        final = {
+            "run_id": run_id,
+            "validation": validation,
+            "sim": sim_summary,
+            "load": load_summary,
+            "replay": replay_summary,
+            "started_at": started_at,
+            "ended_at": datetime.utcnow().isoformat() + "Z",
+        }
+        result_path = self.reports_dir / f"{run_id}_result.json"
+        report_path = self.reports_dir / f"{run_id}_report.json"
+        result_path.write_text(json.dumps(final, indent=2, sort_keys=True), encoding="utf-8")
+        report_path.write_text(json.dumps({"metrics": final}, indent=2, sort_keys=True), encoding="utf-8")
+        self.snapshot_store.save(run_id, "final", final)
+
+        self._update_run(run_id, "completed", final["ended_at"], str(result_path), str(report_path))
+        self._record_event(run_id, "run_completed", {"final": True, "result_path": str(result_path)})
+
+    def status(self, run_id: str) -> Optional[RunRecord]:
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT run_id, status, started_at, ended_at, result_path, report_path FROM test_runs WHERE run_id = ?",
+            (run_id,),
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
             return None
-        return state.results
+        return RunRecord(*row)
 
-    def stream(self, run_id: str) -> Optional[EventSourceResponse]:
-        if run_id not in self.states:
+    def load_json(self, path: Optional[str]) -> Optional[Dict[str, Any]]:
+        if not path:
             return None
-        return EventSourceResponse(self.sse.iterate(run_id))
+        file_path = Path(path)
+        if not file_path.exists():
+            return None
+        return json.loads(file_path.read_text(encoding="utf-8"))
 
 
-def _build_runner() -> MasterRunner:
-    return MasterRunner()
-
-
-master_runner = _build_runner()
-
-__all__ = ["master_runner", "MasterRunner", "RunState", "SSEBroker"]
+__all__ = ["MasterRunner", "RunEventBus", "RunRecord"]

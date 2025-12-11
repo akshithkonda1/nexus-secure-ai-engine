@@ -1,22 +1,12 @@
-{
-  "scenarios": [
-    {
-      "name": "toron_handshake",
-      "threshold_ms": 250,
-      "steps": [
-        {"action": "connect", "duration_ms": 40, "expected_code": 200},
-        {"action": "negotiate", "duration_ms": 65, "expected_code": 200},
-        {"action": "confirm", "duration_ms": 45, "expected_code": 200}
-      ]
-    },
-    {
-      "name": "payload_exchange",
-      "threshold_ms": 300,
-      "steps": [
-        {"action": "serialize", "duration_ms": 55, "expected_code": 200},
-        {"action": "transmit", "duration_ms": 70, "expected_code": 202},
-        {"action": "acknowledge", "duration_ms": 50, "expected_code": 200}
-      ]
-    }
-  ]
-}
+[
+  "Evaluate the stability of the Toron reasoning pipeline under nominal load.",
+  "Assess how the system handles contradictory premises in legal analysis.",
+  "Summarize a multi-step cybersecurity incident response scenario.",
+  "Outline the ethical considerations of autonomous research agents.",
+  "Generate risk controls for financial reporting anomalies.",
+  "Describe safeguards for LLM-powered code generation workflows.",
+  "Draft mitigation strategies for high-severity infrastructure alerts.",
+  "Analyze conflicting eyewitness accounts for reliability cues.",
+  "Provide a concise execution plan for cloud migration readiness.",
+  "Explain how consensus is reached when evidence is sparse."
+]

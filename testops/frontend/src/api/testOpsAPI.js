@@ -1,35 +1,28 @@
-const BASE_URL = import.meta.env.VITE_TESTOPS_API_URL || 'http://localhost:8000';
+const baseUrl = () => window.location.origin;
 
-export async function runAllTests() {
-  const response = await fetch(`${BASE_URL}/tests/run_all`, {
+export async function startTest() {
+  const response = await fetch(`${baseUrl()}/tests/run_all`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }
   });
-  if (!response.ok) {
-    throw new Error('Failed to start tests');
-  }
+  if (!response.ok) throw new Error('Failed to start tests');
   return response.json();
 }
 
-export async function fetchStatus(runId) {
-  const response = await fetch(`${BASE_URL}/tests/status/${runId}`);
-  if (!response.ok) {
-    throw new Error('Unable to fetch status');
-  }
+export async function getStatus(runId) {
+  const response = await fetch(`${baseUrl()}/tests/status/${runId}`);
+  if (!response.ok) throw new Error('Failed to load status');
   return response.json();
 }
 
-export function createLogStream(runId) {
-  const url = `${BASE_URL}/tests/stream/${runId}`;
-  return new EventSource(url);
+export async function getReport(runId) {
+  const response = await fetch(`${baseUrl()}/tests/report/${runId}`);
+  if (!response.ok) throw new Error('Failed to load report');
+  return response.text();
 }
 
-export async function validateEngine() {
-  const response = await fetch(`${BASE_URL}/tests/validate_engine`);
-  if (!response.ok) {
-    throw new Error('Engine validation failed');
-  }
-  return response.json();
+export async function getBundle(runId) {
+  const response = await fetch(`${baseUrl()}/tests/bundle/${runId}`);
+  if (!response.ok) throw new Error('Failed to download bundle');
+  return response.blob();
 }
-
-export default { runAllTests, fetchStatus, createLogStream, validateEngine };
