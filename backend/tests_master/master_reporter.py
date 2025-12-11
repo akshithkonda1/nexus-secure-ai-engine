@@ -6,18 +6,19 @@ from pathlib import Path
 from typing import Dict
 
 from .master_models import RunSummary
-from .master_store import REPORT_DIR
+from .master_store import REPORT_BASE
 
 
 BOOTSTRAP_CDN = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
 
 
-def build_report(run_summary: RunSummary) -> Dict[str, Path]:
+def build_report(run_summary: RunSummary, base_dir: Path | None = None) -> Dict[str, Path]:
     """Write HTML and JSON reports for a run."""
 
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    html_path = REPORT_DIR / f"{run_summary.run_id}.html"
-    json_path = REPORT_DIR / f"{run_summary.run_id}.json"
+    report_root = (base_dir or REPORT_BASE) / run_summary.run_id
+    report_root.mkdir(parents=True, exist_ok=True)
+    html_path = report_root / "report.html"
+    json_path = report_root / "report.json"
 
     metrics = run_summary.metrics
     errors = run_summary.errors

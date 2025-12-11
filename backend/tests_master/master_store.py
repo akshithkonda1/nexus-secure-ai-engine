@@ -1,81 +1,130 @@
+from __future__ import annotations
+
+import asyncio
+import json
 import sqlite3
-from datetime import datetime
-from typing import Optional, Dict, Any
-import os
+import zipfile
+from pathlib import Path
+from typing import Dict
 
-DB_PATH = "database/tests_master.db"
+DATABASE_PATH = Path("database/tests_master.db")
+REPORT_BASE = Path("reports/master")
+SNAPSHOT_DIR = Path("snapshots")
+LOAD_RESULTS_DIR = Path("load_results")
+LOG_DIR = Path("warroom/master")
 
 
-class MasterStore:
-    def __init__(self, db_path: str = DB_PATH):
-        os.makedirs("database", exist_ok=True)
-        self.db_path = db_path
-        self._init()
+class TestStore:
+    def __init__(self, db_path: Path | str = DATABASE_PATH):
+        self.db_path = Path(db_path)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        REPORT_BASE.mkdir(parents=True, exist_ok=True)
+        SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+        LOAD_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        self._init_db()
+        self.log_queues: Dict[str, asyncio.Queue] = {}
 
-    def _conn(self):
+    def _connect(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path)
 
-    def _init(self):
-        conn = self._conn()
-        cur = conn.cursor()
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS test_runs (
-            run_id TEXT PRIMARY KEY,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )
-        """)
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS test_results (
-            run_id TEXT PRIMARY KEY,
-            result_json TEXT,
-            created_at TEXT
-        )
-        """)
-
-        conn.commit()
-        conn.close()
-
-    def create_run(self, run_id: str):
-        now = datetime.utcnow().isoformat()
-        conn = self._conn()
+    def _init_db(self) -> None:
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO test_runs (run_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)",
-            (run_id, "started", now, now),
+            """
+            CREATE TABLE IF NOT EXISTS runs (
+                run_id TEXT PRIMARY KEY,
+                status TEXT,
+                progress INTEGER,
+                current_stage TEXT,
+                result_json TEXT
+            )
+            """
         )
         conn.commit()
         conn.close()
 
-    def update_status(self, run_id: str, status: str):
-        now = datetime.utcnow().isoformat()
-        conn = self._conn()
+    def init_run(self, run_id: str) -> None:
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute(
-            "UPDATE test_runs SET status=?, updated_at=? WHERE run_id=?",
-            (status, now, run_id),
+            "INSERT OR REPLACE INTO runs(run_id, status, progress, current_stage, result_json) VALUES (?, ?, ?, ?, ?)",
+            (run_id, "running", 0, "initializing", None),
         )
         conn.commit()
         conn.close()
+        self.log_queues[run_id] = asyncio.Queue()
 
-    def save_result(self, run_id: str, result_json: str):
-        now = datetime.utcnow().isoformat()
-        conn = self._conn()
+    def add_log(self, run_id: str, message: str) -> None:
+        queue = self.log_queues.setdefault(run_id, asyncio.Queue())
+        queue.put_nowait(message)
+        log_file = LOG_DIR / f"{run_id}.log"
+        with log_file.open("a", encoding="utf-8") as handle:
+            handle.write(message + "\n")
+
+    def get_log_queue(self, run_id: str) -> asyncio.Queue:
+        return self.log_queues.setdefault(run_id, asyncio.Queue())
+
+    def update_progress(self, run_id: str, progress: int, stage: str) -> None:
+        conn = self._connect()
         cur = conn.cursor()
         cur.execute(
-            "INSERT OR REPLACE INTO test_results (run_id, result_json, created_at) VALUES (?, ?, ?)",
-            (run_id, result_json, now),
+            "UPDATE runs SET progress=?, current_stage=? WHERE run_id=?",
+            (progress, stage, run_id),
         )
         conn.commit()
         conn.close()
 
-    def get_status(self, run_id: str) -> Optional[str]:
-        conn = self._conn()
+    def save_result(self, run_id: str, result: dict) -> None:
+        conn = self._connect()
         cur = conn.cursor()
-        cur.execute("SELECT status FROM test_runs WHERE run_id=?", (run_id,))
-        row = cur.fetchone()
+        cur.execute(
+            "UPDATE runs SET status=?, result_json=? WHERE run_id=?",
+            ("finished", json.dumps(result), run_id),
+        )
+        conn.commit()
         conn.close()
-        return row[0] if row else None
+
+    def get_status(self, run_id: str) -> dict:
+        conn = self._connect()
+        cur = conn.cursor()
+        row = cur.execute(
+            "SELECT status, progress, current_stage FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return {"error": "run_id not found"}
+        return {"run_id": run_id, "status": row[0], "progress": row[1], "current_stage": row[2]}
+
+    def get_result(self, run_id: str) -> dict:
+        conn = self._connect()
+        cur = conn.cursor()
+        row = cur.execute("SELECT result_json FROM runs WHERE run_id=?", (run_id,)).fetchone()
+        conn.close()
+        if not row or row[0] is None:
+            return {"error": "not found"}
+        return json.loads(row[0])
+
+    def get_report_path(self, run_id: str) -> str:
+        return str(REPORT_BASE / run_id / "report.html")
+
+    def build_bundle(self, run_id: str) -> str:
+        base = REPORT_BASE / run_id
+        base.mkdir(parents=True, exist_ok=True)
+        bundle_path = base / "bundle.zip"
+        with zipfile.ZipFile(bundle_path, "w") as zf:
+            for file in base.glob("*"):
+                if file.name != "bundle.zip":
+                    zf.write(file, arcname=file.name)
+        return str(bundle_path)
+
+
+__all__ = [
+    "TestStore",
+    "DATABASE_PATH",
+    "REPORT_BASE",
+    "SNAPSHOT_DIR",
+    "LOAD_RESULTS_DIR",
+    "LOG_DIR",
+]
