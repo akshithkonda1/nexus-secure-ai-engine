@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, StreamingResponse
@@ -43,9 +44,19 @@ async def warroom_events(run_id: str):
 
 @router.get("/reports/{run_id}")
 async def fetch_report(run_id: str):
-    report_path = os.path.join("reports", "master", f"{run_id}.html")
-    if not os.path.exists(report_path):
+    if ".." in run_id or any(sep in run_id for sep in (os.sep, os.altsep) if sep):
+        return {"error": "invalid run id"}
+
+    report_dir = Path("reports") / "master"
+    report_path = report_dir / f"{run_id}.html"
+    resolved_report = report_path.resolve(strict=False)
+
+    if report_dir.resolve() not in resolved_report.parents:
+        return {"error": "invalid run id"}
+
+    if not report_path.exists():
         return {"error": "report missing"}
+
     return FileResponse(report_path, media_type="text/html")
 
 
