@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers.testops_router import router as testops_router
+from testops.backend.routers.testops_router import router as testops_router
 
 app = FastAPI(title="Ryuzen TestOps Backend")
 
