@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ryuzen Toron v2.5H+ - TestOps Report {run_id}</title>
+  <style>
+    :root {{
+      --bg: #0b1021;
+      --panel: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --pass: #34d399;
+      --fail: #f87171;
+      --warn: #fbbf24;
+      --accent: linear-gradient(90deg, #4fd1c5, #9f7aea);
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }}
+    h1 {{ margin: 0 0 6px 0; }}
+    .meta {{ color: var(--muted); margin-bottom: 14px; }}
+    .panel {{
+      background: var(--panel);
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    }}
+    .status {{
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+    }}
+    .pass {{ background: rgba(52,211,153,0.15); color: var(--pass); }}
+    .fail {{ background: rgba(248,113,113,0.15); color: var(--fail); }}
+    .running {{ background: rgba(59,130,246,0.15); color: #60a5fa; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+    th, td {{ padding: 10px; border-bottom: 1px solid #1f2937; text-align: left; vertical-align: top; }}
+    th {{ color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }}
+    pre {{ margin: 0; white-space: pre-wrap; word-break: break-word; color: var(--muted); }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }}
+    .meter {{ background: #111827; border-radius: 10px; overflow: hidden; height: 12px; margin-top: 6px; }}
+    .meter span {{ display: block; height: 100%; background-image: var(--accent); }}
+    .inline-code {{ font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }}
+  </style>
+</head>
+<body>
+  <header class="panel">
+    <h1>Ryuzen Toron v2.5H+ / TestOps Report</h1>
+    <div class="meta">Run ID: <span class="inline-code">{run_id}</span></div>
+    <div class="meta">Started: {started_at} &nbsp; • &nbsp; Finished: {finished_at}</div>
+    <div class="status {status_class}">{status}</div>
+  </header>
+
+  <section class="panel grid">
+    <div>
+      <div class="meta">Latency profile</div>
+      {latency_chart}
+    </div>
+    <div>
+      <div class="meta">Determinism score</div>
+      <div class="meter"><span style="width: {determinism_score}%;"></span></div>
+      <div class="meta">Score: {determinism_score}</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="meta">Module matrix</div>
+    <table>
+      <thead><tr><th>Module</th><th>Status</th><th>Metrics</th><th>Notes</th></tr></thead>
+      <tbody>{module_rows}</tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <div class="meta">Snapshot</div>
+    <pre>{snapshot_json}</pre>
+  </section>
+</body>
+</html>
