@@ -1,36 +1,41 @@
-const API_BASE = import.meta.env.VITE_TESTOPS_API || "http://localhost:8088";
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8088';
 
-export async function engineHealth() {
-  const res = await fetch(`${API_BASE}/engine_health`);
-  if (!res.ok) throw new Error("Engine health request failed");
+export async function startRun() {
+  const res = await fetch(`${BASE_URL}/tests/run_all`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to start run');
   return res.json();
 }
 
-export async function validateEngine() {
-  const res = await fetch(`${API_BASE}/tests/validate_engine`);
-  if (!res.ok) throw new Error("Engine validation request failed");
+export async function fetchStatus(runId) {
+  const res = await fetch(`${BASE_URL}/tests/status/${runId}`);
+  if (!res.ok) throw new Error('Status not found');
   return res.json();
 }
 
-export async function startFullTestSuite() {
-  const res = await fetch(`${API_BASE}/tests/run_all`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error("Failed to start test suite");
+export async function fetchResult(runId) {
+  const res = await fetch(`${BASE_URL}/tests/result/${runId}`);
+  if (!res.ok) throw new Error('Result not found');
   return res.json();
 }
 
-export async function getRunStatus(runId) {
-  const res = await fetch(`${API_BASE}/tests/status/${runId}`);
-  if (!res.ok) throw new Error("Status fetch failed");
-  return res.json();
-}
-
-export function streamLogs(runId, onMessage) {
-  const evtSource = new EventSource(`${API_BASE}/tests/stream/${runId}`);
-  evtSource.onmessage = (ev) => {
-    if (onMessage) onMessage(ev.data);
+export function streamRun(runId, onEvent) {
+  const source = new EventSource(`${BASE_URL}/tests/stream/${runId}`);
+  source.onmessage = (event) => {
+    const payload = JSON.parse(event.data);
+    onEvent(payload);
   };
-  return evtSource;
+  return source;
+}
+
+export async function downloadBundle(runId) {
+  const res = await fetch(`${BASE_URL}/tests/bundle/${runId}`);
+  if (!res.ok) throw new Error('Bundle not available');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${runId}.zip`;
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }

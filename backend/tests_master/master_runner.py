@@ -1,93 +1,126 @@
 from __future__ import annotations
 
 import asyncio
-import uuid
+import importlib
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, List
+from uuid import uuid4
 
-from .engine_validator import validate_engine
-from .fuzzer import run_fuzzer
-from .k6_runner import run_load_test
-from .pipeline_checker import validate_pipeline
-from .replay_engine import replay_snapshot
-from .sim_reporter import generate_report
-from .sim_runner import run_sim_batch
-from .snapshot_saver import save_snapshot
-from .warroom_logger import WarRoomLogger
-from .master_store import MasterStore
+from backend.tests_master.master_models import PhaseResult, RunStatus, StreamEvent, TestRun
+from backend.tests_master.master_reporter import write_report, write_snapshot
+from backend.tests_master.master_sse import sse_manager
+from backend.tests_master import master_store
+
+SNAPSHOT_DIR = Path("backend/snapshots")
+REPORT_DIR = Path("backend/reports/master")
+LOG_DIR = Path("backend/logs/master")
+WARROOM_DIR = Path("backend/warroom/master")
+
+for path in [SNAPSHOT_DIR, REPORT_DIR, LOG_DIR, WARROOM_DIR]:
+    path.mkdir(parents=True, exist_ok=True)
+
+PHASES = [
+    ("sim", "backend.tests_master.sim_suite"),
+    ("engine_hardening", "backend.tests_master.engine_hardening"),
+    ("cloud_hardening", "backend.tests_master.cloud_hardening"),
+    ("security_hardening", "backend.tests_master.security_hardening"),
+    ("load_and_chaos", "backend.tests_master.load_and_chaos"),
+    ("replay", "backend.tests_master.replay_suite"),
+    ("beta_readiness", "backend.tests_master.beta_readiness"),
+    ("public_beta", "backend.tests_master.public_beta"),
+]
 
 
-class MasterRunner:
-    def __init__(self, queue_factory=None):
-        self.store = MasterStore()
-        self.logger = WarRoomLogger(queue_factory=queue_factory)
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
-    async def start_run(self) -> str:
-        """Create a new run and launch orchestration in the background.
 
-        Returns the run identifier immediately so the caller can poll status
-        and attach log streams without waiting for the full suite to finish.
-        """
+async def _run_phase(run_id: str, name: str, module_path: str, engine, start_progress: int, end_progress: int) -> PhaseResult:
+    module = importlib.import_module(module_path)
+    progress_span = end_progress - start_progress
+    logs: List[str] = []
+    log_file = LOG_DIR / f"{run_id}.log"
 
-        run_id = str(uuid.uuid4())
-        self.store.create_run(run_id)
-        asyncio.create_task(self.run_all(run_id))
+    async def progress_callback(percent: float, message: str) -> None:
+        overall = start_progress + percent * progress_span / 100
+        event = StreamEvent(_now(), name, overall, "running", message)
+        logs.append(f"[{event.timestamp}] {message}")
+        await sse_manager.publish(run_id, event)
+        master_store.append_log(run_id, event.timestamp, f"{name}: {message}")
+        with log_file.open("a") as lf:
+            lf.write(f"[{event.timestamp}] {name}: {message}\n")
+
+    try:
+        result = await module.run(engine, progress_callback)
+        status = "PASS" if result.get("status", "PASS") == "PASS" else "FAIL"
+        metrics = result.get("metrics", {})
+        logs.extend(result.get("logs", []))
+        await sse_manager.publish(run_id, StreamEvent(_now(), name, end_progress, status, f"{name} complete"))
+        return PhaseResult(name=name, status=status, metrics=metrics, logs=logs)
+    except Exception as exc:  # noqa: BLE001
+        error_msg = f"{name} failed: {exc}"
+        logs.append(error_msg)
+        await sse_manager.publish(run_id, StreamEvent(_now(), name, end_progress, "FAIL", error_msg))
+        master_store.append_log(run_id, _now(), error_msg)
+        raise
+
+
+async def run_all(config: Dict | None = None) -> str:
+    run_id = str(uuid4())
+    started_at = _now()
+    run = TestRun(run_id=run_id, started_at=datetime.fromisoformat(started_at.replace("Z", "")), status=RunStatus.RUNNING)
+    master_store.create_run(run_id, started_at)
+    master_store.append_log(run_id, started_at, "Run initiated")
+    (LOG_DIR / f"{run_id}.log").write_text(f"[{started_at}] Run initiated\n")
+
+    from ryuzen.engine.toron_v25hplus import ToronEngine
+
+    engine = ToronEngine()
+    engine.validate()
+
+    results: Dict[str, Dict] = {}
+    progress_steps = [0, 12, 24, 36, 48, 60, 76, 88, 100]
+
+    try:
+        for idx, (name, module_path) in enumerate(PHASES):
+            phase_result = await _run_phase(
+                run_id,
+                name,
+                module_path,
+                engine,
+                progress_steps[idx],
+                progress_steps[idx + 1],
+            )
+            results[name] = {
+                "status": phase_result.status,
+                "metrics": phase_result.metrics,
+                "logs": phase_result.logs,
+            }
+    except Exception as exc:  # noqa: BLE001
+        warroom_path = WARROOM_DIR / f"{run_id}.log"
+        warroom_path.write_text(f"[{_now()}] {exc}\n")
+        run.status = RunStatus.FAIL
+        run.finished_at = datetime.now(timezone.utc)
+        master_store.update_run(run_id, finished_at=run.finished_at.isoformat(), status=run.status.value, result_json=results)
+        await sse_manager.close(run_id)
         return run_id
 
-    async def run_all(self, run_id: str) -> str:
-        self.logger.log(run_id, "RUN STARTED", severity="info")
+    run.status = RunStatus.PASS
+    run.finished_at = datetime.now(timezone.utc)
 
-        # Engine validation gate
-        self.store.update_status(run_id, "validating", steps={"engine_check": "running"}, progress=5)
-        engine_check = validate_engine()
-        if not engine_check.get("ok", False):
-            self.logger.log(run_id, f"ENGINE VALIDATION FAILED: {engine_check}", severity="critical")
-            self.store.update_status(run_id, "failed", steps={"engine_check": "failed"}, progress=5)
-            return run_id
-        self.store.update_status(run_id, "running", steps={"engine_check": "ok"}, progress=10)
+    snapshot_path = write_snapshot(run_id, results)
+    report_path = write_report(run_id, results)
 
-        # SIM batch
-        sim_result = await asyncio.to_thread(run_sim_batch)
-        self.store.attach_metrics(run_id, {"avg_engine_latency": sim_result.get("avg_latency"), "determinism": sim_result.get("determinism")})
-        self.store.update_status(run_id, "running", steps={"sim_batch": "completed"}, progress=30)
+    master_store.update_run(
+        run_id,
+        finished_at=run.finished_at.isoformat(),
+        status=run.status.value,
+        result_json=results,
+        report_path=report_path,
+        snapshot_path=snapshot_path,
+    )
 
-        # Pipeline integrity
-        pipeline_result = validate_pipeline()
-        step_status = "completed" if pipeline_result.get("stable") else "failed"
-        self.store.update_status(run_id, "running", steps={"engine_check": "ok", "sim_batch": "completed", "pipeline": step_status}, progress=45)
-        if not pipeline_result.get("stable"):
-            self.logger.log(run_id, "PIPELINE INSTABILITY DETECTED", severity="warning")
-
-        # Fuzzer
-        fuzzer_result = run_fuzzer(run_id)
-        self.store.update_status(run_id, "running", steps={"fuzzer": "completed"}, progress=60)
-
-        # Replay determinism
-        replay_result = replay_snapshot(run_id)
-        replay_state = "completed" if replay_result.get("deterministic") else "failed"
-        self.store.update_status(run_id, "running", steps={"replay": replay_state}, progress=70)
-
-        # Load test
-        load_result = run_load_test(run_id)
-        self.store.attach_metrics(run_id, {"p95_latency": load_result.get("p95"), "p99_latency": load_result.get("p99")})
-        self.store.update_status(run_id, "running", steps={"load_test": "completed"}, progress=85)
-
-        # Snapshot + report
-        snapshot_path, bundle_path = save_snapshot(run_id, {
-            "run_id": run_id,
-            "sim": sim_result,
-            "pipeline": pipeline_result,
-            "replay": replay_result,
-            "load": load_result,
-            "fuzzer": fuzzer_result,
-        })
-        report_path = generate_report(run_id, sim_result, load_result)
-        self.store.attach_artifacts(run_id, snapshot=snapshot_path, bundle=bundle_path, report=report_path)
-        self.store.save_result(run_id, {
-            "sim": sim_result,
-            "pipeline": pipeline_result,
-            "fuzzer": fuzzer_result,
-            "replay": replay_result,
-            "load": load_result,
-        })
-        self.store.update_status(run_id, "completed", progress=100)
-        self.logger.log(run_id, "RUN COMPLETE", severity="info")
-        return run_id
+    await sse_manager.publish(run_id, StreamEvent(_now(), "master", 100, run.status.value, "Run complete"))
+    await sse_manager.close(run_id)
+    return run_id

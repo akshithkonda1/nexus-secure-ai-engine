@@ -1,74 +1,76 @@
 from __future__ import annotations
 
-import asyncio
-from typing import Dict
+import io
+import zipfile
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
-from .engine_validator import validate_engine
-from .master_runner import MasterRunner
+from backend.tests_master.master_runner import run_all
+from backend.tests_master.master_sse import event_stream
+from backend.tests_master.master_reporter import REPORT_DIR, SNAPSHOT_DIR
+from backend.tests_master import master_store
 
-router = APIRouter()
-
-
-_queues: Dict[str, asyncio.Queue[str]] = {}
-
-
-def get_log_queue(run_id: str) -> asyncio.Queue[str]:
-    if run_id not in _queues:
-        _queues[run_id] = asyncio.Queue()
-    return _queues[run_id]
+router = APIRouter(prefix="/tests", tags=["tests"])
 
 
-runner = MasterRunner(queue_factory=get_log_queue)
-store = runner.store
-
-
-@router.post("/tests/run_all")
 @router.post("/run_all")
-async def run_all_tests():
-    run_id = await runner.start_run()
-    get_log_queue(run_id).put_nowait(f"Run {run_id} accepted")
-    return {"run_id": run_id, "status": "started"}
+async def run_all_endpoint(payload: dict | None = None) -> dict:
+    run_id = await run_all(payload or {})
+    return {"run_id": run_id}
 
 
-@router.get("/tests/status/{run_id}")
-async def get_status(run_id: str):
-    status = store.get_status(run_id)
-    return status or {"error": "unknown run"}
+@router.get("/status/{run_id}")
+async def status(run_id: str) -> dict:
+    record = master_store.get_run(run_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return record
 
 
-@router.get("/validate_engine")
-async def validate_engine_route():
-    result = validate_engine()
-    return result
-
-
-@router.get("/tests/stream/{run_id}")
 @router.get("/stream/{run_id}")
-async def stream_logs(run_id: str):
-    async def event_generator():
-        while True:
-            queue = get_log_queue(run_id)
-            msg = await queue.get()
-            yield f"data: {msg}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+async def stream(run_id: str) -> StreamingResponse:
+    return StreamingResponse(event_stream(run_id), media_type="text/event-stream")
 
 
-@router.get("/tests/result/{run_id}")
-async def get_result(run_id: str):
-    return store.get_result(run_id)
+@router.get("/result/{run_id}")
+async def result(run_id: str) -> dict:
+    record = master_store.get_run(run_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return record.get("result_json", {})
 
 
-@router.get("/tests/report/{run_id}")
-async def get_report(run_id: str):
-    path = store.get_report_path(run_id)
-    return FileResponse(path)
+@router.get("/report/{run_id}")
+async def report(run_id: str) -> HTMLResponse:
+    report_path = Path(REPORT_DIR) / f"report_{run_id}.html"
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="Report not ready")
+    return HTMLResponse(report_path.read_text())
 
 
-@router.get("/tests/bundle/{run_id}")
-async def get_bundle(run_id: str):
-    path = store.build_bundle(run_id)
-    return FileResponse(path)
+@router.get("/bundle/{run_id}")
+async def bundle(run_id: str) -> StreamingResponse:
+    record = master_store.get_run(run_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Run not found")
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        snapshot_path = record.get("snapshot_path")
+        report_path = record.get("report_path")
+        if snapshot_path and Path(snapshot_path).exists():
+            zf.write(snapshot_path, arcname=Path(snapshot_path).name)
+        if report_path and Path(report_path).exists():
+            zf.write(report_path, arcname=Path(report_path).name)
+        log_dir = Path("backend/logs/master")
+        for log_file in log_dir.glob(f"{run_id}*.log"):
+            zf.write(log_file, arcname=log_file.name)
+    buffer.seek(0)
+    return StreamingResponse(buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={run_id}.zip"})
+
+
+@router.post("/run")
+async def testops_run() -> dict:
+    run_id = await run_all({})
+    return {"run_id": run_id}
