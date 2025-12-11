@@ -1,4 +1,10 @@
+run_id: toron_sim_suite
+seed: 4242
 max_users: 10000
+latency_budget_ms:
+  alpha: 180
+  beta: 200
+  gamma: 230
 stages:
   - name: warmup
     duration_ms: 100
