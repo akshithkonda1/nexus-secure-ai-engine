@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from testops.backend.routers.testops_router import router as testops_router
+from testops.backend.routers.testops_router import router
 
 app = FastAPI(title="Ryuzen TestOps Backend")
 
@@ -11,4 +11,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(testops_router, prefix="/tests")
+app.include_router(router, prefix="/tests")
