@@ -1,0 +1,8 @@
+max_users: 10000
+stages:
+  - name: warmup
+    duration_ms: 100
+  - name: peak
+    duration_ms: 200
+  - name: cooldown
+    duration_ms: 100

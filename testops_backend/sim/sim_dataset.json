@@ -1,0 +1,9 @@
+{
+  "samples": [
+    {"prompt": "tier-alpha: route"},
+    {"prompt": "tier-beta: fuse"},
+    {"prompt": "tier-gamma: escalate"},
+    {"prompt": "tier-alpha: audit"},
+    {"prompt": "tier-beta: resolve"}
+  ]
+}
