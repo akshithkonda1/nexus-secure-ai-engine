@@ -1,21 +1,26 @@
-import os
+from pathlib import Path
+import threading
 from datetime import datetime
 
 
 class WarRoomLogger:
-    LOG_DIR = "warroom/master"
+    _lock = threading.Lock()
 
-    def __init__(self):
-        os.makedirs(self.LOG_DIR, exist_ok=True)
+    def __init__(self, base_dir="warroom/master"):
+        self.base = Path(base_dir)
+        self.base.mkdir(parents=True, exist_ok=True)
 
     def log(self, run_id: str, message: str):
-        ts = datetime.utcnow().isoformat()
-        log_line = f"[{ts}] {message}\n"
+        with self._lock:
+            ts = datetime.utcnow().isoformat() + "Z"
+            path = self.base / f"{run_id}.log"
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(f"[{ts}] {message}\n")
 
-        with open(f"{self.LOG_DIR}/{run_id}.log", "a") as f:
-            f.write(log_line)
+
+# global instance (import-safe)
+_logger = WarRoomLogger()
 
 
 def log_error(run_id: str, message: str):
-    logger = WarRoomLogger()
-    logger.log(run_id, f"ERROR: {message}")
+    _logger.log(run_id, f"ERROR: {message}")

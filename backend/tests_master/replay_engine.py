@@ -1,48 +1,60 @@
-"""Snapshot determinism replay implementation."""
-from __future__ import annotations
-
-import hashlib
 import json
-from pathlib import Path
-from typing import Dict
-
-from .master_models import SnapshotReplayResult
-from .master_store import SNAPSHOT_DIR
+import hashlib
 
 
-def _checksum(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(8192):
-            digest.update(chunk)
-    return digest.hexdigest()
+def run_single_simulation(engine, seed: int):
+    """Execute a single simulation using the provided engine.
 
+    The previous implementation attempted to import this helper from a
+    non‑existent ``sim_runner`` module. To keep ``ReplayEngine`` self-contained
+    while remaining flexible, we first look for an engine-level helper
+    (``run_single_simulation``) and fall back to a generic ``run`` method. If
+    neither is available, a clear error is raised so callers know the engine
+    contract was not satisfied.
+    """
 
-def replay_snapshot(run_id: str, snapshot_name: str = "state_snapshot.json") -> SnapshotReplayResult:
-    """Replay a snapshot file and compute determinism."""
+    if hasattr(engine, "run_single_simulation"):
+        return engine.run_single_simulation(seed)
+    if hasattr(engine, "run"):
+        return engine.run(seed)
 
-    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    original = SNAPSHOT_DIR / snapshot_name
-    if not original.exists():
-        # If the original snapshot is missing, create a tiny deterministic placeholder
-        original.write_text(json.dumps({"status": "seeded", "run_id": run_id}))
-    replayed_path = SNAPSHOT_DIR / f"{run_id}_replay.json"
-    replayed_path.write_bytes(original.read_bytes())
-
-    original_hash = _checksum(original)
-    replay_hash = _checksum(replayed_path)
-    identical = original_hash == replay_hash
-    total_bytes = replayed_path.stat().st_size
-    mismatched_bytes = 0 if identical else max(1, total_bytes // 10)
-    score = 100.0 if identical else round(100.0 - (mismatched_bytes / max(total_bytes, 1) * 100), 2)
-
-    return SnapshotReplayResult(
-        determinism_score=score,
-        mismatched_bytes=mismatched_bytes,
-        total_bytes=total_bytes,
-        identical=identical,
-        snapshot_path=str(replayed_path),
+    raise AttributeError(
+        "Engine does not implement run_single_simulation(seed) or run(seed)"
     )
 
 
-__all__ = ["replay_snapshot"]
+class ReplayEngine:
+    def __init__(self):
+        pass
+
+    def _hash_snapshot(self, snap: dict) -> str:
+        text = json.dumps(snap, sort_keys=True)
+        return hashlib.sha256(text.encode()).hexdigest()
+
+    def replay(self, engine, snapshot: dict):
+        # Extract seed from prompt
+        prompt = snapshot["prompt"]
+        # prompt format: SIMTEST-<seed>-Explain...
+        seed = int(prompt.split("-")[1])
+
+        rerun = run_single_simulation(engine, seed)
+
+        h1 = self._hash_snapshot(snapshot)
+        h2 = self._hash_snapshot(rerun)
+
+        same = h1 == h2
+        score = 100 if same else 0
+
+        diffs = []
+        if not same:
+            # Shallow structure comparison
+            for k in snapshot:
+                if snapshot[k] != rerun.get(k):
+                    diffs.append(k)
+
+        return {
+            "same": same,
+            "determinism_score": score,
+            "differences": diffs,
+            "rerun": rerun,
+        }
