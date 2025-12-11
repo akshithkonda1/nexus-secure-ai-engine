@@ -1,73 +1,77 @@
-"""Consistency checks for master TestOps pipeline outputs."""
+"""Tiered pipeline validation for Wave 3.
+
+Evaluates structure and quality of outputs from T1/T2/T3 plus operational
+signals. Returns a structured PIPELINE_STATUS payload for the reporter.
+"""
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
-TIER_SECTIONS = [
-    "sim_suite",
-    "engine_hardening",
-    "cloud_hardening",
-    "security_hardening",
-    "load_and_chaos",
-    "replay",
-    "beta_readiness",
-    "public_beta",
-    "v3_migration",
-]
+PIPELINE_STATUS = {
+    "t1_ok": False,
+    "t2_ok": False,
+    "t3_ok": False,
+    "opus_ok": False,
+    "confidence_ok": False,
+    "latency_ok": False,
+    "notes": [],
+}
 
 
-def _ensure_path(path_value: str | Path) -> Path:
-    path = Path(path_value).expanduser().resolve()
-    if not path.exists():
-        raise FileNotFoundError(f"Expected artifact path does not exist: {path}")
-    return path
+def _validate_section(payload: Mapping[str, Any], expected_keys: List[str]) -> bool:
+    return all(key in payload for key in expected_keys)
 
 
-def normalize_modules(modules: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
-    normalized: List[Dict[str, Any]] = []
-    for module in modules:
-        normalized.append(
-            {
-                "name": str(module.get("name")),
-                "status": str(module.get("status", "UNKNOWN")),
-                "metrics": module.get("metrics", {}),
-                "notes": list(module.get("notes", [])),
-            }
-        )
-    return normalized
+def _check_latency(latencies: List[float]) -> tuple[bool, str]:
+    if not latencies:
+        return False, "No latency samples provided"
+    sorted_lat = sorted(latencies)
+    idx = int(0.95 * (len(sorted_lat) - 1))
+    p95 = sorted_lat[idx]
+    if p95 > 450:
+        return False, f"Latency anomaly detected (p95={p95:.2f}ms)"
+    return True, f"Latency stable (p95={p95:.2f}ms)"
 
 
-def check_pipeline_consistency(payload: Mapping[str, Any]) -> Dict[str, Any]:
-    missing_sections = [section for section in TIER_SECTIONS if section not in payload]
-    failed_modules: List[str] = []
-    module_inventory: Dict[str, List[Dict[str, Any]]] = {}
-    for section in TIER_SECTIONS:
-        modules = normalize_modules(payload.get(section, []))
-        module_inventory[section] = modules
-        for module in modules:
-            if module.get("status") != "PASS":
-                failed_modules.append(f"{section}:{module.get('name')}")
-    determinism_score = payload.get("determinism_score")
-    artifacts = payload.get("artifacts", {})
-    artifact_errors: List[str] = []
-    for key in ("sim_data", "load_data", "determinism"):
-        if key in artifacts:
-            try:
-                _ensure_path(artifacts[key])
-            except FileNotFoundError as exc:
-                artifact_errors.append(str(exc))
-        else:
-            artifact_errors.append(f"Missing artifact key: {key}")
-    consistent = not missing_sections and not failed_modules and not artifact_errors and determinism_score is not None
-    return {
-        "consistent": consistent,
-        "missing_sections": missing_sections,
-        "failed_modules": failed_modules,
-        "artifact_errors": artifact_errors,
-        "determinism_score_present": determinism_score is not None,
-        "modules": module_inventory,
-    }
+def run_checks(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    status = dict(PIPELINE_STATUS)
+    notes: List[str] = []
+
+    t1_payload = payload.get("t1", {})
+    t2_payload = payload.get("t2", {})
+    t3_payload = payload.get("t3", {})
+
+    status["t1_ok"] = _validate_section(t1_payload, ["raw_outputs", "format"])
+    if not status["t1_ok"]:
+        notes.append("T1 raw output format missing fields")
+
+    status["t2_ok"] = _validate_section(t2_payload, ["audit", "structure"])
+    if not status["t2_ok"]:
+        notes.append("T2 audit structure incomplete")
+
+    status["t3_ok"] = _validate_section(t3_payload, ["evidence", "claims"])
+    if not status["t3_ok"]:
+        notes.append("T3 evidence structure incomplete")
+
+    opus_escalations = payload.get("opus", {}).get("escalations", [])
+    status["opus_ok"] = len(opus_escalations) <= 3
+    if not status["opus_ok"]:
+        notes.append("Opus escalation behavior exceeded threshold")
+
+    contradictions = payload.get("contradictions", 0)
+    confidence = payload.get("confidence", 0.0)
+    status["confidence_ok"] = contradictions < 5 and 0.0 <= confidence <= 1.0
+    if contradictions >= 5:
+        notes.append("Contradiction density too high")
+    if not (0.0 <= confidence <= 1.0):
+        notes.append("Confidence value outside expected [0,1] range")
+
+    latencies = payload.get("latencies", [])
+    status["latency_ok"], latency_note = _check_latency(latencies)
+    notes.append(latency_note)
+
+    status["notes"] = notes
+    return status
 
 
-__all__ = ["check_pipeline_consistency", "normalize_modules", "TIER_SECTIONS"]
+__all__ = ["PIPELINE_STATUS", "run_checks"]
