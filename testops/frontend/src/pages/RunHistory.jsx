@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getStatus } from '../api/testOpsAPI.js';
+import { getStatus } from '../api/testAPI.js';
 
 const headerStyle = {
   display: 'grid',

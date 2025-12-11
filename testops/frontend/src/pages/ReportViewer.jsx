@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getReport, getStatus } from '../api/testOpsAPI.js';
+import { getReport, getStatus } from '../api/testAPI.js';
 
 const cardStyle = {
   background: '#0f172a',
@@ -23,7 +23,8 @@ const ReportViewer = () => {
       setLoading(true);
       setError(null);
       try {
-        const [reportHtml, statusPayload] = await Promise.all([getReport(runId), getStatus(runId)]);
+        const [reportPayload, statusPayload] = await Promise.all([getReport(runId), getStatus(runId)]);
+        const reportHtml = reportPayload instanceof Blob ? await reportPayload.text() : reportPayload;
         setHtml(reportHtml);
         setSummary(statusPayload.summary || statusPayload.report_summary || null);
       } catch (err) {

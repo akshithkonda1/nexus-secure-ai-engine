@@ -3,6 +3,7 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import TestDashboard from './pages/TestDashboard.jsx';
 import RunHistory from './pages/RunHistory.jsx';
 import ReportViewer from './pages/ReportViewer.jsx';
+import './styles/testops.css';
 
 const navStyle = {
   display: 'flex',
