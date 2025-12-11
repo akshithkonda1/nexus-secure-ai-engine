@@ -14,13 +14,14 @@ from uuid import uuid4
 
 from sse_starlette.sse import EventSourceResponse
 
-from .engine_validator import validate_engine
 from .master_models import ModuleResult, RunSummary, utc_now
 from .master_reporter import build_html_report, build_json_report, build_snapshot, build_warroom_log
 from .master_sse import sse_manager
 from .master_store import MasterStore
 from .sim.sim_runner import run_all as run_sim_suite
 from .sim.sim_replay import run_replay_validation
+from testops.backend.services.engine_validator import EngineValidator
+from testops.backend.services.pipeline_tester import PipelineTester
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 LOG_DIR = BACKEND_ROOT / "logs" / "master"
@@ -93,15 +94,49 @@ class MasterRunner:
         state = self.run_states[run_id]
         summary = RunSummary(run_id=run_id, started_at=utc_now(), status="RUNNING")
         try:
-            validation = validate_engine()
+            validator = EngineValidator()
+            validation = validator.validate()
             state.results["engine_validation"] = validation
-            self._log(run_id, "Engine validation complete")
+            summary.modules.append(
+                self._module_result(
+                    "engine_validation",
+                    "PASS" if validation.get("engine_ready") else "FAIL",
+                    {"failing_components": validation.get("failing_components", [])},
+                    ["Phase 0: Engine readiness and MAL wiring"],
+                )
+            )
+            state.progress = 5
+            self._log(run_id, "Phase 0 completed: engine validation")
+
+            pipeline_tester = PipelineTester()
+            pipeline_probe = pipeline_tester.run(run_id)
+            state.results["pipeline_probe"] = pipeline_probe
+            summary.modules.append(
+                self._module_result(
+                    "pipeline_probe",
+                    pipeline_probe.get("status", "PASS"),
+                    {
+                        "latency_per_tier": pipeline_probe.get("latency_per_tier", {}),
+                        "determinism_preview": pipeline_probe.get("determinism_preview", {}),
+                    },
+                    ["Captured pipeline latency, contradictions, and meta-flags"],
+                )
+            )
+            state.progress = 10
+            self._log(run_id, "Pipeline probe executed before SIM suite")
 
             self._log(run_id, "Running SIM suite")
             sim_result = run_sim_suite(run_id)
-            summary.modules.append(self._module_result("sim_suite", sim_result["status"], sim_result["metrics"], sim_result.get("notes", [])))
+            summary.modules.append(
+                self._module_result(
+                    "sim_suite",
+                    sim_result["status"],
+                    sim_result["metrics"],
+                    sim_result.get("notes", []),
+                )
+            )
             state.results["sim_suite"] = sim_result
-            state.progress = 12.5
+            state.progress = 20
 
             phase_packages = [
                 ("engine_hardening", "Engine Hardening"),
