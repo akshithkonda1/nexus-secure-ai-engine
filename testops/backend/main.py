@@ -1,13 +1,16 @@
-"""FastAPI entrypoint for TestOps backend Wave 1."""
+"""Entry point for TestOps FastAPI backend."""
 from __future__ import annotations
 
+import random
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from testops.backend.routers.test_router import router as test_router
+from testops.backend.routers.testops_router import router
 
-app = FastAPI(title="Ryuzen TestOps Backend", version="1.0.0")
+# Deterministic seeding for consistent simulated outputs
+random.seed(42)
 
+app = FastAPI(title="TestOps Backend", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,12 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(test_router)
+app.include_router(router)
 
 
-@app.get("/health", tags=["system"])
+@app.get("/")
 async def health() -> dict:
     return {"status": "ok"}
-
-
-__all__ = ["app"]
