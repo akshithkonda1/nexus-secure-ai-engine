@@ -16,9 +16,9 @@ from .master_store import MasterStore
 
 
 class MasterRunner:
-    def __init__(self):
+    def __init__(self, queue_factory=None):
         self.store = MasterStore()
-        self.logger = WarRoomLogger()
+        self.logger = WarRoomLogger(queue_factory=queue_factory)
 
     async def start_run(self) -> str:
         """Create a new run and launch orchestration in the background.

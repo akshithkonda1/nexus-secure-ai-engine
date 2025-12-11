@@ -1,5 +1,11 @@
 const API_BASE = import.meta.env.VITE_TESTOPS_API || "http://localhost:8088";
 
+export async function engineHealth() {
+  const res = await fetch(`${API_BASE}/engine_health`);
+  if (!res.ok) throw new Error("Engine health request failed");
+  return res.json();
+}
+
 export async function validateEngine() {
   const res = await fetch(`${API_BASE}/tests/validate_engine`);
   if (!res.ok) throw new Error("Engine validation request failed");

@@ -1,21 +1,35 @@
 from __future__ import annotations
 
 import asyncio
-from uuid import uuid4
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 
+from .engine_validator import validate_engine
 from .master_runner import MasterRunner
 
 router = APIRouter()
-runner = MasterRunner()
+
+
+_queues: Dict[str, asyncio.Queue[str]] = {}
+
+
+def get_log_queue(run_id: str) -> asyncio.Queue[str]:
+    if run_id not in _queues:
+        _queues[run_id] = asyncio.Queue()
+    return _queues[run_id]
+
+
+runner = MasterRunner(queue_factory=get_log_queue)
 store = runner.store
 
 
 @router.post("/tests/run_all")
+@router.post("/run_all")
 async def run_all_tests():
     run_id = await runner.start_run()
+    get_log_queue(run_id).put_nowait(f"Run {run_id} accepted")
     return {"run_id": run_id, "status": "started"}
 
 
@@ -32,11 +46,11 @@ async def validate_engine_route():
 
 
 @router.get("/tests/stream/{run_id}")
+@router.get("/stream/{run_id}")
 async def stream_logs(run_id: str):
-    log_path = os.path.join("backend", "warroom", "master", f"{run_id}.log")
-
     async def event_generator():
         while True:
+            queue = get_log_queue(run_id)
             msg = await queue.get()
             yield f"data: {msg}\n\n"
 

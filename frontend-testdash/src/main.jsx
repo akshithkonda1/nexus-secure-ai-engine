@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import BeginTesting from './pages/BeginTesting.jsx';
 import TestDashboard from './pages/TestDashboard.jsx';
 import RunDetails from './pages/RunDetails.jsx';
 import History from './pages/History.jsx';
@@ -18,15 +19,17 @@ function AppShell() {
           </div>
           <nav aria-label="Primary">
             <NavLink to="/" end>
-              Dashboard
+              Begin
             </NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/history">History</NavLink>
             <NavLink to="/war-room">War Room</NavLink>
           </nav>
         </header>
         <main>
           <Routes>
-            <Route path="/" element={<TestDashboard />} />
+            <Route path="/" element={<BeginTesting />} />
+            <Route path="/dashboard" element={<TestDashboard />} />
             <Route path="/history" element={<History />} />
             <Route path="/war-room" element={<WarRoom />} />
             <Route path="/runs/:runId" element={<RunDetails />} />
