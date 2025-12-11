@@ -15,7 +15,7 @@ store = MasterStore()
 
 @router.post("/run_all")
 async def run_all_tests():
-    run_id = await runner.run_all()
+    run_id = await runner.start_run()
     return {"run_id": run_id, "status": "started"}
 
 

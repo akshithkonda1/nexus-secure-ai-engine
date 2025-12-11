@@ -20,9 +20,19 @@ class MasterRunner:
         self.store = MasterStore()
         self.logger = WarRoomLogger()
 
-    async def run_all(self) -> str:
+    async def start_run(self) -> str:
+        """Create a new run and launch orchestration in the background.
+
+        Returns the run identifier immediately so the caller can poll status
+        and attach log streams without waiting for the full suite to finish.
+        """
+
         run_id = str(uuid.uuid4())
         self.store.create_run(run_id)
+        asyncio.create_task(self.run_all(run_id))
+        return run_id
+
+    async def run_all(self, run_id: str) -> str:
         self.logger.log(run_id, "RUN STARTED", severity="info")
 
         # Engine validation gate
