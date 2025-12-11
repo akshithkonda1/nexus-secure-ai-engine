@@ -1,18 +1,24 @@
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Dict, Any
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 
 @dataclass
-class TestRunRecord:
+class RunStatus:
     run_id: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
+    timestamp: float
+    status: str  # "started", "running", "completed", "error"
+    progress: float = 0.0
 
 
 @dataclass
-class TestResult:
+class RunResult:
     run_id: str
     result: Dict[str, Any]
+    created_at: datetime
+
+
+@dataclass
+class RunResult:
+    run_id: str
+    summary: Dict[str, Any]
     created_at: datetime
