@@ -46,9 +46,10 @@ simrunner/
 ```
 
 ## Report Interpretation
-- **Stability grade**: Derived from contradiction frequency, escalation rate, and p95 latency. Lower instability index yields higher grades (A+ best).
-- **Opus escalation**: Rates segmented by tier bucket to observe escalation clustering.
+- **Dual grades**: Consumer Stability targets UX-safety (tolerant thresholds), while Epistemic Rigor enforces stricter research-grade bounds. Each grade is derived from the weighted instability index (latency, Opus, contradictions, meta flags). Epistemic "B" can still accompany a consumer "A+" when deep reasoning stays honest yet fast enough for end users.
+- **Opus escalation**: Treated as judicial deep reasoning. Neutral unless escalation exceeds the defined thresholds.
+- **Contradictions**: Normalized and only penalized when rates surpass the mode-specific bounds, preserving epistemic honesty.
 - **Determinism score**: 100% indicates byte-for-byte identical outputs across three runs; lower values highlight nondeterminism.
 - **Contradiction map**: Prompt-level contradiction counts to pinpoint problematic scenarios.
 
-All components are offline, dependency-light (stdlib + `json`), and guard-railed to avoid crashes even when Toron errors occur.
+All components are offline, dependency-light (stdlib + `json`), and guard-railed to avoid crashes even when Toron errors occur. This aligns with Ryuzen's mission to ship deterministic, safety-first systems while permitting rigor to tighten over time. Future versions (v3+) can reduce thresholds to further emphasize epistemic strength without compromising consumer stability.
