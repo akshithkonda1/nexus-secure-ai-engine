@@ -10,10 +10,18 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from ryuzen.engine.cache import InMemoryCache
+from ryuzen.engine.confidence import stabilized_confidence
+from ryuzen.engine.contradictions import _PolarityRecord, stabilized_contradiction_score
+from ryuzen.engine.execution_plan import stabilize_execution_plan
+from ryuzen.engine.latency_utils import stable_latency
+from ryuzen.engine.meta_flags import stabilized_meta_flags
+from ryuzen.engine.snapshot_utils import normalize_snapshot
+from ryuzen.engine.tier_utils import normalized_pipeline, should_escalate_to_opus
 
 
 @dataclass
@@ -111,6 +119,9 @@ class ExecutionPlan:
     tier1_models: List[str]
     mmre_layers: List[int]
     synthesis_depth: str
+    latency_ms: int = 0
+    tier_path: List[str] = field(default_factory=list)
+    snapshot: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -374,6 +385,7 @@ class RyuzenToronV25HPlus:
         clean_prompt = psl["clean_prompt"]
 
         execution_plan = self._routing_intelligence_layer(clean_prompt)
+        execution_plan = stabilize_execution_plan(execution_plan)
         aloe_policy = self._aloe_pre_pass(clean_prompt)
         t1_raw = self._tier1_ensemble(clean_prompt, execution_plan)
         t1_summary = self._tier1_summary(t1_raw)
@@ -382,8 +394,21 @@ class RyuzenToronV25HPlus:
         reality_packet = self._mmre_engine(clean_prompt, execution_plan)
         synthesis = self._dual_synthesis(clean_prompt, t1_summary, reality_packet)
 
+        facts = [_PolarityRecord(subject=node, polarity=True) for node in cdg_structure.get("nodes", [])]
+        contradiction_subjects: List[_PolarityRecord] = []
+        for subject, contradictions in t1_summary.get("contradiction_map", {}).items():
+            contradiction_subjects.append(_PolarityRecord(subject=subject, polarity=False))
+            contradiction_subjects.extend(
+                _PolarityRecord(subject=contradiction, polarity=False) for contradiction in contradictions
+            )
+
+        contradiction_count = stabilized_contradiction_score(facts, contradiction_subjects)
+
+        t2_stability = 1.0 if t2_audit_report.get("cdg_valid") else 0.6
+        use_opus = execution_plan.use_opus and should_escalate_to_opus(t2_stability, contradiction_count)
+
         judicial_result: Dict[str, Any] = {}
-        if execution_plan.use_opus:
+        if use_opus:
             judicial_result = self._judicial_review(clean_prompt, synthesis)
 
         rwl_result = self._random_witness_layer(t1_raw)
@@ -391,12 +416,28 @@ class RyuzenToronV25HPlus:
             t1_raw,
             t2_audit_report,
             reality_packet,
-            judicial_result if execution_plan.use_opus else None,
+            judicial_result if use_opus else None,
             rwl_result,
         )
 
         aloe_final = self._aloe_final_pass(synthesis["human"])
-        meta_flags = self._meta_surveillance(t1_summary, reality_packet)
+        latency_ms = stable_latency()
+        tier_path = normalized_pipeline(SimpleNamespace(use_opus=use_opus))
+        final_confidence = stabilized_confidence(confidence_score, contradiction_count)
+        meta_flags = stabilized_meta_flags(
+            contradiction_count,
+            latency_ms,
+            missing_evidence=not reality_packet.get("verified_facts"),
+        )
+
+        snapshot = normalize_snapshot(
+            {
+                "CDG_STRUCTURE": cdg_structure,
+                "tier_path": tier_path,
+                "confidence": final_confidence,
+                "meta_flags": meta_flags,
+            }
+        )
 
         state_snapshot = {
             "CLEAN_PROMPT": clean_prompt,
@@ -408,25 +449,33 @@ class RyuzenToronV25HPlus:
             "REALITY_PACKET": reality_packet,
             "JUDICIAL_RESULT": judicial_result,
             "RWL_RESULT": rwl_result,
-            "CONFIDENCE_SCORE": confidence_score,
+            "CONFIDENCE_SCORE": final_confidence,
             "ALOE_POLICY": aloe_policy,
             "MSL_FLAGS": meta_flags,
+            "LATENCY_MS": latency_ms,
+            "CONTRADICTIONS": contradiction_count,
+            "NORMALIZED_SNAPSHOT": snapshot,
         }
 
         final_output = {
             "final_answer": aloe_final["refined_answer"],
-            "confidence_score": confidence_score,
+            "confidence_score": final_confidence,
             "sources_used": list(reality_packet.get("source_clusters", {}).keys()),
-            "models_used": execution_plan.tier1_models + (["Opus"] if execution_plan.use_opus else []),
-            "tier_path": "T1->T1_SUMMARY->CDG->T2->MMRE->SYNTH->JUDICIAL->RWL->CONSENSUS->ALOE",
-            "opus_used": execution_plan.use_opus,
+            "models_used": execution_plan.tier1_models + (["Opus"] if use_opus else []),
+            "tier_path": tier_path,
+            "opus_used": use_opus,
             "random_witness": rwl_result.get("model"),
             "governance_adjustments": aloe_final["governance_adjustments"],
             "meta_surveillance_flags": meta_flags,
+            "latency_ms": latency_ms,
+            "contradictions": contradiction_count,
+            "snapshot": snapshot,
             "state_snapshot": state_snapshot,
         }
 
         return final_output
+
+
 class ToronEngine(RyuzenToronV25HPlus):
     """Public entry point for Toron v2.5H+ used by TestOps."""
 
