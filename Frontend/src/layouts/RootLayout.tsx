@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { FadeIn } from "@/components/animations/FadeIn";
-import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
 import { RyuzenErrorBoundary } from "@/components/errors/RyuzenErrorBoundary";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -70,7 +69,6 @@ export default function RootLayout() {
         </main>
       </div>
 
-      <RyuzenCommandCenterOverlay />
       <FeedbackModal />
     </div>
   );

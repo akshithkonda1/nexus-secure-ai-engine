@@ -68,7 +68,7 @@ export default function FeedbackDashboard() {
         sentiment: "positive",
         priority: 0.68,
         createdAt: "2024-11-03T09:30:00Z",
-        summary: "Command Center shortcuts feel natural",
+        summary: "System behavior shortcuts feel natural",
       },
       {
         id: "FB-1045",

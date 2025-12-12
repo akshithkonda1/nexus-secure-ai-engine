@@ -5,7 +5,7 @@
    Sections:
    1. Ryuzen Overview
    2. Workspace Overview
-   3. Command Center Overview
+   3. System behavior & transparency
 ============================================================================ */
 
 import React, { useState } from "react";
@@ -33,7 +33,7 @@ const faqSections = [
     items: [
       {
         q: "What is Ryuzen, in plain English?",
-        a: "Ryuzen is your personal AI command center. It debates AI models, ranks their answers, filters hallucinations, and helps you work faster with more accuracy and safety.",
+        a: "Ryuzen is your transparent AI partner. It debates AI models, ranks their answers, filters hallucinations, and helps you work faster with more accuracy and safety.",
       },
       {
         q: "Why does Ryuzen debate AI models?",
@@ -41,7 +41,7 @@ const faqSections = [
       },
       {
         q: "How does Ryuzen protect my data?",
-        a: "Everything is encrypted at rest and in transit. Your Workspace, Command Center, and chat content are never used for training by default. Your work stays yours unless you explicitly opt in to share anonymized telemetry in Settings.",
+        a: "Everything is encrypted at rest and in transit. Your Workspace and chat content are never used for training by default. Your work stays yours unless you explicitly opt in to share anonymized telemetry in Settings.",
       },
 
       /* ===========================
@@ -58,11 +58,11 @@ const faqSections = [
       },
       {
         q: "Why would I turn on opt-in telemetry?",
-        a: "Turning it on helps improve Ryuzen's accuracy, Workspace intelligence, Command Center recommendations, and the overall debate engine. It makes the entire Ryuzen ecosystem smarter for you while protecting your privacy. You can enable or disable this anytime in Settings → Privacy & Telemetry.",
+        a: "Turning it on helps improve Ryuzen's accuracy, Workspace intelligence, system behavior insights, and the overall debate engine. It makes the entire Ryuzen ecosystem smarter for you while protecting your privacy. You can enable or disable this anytime in Settings → Privacy & Telemetry.",
       },
       {
         q: "Does Ryuzen train on my actual data?",
-        a: "No. Ryuzen never trains on your chats, files, documents, Workspace content, or Command Center data. If opt-in telemetry is enabled in Settings → Privacy & Telemetry, only anonymized performance patterns are shared — never your content.",
+        a: "No. Ryuzen never trains on your chats, files, documents, or Workspace content. If opt-in telemetry is enabled in Settings → Privacy & Telemetry, only anonymized performance patterns are shared — never your content.",
       },
       {
         q: "Does Ryuzen sell data?",
@@ -111,25 +111,25 @@ const faqSections = [
   },
 
   {
-    id: "command-center",
-    title: "What is the Command Center?",
+    id: "system-behavior",
+    title: "How does Ryuzen stay transparent?",
     icon: LayoutDashboard,
     items: [
       {
-        q: "What is the Command Center?",
-        a: "The Command Center is your cockpit — the place that shows projects, tasks, connectors, research signals, and system insights. It lives in a glowing, animated drawer in the header.",
+        q: "Where can I see what Ryuzen is doing?",
+        a: "System behavior is visible across Toron, Workspace, and telemetry summaries. Each surface clarifies when AI is involved, what context it used, and how recommendations were formed.",
       },
       {
-        q: "Why does Ryuzen need a Command Center?",
-        a: "AI needs structure to be reliable. The Command Center gives Ryuzen that structure: your goals, your projects, your files, and your workflow map.",
+        q: "Why emphasize transparency instead of control?",
+        a: "Ryuzen assumes trust comes from understanding, not toggles. The platform focuses on clear reasoning traces, aligned context, and deliberate AI actions instead of hidden automation.",
       },
       {
-        q: "What can I control from the Command Center?",
-        a: "Projects, incoming tasks, connectors, integrations, signals, and the entire Ryuzen agent ecosystem.",
+        q: "What levers do I still have?",
+        a: "You can manage data sources, privacy preferences, and advanced settings without exposing operational dashboards. The goal is to keep your choices simple while the underlying framework handles safety and reliability.",
       },
       {
-        q: "Does the Command Center make Ryuzen more accurate?",
-        a: "Yes. The more Ryuzen understands your work and your context, the more accurate your AI becomes. The Command Center organizes this context automatically.",
+        q: "Does this approach affect accuracy?",
+        a: "Yes. Making reasoning explicit reduces overconfidence and keeps responses grounded in your chosen context. Transparency is treated as a feature, not an afterthought.",
       },
     ],
   },
@@ -228,8 +228,9 @@ export default function Guides() {
         </h1>
         <p className="mt-3 max-w-3xl text-sm text-[rgba(var(--subtle),0.8)]">
           This is your simple, user-friendly guide to understanding Ryuzen,
-          Workspace, and the Command Center. Everything is organized into
-          collapsible sections so you can explore without friction or overwhelm.
+          Workspace, and how system behavior stays transparent. Everything is
+          organized into collapsible sections so you can explore without
+          friction or overwhelm.
         </p>
         <p className="mt-2 text-[11px] text-[rgba(var(--subtle),0.78)]">
           When you&apos;re ready to fine-tune privacy and telemetry, you&apos;ll

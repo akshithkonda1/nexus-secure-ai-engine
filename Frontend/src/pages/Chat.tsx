@@ -924,7 +924,7 @@ function ChatInner() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-textMuted">
-                  Ask what you need — Toron pulls from AI Models and the internet as well as the Command Center and your Workspace,
+                  Ask what you need — Toron pulls from AI Models, the internet, the underlying framework, and your Workspace,
                   then explains things as needed.
                 </p>
               </div>

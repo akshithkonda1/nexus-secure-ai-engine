@@ -5,10 +5,13 @@ test("Ryuzen loads", async ({ page }) => {
   await expect(page.locator("text=Home")).toBeVisible();
 });
 
-test("Command Center opens", async ({ page }) => {
+test("Home hero copy is visible", async ({ page }) => {
   await page.goto("/");
-  await page.click("text=Command Center");
-  await expect(page.locator("text=Neural Load")).toBeVisible();
+  await expect(
+    page.locator(
+      "text=A platform for working with AI you can understand and trust."
+    )
+  ).toBeVisible();
 });
 
 test("Theme toggles", async ({ page }) => {
