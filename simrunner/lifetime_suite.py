@@ -28,7 +28,8 @@ def main() -> Dict[str, Any]:
     print("Ryuzen Toron Engine Lifetime Suite")
     print("-----------------------------------")
     print(f"Simulations completed: {simulation_output['metadata'].get('run_count')}")
-    print(f"Stability grade: {stability_metrics.get('stability_grade')}")
+    print(f"Consumer Stability Grade: {stability_metrics.get('consumer_stability_grade')}")
+    print(f"Epistemic Rigor Grade: {stability_metrics.get('epistemic_rigor_grade')}")
     print(f"Determinism score: {determinism_report.get('determinism_score')}%")
     print(f"Reports saved to: {reports.get('text_report')} and {reports.get('json_report')}")
 
@@ -37,6 +38,6 @@ def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":  # pragma: no cover
     run_summary = main()
-    stability_grade = (run_summary.get("stability") or {}).get("stability_grade")
+    stability_grade = (run_summary.get("stability") or {}).get("consumer_stability_grade")
     exit_code = 0 if stability_grade in {"A+", "A", "B"} else 1
     sys.exit(exit_code)

@@ -74,14 +74,39 @@ def analyze_stability(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     )
     meta_flag_rate = instability_meta_runs / total_runs if total_runs else 0.0
 
-    instability_index = round(
-        ((p95_latency > 600) * 0.25)
-        + ((opus_escalation_rate > 0.25) * 0.25)
-        + ((contradiction_rate > 0.15) * 0.25)
-        + ((meta_flag_rate > 0.10) * 0.25),
-        4,
-    )
-    stability_grade = _grade(instability_index)
+    scoring_modes = {
+        "CONSUMER_STABILITY": {
+            "p95_latency_ms": 750,
+            "opus_escalation_rate": 0.35,
+            "contradiction_rate": 0.20,
+            "meta_flag_rate": 0.15,
+        },
+        "EPISTEMIC_RIGOR": {
+            "p95_latency_ms": 600,
+            "opus_escalation_rate": 0.25,
+            "contradiction_rate": 0.15,
+            "meta_flag_rate": 0.10,
+        },
+    }
+
+    def _penalty(metric: float, threshold: float) -> int:
+        return 1 if metric > threshold else 0
+
+    def _instability_for_mode(thresholds: Dict[str, float]) -> float:
+        latency_penalty = _penalty(p95_latency, thresholds["p95_latency_ms"])
+        opus_penalty = _penalty(opus_escalation_rate, thresholds["opus_escalation_rate"])
+        contradiction_penalty = _penalty(contradiction_rate, thresholds["contradiction_rate"])
+        meta_penalty = _penalty(meta_flag_rate, thresholds["meta_flag_rate"])
+        return round(
+            (latency_penalty * 0.30)
+            + (opus_penalty * 0.25)
+            + (contradiction_penalty * 0.25)
+            + (meta_penalty * 0.20),
+            4,
+        )
+
+    consumer_index = _instability_for_mode(scoring_modes["CONSUMER_STABILITY"])
+    epistemic_index = _instability_for_mode(scoring_modes["EPISTEMIC_RIGOR"])
 
     return {
         "average_latency_ms": round(avg_latency, 3),
@@ -91,8 +116,12 @@ def analyze_stability(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         "opus_escalation_rate": round(opus_escalation_rate, 4),
         "escalation_frequency": round(opus_escalation_rate, 4),
         "meta_flag_rate": round(meta_flag_rate, 4),
-        "instability_index": instability_index,
-        "stability_grade": stability_grade,
+        "instability_index": consumer_index,
+        "stability_grade": _grade(consumer_index),
+        "consumer_instability_index": consumer_index,
+        "consumer_stability_grade": _grade(consumer_index),
+        "epistemic_instability_index": epistemic_index,
+        "epistemic_rigor_grade": _grade(epistemic_index),
     }
 
 

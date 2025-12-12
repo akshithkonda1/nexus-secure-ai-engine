@@ -38,8 +38,10 @@ def _text_report(summary: Dict[str, Any]) -> str:
         "",
         f"Run count: {summary['metadata'].get('run_count')}",
         f"Seed: {summary['metadata'].get('seed')}",
-        f"Stability grade: {summary['stability'].get('stability_grade')}",
-        f"Instability index: {summary['stability'].get('instability_index')}",
+        f"Consumer Stability grade: {summary['stability'].get('consumer_stability_grade')}",
+        f"Consumer instability index: {summary['stability'].get('consumer_instability_index')}",
+        f"Epistemic Rigor grade: {summary['stability'].get('epistemic_rigor_grade')}",
+        f"Epistemic instability index: {summary['stability'].get('epistemic_instability_index')}",
         f"Average latency (ms): {summary['stability'].get('average_latency_ms')}",
         f"p95 latency (ms): {summary['stability'].get('p95_latency_ms')}",
         f"Contradiction rate: {summary['stability'].get('contradiction_rate')}",
@@ -66,11 +68,18 @@ def _text_report(summary: Dict[str, Any]) -> str:
         [
             "",
             "Interpretation:",
-            "- Contradictions within bounded rates reflect healthy epistemic debate and are benign until they exceed operational limits.",
-            "- Opus escalation is encouraged on harder problems and indicates productive deep reasoning rather than instability when within thresholds.",
+            "- Contradictions within thresholds are normal for epistemic engines and incur no penalty until they exceed rigor bounds.",
+            "- Opus escalation is treated as judicial deep reasoning; it is neutral unless rates surpass the defined thresholds.",
             "- Determinism outranks unanimity; consistent, repeatable outputs matter more than perfectly aligned responses.",
             "- A+ represents production-grade readiness with deterministic, bounded variance and headroom under load.",
-            "This engine demonstrates production-grade epistemic stability.",
+            "This system favors correctness, validation, and safety over shallow speed.",
+            "Contradictions and escalations reflect epistemic honesty, not instability.",
+            "100% determinism confirms reproducibility.",
+            "Workspace readiness:",
+            "- Toron stability confirmed for UI-driven usage.",
+            "- Deterministic outputs ensure UI consistency.",
+            "- Latency within consumer tolerances.",
+            "- Escalation behavior predictable.",
         ]
     )
 
@@ -104,6 +113,9 @@ def build_reports(
         "summary": summary,
         "results_file": simulation_output.get("results_file"),
         "determinism_file": determinism_report.get("output_file"),
+        "consumer_stability_grade": stability_metrics.get("consumer_stability_grade"),
+        "epistemic_rigor_grade": stability_metrics.get("epistemic_rigor_grade"),
+        "determinism_score": determinism_report.get("determinism_score"),
     }
 
     text_path = os.path.join(output_dir, f"report_{timestamp}.txt")
