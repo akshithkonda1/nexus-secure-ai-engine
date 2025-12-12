@@ -4,7 +4,7 @@ import { SunMedium, MonitorSmartphone, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useProfile } from "@/features/profile/ProfileProvider";
-import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
+import { RyuzenLogoBadge } from "@/components/RyuzenBrandmark";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
 
 // ------------------------------------------------------------
@@ -38,14 +38,7 @@ export default function Header() {
 
           {/* LEFT — BRAND + TEXT */}
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl 
-                bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)]
-                shadow-lg shadow-cyan-500/15">
-              <RyuzenBrandmark
-                size={26}
-                className="rounded-full drop-shadow-[0_6px_18px_rgba(92,240,255,0.45)]"
-              />
-            </div>
+          <RyuzenLogoBadge size={48} />
 
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-secondary)]">

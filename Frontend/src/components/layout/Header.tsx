@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, LogOut, Mail, Paintbrush2, ShieldCheck, User, Wand2 } from "lucide-react";
 
-import logo from "@/assets/ryuzen-dragon.svg";
+import { RyuzenLogoBadge } from "@/components/RyuzenBrandmark";
 import { useTheme } from "@/theme/useTheme";
 
 const userProfile = {
@@ -40,11 +40,11 @@ export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           >
             <span className="text-lg font-semibold">≡</span>
           </button>
-          <div className="flex items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)] px-3 py-2 shadow-sm">
-            <img src={logo} alt="Ryuzen" className="h-8 w-8" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen OS V2</p>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">Transparent by design</p>
+          <div className="flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)] px-3 py-2 shadow-sm">
+            <RyuzenLogoBadge size={48} />
+            <div className="leading-tight">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-secondary)]">RYUZEN Operations</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">RYUZEN OS V2 – Unified Control</p>
             </div>
           </div>
         </div>
