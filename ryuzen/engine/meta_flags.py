@@ -3,21 +3,15 @@ from __future__ import annotations
 
 from typing import List
 
-def stabilized_meta_flags(contradiction_count: int, latency_ms: int, missing_evidence: bool) -> List[str]:
-    """Emit only meaningful meta flags to avoid noisy signals."""
 
-    flags: List[str] = []
+def stabilized_meta_flags(opus_used: bool) -> List[str]:
+    """Emit only the minimal set of meta flags."""
 
-    if contradiction_count > 0:
-        flags.append("contradiction")
+    meta_flags: List[str] = []
+    if opus_used:
+        meta_flags.append("opus_escalation")
 
-    if latency_ms > 460:
-        flags.append("high_latency")
-
-    if missing_evidence:
-        flags.append("missing_evidence")
-
-    return flags
+    return meta_flags
 
 
 __all__ = ["stabilized_meta_flags"]

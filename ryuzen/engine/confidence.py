@@ -2,12 +2,18 @@
 from __future__ import annotations
 
 
-def stabilized_confidence(base_score: float, contradiction_count: int) -> float:
-    """Smooth confidence so it does not swing violently."""
+def stabilized_confidence(contradiction_count: int, opus_escalation: bool) -> float:
+    """Stabilized confidence curve with bounded deductions."""
 
-    penalty = contradiction_count * 5
-    base_score = max(20, min(100, base_score - penalty))
-    return base_score
+    base = 82
+    deductions = 0
+    if contradiction_count > 3:
+        deductions += 10
+    if opus_escalation:
+        deductions += 5
+
+    confidence = max(60, base - deductions)
+    return confidence
 
 
 __all__ = ["stabilized_confidence"]
