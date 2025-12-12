@@ -381,17 +381,58 @@ class RyuzenToronV25HPlus:
         t1_raw = self._tier1_ensemble(clean_prompt, execution_plan)
         t1_summary = self._tier1_summary(t1_raw)
         cdg_structure = self._causal_dependency_graph(t1_summary)
-        t2_audit_report = self._tier2_audit(t1_summary, cdg_structure)
-        reality_packet = self._mmre_engine(clean_prompt, execution_plan)
-        synthesis = self._dual_synthesis(clean_prompt, t1_summary, reality_packet)
-
         contradiction_count = t1_summary.get("contradiction_map", {}).get("count", 0)
 
-        use_opus = (
-            len(t1_summary.get("shared_conclusions", [])) == 0
-            or cdg_structure.get("cycles")
-            or execution_plan.complexity == "high"
-        )
+        lower_prompt = clean_prompt.lower()
+        requires_logic = any(keyword in lower_prompt for keyword in ("why", "prove", "reason", "derive", "because"))
+        requires_logic = requires_logic or execution_plan.contradiction_likelihood == "elevated"
+        requires_logic = requires_logic or "causal" in lower_prompt or contradiction_count > 0
+
+        # Tier 2: logic gate activates only when explicit reasoning is required
+        t2_audit_report: Dict[str, Any] = {
+            "models": [],
+            "critiques": ["Tier 2 skipped: logic not required"],
+            "cdg_valid": True,
+            "missing_steps": [],
+            "latency_ms": 0,
+        }
+        if requires_logic:
+            t2_audit_report = self._tier2_audit(t1_summary, cdg_structure)
+
+        # Only post-aggregation contradictions can escalate
+        unresolved_contradiction = False
+        if requires_logic:
+            structural_issues = not t2_audit_report.get("cdg_valid", True) or bool(t2_audit_report.get("missing_steps"))
+            unresolved_contradiction = contradiction_count > 0 or structural_issues
+
+        verification_failed = False
+        reality_packet: Dict[str, Any] = {
+            "verified_facts": [],
+            "source_clusters": {},
+            "trust_scores": {},
+            "conflicts_detected": [],
+            "evidence_density": 0.5,
+            "escalation_required": False,
+            "latency_ms": 0,
+        }
+        if unresolved_contradiction:
+            reality_packet = self._mmre_engine(clean_prompt, execution_plan)
+            verification_failed = bool(reality_packet.get("conflicts_detected")) or reality_packet.get("evidence_density", 0) < 0.5
+            if not verification_failed:
+                unresolved_contradiction = False
+
+        # Retry Tier 2 with narrowed assumptions before considering Opus
+        if unresolved_contradiction and verification_failed and requires_logic:
+            narrowed_cdg = {**cdg_structure, "cycles": False, "missing_parents": []}
+            retry_audit = self._tier2_audit(t1_summary, narrowed_cdg)
+            if retry_audit.get("cdg_valid") and not retry_audit.get("missing_steps"):
+                t2_audit_report = retry_audit
+                verification_failed = False
+                unresolved_contradiction = False
+
+        synthesis = self._dual_synthesis(clean_prompt, t1_summary, reality_packet)
+
+        use_opus = unresolved_contradiction and verification_failed
         execution_plan.use_opus = use_opus
 
         judicial_result: Dict[str, Any] = {}
