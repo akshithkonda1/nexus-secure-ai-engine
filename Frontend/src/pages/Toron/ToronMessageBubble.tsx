@@ -16,22 +16,22 @@ const Bubble = ({ message, onSaveToProject }: ToronMessageBubbleProps) => {
   try {
     return (
       <div
-        className={`flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm shadow-sm ${
+        className={`flex flex-col gap-1.5 rounded-2xl border px-4 py-3 text-sm shadow-[0_12px_34px_rgba(0,0,0,0.22)] backdrop-blur ${
           safe.role === "user"
-            ? "self-end border-[var(--border-soft)] bg-[var(--panel-soft)]"
-            : "self-start border-[var(--border-strong)] bg-[var(--panel-strong)]"
+            ? "self-end border-[var(--border-soft)]/70 bg-[color-mix(in_srgb,var(--panel-soft)_92%,transparent)]"
+            : "self-start border-[var(--border-strong)]/60 bg-[color-mix(in_srgb,var(--panel-strong)_88%,transparent)]"
         }`}
         data-testid="toron-message-bubble"
       >
         <div className="text-[var(--text-primary)]">{safe.content || "(empty message)"}</div>
-        <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
+        <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] opacity-80">
           <span>
             {safe.model} · {safeFormatDistance(safe.timestamp)}
           </span>
           {onSaveToProject && (
             <button
               type="button"
-              className="rounded px-2 py-1 text-[var(--text-secondary)] transition hover:bg-[var(--panel-elevated)]"
+              className="rounded px-2 py-1 text-[var(--text-secondary)] transition hover:bg-[var(--panel-elevated)]/70"
               onClick={() => onSaveToProject(safe.content)}
               aria-label="Save message to project"
             >

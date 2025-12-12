@@ -2,6 +2,7 @@
 @import "./styles/ryuzenTokens.css";
 @import "./theme/themes.css";
 @import "./theme/motion.css";
+@import "./styles/toron.css";
 
 :root {
   --text-primary: rgba(12, 18, 36, 0.9);

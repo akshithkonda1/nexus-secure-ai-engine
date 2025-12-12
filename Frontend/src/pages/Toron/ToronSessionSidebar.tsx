@@ -32,13 +32,13 @@ export const ToronSessionSidebar = memo(() => {
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 p-3" data-testid="toron-session-sidebar">
+    <div className="flex h-full flex-col gap-4 p-4" data-testid="toron-session-sidebar">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">Sessions</h2>
         <button
           type="button"
           onClick={() => switchSession(createSession("New Toron Session"))}
-          className="rounded border border-[var(--border-soft)] px-2 py-1 text-xs text-[var(--text-primary)] hover:bg-[var(--panel-soft)]"
+          className="rounded-lg border border-[var(--border-soft)]/60 px-3 py-1.5 text-xs text-[var(--text-primary)] opacity-90 hover:bg-[var(--panel-soft)]"
         >
           New
         </button>
@@ -51,10 +51,10 @@ export const ToronSessionSidebar = memo(() => {
             key={session.sessionId}
             onClick={() => switchSession(session.sessionId)}
             onKeyDown={(e) => e.key === "Enter" && switchSession(session.sessionId)}
-            className={`flex w-full flex-col gap-2 rounded-lg border px-3 py-2 text-left text-sm transition focus:outline-none ${
+            className={`flex w-full flex-col gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm transition focus:outline-none ${
               session.sessionId === activeSessionId
-                ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                : "border-[var(--border-soft)] bg-[var(--panel-soft)] hover:border-[var(--border-strong)]"
+                ? "border-[color-mix(in_srgb,var(--accent)_60%,transparent)] bg-[var(--accent)]/8 shadow-[0_10px_32px_rgba(0,0,0,0.18)]"
+                : "border-[var(--border-soft)]/60 bg-[color-mix(in_srgb,var(--panel-soft)_92%,transparent)] hover:border-[var(--border-strong)]/80"
             }`}
           >
             <div className="flex items-start justify-between gap-2">
@@ -104,7 +104,7 @@ export const ToronSessionSidebar = memo(() => {
                 </button>
               </div>
             </div>
-            <span className="text-xs text-[var(--text-secondary)]">{safeFormatDistance(session.updatedAt)}</span>
+            <span className="text-[0.7rem] text-[var(--text-secondary)] opacity-70">{safeFormatDistance(session.updatedAt)}</span>
           </div>
         ))}
         {sessionList.length === 0 && (

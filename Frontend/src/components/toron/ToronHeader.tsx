@@ -24,33 +24,33 @@ const HeaderComponent = ({ onOpenProjects, onNewChat, title }: ToronHeaderProps)
 
   return safeRender(
     () => (
-      <header className="flex items-center justify-between border-b border-[var(--border-soft)] bg-[var(--panel-strong)]/70 px-4 py-3 backdrop-blur">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-[var(--accent)]/10" aria-hidden />
-          <div className="flex flex-col">
-            <span className="text-xs text-[var(--text-secondary)]">Neural Ops</span>
-            <h1 className="text-lg font-semibold text-[var(--text-primary)]">{resolvedTitle}</h1>
+          <div className="h-9 w-9 rounded-full bg-[var(--accent)]/10 opacity-80" aria-hidden />
+          <div className="flex flex-col leading-tight">
+            <span className="text-[11px] text-[var(--text-secondary)] opacity-70">Neural Ops</span>
+            <h1 className="text-base font-medium text-[var(--text-primary)]">{resolvedTitle}</h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => fallbackButtonHandler(onOpenProjects, telemetry)}
-            className="rounded-md border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--text-primary)] transition hover:bg-[var(--panel-soft)]"
+            className="rounded-lg border border-[var(--border-soft)]/60 bg-[color-mix(in_srgb,var(--panel-elevated)_55%,transparent)] px-3 py-2 text-sm text-[var(--text-primary)] opacity-90 transition hover:bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)] hover:opacity-100"
           >
             Projects
           </button>
           <button
             type="button"
             onClick={() => fallbackButtonHandler(onNewChat, telemetry)}
-            className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-semibold text-textPrimary shadow-sm transition hover:opacity-90"
+            className="rounded-lg bg-[color-mix(in_srgb,var(--accent)_78%,transparent)] px-3 py-2 text-sm font-semibold text-textPrimary shadow-sm shadow-[0_10px_32px_rgba(0,0,0,0.18)] transition hover:opacity-95"
           >
             New Chat
           </button>
         </div>
       </header>
     ),
-    <div className="border-b border-[var(--border-soft)] bg-[var(--panel-strong)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+    <div className="mx-auto max-w-6xl rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 text-sm text-[var(--text-secondary)]">
       Toron header unavailable, but core experience remains active.
     </div>,
   );

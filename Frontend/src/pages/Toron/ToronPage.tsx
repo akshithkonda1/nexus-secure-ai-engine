@@ -44,8 +44,8 @@ export default function ToronPage() {
   }, [closeProjects, pendingProjectContent]);
 
   return (
-    <main className="relative flex h-full min-h-screen flex-row">
-      <section className="flex min-h-screen flex-1 flex-col">
+    <main className="toron-shell relative flex min-h-screen flex-row">
+      <section className="relative z-10 flex min-h-screen flex-1 flex-col px-3 pt-2 sm:px-6 sm:pt-4">
         {safeRender(() => (
           <ToronHeader
             title={activeSession?.title ?? "Toron"}
@@ -65,8 +65,11 @@ export default function ToronPage() {
             onSendToProject={(content) => openProjects(content)}
           />
         ))}
+        <div className="relative z-10 mb-6 mt-2 text-center text-[0.72rem] font-medium text-[var(--text-secondary)] opacity-60">
+          Toron can make mistakes. Please verify important information.
+        </div>
       </section>
-      <aside className="hidden w-72 border-l border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] lg:block">
+      <aside className="toron-session-panel relative z-10 hidden w-72 lg:block">
         {safeRender(() => (
           <ToronSessionSidebar />
         ))}

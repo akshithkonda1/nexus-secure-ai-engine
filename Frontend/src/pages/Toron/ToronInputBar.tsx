@@ -100,8 +100,8 @@ export function ToronInputBar({ onOpenProjects, onSendToProject }: ToronInputBar
 
   return safeRender(
     () => (
-      <div className="sticky bottom-0 z-20 px-4 pb-4 pt-2" data-testid="toron-input-bar">
-        <div className="mx-auto max-w-4xl rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-3 shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="sticky bottom-0 z-20 px-4 pb-6 pt-3" data-testid="toron-input-bar">
+        <div className="mx-auto max-w-4xl rounded-[28px] border border-[var(--border-strong)]/70 bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -116,14 +116,14 @@ export function ToronInputBar({ onOpenProjects, onSendToProject }: ToronInputBar
               <button
                 type="button"
                 onClick={onOpenProjects}
-                className="rounded-2xl border border-[var(--border-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]"
+                className="rounded-2xl border border-[var(--border-strong)]/70 px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]/70"
               >
                 Open Projects
               </button>
               <button
                 type="button"
                 onClick={sendToProject}
-                className="rounded-2xl border border-[var(--border-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]"
+                className="rounded-2xl border border-[var(--border-strong)]/70 px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] hover:bg-[var(--panel-elevated)]/70"
               >
                 Send to Project
               </button>
@@ -131,7 +131,7 @@ export function ToronInputBar({ onOpenProjects, onSendToProject }: ToronInputBar
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={!sessionId || sending || !text.trim()}
-                className="flex items-center gap-1 rounded-2xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)] px-4 py-1.5 text-xs font-semibold text-[var(--text-primary)] shadow-[0_12px_40px_rgba(56,189,248,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-1 rounded-2xl border border-[var(--border-strong)]/70 bg-[color-mix(in_srgb,var(--accent-primary)_34%,transparent)] px-4 py-1.5 text-xs font-semibold text-[var(--text-primary)] shadow-[0_12px_40px_rgba(56,189,248,0.35)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {sending ? "Thinking…" : "Send"}
               </button>
