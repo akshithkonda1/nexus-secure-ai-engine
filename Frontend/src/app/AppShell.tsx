@@ -4,8 +4,6 @@ import { ThemeToggle } from "@/shared/ui/theme/ThemeToggle";
 import { Button } from "@/shared/ui/components/button";
 import React from "react";
 import { useSession } from "@/shared/state/session";
-import { useUI } from "@/state/ui";
-import RyuzenCommandCenterOverlay from "@/components/command-center/RyuzenCommandCenterOverlay";
 
 function cx(...c: (string | false | undefined)[]) {
   return c.filter(Boolean).join(" ");
@@ -13,7 +11,6 @@ function cx(...c: (string | false | undefined)[]) {
 
 export function AppShell() {
   const { user } = useSession();
-  const { openCommandCenter } = useUI();
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -75,18 +72,6 @@ export function AppShell() {
       <main className="pl-64">
         <div className="h-16 sticky top-0 z-20 border-b border-border/80 bg-background/80 backdrop-blur flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={openCommandCenter}
-              className="group relative flex items-center gap-2 rounded-full border border-[rgba(var(--accent-emerald),0.55)] bg-[rgba(15,23,42,0.78)] px-3 py-1.5 text-left shadow-[0_0_18px_rgba(var(--accent-emerald),0.35)] transition-all hover:shadow-[0_0_26px_rgba(var(--accent-emerald),0.55)] focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent-emerald),0.6)] focus:ring-offset-2 focus:ring-offset-[rgba(15,23,42,0.45)]"
-            >
-              <span className="flex size-7 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_20%,rgba(var(--accent-emerald),0.95),rgba(var(--brand-soft),0.85))] text-[rgb(var(--accent-emerald-ink))] shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">
-                ✦
-              </span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[rgba(var(--subtle),0.85)] transition group-hover:text-[rgb(var(--accent-emerald-ink))]">
-                Command Center
-              </span>
-            </button>
             <div className="text-sm font-medium text-[rgba(var(--subtle),0.95)]">AI Chat</div>
           </div>
           <div className="flex items-center gap-2">
@@ -110,7 +95,6 @@ export function AppShell() {
         </div>
       </main>
 
-      <RyuzenCommandCenterOverlay />
     </div>
   );
 }

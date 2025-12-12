@@ -1,23 +1,18 @@
 import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { Sparkles, SunMedium, MonitorSmartphone, Moon } from "lucide-react";
+import { SunMedium, MonitorSmartphone, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useProfile } from "@/features/profile/ProfileProvider";
-import { NotificationBell } from "@/components/shell/NotificationBell";
 import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
 import { useTheme, ThemeMode } from "@/hooks/useTheme";
-import { useUI } from "@/state/ui";
 
 // ------------------------------------------------------------
 // Component
 // ------------------------------------------------------------
 export default function Header() {
-  const navigate = useNavigate();
   const { profile } = useProfile();
   const { theme, setTheme } = useTheme();
-  const { openCommandCenter } = useUI();
 
   const initials = useMemo(() => {
     const name = profile?.fullName;
@@ -54,15 +49,15 @@ export default function Header() {
 
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--text-secondary)]">
-                Ryuzen Command OS
+                Ryuzen Platform
               </p>
               <p className="text-lg font-semibold text-[var(--text-primary)]">
-                Toron Control Surface
+                Understandable intelligence, by design
               </p>
             </div>
           </div>
 
-          {/* RIGHT — THEME, COMMAND CENTER, PROFILE */}
+          {/* RIGHT — THEME, PROFILE */}
           <div className="flex items-center gap-3">
 
             {/* Theme Switch */}
@@ -95,30 +90,9 @@ export default function Header() {
               })}
             </div>
 
-            {/* COMMAND CENTER BUTTON */}
-            <motion.button
-              whileHover={{
-                scale: 1.03,
-                boxShadow: "0 12px 40px rgba(52,224,161,0.35)",
-              }}
-              whileTap={{ scale: 0.98 }}
-              onClick={openCommandCenter}
-              className="relative flex items-center gap-2 rounded-full border border-emerald-300/40
-                bg-gradient-to-r from-emerald-400/30 via-cyan-400/30 to-sky-400/30 
-                px-4 py-2 text-sm font-semibold text-emerald-50
-                shadow-[0_10px_35px_rgba(56,189,248,0.3)]"
-            >
-              <Sparkles className="h-4 w-4" />
-              Command Center
-              <span
-                className="absolute inset-0 -z-10 rounded-full blur-xl bg-emerald-400/30"
-                aria-hidden="true"
-              />
-            </motion.button>
-
             {/* PROFILE ICON */}
             <button
-              className="relative h-11 w-11 overflow-hidden rounded-full border 
+              className="relative h-11 w-11 overflow-hidden rounded-full border
                 border-[var(--border-strong)]
                 bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)]
                 shadow-lg shadow-black/30 transition hover:-translate-y-[1px] 

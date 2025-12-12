@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, Camera, ChevronLeft, Gauge, History, PlayCircle, Shield, Swords } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 import logo from "@/assets/ryuzen-dragon.svg";
 import HomeIcon from "@/assets/icons/home.svg";
@@ -21,14 +21,6 @@ const navItems: NavItem[] = [
   { label: "Documents", path: "/documents", icon: DocumentsIcon },
   { label: "History", path: "/history", icon: HistoryIcon },
   { label: "Settings", path: "/settings", icon: SettingsIcon },
-  { label: "Control Dashboard", path: "/control/dashboard", icon: <Gauge className="h-5 w-5" /> },
-  { label: "Run Tests", path: "/control/run", icon: <PlayCircle className="h-5 w-5" /> },
-  { label: "Test History", path: "/control/test-history", icon: <History className="h-5 w-5" /> },
-  { label: "Snapshots", path: "/control/snapshots", icon: <Camera className="h-5 w-5" /> },
-  { label: "Load Tests", path: "/control/load", icon: <Swords className="h-5 w-5" /> },
-  { label: "Stability", path: "/control/stability", icon: <Shield className="h-5 w-5" /> },
-  { label: "War Room", path: "/control/war-room", icon: <Activity className="h-5 w-5" /> },
-  { label: "Replay Engine", path: "/control/replay", icon: <PlayCircle className="h-5 w-5" /> },
 ];
 
 export function Sidebar({
@@ -60,7 +52,7 @@ export function Sidebar({
           {!collapsed && (
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">Operations</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Workspace</p>
             </div>
           )}
         </div>

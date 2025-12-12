@@ -21,6 +21,6 @@ AI model outputs using an AES-256 encrypted pipeline.
 4. **Connector Module**
 5. **Telemetry Engine**
 6. **Rate Limit + Security Layer**
-7. **Command Center Integration Layer**
+7. **System Behavior Integration Layer**
 8. **AES-256-GCM encryption system**
 9. **Session Pool + Region Router**
