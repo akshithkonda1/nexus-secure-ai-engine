@@ -50,7 +50,7 @@ export default function RootLayout() {
       >
         <Header onToggleSidebar={() => setMobileNavOpen((prev) => !prev)} />
 
-        <main id="main-content" className="relative flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-10">
+        <main id="main-content" className="main-canvas relative flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

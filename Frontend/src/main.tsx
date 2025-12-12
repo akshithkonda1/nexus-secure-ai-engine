@@ -11,7 +11,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Providers>
       <BrowserRouter>
         <RyuzenErrorBoundary>
-          <App />
+          <>
+            <App />
+            <div className="edge-dissolution" aria-hidden="true" />
+          </>
         </RyuzenErrorBoundary>
       </BrowserRouter>
     </Providers>
