@@ -1,22 +1,19 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { RyuzenBrandmark } from "@/components/RyuzenBrandmark";
-import homeIcon from "@/assets/icons/home.svg";
-import toronIcon from "@/assets/icons/toron.svg";
-import workspaceIcon from "@/assets/icons/workspace.svg";
-import documentsIcon from "@/assets/icons/documents.svg";
-import historyIcon from "@/assets/icons/history.svg";
-import settingsIcon from "@/assets/icons/settings.svg";
+import { Clock3, FileText, Folder, Grid, Home, Settings, Sparkles } from "lucide-react";
+
+import { RyuzenLogoBadge } from "@/components/RyuzenBrandmark";
 import { useFeedback } from "@/state/feedback";
 
-const navItems = [
-  { label: "Home", href: "/", icon: homeIcon },
-  { label: "Toron", href: "/toron", icon: toronIcon },
-  { label: "Workspace", href: "/workspace", icon: workspaceIcon },
-  { label: "Projects", href: "/projects", icon: workspaceIcon },
-  { label: "Documents", href: "/documents", icon: documentsIcon },
-  { label: "History", href: "/history", icon: historyIcon },
-  { label: "Settings", href: "/settings", icon: settingsIcon },
+const primaryNavItems = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Toron", href: "/toron", icon: Sparkles, isToron: true },
+  { label: "Workspace", href: "/workspace", icon: Grid },
+  { label: "Projects", href: "/projects", icon: Folder },
+  { label: "Documents", href: "/documents", icon: FileText },
+  { label: "History", href: "/history", icon: Clock3 },
 ];
+
+const secondaryNavItems = [{ label: "Settings", href: "/settings", icon: Settings }];
 
 export function Sidebar() {
   const { pathname } = useLocation();
@@ -25,39 +22,87 @@ export function Sidebar() {
   return (
     <aside className="relative z-30 hidden h-screen border-r border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_88%,transparent)] px-5 py-6 shadow-2xl shadow-black/50 lg:block">
       <div className="flex items-center gap-3 px-2 pb-8">
-        <RyuzenBrandmark
-          size={32}
-          className="rounded-full shadow-[0_0_20px_rgba(0,200,255,0.45)]"
-        />
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-          <p className="text-base font-semibold text-[var(--text-primary)]">Navigation</p>
+        <RyuzenLogoBadge size={48} />
+        <div className="leading-tight">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-secondary)]">RYUZEN Operations</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">RYUZEN OS V2 – Unified Control</p>
         </div>
       </div>
 
       <nav className="space-y-2">
-        {navItems.map((item) => {
+        {primaryNavItems.map((item) => {
           const isActive = pathname === item.href;
+          const Icon = item.icon;
+          const iconSize = item.isToron ? 22 : 20;
+
           return (
             <NavLink
               key={item.href}
               to={item.href}
-              className="group block rounded-2xl"
+              end={item.href === "/"}
+              className="group block rounded-full"
             >
               <div
-                className={`glow-border flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] px-4 py-3 transition ${isActive ? "bg-[color-mix(in_srgb,var(--accent-secondary)_16%,var(--panel-elevated))] text-[var(--text-primary)] border-[color-mix(in_srgb,var(--accent-secondary)_40%,transparent)]" : "bg-[color-mix(in_srgb,var(--panel-elevated)_80%,transparent)] text-[var(--text-secondary)] hover:-translate-y-[1px] hover:text-[var(--text-primary)]"}`}
+                className={`relative flex items-center gap-2.5 rounded-full px-4 py-2 text-sm font-semibold transition duration-100 ${
+                  isActive
+                    ? "bg-[linear-gradient(140deg,color-mix(in_srgb,var(--panel-elevated)_90%,transparent),color-mix(in_srgb,var(--panel-strong)_86%,transparent))] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                    : "text-[color-mix(in_srgb,var(--text-secondary)_94%,transparent)] hover:text-[var(--text-primary)]"
+                }`}
+                style={{
+                  boxShadow: isActive
+                    ? item.isToron
+                      ? "0 10px 28px rgba(107, 232, 255, 0.16)"
+                      : "0 10px 28px rgba(124, 93, 255, 0.12)"
+                    : undefined,
+                }}
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] text-[var(--text-primary)] shadow-inner shadow-black/30">
-                  {item.icon && (
-                    <img
-                      src={item.icon}
-                      alt={`${item.label} icon`}
-                      className="h-5 w-5 object-contain opacity-90 group-hover:opacity-100"
-                      draggable={false}
-                    />
-                  )}
+                <span
+                  className={`flex items-center transition duration-100 ${
+                    item.isToron
+                      ? "text-[color-mix(in_srgb,var(--accent-secondary)_95%,var(--text-primary))] drop-shadow-[0_0_12px_rgba(107,232,255,0.35)]"
+                      : "text-[color-mix(in_srgb,var(--text-secondary)_92%,transparent)]"
+                  } ${isActive ? "text-[var(--text-primary)]" : ""}`}
+                >
+                  <Icon strokeWidth={1.6} size={iconSize} />
                 </span>
-                <span className="text-sm font-semibold tracking-tight">{item.label}</span>
+                <span className="relative z-10">{item.label}</span>
+                {isActive && (
+                  <span className="pointer-events-none absolute inset-px -z-10 rounded-full bg-[radial-gradient(circle_at_50%_120%,color-mix(in_srgb,var(--accent-secondary)_12%,transparent),transparent)]" />
+                )}
+                {isActive && item.isToron && (
+                  <span className="pointer-events-none absolute inset-0 -z-10 rounded-full border border-[color-mix(in_srgb,var(--accent-secondary)_24%,transparent)]" />
+                )}
+              </div>
+            </NavLink>
+          );
+        })}
+
+        <div className="pt-3" />
+
+        {secondaryNavItems.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              end={item.href === "/"}
+              className="group block rounded-full"
+            >
+              <div
+                className={`relative flex items-center gap-2.5 rounded-full px-4 py-2 text-sm font-semibold transition duration-100 ${
+                  isActive
+                    ? "bg-[linear-gradient(140deg,color-mix(in_srgb,var(--panel-elevated)_90%,transparent),color-mix(in_srgb,var(--panel-strong)_86%,transparent))] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                    : "text-[color-mix(in_srgb,var(--text-secondary)_94%,transparent)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <span className="flex items-center text-[color-mix(in_srgb,var(--text-secondary)_92%,transparent)] transition duration-100">
+                  <Icon strokeWidth={1.6} size={20} />
+                </span>
+                <span className="relative z-10">{item.label}</span>
+                {isActive && (
+                  <span className="pointer-events-none absolute inset-px -z-10 rounded-full bg-[radial-gradient(circle_at_50%_120%,color-mix(in_srgb,var(--accent-secondary)_12%,transparent),transparent)]" />
+                )}
               </div>
             </NavLink>
           );

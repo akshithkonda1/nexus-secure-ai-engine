@@ -1,27 +1,31 @@
 import { NavLink } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import {
+  ChevronLeft,
+  Clock3,
+  FileText,
+  Folder,
+  Grid,
+  Home,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 
-import logo from "@/assets/ryuzen-dragon.svg";
-import HomeIcon from "@/assets/icons/home.svg";
-import ToronIcon from "@/assets/icons/toron.svg";
-import WorkspaceIcon from "@/assets/icons/workspace.svg";
-import DocumentsIcon from "@/assets/icons/documents.svg";
-import HistoryIcon from "@/assets/icons/history.svg";
-import SettingsIcon from "@/assets/icons/settings.svg";
+import { RyuzenLogoBadge } from "@/components/RyuzenBrandmark";
 import { useFeedback } from "@/state/feedback";
 
-type NavItem = { label: string; path: string; icon: string | JSX.Element };
+type NavItem = { label: string; path: string; icon: typeof Home; isToron?: boolean };
 
-const navItems: NavItem[] = [
-  { label: "Home", path: "/", icon: HomeIcon },
-  { label: "Toron", path: "/toron", icon: ToronIcon },
-  { label: "Workspace", path: "/workspace", icon: WorkspaceIcon },
-  { label: "Projects", path: "/projects", icon: WorkspaceIcon },
-  { label: "Documents", path: "/documents", icon: DocumentsIcon },
-  { label: "History", path: "/history", icon: HistoryIcon },
-  { label: "Settings", path: "/settings", icon: SettingsIcon },
+const primaryNavItems: NavItem[] = [
+  { label: "Home", path: "/", icon: Home },
+  { label: "Toron", path: "/toron", icon: Sparkles, isToron: true },
+  { label: "Workspace", path: "/workspace", icon: Grid },
+  { label: "Projects", path: "/projects", icon: Folder },
+  { label: "Documents", path: "/documents", icon: FileText },
+  { label: "History", path: "/history", icon: Clock3 },
 ];
+
+const secondaryNavItems: NavItem[] = [{ label: "Settings", path: "/settings", icon: Settings }];
 
 export function Sidebar({
   collapsed,
@@ -47,12 +51,12 @@ export function Sidebar({
       } h-screen flex-col border-r border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] px-3 pb-6 pt-5 shadow-[0_10px_60px_rgba(0,0,0,0.45)]`}
     >
       <div className="flex items-center justify-between px-2 pb-6">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="Ryuzen" className="h-9 w-9" />
+        <div className="flex items-center gap-3">
+          <RyuzenLogoBadge size={48} />
           {!collapsed && (
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Ryuzen</p>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">Workspace</p>
+            <div className="leading-tight">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-secondary)]">RYUZEN Operations</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">RYUZEN OS V2 – Unified Control</p>
             </div>
           )}
         </div>
@@ -66,53 +70,18 @@ export function Sidebar({
           </motion.div>
         </button>
       </div>
-
       <nav className="flex flex-1 flex-col gap-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === "/"}
-            onClick={() => {
-              if (onNavigate) onNavigate();
-            }}
-          >
-            {({ isActive }) => (
-              <motion.div
-                whileHover={{ x: 4 }}
-                className={`group relative flex items-center gap-3 overflow-hidden rounded-xl border border-transparent px-3 py-3 text-sm font-semibold transition ${
-                  isActive
-                    ? "border-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] text-[var(--text-primary)] shadow-[0_8px_28px_rgba(124,93,255,0.24)]"
-                    : "text-[var(--text-secondary)] hover:border-[var(--border-soft)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)]">
-                  {typeof item.icon === "string" ? (
-                    <img src={item.icon} alt={item.label} className="h-6 w-6 opacity-90" />
-                  ) : (
-                    <span className="text-[var(--text-primary)]">{item.icon}</span>
-                  )}
-                  {isActive && <GlowOverlay />}
-                </span>
-                <AnimatePresence initial={false}>
-                  {!collapsed && (
-                    <motion.span
-                      key={`${item.path}-label`}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -6 }}
-                      className="relative z-10"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {isActive && <ActiveGlow />}
-              </motion.div>
-            )}
-          </NavLink>
+        {primaryNavItems.map((item) => (
+          <NavigationLink key={item.path} collapsed={collapsed} item={item} onNavigate={onNavigate} />
         ))}
-        <div className="mt-2 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_82%,transparent)] p-3">
+
+        <div className="h-4" />
+
+        {secondaryNavItems.map((item) => (
+          <NavigationLink key={item.path} collapsed={collapsed} item={item} onNavigate={onNavigate} />
+        ))}
+
+        <div className="mt-3 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_82%,transparent)] p-3">
           <button
             type="button"
             onClick={openModal}
@@ -143,18 +112,71 @@ export function Sidebar({
   );
 }
 
-function GlowOverlay() {
-  return (
-    <span className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_50%_50%,rgba(124,93,255,0.25),transparent_60%)] blur-md" />
-  );
-}
+function NavigationLink({
+  item,
+  collapsed,
+  onNavigate,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const Icon = item.icon;
+  const iconSize = item.isToron ? 22 : 20;
 
-function ActiveGlow() {
   return (
-    <motion.span
-      layoutId="sidebar-active"
-      className="absolute inset-0 -z-10 rounded-xl bg-[color-mix(in_srgb,var(--accent-secondary)_12%,transparent)] shadow-[0_0_30px_rgba(124,93,255,0.15)]"
-      transition={{ type: "spring", stiffness: 220, damping: 24 }}
-    />
+    <NavLink
+      to={item.path}
+      end={item.path === "/"}
+      onClick={() => {
+        if (onNavigate) onNavigate();
+      }}
+      className="group"
+    >
+      {({ isActive }) => (
+        <motion.div
+          whileHover={{ x: collapsed ? 0 : 2 }}
+          className={`relative flex items-center gap-2.5 rounded-full px-3 py-2 text-sm font-semibold transition duration-100 ${
+            isActive
+              ? "bg-[linear-gradient(140deg,color-mix(in_srgb,var(--panel-elevated)_90%,transparent),color-mix(in_srgb,var(--panel-strong)_86%,transparent))] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              : "text-[color-mix(in_srgb,var(--text-secondary)_94%,transparent)] hover:text-[var(--text-primary)]"
+          }`}
+          style={{
+            boxShadow: isActive
+              ? item.isToron
+                ? "0 10px 28px rgba(107, 232, 255, 0.16)"
+                : "0 10px 28px rgba(124, 93, 255, 0.12)"
+              : undefined,
+          }}
+        >
+          <span
+            className={`flex items-center transition duration-100 ${
+              item.isToron ? "text-[color-mix(in_srgb,var(--accent-secondary)_95%,var(--text-primary))] drop-shadow-[0_0_12px_rgba(107,232,255,0.35)]" : "text-[color-mix(in_srgb,var(--text-secondary)_92%,transparent)]"
+            } ${isActive ? "text-[var(--text-primary)]" : ""}`}
+          >
+            <Icon strokeWidth={1.6} size={iconSize} />
+          </span>
+          <AnimatePresence initial={false}>
+            {!collapsed && (
+              <motion.span
+                key={`${item.path}-label`}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                className="relative z-10"
+              >
+                {item.label}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          {isActive && (
+            <span className="pointer-events-none absolute inset-px -z-10 rounded-full bg-[radial-gradient(circle_at_50%_120%,color-mix(in_srgb,var(--accent-secondary)_12%,transparent),transparent)]" />
+          )}
+          {isActive && item.isToron && (
+            <span className="pointer-events-none absolute inset-0 -z-10 rounded-full border border-[color-mix(in_srgb,var(--accent-secondary)_24%,transparent)]" />
+          )}
+        </motion.div>
+      )}
+    </NavLink>
   );
 }
