@@ -8,10 +8,10 @@ from ryuzen.engine.snapshot_utils import normalize_snapshot
 from ryuzen.engine.tier_utils import normalized_pipeline
 
 
-def stabilize_execution_plan(ep: Any) -> Any:
+def stabilize_execution_plan(ep: Any, prompt: str) -> Any:
     """Ensure execution plan parameters are consistent and repeatable."""
 
-    ep.latency_ms = stable_latency()
+    ep.latency_ms = stable_latency(prompt)
     ep.tier_path = normalized_pipeline(ep)
     ep.snapshot = normalize_snapshot(getattr(ep, "snapshot", {}) or {})
     return ep

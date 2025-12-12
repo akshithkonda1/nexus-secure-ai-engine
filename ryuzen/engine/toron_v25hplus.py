@@ -16,12 +16,11 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from ryuzen.engine.cache import InMemoryCache
 from ryuzen.engine.confidence import stabilized_confidence
-from ryuzen.engine.contradictions import _PolarityRecord, stabilized_contradiction_score
 from ryuzen.engine.execution_plan import stabilize_execution_plan
 from ryuzen.engine.latency_utils import stable_latency
 from ryuzen.engine.meta_flags import stabilized_meta_flags
 from ryuzen.engine.snapshot_utils import normalize_snapshot
-from ryuzen.engine.tier_utils import normalized_pipeline, should_escalate_to_opus
+from ryuzen.engine.tier_utils import normalized_pipeline
 
 
 @dataclass
@@ -79,31 +78,18 @@ class ModelAbstractionLayer:
         if cached:
             return cached
 
-        attempts = 0
-        backoff_ms = 120
-        last_latency = 380
-        while attempts < 3:
-            attempts += 1
-            simulated_latency = min(int(last_latency + attempts * 40), 4000)
-            tokens_used = max(24, len(prompt) // 4)
-            response_text = self._sanitize(
-                f"{model} processed: {prompt[:256]}"
-            )
+        latency_ms = stable_latency(prompt)
+        tokens_used = max(24, len(prompt) // 4)
+        response_text = self._sanitize(f"{model} processed: {prompt[:256]}")
 
-            envelope = ModelResponse(
-                model=model,
-                response=response_text,
-                latency_ms=simulated_latency,
-                tokens_used=tokens_used,
-            )
+        envelope = ModelResponse(
+            model=model,
+            response=response_text,
+            latency_ms=latency_ms,
+            tokens_used=tokens_used,
+        )
 
-            if simulated_latency <= 4000:
-                self.cache.set(key, envelope, ttl_seconds=3600)
-                return envelope
-
-            last_latency += backoff_ms
-
-        self.cache.set(key, envelope, ttl_seconds=120)
+        self.cache.set(key, envelope, ttl_seconds=3600)
         return envelope
 
 
@@ -264,7 +250,10 @@ class RyuzenToronV25HPlus:
         shared_conclusions = list({entry["hypothesis"] for entry in t1_raw})
         divergent_branches: List[str] = []
         missing_premises: List[str] = []
-        contradiction_map: Dict[str, List[str]] = {}
+        found_contradictions: List[str] = []
+        for entry in t1_raw:
+            found_contradictions.extend(entry.get("contradictions", []))
+        contradiction_map: Dict[str, Any] = {"count": len(found_contradictions)}
         implicit_assumptions = ["Citations may be required", "User intent requires clarity"]
         return {
             "shared_conclusions": shared_conclusions,
@@ -288,14 +277,15 @@ class RyuzenToronV25HPlus:
 
     def _tier2_audit(self, t1_summary: Dict[str, Any], cdg: Dict[str, Any]) -> Dict[str, Any]:
         critiques = [
-            "DeepSeek R1 (Light) notes potential gaps in evidence density.",
-            "Kimi K2 (Light) suggests clarifying assumptions in shared conclusions.",
+            "R1: structural integrity acceptable",
+            "K2: no major logical gaps",
         ]
         return {
             "models": ["DeepSeek R1 (Light)", "Kimi K2 (Light)"],
             "critiques": critiques,
             "cdg_valid": not cdg.get("cycles"),
             "missing_steps": cdg.get("missing_parents", []),
+            "latency_ms": stable_latency(str(t1_summary)),
         }
 
     def _mmre_engine(self, clean_prompt: str, plan: ExecutionPlan) -> Dict[str, Any]:
@@ -313,6 +303,7 @@ class RyuzenToronV25HPlus:
             "conflicts_detected": conflicts_detected,
             "evidence_density": evidence_density,
             "escalation_required": escalation_required,
+            "latency_ms": stable_latency(clean_prompt),
         }
 
     def _dual_synthesis(self, clean_prompt: str, t1_summary: Dict[str, Any], reality_packet: Dict[str, Any]) -> Dict[str, Any]:
@@ -326,7 +317,7 @@ class RyuzenToronV25HPlus:
         return {"objective": objective.strip(), "human": human.strip()}
 
     def _judicial_review(self, clean_prompt: str, synthesis: Dict[str, Any]) -> Dict[str, Any]:
-        opus_result = self.mal.call_model("Opus", clean_prompt)
+        response = f"OpusResolution:{hash(clean_prompt) % 10_000}"
         reasoning_chain = ["Opus evaluated synthesis", "Stress-tested assumptions"]
         heavy_audit = {
             "models": ["DeepSeek R1 (Heavy)", "Kimi K2 (Heavy)"],
@@ -334,19 +325,19 @@ class RyuzenToronV25HPlus:
         }
         return {
             "opus_result": {
-                "result": opus_result.response,
-                "latency_ms": opus_result.latency_ms,
-                "tokens_used": opus_result.tokens_used,
+                "result": response,
+                "latency_ms": stable_latency(clean_prompt),
+                "tokens_used": max(24, len(clean_prompt) // 4),
             },
             "opus_reasoning_chain": reasoning_chain,
             "heavy_audit": heavy_audit,
             "revision_applied": False,
         }
 
-    def _random_witness_layer(self, t1_raw: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _random_witness_layer(self, t1_raw: List[Dict[str, Any]], prompt: str) -> Dict[str, Any]:
         if not t1_raw:
             return {"model": None, "challenge": "no_models"}
-        witness = t1_raw[int(self.now) % len(t1_raw)]["model"]
+        witness = t1_raw[abs(hash(prompt)) % len(t1_raw)]["model"]
         challenge = "Challenge issued: validate logic chains and biases."
         dissent = 0.15
         return {"model": witness, "challenge": challenge, "dissent_score": dissent}
@@ -385,7 +376,7 @@ class RyuzenToronV25HPlus:
         clean_prompt = psl["clean_prompt"]
 
         execution_plan = self._routing_intelligence_layer(clean_prompt)
-        execution_plan = stabilize_execution_plan(execution_plan)
+        execution_plan = stabilize_execution_plan(execution_plan, clean_prompt)
         aloe_policy = self._aloe_pre_pass(clean_prompt)
         t1_raw = self._tier1_ensemble(clean_prompt, execution_plan)
         t1_summary = self._tier1_summary(t1_raw)
@@ -394,24 +385,20 @@ class RyuzenToronV25HPlus:
         reality_packet = self._mmre_engine(clean_prompt, execution_plan)
         synthesis = self._dual_synthesis(clean_prompt, t1_summary, reality_packet)
 
-        facts = [_PolarityRecord(subject=node, polarity=True) for node in cdg_structure.get("nodes", [])]
-        contradiction_subjects: List[_PolarityRecord] = []
-        for subject, contradictions in t1_summary.get("contradiction_map", {}).items():
-            contradiction_subjects.append(_PolarityRecord(subject=subject, polarity=False))
-            contradiction_subjects.extend(
-                _PolarityRecord(subject=contradiction, polarity=False) for contradiction in contradictions
-            )
+        contradiction_count = t1_summary.get("contradiction_map", {}).get("count", 0)
 
-        contradiction_count = stabilized_contradiction_score(facts, contradiction_subjects)
-
-        t2_stability = 1.0 if t2_audit_report.get("cdg_valid") else 0.6
-        use_opus = execution_plan.use_opus and should_escalate_to_opus(t2_stability, contradiction_count)
+        use_opus = (
+            len(t1_summary.get("shared_conclusions", [])) == 0
+            or cdg_structure.get("cycles")
+            or execution_plan.complexity == "high"
+        )
+        execution_plan.use_opus = use_opus
 
         judicial_result: Dict[str, Any] = {}
         if use_opus:
             judicial_result = self._judicial_review(clean_prompt, synthesis)
 
-        rwl_result = self._random_witness_layer(t1_raw)
+        rwl_result = self._random_witness_layer(t1_raw, clean_prompt)
         confidence_score = self._consensus_engine(
             t1_raw,
             t2_audit_report,
@@ -421,20 +408,22 @@ class RyuzenToronV25HPlus:
         )
 
         aloe_final = self._aloe_final_pass(synthesis["human"])
-        latency_ms = stable_latency()
+        latency_ms = stable_latency(clean_prompt)
         tier_path = normalized_pipeline(SimpleNamespace(use_opus=use_opus))
-        final_confidence = stabilized_confidence(confidence_score, contradiction_count)
-        meta_flags = stabilized_meta_flags(
-            contradiction_count,
-            latency_ms,
-            missing_evidence=not reality_packet.get("verified_facts"),
-        )
+        final_confidence = stabilized_confidence(contradiction_count, use_opus)
+        meta_flags = stabilized_meta_flags(use_opus)
 
         snapshot = normalize_snapshot(
             {
-                "CDG_STRUCTURE": cdg_structure,
-                "tier_path": tier_path,
-                "confidence": final_confidence,
+                "t1_raw": t1_raw,
+                "t1_summary": t1_summary,
+                "cdg_structure": cdg_structure,
+                "t2_audit_report": t2_audit_report,
+                "reality_packet": reality_packet,
+                "judicial_result": judicial_result,
+                "rwl_result": rwl_result,
+                "confidence_score": final_confidence,
+                "aloe_policy": aloe_policy,
                 "meta_flags": meta_flags,
             }
         )
