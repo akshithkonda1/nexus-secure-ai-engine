@@ -12,7 +12,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from ryuzen.engine.cache import InMemoryCache
 from ryuzen.engine.confidence import stabilized_confidence
@@ -129,6 +129,8 @@ class TierArtifacts:
 class RyuzenToronV25HPlus:
     """Deterministic, multi-tier Toron v2.5H+ pipeline."""
 
+    TIER2_MODELS: Sequence[str] = ("DeepSeek R1 (Light)", "Kimi K2 (Light)")
+
     def __init__(self, now: Optional[float] = None) -> None:
         self.mal = ModelAbstractionLayer()
         self.psl_cache = InMemoryCache()
@@ -220,15 +222,26 @@ class RyuzenToronV25HPlus:
             "prompt_signature": hashlib.sha256(clean_prompt.encode()).hexdigest(),
         }
 
-    def _tier1_ensemble(self, clean_prompt: str, plan: ExecutionPlan) -> List[Dict[str, Any]]:
+    def _tier1_ensemble(
+        self, clean_prompt: str, plan: ExecutionPlan, fired_models: Optional[Set[str]] = None
+    ) -> List[Dict[str, Any]]:
         cache_key = f"t1:{hashlib.sha256(clean_prompt.encode()).hexdigest()}"
         cached = self.t1_cache.get(cache_key)
         if cached:
+            if fired_models is not None:
+                for entry in cached:
+                    model_name = entry.get("model")
+                    if model_name:
+                        fired_models.add(model_name)
             return cached
 
         raw_outputs: List[Dict[str, Any]] = []
+        fired_models = fired_models or set()
         for model_name in plan.tier1_models:
+            if model_name in fired_models:
+                continue
             envelope = self.mal.call_model(model_name, clean_prompt)
+            fired_models.add(model_name)
             hypothesis = f"{model_name} hypothesis on: {clean_prompt[:120]}"
             logic_chain = ["Parse prompt", "Generate reasoning", "Deliver hypothesis"]
             raw_outputs.append(
@@ -275,13 +288,16 @@ class RyuzenToronV25HPlus:
             "invalid_chains": [],
         }
 
-    def _tier2_audit(self, t1_summary: Dict[str, Any], cdg: Dict[str, Any]) -> Dict[str, Any]:
+    def _tier2_audit(
+        self, t1_summary: Dict[str, Any], cdg: Dict[str, Any], models: Optional[Sequence[str]] = None
+    ) -> Dict[str, Any]:
         critiques = [
             "R1: structural integrity acceptable",
             "K2: no major logical gaps",
         ]
+        models = tuple(models or self.TIER2_MODELS)
         return {
-            "models": ["DeepSeek R1 (Light)", "Kimi K2 (Light)"],
+            "models": list(models),
             "critiques": critiques,
             "cdg_valid": not cdg.get("cycles"),
             "missing_steps": cdg.get("missing_parents", []),
@@ -375,10 +391,18 @@ class RyuzenToronV25HPlus:
         psl = self._premise_scrubbing_layer(prompt)
         clean_prompt = psl["clean_prompt"]
 
+        fired_models: Set[str] = set()
+
+        def record_firing(model_name: str) -> bool:
+            if model_name in fired_models:
+                return False
+            fired_models.add(model_name)
+            return True
+
         execution_plan = self._routing_intelligence_layer(clean_prompt)
         execution_plan = stabilize_execution_plan(execution_plan, clean_prompt)
         aloe_policy = self._aloe_pre_pass(clean_prompt)
-        t1_raw = self._tier1_ensemble(clean_prompt, execution_plan)
+        t1_raw = self._tier1_ensemble(clean_prompt, execution_plan, fired_models)
         t1_summary = self._tier1_summary(t1_raw)
         cdg_structure = self._causal_dependency_graph(t1_summary)
         contradiction_count = t1_summary.get("contradiction_map", {}).get("count", 0)
@@ -397,7 +421,9 @@ class RyuzenToronV25HPlus:
             "latency_ms": 0,
         }
         if requires_logic:
-            t2_audit_report = self._tier2_audit(t1_summary, cdg_structure)
+            available_tier2_models = [model for model in self.TIER2_MODELS if record_firing(model)]
+            if available_tier2_models:
+                t2_audit_report = self._tier2_audit(t1_summary, cdg_structure, available_tier2_models)
 
         # Only post-aggregation contradictions can escalate
         unresolved_contradiction = False
@@ -423,20 +449,31 @@ class RyuzenToronV25HPlus:
 
         # Retry Tier 2 with narrowed assumptions before considering Opus
         if unresolved_contradiction and verification_failed and requires_logic:
-            narrowed_cdg = {**cdg_structure, "cycles": False, "missing_parents": []}
-            retry_audit = self._tier2_audit(t1_summary, narrowed_cdg)
-            if retry_audit.get("cdg_valid") and not retry_audit.get("missing_steps"):
-                t2_audit_report = retry_audit
-                verification_failed = False
-                unresolved_contradiction = False
+            retriable_models = [model for model in self.TIER2_MODELS if record_firing(model)]
+            if retriable_models:
+                narrowed_cdg = {**cdg_structure, "cycles": False, "missing_parents": []}
+                retry_audit = self._tier2_audit(t1_summary, narrowed_cdg, retriable_models)
+                if retry_audit.get("cdg_valid") and not retry_audit.get("missing_steps"):
+                    t2_audit_report = retry_audit
+                    verification_failed = False
+                    unresolved_contradiction = False
 
         synthesis = self._dual_synthesis(clean_prompt, t1_summary, reality_packet)
 
-        use_opus = unresolved_contradiction and verification_failed
+        total_available_models = len(execution_plan.tier1_models) + (len(self.TIER2_MODELS) if requires_logic else 0) + 1
+        synthesis_bailout_failed = unresolved_contradiction and verification_failed
+        opus_ready = (
+            synthesis_bailout_failed
+            and len(fired_models) == total_available_models - 1
+            and "Opus" not in fired_models
+        )
+
+        use_opus = opus_ready
         execution_plan.use_opus = use_opus
 
         judicial_result: Dict[str, Any] = {}
         if use_opus:
+            record_firing("Opus")
             judicial_result = self._judicial_review(clean_prompt, synthesis)
 
         rwl_result = self._random_witness_layer(t1_raw, clean_prompt)
