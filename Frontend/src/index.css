@@ -250,3 +250,37 @@ a {
     padding-top: calc(var(--header-height) + 24px);
   }
 }
+
+.edge-dissolution {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(6, 10, 24, 0.35) 82%,
+      rgba(6, 10, 24, 0.6) 100%
+    );
+}
+
+.main-canvas {
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(24, 40, 80, 0.28),
+      rgba(6, 10, 24, 1) 72%
+    );
+}
+
+.panel-edge-dissolve-left {
+  background: linear-gradient(
+    to right,
+    rgba(10, 16, 34, 0.95),
+    rgba(10, 16, 34, 0.7),
+    rgba(10, 16, 34, 0)
+  );
+  border: none;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.38);
+}

@@ -48,7 +48,7 @@ export function Sidebar({
       transition={{ duration: 0.25, ease: "easeOut" }}
       className={`${collapsed ? "w-[86px]" : "w-[var(--sidebar-width)]"} fixed left-0 top-0 z-30 ${
         mobileVisible ? "flex" : "hidden lg:flex"
-      } h-screen flex-col border-r border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] px-3 pb-6 pt-5 shadow-[0_10px_60px_rgba(0,0,0,0.45)]`}
+      } h-screen flex-col panel-edge-dissolve-left px-3 pb-6 pt-5 backdrop-blur-xl`}
     >
       <div className="flex items-center justify-between px-2 pb-6">
         <div className="flex items-center gap-3">
