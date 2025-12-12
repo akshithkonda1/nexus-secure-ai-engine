@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Dict
 
 from .determinism_checker import run_determinism_checks
@@ -35,4 +36,7 @@ def main() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    run_summary = main()
+    stability_grade = (run_summary.get("stability") or {}).get("stability_grade")
+    exit_code = 0 if stability_grade in {"A+", "A", "B"} else 1
+    sys.exit(exit_code)
