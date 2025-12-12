@@ -23,7 +23,10 @@ const List = ({ onSaveToProject }: ToronMessageListProps) => {
     }
 
     return (
-      <section className="flex flex-1 flex-col gap-2 overflow-y-auto bg-[var(--panel-main)] p-4" data-testid="toron-message-list">
+      <section
+        className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto p-4 sm:p-6"
+        data-testid="toron-message-list"
+      >
         {messages.map((message) => (
           <ToronMessageBubble
             key={message.id}
@@ -36,7 +39,7 @@ const List = ({ onSaveToProject }: ToronMessageListProps) => {
   } catch (error) {
     telemetry("render_error", { component: "ToronMessageList", error: (error as Error).message });
     return (
-      <section className="flex flex-1 flex-col items-center justify-center bg-[var(--panel-main)] p-4 text-sm text-[var(--text-secondary)]">
+      <section className="flex flex-1 flex-col items-center justify-center p-4 text-sm text-[var(--text-secondary)]">
         Messages temporarily unavailable.
       </section>
     );
