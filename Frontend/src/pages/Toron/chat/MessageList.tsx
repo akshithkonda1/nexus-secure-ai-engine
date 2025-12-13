@@ -38,7 +38,7 @@ export function MessageList({ messages, onEditMessage, onSaveToProject }: Messag
   return (
     <section
       ref={listRef}
-      className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 overflow-y-auto px-4 pb-32 pt-4 sm:px-6"
+      className="relative flex w-full max-w-5xl flex-1 flex-col gap-4 overflow-y-auto px-4 pb-32 pt-4 sm:px-6"
     >
       {ordered.map((message) => (
         <MessageBubble key={message.id} message={message} onEdit={onEditMessage} onSaveToProject={onSaveToProject} />

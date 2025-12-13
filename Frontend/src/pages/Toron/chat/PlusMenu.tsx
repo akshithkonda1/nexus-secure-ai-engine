@@ -32,7 +32,10 @@ export function PlusMenu({ onOpenDriveModal, onOpenGithubModal, onPickFile, onPi
         <img src="/assets/icons/plus.svg" alt="Add" className="h-5 w-5" />
       </button>
       {open && (
-        <div className="absolute left-0 top-12 z-30 w-56 rounded-2xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-2 shadow-2xl backdrop-blur-xl">
+        <div
+          className="absolute bottom-14 left-0 z-30 w-56 max-h-60 overflow-y-auto rounded-2xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-2 shadow-2xl backdrop-blur-xl"
+          style={{ scrollbarWidth: "thin" }}
+        >
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-left text-[var(--text-primary)] transition hover:bg-white/10"

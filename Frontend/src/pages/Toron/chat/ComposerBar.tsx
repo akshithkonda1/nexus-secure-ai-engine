@@ -166,9 +166,9 @@ export function ComposerBar({
   const sendDisabled = !composer.canSend;
 
   return (
-    <div className="pointer-events-auto">
+    <div className="pointer-events-auto w-full">
       <AttachmentTray attachments={attachments} onRemove={onRemoveAttachment} />
-      <div className="relative mx-auto max-w-4xl rounded-[28px] bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-xl">
+      <div className="relative w-full rounded-[28px] bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] p-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur-xl">
         <div className="flex items-start gap-3">
           <PlusMenu
             onPickFile={() => fileInputRef.current?.click()}
