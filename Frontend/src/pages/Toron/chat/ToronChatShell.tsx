@@ -19,6 +19,7 @@ interface ToronChatShellProps {
 
 export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShellProps) {
   const composer = useComposerStateMachine();
+  const { updateInputs } = composer;
   const { sessions, activeSessionId, createSession, switchSession, addMessage, removeMessage, getActiveSession } =
     useToronStore();
   const [inputValue, setInputValue] = useState("");
@@ -42,8 +43,8 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
   const sessionId = session?.sessionId ?? activeSessionId;
 
   useEffect(() => {
-    composer.updateInputs(inputValue, attachments);
-  }, [attachments, composer, inputValue]);
+    updateInputs(inputValue, attachments);
+  }, [attachments, inputValue, updateInputs]);
 
   const handleAddAttachments = useCallback((files: File[], source: "upload" | "drive" | "github" = "upload") => {
     setAttachments((prev) => {
@@ -55,18 +56,18 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
         source,
       }));
       const next = [...prev, ...mapped];
-      composer.updateInputs(inputValue, next);
+      updateInputs(inputValue, next);
       return next;
     });
-  }, [composer, inputValue]);
+  }, [inputValue, updateInputs]);
 
   const handleRemoveAttachment = useCallback((id: string) => {
     setAttachments((prev) => {
       const next = prev.filter((file) => file.id !== id);
-      composer.updateInputs(inputValue, next);
+      updateInputs(inputValue, next);
       return next;
     });
-  }, [composer, inputValue]);
+  }, [inputValue, updateInputs]);
 
   const handleSend = useCallback(async () => {
     if (!sessionId) return;
@@ -152,9 +153,9 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
       setEditingMessageId(message.id);
       setInputValue(message.content);
       setAttachments(message.attachments ?? []);
-      composer.updateInputs(message.content, message.attachments ?? []);
+      updateInputs(message.content, message.attachments ?? []);
     },
-    [composer],
+    [updateInputs],
   );
 
   const handleGithubAttach = useCallback(
