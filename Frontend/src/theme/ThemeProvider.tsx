@@ -1,46 +1,45 @@
-import { PropsWithChildren, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { RyuzenThemeProvider, useRyuzenTheme } from "./RyuzenThemeProvider";
+export type Theme = "light" | "dark";
 
-export type ThemeMode = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
+type ThemeContextValue = {
+  theme: Theme;
+  toggleTheme: () => void;
+};
 
-function ThemeAttributeSync({ children }: PropsWithChildren) {
-  const { resolvedTheme } = useRyuzenTheme();
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+
+const getPreferredTheme = (): Theme => {
+  if (typeof window === "undefined") return "light";
+  const stored = window.localStorage.getItem("ryuzen-theme") as Theme | null;
+  if (stored === "light" || stored === "dark") return stored;
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
+};
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(getPreferredTheme);
 
   useEffect(() => {
-    const nextTheme = (resolvedTheme ?? "dark") as ResolvedTheme;
-    document.documentElement.setAttribute("data-theme", nextTheme);
-  }, [resolvedTheme]);
+    document.documentElement.setAttribute("data-theme", theme);
+    window.localStorage.setItem("ryuzen-theme", theme);
+  }, [theme]);
 
-  return <>{children}</>;
-}
-
-export function ThemeProvider({ children }: PropsWithChildren) {
-  return (
-    <RyuzenThemeProvider>
-      <ThemeAttributeSync>{children}</ThemeAttributeSync>
-    </RyuzenThemeProvider>
-  );
-}
-
-export function useThemeContext() {
-  const { theme, setTheme, resolvedTheme } = useRyuzenTheme();
-
-  const safeResolved = (resolvedTheme ?? "dark") as ResolvedTheme;
-  const safeTheme = (theme ?? "dark") as ThemeMode;
-
-  const toggleTheme = () => setTheme(safeResolved === "dark" ? "light" : "dark");
-
-  return useMemo(
+  const value = useMemo(
     () => ({
-      theme: safeTheme,
-      resolvedTheme: safeResolved,
-      setTheme,
-      toggleTheme,
+      theme,
+      toggleTheme: () => setTheme((prev) => (prev === "light" ? "dark" : "light")),
     }),
-    [safeResolved, safeTheme, setTheme],
+    [theme]
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export { useThemeContext as useTheme };
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return context;
+}
