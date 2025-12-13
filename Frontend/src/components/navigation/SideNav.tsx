@@ -1,5 +1,15 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import {
+  Clock,
+  FileText,
+  Folder,
+  Home,
+  LayoutGrid,
+  MessageCircle,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 
 interface SideNavProps {
   collapsed: boolean;
@@ -7,14 +17,14 @@ interface SideNavProps {
 }
 
 const navItems = [
-  { to: "/", label: "Home", icon: "🏠" },
-  { to: "/toron", label: "Toron", icon: "🪐" },
-  { to: "/workspace", label: "Workspace", icon: "🧭" },
-  { to: "/projects", label: "Projects", icon: "📁" },
-  { to: "/documents", label: "Documents", icon: "📄" },
-  { to: "/history", label: "History", icon: "⏳" },
-  { to: "/settings", label: "Settings", icon: "⚙️" },
-  { to: "/feedback", label: "Feedback", icon: "💬" },
+  { to: "/", label: "Home", icon: Home },
+  { to: "/toron", label: "Toron", icon: Sparkles },
+  { to: "/workspace", label: "Workspace", icon: LayoutGrid },
+  { to: "/projects", label: "Projects", icon: Folder },
+  { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/history", label: "History", icon: Clock },
+  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/feedback", label: "Feedback", icon: MessageCircle },
 ];
 
 const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
@@ -30,18 +40,18 @@ const SideNav: React.FC<SideNavProps> = ({ collapsed, onToggle }) => {
         {collapsed ? "›" : "‹"}
       </button>
       <ul className="nav-list">
-        {navItems.map((item) => (
-          <li key={item.to}>
+        {navItems.map(({ to, label, icon: Icon }) => (
+          <li key={to}>
             <NavLink
-              to={item.to}
+              to={to}
               className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-              end={item.to === "/"}
-              aria-label={collapsed ? item.label : undefined}
-              title={collapsed ? item.label : undefined}
+              end={to === "/"}
+              aria-label={collapsed ? label : undefined}
+              title={collapsed ? label : undefined}
             >
-              <span aria-hidden>{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-              {collapsed && <span className="tooltip">{item.label}</span>}
+              <Icon size={18} strokeWidth={1.8} aria-hidden />
+              <span className="nav-label">{label}</span>
+              {collapsed && <span className="tooltip">{label}</span>}
             </NavLink>
           </li>
         ))}

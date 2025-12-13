@@ -27,11 +27,11 @@ Outline the operational, security, and product readiness requirements for moving
 - `GET /v1/reports/{id}` — read SLO compliance.
 
 ## Checklist
-- ✅ All hardening phases 4–9 completed; artifacts attached.
-- ✅ Chaos and load SLOs met for 7 consecutive days.
-- ✅ Telemetry compliance reports delivered to security; no open critical findings.
-- ✅ Warroom incident templates published; rollback rehearsed.
-- ✅ Documentation suite (this repo) version tagged in release notes.
+- [x] All hardening phases 4–9 completed; artifacts attached.
+- [x] Chaos and load SLOs met for 7 consecutive days.
+- [x] Telemetry compliance reports delivered to security; no open critical findings.
+- [x] Warroom incident templates published; rollback rehearsed.
+- [x] Documentation suite (this repo) version tagged in release notes.
 
 ## Command Examples
 - `gh workflow run testops-ci.yml --ref main` (manual trigger)

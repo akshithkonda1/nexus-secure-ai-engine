@@ -4,7 +4,7 @@ The following prompt is the fully rewritten, cloud-sorted, production-ready Phas
 
 ---
 
-## 🔥 PHASE 5 — REFACTORED CLOUD-SORTED CODEX GENERATION PROMPT
+## PHASE 5 — REFACTORED CLOUD-SORTED CODEX GENERATION PROMPT
 
 ```
 You are Codex.
@@ -161,7 +161,7 @@ Defines:
 
 Defines IAM roles/policies enabling:
 
-* AWS ↔ GCP secure cross-cloud traffic
+* AWS to GCP secure cross-cloud traffic
 * replication access
 * cross-cloud monitoring
 

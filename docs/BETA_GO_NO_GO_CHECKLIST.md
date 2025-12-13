@@ -24,11 +24,11 @@ Provide a deterministic decision framework for advancing TestOps and Toron v2.5H
 - `GET /v1/snapshots/compare` — verify drift status pre-decision.
 
 ## Pre-Checks
-- ✅ All CI jobs green (lint, unit, sim, hardening, chaos/load, snapshot-compare, build).
-- ✅ Determinism ≥98% and coverage ≥90%.
-- ✅ Telemetry compliance reports current; no PII leakage.
-- ✅ Snapshots refreshed and stored with version tags.
-- ✅ Warroom incidents resolved; rollback tested.
+- [x] All CI jobs green (lint, unit, sim, hardening, chaos/load, snapshot-compare, build).
+- [x] Determinism ≥98% and coverage ≥90%.
+- [x] Telemetry compliance reports current; no PII leakage.
+- [x] Snapshots refreshed and stored with version tags.
+- [x] Warroom incidents resolved; rollback tested.
 
 ## Go/No-Go Matrix
 ```

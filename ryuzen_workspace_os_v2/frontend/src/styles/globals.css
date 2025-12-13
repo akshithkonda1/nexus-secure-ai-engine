@@ -234,6 +234,11 @@ a {
   position: relative;
 }
 
+.nav-link svg {
+  flex-shrink: 0;
+  color: var(--icon-primary);
+}
+
 .sidebar.collapsed .nav-link {
   grid-template-columns: 24px;
   justify-content: center;
@@ -391,6 +396,9 @@ a {
 }
 
 .control-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
