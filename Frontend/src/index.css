@@ -274,68 +274,13 @@ a {
     );
 }
 
-.edge-facing-panel,
 .panel-edge-dissolve-left {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 22px;
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      color-mix(in srgb, var(--panel-strong) 85%, transparent) 0%,
-      color-mix(in srgb, var(--panel-strong) 60%, transparent) 48%,
-      transparent 100%
-    ),
-    color-mix(in srgb, var(--panel-strong) 78%, transparent);
+  background: linear-gradient(
+    to right,
+    rgba(10, 16, 34, 0.95),
+    rgba(10, 16, 34, 0.7),
+    rgba(10, 16, 34, 0)
+  );
   border: none;
-  box-shadow: none;
-  backdrop-filter: blur(18px);
-}
-
-.edge-facing-panel.edge-fade-left::before,
-.panel-edge-dissolve-left::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  background:
-    linear-gradient(
-      to left,
-      color-mix(in srgb, var(--panel-strong) 90%, transparent) 0%,
-      color-mix(in srgb, var(--panel-strong) 65%, transparent) 46%,
-      transparent 100%
-    );
-  opacity: 0.9;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.edge-facing-panel.edge-fade-right::before {
-  background:
-    linear-gradient(
-      to right,
-      color-mix(in srgb, var(--panel-strong) 90%, transparent) 0%,
-      color-mix(in srgb, var(--panel-strong) 65%, transparent) 46%,
-      transparent 100%
-    );
-}
-
-.edge-facing-panel.edge-fade-top::before {
-  background:
-    linear-gradient(
-      to top,
-      color-mix(in srgb, var(--panel-strong) 90%, transparent) 0%,
-      color-mix(in srgb, var(--panel-strong) 60%, transparent) 44%,
-      transparent 100%
-    );
-}
-
-.edge-facing-panel.edge-fade-bottom::before {
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--panel-strong) 90%, transparent) 0%,
-      color-mix(in srgb, var(--panel-strong) 60%, transparent) 44%,
-      transparent 100%
-    );
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.38);
 }
