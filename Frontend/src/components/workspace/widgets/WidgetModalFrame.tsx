@@ -21,7 +21,7 @@ const WidgetModalFrame: React.FC<WidgetModalFrameProps> = ({ title, children }) 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[30] flex items-center justify-center p-4"
-        style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(16px)" }}
+        style={{ background: "var(--overlay-scrim)", backdropFilter: "blur(16px)" }}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 12 }}
