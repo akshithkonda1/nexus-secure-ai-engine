@@ -1,20 +1,31 @@
-import { SlideUp } from "@/components/animations/SlideUp";
-import { useTheme } from "@/theme/useTheme";
+const historyItems = [
+  { id: "h1", title: "Toron branch created", detail: "New branch for compliance Q1." },
+  { id: "h2", title: "Workspace published", detail: "Shared with governance squad." },
+  { id: "h3", title: "Theme updated", detail: "Dark mode set for evening review." },
+];
 
-export default function History() {
-  const { resolvedTheme } = useTheme();
-
+function History() {
   return (
-    <div className="space-y-6">
-      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
-        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">History</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Audit and trace</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Session timelines will render here. Theme: {resolvedTheme}.</p>
-      </SlideUp>
-
-      <SlideUp className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4">
-        <p className="text-sm text-[var(--text-secondary)]">No history yet. Start a session to populate this feed.</p>
-      </SlideUp>
+    <div className="page">
+      <div className="glass-panel hero">
+        <div>
+          <p className="section-body">History</p>
+          <h1>Review actions without trapping routes.</h1>
+        </div>
+        <p className="section-body">Each entry is contextual and minimal. Navigate freely without state leakage.</p>
+      </div>
+      <div className="glass-panel section-card">
+        <div className="simple-list">
+          {historyItems.map((item) => (
+            <div key={item.id} className="simple-item">
+              <h3 className="section-title">{item.title}</h3>
+              <p className="section-body">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+export default History;
