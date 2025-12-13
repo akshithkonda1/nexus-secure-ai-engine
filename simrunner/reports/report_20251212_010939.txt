@@ -1,0 +1,27 @@
+Ryuzen Toron Engine Simulation Report
+====================================
+
+Run count: 1000
+Seed: 42
+Stability grade: F
+Instability index: 0.396
+Average latency (ms): 0.002
+p95 latency (ms): 0.002
+Contradiction frequency: 0.6
+Escalation frequency: 0.12
+Determinism score: 100.0
+
+Tier Usage Histogram:
+- T1: 1000
+- T3: 360
+- T2: 640
+
+Opus escalation (by bucket):
+- Lower: 0.12
+
+Determinism samples:
+- Solve the puzzle: an infinite hotel? Provide reasoning.... :: 100.0%
+- Simulate a debate between a cybersecurity analyst and a safe... :: 100.0%
+- Provide a counterargument to the claim: 'security through ob... :: 100.0%
+- What are the risks of training on synthetic data only and ho... :: 100.0%
+- Simulate a debate between a linguist and a cybersecurity ana... :: 100.0%
