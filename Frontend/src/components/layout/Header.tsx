@@ -40,7 +40,7 @@ export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           >
             <span className="text-lg font-semibold">≡</span>
           </button>
-          <div className="flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)] px-3 py-2 shadow-sm">
+        <div className="edge-facing-panel edge-fade-top flex items-center gap-3 px-3 py-2">
             <RyuzenLogoBadge size={48} />
             <div className="leading-tight">
               <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-secondary)]">RYUZEN Operations</p>
