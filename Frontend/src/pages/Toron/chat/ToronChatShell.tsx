@@ -7,7 +7,7 @@ import type { ToronAttachment, ToronMessage } from "@/state/toron/toronSessionTy
 
 import { ComposerBar } from "./ComposerBar";
 import { MessageList } from "./MessageList";
-import { SessionSidebar } from "./SessionSidebar";
+import { SessionsToggle, SessionsWidget } from "./SessionsWidget";
 import { useComposerStateMachine } from "./useComposerStateMachine";
 
 const API_CHAT = "/api/v1/toron/chat";
@@ -201,9 +201,8 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
           </div>
         </div>
       </div>
-      <div className="hidden w-72 border-l border-white/5 bg-[color-mix(in_srgb,var(--panel-elevated)_85%,transparent)]/60 lg:block">
-        <SessionSidebar onNewSession={() => switchSession(createSession("New Toron Session"))} />
-      </div>
+      <SessionsWidget />
+      <SessionsToggle />
 
       {driveModalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
