@@ -24,7 +24,7 @@ const HeaderComponent = ({ onOpenProjects, onNewChat, title }: ToronHeaderProps)
 
   return safeRender(
     () => (
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur">
+      <header className="flex w-full items-center justify-between rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-[var(--accent)]/10 opacity-80" aria-hidden />
           <div className="flex flex-col leading-tight">
@@ -50,7 +50,7 @@ const HeaderComponent = ({ onOpenProjects, onNewChat, title }: ToronHeaderProps)
         </div>
       </header>
     ),
-    <div className="mx-auto max-w-6xl rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 text-sm text-[var(--text-secondary)]">
+    <div className="w-full rounded-2xl bg-[color-mix(in_srgb,var(--panel-strong)_62%,transparent)]/70 px-3 py-2 text-sm text-[var(--text-secondary)]">
       Toron header unavailable, but core experience remains active.
     </div>,
   );
