@@ -7,36 +7,25 @@
 /* ----------------------------- */
 
 :root {
-  --tile-bg: rgba(20, 20, 26, 0.96); /* nearly opaque */
-  --tile-bg-strong: rgba(20, 20, 26, 0.985);
+  color-scheme: dark;
+
+  --tile-bg: color-mix(in srgb, var(--bg-glass) 100%, transparent 0%);
+  --tile-bg-strong: color-mix(in srgb, var(--bg-glass) 100%, rgba(0, 0, 0, 0.08));
 
   --tile-gradient: linear-gradient(
     135deg,
-    rgba(70, 30, 140, 0.35),
-    rgba(0, 180, 150, 0.30),
-    rgba(25, 25, 32, 0.40)
+    color-mix(in srgb, var(--accent-secondary) 48%, transparent),
+    color-mix(in srgb, var(--accent-primary) 42%, transparent),
+    color-mix(in srgb, var(--bg-surface) 72%, transparent)
   );
 
-  --tile-border: rgba(255, 255, 255, 0.08);
-  --tile-border-strong: rgba(255, 255, 255, 0.14);
+  --tile-border: color-mix(in srgb, var(--border-subtle) 78%, transparent 22%);
+  --tile-border-strong: color-mix(in srgb, var(--border-subtle) 90%, transparent 10%);
 
-  --tile-inner: rgba(255, 255, 255, 0.04);
+  --tile-inner: color-mix(in srgb, var(--bg-glass) 30%, #ffffff 10%);
 
-  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
-  --tile-shadow-strong: 0 28px 65px rgba(0, 0, 0, 0.75);
-
-  --text-primary: #FFFFFF;
-  --text-secondary: #D8D8D8;
-  --text-muted: #909090;
-
-  color-scheme: dark;
-
-  --bg: 16 16 22;
-  --surface: 20 20 26;
-  --panel: 24 24 32;
-  --text: 255 255 255;
-  --subtle: 168 168 186;
-  --border: 60 60 72;
+  --tile-shadow: var(--shadow-soft);
+  --tile-shadow-strong: var(--shadow-elevated);
 
   --brand: 0 133 255;
   --brand-soft: 96 165 250;
@@ -47,21 +36,19 @@
   --radius-button: 18px;
   --radius-input: 20px;
 
-  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.32);
-  --shadow-lift: 0 22px 70px rgba(0, 0, 0, 0.48);
+  --shadow-lift: var(--shadow-elevated);
 
   --glow-blue: 0 133 255;
   --glow-purple: 139 92 246;
-  --glass-alpha: .82;
-  --aurora-gradient: linear-gradient(135deg, rgba(70, 30, 140, 0.55), rgba(0, 180, 150, 0.42), rgba(25, 25, 32, 0.85));
+  --glass-alpha: var(--glass-opacity);
+  --aurora-gradient: linear-gradient(135deg, color-mix(in srgb, var(--accent-secondary) 35%, transparent), color-mix(in srgb, var(--accent-primary) 32%, transparent), color-mix(in srgb, var(--bg-surface) 80%, transparent));
 
-  --bg-primary: #0f1016;
-  --bg-secondary: #111423;
-  --bg-elevated: #151828;
-  --border-light: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --bg-primary: var(--bg-app);
+  --bg-secondary: var(--bg-surface);
+  --border-light: var(--border-subtle);
+  --border-strong: var(--border-subtle);
 
-  /* Legacy glass tokens mapped to tile values for backward compatibility */
+  /* Legacy glass tokens mapped to theme values for backward compatibility */
   --glass-bg: var(--tile-bg);
   --glass-bg-heavy: var(--tile-bg-strong);
   --glass-inner: var(--tile-inner);
@@ -69,87 +56,6 @@
   --glass-border-strong: var(--tile-border-strong);
   --glass-shadow: var(--tile-shadow);
   --glass-shadow-strong: var(--tile-shadow-strong);
-}
-
-[data-theme="light"] {
-  --tile-bg: rgba(255, 255, 255, 0.95);
-  --tile-bg-strong: rgba(255, 255, 255, 0.98);
-
-  --tile-gradient: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.70),
-    rgba(240, 240, 255, 0.65),
-    rgba(245, 245, 255, 0.55)
-  );
-
-  --tile-border: rgba(0, 0, 0, 0.12);
-  --tile-border-strong: rgba(0, 0, 0, 0.18);
-
-  --tile-inner: rgba(255, 255, 255, 0.25);
-
-  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-  --tile-shadow-strong: 0 24px 55px rgba(0, 0, 0, 0.25);
-
-  --text-primary: #0A0A0A;
-  --text-secondary: #2A2A2A;
-  --text-muted: #6A6A6A;
-
-  color-scheme: light;
-
-  --bg: 249 250 252;
-  --surface: 255 255 255;
-  --panel: 245 245 250;
-  --text: 15 23 42;
-  --subtle: 100 116 139;
-  --border: 226 232 240;
-
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f7;
-  --bg-elevated: #ffffff;
-  --border-light: rgba(0, 0, 0, 0.12);
-  --border-strong: rgba(0, 0, 0, 0.18);
-
-  --shadow-soft: 0 16px 44px rgba(15, 23, 42, 0.14);
-  --shadow-lift: 0 18px 40px rgba(15, 23, 42, 0.18);
-
-  --aurora-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.70), rgba(240, 240, 255, 0.65), rgba(245, 245, 255, 0.80));
-}
-
-[data-theme="dark"] {
-  color-scheme: dark;
-  --tile-bg: rgba(20, 20, 26, 0.96);
-  --tile-bg-strong: rgba(20, 20, 26, 0.985);
-  --tile-gradient: linear-gradient(
-    135deg,
-    rgba(70, 30, 140, 0.35),
-    rgba(0, 180, 150, 0.30),
-    rgba(25, 25, 32, 0.40)
-  );
-  --tile-border: rgba(255, 255, 255, 0.08);
-  --tile-border-strong: rgba(255, 255, 255, 0.14);
-  --tile-inner: rgba(255, 255, 255, 0.04);
-  --tile-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
-  --tile-shadow-strong: 0 28px 65px rgba(0, 0, 0, 0.75);
-
-  --text-primary: #FFFFFF;
-  --text-secondary: #D8D8D8;
-  --text-muted: #909090;
-
-  --bg: 16 16 22;
-  --surface: 20 20 26;
-  --panel: 24 24 32;
-  --text: 255 255 255;
-  --subtle: 168 168 186;
-  --border: 60 60 72;
-
-  --bg-primary: #0f1016;
-  --bg-secondary: #111423;
-  --bg-elevated: #151828;
-  --border-light: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-
-  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.32);
-  --shadow-lift: 0 22px 70px rgba(0, 0, 0, 0.48);
 }
 
 /* Base */
@@ -189,12 +95,12 @@ body::before{
   /* Glassy panel */
   .panel{
     position: relative;
-    background: rgba(var(--panel), .78);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    border: 1px solid rgba(var(--border), .18);
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--blur-strength)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(160%);
+    border: 1px solid color-mix(in srgb, var(--border-subtle) 18%, transparent);
     border-radius: var(--radius-card);
-    box-shadow: 0 20px 60px rgba(6, 9, 20, 0.42);
+    box-shadow: var(--shadow-soft);
   }
   .panel-hover,
   .panel--hover{ transition: transform .2s, box-shadow .2s, border-color .2s; }
@@ -202,22 +108,22 @@ body::before{
   .panel--hover:hover{ transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,.12); border-color: rgba(var(--brand),.35); }
 
   .panel--glassy{
-    background: rgba(var(--surface), .72);
-    border-color: rgba(var(--border), .2);
-    box-shadow: 0 18px 50px rgba(8, 12, 24, 0.5);
+    background: var(--bg-glass);
+    border-color: color-mix(in srgb, var(--border-subtle) 28%, transparent);
+    box-shadow: var(--shadow-elevated);
   }
   [data-theme="dark"] .panel--glassy{
-    background: rgba(var(--surface), .58);
-    border-color: rgba(var(--border), .25);
+    background: color-mix(in srgb, var(--bg-glass) 95%, transparent);
+    border-color: color-mix(in srgb, var(--border-subtle) 32%, transparent);
   }
 
   .panel--immersive{
-    background: rgba(var(--panel), .6);
-    backdrop-filter: blur(26px) saturate(185%);
-    -webkit-backdrop-filter: blur(26px) saturate(185%);
-    border-color: rgba(var(--border), .22);
+    background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+    backdrop-filter: blur(var(--blur-strength)) saturate(185%);
+    -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(185%);
+    border-color: color-mix(in srgb, var(--border-subtle) 24%, transparent);
   }
-  [data-theme="dark"] .panel--immersive{ background: rgba(var(--panel), .55); }
+  [data-theme="dark"] .panel--immersive{ background: color-mix(in srgb, var(--bg-elevated) 82%, transparent); }
 
   .panel--edge{
     border-image: linear-gradient(130deg,
@@ -281,10 +187,10 @@ body::before{
   /* Legacy modifier aliases ------------------------------------------------ */
   .panel--glassy{
     position: relative;
-    background: rgba(var(--surface), .72);
-    backdrop-filter: blur(18px) saturate(180%);
-    -webkit-backdrop-filter: blur(18px) saturate(180%);
-    border-color: rgba(var(--border), .45);
+    background: var(--bg-glass);
+    backdrop-filter: blur(var(--blur-strength)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(180%);
+    border-color: color-mix(in srgb, var(--border-subtle) 32%, transparent);
   }
   .panel--glassy::after{
     content: "";
@@ -300,10 +206,10 @@ body::before{
   .panel--hover:hover{ transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,.12); border-color: rgba(var(--brand),.35); }
 
   .panel--immersive{
-    background: rgba(var(--panel), .55);
-    backdrop-filter: blur(22px) saturate(195%);
-    -webkit-backdrop-filter: blur(22px) saturate(195%);
-    border-color: rgba(var(--border), .4);
+    background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
+    backdrop-filter: blur(var(--blur-strength)) saturate(195%);
+    -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(195%);
+    border-color: color-mix(in srgb, var(--border-subtle) 32%, transparent);
   }
 
   .panel--gradient-border{ position: relative; }
@@ -344,23 +250,23 @@ body::before{
     box-shadow: none;
   }
   .panel--glassy{
-    background: rgba(var(--surface), .78);
-    border-color: rgba(var(--border), .4);
+    background: var(--bg-glass);
+    border-color: color-mix(in srgb, var(--border-subtle) 32%, transparent);
   }
   [data-theme="dark"] .panel--glassy{
-    background: rgba(var(--surface), .42);
-    border-color: rgba(var(--brand), .18);
+    background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
+    border-color: color-mix(in srgb, var(--border-subtle) 34%, transparent);
   }
 
   .panel--immersive{
-    background: rgba(var(--panel), .6);
-    backdrop-filter: blur(18px) saturate(190%);
-    -webkit-backdrop-filter: blur(18px) saturate(190%);
-    border-color: rgba(var(--border), .28);
+    background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+    backdrop-filter: blur(var(--blur-strength)) saturate(190%);
+    -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(190%);
+    border-color: color-mix(in srgb, var(--border-subtle) 30%, transparent);
   }
   [data-theme="dark"] .panel--immersive{
-    background: rgba(var(--panel), .45);
-    border-color: rgba(var(--brand), .24);
+    background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+    border-color: color-mix(in srgb, var(--border-subtle) 32%, transparent);
   }
 
   .panel-hover,
@@ -389,11 +295,11 @@ body::before{
   }
 
   .panel--edge{
-    border-color: rgba(var(--border), .5);
+    border-color: color-mix(in srgb, var(--border-subtle) 52%, transparent);
     box-shadow: 0 12px 36px rgba(15,23,42,.08);
   }
   [data-theme="dark"] .panel--edge{
-    border-color: rgba(var(--border), .35);
+    border-color: color-mix(in srgb, var(--border-subtle) 42%, transparent);
     box-shadow: 0 18px 50px rgba(0,0,0,.45);
   }
 

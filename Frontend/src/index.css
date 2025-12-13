@@ -5,34 +5,17 @@
 @import "./styles/toron.css";
 
 :root {
-  --text-primary: rgba(12, 18, 36, 0.9);
-  --text-secondary: rgba(12, 18, 36, 0.68);
-  --text-muted: rgba(12, 18, 36, 0.52);
+  /* Theme contract is defined in src/theme/themes.css */
+  --bg-primary: var(--bg-app);
+  --bg-secondary: var(--bg-surface);
 
-  --bg-primary: #f4f6fa;
-  --bg-secondary: #f0f3f8;
-  --bg-elevated: #ffffff;
-
-  --border-light: #d9e0ec;
-  --border-strong: #c3ccdc;
+  --border-light: var(--border-subtle);
+  --border-strong: var(--border-subtle);
 
   --space-4: 4px;
   --space-8: 8px;
   --space-12: 12px;
   --space-16: 16px;
-}
-
-[data-theme="dark"] {
-  --text-primary: rgba(230, 235, 247, 0.9);
-  --text-secondary: rgba(159, 172, 201, 0.72);
-  --text-muted: rgba(159, 172, 201, 0.6);
-
-  --bg-primary: #0b1018;
-  --bg-secondary: #111a28;
-  --bg-elevated: #141c2b;
-
-  --border-light: #1f2a3c;
-  --border-strong: #2a374d;
 }
 
 :root {
@@ -45,48 +28,22 @@
 
 /* Ryuzen Theme Tokens */
 
-/* LIGHT MODE */
-:root.light {
-  --bg-main: #f4f6fa;
-  --bg-card: #ffffff;
-  --bg-widget: #f0f3f8;
-  --bg-osbar: #e8edf5;
-
-  --border-card: #d9e0ec;
-  --border-osbar: #c3ccdc;
-
-  --text-primary: rgba(12, 18, 36, 0.9);
-  --text-secondary: rgba(12, 18, 36, 0.72);
-  --text-faded: rgba(12, 18, 36, 0.58);
-
-  --btn-bg: #e8edf5;
-  --btn-border: #c3ccdc;
-  --btn-text: rgba(12, 18, 36, 0.9);
-
-  --shadow-soft: 0 12px 36px rgba(12, 18, 36, 0.16);
-  --glass-blur: 0px;
-}
-
-/* DARK MODE */
+/* Mode aliases mapped to the global theme contract */
+:root.light,
 :root.dark {
-  --bg-main: #0b1018;
-  --bg-card: #141c2b;
-  --bg-widget: #192337;
-  --bg-osbar: #0f1624;
+  --bg-main: var(--bg-app);
+  --bg-card: var(--bg-elevated);
+  --bg-widget: var(--bg-surface);
+  --bg-osbar: var(--bg-elevated);
 
-  --border-card: #1f2a3c;
-  --border-osbar: #2a374d;
+  --border-card: var(--border-subtle);
+  --border-osbar: var(--border-subtle);
 
-  --text-primary: rgba(230, 235, 247, 0.9);
-  --text-secondary: rgba(159, 172, 201, 0.72);
-  --text-faded: rgba(159, 172, 201, 0.58);
+  --btn-bg: var(--bg-elevated);
+  --btn-border: var(--border-subtle);
+  --btn-text: var(--text-primary);
 
-  --btn-bg: #141c2b;
-  --btn-border: #2a374d;
-  --btn-text: rgba(230, 235, 247, 0.9);
-
-  --shadow-soft: 0 12px 36px rgba(0, 0, 0, 0.36);
-  --glass-blur: 0px;
+  --glass-blur: var(--blur-strength);
 }
 
 /* UNIVERSAL */
