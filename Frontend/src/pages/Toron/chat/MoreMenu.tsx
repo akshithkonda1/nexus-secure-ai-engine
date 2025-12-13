@@ -34,7 +34,10 @@ export function MoreMenu({ browsing, agentMode, onToggleAgent, onToggleBrowsing 
         <img src="/assets/icons/more.svg" alt="More" className="h-5 w-5" />
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-30 w-52 rounded-2xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-2 shadow-2xl backdrop-blur-xl">
+        <div
+          className="absolute bottom-14 right-0 z-30 w-52 max-h-48 overflow-y-auto rounded-2xl border border-white/10 bg-[color-mix(in_srgb,var(--panel-elevated)_94%,transparent)] p-2 shadow-2xl backdrop-blur-xl"
+          style={{ scrollbarWidth: "thin" }}
+        >
           <button
             type="button"
             className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm text-[var(--text-primary)] transition hover:bg-white/10"

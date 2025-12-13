@@ -8,6 +8,7 @@ import type { ToronAttachment, ToronMessage } from "@/state/toron/toronSessionTy
 import { ComposerBar } from "./ComposerBar";
 import { MessageList } from "./MessageList";
 import { SessionsToggle, SessionsWidget } from "./SessionsWidget";
+import { ToronContentColumn } from "./ToronContentColumn";
 import { useComposerStateMachine } from "./useComposerStateMachine";
 
 const API_CHAT = "/api/v1/toron/chat";
@@ -19,7 +20,6 @@ interface ToronChatShellProps {
 
 export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShellProps) {
   const composer = useComposerStateMachine();
-  const { updateInputs } = composer;
   const { sessions, activeSessionId, createSession, switchSession, addMessage, removeMessage, getActiveSession } =
     useToronStore();
   const [inputValue, setInputValue] = useState("");
@@ -43,8 +43,8 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
   const sessionId = session?.sessionId ?? activeSessionId;
 
   useEffect(() => {
-    updateInputs(inputValue, attachments);
-  }, [attachments, inputValue, updateInputs]);
+    composer.updateInputs(inputValue, attachments);
+  }, [attachments, composer, inputValue]);
 
   const handleAddAttachments = useCallback((files: File[], source: "upload" | "drive" | "github" = "upload") => {
     setAttachments((prev) => {
@@ -56,18 +56,18 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
         source,
       }));
       const next = [...prev, ...mapped];
-      updateInputs(inputValue, next);
+      composer.updateInputs(inputValue, next);
       return next;
     });
-  }, [inputValue, updateInputs]);
+  }, [composer, inputValue]);
 
   const handleRemoveAttachment = useCallback((id: string) => {
     setAttachments((prev) => {
       const next = prev.filter((file) => file.id !== id);
-      updateInputs(inputValue, next);
+      composer.updateInputs(inputValue, next);
       return next;
     });
-  }, [inputValue, updateInputs]);
+  }, [composer, inputValue]);
 
   const handleSend = useCallback(async () => {
     if (!sessionId) return;
@@ -153,9 +153,9 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
       setEditingMessageId(message.id);
       setInputValue(message.content);
       setAttachments(message.attachments ?? []);
-      updateInputs(message.content, message.attachments ?? []);
+      composer.updateInputs(message.content, message.attachments ?? []);
     },
-    [updateInputs],
+    [composer],
   );
 
   const handleGithubAttach = useCallback(
@@ -174,33 +174,37 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
   const activeMessages = useMemo(() => session?.messages ?? [], [session]);
 
   return (
-    <div className="relative flex h-full min-h-screen bg-[var(--panel-main)] text-[var(--text-primary)]">
-      <div className="flex min-h-screen flex-1 flex-col px-3 pt-3 sm:px-6 sm:pt-5">
-        <ToronHeader
-          title={session?.title ?? "Toron"}
-          onNewChat={() => switchSession(createSession("New Toron Session"))}
-          onOpenProjects={onOpenProjects}
-        />
-        <MessageList messages={activeMessages} onEditMessage={handleEditMessage} onSaveToProject={onSaveToProject} />
-        <div className="fixed bottom-4 left-0 right-0 flex justify-start px-4 sm:px-6 lg:px-10">
-          <div className="w-full max-w-5xl">
-            <ComposerBar
-              value={inputValue}
-              onChange={setInputValue}
-              onSend={handleSend}
-              attachments={attachments}
-              onAddAttachments={handleAddAttachments}
-              onRemoveAttachment={handleRemoveAttachment}
-              composer={composer}
-              browsing={browsing}
-              agentMode={agentMode}
-              onToggleAgent={() => setAgentMode((prev) => !prev)}
-              onToggleBrowsing={() => setBrowsing((prev) => !prev)}
-              onOpenDriveModal={() => setDriveModalOpen(true)}
-              onOpenGithubModal={() => setGithubModalOpen(true)}
-            />
-          </div>
-        </div>
+    <div className="relative flex min-h-screen w-full flex-col bg-[var(--panel-main)] text-[var(--text-primary)]">
+      <div className="flex w-full flex-1 flex-col items-center gap-4 pt-3 sm:pt-5">
+        <ToronContentColumn>
+          <ToronHeader
+            title={session?.title ?? "Toron"}
+            onNewChat={() => switchSession(createSession("New Toron Session"))}
+            onOpenProjects={onOpenProjects}
+          />
+        </ToronContentColumn>
+        <ToronContentColumn className="flex w-full flex-1">
+          <MessageList messages={activeMessages} onEditMessage={handleEditMessage} onSaveToProject={onSaveToProject} />
+        </ToronContentColumn>
+      </div>
+      <div className="pointer-events-none fixed bottom-4 left-0 right-0">
+        <ToronContentColumn className="pointer-events-auto">
+          <ComposerBar
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSend}
+            attachments={attachments}
+            onAddAttachments={handleAddAttachments}
+            onRemoveAttachment={handleRemoveAttachment}
+            composer={composer}
+            browsing={browsing}
+            agentMode={agentMode}
+            onToggleAgent={() => setAgentMode((prev) => !prev)}
+            onToggleBrowsing={() => setBrowsing((prev) => !prev)}
+            onOpenDriveModal={() => setDriveModalOpen(true)}
+            onOpenGithubModal={() => setGithubModalOpen(true)}
+          />
+        </ToronContentColumn>
       </div>
       <SessionsWidget />
       <SessionsToggle />
