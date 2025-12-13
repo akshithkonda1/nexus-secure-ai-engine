@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import type { ToronMessage, ToronSession } from "@/state/toron/toronSessionTypes";
+import type { ToronAttachment, ToronMessage, ToronSession } from "@/state/toron/toronSessionTypes";
 
 // Basic validators keep UI defensive and predictable.
 export const safeString = (value: unknown, fallback = "unknown"): string => {
@@ -59,6 +59,18 @@ export const safeFormatDistance = (value?: unknown): string => {
   }
 };
 
+const safeAttachment = (raw: unknown): ToronAttachment => {
+  const base = safeObject(raw as Record<string, unknown>, {} as Record<string, unknown>);
+  return {
+    id: safeString(base.id, nanoid()),
+    name: safeString(base.name, "attachment"),
+    type: safeString(base.type, "file"),
+    size: typeof base.size === "number" ? base.size : undefined,
+    previewUrl: typeof base.previewUrl === "string" ? base.previewUrl : undefined,
+    source: base.source === "drive" || base.source === "github" ? base.source : "upload",
+  };
+};
+
 export const safeMessage = (raw: unknown): ToronMessage => {
   const baseId = nanoid();
   const obj = safeObject(raw as Record<string, unknown>, { id: baseId } as Record<string, unknown>);
@@ -78,6 +90,12 @@ export const safeMessage = (raw: unknown): ToronMessage => {
     content: safeString(obj.content ?? obj.text, ""),
     model: safeString(obj.model, "unknown-model"),
     timestamp,
+    attachments: safeArray(obj.attachments, []).map(safeAttachment),
+    meta: {
+      browsing: safeBool(obj.meta?.browsing, false),
+      agentMode: safeBool(obj.meta?.agentMode, false),
+      editedFromId: typeof obj.meta?.editedFromId === "string" ? obj.meta.editedFromId : undefined,
+    },
   };
 };
 
