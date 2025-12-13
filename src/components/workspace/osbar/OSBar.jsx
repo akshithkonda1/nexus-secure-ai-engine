@@ -1,4 +1,5 @@
 import React from "react";
+import { Bell, User } from "lucide-react";
 
 const items = [
   { key: "pages", label: "Pages" },
@@ -30,7 +31,7 @@ const OSBar = ({ activeMode, onSelect }) => {
           }`}
           aria-label="Notifications"
         >
-          <span className="text-lg">🔔</span>
+          <Bell size={18} strokeWidth={2} aria-hidden />
         </button>
         <button
           onClick={() => onSelect("pages")}
@@ -39,7 +40,7 @@ const OSBar = ({ activeMode, onSelect }) => {
           }`}
           aria-label="User"
         >
-          <span className="text-lg">👤</span>
+          <User size={18} strokeWidth={2} aria-hidden />
         </button>
       </div>
     </div>

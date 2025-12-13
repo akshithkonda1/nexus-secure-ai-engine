@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Bell } from "lucide-react";
 import { useTheme } from "../../state/theme";
 
 interface TopNavProps {
@@ -20,7 +21,7 @@ const TopNav: React.FC<TopNavProps> = ({ onProfile }) => {
       </Link>
       <div className="nav-actions">
         <button type="button" className="icon-button" aria-label="Notifications">
-          🔔
+          <Bell size={18} strokeWidth={2} aria-hidden />
         </button>
         <button
           type="button"

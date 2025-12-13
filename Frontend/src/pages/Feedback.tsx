@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Feedback: React.FC = () => {
@@ -12,7 +13,7 @@ const Feedback: React.FC = () => {
     <div className="modal-backdrop" role="dialog" aria-modal="true">
       <div className="modal-panel glass-panel" style={{ width: 520 }}>
         <button type="button" className="close-button" aria-label="Close feedback" onClick={close}>
-          ✕
+          <X size={16} strokeWidth={2} aria-hidden />
         </button>
         {!submitted ? (
           <div style={{ display: "grid", gap: 12 }}>

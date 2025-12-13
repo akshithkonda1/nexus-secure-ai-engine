@@ -35,7 +35,7 @@ const Home: React.FC = () => {
                 <div style={{ fontWeight: 700 }}>{section.title}</div>
                 <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Tap to {collapsed[section.title] ? "expand" : "minimize"}</div>
               </div>
-              <span aria-hidden>{collapsed[section.title] ? "＋" : "−"}</span>
+              <span aria-hidden>{collapsed[section.title] ? "+" : "-"}</span>
             </div>
             {!collapsed[section.title] && <div className="accordion-body">{section.body}</div>}
           </div>

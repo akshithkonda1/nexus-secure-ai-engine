@@ -1,4 +1,5 @@
 import React from "react";
+import { X } from "lucide-react";
 import { useTheme } from "../../state/theme";
 
 interface ProfileModalProps {
@@ -12,7 +13,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose }) => {
     <div className="modal-backdrop" role="dialog" aria-modal="true">
       <div className="modal-panel glass-panel">
         <button type="button" className="close-button" aria-label="Close profile" onClick={onClose}>
-          ✕
+          <X size={16} strokeWidth={2} aria-hidden />
         </button>
         <h2 style={{ marginTop: 0, marginBottom: 8 }}>Profile</h2>
         <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 18 }}>

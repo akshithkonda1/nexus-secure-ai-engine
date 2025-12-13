@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Check, Circle, Mic, Plus, Send, X } from "lucide-react";
 
 interface Message {
   id: string;
@@ -60,7 +61,7 @@ const Toron: React.FC = () => {
         {sessionsOpen && (
           <div style={{ display: "grid", gap: 10 }}>
             <div className="session-status">
-              <span aria-hidden>🟢</span>
+              <Circle size={12} strokeWidth={3} color="var(--accent-green)" fill="var(--accent-green)" aria-hidden />
               Soft green alive pulse
             </div>
             {sessions.map((session) => (
@@ -79,7 +80,7 @@ const Toron: React.FC = () => {
             <h2 style={{ margin: 0 }}>Authoritative chat</h2>
           </div>
           <div className="mini-card" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span aria-hidden>🎙️</span>
+            <Mic size={18} strokeWidth={1.8} aria-hidden />
             Mic ready — speech-to-text only
           </div>
         </div>
@@ -91,8 +92,12 @@ const Toron: React.FC = () => {
                 {message.role === "assistant" && (
                   <>
                     <span className="control-chip">Copy</span>
-                    <span className="control-chip">Regenerate ✓</span>
-                    <span className="control-chip">Regenerate ✕</span>
+                    <span className="control-chip">
+                      <Check size={12} strokeWidth={2.2} aria-hidden /> Regenerate
+                    </span>
+                    <span className="control-chip">
+                      <X size={12} strokeWidth={2.2} aria-hidden /> Dismiss
+                    </span>
                     <span className="control-chip">Read aloud</span>
                     <span className="control-chip">Branch new chat</span>
                     <span className="control-chip">Report message</span>
@@ -107,10 +112,10 @@ const Toron: React.FC = () => {
 
         <div className="composer" role="form" aria-label="Toron composer">
           <button type="button" className="icon-button" aria-label="Plus actions">
-            ＋
+            <Plus size={16} strokeWidth={2} aria-hidden />
           </button>
           <button type="button" className="icon-button" aria-label="Microphone input">
-            🎤
+            <Mic size={16} strokeWidth={2} aria-hidden />
           </button>
           <input
             value={draft}
@@ -124,7 +129,8 @@ const Toron: React.FC = () => {
             onClick={sendDraft}
             style={{ transition: "transform 180ms ease" }}
           >
-            Send →
+            <Send size={16} strokeWidth={2} style={{ marginRight: 8 }} aria-hidden />
+            Send
           </button>
         </div>
       </div>

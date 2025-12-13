@@ -5,7 +5,7 @@ from ryuzen.engine.toron_engine import ToronEngine
 class ToronDoctor:
     @staticmethod
     def run():
-        print("🔍 Toron Doctor — Diagnostics Running…")
+        print("[Toron Doctor] Diagnostics Running…")
         SimulationMode.enable()
 
         engine = ToronEngine()
@@ -18,4 +18,4 @@ class ToronDoctor:
         print("Lineage:", result["lineage"])
         print("Response:", result["response"])
 
-        print("\n✅ Toron Engine appears operational.\n")
+        print("\n[OK] Toron Engine appears operational.\n")

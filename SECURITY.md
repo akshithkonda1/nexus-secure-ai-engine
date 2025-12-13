@@ -4,8 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| main    | ✅        |
-| tags    | ✅        |
+| main    | Yes      |
+| tags    | Yes      |
 
 All production deployments must track the latest tagged release and incorporate security patches within 7 days of publication.
 

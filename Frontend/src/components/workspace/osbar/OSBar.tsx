@@ -1,4 +1,5 @@
 import React from "react";
+import { Bell } from "lucide-react";
 import type { WorkspaceMode } from "../WorkspaceCanvas";
 
 interface OSBarProps {
@@ -52,7 +53,7 @@ const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
             style={buttonStyle(false)}
             aria-label="Notifications"
           >
-            🔔
+            <Bell size={18} strokeWidth={2} aria-hidden />
           </button>
         </div>
       </div>

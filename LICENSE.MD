@@ -29,4 +29,4 @@ If you wish to use Nexus in a **commercial product, paid service, or for-profit 
 
 **Failure to follow these steps will constitute a license violation and may result in legal action.**
 
-🔗 Full License Text: [Creative Commons BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
+Full License Text: [Creative Commons BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode)

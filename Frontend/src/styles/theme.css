@@ -6,6 +6,7 @@
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
+  --icon-primary: rgba(20, 20, 30, 0.85);
   --accent-purple: #7c7bff;
   --accent-green: #4bd1a0;
   --accent-teal: #47c0c7;
@@ -40,6 +41,7 @@
   --text-primary: #e6ebff;
   --text-secondary: #c5d0ff;
   --text-muted: #8fa1c7;
+  --icon-primary: rgba(255, 255, 255, 0.85);
   --accent-purple: #9f8cff;
   --accent-green: #5de0b8;
   --accent-teal: #57d7e0;
