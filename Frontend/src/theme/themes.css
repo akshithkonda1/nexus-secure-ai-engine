@@ -27,6 +27,7 @@
 
   --border-subtle: #2a374d;
   --border-subtle-rgb: 42 55 77;
+  --border-soft: var(--border-subtle);
 
   --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.34);
   --shadow-elevated: 0 26px 86px rgba(0, 0, 0, 0.46);
@@ -89,6 +90,7 @@
 
   --border-subtle: #d9e0ec;
   --border-subtle-rgb: 217 224 236;
+  --border-soft: var(--border-subtle);
 
   --shadow-soft: 0 16px 46px rgba(12, 18, 36, 0.16);
   --shadow-elevated: 0 24px 70px rgba(12, 18, 36, 0.22);
@@ -134,6 +136,7 @@
 
   --border-subtle: #2a374d;
   --border-subtle-rgb: 42 55 77;
+  --border-soft: var(--border-subtle);
 
   --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.34);
   --shadow-elevated: 0 26px 86px rgba(0, 0, 0, 0.46);
