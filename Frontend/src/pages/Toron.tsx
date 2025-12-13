@@ -59,9 +59,22 @@ function Sessions() {
     []
   );
 
+  const toggle = () => setOpen((prev) => !prev);
+
   return (
     <aside className="sessions" aria-label="Sessions">
-      <div className="head" onClick={() => setOpen((prev) => !prev)} role="button" tabIndex={0}>
+      <div
+        className="head"
+        onClick={toggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggle();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
         <div className="session-title">
           <span className="pulse" aria-hidden="true" />
           <strong>Sessions</strong>
@@ -79,6 +92,27 @@ function Sessions() {
         </div>
       )}
     </aside>
+  );
+}
+
+function PlusMenu({ onInsert }: { onInsert: (value: string) => void }) {
+  const items = [
+    { id: "snippet", label: "Insert structured snippet" },
+    { id: "reference", label: "Upload reference" },
+    { id: "workspace", label: "Link workspace context" },
+  ];
+
+  return (
+    <details className="plus-menu">
+      <summary aria-label="Open plus menu" className="icon-button">+</summary>
+      <div className="more-menu-list" role="menu">
+        {items.map((item) => (
+          <button key={item.id} role="menuitem" onClick={() => onInsert(item.label)}>
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -104,10 +138,8 @@ function Toron() {
       <div className="glass-panel chat-window" aria-live="polite">
         {messages.map((message) => (
           <div key={message.id} className="message-row">
-            <div className={`bubble ${message.role}`}>
-              <p className="section-body bubble-text">
-                {message.content}
-              </p>
+            <div className={`bubble ${message.role}`} tabIndex={0}>
+              <p className="section-body bubble-text">{message.content}</p>
               {message.role === "assistant" && <AssistantControls />}
             </div>
           </div>
@@ -115,16 +147,14 @@ function Toron() {
       </div>
       <div className="composer">
         <div className="composer-inner">
-          <button className="icon-button" type="button" aria-label="Open plus menu">
-            +
-          </button>
+          <PlusMenu onInsert={(value) => setDraft((prev) => `${prev ? `${prev} ` : ""}${value}`)} />
           <textarea
             rows={1}
             placeholder="Calm, thoughtful prompts only"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
           />
-          <button className="icon-button" type="button" aria-label="Mic input">
+          <button className="icon-button" type="button" aria-label="Mic input (speech to text)">
             🎙️
           </button>
           <button className="send-button" type="button" onClick={sendMessage}>

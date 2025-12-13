@@ -265,24 +265,46 @@ main {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent-purple) 12%, transparent) 0%, transparent 38%),
-    radial-gradient(circle at 75% 25%, color-mix(in srgb, var(--accent-teal) 12%, transparent) 0%, transparent 40%),
-    radial-gradient(circle at 40% 75%, color-mix(in srgb, var(--accent-green) 10%, transparent) 0%, transparent 50%),
-    linear-gradient(145deg, var(--bg-canvas), var(--bg-elevated));
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--bg-canvas), var(--bg-elevated));
+}
+
+.cosmic-gradient,
+.cosmic-veil,
+.cosmic-stars {
+  position: absolute;
+  inset: 0;
+}
+
+.cosmic-gradient {
+  background: radial-gradient(circle at 22% 20%, color-mix(in srgb, var(--accent-purple) 12%, transparent) 0%, transparent 38%),
+    radial-gradient(circle at 78% 24%, color-mix(in srgb, var(--accent-teal) 12%, transparent) 0%, transparent 42%),
+    radial-gradient(circle at 42% 78%, color-mix(in srgb, var(--accent-green) 12%, transparent) 0%, transparent 48%);
+  opacity: 0.8;
 }
 
 .cosmic-veil {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent-teal) 15%, transparent) 0%, transparent 45%),
-    radial-gradient(circle at 60% 70%, color-mix(in srgb, var(--accent-purple) 10%, transparent) 0%, transparent 50%);
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent-teal) 16%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 60% 70%, color-mix(in srgb, var(--accent-purple) 12%, transparent) 0%, transparent 52%);
   mix-blend-mode: screen;
-  opacity: 0.25;
+  opacity: 0.24;
   filter: blur(28px);
+  transition: opacity 0.3s ease;
+}
+
+.cosmic-stars {
+  background: radial-gradient(circle at 15% 35%, color-mix(in srgb, var(--text-primary) 14%, transparent) 1px, transparent 32%),
+    radial-gradient(circle at 75% 65%, color-mix(in srgb, var(--text-secondary) 16%, transparent) 1px, transparent 34%);
+  opacity: 0.12;
+  filter: blur(0.4px);
 }
 
 [data-theme="light"] .cosmic-veil {
-  opacity: 0.12;
+  opacity: 0.1;
+}
+
+[data-theme="light"] .cosmic-stars {
+  opacity: 0.05;
 }
 
 .page {
@@ -370,6 +392,9 @@ main {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 .control-button {
@@ -388,6 +413,34 @@ main {
   background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
+}
+
+.bubble.assistant:hover .assistant-controls,
+.bubble.assistant:focus-within .assistant-controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.plus-menu {
+  position: relative;
+}
+
+.plus-menu summary {
+  list-style: none;
+}
+
+.plus-menu[open] > summary::marker,
+.plus-menu summary::marker {
+  display: none;
+}
+
+.plus-menu[open] .more-menu-list {
+  display: grid;
+  gap: 6px;
+  position: absolute;
+  top: 115%;
+  left: 0;
+  min-width: 220px;
 }
 
 .more-menu {
@@ -495,11 +548,24 @@ main {
   cursor: pointer;
   box-shadow: var(--shadow-soft);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: sendGlow 8s ease-in-out infinite;
 }
 
 .send-button:hover {
   transform: translateY(-1px) scale(1.01);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--accent-purple) 25%, transparent);
+}
+
+@keyframes sendGlow {
+  0% {
+    box-shadow: var(--shadow-soft);
+  }
+  50% {
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--accent-teal) 18%, transparent);
+  }
+  100% {
+    box-shadow: var(--shadow-soft);
+  }
 }
 
 .sessions {

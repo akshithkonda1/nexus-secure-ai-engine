@@ -1,6 +1,4 @@
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import CosmicCanvas from "./components/CosmicCanvas";
-import Header from "./components/Header";
+import { Route, Routes, useLocation } from "react-router-dom";
 import RouteBoundary from "./components/RouteBoundary";
 import Documents from "./pages/Documents";
 import History from "./pages/History";
@@ -83,18 +81,4 @@ function AppRoutes() {
   );
 }
 
-function ShellWithRouter() {
-  return (
-    <BrowserRouter>
-      <div className="content-shell">
-        <Header />
-        <main>
-          <AppRoutes />
-        </main>
-      </div>
-      <CosmicCanvas />
-    </BrowserRouter>
-  );
-}
-
-export default ShellWithRouter;
+export default AppRoutes;

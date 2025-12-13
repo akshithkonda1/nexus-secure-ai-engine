@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 
 function RouteBoundary({ children }: { children: React.ReactNode }) {
-  useEffect(() => () => undefined, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    return () => undefined;
+  }, []);
+
   return <>{children}</>;
 }
 

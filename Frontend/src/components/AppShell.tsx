@@ -1,13 +1,24 @@
-import ShellWithRouter from "../router";
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "../router";
+import CosmicCanvas from "./CosmicCanvas";
+import Header from "./Header";
 import { ThemeProvider } from "../theme/ThemeProvider";
 
 function AppShell() {
   return (
-    <div className="app-shell">
-      <ThemeProvider>
-        <ShellWithRouter />
-      </ThemeProvider>
-    </div>
+    <ThemeProvider>
+      <div className="app-shell">
+        <CosmicCanvas />
+        <BrowserRouter>
+          <div className="content-shell">
+            <Header />
+            <main>
+              <AppRoutes />
+            </main>
+          </div>
+        </BrowserRouter>
+      </div>
+    </ThemeProvider>
   );
 }
 
