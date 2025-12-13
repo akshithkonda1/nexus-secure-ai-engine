@@ -1,20 +1,31 @@
-import { SlideUp } from "@/components/animations/SlideUp";
-import { useTheme } from "@/theme/useTheme";
+const documents = [
+  { id: "d1", title: "Trust charter", summary: "Defines transparency principles for all interfaces." },
+  { id: "d2", title: "Workspace handbook", summary: "How to keep artifacts aligned and visible." },
+  { id: "d3", title: "ALOE reference", summary: "Quick guide to Align, Link, Observe, Elevate." },
+];
 
-export default function Documents() {
-  const { resolvedTheme } = useTheme();
-
+function Documents() {
   return (
-    <div className="space-y-6">
-      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
-        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Documents</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Intelligence cache</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Attach your files once backend sync is ready. Theme: {resolvedTheme}.</p>
-      </SlideUp>
-
-      <SlideUp className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4">
-        <p className="text-sm text-[var(--text-secondary)]">Document grid placeholder.</p>
-      </SlideUp>
+    <div className="page">
+      <div className="glass-panel hero">
+        <div>
+          <p className="section-body">Documents</p>
+          <h1>Reference the material without leaving Toron.</h1>
+        </div>
+        <p className="section-body">Lightweight access to the essentials. No persistence beyond what is needed.</p>
+      </div>
+      <div className="glass-panel section-card">
+        <div className="simple-list">
+          {documents.map((doc) => (
+            <div key={doc.id} className="simple-item">
+              <h3 className="section-title">{doc.title}</h3>
+              <p className="section-body">{doc.summary}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+export default Documents;

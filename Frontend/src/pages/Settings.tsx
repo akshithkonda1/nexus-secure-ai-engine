@@ -1,36 +1,55 @@
-import { SlideUp } from "@/components/animations/SlideUp";
-import { useTheme, type ThemeMode } from "@/theme/useTheme";
+import { useTheme } from "../theme/ThemeProvider";
 
-export default function Settings() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const modes: ThemeMode[] = ["light", "dark", "system"];
+function Settings() {
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="space-y-6">
-      <SlideUp className="rounded-3xl border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-6 shadow-[0_22px_70px_rgba(0,0,0,0.35)]">
-        <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-secondary)]">Settings</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">System preferences</h1>
-        <p className="text-sm text-[var(--text-secondary)]">Choose how Ryuzen renders. Currently using {resolvedTheme}.</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {modes.map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setTheme(mode)}
-              className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                theme === mode
-                  ? "border-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] text-[var(--text-primary)]"
-                  : "border-[var(--border-soft)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              {mode.toUpperCase()}
-            </button>
-          ))}
+    <div className="page">
+      <div className="glass-panel hero">
+        <div>
+          <p className="section-body">Settings</p>
+          <h1>Predictable and boring on purpose.</h1>
         </div>
-      </SlideUp>
-
-      <SlideUp className="rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)] p-4">
-        <p className="text-sm text-[var(--text-secondary)]">More settings panels will appear here soon.</p>
-      </SlideUp>
+        <p className="section-body">Theme, account, privacy, and preferences. Nothing more, nothing hidden.</p>
+      </div>
+      <div className="settings-grid">
+        <div className="glass-panel settings-card">
+          <h3>Theme</h3>
+          <p>Light and dark share identical tokens. Toggle to switch.</p>
+          <button className="pill-button" type="button" onClick={toggleTheme}>
+            Switch to {theme === "dark" ? "light" : "dark"}
+          </button>
+        </div>
+        <div className="glass-panel settings-card">
+          <h3>Account</h3>
+          <p>Manage credentials without touching route state.</p>
+          <label htmlFor="name">Display name</label>
+          <input id="name" name="name" placeholder="Ryuzen user" />
+          <small>Local only. Clears on navigation.</small>
+        </div>
+        <div className="glass-panel settings-card">
+          <h3>Privacy</h3>
+          <p>Visibility settings stay explicit.</p>
+          <label htmlFor="visibility">Session visibility</label>
+          <select id="visibility" name="visibility" defaultValue="private">
+            <option value="private">Private</option>
+            <option value="team">Team</option>
+            <option value="org">Organization</option>
+          </select>
+        </div>
+        <div className="glass-panel settings-card">
+          <h3>Preferences</h3>
+          <p>Operational defaults for Toron and Workspace.</p>
+          <label htmlFor="notifications">Notifications</label>
+          <select id="notifications" name="notifications" defaultValue="calm">
+            <option value="calm">Calm</option>
+            <option value="focused">Focused</option>
+            <option value="detailed">Detailed</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default Settings;
