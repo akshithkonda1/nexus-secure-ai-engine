@@ -28,7 +28,7 @@ const HeaderComponent = ({ onOpenProjects, onNewChat, title }: ToronHeaderProps)
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-[var(--accent)]/10 opacity-80" aria-hidden />
           <div className="flex flex-col leading-tight">
-            <span className="text-[11px] text-[var(--text-secondary)] opacity-70">Neural Ops</span>
+            <span className="text-[11px] text-[var(--text-secondary)] opacity-70">Toron</span>
             <h1 className="text-base font-medium text-[var(--text-primary)]">{resolvedTitle}</h1>
           </div>
         </div>
