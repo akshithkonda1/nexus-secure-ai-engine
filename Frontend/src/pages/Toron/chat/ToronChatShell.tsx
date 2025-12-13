@@ -175,6 +175,7 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-[var(--panel-main)] text-[var(--text-primary)]">
+      <div className="toron-aurora-layer" aria-hidden />
       <div className="flex w-full flex-1 flex-col items-center gap-4 pt-3 sm:pt-5">
         <ToronContentColumn>
           <ToronHeader
@@ -188,7 +189,11 @@ export function ToronChatShell({ onOpenProjects, onSaveToProject }: ToronChatShe
         </ToronContentColumn>
       </div>
       <div className="pointer-events-none fixed bottom-4 left-0 right-0">
-        <ToronContentColumn className="pointer-events-auto">
+        <ToronContentColumn className="pointer-events-none relative">
+          <div className="pointer-events-auto absolute right-0 -top-20 flex flex-col items-end gap-3 sm:-top-24">
+            <SessionsWidget className="relative" />
+            <SessionsToggle className="relative" />
+          </div>
           <ComposerBar
             value={inputValue}
             onChange={setInputValue}

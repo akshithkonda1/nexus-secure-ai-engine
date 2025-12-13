@@ -19,12 +19,16 @@ const formatTimestamp = (value?: string | null) => {
   }
 };
 
-export function SessionsToggle() {
+interface SessionsToggleProps {
+  className?: string;
+}
+
+export function SessionsToggle({ className = "" }: SessionsToggleProps) {
   const { sessionsWidgetState, setSessionsWidgetState } = useToronUIStore();
   const [hovered, setHovered] = useState(false);
 
   const baseClasses =
-    "fixed bottom-28 right-4 z-30 flex items-center gap-2 rounded-full backdrop-blur-lg transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent)_70%,transparent)] motion-reduce:transform-none motion-reduce:transition-none";
+    "z-30 flex items-center gap-2 rounded-full backdrop-blur-lg transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent)_70%,transparent)] motion-reduce:transform-none motion-reduce:transition-none";
 
   if (sessionsWidgetState === "hidden") {
     return (
@@ -32,7 +36,7 @@ export function SessionsToggle() {
         type="button"
         aria-label="Show sessions"
         onClick={() => setSessionsWidgetState("collapsed")}
-        className={`${baseClasses} bg-[var(--panel-elevated)]/40 px-3 py-2 text-xs text-[var(--text-secondary)] shadow-[0_6px_20px_rgba(0,0,0,0.18)] hover:bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)]`}
+        className={`${baseClasses} ${className} bg-[var(--panel-elevated)]/40 px-3 py-2 text-xs text-[var(--text-secondary)] shadow-[0_6px_20px_rgba(0,0,0,0.18)] hover:bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)]`}
       >
         <span className="sr-only">Open sessions widget</span>
         <span aria-hidden className="h-1.5 w-10 rounded-full bg-[var(--text-secondary)]/60" />
@@ -47,15 +51,23 @@ export function SessionsToggle() {
       onClick={() => setSessionsWidgetState("expanded")}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`${baseClasses} bg-[var(--panel-elevated)]/70 px-3 py-2 text-sm text-[var(--text-primary)] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[color-mix(in_srgb,var(--panel-elevated)_85%,transparent)]`}
+      className={`${baseClasses} ${className} bg-[var(--panel-elevated)]/70 px-3 py-2 text-sm text-[var(--text-primary)] shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:bg-[color-mix(in_srgb,var(--panel-elevated)_85%,transparent)]`}
     >
-      <span className={`h-2 w-2 rounded-full transition ${hovered ? "bg-[var(--accent)]" : "bg-[var(--text-secondary)]/70"}`} />
+      <span
+        className={`h-2 w-2 rounded-full transition-colors duration-200 ${hovered ? "bg-[var(--accent)]" : "bg-[var(--text-secondary)]/70"}`}
+      >
+        <span className="toron-session-breath pointer-events-none block h-full w-full rounded-full" aria-hidden />
+      </span>
       <span className="font-semibold">Sessions</span>
     </button>
   );
 }
 
-export function SessionsWidget() {
+interface SessionsWidgetProps {
+  className?: string;
+}
+
+export function SessionsWidget({ className = "" }: SessionsWidgetProps) {
   const { sessionsWidgetState, setSessionsWidgetState, sessionsScrollTop, setSessionsScrollTop } = useToronUIStore();
   const { sessions, activeSessionId, switchSession, renameSession, deleteSession, createSession } = useToronStore();
 
@@ -104,7 +116,7 @@ export function SessionsWidget() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-28 right-4 z-40 w-80 max-w-[85vw] overflow-hidden rounded-3xl bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] shadow-[0_14px_42px_rgba(0,0,0,0.32)] backdrop-blur-xl transition duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none"
+      className={`z-40 w-80 max-w-[85vw] overflow-hidden rounded-3xl bg-[color-mix(in_srgb,var(--panel-elevated)_88%,transparent)] shadow-[0_14px_42px_rgba(0,0,0,0.32)] backdrop-blur-xl transition duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none ${className}`}
       style={{ transform: "translateY(4px)", opacity: 1 }}
     >
       <div className="flex items-center justify-between px-4 py-3 text-[var(--text-primary)]">

@@ -33,6 +33,76 @@
   overflow: hidden;
 }
 
+.toron-aurora-layer {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(120% 120% at 20% 20%, rgba(76, 81, 191, 0.22), transparent 44%),
+    radial-gradient(120% 120% at 78% 12%, rgba(139, 92, 246, 0.18), transparent 42%),
+    radial-gradient(120% 120% at 52% 86%, rgba(16, 185, 129, 0.16), transparent 46%),
+    radial-gradient(120% 120% at 48% 62%, rgba(45, 212, 191, 0.12), transparent 50%);
+  mix-blend-mode: screen;
+  opacity: 0.16;
+  filter: blur(32px) saturate(110%);
+  pointer-events: none;
+  animation: toron-aurora-drift 32s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] .toron-aurora-layer {
+  opacity: 0.04;
+  animation: none;
+}
+
+@keyframes toron-aurora-drift {
+  0% {
+    transform: translate3d(-6%, -2%, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(-2%, 5%, 0) scale(1.01);
+  }
+}
+
+.toron-session-breath {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background: color-mix(in srgb, #10b981 70%, transparent);
+  animation: toron-session-breathe 3.2s ease-in-out infinite;
+  opacity: 0.18;
+}
+
+@keyframes toron-session-breathe {
+  0% {
+    opacity: 0.12;
+    transform: scale(0.9);
+    background: color-mix(in srgb, #10b981 70%, transparent);
+  }
+  50% {
+    opacity: 0.18;
+    transform: scale(1.08);
+    background: color-mix(in srgb, #14b8a6 70%, transparent);
+  }
+  100% {
+    opacity: 0.12;
+    transform: scale(0.95);
+    background: color-mix(in srgb, #10b981 70%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toron-aurora-layer {
+    animation: none;
+  }
+
+  .toron-session-breath {
+    animation: none;
+  }
+}
+
 .toron-shell::before {
   content: "";
   position: absolute;

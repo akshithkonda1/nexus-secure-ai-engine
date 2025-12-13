@@ -23,10 +23,10 @@ export function MessageBubble({ message, onEdit, onSaveToProject }: MessageBubbl
   return (
     <article
       tabIndex={0}
-      className={`group relative w-full rounded-3xl border border-white/5 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
+      className={`group relative w-full border border-white/5 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
         isUser
-          ? "ml-auto max-w-3xl bg-[color-mix(in_srgb,var(--accent-primary)_14%,var(--panel-elevated))]"
-          : "mr-auto max-w-4xl bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)]"
+          ? "ml-auto max-w-3xl rounded-[18px] bg-[color-mix(in_srgb,var(--accent-primary)_14%,var(--panel-elevated))]"
+          : "mr-auto max-w-4xl rounded-[20px] bg-[color-mix(in_srgb,var(--panel-elevated)_92%,transparent)]"
       }`}
     >
       <header className="mb-2 flex items-center justify-between text-xs text-[var(--text-tertiary)]">
@@ -45,7 +45,7 @@ export function MessageBubble({ message, onEdit, onSaveToProject }: MessageBubbl
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+        <div className="flex items-center gap-2 opacity-0 transition-opacity duration-100 group-hover:opacity-100 focus-within:opacity-100">
           {isUser && (
             <button
               type="button"
