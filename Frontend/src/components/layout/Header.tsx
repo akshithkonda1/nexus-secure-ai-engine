@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, LogOut, Mail, Paintbrush2, ShieldCheck, User, Wand2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { RyuzenLogoBadge } from "@/components/RyuzenBrandmark";
-import { useTheme } from "@/theme/useTheme";
+import { AuroraToggle } from "@/components/layout/AuroraToggle";
+import { ProfileModal } from "@/components/layout/ProfileModal";
 
 const userProfile = {
   name: "Ryuzen Operator",
@@ -16,7 +17,7 @@ const userProfile = {
 export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const { toggleTheme, resolvedTheme } = useTheme();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -50,17 +51,14 @@ export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            className="group flex items-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_70%,transparent)] px-3 py-2 text-[var(--text-secondary)] shadow-inner transition hover:text-[var(--text-primary)]"
-          >
-            <Paintbrush2 className="h-4 w-4" />
-            <span className="text-sm font-semibold">{resolvedTheme === "dark" ? "Dark" : "Light"}</span>
-          </button>
+          <AuroraToggle />
 
           <div ref={dropdownRef} className="relative">
             <button
-              onClick={() => setOpen((prev) => !prev)}
+              onClick={() => {
+                setOpen((prev) => !prev);
+                setProfileOpen(false);
+              }}
               className="flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--panel-elevated)_70%,transparent)] px-2 py-1 text-left shadow-sm transition hover:-translate-y-[1px]"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--accent-secondary)_35%,transparent)] text-sm font-semibold text-[var(--text-primary)]">
@@ -85,46 +83,44 @@ export function Header({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                     <p className="text-xs text-[var(--text-secondary)]">Plan: {userProfile.plan}</p>
                   </div>
                   <div className="space-y-1 border-t border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-strong)_90%,transparent)] p-3">
-                    <ProfileAction icon={<User className="h-4 w-4" />} label="Change password" />
-                    <ProfileAction icon={<Wand2 className="h-4 w-4" />} label="Change profile picture" />
-                    {!userProfile.isOAuth && (
-                      <ProfileAction icon={<Mail className="h-4 w-4" />} label="Change email" secondary={userProfile.email} />
-                    )}
-                    <ProfileAction icon={<ShieldCheck className="h-4 w-4" />} label="Security & MFA" />
-                    <ProfileAction icon={<Paintbrush2 className="h-4 w-4" />} label="Appearance" />
+                    <DropdownAction label="Account" description="Profile, security, and routing" />
+                    <DropdownAction label="Preferences" description="Theme, focus, and shortcuts" />
+                    <DropdownAction label="Control center" description="Privacy, telemetry, visibility" />
                   </div>
                   <div className="flex items-center justify-between border-t border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--panel-elevated)_95%,transparent)] px-4 py-3">
                     <div>
-                      <p className="text-xs text-[var(--text-secondary)]">Settings</p>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">Control shortcuts</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Profile modal</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">World-class view</p>
                     </div>
-                    <button className="rounded-full border border-[var(--border-soft)] px-3 py-1 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--border-strong)]">
+                    <button
+                      className="rounded-full border border-[var(--border-soft)] px-3 py-1 text-xs font-semibold text-[var(--text-primary)] transition hover:border-[var(--border-strong)]"
+                      onClick={() => {
+                        setProfileOpen(true);
+                        setOpen(false);
+                      }}
+                    >
                       Open
                     </button>
                   </div>
                   <button className="flex w-full items-center gap-2 bg-[color-mix(in_srgb,var(--panel-strong)_96%,transparent)] px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[color-mix(in_srgb,var(--accent-secondary)_16%,transparent)]">
-                    <LogOut className="h-4 w-4" /> Sign out
+                    Sign out
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
+        <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       </div>
     </header>
   );
 }
 
-function ProfileAction({ icon, label, secondary }: { icon: ReactNode; label: string; secondary?: string }) {
+function DropdownAction({ label, description }: { label: string; description: string }) {
   return (
-    <button className="flex w-full items-center gap-3 rounded-xl border border-transparent px-2 py-2 text-left text-sm text-[var(--text-primary)] transition hover:border-[var(--border-soft)] hover:bg-[color-mix(in_srgb,var(--accent-secondary)_8%,transparent)]">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--accent-secondary)_14%,transparent)] text-[var(--text-primary)]">
-        {icon}
-      </span>
-      <div className="flex-1">
-        <p className="font-semibold leading-tight">{label}</p>
-        {secondary && <p className="text-xs text-[var(--text-secondary)]">{secondary}</p>}
-      </div>
-    </button>
+    <div className="rounded-xl px-2 py-2">
+      <p className="text-sm font-semibold text-[var(--text-primary)]">{label}</p>
+      <p className="text-xs text-[var(--text-secondary)]">{description}</p>
+    </div>
   );
 }
