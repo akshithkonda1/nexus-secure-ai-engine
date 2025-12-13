@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Outlet, useLocation } from "react-router-dom";
 
+import { CosmicCanvas } from "@/components/layout/CosmicCanvas";
 import { FadeIn } from "@/components/animations/FadeIn";
 import { RyuzenErrorBoundary } from "@/components/errors/RyuzenErrorBoundary";
 import { Header } from "@/components/layout/Header";
@@ -21,8 +22,7 @@ export default function RootLayout() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[var(--bg-main)] text-[var(--text-primary)] transition-all">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(140%_120%_at_20%_-10%,rgba(124,93,255,0.2),transparent_40%),radial-gradient(140%_120%_at_90%_0%,rgba(34,211,238,0.16),transparent_40%)] opacity-80" />
-      <div className="pointer-events-none fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[var(--noise-opacity)]" />
+      <CosmicCanvas />
 
       <Sidebar
         collapsed={collapsed}
@@ -53,7 +53,7 @@ export default function RootLayout() {
         <main id="main-content" className="main-canvas relative flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-10">
           <AnimatePresence mode="wait">
             <motion.div
-              key={location.pathname}
+              key={location.key}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } }}
               exit={{ opacity: 0, y: -10, transition: { duration: 0.18, ease: "easeIn" } }}
@@ -61,7 +61,7 @@ export default function RootLayout() {
             >
               <RyuzenErrorBoundary>
                 <FadeIn>
-                  <Outlet />
+                  <Outlet key={location.key} />
                 </FadeIn>
               </RyuzenErrorBoundary>
             </motion.div>
