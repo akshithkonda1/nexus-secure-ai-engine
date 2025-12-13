@@ -1,25 +1,51 @@
+/*
+  Global theme authority
+  - Theme tokens are defined once here and consumed everywhere else.
+  - All compatibility variables map back to these tokens so legacy
+    components inherit the same contract automatically.
+*/
 :root {
   --font-sans: "Inter", "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --header-height: 72px;
   --sidebar-width: 268px;
 
+  /* Core token contract */
+  --bg-app: #0b1018;
+  --bg-app-rgb: 11 16 24;
+  --bg-surface: #101829;
+  --bg-surface-rgb: 16 24 41;
+  --bg-glass: rgba(16, 24, 41, 0.62);
+  --bg-glass-rgb: 16 24 41;
+  --bg-elevated: #141c2b;
+  --bg-elevated-rgb: 20 28 43;
+
+  --text-primary: rgba(230, 235, 247, 0.92);
+  --text-primary-rgb: 230 235 247;
+  --text-secondary: rgba(159, 172, 201, 0.78);
+  --text-secondary-rgb: 159 172 201;
+  --text-muted: rgba(159, 172, 201, 0.65);
+
+  --border-subtle: #2a374d;
+  --border-subtle-rgb: 42 55 77;
+
+  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.34);
+  --shadow-elevated: 0 26px 86px rgba(0, 0, 0, 0.46);
+
+  --blur-strength: 18px;
+  --glass-opacity: 0.62;
+
+  /* Accents */
   --accent-base: #76c7a9;
   --accent-primary: #76c7a9;
   --accent-secondary: #7da5e1;
   --accent-emerald: #76c7a9;
   --accent-warning: #d5a25c;
 
+  /* Gradients + depth */
   --surface-base: radial-gradient(circle at 52% 18%, #1a2434 0%, #101829 55%, #0b1018 100%);
-  --surface-card: #141c2b;
+  --surface-card: var(--bg-elevated);
   --panel-elevated: #192337;
   --panel-strong: #0f1624;
-  --text-primary: rgba(232, 235, 245, 0.9);
-  --text-secondary: rgba(168, 178, 199, 0.72);
-  --border-strong: #2a374d;
-  --border-soft: #1f2a3c;
-
-  --shadow-soft: 0 16px 44px rgba(0, 0, 0, 0.3);
-  --shadow-strong: 0 24px 72px rgba(0, 0, 0, 0.42);
 
   --radius-xl: 26px;
   --radius-lg: 20px;
@@ -27,7 +53,15 @@
   --radius-sm: 12px;
   --noise-opacity: 0.06;
 
-  --blur-glass: 0px;
+  /* Compatibility mappings (legacy variables) */
+  --bg: var(--bg-app-rgb);
+  --surface: var(--bg-surface-rgb);
+  --panel: var(--bg-elevated-rgb);
+  --text: var(--text-primary-rgb);
+  --subtle: var(--text-secondary-rgb);
+  --border: var(--border-subtle-rgb);
+  --shadow-strong: var(--shadow-elevated);
+  --blur-glass: var(--blur-strength);
 }
 
 :root.theme-fade *,
@@ -38,34 +72,90 @@
 
 [data-theme="light"] {
   color-scheme: light;
+  --bg-app: #f4f6fa;
+  --bg-app-rgb: 244 246 250;
+  --bg-surface: #ecf1f8;
+  --bg-surface-rgb: 236 241 248;
+  --bg-glass: rgba(255, 255, 255, 0.72);
+  --bg-glass-rgb: 255 255 255;
+  --bg-elevated: #ffffff;
+  --bg-elevated-rgb: 255 255 255;
+
+  --text-primary: rgba(12, 18, 36, 0.92);
+  --text-primary-rgb: 12 18 36;
+  --text-secondary: rgba(75, 85, 107, 0.78);
+  --text-secondary-rgb: 75 85 107;
+  --text-muted: rgba(75, 85, 107, 0.6);
+
+  --border-subtle: #d9e0ec;
+  --border-subtle-rgb: 217 224 236;
+
+  --shadow-soft: 0 16px 46px rgba(12, 18, 36, 0.16);
+  --shadow-elevated: 0 24px 70px rgba(12, 18, 36, 0.22);
+
+  --blur-strength: 12px;
+  --glass-opacity: 0.68;
+
   --surface-base: radial-gradient(circle at 46% 18%, #ffffff 0%, #f4f6fa 50%, #ecf1f8 100%);
-  --surface-card: #ffffff;
+  --surface-card: var(--bg-elevated);
   --panel-elevated: #f3f5fa;
   --panel-strong: #e8edf5;
-  --text-primary: rgba(12, 18, 36, 0.9);
-  --text-secondary: rgba(75, 85, 107, 0.72);
-  --border-strong: #c3ccdc;
-  --border-soft: #d9e0ec;
-  --shadow-soft: 0 16px 46px rgba(12, 18, 36, 0.16);
-  --shadow-strong: 0 24px 70px rgba(12, 18, 36, 0.22);
   --noise-opacity: 0.04;
   --accent-primary: #76c7a9;
   --accent-secondary: #7da5e1;
+
+  /* Compatibility mappings (legacy variables) */
+  --bg: var(--bg-app-rgb);
+  --surface: var(--bg-surface-rgb);
+  --panel: var(--bg-elevated-rgb);
+  --text: var(--text-primary-rgb);
+  --subtle: var(--text-secondary-rgb);
+  --border: var(--border-subtle-rgb);
+  --shadow-strong: var(--shadow-elevated);
+  --blur-glass: var(--blur-strength);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
+  --bg-app: #0b1018;
+  --bg-app-rgb: 11 16 24;
+  --bg-surface: #101829;
+  --bg-surface-rgb: 16 24 41;
+  --bg-glass: rgba(16, 24, 41, 0.62);
+  --bg-glass-rgb: 16 24 41;
+  --bg-elevated: #141c2b;
+  --bg-elevated-rgb: 20 28 43;
+
+  --text-primary: rgba(230, 235, 247, 0.92);
+  --text-primary-rgb: 230 235 247;
+  --text-secondary: rgba(159, 172, 201, 0.78);
+  --text-secondary-rgb: 159 172 201;
+  --text-muted: rgba(159, 172, 201, 0.65);
+
+  --border-subtle: #2a374d;
+  --border-subtle-rgb: 42 55 77;
+
+  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.34);
+  --shadow-elevated: 0 26px 86px rgba(0, 0, 0, 0.46);
+
+  --blur-strength: 18px;
+  --glass-opacity: 0.62;
+
   --surface-base: radial-gradient(circle at 48% 20%, #1a2434 0%, #101829 55%, #0b1018 100%);
-  --surface-card: #141c2b;
+  --surface-card: var(--bg-elevated);
   --panel-elevated: #192337;
   --panel-strong: #0f1624;
-  --text-primary: rgba(230, 235, 247, 0.9);
-  --text-secondary: rgba(159, 172, 201, 0.72);
-  --border-strong: #2a374d;
-  --border-soft: #1f2a3c;
-  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.34);
-  --shadow-strong: 0 26px 86px rgba(0, 0, 0, 0.46);
   --noise-opacity: 0.05;
   --accent-primary: #76c7a9;
   --accent-secondary: #7da5e1;
+
+  /* Compatibility mappings (legacy variables) */
+  --bg: var(--bg-app-rgb);
+  --surface: var(--bg-surface-rgb);
+  --panel: var(--bg-elevated-rgb);
+  --text: var(--text-primary-rgb);
+  --subtle: var(--text-secondary-rgb);
+  --border: var(--border-subtle-rgb);
+  --shadow-strong: var(--shadow-elevated);
+  --blur-glass: var(--blur-strength);
 }

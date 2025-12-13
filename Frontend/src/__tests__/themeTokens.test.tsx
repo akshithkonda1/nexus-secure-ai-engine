@@ -5,25 +5,25 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const LIGHT_VARS = {
-  "--text-primary": "#0a0a0a",
-  "--text-secondary": "#3b3b3b",
-  "--text-muted": "#5a5a5a",
-  "--bg-primary": "#ffffff",
-  "--bg-secondary": "#f7f7f7",
+  "--text-primary": "rgba(12, 18, 36, 0.92)",
+  "--text-secondary": "rgba(75, 85, 107, 0.78)",
+  "--text-muted": "rgba(75, 85, 107, 0.6)",
+  "--bg-primary": "#f4f6fa",
+  "--bg-secondary": "#ecf1f8",
   "--bg-elevated": "#ffffff",
-  "--border-light": "#e5e5e5",
-  "--border-strong": "#c8c8c8",
+  "--border-light": "#d9e0ec",
+  "--border-strong": "#d9e0ec",
 };
 
 const DARK_VARS = {
-  "--text-primary": "#ffffff",
-  "--text-secondary": "#dddddd",
-  "--text-muted": "#a3a3a3",
-  "--bg-primary": "#0a0a0f",
-  "--bg-secondary": "#11121a",
-  "--bg-elevated": "#1a1b24",
-  "--border-light": "#20202a",
-  "--border-strong": "#3a3a42",
+  "--text-primary": "rgba(230, 235, 247, 0.92)",
+  "--text-secondary": "rgba(159, 172, 201, 0.78)",
+  "--text-muted": "rgba(159, 172, 201, 0.65)",
+  "--bg-primary": "#0b1018",
+  "--bg-secondary": "#101829",
+  "--bg-elevated": "#141c2b",
+  "--border-light": "#2a374d",
+  "--border-strong": "#2a374d",
 };
 
 function applyVars(theme: "light" | "dark") {
