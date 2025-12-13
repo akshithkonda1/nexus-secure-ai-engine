@@ -12,6 +12,7 @@ interface ToronStore {
   deleteSession: (id: string) => void;
   renameSession: (id: string, title: string) => void;
   addMessage: (message: ToronMessage, sessionId?: string) => void;
+  removeMessage: (messageId: string, sessionId?: string) => void;
   getActiveSession: () => ToronSession | null;
 }
 
@@ -108,6 +109,19 @@ export const useToronStore = create<ToronStore>()(
             sessions: updatedSessions,
             activeSessionId: targetId,
           };
+        });
+      },
+
+      removeMessage: (messageId, sessionId) => {
+        const targetId = sessionId ?? get().activeSessionId;
+        if (!targetId) return;
+        set((state) => {
+          const updatedSessions = safeArray(state.sessions).map((session) => {
+            if (session.sessionId !== targetId) return session;
+            const filtered = safeArray(session.messages).filter((message) => message.id !== messageId);
+            return safeSession({ ...session, messages: filtered });
+          });
+          return { sessions: updatedSessions, activeSessionId: targetId };
         });
       },
 
