@@ -85,7 +85,9 @@ const Toron: React.FC = () => {
     offsetY: 0,
   });
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
+  const [headerTucked, setHeaderTucked] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
 
   const sessionTitle = useMemo(() => deriveSessionTitle(messages), [messages]);
@@ -204,6 +206,29 @@ const Toron: React.FC = () => {
     localStorage.setItem("toron-session-position", JSON.stringify(clamped));
   }, [sessionPosition.top, sessionPosition.left]);
 
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      setHeaderTucked(viewport.scrollTop > 12);
+    };
+
+    viewport.addEventListener("scroll", handleScroll);
+    return () => {
+      viewport.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    if (distanceFromBottom < 140) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages]);
+
   return (
     <div className="toron-shell">
       <aside
@@ -242,8 +267,8 @@ const Toron: React.FC = () => {
         )}
       </aside>
 
-      <section className="toron-main" aria-label="Toron conversation">
-        <header className="toron-header" aria-label="Toron session header">
+      <section className={`toron-main${headerTucked ? " tucked" : ""}`} aria-label="Toron conversation">
+        <header className={`toron-header${headerTucked ? " tucked" : ""}`} aria-label="Toron session header">
           <div className="toron-header-title">
             <span className="toron-name">Toron</span>
             <span className="toron-session-name" title={sessionTitle}>
@@ -252,56 +277,60 @@ const Toron: React.FC = () => {
           </div>
         </header>
 
-        <div className="toron-conversation">
-          {messages.map((message) => (
-            <article key={message.id} className={`toron-message ${message.role}`}>
-              <div className="toron-message-top">
-                <span className="toron-label" aria-label={message.role === "assistant" ? "Toron" : "User"}>
-                  {message.role === "assistant" ? "Toron" : "User"}
-                </span>
-                <div className="toron-actions" aria-label="message actions">
-                  {message.role === "user" ? (
-                    <>
-                      <button type="button" className="toron-action" aria-label="Edit message">
-                        <Edit3 size={14} strokeWidth={2} aria-hidden />
-                      </button>
-                      <button type="button" className="toron-action" aria-label="Copy message">
-                        <Copy size={14} strokeWidth={2} aria-hidden />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" className="toron-action" aria-label="Copy Toron message">
-                        <Copy size={14} strokeWidth={2} aria-hidden />
-                      </button>
-                      <button type="button" className="toron-action" aria-label="Regenerate Toron message">
-                        <RefreshCw size={14} strokeWidth={2} aria-hidden />
-                      </button>
-                      <div className="toron-more-group" role="group" aria-label="More message options">
-                        <button type="button" className="toron-action" aria-label="More options">
-                          <MoreHorizontal size={14} strokeWidth={2} aria-hidden />
-                        </button>
-                        <div className="toron-more-menu">
-                          <button type="button" className="toron-inline" aria-label="Read aloud">
-                            Read aloud
+        <div className="toron-viewport">
+          <div className="toron-viewport-scroll" ref={viewportRef}>
+            <div className="toron-conversation">
+              {messages.map((message) => (
+                <article key={message.id} className={`toron-message ${message.role}`}>
+                  <div className="toron-message-top">
+                    <span className="toron-label" aria-label={message.role === "assistant" ? "Toron" : "User"}>
+                      {message.role === "assistant" ? "Toron" : "User"}
+                    </span>
+                    <div className="toron-actions" aria-label="message actions">
+                      {message.role === "user" ? (
+                        <>
+                          <button type="button" className="toron-action" aria-label="Edit message">
+                            <Edit3 size={14} strokeWidth={2} aria-hidden />
                           </button>
-                          <button type="button" className="toron-inline" aria-label="Branch into new chat">
-                            <GitBranch size={14} strokeWidth={2} aria-hidden />
-                            Branch new chat
+                          <button type="button" className="toron-action" aria-label="Copy message">
+                            <Copy size={14} strokeWidth={2} aria-hidden />
                           </button>
-                          <button type="button" className="toron-inline" aria-label="Report message">
-                            <Flag size={14} strokeWidth={2} aria-hidden />
-                            Report output
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" className="toron-action" aria-label="Copy Toron message">
+                            <Copy size={14} strokeWidth={2} aria-hidden />
                           </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="toron-message-body">{message.content}</div>
-            </article>
-          ))}
+                          <button type="button" className="toron-action" aria-label="Regenerate Toron message">
+                            <RefreshCw size={14} strokeWidth={2} aria-hidden />
+                          </button>
+                          <div className="toron-more-group" role="group" aria-label="More message options">
+                            <button type="button" className="toron-action" aria-label="More options">
+                              <MoreHorizontal size={14} strokeWidth={2} aria-hidden />
+                            </button>
+                            <div className="toron-more-menu">
+                              <button type="button" className="toron-inline" aria-label="Read aloud">
+                                Read aloud
+                              </button>
+                              <button type="button" className="toron-inline" aria-label="Branch into new chat">
+                                <GitBranch size={14} strokeWidth={2} aria-hidden />
+                                Branch new chat
+                              </button>
+                              <button type="button" className="toron-inline" aria-label="Report message">
+                                <Flag size={14} strokeWidth={2} aria-hidden />
+                                Report output
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="toron-message-body">{message.content}</div>
+                </article>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="toron-directive" role="form" aria-label="Toron input">

@@ -648,11 +648,14 @@ table th {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 12px 18px 140px;
+  padding: 14px 18px 42px;
   background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent-purple) 14%, transparent), transparent 32%),
     radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent-green) 16%, transparent), transparent 32%),
     radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent-teal) 10%, transparent), transparent 28%),
     color-mix(in srgb, var(--bg-canvas) 90%, transparent);
+  --toron-header-height: 72px;
+  --toron-header-height-compact: 56px;
+  --toron-directive-space: 220px;
 }
 
 .toron-sessions {
@@ -765,21 +768,36 @@ table th {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 100vh;
+  min-height: calc(100vh - 32px);
   position: relative;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  transition: padding-top var(--rz-duration) ease;
+}
+
+.toron-main.tucked {
+  padding-top: 4px;
 }
 
 .toron-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 3;
   display: flex;
   align-items: center;
-  height: 72px;
+  height: var(--toron-header-height);
   border-bottom: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-glass) 90%, transparent);
   backdrop-filter: blur(var(--blur-strength));
   padding: 10px 6px;
+  transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
+    background var(--rz-duration) ease;
+}
+
+.toron-header.tucked {
+  height: var(--toron-header-height-compact);
+  padding: 6px 6px;
+  border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
 }
 
 .toron-header-title {
@@ -804,11 +822,44 @@ table th {
   white-space: nowrap;
 }
 
+.toron-viewport {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.toron-viewport-scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - var(--toron-header-height) - var(--toron-directive-space));
+  padding: 12px 12px calc(var(--toron-directive-space) + 18px);
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 45%, transparent);
+  border-radius: 999px;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .toron-conversation {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 8px 220px;
   width: min(960px, 100%);
   margin: 0 auto;
 }
