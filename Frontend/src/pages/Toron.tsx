@@ -1,17 +1,28 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Archive,
+  ArrowDown,
+  ArrowUp,
   Copy,
   Edit3,
-  Archive,
+  Ellipsis,
   FilePlus,
   FolderClosed,
   Mic,
   MicOff,
+  MoreVertical,
   Pause,
+  Pin,
+  PinOff,
   Play,
   Plus,
   RefreshCw,
+  Search,
   Send,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+  Volume2,
 } from "lucide-react";
 
 type Role = "assistant" | "user";
@@ -26,6 +37,7 @@ interface SessionMeta {
   id: string;
   title: string;
   status: "Alive" | "Quiet" | "Paused";
+  pinned?: boolean;
 }
 
 interface DragState {
@@ -94,12 +106,22 @@ const quickActions = [
   },
 ];
 
+const SESSION_STATUSES: SessionMeta["status"][] = ["Alive", "Quiet", "Paused"];
+
 const Toron: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(seedMessages);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const [sessionsOpen, setSessionsOpen] = useState(true);
+  const [sessionList, setSessionList] = useState<SessionMeta[]>([
+    { id: "current", title: deriveSessionTitle(seedMessages), status: "Alive", pinned: true },
+    { id: "workspace-sync", title: "Workspace sync signals", status: "Quiet" },
+    { id: "docs-review", title: "Docs health and risk review", status: "Paused" },
+    { id: "signals", title: "Signals for the next release window", status: "Quiet", pinned: true },
+  ]);
+  const [currentSessionId, setCurrentSessionId] = useState("current");
+  const [searchTerm, setSearchTerm] = useState("");
   const [attachments, setAttachments] = useState<string[]>([]);
   const [dragState, setDragState] = useState<DragState>({
     active: false,
@@ -107,7 +129,6 @@ const Toron: React.FC = () => {
     offsetY: 0,
   });
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
-  const [sessionFootprint, setSessionFootprint] = useState(0);
   const [headerTucked, setHeaderTucked] = useState(false);
   const [newResponseHint, setNewResponseHint] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -116,14 +137,28 @@ const Toron: React.FC = () => {
 
   const sessionTitle = useMemo(() => deriveSessionTitle(messages), [messages]);
 
-  const sessions: SessionMeta[] = useMemo(
-    () => [
-      { id: "current", title: sessionTitle, status: "Alive" },
-      { id: "workspace-sync", title: "Workspace sync signals", status: "Quiet" },
-      { id: "docs-review", title: "Docs health and risk review", status: "Paused" },
-    ],
-    [sessionTitle]
-  );
+  useEffect(() => {
+    setSessionList((prev) => prev.map((session) => (session.id === "current" ? { ...session, title: sessionTitle } : session)));
+  }, [sessionTitle]);
+
+  const orderedSessions = useMemo(() => {
+    const normalized = searchTerm.trim().toLowerCase();
+    const pinned = sessionList.filter((session) => session.pinned);
+    const unpinned = sessionList.filter((session) => !session.pinned);
+    const applySearch = (items: SessionMeta[]) =>
+      items.filter(
+        (session) =>
+          session.title.toLowerCase().includes(normalized) ||
+          session.status.toLowerCase().includes(normalized) ||
+          session.id.toLowerCase().includes(normalized)
+      );
+
+    if (!normalized) {
+      return [...pinned, ...unpinned];
+    }
+
+    return [...applySearch(pinned), ...applySearch(unpinned)];
+  }, [searchTerm, sessionList]);
 
   const handleSend = () => {
     const trimmed = draft.trim();
@@ -168,6 +203,59 @@ const Toron: React.FC = () => {
     }
   };
 
+  const createSession = () => {
+    const nextId = `session-${Date.now()}`;
+    const nextTitle = "New Toron session";
+    const newSession: SessionMeta = { id: nextId, title: nextTitle, status: "Alive" };
+    setSessionList((prev) => [...prev, newSession]);
+    setCurrentSessionId(nextId);
+  };
+
+  const renameSession = (sessionId: string) => {
+    const session = sessionList.find((item) => item.id === sessionId);
+    if (!session) return;
+    const nextTitle = window.prompt("Name this session", session.title)?.trim();
+    if (!nextTitle) return;
+    setSessionList((prev) => prev.map((item) => (item.id === sessionId ? { ...item, title: nextTitle } : item)));
+  };
+
+  const deleteSession = (sessionId: string) => {
+    if (sessionList.length <= 1) return;
+    setSessionList((prev) => prev.filter((item) => item.id !== sessionId));
+    if (currentSessionId === sessionId) {
+      const fallback = sessionList.find((item) => item.id !== sessionId)?.id;
+      if (fallback) setCurrentSessionId(fallback);
+    }
+  };
+
+  const togglePinSession = (sessionId: string) => {
+    setSessionList((prev) => prev.map((item) => (item.id === sessionId ? { ...item, pinned: !item.pinned } : item)));
+  };
+
+  const moveSession = (sessionId: string, direction: number) => {
+    setSessionList((prev) => {
+      const index = prev.findIndex((item) => item.id === sessionId);
+      if (index === -1) return prev;
+      const nextIndex = index + direction;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const next = [...prev];
+      const [removed] = next.splice(index, 1);
+      next.splice(nextIndex, 0, removed);
+      return next;
+    });
+  };
+
+  const cycleSessionStatus = (sessionId: string) => {
+    setSessionList((prev) =>
+      prev.map((item) => {
+        if (item.id !== sessionId) return item;
+        const currentIndex = SESSION_STATUSES.indexOf(item.status);
+        const nextStatus = SESSION_STATUSES[(currentIndex + 1) % SESSION_STATUSES.length];
+        return { ...item, status: nextStatus };
+      })
+    );
+  };
+
   const clampPosition = (top: number, left: number) => {
     if (typeof window === "undefined") return { top, left };
     const widgetWidth = widgetRef.current?.offsetWidth ?? 320;
@@ -179,6 +267,8 @@ const Toron: React.FC = () => {
 
   const startDrag = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("textarea")) return;
     const rect = widgetRef.current?.getBoundingClientRect();
     if (!rect) return;
     setDragState({
@@ -262,19 +352,6 @@ const Toron: React.FC = () => {
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (!sessionsOpen) {
-      setSessionFootprint(0);
-      return;
-    }
-
-    const width = widgetRef.current?.offsetWidth ?? 320;
-    const offset = sessionPosition.left;
-    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1440;
-    const footprint = Math.min(offset + width + 24, Math.max(width + 32, viewportWidth * 0.42));
-    setSessionFootprint(sessionsOpen ? Math.max(0, footprint) : 0);
-  }, [sessionsOpen, sessionPosition.left, sessionPosition.top]);
-
   const scrollToLatest = () => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -288,40 +365,140 @@ const Toron: React.FC = () => {
   };
 
   return (
-    <div className="toron-shell" style={{ ["--toron-offset" as string]: `${sessionFootprint}px` }}>
+    <div className="toron-shell">
       <aside
         ref={widgetRef}
         className={`toron-sessions${sessionsOpen ? "" : " collapsed"}`}
         aria-label="Toron sessions"
         style={{ top: sessionPosition.top, left: sessionPosition.left }}
-        onMouseDown={startDrag}
       >
-        <div className="toron-sessions-header">
-          <div className="toron-sessions-title">Sessions</div>
-          <button
-            type="button"
-            className="toron-toggle"
-            aria-expanded={sessionsOpen}
-            onClick={(event) => {
-              event.stopPropagation();
-              setSessionsOpen((prev) => !prev);
-            }}
-          >
-            {sessionsOpen ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
-          </button>
+        <div className="toron-sessions-header" onMouseDown={startDrag}>
+          <div className="toron-sessions-title">
+            <span>Sessions</span>
+            <small>Reasoning timelines</small>
+          </div>
+          <div className="toron-session-header-actions">
+            <button type="button" className="toron-inline" onClick={createSession} aria-label="Create new session">
+              <Plus size={14} strokeWidth={2} aria-hidden />
+              New
+            </button>
+            <button
+              type="button"
+              className="toron-toggle"
+              aria-expanded={sessionsOpen}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSessionsOpen((prev) => !prev);
+              }}
+            >
+              {sessionsOpen ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
+            </button>
+          </div>
         </div>
         {sessionsOpen && (
-          <div className="toron-sessions-list">
-            {sessions.map((session) => (
-              <div key={session.id} className={`toron-session-card${session.id === "current" ? " active" : ""}`}>
-                <div className="toron-session-row">
-                  <span className="toron-session-title">{session.title}</span>
-                  <span className={`toron-status-dot ${session.status.toLowerCase()}`} aria-hidden />
+          <>
+            <label className="toron-session-search" aria-label="Search sessions">
+              <Search size={14} strokeWidth={2} aria-hidden />
+              <input
+                type="search"
+                placeholder="Search or filter sessions"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </label>
+            <div className="toron-sessions-list">
+              {orderedSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className={`toron-session-card${session.id === currentSessionId ? " active" : ""}${
+                    session.pinned ? " pinned" : ""
+                  }`}
+                  onClick={() => setCurrentSessionId(session.id)}
+                >
+                  <div className="toron-session-row">
+                    <div className="toron-session-meta">
+                      <span className="toron-session-title">{session.title}</span>
+                      <button
+                        type="button"
+                        className="toron-session-status"
+                        aria-label={`Session status: ${session.status}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          cycleSessionStatus(session.id);
+                        }}
+                      >
+                        <span className={`toron-status-dot ${session.status.toLowerCase()}`} aria-hidden />
+                        {session.status}
+                      </button>
+                    </div>
+                    <div className="toron-session-actions" aria-label="Session actions">
+                      <button
+                        type="button"
+                        className="toron-action"
+                        aria-label={session.pinned ? "Unpin session" : "Pin session"}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          togglePinSession(session.id);
+                        }}
+                      >
+                        {session.pinned ? <Pin size={14} strokeWidth={2} aria-hidden /> : <PinOff size={14} strokeWidth={2} aria-hidden />}
+                      </button>
+                      <button
+                        type="button"
+                        className="toron-action"
+                        aria-label="Move session up"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          moveSession(session.id, -1);
+                        }}
+                      >
+                        <ArrowUp size={14} strokeWidth={2} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="toron-action"
+                        aria-label="Move session down"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          moveSession(session.id, 1);
+                        }}
+                      >
+                        <ArrowDown size={14} strokeWidth={2} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="toron-action"
+                        aria-label="Rename session"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          renameSession(session.id);
+                        }}
+                      >
+                        <Edit3 size={14} strokeWidth={2} aria-hidden />
+                      </button>
+                      {session.id !== "current" && (
+                        <button
+                          type="button"
+                          className="toron-action"
+                          aria-label="Delete session"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            deleteSession(session.id);
+                          }}
+                        >
+                          <Trash2 size={14} strokeWidth={2} aria-hidden />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="toron-session-footer">
+                    <span className="toron-session-id">{session.id}</span>
+                    <MoreVertical size={14} strokeWidth={2} aria-hidden />
+                  </div>
                 </div>
-                <div className="toron-session-status">{session.status}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </aside>
 
@@ -381,8 +558,20 @@ const Toron: React.FC = () => {
                           <button type="button" className="toron-action" aria-label="Copy Toron message">
                             <Copy size={14} strokeWidth={2} aria-hidden />
                           </button>
+                          <button type="button" className="toron-action" aria-label="Mark good response">
+                            <ThumbsUp size={14} strokeWidth={2} aria-hidden />
+                          </button>
+                          <button type="button" className="toron-action" aria-label="Mark bad response">
+                            <ThumbsDown size={14} strokeWidth={2} aria-hidden />
+                          </button>
                           <button type="button" className="toron-action" aria-label="Regenerate Toron message">
                             <RefreshCw size={14} strokeWidth={2} aria-hidden />
+                          </button>
+                          <button type="button" className="toron-action" aria-label="Read message aloud">
+                            <Volume2 size={14} strokeWidth={2} aria-hidden />
+                          </button>
+                          <button type="button" className="toron-action" aria-label="More actions">
+                            <Ellipsis size={14} strokeWidth={2} aria-hidden />
                           </button>
                         </>
                       )}
