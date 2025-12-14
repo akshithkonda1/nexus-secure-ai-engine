@@ -331,7 +331,7 @@ const Toron: React.FC = () => {
               ))}
             </div>
           </div>
-        </div>
+        </header>
 
         <div className="toron-directive-shell" aria-label="Toron directive shell">
           <div className="toron-directive" role="form" aria-label="Toron input">
