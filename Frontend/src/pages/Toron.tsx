@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Copy,
   Edit3,
+  Box,
+  Cloud,
   FilePlus,
   GitBranch,
+  Github,
   Mic,
   MicOff,
   MoreHorizontal,
@@ -71,6 +74,29 @@ const deriveSessionTitle = (messages: Message[]) => {
   const source = firstUser?.content ?? messages[0]?.content ?? "Focused Toron session";
   return sanitizeTitle(source);
 };
+
+const quickActions = [
+  {
+    label: "Clarify scope",
+    description: "Define constraints and success signals before execution.",
+    prompt: "Clarify the scope, constraints, and checkpoints before proceeding.",
+  },
+  {
+    label: "Brainstorm",
+    description: "Map options with tradeoffs and expected impact.",
+    prompt: "Brainstorm structured options with tradeoffs and expected impact.",
+  },
+  {
+    label: "Make a plan",
+    description: "Draft a concise execution path with owners and timing.",
+    prompt: "Draft a concise execution plan with owners, timing, and risks.",
+  },
+  {
+    label: "Surface risks",
+    description: "Highlight blockers, dependencies, and mitigations.",
+    prompt: "Surface key risks, dependencies, and mitigations for this track.",
+  },
+];
 
 const Toron: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(seedMessages);
@@ -260,6 +286,11 @@ const Toron: React.FC = () => {
     setNewResponseHint(false);
   };
 
+  const handleQuickAction = (prompt: string) => {
+    setDraft(prompt);
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="toron-shell" style={{ ["--toron-offset" as string]: `${sessionFootprint}px` }}>
       <aside
@@ -310,6 +341,28 @@ const Toron: React.FC = () => {
 
         <div className="toron-viewport">
           <div className="toron-viewport-scroll" ref={viewportRef}>
+            <section className="toron-hero" aria-label="Toron session context">
+              <div className="toron-orb" aria-hidden />
+              <div className="toron-hero-copy">
+                <p className="toron-kicker">Model B · Context aware</p>
+                <h1 className="toron-headline">Ready to move the plan forward?</h1>
+                <p className="toron-subhead">Toron keeps the directive stable while you think, decide, and execute.</p>
+                <div className="toron-quick-actions" role="list">
+                  {quickActions.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      className="toron-quick"
+                      onClick={() => handleQuickAction(action.prompt)}
+                      role="listitem"
+                    >
+                      <span className="toron-quick-label">{action.label}</span>
+                      <span className="toron-quick-description">{action.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
             <div className="toron-conversation">
               {messages.map((message) => (
                 <article key={message.id} className={`toron-message ${message.role}`}>
@@ -384,7 +437,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from GitHub"
                       onClick={() => handleAddAttachment("GitHub file")}
                     >
-                      <GitBranch size={14} strokeWidth={2} aria-hidden />
+                      <Github size={14} strokeWidth={2} aria-hidden />
                       Add file from GitHub
                     </button>
                     <button
@@ -393,7 +446,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from Google Drive"
                       onClick={() => handleAddAttachment("Google Drive file")}
                     >
-                      <FilePlus size={14} strokeWidth={2} aria-hidden />
+                      <Cloud size={14} strokeWidth={2} aria-hidden />
                       Add file from Google Drive
                     </button>
                     <button
@@ -402,7 +455,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from Dropbox"
                       onClick={() => handleAddAttachment("Dropbox file")}
                     >
-                      <FilePlus size={14} strokeWidth={2} aria-hidden />
+                      <Box size={14} strokeWidth={2} aria-hidden />
                       Add file from Dropbox
                     </button>
                   </div>
