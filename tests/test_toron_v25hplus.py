@@ -19,6 +19,20 @@ from ryuzen.toron_v25hplus import (
 )
 
 
+class DummyDetector:
+    def find_disagreements(self, claims):
+        return (["semantic divergence"], 0.5)
+
+
+class DummyMMRE:
+    def evaluate_claims(self, claims):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(
+            verified_facts=list(claims), conflicts_detected=[], evidence_density=1.0, escalation_required=False
+        )
+
+
 PASSAGE = "The engine is deterministic. It never calls external APIs. Maybe it caches every decision."
 
 
@@ -56,22 +70,43 @@ def test_cdg_summary_is_valid() -> None:
 
 
 def test_tier2_detects_contradictions() -> None:
-    tier2 = TierTwoValidator().evaluate(
+    tier2 = TierTwoValidator(detector=DummyDetector()).evaluate(
         {"alpha": ({"model": "alpha", "claim": "not safe", "label": "true", "score": 65.0},)}
     )
     assert tier2["accepted"] is False
-    assert tier2["contradictions"] == ("not safe",)
+    assert tier2["contradictions"] == ("semantic divergence",)
     assert tier2["score"] < 100
 
 
 def test_reality_packet_and_judicial_logic_have_expected_keys() -> None:
     psl = PremiseStructureLayer().structure(PASSAGE)
     cdg = CausalDirectedGraph(psl["claims"])
-    tier2: TierTwoResult = {"accepted": True, "contradictions": (), "score": 100.0}
-    packet = RealityPacketBuilder().build(psl, cdg, tier2, consensus_score=77.0)
+    tier2: TierTwoResult = {"accepted": True, "contradictions": (), "score": 100.0, "disagreement_rate": 0.0}
+    packet = RealityPacketBuilder().build(
+        psl,
+        cdg,
+        tier2,
+        consensus_score=77.0,
+        evidence_density=1.0,
+        verified_facts=[premise.text for premise in psl["claims"]],
+        conflicts_detected=[],
+        aloe_summary="Findings: ok",
+        escalation_required=False,
+    )
     judicial = JudicialLogic().deliberate(tier2, packet)
 
-    assert set(packet.keys()) == {"version", "claims", "graph", "consensus_score", "adjudicated"}
+    assert set(packet.keys()) == {
+        "version",
+        "claims",
+        "graph",
+        "consensus_score",
+        "adjudicated",
+        "verified_facts",
+        "conflicts_detected",
+        "evidence_density",
+        "escalation_required",
+        "aloe",
+    }
     assert tuple(judicial.keys()) == JudicialLogic.REQUIRED_KEYS
     assert judicial["verdict"] == "accepted"
     assert packet["graph"]["nodes"][1] == "It never calls external APIs"
@@ -94,7 +129,7 @@ def test_rwl_and_consensus_are_deterministic() -> None:
 
 
 def test_final_output_json_has_required_fields() -> None:
-    engine = RyuzenEngine()
+    engine = RyuzenEngine(semantic_detector=DummyDetector(), mmre_engine=DummyMMRE())
     snapshot = engine.execute(PASSAGE, witnesses=[{"name": "primary", "reliability": 0.9}])
     payload = snapshot.as_dict()
 
@@ -110,3 +145,4 @@ def test_final_output_json_has_required_fields() -> None:
     }
     assert payload["reality_packet"]["consensus_score"] == payload["consensus_score"]
     assert json.loads(json.dumps(payload))["execution_plan"]["stages"] == list(snapshot.execution_plan.stages)
+    assert "evidence_density" in payload["reality_packet"]
