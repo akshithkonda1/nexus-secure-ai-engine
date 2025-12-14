@@ -44,18 +44,19 @@ class ModelAbstractionLayer:
 
     SUPPORTED_MODELS: Sequence[str] = (
         "Claude-Sonnet-4.5",
-        "GPT-5.1",
+        "GPT-5.2",
         "Mistral-Large",
-        "Gemini-Pro",
+        "Gemini 3",
         "Qwen 72B",
         "Llama 3.1 70B",
         "Grok",
-        "Perplexity Sonar",
         "DeepSeek R1 (Light)",
         "DeepSeek R1 (Heavy)",
         "Kimi K2 (Light)",
         "Kimi K2 (Heavy)",
         "Opus",
+        "Perplexity Sonar",
+
     )
 
     def __init__(self, cache: Optional[InMemoryCache] = None) -> None:
@@ -136,7 +137,7 @@ class RyuzenToronV25HPlus:
         self.psl_cache = InMemoryCache()
         self.t1_cache = InMemoryCache()
         self.now = now or time.time()
-
+#This defines the tier structure, 1-8, Tier 1 always fires, Tier 2 is Logic, Tier 3 is any sourcing via the internet and other SBR(Subject Based Repositories), Tier 4 is Cold Synthesis and ALOE Synthesis for human friendly sythesis, Tier 5, is Judicial Review involving Opus and a random model from Tier 2, Then Consensus with a final sweep 
     def quick_health_check(self) -> Dict[str, Any]:
         return {
             "tiers": [
@@ -186,9 +187,9 @@ class RyuzenToronV25HPlus:
         use_opus = complexity == "high" or contradiction_likelihood == "elevated"
         tier1_models = [
             "Claude-Sonnet-4.5",
-            "GPT-5.1",
+            "GPT-5.2",
             "Mistral-Large",
-            "Gemini-Pro",
+            "Gemini 3",
             "Qwen 72B",
             "Llama 3.1 70B",
             "Grok",
@@ -412,7 +413,7 @@ class RyuzenToronV25HPlus:
         requires_logic = requires_logic or execution_plan.contradiction_likelihood == "elevated"
         requires_logic = requires_logic or "causal" in lower_prompt or contradiction_count > 0
 
-        # Tier 2: logic gate activates only when explicit reasoning is required
+        # Tier 2: logic gate activates only when explicit reasoning is required, if not needed then it is taken to Synthesis and Judicial Review
         t2_audit_report: Dict[str, Any] = {
             "models": [],
             "critiques": ["Tier 2 skipped: logic not required"],
