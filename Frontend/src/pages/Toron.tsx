@@ -267,7 +267,7 @@ const Toron: React.FC = () => {
         )}
       </aside>
 
-      <section className={`toron-main${headerTucked ? " tucked" : ""}`} aria-label="Toron conversation">
+      <section className={`toron-appframe${headerTucked ? " tucked" : ""}`} aria-label="Toron workspace">
         <header className={`toron-header${headerTucked ? " tucked" : ""}`} aria-label="Toron session header">
           <div className="toron-header-title">
             <span className="toron-name">Toron</span>
@@ -331,88 +331,90 @@ const Toron: React.FC = () => {
               ))}
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="toron-directive" role="form" aria-label="Toron input">
-          <div className="toron-input-shell">
-            <div className="toron-control">
-              <div className="toron-more-group toron-plus" role="group" aria-label="Attachment options">
-                <button type="button" className="toron-action" aria-label="Add attachments">
-                  <Plus size={16} strokeWidth={2} aria-hidden />
-                </button>
-                <div className="toron-more-menu toron-plus-menu">
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from GitHub"
-                    onClick={() => handleAddAttachment("GitHub file")}
-                  >
-                    <GitBranch size={14} strokeWidth={2} aria-hidden />
-                    Add file from GitHub
+        <div className="toron-directive-shell" aria-label="Toron directive shell">
+          <div className="toron-directive" role="form" aria-label="Toron input">
+            <div className="toron-input-shell">
+              <div className="toron-control">
+                <div className="toron-more-group toron-plus" role="group" aria-label="Attachment options">
+                  <button type="button" className="toron-action" aria-label="Add attachments">
+                    <Plus size={16} strokeWidth={2} aria-hidden />
                   </button>
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from Google Drive"
-                    onClick={() => handleAddAttachment("Google Drive file")}
-                  >
-                    <FilePlus size={14} strokeWidth={2} aria-hidden />
-                    Add file from Google Drive
-                  </button>
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from Dropbox"
-                    onClick={() => handleAddAttachment("Dropbox file")}
-                  >
-                    <FilePlus size={14} strokeWidth={2} aria-hidden />
-                    Add file from Dropbox
-                  </button>
+                  <div className="toron-more-menu toron-plus-menu">
+                    <button
+                      type="button"
+                      className="toron-inline"
+                      aria-label="Add file from GitHub"
+                      onClick={() => handleAddAttachment("GitHub file")}
+                    >
+                      <GitBranch size={14} strokeWidth={2} aria-hidden />
+                      Add file from GitHub
+                    </button>
+                    <button
+                      type="button"
+                      className="toron-inline"
+                      aria-label="Add file from Google Drive"
+                      onClick={() => handleAddAttachment("Google Drive file")}
+                    >
+                      <FilePlus size={14} strokeWidth={2} aria-hidden />
+                      Add file from Google Drive
+                    </button>
+                    <button
+                      type="button"
+                      className="toron-inline"
+                      aria-label="Add file from Dropbox"
+                      onClick={() => handleAddAttachment("Dropbox file")}
+                    >
+                      <FilePlus size={14} strokeWidth={2} aria-hidden />
+                      Add file from Dropbox
+                    </button>
+                  </div>
                 </div>
               </div>
+              <button
+                type="button"
+                className={`toron-action mic${micActive ? " active" : ""}`}
+                aria-pressed={micActive}
+                aria-label="Toggle microphone"
+                onClick={toggleMic}
+              >
+                {micActive ? <MicOff size={16} strokeWidth={2} aria-hidden /> : <Mic size={16} strokeWidth={2} aria-hidden />}
+              </button>
+              <div className="toron-input-field">
+                <textarea
+                  ref={inputRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask Toron anything…"
+                  aria-label="Ask Toron"
+                  rows={1}
+                />
+                {attachments.length > 0 && (
+                  <div className="toron-attachments" aria-label="Attachments">
+                    {attachments.map((item) => (
+                      <span key={item} className="toron-attachment">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className={`toron-send${sending ? " sending" : ""}`}
+                onClick={handleSend}
+                disabled={(draft.trim().length === 0 && attachments.length === 0) || sending}
+                aria-label="Send to Toron"
+              >
+                <Send size={16} strokeWidth={2} aria-hidden />
+                <span>{sending ? "Sending" : "Send"}</span>
+                {sending && <span className="toron-thinking" aria-hidden />}
+              </button>
             </div>
-            <button
-              type="button"
-              className={`toron-action mic${micActive ? " active" : ""}`}
-              aria-pressed={micActive}
-              aria-label="Toggle microphone"
-              onClick={toggleMic}
-            >
-              {micActive ? <MicOff size={16} strokeWidth={2} aria-hidden /> : <Mic size={16} strokeWidth={2} aria-hidden />}
-            </button>
-            <div className="toron-input-field">
-              <textarea
-                ref={inputRef}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask Toron anything…"
-                aria-label="Ask Toron"
-                rows={1}
-              />
-              {attachments.length > 0 && (
-                <div className="toron-attachments" aria-label="Attachments">
-                  {attachments.map((item) => (
-                    <span key={item} className="toron-attachment">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              className={`toron-send${sending ? " sending" : ""}`}
-              onClick={handleSend}
-              disabled={(draft.trim().length === 0 && attachments.length === 0) || sending}
-              aria-label="Send to Toron"
-            >
-              <Send size={16} strokeWidth={2} aria-hidden />
-              <span>{sending ? "Sending" : "Send"}</span>
-              {sending && <span className="toron-thinking" aria-hidden />}
-            </button>
+            <div className="toron-footer">Toron can make mistakes. Please verify important information.</div>
           </div>
-          <div className="toron-footer">Toron can make mistakes. Please verify important information.</div>
         </div>
       </section>
     </div>

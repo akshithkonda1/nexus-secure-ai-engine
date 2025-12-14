@@ -645,17 +645,20 @@ table th {
 /* Toron */
 .toron-shell {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 14px 18px 42px;
+  align-items: center;
+  padding: 14px 18px 24px;
   background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent-purple) 14%, transparent), transparent 32%),
     radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent-green) 16%, transparent), transparent 32%),
     radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent-teal) 10%, transparent), transparent 28%),
     color-mix(in srgb, var(--bg-canvas) 90%, transparent);
   --toron-header-height: 72px;
   --toron-header-height-compact: 56px;
-  --toron-directive-space: 220px;
+  --toron-header-active: var(--toron-header-height);
+  --toron-directive-space: 240px;
 }
 
 .toron-sessions {
@@ -764,7 +767,7 @@ table th {
   border-color: color-mix(in srgb, #d2982b 70%, transparent);
 }
 
-.toron-main {
+.toron-appframe {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -775,8 +778,9 @@ table th {
   transition: padding-top var(--rz-duration) ease;
 }
 
-.toron-main.tucked {
+.toron-appframe.tucked {
   padding-top: 4px;
+  --toron-header-active: var(--toron-header-height-compact);
 }
 
 .toron-header {
@@ -784,20 +788,20 @@ table th {
   z-index: 3;
   display: flex;
   align-items: center;
-  height: var(--toron-header-height);
+  height: var(--toron-header-active);
   border-bottom: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-glass) 90%, transparent);
   backdrop-filter: blur(var(--blur-strength));
   padding: 10px 6px;
   transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
-    background var(--rz-duration) ease;
+    background var(--rz-duration) ease, opacity var(--rz-duration) ease;
 }
 
 .toron-header.tucked {
-  height: var(--toron-header-height-compact);
   padding: 6px 6px;
   border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
   background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  opacity: 0.92;
 }
 
 .toron-header-title {
@@ -824,9 +828,11 @@ table th {
 
 .toron-viewport {
   position: relative;
-  border-radius: 24px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  border-radius: 26px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 5%, transparent), transparent 32%),
+    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 5%, transparent), transparent 30%),
+    color-mix(in srgb, var(--bg-surface) 96%, transparent);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
@@ -837,8 +843,8 @@ table th {
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  max-height: calc(100vh - var(--toron-header-height) - var(--toron-directive-space));
-  padding: 12px 12px calc(var(--toron-directive-space) + 18px);
+  max-height: calc(100vh - var(--toron-header-active) - var(--toron-directive-space));
+  padding: 18px 16px calc(var(--toron-directive-space) + 18px);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
@@ -848,12 +854,19 @@ table th {
 }
 
 .toron-viewport-scroll::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--text-muted) 45%, transparent);
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
   border-radius: 999px;
+  opacity: 0;
+  transition: opacity var(--rz-duration) ease;
 }
 
 .toron-viewport-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.toron-viewport-scroll:hover::-webkit-scrollbar-thumb,
+.toron-viewport-scroll:focus-within::-webkit-scrollbar-thumb {
+  opacity: 1;
 }
 
 .toron-conversation {
@@ -870,9 +883,9 @@ table th {
   gap: 8px;
   padding: 14px 16px 12px;
   border-radius: 14px;
-  border: 1px solid var(--border-strong);
-  background: var(--bg-surface);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 68%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
 }
 
 .toron-message.assistant {
@@ -956,8 +969,8 @@ table th {
 }
 
 .toron-plus .toron-more-menu {
-  bottom: auto;
-  top: 42px;
+  bottom: calc(100% + 12px);
+  top: auto;
   left: 0;
   right: auto;
 }
@@ -980,16 +993,24 @@ table th {
   cursor: pointer;
 }
 
-.toron-directive {
-  position: fixed;
+.toron-directive-shell {
+  position: absolute;
   left: 50%;
-  bottom: 24px;
+  bottom: 18px;
   transform: translateX(-50%);
   width: min(1040px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 9;
+  z-index: 7;
+}
+
+.toron-directive {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
 .toron-input-shell {
