@@ -85,6 +85,7 @@ const Toron: React.FC = () => {
     offsetY: 0,
   });
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
+  const [sessionFootprint, setSessionFootprint] = useState(0);
   const [headerTucked, setHeaderTucked] = useState(false);
   const [newResponseHint, setNewResponseHint] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -111,6 +112,7 @@ const Toron: React.FC = () => {
     setMessages((prev) => [...prev, outbound]);
     setDraft("");
     setAttachments([]);
+    inputRef.current?.focus();
 
     window.setTimeout(() => {
       const reply: Message = {
@@ -120,14 +122,13 @@ const Toron: React.FC = () => {
       };
       setMessages((prev) => [...prev, reply]);
       setSending(false);
+      inputRef.current?.focus();
     }, 480);
   };
 
   const toggleMic = () => {
     setMicActive((prev) => !prev);
-    if (!micActive) {
-      inputRef.current?.focus();
-    }
+    inputRef.current?.focus();
   };
 
   const handleAddAttachment = (label: string) => {
@@ -135,6 +136,7 @@ const Toron: React.FC = () => {
       if (prev.includes(label)) return prev;
       return [...prev, label];
     });
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -145,6 +147,7 @@ const Toron: React.FC = () => {
   };
 
   const clampPosition = (top: number, left: number) => {
+    if (typeof window === "undefined") return { top, left };
     const widgetWidth = widgetRef.current?.offsetWidth ?? 320;
     const widgetHeight = widgetRef.current?.offsetHeight ?? 260;
     const maxLeft = Math.max(0, window.innerWidth - widgetWidth - 12);
@@ -237,6 +240,19 @@ const Toron: React.FC = () => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (!sessionsOpen) {
+      setSessionFootprint(0);
+      return;
+    }
+
+    const width = widgetRef.current?.offsetWidth ?? 320;
+    const offset = sessionPosition.left;
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1440;
+    const footprint = Math.min(offset + width + 24, Math.max(width + 32, viewportWidth * 0.42));
+    setSessionFootprint(sessionsOpen ? Math.max(0, footprint) : 0);
+  }, [sessionsOpen, sessionPosition.left, sessionPosition.top]);
+
   const scrollToLatest = () => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -244,115 +260,8 @@ const Toron: React.FC = () => {
     setNewResponseHint(false);
   };
 
-  const toggleMic = () => {
-    setMicActive((prev) => !prev);
-    if (!micActive) {
-      inputRef.current?.focus();
-    }
-  };
-
-  const handleAddAttachment = (label: string) => {
-    setAttachments((prev) => {
-      if (prev.includes(label)) return prev;
-      return [...prev, label];
-    });
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
-    }
-  };
-
-  const clampPosition = (top: number, left: number) => {
-    const widgetWidth = widgetRef.current?.offsetWidth ?? 320;
-    const widgetHeight = widgetRef.current?.offsetHeight ?? 260;
-    const maxLeft = Math.max(0, window.innerWidth - widgetWidth - 12);
-    const maxTop = Math.max(0, window.innerHeight - widgetHeight - 12);
-    return { top: Math.min(Math.max(12, top), maxTop), left: Math.min(Math.max(12, left), maxLeft) };
-  };
-
-  const startDrag = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    const rect = widgetRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setDragState({
-      active: true,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top,
-    });
-  };
-
-  useEffect(() => {
-    const handleMove = (event: MouseEvent) => {
-      if (!dragState.active) return;
-      const nextTop = event.clientY - dragState.offsetY;
-      const nextLeft = event.clientX - dragState.offsetX;
-      setSessionPosition(clampPosition(nextTop, nextLeft));
-    };
-
-    const handleUp = () => {
-      if (!dragState.active) return;
-      setDragState((prev) => ({ ...prev, active: false }));
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-    };
-  }, [dragState]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("toron-session-position");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setSessionPosition(clampPosition(parsed.top, parsed.left));
-      } catch {
-        setSessionPosition(clampPosition(20, 20));
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const clamped = clampPosition(sessionPosition.top, sessionPosition.left);
-    if (clamped.top !== sessionPosition.top || clamped.left !== sessionPosition.left) {
-      setSessionPosition(clamped);
-      return;
-    }
-    localStorage.setItem("toron-session-position", JSON.stringify(clamped));
-  }, [sessionPosition.top, sessionPosition.left]);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const handleScroll = () => {
-      setHeaderTucked(viewport.scrollTop > 12);
-    };
-
-    viewport.addEventListener("scroll", handleScroll);
-    return () => {
-      viewport.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
-    if (distanceFromBottom < 140) {
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
-    }
-  }, [messages]);
-
   return (
-    <div className="toron-shell">
+    <div className="toron-shell" style={{ ["--toron-offset" as string]: `${sessionFootprint}px` }}>
       <aside
         ref={widgetRef}
         className={`toron-sessions${sessionsOpen ? "" : " collapsed"}`}
@@ -458,7 +367,7 @@ const Toron: React.FC = () => {
               </button>
             )}
           </div>
-        </header>
+        </div>
 
         <div className="toron-directive-shell" aria-label="Toron directive shell">
           <div className="toron-directive" role="form" aria-label="Toron input">
@@ -514,7 +423,7 @@ const Toron: React.FC = () => {
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask Toron anything"
+                  placeholder="Ask Toron anything…"
                   aria-label="Ask Toron"
                   rows={1}
                 />
