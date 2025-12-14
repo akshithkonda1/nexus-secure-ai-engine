@@ -2,20 +2,16 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Copy,
   Edit3,
-  Box,
-  Cloud,
+  Archive,
   FilePlus,
-  GitBranch,
-  Github,
+  FolderClosed,
   Mic,
   MicOff,
-  MoreHorizontal,
   Pause,
   Play,
   Plus,
   RefreshCw,
   Send,
-  Flag,
 } from "lucide-react";
 
 type Role = "assistant" | "user";
@@ -77,14 +73,14 @@ const deriveSessionTitle = (messages: Message[]) => {
 
 const quickActions = [
   {
-    label: "Clarify scope",
-    description: "Define constraints and success signals before execution.",
-    prompt: "Clarify the scope, constraints, and checkpoints before proceeding.",
+    label: "Define scope",
+    description: "Confirm constraints, signals, and success state.",
+    prompt: "Clarify the scope, constraints, success signals, and acceptance criteria before execution.",
   },
   {
-    label: "Brainstorm",
-    description: "Map options with tradeoffs and expected impact.",
-    prompt: "Brainstorm structured options with tradeoffs and expected impact.",
+    label: "Explore paths",
+    description: "Outline options with tradeoffs and effort.",
+    prompt: "List structured options with tradeoffs, effort, and expected impact.",
   },
   {
     label: "Make a plan",
@@ -93,7 +89,7 @@ const quickActions = [
   },
   {
     label: "Surface risks",
-    description: "Highlight blockers, dependencies, and mitigations.",
+    description: "Highlight blockers, dependencies, mitigations.",
     prompt: "Surface key risks, dependencies, and mitigations for this track.",
   },
 ];
@@ -344,23 +340,23 @@ const Toron: React.FC = () => {
             <section className="toron-hero" aria-label="Toron session context">
               <div className="toron-orb" aria-hidden />
               <div className="toron-hero-copy">
-                <p className="toron-kicker">Model B · Context aware</p>
-                <h1 className="toron-headline">Ready to move the plan forward?</h1>
-                <p className="toron-subhead">Toron keeps the directive stable while you think, decide, and execute.</p>
-                <div className="toron-quick-actions" role="list">
-                  {quickActions.map((action) => (
-                    <button
-                      key={action.label}
-                      type="button"
-                      className="toron-quick"
-                      onClick={() => handleQuickAction(action.prompt)}
-                      role="listitem"
-                    >
-                      <span className="toron-quick-label">{action.label}</span>
-                      <span className="toron-quick-description">{action.description}</span>
-                    </button>
-                  ))}
-                </div>
+                <p className="toron-kicker">Toron — Model B</p>
+                <h1 className="toron-headline">Ready to create something new?</h1>
+                <p className="toron-subhead">Maintain directive clarity as you think, decide, and execute.</p>
+              </div>
+              <div className="toron-quick-actions" role="list">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    className="toron-quick"
+                    onClick={() => handleQuickAction(action.prompt)}
+                    role="listitem"
+                  >
+                    <span className="toron-quick-label">{action.label}</span>
+                    <span className="toron-quick-description">{action.description}</span>
+                  </button>
+                ))}
               </div>
             </section>
             <div className="toron-conversation">
@@ -388,24 +384,6 @@ const Toron: React.FC = () => {
                           <button type="button" className="toron-action" aria-label="Regenerate Toron message">
                             <RefreshCw size={14} strokeWidth={2} aria-hidden />
                           </button>
-                          <div className="toron-more-group" role="group" aria-label="More message options">
-                            <button type="button" className="toron-action" aria-label="More options">
-                              <MoreHorizontal size={14} strokeWidth={2} aria-hidden />
-                            </button>
-                            <div className="toron-more-menu">
-                              <button type="button" className="toron-inline" aria-label="Read aloud">
-                                Read aloud
-                              </button>
-                              <button type="button" className="toron-inline" aria-label="Branch into new chat">
-                                <GitBranch size={14} strokeWidth={2} aria-hidden />
-                                Branch new chat
-                              </button>
-                              <button type="button" className="toron-inline" aria-label="Report message">
-                                <Flag size={14} strokeWidth={2} aria-hidden />
-                                Report output
-                              </button>
-                            </div>
-                          </div>
                         </>
                       )}
                     </div>
@@ -437,7 +415,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from GitHub"
                       onClick={() => handleAddAttachment("GitHub file")}
                     >
-                      <Github size={14} strokeWidth={2} aria-hidden />
+                      <FilePlus size={14} strokeWidth={2} aria-hidden />
                       Add file from GitHub
                     </button>
                     <button
@@ -446,7 +424,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from Google Drive"
                       onClick={() => handleAddAttachment("Google Drive file")}
                     >
-                      <Cloud size={14} strokeWidth={2} aria-hidden />
+                      <FolderClosed size={14} strokeWidth={2} aria-hidden />
                       Add file from Google Drive
                     </button>
                     <button
@@ -455,7 +433,7 @@ const Toron: React.FC = () => {
                       aria-label="Add file from Dropbox"
                       onClick={() => handleAddAttachment("Dropbox file")}
                     >
-                      <Box size={14} strokeWidth={2} aria-hidden />
+                      <Archive size={14} strokeWidth={2} aria-hidden />
                       Add file from Dropbox
                     </button>
                   </div>
