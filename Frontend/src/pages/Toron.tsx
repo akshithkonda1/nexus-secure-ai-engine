@@ -1,139 +1,267 @@
-import React, { useMemo, useState } from "react";
-import { Check, Circle, Mic, Plus, Send, X } from "lucide-react";
+import React, { useMemo, useRef, useState } from "react";
+import {
+  Check,
+  Copy,
+  Edit3,
+  FolderGit,
+  GitBranch,
+  Mic,
+  MicOff,
+  MoreHorizontal,
+  PauseCircle,
+  PlayCircle,
+  Plus,
+  Send,
+  Flag,
+  Volume2,
+} from "lucide-react";
+
+type Role = "assistant" | "user";
 
 interface Message {
   id: string;
-  role: "assistant" | "user";
+  role: Role;
   content: string;
 }
 
-const initialMessages: Message[] = [
+interface SessionMeta {
+  id: string;
+  title: string;
+  status: "Alive" | "Quiet" | "Paused";
+}
+
+const seedMessages: Message[] = [
   {
-    id: "1",
+    id: "seed-1",
     role: "assistant",
     content: "I'm present. What do you want to move today?",
   },
   {
-    id: "2",
+    id: "seed-2",
     role: "user",
     content: "Reprioritize the Q3 delivery plan and surface risks for transparency.",
   },
   {
-    id: "3",
+    id: "seed-3",
     role: "assistant",
-    content: "Understood. I'll map current milestones, annotate risk vectors, and draft a transparent update.",
+    content: "I'll map milestones, annotate risk vectors, and draft a transparent update.",
   },
 ];
 
-const Toron: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [draft, setDraft] = useState("");
-  const [sessionsOpen, setSessionsOpen] = useState(true);
+const sanitizeTitle = (content: string): string => {
+  const normalized = content
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return "Focused Toron session";
 
-  const sessions = useMemo(
+  const words = normalized.split(" ").filter(Boolean);
+  const clipped = words.slice(0, Math.min(8, Math.max(6, words.length)));
+  const sentence = clipped.join(" ").toLowerCase();
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+};
+
+const deriveSessionTitle = (messages: Message[]) => {
+  const firstUser = messages.find((msg) => msg.role === "user");
+  const source = firstUser?.content ?? messages[0]?.content ?? "Focused Toron session";
+  return sanitizeTitle(source);
+};
+
+const Toron: React.FC = () => {
+  const [messages, setMessages] = useState<Message[]>(seedMessages);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [micActive, setMicActive] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(true);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const sessionTitle = useMemo(() => deriveSessionTitle(messages), [messages]);
+
+  const sessions: SessionMeta[] = useMemo(
     () => [
-      { title: "Plan Revamp", detail: "Alive" },
-      { title: "Workspace Sync", detail: "Quiet" },
-      { title: "Docs Deep Dive", detail: "Paused" },
+      { id: "current", title: sessionTitle, status: "Alive" },
+      { id: "workspace-sync", title: "Workspace sync signals", status: "Quiet" },
+      { id: "docs-review", title: "Docs health and risk review", status: "Paused" },
     ],
-    []
+    [sessionTitle]
   );
 
-  const sendDraft = () => {
-    if (!draft.trim()) return;
-    const next: Message = { id: Date.now().toString(), role: "user", content: draft };
-    setMessages((prev) => [...prev, next, { id: `${next.id}-ack`, role: "assistant", content: "Acknowledged." }]);
+  const handleSend = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    setSending(true);
+    const outbound: Message = { id: `user-${Date.now()}`, role: "user", content: trimmed };
+    setMessages((prev) => [...prev, outbound]);
     setDraft("");
+
+    window.setTimeout(() => {
+      const reply: Message = {
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: "Acknowledged. I will process this with context and return a concise plan.",
+      };
+      setMessages((prev) => [...prev, reply]);
+      setSending(false);
+    }, 480);
+  };
+
+  const toggleMic = () => {
+    setMicActive((prev) => !prev);
+    if (!micActive) {
+      inputRef.current?.focus();
+    }
   };
 
   return (
-    <div className="chat-shell">
-      <aside className="sessions">
-        <div className="section-header">
-          <div>
-            <div style={{ fontWeight: 700 }}>Sessions</div>
-            <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Contextual, never a sidebar</div>
-          </div>
-          <button type="button" className="icon-button" onClick={() => setSessionsOpen((prev) => !prev)} aria-label="Toggle sessions">
-            {sessionsOpen ? "−" : "+"}
+    <div className="toron-shell">
+      <aside className={`toron-sessions${sessionsOpen ? "" : " collapsed"}`} aria-label="Toron sessions">
+        <div className="toron-sessions-header">
+          <div className="toron-sessions-title">Sessions</div>
+          <button
+            type="button"
+            className="toron-toggle"
+            aria-expanded={sessionsOpen}
+            onClick={() => setSessionsOpen((prev) => !prev)}
+          >
+            {sessionsOpen ? <PauseCircle size={16} aria-hidden /> : <PlayCircle size={16} aria-hidden />}
           </button>
         </div>
         {sessionsOpen && (
-          <div style={{ display: "grid", gap: 10 }}>
-            <div className="session-status">
-              <Circle size={12} strokeWidth={3} color="var(--accent-green)" fill="var(--accent-green)" aria-hidden />
-              Soft green alive pulse
-            </div>
+          <div className="toron-sessions-list">
             {sessions.map((session) => (
-              <div key={session.title} className="mini-card">
-                <div style={{ fontWeight: 700 }}>{session.title}</div>
-                <div style={{ color: "var(--text-secondary)" }}>{session.detail}</div>
+              <div key={session.id} className={`toron-session-card${session.id === "current" ? " active" : ""}`}>
+                <div className="toron-session-row">
+                  <span className="toron-session-title">{session.title}</span>
+                  <span className={`toron-status-dot ${session.status.toLowerCase()}`} aria-hidden />
+                </div>
+                <div className="toron-session-status">{session.status}</div>
               </div>
             ))}
           </div>
         )}
       </aside>
-      <div className="glass-panel" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div className="section-header">
-          <div>
-            <p style={{ margin: 0, color: "var(--text-muted)" }}>Toron</p>
-            <h2 style={{ margin: 0 }}>Authoritative chat</h2>
-          </div>
-          <div className="mini-card" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Mic size={18} strokeWidth={1.8} aria-hidden />
-            Mic ready — speech-to-text only
-          </div>
-        </div>
 
-        <div className="chat-stream">
+      <section className="toron-main" aria-label="Toron conversation">
+        <header className="toron-header" aria-label="Toron session header">
+          <div className="toron-header-title">
+            <span className="toron-name">Toron</span>
+            <span className="toron-divider" aria-hidden />
+            <span className="toron-session-name" title={sessionTitle}>
+              {sessionTitle}
+            </span>
+          </div>
+        </header>
+
+        <div className="toron-conversation">
           {messages.map((message) => (
-            <div key={message.id} className={`message ${message.role}`}>
-              <div className="controls" aria-label="Assistant controls">
-                {message.role === "assistant" && (
+            <article key={message.id} className={`toron-message ${message.role}`}>
+              <div className="toron-message-meta">
+                <span className="toron-label" aria-label={message.role === "assistant" ? "Toron" : "User"}>
+                  {message.role === "assistant" ? "TORON" : "U"}
+                </span>
+              </div>
+              <div className="toron-message-body">{message.content}</div>
+              <div className="toron-actions" aria-label="message actions">
+                {message.role === "user" ? (
                   <>
-                    <span className="control-chip">Copy</span>
-                    <span className="control-chip">
-                      <Check size={12} strokeWidth={2.2} aria-hidden /> Regenerate
-                    </span>
-                    <span className="control-chip">
-                      <X size={12} strokeWidth={2.2} aria-hidden /> Dismiss
-                    </span>
-                    <span className="control-chip">Read aloud</span>
-                    <span className="control-chip">Branch new chat</span>
-                    <span className="control-chip">Report message</span>
+                    <button type="button" className="toron-action" aria-label="Edit message">
+                      <Edit3 size={14} strokeWidth={2} aria-hidden />
+                    </button>
+                    <button type="button" className="toron-action" aria-label="Copy message">
+                      <Copy size={14} strokeWidth={2} aria-hidden />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="toron-action" aria-label="Copy Toron message">
+                      <Copy size={14} strokeWidth={2} aria-hidden />
+                    </button>
+                    <button type="button" className="toron-action" aria-label="Regenerate Toron message">
+                      <Check size={14} strokeWidth={2} aria-hidden />
+                    </button>
+                    <div className="toron-more-group" role="group" aria-label="More message options">
+                      <button type="button" className="toron-action" aria-label="More options">
+                        <MoreHorizontal size={14} strokeWidth={2} aria-hidden />
+                      </button>
+                      <div className="toron-more-menu">
+                        <button type="button" className="toron-inline" aria-label="Read aloud">
+                          <Volume2 size={14} strokeWidth={2} aria-hidden />
+                          Read aloud
+                        </button>
+                        <button type="button" className="toron-inline" aria-label="Branch into new chat">
+                          <GitBranch size={14} strokeWidth={2} aria-hidden />
+                          Branch into new chat
+                        </button>
+                        <button type="button" className="toron-inline" aria-label="Report message">
+                          <Flag size={14} strokeWidth={2} aria-hidden />
+                          Report message
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>{message.role === "assistant" ? "Toron" : "You"}</div>
-              <div style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>{message.content}</div>
-            </div>
+            </article>
           ))}
         </div>
 
-        <div className="composer" role="form" aria-label="Toron composer">
-          <button type="button" className="icon-button" aria-label="Plus actions">
-            <Plus size={16} strokeWidth={2} aria-hidden />
-          </button>
-          <button type="button" className="icon-button" aria-label="Microphone input">
-            <Mic size={16} strokeWidth={2} aria-hidden />
-          </button>
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Say it softly — Toron is listening"
-            aria-label="Message Toron"
-          />
+        <div className="toron-input" role="form" aria-label="Toron input">
+          <div className="toron-more-group toron-plus" role="group" aria-label="Attachment options">
+            <button type="button" className="toron-action" aria-label="Add attachments">
+              <Plus size={16} strokeWidth={2} aria-hidden />
+            </button>
+            <div className="toron-more-menu toron-plus-menu">
+              <button type="button" className="toron-inline" aria-label="Attach file">
+                <FolderGit size={14} strokeWidth={2} aria-hidden />
+                Attach file
+              </button>
+              <button type="button" className="toron-inline" aria-label="Add from GitHub">
+                <GitBranch size={14} strokeWidth={2} aria-hidden />
+                Add from GitHub (SVG)
+              </button>
+              <button type="button" className="toron-inline" aria-label="Add from Google Drive">
+                <FolderGit size={14} strokeWidth={2} aria-hidden />
+                Add from Google Drive (SVG)
+              </button>
+            </div>
+          </div>
           <button
             type="button"
-            className="pill-button"
-            onClick={sendDraft}
-            style={{ transition: "transform 180ms ease" }}
+            className={`toron-action mic${micActive ? " active" : ""}`}
+            aria-pressed={micActive}
+            aria-label="Toggle microphone"
+            onClick={toggleMic}
           >
-            <Send size={16} strokeWidth={2} style={{ marginRight: 8 }} aria-hidden />
-            Send
+            {micActive ? <MicOff size={16} strokeWidth={2} aria-hidden /> : <Mic size={16} strokeWidth={2} aria-hidden />}
+          </button>
+          <div className="toron-input-field">
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Ask me anything."
+              aria-label="Ask Toron"
+            />
+            {micActive && (
+              <div className="toron-waveform" aria-label="Voice capture waveform">
+                {[1, 2, 3, 4, 5, 6].map((bar) => (
+                  <span key={bar} style={{ animationDelay: `${bar * 80}ms` }} />
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className={`toron-send${sending ? " sending" : ""}`}
+            onClick={handleSend}
+            disabled={!draft.trim() || sending}
+            aria-label="Send to Toron"
+          >
+            <Send size={16} strokeWidth={2} aria-hidden />
+            <span>{sending ? "Processing" : "Send"}</span>
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
