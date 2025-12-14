@@ -86,6 +86,7 @@ const Toron: React.FC = () => {
   });
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
   const [headerTucked, setHeaderTucked] = useState(false);
+  const [newResponseHint, setNewResponseHint] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
@@ -120,6 +121,127 @@ const Toron: React.FC = () => {
       setMessages((prev) => [...prev, reply]);
       setSending(false);
     }, 480);
+  };
+
+  const toggleMic = () => {
+    setMicActive((prev) => !prev);
+    if (!micActive) {
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleAddAttachment = (label: string) => {
+    setAttachments((prev) => {
+      if (prev.includes(label)) return prev;
+      return [...prev, label];
+    });
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSend();
+    }
+  };
+
+  const clampPosition = (top: number, left: number) => {
+    const widgetWidth = widgetRef.current?.offsetWidth ?? 320;
+    const widgetHeight = widgetRef.current?.offsetHeight ?? 260;
+    const maxLeft = Math.max(0, window.innerWidth - widgetWidth - 12);
+    const maxTop = Math.max(0, window.innerHeight - widgetHeight - 12);
+    return { top: Math.min(Math.max(12, top), maxTop), left: Math.min(Math.max(12, left), maxLeft) };
+  };
+
+  const startDrag = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const rect = widgetRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setDragState({
+      active: true,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    });
+  };
+
+  useEffect(() => {
+    const handleMove = (event: MouseEvent) => {
+      if (!dragState.active) return;
+      const nextTop = event.clientY - dragState.offsetY;
+      const nextLeft = event.clientX - dragState.offsetX;
+      setSessionPosition(clampPosition(nextTop, nextLeft));
+    };
+
+    const handleUp = () => {
+      if (!dragState.active) return;
+      setDragState((prev) => ({ ...prev, active: false }));
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, [dragState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("toron-session-position");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setSessionPosition(clampPosition(parsed.top, parsed.left));
+      } catch {
+        setSessionPosition(clampPosition(20, 20));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const clamped = clampPosition(sessionPosition.top, sessionPosition.left);
+    if (clamped.top !== sessionPosition.top || clamped.left !== sessionPosition.left) {
+      setSessionPosition(clamped);
+      return;
+    }
+    localStorage.setItem("toron-session-position", JSON.stringify(clamped));
+  }, [sessionPosition.top, sessionPosition.left]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      setHeaderTucked(viewport.scrollTop > 12);
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      if (distanceFromBottom < 120) {
+        setNewResponseHint(false);
+      }
+    };
+
+    viewport.addEventListener("scroll", handleScroll);
+    return () => {
+      viewport.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    if (distanceFromBottom < 140) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+      setNewResponseHint(false);
+    } else {
+      setNewResponseHint(true);
+    }
+  }, [messages]);
+
+  const scrollToLatest = () => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+    setNewResponseHint(false);
   };
 
   const toggleMic = () => {
@@ -330,6 +452,11 @@ const Toron: React.FC = () => {
                 </article>
               ))}
             </div>
+            {newResponseHint && (
+              <button type="button" className="toron-new-response" onClick={scrollToLatest}>
+                New Toron response
+              </button>
+            )}
           </div>
         </header>
 
@@ -387,7 +514,7 @@ const Toron: React.FC = () => {
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask Toron anything…"
+                  placeholder="Ask Toron anything"
                   aria-label="Ask Toron"
                   rows={1}
                 />

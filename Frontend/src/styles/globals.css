@@ -659,6 +659,7 @@ table th {
   --toron-header-height-compact: 56px;
   --toron-header-active: var(--toron-header-height);
   --toron-directive-space: 240px;
+  --toron-radius: 26px;
 }
 
 .toron-sessions {
@@ -775,6 +776,8 @@ table th {
   position: relative;
   width: min(1180px, 100%);
   margin: 0 auto;
+  padding: 6px 10px 0;
+  isolation: isolate;
   transition: padding-top var(--rz-duration) ease;
 }
 
@@ -789,19 +792,20 @@ table th {
   display: flex;
   align-items: center;
   height: var(--toron-header-active);
-  border-bottom: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-glass) 90%, transparent);
-  backdrop-filter: blur(var(--blur-strength));
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
   padding: 10px 6px;
   transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
-    background var(--rz-duration) ease, opacity var(--rz-duration) ease;
+    background var(--rz-duration) ease, opacity var(--rz-duration) ease, transform var(--rz-duration) ease;
 }
 
 .toron-header.tucked {
   padding: 6px 6px;
   border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
   background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
-  opacity: 0.92;
+  opacity: 0.9;
+  transform: translateY(-4px);
 }
 
 .toron-header-title {
@@ -828,13 +832,24 @@ table th {
 
 .toron-viewport {
   position: relative;
-  border-radius: 26px;
-  border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
-  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 5%, transparent), transparent 32%),
-    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 5%, transparent), transparent 30%),
-    color-mix(in srgb, var(--bg-surface) 96%, transparent);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--toron-radius);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
+  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 34%),
+    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 6%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 94%, transparent), color-mix(in srgb, var(--bg-glass) 82%, transparent));
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.1));
   overflow: hidden;
+}
+
+.toron-viewport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 12%, transparent), transparent 32%),
+    linear-gradient(0deg, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 24%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 1));
 }
 
 .toron-viewport-scroll {
@@ -847,6 +862,7 @@ table th {
   padding: 18px 16px calc(var(--toron-directive-space) + 18px);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 24%, transparent) transparent;
 }
 
 .toron-viewport-scroll::-webkit-scrollbar {
@@ -882,10 +898,11 @@ table th {
   flex-direction: column;
   gap: 8px;
   padding: 14px 16px 12px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--border-strong) 68%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
+  border-radius: calc(var(--toron-radius) * 0.55);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
 }
 
 .toron-message.assistant {
@@ -1019,10 +1036,10 @@ table th {
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-glass) 95%, transparent);
-  box-shadow: var(--shadow-soft);
+  border-radius: calc(var(--toron-radius) * 0.7);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(var(--blur-strength));
 }
 
@@ -1115,6 +1132,20 @@ table th {
   text-align: center;
   font-size: 12px;
   color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+}
+
+.toron-new-response {
+  position: sticky;
+  bottom: 12px;
+  align-self: flex-end;
+  margin-right: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 42%, var(--border-strong));
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
 }
 
 @media (max-width: 1080px) {
