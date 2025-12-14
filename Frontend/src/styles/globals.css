@@ -649,17 +649,20 @@ table th {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 14px 18px 24px;
-  background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent-purple) 14%, transparent), transparent 32%),
-    radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent-green) 16%, transparent), transparent 32%),
-    radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent-teal) 10%, transparent), transparent 28%),
-    color-mix(in srgb, var(--bg-canvas) 90%, transparent);
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px 22px 28px;
+  gap: 12px;
+  background: radial-gradient(circle at 10% 14%, color-mix(in srgb, var(--accent-purple) 10%, transparent), transparent 30%),
+    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--accent-green) 12%, transparent), transparent 28%),
+    radial-gradient(circle at 18% 78%, color-mix(in srgb, var(--accent-teal) 9%, transparent), transparent 30%),
+    color-mix(in srgb, var(--bg-canvas) 94%, transparent);
   --toron-header-height: 72px;
   --toron-header-height-compact: 56px;
   --toron-header-active: var(--toron-header-height);
-  --toron-directive-space: 240px;
+  --toron-directive-space: 256px;
   --toron-radius: 26px;
+  --toron-offset: 0px;
 }
 
 .toron-sessions {
@@ -668,12 +671,12 @@ table th {
   width: 320px;
   cursor: grab;
   border-radius: 18px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
-  box-shadow: var(--shadow-soft);
-  padding: 14px;
-  backdrop-filter: blur(var(--blur-strength));
-  transition: background var(--rz-duration) ease, border var(--rz-duration) ease;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 94%, transparent);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+  padding: 12px 14px;
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.05));
+  transition: background var(--rz-duration) ease, border var(--rz-duration) ease, transform var(--rz-duration) ease;
 }
 
 .toron-sessions.collapsed .toron-sessions-list {
@@ -774,11 +777,11 @@ table th {
   gap: 12px;
   min-height: calc(100vh - 32px);
   position: relative;
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  padding: 6px 10px 0;
+  width: min(1240px, calc(100% - min(var(--toron-offset), 520px) - 24px));
+  margin: 0 auto 0 min(var(--toron-offset), 520px);
+  padding: 10px 12px 0;
   isolation: isolate;
-  transition: padding-top var(--rz-duration) ease;
+  transition: padding-top var(--rz-duration) ease, margin var(--rz-duration) ease, width var(--rz-duration) ease;
 }
 
 .toron-appframe.tucked {
@@ -792,10 +795,10 @@ table th {
   display: flex;
   align-items: center;
   height: var(--toron-header-active);
-  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
-  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 76%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 88%, transparent);
   backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
-  padding: 10px 6px;
+  padding: 10px 8px;
   transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
     background var(--rz-duration) ease, opacity var(--rz-duration) ease, transform var(--rz-duration) ease;
 }
@@ -834,11 +837,11 @@ table th {
   position: relative;
   border-radius: var(--toron-radius);
   border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
-  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 34%),
-    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 6%, transparent), transparent 30%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 94%, transparent), color-mix(in srgb, var(--bg-glass) 82%, transparent));
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(calc(var(--blur-strength) * 1.1));
+  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 7%, transparent), transparent 34%),
+    radial-gradient(circle at 86% 16%, color-mix(in srgb, var(--accent-green) 8%, transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 92%, transparent), color-mix(in srgb, var(--bg-glass) 86%, transparent));
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.12));
   overflow: hidden;
 }
 
@@ -859,7 +862,7 @@ table th {
   gap: 12px;
   overflow-y: auto;
   max-height: calc(100vh - var(--toron-header-active) - var(--toron-directive-space));
-  padding: 18px 16px calc(var(--toron-directive-space) + 18px);
+  padding: 18px 18px calc(var(--toron-directive-space) + 26px);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--text-muted) 24%, transparent) transparent;
@@ -897,20 +900,20 @@ table th {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px 12px;
+  padding: 16px 18px 14px;
   border-radius: calc(var(--toron-radius) * 0.55);
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(4px);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 88%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 90%, transparent), color-mix(in srgb, var(--bg-surface) 94%, transparent));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(6px);
 }
 
 .toron-message.assistant {
-  border-color: color-mix(in srgb, var(--accent-green) 32%, var(--border-strong));
+  border-color: color-mix(in srgb, var(--accent-green) 34%, var(--border-strong));
 }
 
 .toron-message.user {
-  border-color: color-mix(in srgb, var(--accent-purple) 32%, var(--border-strong));
+  border-color: color-mix(in srgb, var(--accent-purple) 34%, var(--border-strong));
 }
 
 .toron-message-top {
@@ -923,8 +926,8 @@ table th {
 .toron-label {
   font-size: 12px;
   letter-spacing: 0.2px;
-  color: var(--text-muted);
-  font-weight: 600;
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+  font-weight: 700;
 }
 
 .toron-message-body {
@@ -1013,9 +1016,10 @@ table th {
 .toron-directive-shell {
   position: absolute;
   left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  width: min(1040px, calc(100% - 32px));
+  bottom: 22px;
+  transform: translateX(calc(-50% + (min(var(--toron-offset), 520px) * 0.02)));
+  width: min(1080px, calc(100% - 32px));
+  max-width: 1100px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1035,12 +1039,12 @@ table th {
   grid-template-columns: auto auto 1fr auto;
   align-items: flex-start;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: calc(var(--toron-radius) * 0.7);
-  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
-  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(var(--blur-strength));
+  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 94%, transparent), color-mix(in srgb, var(--bg-surface) 90%, transparent));
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.08));
 }
 
 .toron-control {
