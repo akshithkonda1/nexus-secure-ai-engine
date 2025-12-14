@@ -45,6 +45,11 @@ a {
   z-index: 0;
   overflow: hidden;
   isolation: isolate;
+  background: radial-gradient(circle at 50% 26%, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 36%),
+    radial-gradient(circle at 18% 64%, color-mix(in srgb, var(--accent-teal) 7%, transparent), transparent 34%),
+    radial-gradient(circle at 84% 70%, color-mix(in srgb, var(--accent-green) 6%, transparent), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-canvas) 94%, transparent), color-mix(in srgb, var(--bg-canvas) 88%, trans
+parent));
 }
 
 .cosmic-layer {
@@ -52,6 +57,26 @@ a {
   inset: 0;
   filter: blur(72px);
   opacity: 0.9;
+}
+
+.cosmic-strata {
+  position: absolute;
+  inset: -12% 0;
+  background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent-purple) 18%, transparent) 0%,
+      transparent 12%,
+      transparent 18%,
+      color-mix(in srgb, var(--accent-teal) 16%, transparent) 30%,
+      transparent 46%,
+      color-mix(in srgb, var(--accent-purple) 20%, transparent) 60%,
+      transparent 74%,
+      color-mix(in srgb, var(--accent-green) 16%, transparent) 86%,
+      transparent 100%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated) 50%, transparent), transparent 42%);
+  opacity: 0.42;
+  filter: blur(48px);
 }
 
 .cosmic-layer.aurora {
@@ -256,11 +281,11 @@ a {
   position: sticky;
   top: 0;
   height: 100vh;
-  width: 252px;
-  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  border-right: 1px solid var(--border-strong);
-  backdrop-filter: blur(var(--blur-strength));
-  box-shadow: var(--shadow-soft);
+  width: 232px;
+  background: linear-gradient(180deg, rgba(8, 10, 18, 0.82), rgba(12, 16, 28, 0.94));
+  border-right: 1px solid color-mix(in srgb, var(--accent-purple) 16%, var(--border-strong));
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.9));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -278,8 +303,8 @@ a {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-glass) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 28%, var(--border-strong));
+  background: color-mix(in srgb, rgba(255, 255, 255, 0.06) 100%, transparent);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -308,16 +333,16 @@ a {
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  color: var(--text-primary);
+  color: #e6ecff;
   border: 1px solid transparent;
-  background: transparent;
-  transition: background 200ms ease, color 200ms ease, border 200ms ease;
+  background: color-mix(in srgb, rgba(255, 255, 255, 0.04) 100%, transparent);
+  transition: background 200ms ease, color 200ms ease, border 200ms ease, transform 160ms ease;
   position: relative;
 }
 
 .nav-link svg {
   flex-shrink: 0;
-  color: var(--icon-primary);
+  color: #e6ecff;
 }
 
 .sidebar.collapsed .nav-link {
@@ -327,19 +352,20 @@ a {
 }
 
 .nav-link:hover {
-  background: color-mix(in srgb, var(--accent-purple) 8%, var(--bg-surface));
-  border-color: var(--border-strong);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-purple) 26%, transparent), color-mix(in srgb, var(--accent-teal) 18%, transparent));
+  border-color: color-mix(in srgb, var(--accent-purple) 35%, var(--border-strong));
+  transform: translateX(2px);
 }
 
 .nav-link.active {
-  background: color-mix(in srgb, var(--accent-purple) 15%, var(--bg-surface));
-  border-color: color-mix(in srgb, var(--accent-purple) 40%, var(--border-strong));
-  box-shadow: var(--shadow-soft);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-purple) 36%, transparent), color-mix(in srgb, var(--accent-teal) 28%, transparent));
+  border-color: color-mix(in srgb, var(--accent-purple) 46%, var(--border-strong));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
 }
 
 .nav-label {
   font-weight: 600;
-  color: var(--text-primary);
+  color: #e6ecff;
 }
 
 .sidebar.collapsed .nav-label {
@@ -351,11 +377,11 @@ a {
   left: 78px;
   top: 50%;
   transform: translateY(-50%);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
+  background: rgba(8, 10, 18, 0.94);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 34%, var(--border-strong));
   padding: 8px 10px;
   border-radius: 10px;
-  color: var(--text-primary);
+  color: #e6ecff;
   box-shadow: var(--shadow-soft);
   white-space: nowrap;
   opacity: 0;
@@ -645,38 +671,42 @@ table th {
 /* Toron */
 .toron-shell {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  padding: 16px 22px 28px;
+  padding: 32px 28px 40px;
   gap: 12px;
-  background: radial-gradient(circle at 10% 14%, color-mix(in srgb, var(--accent-purple) 10%, transparent), transparent 30%),
-    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--accent-green) 12%, transparent), transparent 28%),
-    radial-gradient(circle at 18% 78%, color-mix(in srgb, var(--accent-teal) 9%, transparent), transparent 30%),
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-canvas) 88%, transparent), color-mix(in srgb, var(--bg-canvas) 82%, transparent)),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 24%, transparent 42%, color-mix(in srgb, var(--accent-teal) 6%, transparent) 60%, transparent 80%, color-mix(in srgb, var(--accent-green) 6%, transparent)),
+    radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--accent-purple) 10%, transparent), transparent 32%),
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--accent-green) 10%, transparent), transparent 30%),
+    radial-gradient(circle at 20% 78%, color-mix(in srgb, var(--accent-teal) 9%, transparent), transparent 32%),
     color-mix(in srgb, var(--bg-canvas) 94%, transparent);
-  --toron-header-height: 72px;
-  --toron-header-height-compact: 56px;
+  --toron-header-height: 78px;
+  --toron-header-height-compact: 60px;
   --toron-header-active: var(--toron-header-height);
-  --toron-directive-space: 256px;
-  --toron-radius: 26px;
+  --toron-directive-space: 272px;
+  --toron-radius: 28px;
   --toron-offset: 0px;
 }
 
 .toron-sessions {
   position: fixed;
   z-index: 8;
-  width: 320px;
+  width: 300px;
   cursor: grab;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-glass) 94%, transparent);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
-  padding: 12px 14px;
-  backdrop-filter: blur(calc(var(--blur-strength) * 1.05));
-  transition: background var(--rz-duration) ease, border var(--rz-duration) ease, transform var(--rz-duration) ease;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 22%, var(--border-strong));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated) 90%, transparent), color-mix(in srgb, var(--bg-glass)
+ 88%, transparent));
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.28);
+  padding: 14px 16px;
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.08));
+  transition: background var(--rz-duration) ease, border var(--rz-duration) ease, transform var(--rz-duration) ease,
+    box-shadow var(--rz-duration) ease;
 }
 
 .toron-sessions.collapsed .toron-sessions-list {
@@ -684,27 +714,27 @@ table th {
 }
 
 .toron-sessions.collapsed {
-  width: 220px;
+  width: 210px;
 }
 
 .toron-sessions-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 4px 10px;
+  padding: 4px 4px 12px;
 }
 
 .toron-sessions-title {
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 }
 
 .toron-toggle {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  border: 1px solid var(--border-strong);
-  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 32%, var(--border-strong));
+  background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
   color: var(--text-primary);
   display: grid;
   place-items: center;
@@ -714,16 +744,18 @@ table th {
 
 .toron-sessions-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .toron-session-card {
   display: grid;
   gap: 6px;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 12px;
-  border: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 94%, transparent), color-mix(in srgb, var(--bg-glass) 9
+0%, transparent));
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
 }
 
 .toron-session-card.active {
@@ -739,14 +771,14 @@ table th {
 }
 
 .toron-session-title {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
 }
 
 .toron-session-status {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
 }
 
 .toron-status-dot {
@@ -777,9 +809,9 @@ table th {
   gap: 12px;
   min-height: calc(100vh - 32px);
   position: relative;
-  width: min(1240px, calc(100% - min(var(--toron-offset), 520px) - 24px));
+  width: min(1320px, calc(100% - min(var(--toron-offset), 520px) - 32px));
   margin: 0 auto 0 min(var(--toron-offset), 520px);
-  padding: 10px 12px 0;
+  padding: 14px 16px 0;
   isolation: isolate;
   transition: padding-top var(--rz-duration) ease, margin var(--rz-duration) ease, width var(--rz-duration) ease;
 }
@@ -795,27 +827,27 @@ table th {
   display: flex;
   align-items: center;
   height: var(--toron-header-active);
-  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 76%, transparent);
-  background: color-mix(in srgb, var(--bg-glass) 88%, transparent);
-  backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
-  padding: 10px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-strong) 60%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 84%, transparent);
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.9));
+  padding: 10px 12px;
   transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
     background var(--rz-duration) ease, opacity var(--rz-duration) ease, transform var(--rz-duration) ease;
 }
 
 .toron-header.tucked {
-  padding: 6px 6px;
+  padding: 6px 10px;
   border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
-  opacity: 0.9;
+  background: color-mix(in srgb, var(--bg-glass) 80%, transparent);
+  opacity: 0.92;
   transform: translateY(-4px);
 }
 
 .toron-header-title {
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 18px;
+  gap: 10px;
+  font-size: 19px;
   line-height: 1.2;
 }
 
@@ -836,12 +868,12 @@ table th {
 .toron-viewport {
   position: relative;
   border-radius: var(--toron-radius);
-  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
-  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 7%, transparent), transparent 34%),
-    radial-gradient(circle at 86% 16%, color-mix(in srgb, var(--accent-green) 8%, transparent), transparent 28%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 92%, transparent), color-mix(in srgb, var(--bg-glass) 86%, transparent));
-  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(calc(var(--blur-strength) * 1.12));
+  border: 1px solid color-mix(in srgb, var(--border-strong) 58%, transparent);
+  background: radial-gradient(circle at 22% 12%, color-mix(in srgb, var(--accent-purple) 12%, transparent), transparent 42%),
+    radial-gradient(circle at 80% 18%, color-mix(in srgb, var(--accent-teal) 12%, transparent), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 90%, transparent), color-mix(in srgb, var(--bg-glass) 86%, transparent));
+  box-shadow: 0 26px 86px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.18));
   overflow: hidden;
 }
 
@@ -851,8 +883,9 @@ table th {
   inset: 0;
   pointer-events: none;
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 12%, transparent), transparent 32%),
-    linear-gradient(0deg, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 24%);
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 1));
+    linear-gradient(0deg, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 24%),
+    radial-gradient(circle at 50% 14%, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 38%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 1));
 }
 
 .toron-viewport-scroll {
@@ -862,7 +895,7 @@ table th {
   gap: 12px;
   overflow-y: auto;
   max-height: calc(100vh - var(--toron-header-active) - var(--toron-directive-space));
-  padding: 18px 18px calc(var(--toron-directive-space) + 26px);
+  padding: 20px 22px calc(var(--toron-directive-space) + 26px);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
   scrollbar-color: color-mix(in srgb, var(--text-muted) 24%, transparent) transparent;
@@ -888,24 +921,117 @@ table th {
   opacity: 1;
 }
 
+.toron-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px;
+  width: min(1040px, 100%);
+  margin: 0 auto 8px;
+  border-radius: calc(var(--toron-radius) * 0.7);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 72%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 92%, transparent), color-mix(in srgb, var(--bg-surface) 88%, transparent));
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.9));
+}
+
+
+.toron-orb {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent-teal) 40%, transparent), transparent 44%),
+    radial-gradient(circle at 70% 70%, color-mix(in srgb, var(--accent-purple) 44%, transparent), transparent 42%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--bg-surface) 70%, transparent), transparent 60%);
+  box-shadow: inset 0 0 22px rgba(255, 255, 255, 0.14), 0 20px 46px rgba(0, 0, 0, 0.24);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 38%, var(--border-strong));
+}
+
+
+.toron-hero-copy {
+  display: grid;
+  gap: 6px;
+  text-align: center;
+}
+
+.toron-kicker {
+  font-weight: 700;
+  color: color-mix(in srgb, var(--text-muted) 70%, transparent);
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+
+.toron-headline {
+  margin: 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.toron-subhead {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-muted) 76%, transparent);
+  max-width: 720px;
+}
+
+.toron-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.toron-quick {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 2px;
+  align-items: center;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border var(--rz-duration) ease, box-shadow var(--rz-duration) ease, transform var(--rz-duration) ease;
+}
+
+.toron-quick:hover,
+.toron-quick:focus-visible {
+  border-color: color-mix(in srgb, var(--accent-purple) 40%, var(--border-strong));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.toron-quick-label {
+  font-weight: 700;
+}
+
+.toron-quick-description {
+  color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+  font-size: 13px;
+}
+
 .toron-conversation {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  width: min(960px, 100%);
+  width: min(1080px, 100%);
   margin: 0 auto;
 }
 
 .toron-message {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px 18px 14px;
-  border-radius: calc(var(--toron-radius) * 0.55);
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 88%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 90%, transparent), color-mix(in srgb, var(--bg-surface) 94%, transparent));
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(6px);
+  gap: 10px;
+  padding: 18px 20px 16px;
+  border-radius: calc(var(--toron-radius) * 0.6);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 82%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 92%, transparent), color-mix(in srgb, var(--bg-surface) 92%, transparent));
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(8px);
 }
 
 .toron-message.assistant {
@@ -1040,11 +1166,11 @@ table th {
   align-items: flex-start;
   gap: 12px;
   padding: 16px 18px;
-  border-radius: calc(var(--toron-radius) * 0.7);
-  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-glass) 94%, transparent), color-mix(in srgb, var(--bg-surface) 90%, transparent));
-  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(calc(var(--blur-strength) * 1.08));
+  border-radius: calc(var(--toron-radius) * 0.75);
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 32%, var(--border-strong));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-glass) 94%, transparent), color-mix(in srgb, var(--bg-surface) 90%, transparent));
+  box-shadow: 0 26px 72px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.1));
 }
 
 .toron-control {
@@ -1092,14 +1218,15 @@ table th {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent-green) 60%, var(--border-strong));
-  background: color-mix(in srgb, var(--accent-green) 24%, var(--bg-surface));
+  padding: 11px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent-green) 46%, var(--border-strong));
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent-green) 32%, var(--bg-surface)), color-mix(in srgb, var(--accent-teal) 24%, var(--bg-surface)));
   color: var(--text-primary);
   cursor: pointer;
   font-weight: 700;
-  min-width: 110px;
+  min-width: 122px;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.16);
 }
 
 .toron-send:disabled {
