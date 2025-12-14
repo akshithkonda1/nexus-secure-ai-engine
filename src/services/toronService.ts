@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 export type ToronSnapshot = Record<string, unknown>;
 
 export type ToronStreamChunk =
@@ -124,7 +126,10 @@ export class ToronService {
     return response.json();
   }
 
-  async getSnapshot(snapshotId: string, signal?: AbortSignal): Promise<ToronSnapshot> {
+  async getSnapshot(
+    snapshotId: string,
+    signal?: AbortSignal
+  ): Promise<ToronSnapshot> {
     const response = await fetch(
       `${this.baseUrl}/snapshots/${encodeURIComponent(snapshotId)}`,
       { signal }
@@ -157,14 +162,15 @@ export interface UseToronState {
 
 export interface UseToronActions {
   generate: (payload: ToronGenerateRequest) => Promise<ToronGenerateResponse>;
-  streamGenerate: (payload: ToronGenerateRequest) => Promise<void>;
+  streamGenerate: (
+    payload: ToronGenerateRequest,
+    onChunk?: (chunk: ToronStreamChunk) => void
+  ) => Promise<ToronGenerateResponse | null>;
   cancel: () => void;
   checkHealth: () => Promise<ToronHealthStatus>;
 }
 
 export type UseToronResult = UseToronState & UseToronActions;
-
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function useToron(baseUrl?: string): UseToronResult {
   const service = useMemo(() => new ToronService(baseUrl), [baseUrl]);
@@ -196,14 +202,21 @@ export function useToron(baseUrl?: string): UseToronResult {
   );
 
   const streamGenerate = useCallback(
-    async (payload: ToronGenerateRequest) => {
+    async (
+      payload: ToronGenerateRequest,
+      onChunk?: (chunk: ToronStreamChunk) => void
+    ): Promise<ToronGenerateResponse | null> => {
       setIsGenerating(true);
       setError(null);
       setCurrentStage(null);
       setProgress(null);
 
+      let finalResult: ToronGenerateResponse | null = null;
+
       try {
         await service.streamGenerate(payload, (chunk) => {
+          onChunk?.(chunk);
+
           switch (chunk.type) {
             case "stage":
               setCurrentStage(chunk.stage);
@@ -215,6 +228,11 @@ export function useToron(baseUrl?: string): UseToronResult {
               }
               break;
             case "complete":
+              finalResult = {
+                result: chunk.result,
+                snapshot: chunk.snapshot,
+                metadata: chunk.metadata,
+              };
               setCurrentStage("complete");
               setProgress(100);
               break;
@@ -226,6 +244,8 @@ export function useToron(baseUrl?: string): UseToronResult {
               break;
           }
         });
+
+        return finalResult;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Toron stream failed";
         setError(message);
