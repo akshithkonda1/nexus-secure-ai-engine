@@ -27,9 +27,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="flex w-64 flex-col gap-6 rounded-3xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-6">
+    <aside className="flex w-56 shrink-0 flex-col gap-5 border-r border-[var(--line-subtle)] bg-[var(--layer-surface)] px-3 py-6">
       {/* Header */}
-      <div className="flex items-center gap-3 px-3">
+      <div className="flex items-center gap-3 px-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--layer-active)]">
           <div className="text-lg font-bold text-[var(--text-strong)]">S</div>
         </div>
@@ -45,8 +45,8 @@ export default function Sidebar() {
       </div>
 
       {/* Search */}
-      <div className="px-2">
-        <div className="flex items-center gap-2 rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-3 py-2">
+      <div className="px-1">
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-2.5 py-1.5">
           <Search className="h-4 w-4 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -58,7 +58,7 @@ export default function Sidebar() {
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex flex-1 flex-col gap-1 px-2">
+      <nav className="flex flex-1 flex-col gap-0.5 px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = location.pathname === item.to;
@@ -66,14 +66,14 @@ export default function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+              className={`flex items-center justify-between rounded-lg px-2.5 py-2 text-sm font-medium transition ${
                 active
                   ? "bg-[var(--layer-active)] text-[var(--text-strong)]"
                   : "text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Icon className="h-[18px] w-[18px]" aria-hidden />
+              <div className="flex items-center gap-2.5">
+                <Icon className="h-4 w-4" aria-hidden />
                 <span>{item.label}</span>
               </div>
               {item.badge && (
@@ -87,11 +87,11 @@ export default function Sidebar() {
       </nav>
 
       {/* Settings & Help */}
-      <div className="border-t border-[var(--line-subtle)] px-2 pt-4">
-        <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+      <div className="border-t border-[var(--line-subtle)] px-1 pt-3">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           Settings & Help
         </div>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5">
           {settingsItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
@@ -99,13 +99,13 @@ export default function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-[var(--layer-active)] text-[var(--text-strong)]"
                     : "text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                <Icon className="h-[18px] w-[18px]" aria-hidden />
+                <Icon className="h-4 w-4" aria-hidden />
                 <span>{item.label}</span>
               </NavLink>
             );
@@ -114,7 +114,7 @@ export default function Sidebar() {
       </div>
 
       {/* Theme Toggle */}
-      <div className="flex items-center gap-2 px-2">
+      <div className="flex items-center gap-1.5 px-1">
         <button
           onClick={toggleTheme}
           className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -140,7 +140,7 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="flex items-center gap-3 rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-3 py-2.5">
+      <div className="flex items-center gap-2.5 rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-2.5 py-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] text-sm font-semibold text-white">
           EC
         </div>
