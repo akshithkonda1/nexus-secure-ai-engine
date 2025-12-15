@@ -11,13 +11,13 @@
   "dependencies": {
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.561.0",
-    "react": "^18.2.0",
+    "react": "^19.2.3",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
-    "@types/react": "^18.2.0",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.23",
