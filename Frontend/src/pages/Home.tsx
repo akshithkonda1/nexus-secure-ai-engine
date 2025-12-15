@@ -43,12 +43,9 @@ export default function HomePage() {
                   <span>Prompts</span>
                 </button>
               </div>
-              <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] text-white transition hover:opacity-90">
-                <Send className="h-4 w-4" />
-              </button>
             </div>
+            <p className="text-xs text-[var(--text-muted)]">Routes to Toron for deeper threads.</p>
           </div>
-          <p className="text-xs text-[var(--text-muted)]">Routes to Toron for deeper threads.</p>
         </div>
       </div>
     </section>
