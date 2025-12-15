@@ -1,43 +1,38 @@
 import { useMemo } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { ChevronRight, Moon, SunMedium } from "lucide-react";
-import { useTheme } from "../theme/ThemeProvider";
+import { useLocation } from "react-router-dom";
+import { Zap, HelpCircle, MoreVertical } from "lucide-react";
 
 const labels: Record<string, string> = {
-  "/": "Home",
-  "/toron": "Toron",
-  "/workspace": "Workspace",
+  "/": "AI Chat",
+  "/projects": "Projects",
+  "/templates": "Templates",
+  "/documents": "Documents",
+  "/community": "Community",
+  "/history": "History",
   "/settings": "Settings",
+  "/help": "Help",
 };
 
 export default function TopBar() {
   const location = useLocation();
-  const { mode, resolved, setMode } = useTheme();
 
-  const title = useMemo(() => labels[location.pathname] ?? "", [location.pathname]);
-  const nextMode = resolved === "dark" ? "light" : "dark";
+  const title = useMemo(() => labels[location.pathname] ?? "AI Chat", [location.pathname]);
 
   return (
-    <header className="flex items-center justify-between border-b border-[var(--line-subtle)] pb-6">
-      <div className="flex items-center gap-2.5 text-sm text-[var(--text-muted)]">
-        <Link to="/" className="rounded-lg px-2 py-1 transition hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
-          Home
-        </Link>
-        <ChevronRight className="h-[18px] w-[18px]" aria-hidden />
-        <span className="text-[var(--text-primary)]">{title}</span>
+    <header className="flex items-center justify-between border-b border-[var(--line-subtle)] pb-4">
+      <h2 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h2>
+      <div className="flex items-center gap-2">
+        <button className="flex items-center gap-2 rounded-lg bg-[var(--layer-base)] px-3 py-2 text-sm font-medium text-[var(--text-strong)] transition hover:bg-[var(--layer-muted)]">
+          <Zap className="h-4 w-4" />
+          <span>Upgrade</span>
+        </button>
+        <button className="flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-[var(--layer-muted)]">
+          <HelpCircle className="h-5 w-5 text-[var(--text-muted)]" />
+        </button>
+        <button className="flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-[var(--layer-muted)]">
+          <MoreVertical className="h-5 w-5 text-[var(--text-muted)]" />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={() => setMode(nextMode)}
-        className="flex items-center gap-2.5 rounded-xl border border-[var(--line-subtle)] px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
-      >
-        {resolved === "dark" ? (
-          <Moon className="h-[18px] w-[18px]" aria-hidden />
-        ) : (
-          <SunMedium className="h-[18px] w-[18px]" aria-hidden />
-        )}
-        <span className="capitalize">{mode === "system" ? `${resolved} (system)` : resolved}</span>
-      </button>
     </header>
   );
 }
