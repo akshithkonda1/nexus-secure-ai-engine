@@ -1,10 +1,6 @@
 export default function TopBar() {
   return (
     <header className="topbar">
-      <div className="topbar-context">
-        <button type="button" className="ghost pill active">Toron</button>
-        <button type="button" className="ghost pill">Workspace</button>
-      </div>
       <div className="topbar-actions">
         <select aria-label="Model" defaultValue="gpt4o" className="input-select">
           <option value="gpt4o">CreateGPT v4.0</option>

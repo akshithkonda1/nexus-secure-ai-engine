@@ -1,20 +1,32 @@
-const quickActions = ["Prompt", "Chat", "Image"];
-const composerChips = ["Attach", "Tone", "System" ];
-const panels = [
-  { title: "Image Generator", detail: "Quietly craft polished visuals." },
-  { title: "Presentation", detail: "Shape clear, concise narratives." },
-  { title: "Dev Assistant", detail: "Ship with confident guidance." },
-  { title: "Research", detail: "Hold only curated, relevant sources." },
-];
+const quickActions = ["Create image", "Brainstorm", "Make a plan", "Summarize", "Outline"];
 
 export default function HomePage() {
   return (
     <section className="page">
       <div className="hero">
         <div className="orb" aria-hidden />
-        <div className="hero-title">Ryuzen</div>
-        <p className="hero-subtitle">Start centered. One prompt. Clear output.</p>
-        <div className="hero-actions">
+        <div className="hero-title">Ready to Create Something New?</div>
+        <p className="hero-subtitle">
+          Begin calmly with one prompt. Configure softly, act decisively, and let the output flow without
+          distractions.
+        </p>
+      </div>
+
+      <div className="composer">
+        <div className="composer-top">
+          <span>Ask Anything…</span>
+          <div className="icon-dot" aria-hidden />
+          <span>Attach</span>
+          <div className="icon-dot" aria-hidden />
+          <span>Settings</span>
+          <div className="icon-dot" aria-hidden />
+          <span>Options</span>
+        </div>
+        <div className="composer-input">
+          <input type="text" placeholder="Describe the experience you want" />
+          <button type="button" className="primary">Generate</button>
+        </div>
+        <div className="composer-actions">
           {quickActions.map((item) => (
             <button key={item} type="button" className="chip-button">
               {item}
@@ -23,22 +35,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="composer">
-        <div className="composer-input">
-          <input type="text" placeholder="Describe the experience you want" />
-          <div className="composer-icons">
-            {composerChips.map((chip) => (
-              <button key={chip} type="button" className="ghost pill">
-                {chip}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="primary">Generate</button>
-        </div>
-      </div>
-
       <div className="grid">
-        {panels.map((card) => (
+        {[
+          { title: "Image Generator", detail: "Create high-quality imagery in seconds." },
+          { title: "AI Presentation", detail: "Turn ideas into engaging, polished narratives." },
+          { title: "Dev Assistant", detail: "Ship features with calm, guided steps." },
+          { title: "Research", detail: "Collect insights without the clutter." },
+        ].map((card) => (
           <div className="panel subtle" key={card.title}>
             <div className="panel-title">{card.title}</div>
             <p className="muted">{card.detail}</p>
