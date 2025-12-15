@@ -3,7 +3,6 @@ import {
   Archive,
   ArrowDown,
   ArrowUp,
-  Copy,
   Edit3,
   Ellipsis,
   FilePlus,
@@ -16,14 +15,13 @@ import {
   PinOff,
   Play,
   Plus,
-  RefreshCw,
   Search,
   Send,
-  ThumbsDown,
-  ThumbsUp,
   Trash2,
-  Volume2,
 } from "lucide-react";
+import ToronAdvancedMessage, { ToronMessageMetadata } from "../components/toron/ToronAdvancedMessage";
+import ToronOrb from "../components/toron/ToronOrb";
+import { useToron } from "../state/useToron";
 
 type Role = "assistant" | "user";
 
@@ -31,6 +29,7 @@ interface Message {
   id: string;
   role: Role;
   content: string;
+  metadata?: ToronMessageMetadata;
 }
 
 interface SessionMeta {
@@ -51,6 +50,11 @@ const seedMessages: Message[] = [
     id: "seed-1",
     role: "assistant",
     content: "I'm present. What do you want to move today?",
+    metadata: {
+      confidenceScore: 0.72,
+      agreementLevel: "aligned",
+      evidenceDensity: "medium",
+    },
   },
   {
     id: "seed-2",
@@ -61,6 +65,11 @@ const seedMessages: Message[] = [
     id: "seed-3",
     role: "assistant",
     content: "I'll map milestones, annotate risk vectors, and draft a transparent update.",
+    metadata: {
+      confidenceScore: 0.78,
+      agreementLevel: "aligned",
+      evidenceDensity: "high",
+    },
   },
 ];
 
@@ -131,6 +140,7 @@ const Toron: React.FC = () => {
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
   const [headerTucked, setHeaderTucked] = useState(false);
   const [newResponseHint, setNewResponseHint] = useState(false);
+  const { streamGenerate, status: toronStatus, currentStage, progress, error: toronError } = useToron();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
@@ -171,16 +181,66 @@ const Toron: React.FC = () => {
     setAttachments([]);
     inputRef.current?.focus();
 
-    window.setTimeout(() => {
-      const reply: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: "Acknowledged. I will process this with context and return a concise plan.",
-      };
-      setMessages((prev) => [...prev, reply]);
-      setSending(false);
-      inputRef.current?.focus();
-    }, 480);
+    const requestId = `toron-${Date.now()}`;
+    let latestStage = currentStage;
+    let latestProgress = progress ?? 0.64;
+
+    streamGenerate(
+      {
+        prompt: content,
+        attachments,
+        requestId,
+        metadata: { source: "workspace" },
+      },
+      {
+        onChunk: (chunk) => {
+          if (chunk.type === "stage" && chunk.stage) {
+            setNewResponseHint(true);
+            latestStage = chunk.stage;
+          }
+          if (typeof chunk.progress === "number") {
+            latestProgress = chunk.progress;
+          }
+        },
+      }
+    )
+      .then((response) => {
+        const toronContent =
+          (typeof response?.data === "string" && response.data) ||
+          response?.output ||
+          "Acknowledged. I will process this with context and return a concise plan.";
+        const reply: Message = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: toronContent,
+          metadata: {
+            confidenceScore: latestProgress,
+            agreementLevel: "aligned",
+            evidenceDensity: "medium",
+            escalationNote: latestStage && latestStage !== "complete" ? `Stage: ${latestStage}` : undefined,
+            warnings: toronError ? [toronError] : undefined,
+          },
+        };
+        setMessages((prev) => [...prev, reply]);
+      })
+      .catch(() => {
+        const reply: Message = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: "Acknowledged. I will process this with context and return a concise plan.",
+          metadata: {
+            confidenceScore: 0.5,
+            agreementLevel: "neutral",
+            evidenceDensity: "low",
+            warnings: ["Toron stream unavailable"],
+          },
+        };
+        setMessages((prev) => [...prev, reply]);
+      })
+      .finally(() => {
+        setSending(false);
+        inputRef.current?.focus();
+      });
   };
 
   const toggleMic = () => {
@@ -515,11 +575,12 @@ const Toron: React.FC = () => {
         <div className="toron-viewport">
           <div className="toron-viewport-scroll" ref={viewportRef}>
             <section className="toron-hero" aria-label="Toron session context">
-              <div className="toron-orb" aria-hidden />
+              <ToronOrb state={toronStatus} stageLabel={currentStage} progress={progress} />
               <div className="toron-hero-copy">
                 <p className="toron-kicker">Toron — Model B</p>
                 <h1 className="toron-headline">Ready to create something new?</h1>
                 <p className="toron-subhead">Maintain directive clarity as you think, decide, and execute.</p>
+                {toronError && <p className="toron-stage-warning">{toronError}</p>}
               </div>
               <div className="toron-quick-actions" role="list">
                 {quickActions.map((action) => (
@@ -538,47 +599,14 @@ const Toron: React.FC = () => {
             </section>
             <div className="toron-conversation">
               {messages.map((message) => (
-                <article key={message.id} className={`toron-message ${message.role}`}>
-                  <div className="toron-message-top">
-                    <span className="toron-label" aria-label={message.role === "assistant" ? "Toron" : "User"}>
-                      {message.role === "assistant" ? "Toron" : "User"}
-                    </span>
-                    <div className="toron-actions" aria-label="message actions">
-                      {message.role === "user" ? (
-                        <>
-                          <button type="button" className="toron-action" aria-label="Edit message">
-                            <Edit3 size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="Copy message">
-                            <Copy size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button type="button" className="toron-action" aria-label="Copy Toron message">
-                            <Copy size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="Mark good response">
-                            <ThumbsUp size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="Mark bad response">
-                            <ThumbsDown size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="Regenerate Toron message">
-                            <RefreshCw size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="Read message aloud">
-                            <Volume2 size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                          <button type="button" className="toron-action" aria-label="More actions">
-                            <Ellipsis size={14} strokeWidth={2} aria-hidden />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="toron-message-body">{message.content}</div>
-                </article>
+                <ToronAdvancedMessage
+                  key={message.id}
+                  content={message.content}
+                  label={message.role === "assistant" ? "Toron" : "User"}
+                  role={message.role}
+                  metadata={message.metadata}
+                  onRegenerate={() => setDraft(message.content)}
+                />
               ))}
             </div>
             {newResponseHint && (
