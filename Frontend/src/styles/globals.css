@@ -1036,10 +1036,9 @@ table th {
   width: 124px;
   height: 124px;
   border-radius: 50%;
-  background: radial-gradient(circle at 52% 46%, rgba(255, 255, 255, 0.2), transparent 64%),
-    radial-gradient(circle at 44% 38%, rgba(146, 226, 255, 0.18), transparent 62%),
-    radial-gradient(circle at 62% 66%, rgba(140, 112, 255, 0.16), transparent 60%),
-    linear-gradient(160deg, rgba(16, 22, 40, 0.96), rgba(6, 10, 22, 0.98));
+  background: radial-gradient(circle at 48% 42%, color-mix(in srgb, var(--accent-purple) 18%, transparent), transparent 60%),
+    radial-gradient(circle at 56% 64%, color-mix(in srgb, var(--accent-teal) 22%, transparent), transparent 62%),
+    linear-gradient(150deg, color-mix(in srgb, var(--bg-surface) 12%, rgba(10, 12, 28, 0.9)), color-mix(in srgb, var(--bg-canvas) 8%, rgba(4, 6, 14, 0.96)));
   box-shadow:
     0 20px 48px rgba(0, 0, 0, 0.42),
     0 0 0 1px color-mix(in srgb, var(--toron-orb-rim, #0f1025) 36%, transparent),
@@ -1057,7 +1056,7 @@ table th {
   position: absolute;
   inset: -8%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, var(--toron-orb-halo, rgba(160, 238, 255, 0.3)), transparent 70%);
+  background: radial-gradient(circle at 50% 46%, var(--toron-orb-halo, rgba(160, 238, 255, 0.3)), transparent 70%);
   filter: blur(10px);
   opacity: 0.92;
   mix-blend-mode: screen;
@@ -1069,8 +1068,8 @@ table th {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.12), transparent 58%),
-    linear-gradient(125deg, rgba(255, 255, 255, 0.08), transparent 40%);
+  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.14), transparent 56%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.12), transparent 40%);
   pointer-events: none;
   mix-blend-mode: soft-light;
 }
@@ -1087,11 +1086,22 @@ table th {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 46% 42%, rgba(255, 255, 255, 0.16), transparent 50%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.14), transparent 36%),
-    radial-gradient(circle at 64% 64%, rgba(120, 170, 255, 0.1), transparent 58%);
+  background: radial-gradient(circle at 46% 42%, rgba(255, 255, 255, 0.18), transparent 52%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16), transparent 36%),
+    radial-gradient(circle at 64% 64%, rgba(120, 196, 255, 0.14), transparent 58%);
   mix-blend-mode: screen;
   pointer-events: none;
+}
+
+[data-theme="dark"] .toron-orb,
+.dark .toron-orb {
+  background: radial-gradient(circle at 46% 44%, color-mix(in srgb, var(--accent-purple) 26%, transparent), transparent 60%),
+    radial-gradient(circle at 58% 64%, color-mix(in srgb, var(--accent-teal) 28%, transparent), transparent 64%),
+    linear-gradient(152deg, rgba(18, 12, 42, 0.94), rgba(6, 8, 22, 0.98));
+  box-shadow:
+    0 26px 62px rgba(0, 0, 0, 0.52),
+    0 0 0 1px color-mix(in srgb, var(--toron-orb-rim, #0a0c1f) 42%, transparent),
+    inset 0 0 32px rgba(255, 255, 255, 0.06);
 }
 
 .toron-orb-shell.held .toron-orb,
