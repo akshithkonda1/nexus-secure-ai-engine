@@ -18,24 +18,22 @@ export default function ToronInput({ value, onChange, onSubmit }: ToronInputProp
   );
 
   return (
-    <div className="space-y-4">
+    <div className="group relative">
       <textarea
-        className="min-h-[200px] w-full resize-none rounded-xl bg-white/5 px-5 py-4 text-base font-medium leading-relaxed text-slate-100 placeholder:text-slate-400/70 shadow-inner shadow-black/30 focus:outline-none"
+        className="min-h-[220px] w-full resize-none rounded-2xl bg-white/5 px-5 py-4 text-base font-medium leading-relaxed text-slate-100 placeholder:text-slate-400/70 shadow-inner shadow-black/30 outline-none ring-0 focus:outline-none"
         placeholder="Ask anything…"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
       />
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={!value.trim()}
-          className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-100/80 transition hover:border-white/20 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Submit
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={!value.trim()}
+        className="absolute bottom-4 right-4 inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-100/70 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        Submit
+      </button>
     </div>
   );
 }
