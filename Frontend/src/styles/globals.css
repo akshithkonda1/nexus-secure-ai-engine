@@ -1033,119 +1033,87 @@ table th {
 
 .toron-orb {
   position: relative;
-  width: 108px;
-  height: 108px;
+  width: 124px;
+  height: 124px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.14), transparent 60%),
-    radial-gradient(circle at 42% 42%, rgba(125, 255, 230, 0.15), transparent 62%),
-    radial-gradient(circle at 62% 62%, rgba(120, 190, 255, 0.16), transparent 58%),
-    linear-gradient(135deg, rgba(20, 24, 44, 0.8), rgba(16, 21, 40, 0.92));
-  box-shadow: inset 0 0 26px rgba(255, 255, 255, 0.12), 0 24px 64px rgba(0, 0, 0, 0.32);
+  background: radial-gradient(circle at 48% 42%, color-mix(in srgb, var(--accent-purple) 18%, transparent), transparent 60%),
+    radial-gradient(circle at 56% 64%, color-mix(in srgb, var(--accent-teal) 22%, transparent), transparent 62%),
+    linear-gradient(150deg, color-mix(in srgb, var(--bg-surface) 12%, rgba(10, 12, 28, 0.9)), color-mix(in srgb, var(--bg-canvas) 8%, rgba(4, 6, 14, 0.96)));
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.42),
+    0 0 0 1px color-mix(in srgb, var(--toron-orb-rim, #0f1025) 36%, transparent),
+    inset 0 0 28px rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--accent-teal) 36%, var(--border-strong));
+  isolation: isolate;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform: rotateX(var(--orb-tilt-y, 0deg)) rotateY(var(--orb-tilt-x, 0deg)) scale(var(--orb-scale, 1));
+  transition: transform 320ms ease, box-shadow 320ms ease;
 }
 
-.toron-orb-core {
+.toron-orb::before {
+  content: "";
   position: absolute;
-  inset: 24%;
+  inset: -8%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, rgba(120, 255, 242, 0.35), rgba(52, 210, 255, 0.16) 68%, transparent 74%);
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.2);
+  background: radial-gradient(circle at 50% 46%, var(--toron-orb-halo, rgba(160, 238, 255, 0.3)), transparent 70%);
+  filter: blur(10px);
+  opacity: 0.92;
+  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
-.toron-orb-field {
-  position: absolute;
-  inset: 12%;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 120deg,
-    rgba(66, 225, 255, 0.24),
-    rgba(64, 157, 255, 0.15),
-    rgba(82, 236, 192, 0.18),
-    rgba(82, 236, 192, 0.18),
-    rgba(130, 140, 255, 0.22)
-  );
-  filter: blur(6px);
-  opacity: 0.8;
-}
-
-.toron-orb-halo {
+.toron-orb::after {
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, rgba(164, 242, 255, 0.32), rgba(108, 146, 255, 0.2), rgba(16, 24, 52, 0.18));
+  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.14), transparent 56%),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.12), transparent 40%);
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+.toron-orb-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+}
+
+.toron-orb-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 46% 42%, rgba(255, 255, 255, 0.18), transparent 52%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16), transparent 36%),
+    radial-gradient(circle at 64% 64%, rgba(120, 196, 255, 0.14), transparent 58%);
   mix-blend-mode: screen;
+  pointer-events: none;
 }
 
-.toron-orb-overlay {
-  position: absolute;
-  inset: 8%;
-  overflow: hidden;
-  border-radius: 50%;
+[data-theme="dark"] .toron-orb,
+.dark .toron-orb {
+  background: radial-gradient(circle at 46% 44%, color-mix(in srgb, var(--accent-purple) 26%, transparent), transparent 60%),
+    radial-gradient(circle at 58% 64%, color-mix(in srgb, var(--accent-teal) 28%, transparent), transparent 64%),
+    linear-gradient(152deg, rgba(18, 12, 42, 0.94), rgba(6, 8, 22, 0.98));
+  box-shadow:
+    0 26px 62px rgba(0, 0, 0, 0.52),
+    0 0 0 1px color-mix(in srgb, var(--toron-orb-rim, #0a0c1f) 42%, transparent),
+    inset 0 0 32px rgba(255, 255, 255, 0.06);
 }
 
-.toron-orb-energy,
-.toron-orb-energy.alt {
-  position: absolute;
-  inset: -10%;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(86, 255, 235, 0.1),
-    rgba(120, 208, 255, 0.3),
-    rgba(90, 140, 255, 0.2),
-    rgba(86, 255, 235, 0.1)
-  );
-  filter: blur(12px);
-  animation: toron-drift 18s ease-in-out infinite;
+.toron-orb-shell.held .toron-orb,
+.toron-orb-shell.state-processing .toron-orb {
+  box-shadow:
+    0 24px 52px rgba(0, 0, 0, 0.46),
+    0 0 0 1px color-mix(in srgb, var(--toron-orb-highlight, #dff5ff) 42%, transparent),
+    inset 0 0 28px rgba(255, 255, 255, 0.1);
 }
 
-.toron-orb-energy.alt {
-  animation-duration: 22s;
-  animation-direction: reverse;
-  opacity: 0.7;
-}
-
-@keyframes toron-drift {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(140deg) scale(1.04);
-  }
-  100% {
-    transform: rotate(320deg) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toron-orb-energy,
-  .toron-orb-energy.alt {
-    animation: none;
-  }
-}
-
-.toron-orb-shell.state-processing .toron-orb-core {
-  background: radial-gradient(circle at 48% 52%, rgba(140, 255, 250, 0.48), rgba(66, 210, 255, 0.2) 66%, transparent 72%);
-}
-
-.toron-orb-shell.state-consensus .toron-orb-halo {
-  background: radial-gradient(circle at 50% 50%, rgba(220, 244, 255, 0.32), rgba(140, 255, 230, 0.18), rgba(16, 24, 52, 0.12));
-}
-
-.toron-orb-shell.state-error .toron-orb-core {
-  background: radial-gradient(circle at 48% 52%, rgba(90, 120, 180, 0.3), rgba(40, 60, 120, 0.18) 66%, transparent 72%);
-  filter: grayscale(0.4);
-}
-
-.toron-orb-shell.state-error .toron-orb-energy,
-.toron-orb-shell.state-error .toron-orb-energy.alt {
-  opacity: 0.35;
-}
-
-.toron-orb-shell.state-held .toron-orb-halo,
-.toron-orb-shell.held .toron-orb-halo {
-  box-shadow: 0 0 0 8px rgba(120, 255, 235, 0.06);
+.toron-orb-shell.state-error .toron-orb {
+  filter: saturate(0.85);
 }
 
 .toron-orb-caption {
