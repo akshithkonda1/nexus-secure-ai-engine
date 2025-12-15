@@ -1036,16 +1036,20 @@ table th {
   width: 124px;
   height: 124px;
   border-radius: 50%;
-  background: radial-gradient(circle at 52% 46%, rgba(255, 255, 255, 0.18), transparent 68%),
-    radial-gradient(circle at 42% 38%, rgba(126, 226, 255, 0.18), transparent 64%),
-    radial-gradient(circle at 62% 62%, rgba(110, 142, 255, 0.12), transparent 60%),
-    linear-gradient(142deg, rgba(12, 18, 34, 0.94), rgba(6, 10, 22, 0.96));
+  background: radial-gradient(circle at 52% 46%, rgba(255, 255, 255, 0.2), transparent 64%),
+    radial-gradient(circle at 44% 38%, rgba(146, 226, 255, 0.18), transparent 62%),
+    radial-gradient(circle at 62% 66%, rgba(140, 112, 255, 0.16), transparent 60%),
+    linear-gradient(160deg, rgba(16, 22, 40, 0.96), rgba(6, 10, 22, 0.98));
   box-shadow:
     0 20px 48px rgba(0, 0, 0, 0.42),
     0 0 0 1px color-mix(in srgb, var(--toron-orb-rim, #0f1025) 36%, transparent),
     inset 0 0 28px rgba(255, 255, 255, 0.08);
   overflow: hidden;
   isolation: isolate;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform: rotateX(var(--orb-tilt-y, 0deg)) rotateY(var(--orb-tilt-x, 0deg)) scale(var(--orb-scale, 1));
+  transition: transform 320ms ease, box-shadow 320ms ease;
 }
 
 .toron-orb::before {
@@ -1055,7 +1059,7 @@ table th {
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, var(--toron-orb-halo, rgba(160, 238, 255, 0.3)), transparent 70%);
   filter: blur(10px);
-  opacity: 0.9;
+  opacity: 0.92;
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -1065,7 +1069,8 @@ table th {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.08), transparent 58%);
+  background: radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.12), transparent 58%),
+    linear-gradient(125deg, rgba(255, 255, 255, 0.08), transparent 40%);
   pointer-events: none;
   mix-blend-mode: soft-light;
 }
@@ -1083,7 +1088,8 @@ table th {
   inset: 0;
   border-radius: 50%;
   background: radial-gradient(circle at 46% 42%, rgba(255, 255, 255, 0.16), transparent 50%),
-    linear-gradient(160deg, rgba(255, 255, 255, 0.12), transparent 40%);
+    linear-gradient(160deg, rgba(255, 255, 255, 0.14), transparent 36%),
+    radial-gradient(circle at 64% 64%, rgba(120, 170, 255, 0.1), transparent 58%);
   mix-blend-mode: screen;
   pointer-events: none;
 }
