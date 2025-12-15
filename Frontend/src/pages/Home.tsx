@@ -3,17 +3,16 @@ import ActionCard from "../components/ActionCard";
 
 export default function HomePage() {
   return (
-    <section className="flex h-full flex-col">
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 pb-24">
-        <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-semibold text-[var(--text-strong)]">Welcome to Script</h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            Get started by Script a task and Chat can do the rest. Not sure where to start?
-          </p>
-        </div>
+    <section className="flex min-h-full flex-col gap-10">
+      <header className="space-y-3 text-center">
+        <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Home</p>
+        <h1 className="text-4xl font-semibold text-[var(--text-strong)]">Welcome to Script</h1>
+        <p className="text-sm text-[var(--text-muted)]">
+          Get started by Script a task and Chat can do the rest. Not sure where to start?
+        </p>
+      </header>
 
-        {/* Action Cards Grid */}
+      <div className="flex flex-1 flex-col items-center gap-10 py-4">
         <div className="grid w-full max-w-2xl grid-cols-2 gap-4">
           <ActionCard
             title="Write copy"
@@ -38,8 +37,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Bottom Input Area */}
-      <div className="border-t border-[var(--line-subtle)] bg-[var(--layer-surface)] px-6 pb-6 pt-4">
+      <div className="mt-auto border-t border-[var(--line-subtle)] bg-[var(--layer-surface)] px-6 pb-6 pt-4">
         <div className="mx-auto max-w-3xl">
           <div className="flex items-end gap-3 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-3">
             <div className="flex flex-1 flex-col gap-3">
