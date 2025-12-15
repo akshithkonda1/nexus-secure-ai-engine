@@ -10,11 +10,11 @@ export default function ToronResponse({ content }: ToronResponseProps) {
       {content && (
         <motion.div
           key={content}
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="space-y-4 text-base leading-relaxed text-slate-100/90"
+          className="rounded-2xl bg-white/5 px-5 py-4 text-base leading-relaxed text-slate-100/90 shadow-inner shadow-black/30"
         >
           <p className="whitespace-pre-wrap">{content}</p>
         </motion.div>

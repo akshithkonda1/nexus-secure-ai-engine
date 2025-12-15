@@ -30,7 +30,7 @@ export default function ToronInput({ value, onChange, onSubmit }: ToronInputProp
         type="button"
         onClick={onSubmit}
         disabled={!value.trim()}
-        className="absolute bottom-4 right-4 inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-100/70 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+        className="absolute bottom-4 right-4 inline-flex items-center rounded px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-100/70 opacity-0 transition-opacity pointer-events-none group-focus-within:opacity-100 group-focus-within:pointer-events-auto hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
       >
         Submit
       </button>
