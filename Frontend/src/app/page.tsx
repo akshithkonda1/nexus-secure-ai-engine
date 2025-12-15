@@ -18,15 +18,9 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-8">
-      <div className="rounded-xl border border-white/5 bg-white/5 p-6 shadow-soft backdrop-blur-sm">
-        <ToronInput
-          value={prompt}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-        />
-      </div>
-      <div className="rounded-xl border border-white/5 bg-white/5 p-6 shadow-soft backdrop-blur-sm">
+    <div className="w-full max-w-6xl px-6">
+      <div className="rounded-2xl bg-white/5 p-8 shadow-soft backdrop-blur space-y-8">
+        <ToronInput value={prompt} onChange={handleChange} onSubmit={handleSubmit} />
         <ToronResponse content={response} />
       </div>
     </div>
