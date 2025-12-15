@@ -1,5 +1,5 @@
 """
-Ryuzen Engine v3.0 - Production-Ready Implementation
+Ryuzen Toron Engine v2.5 - Production-Ready and Hardened Implementation
 ====================================================
 
 A battle-tested, enterprise-grade AI orchestration engine with:
