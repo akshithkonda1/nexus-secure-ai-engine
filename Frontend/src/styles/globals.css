@@ -1,3 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
 :root {
   --bg-base: #1a0f2e;
   --bg-gradient-top: #2d1b4e;
