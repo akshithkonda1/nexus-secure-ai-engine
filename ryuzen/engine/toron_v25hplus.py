@@ -396,7 +396,7 @@ class SemanticSimilarity:
     @staticmethod
     def simple_embedding(text: str, dim: int = 128) -> np.ndarray:
         digest = hashlib.sha256(text.encode("utf-8")).digest()
-        seed = int.from_bytes(digest[:8], byteorder="big")
+        seed = int.from_bytes(digest[:8], byteorder="big") % (2**32)
         rng = np.random.RandomState(seed)
         vec = rng.randn(dim)
         return vec / (np.linalg.norm(vec) + 1e-10)
@@ -609,9 +609,10 @@ class MockProvider:
         self._call_count += 1
 
         seed = int(
-            hashlib.sha256(f"{prompt}:{self._call_count}".encode()).hexdigest(), 16
+            hashlib.sha256(f"{prompt}:{self._call_count}".encode()).hexdigest()[:8], 16
         )
-        rng = np.random.RandomState(seed % (2**32))
+        seed = seed % (2**32)  # Ensure seed is within valid range
+        rng = np.random.RandomState(seed)
 
         if rng.random() < self.error_rate:
             raise RuntimeError(f"Simulated failure for {self.model_name}")
