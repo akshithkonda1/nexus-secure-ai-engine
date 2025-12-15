@@ -4,8 +4,8 @@ import ActionCard from "../components/ActionCard";
 export default function HomePage() {
   return (
     <section className="flex min-h-full flex-col items-center py-10">
-      <div className="flex w-full max-w-4xl flex-col items-center gap-10">
-        <header className="flex w-full max-w-3xl flex-col items-center space-y-3 text-center">
+      <div className="flex max-w-4xl flex-col items-center gap-10">
+        <header className="flex max-w-3xl flex-col items-center space-y-3 text-center">
           <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Home</p>
           <h1 className="text-4xl font-semibold text-[var(--text-strong)]">Welcome to Ryuzen</h1>
           <p className="max-w-2xl text-sm text-[var(--text-muted)]">
@@ -13,14 +13,14 @@ export default function HomePage() {
           </p>
         </header>
 
-        <div className="grid w-full max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
           <ActionCard title="Write copy" icon={PenTool} iconBg="bg-gradient-to-br from-orange-400 to-orange-500" />
           <ActionCard title="Image generation" icon={Sparkles} iconBg="bg-gradient-to-br from-blue-400 to-blue-500" />
           <ActionCard title="Create avatar" icon={User} iconBg="bg-gradient-to-br from-green-400 to-green-500" />
           <ActionCard title="Write code" icon={Code} iconBg="bg-gradient-to-br from-pink-400 to-pink-500" />
         </div>
 
-        <div className="w-full max-w-3xl space-y-3 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6">
+        <div className="max-w-3xl space-y-3 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6">
           <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Quick prompt</p>
           <div className="flex flex-col gap-3 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-3">
             <input
