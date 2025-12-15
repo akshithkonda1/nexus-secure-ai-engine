@@ -1,61 +1,70 @@
-const quickActions = ["Create Image", "Brainstorm", "Make a plan"];
+import { Link } from "react-router-dom";
+import { ArrowRight, MessageSquare, Briefcase } from "lucide-react";
+
+const recent = [
+  { title: "Workspace", description: "Updated research outline" },
+  { title: "Toron", description: "Shared summary with team" },
+  { title: "Settings", description: "Adjusted appearance" },
+];
 
 export default function HomePage() {
   return (
-    <section className="page">
-      <div className="hero">
-        <div className="orb" aria-hidden="true" />
-        <div className="hero-title">Ready to Create Something New?</div>
-        <p className="hero-subtitle">
-          Begin with a single prompt and watch your ideas come to life with powerful AI assistance.
+    <section className="flex flex-col gap-8">
+      <div className="space-y-2">
+        <p className="text-sm uppercase tracking-[0.08em] text-[var(--text-muted)]">Welcome</p>
+        <h1 className="text-3xl font-semibold text-[var(--text-strong)]">Calm control for your workspace</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+          Move between Toron, project work, and settings without friction. Everything uses one quiet, consistent shell.
         </p>
       </div>
 
-      <div className="composer">
-        <div className="composer-top">
-          <span>Ask Anything...</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Attach</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Settings</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Options</span>
-        </div>
-        <div className="composer-input">
-          <input type="text" placeholder="Describe the experience you want to create..." />
-          <button type="button" className="primary">
-            <span>Generate</span>
-          </button>
-        </div>
-        <div className="composer-actions">
-          {quickActions.map((item) => (
-            <button key={item} type="button" className="chip-button">
-              {item}
-            </button>
-          ))}
-        </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link
+          to="/toron"
+          className="group flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-5 py-6 text-[var(--text-primary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)]">
+              <MessageSquare className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <div className="text-lg font-semibold">Toron</div>
+              <p className="text-sm text-[var(--text-muted)]">Focused, neutral chat interface.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-[var(--text-muted)] transition group-hover:text-[var(--text-strong)]" aria-hidden />
+        </Link>
+
+        <Link
+          to="/workspace"
+          className="group flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-5 py-6 text-[var(--text-primary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)]">
+              <Briefcase className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <div className="text-lg font-semibold">Workspace</div>
+              <p className="text-sm text-[var(--text-muted)]">Structured projects without clutter.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-5 w-5 text-[var(--text-muted)] transition group-hover:text-[var(--text-strong)]" aria-hidden />
+        </Link>
       </div>
 
-      <div className="grid">
-        {[
-          { 
-            title: "Image Generator", 
-            detail: "Create high-quality images instantly from text descriptions." 
-          },
-          { 
-            title: "AI Presentation", 
-            detail: "Turn ideas into engaging, professional presentations." 
-          },
-          { 
-            title: "Dev Assistant", 
-            detail: "Generate clean, production-ready code in seconds." 
-          },
-        ].map((card) => (
-          <div className="panel" key={card.title}>
-            <div className="panel-title">{card.title}</div>
-            <p className="muted">{card.detail}</p>
-          </div>
-        ))}
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-[var(--text-strong)]">Recent activity</div>
+        <div className="divide-y divide-[var(--line-subtle)] rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)]">
+          {recent.map((item) => (
+            <div key={item.title} className="flex items-center justify-between px-5 py-4 text-sm">
+              <div>
+                <div className="font-medium text-[var(--text-primary)]">{item.title}</div>
+                <p className="text-[var(--text-muted)]">{item.description}</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-[var(--text-muted)]" aria-hidden />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
