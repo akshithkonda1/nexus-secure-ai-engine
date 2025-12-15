@@ -37,6 +37,7 @@ export default function AppShell({ children, rightRail }: AppShellProps) {
           </div>
         </div>
       </div>
+      <RightRail>{rightRail}</RightRail>
     </div>
   );
 }

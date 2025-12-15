@@ -56,13 +56,13 @@ export default function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-[var(--layer-active)] text-[var(--text-strong)]"
                     : "text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]"
                 }`}
               >
-                <Icon className="h-[18px] w-[18px]" aria-hidden />
+                <Icon className="h-4 w-4" aria-hidden />
                 <span>{item.label}</span>
               </NavLink>
             );

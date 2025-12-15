@@ -48,7 +48,7 @@ export default function HomeRail() {
         </div>
       </div>
 
-      <button className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--line-strong)] bg-[var(--layer-muted)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--accent)] hover:bg-[var(--layer-active)] hover:text-[var(--text-strong)]">
+      <button className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--layer-muted)] px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--accent)] hover:bg-[var(--layer-active)] hover:text-[var(--text-strong)]">
         <Plus className="h-4 w-4" />
         <span>New Project</span>
       </button>
@@ -57,7 +57,7 @@ export default function HomeRail() {
         {projects.map((project, index) => (
           <div
             key={index}
-            className="group cursor-pointer rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-4 transition hover:border-[var(--line-strong)] hover:shadow-md"
+            className="group cursor-pointer rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-3.5 transition hover:border-[var(--line-strong)]"
           >
             <div className="mb-2 flex items-start justify-between">
               <h3 className="text-sm font-semibold text-[var(--text-strong)]">{project.title}</h3>
