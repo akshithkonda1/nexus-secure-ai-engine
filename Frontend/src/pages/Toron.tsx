@@ -1,38 +1,36 @@
 const sessionFeed = [
   {
-    title: "Session output",
-    detail: "Results will be listed here once generated. Keep the flow focused on the latest response.",
-  },
-  {
-    title: "Recent note",
-    detail: "Use this space for the next action without adding noise.",
+    title: "Ready to start",
+    detail: "Your AI assistant is ready to help with any task. Start by typing your prompt below.",
   },
 ];
 
-const modes = ["Create image", "Brainstorm", "Make a plan", "Summarize", "Refine"];
+const modes = ["Create image", "Brainstorm", "Make a plan", "Generate Code"];
 
 export default function ToronPage() {
   return (
     <section className="page">
       <div className="hero">
-        <div className="orb" aria-hidden />
+        <div className="orb" aria-hidden="true" />
         <div className="hero-title">Toron</div>
-        <p className="hero-subtitle">Calm input. Clear output. One decisive surface.</p>
+        <p className="hero-subtitle">Your intelligent conversation partner for creative and analytical tasks.</p>
       </div>
 
       <div className="composer">
         <div className="composer-top">
-          <span>Ask Anything…</span>
-          <div className="icon-dot" aria-hidden />
+          <span>Ask Anything...</span>
+          <div className="icon-dot" aria-hidden="true" />
           <span>Attach</span>
-          <div className="icon-dot" aria-hidden />
+          <div className="icon-dot" aria-hidden="true" />
           <span>Settings</span>
-          <div className="icon-dot" aria-hidden />
+          <div className="icon-dot" aria-hidden="true" />
           <span>Options</span>
         </div>
         <div className="composer-input">
-          <input type="text" placeholder="Describe what you need" />
-          <button type="button" className="primary">Send</button>
+          <input type="text" placeholder="Describe what you need..." />
+          <button type="button" className="primary">
+            <span>Send</span>
+          </button>
         </div>
         <div className="composer-actions">
           {modes.map((item, index) => (

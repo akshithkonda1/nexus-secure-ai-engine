@@ -1,30 +1,31 @@
-const quickActions = ["Create image", "Brainstorm", "Make a plan", "Summarize", "Outline"];
+const quickActions = ["Create Image", "Brainstorm", "Make a plan"];
 
 export default function HomePage() {
   return (
     <section className="page">
       <div className="hero">
-        <div className="orb" aria-hidden />
+        <div className="orb" aria-hidden="true" />
         <div className="hero-title">Ready to Create Something New?</div>
         <p className="hero-subtitle">
-          Begin calmly with one prompt. Configure softly, act decisively, and let the output flow without
-          distractions.
+          Begin with a single prompt and watch your ideas come to life with powerful AI assistance.
         </p>
       </div>
 
       <div className="composer">
         <div className="composer-top">
-          <span>Ask Anything…</span>
-          <div className="icon-dot" aria-hidden />
+          <span>Ask Anything...</span>
+          <div className="icon-dot" aria-hidden="true" />
           <span>Attach</span>
-          <div className="icon-dot" aria-hidden />
+          <div className="icon-dot" aria-hidden="true" />
           <span>Settings</span>
-          <div className="icon-dot" aria-hidden />
+          <div className="icon-dot" aria-hidden="true" />
           <span>Options</span>
         </div>
         <div className="composer-input">
-          <input type="text" placeholder="Describe the experience you want" />
-          <button type="button" className="primary">Generate</button>
+          <input type="text" placeholder="Describe the experience you want to create..." />
+          <button type="button" className="primary">
+            <span>Generate</span>
+          </button>
         </div>
         <div className="composer-actions">
           {quickActions.map((item) => (
@@ -37,12 +38,20 @@ export default function HomePage() {
 
       <div className="grid">
         {[
-          { title: "Image Generator", detail: "Create high-quality imagery in seconds." },
-          { title: "AI Presentation", detail: "Turn ideas into engaging, polished narratives." },
-          { title: "Dev Assistant", detail: "Ship features with calm, guided steps." },
-          { title: "Research", detail: "Collect insights without the clutter." },
+          { 
+            title: "Image Generator", 
+            detail: "Create high-quality images instantly from text descriptions." 
+          },
+          { 
+            title: "AI Presentation", 
+            detail: "Turn ideas into engaging, professional presentations." 
+          },
+          { 
+            title: "Dev Assistant", 
+            detail: "Generate clean, production-ready code in seconds." 
+          },
         ].map((card) => (
-          <div className="panel subtle" key={card.title}>
+          <div className="panel" key={card.title}>
             <div className="panel-title">{card.title}</div>
             <p className="muted">{card.detail}</p>
           </div>
