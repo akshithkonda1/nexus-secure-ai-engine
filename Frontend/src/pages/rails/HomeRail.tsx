@@ -12,7 +12,7 @@ export default function HomeRail() {
         {recent.map((item) => (
           <div
             key={item.title + item.detail}
-            className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-3 py-3"
+            className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3"
           >
             <div className="text-sm font-medium text-[var(--text-primary)]">{item.title}</div>
             <p className="text-xs text-[var(--text-muted)]">{item.detail}</p>

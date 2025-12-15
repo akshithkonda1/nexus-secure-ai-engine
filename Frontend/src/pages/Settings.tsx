@@ -14,17 +14,17 @@ export default function SettingsPage() {
   };
 
   return (
-    <section className="flex flex-col gap-8">
-      <header className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.08em] text-[var(--text-muted)]">Settings</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-strong)]">Controlled preferences</h1>
+    <section className="flex flex-col gap-10">
+      <header className="space-y-3">
+        <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Settings</p>
+        <h1 className="text-[28px] font-semibold text-[var(--text-strong)]">Controlled preferences</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
           Appearance and safety options stay in simple lists. No gradients or distractions.
         </p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-6">
           <div className="text-sm font-semibold text-[var(--text-primary)]">Appearance</div>
           <p className="mt-2 text-sm text-[var(--text-muted)]">Select light, dark, or follow the system.</p>
           <div className="mt-4 flex gap-2 text-sm">
@@ -33,10 +33,10 @@ export default function SettingsPage() {
                 key={value}
                 type="button"
                 onClick={() => handleThemeChange(value as ThemeMode)}
-                className={`rounded-lg border px-3 py-2 capitalize transition ${
+                className={`rounded-xl border px-4 py-2.5 capitalize transition ${
                   mode === value
                     ? "border-[var(--line-strong)] bg-[var(--layer-active)] text-[var(--text-strong)]"
-                    : "border-[var(--line-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    : "border-[var(--line-subtle)] text-[var(--text-muted)] hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {value}
@@ -46,11 +46,11 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs text-[var(--text-muted)]">Current: {resolved}</p>
         </div>
 
-        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
+        <div className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-6">
           <div className="text-sm font-semibold text-[var(--text-primary)]">Controls</div>
           <div className="mt-3 space-y-3 text-sm">
             {toggles.map((item) => (
-              <div key={item.label} className="flex items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-3 py-3">
+              <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3">
                 <div>
                   <div className="font-medium text-[var(--text-primary)]">{item.label}</div>
                   <p className="text-[var(--text-muted)]">{item.description}</p>

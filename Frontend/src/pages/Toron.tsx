@@ -16,7 +16,7 @@ export default function ToronPage() {
       messages.map((message, index) => (
         <div
           key={message.content + index}
-          className={`rounded-xl border border-[var(--line-subtle)] px-4 py-3 text-sm leading-relaxed ${
+          className={`rounded-2xl border border-[var(--line-subtle)] px-5 py-4 text-sm leading-relaxed ${
             message.role === "user"
               ? "bg-[var(--layer-surface)] text-[var(--text-primary)]"
               : "bg-[var(--layer-muted)] text-[var(--text-muted)]"
@@ -43,22 +43,22 @@ export default function ToronPage() {
   };
 
   return (
-    <section className="flex flex-1 flex-col gap-6">
-      <header className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.08em] text-[var(--text-muted)]">Toron</p>
-        <h1 className="text-2xl font-semibold text-[var(--text-strong)]">Chat without distractions</h1>
+    <section className="flex flex-1 flex-col gap-10">
+      <header className="space-y-3">
+        <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Toron</p>
+        <h1 className="text-[28px] font-semibold text-[var(--text-strong)]">Chat without distractions</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
           Messages stay in one column. The input stays docked to the bottom of the canvas.
         </p>
       </header>
 
       <div className="relative flex min-h-[60vh] flex-1 flex-col">
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-28">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto pb-32">
           {thread}
         </div>
         <form
           onSubmit={handleSubmit}
-          className="absolute bottom-0 left-0 right-0 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-4"
+          className="absolute bottom-0 left-0 right-0 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5 shadow-[0_14px_30px_-24px_var(--ryuzen-cod-gray)]"
         >
           <label className="sr-only" htmlFor="toron-input">
             Toron prompt
@@ -69,13 +69,13 @@ export default function ToronPage() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Type a prompt..."
-            className="h-24 w-full resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none"
+            className="h-28 w-full resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none"
           />
-          <div className="flex items-center justify-between pt-3 text-xs text-[var(--text-muted)]">
+          <div className="flex items-center justify-between pt-4 text-xs text-[var(--text-muted)]">
             <span>Press Enter to send</span>
             <button
               type="submit"
-              className="rounded-lg border border-[var(--line-strong)] bg-[var(--layer-active)] px-3 py-2 text-sm font-medium text-[var(--text-strong)] hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
+              className="rounded-xl border border-[var(--line-strong)] bg-[var(--layer-active)] px-4 py-2.5 text-sm font-medium text-[var(--text-strong)] hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
             >
               Send
             </button>
