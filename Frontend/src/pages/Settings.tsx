@@ -1,43 +1,35 @@
-import React from "react";
-import { useTheme } from "../state/theme";
+const sections = [
+  { title: "Account", items: ["Profile", "Email", "Sessions"] },
+  { title: "Security", items: ["MFA", "Keys", "Device approvals"] },
+  { title: "Privacy", items: ["Data retention", "Visibility", "Exports"] },
+  { title: "Telemetry", items: ["Usage analytics", "Error reports"] },
+  { title: "Toron", items: ["Default model", "Session limits"] },
+  { title: "Workspace", items: ["Members", "Permissions"] },
+];
 
-const Settings: React.FC = () => {
-  const { theme, setTheme } = useTheme();
-
+export default function SettingsPage() {
   return (
-    <div className="glass-panel" style={{ padding: 20, display: "grid", gap: 16 }}>
-      <h2 style={{ margin: 0 }}>Settings</h2>
-      <div className="settings-grid">
-        <div className="stub-card">
-          <div style={{ fontWeight: 700 }}>Theme</div>
-          <div style={{ color: "var(--text-secondary)" }}>Light / Dark</div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="pill-button secondary" onClick={() => setTheme("light")} aria-pressed={theme === "light"}>
-              Light
-            </button>
-            <button type="button" className="pill-button secondary" onClick={() => setTheme("dark")} aria-pressed={theme === "dark"}>
-              Dark
-            </button>
-          </div>
-        </div>
-        <div className="stub-card">
-          <div style={{ fontWeight: 700 }}>Account</div>
-          <div style={{ color: "var(--text-secondary)" }}>ryuzen.lead@cosmos.ai</div>
-          <button type="button" className="pill-button secondary">Manage</button>
-        </div>
-        <div className="stub-card">
-          <div style={{ fontWeight: 700 }}>Privacy</div>
-          <div style={{ color: "var(--text-secondary)" }}>Data lineage and evidence logging are on.</div>
-          <button type="button" className="pill-button secondary">Review controls</button>
-        </div>
-        <div className="stub-card">
-          <div style={{ fontWeight: 700 }}>Preferences</div>
-          <div style={{ color: "var(--text-secondary)" }}>Calm notifications • Minimal prompts • Boring by design</div>
-          <button type="button" className="pill-button secondary">Open preferences</button>
-        </div>
+    <section className="page">
+      <div className="page-header">
+        <div className="headline">Settings</div>
+        <p className="muted">Plain controls without distraction.</p>
       </div>
-    </div>
+      <div className="stack">
+        {sections.map((section) => (
+          <div className="panel subtle" key={section.title}>
+            <div className="panel-title">{section.title}</div>
+            <div className="list">
+              {section.items.map((item) => (
+                <label className="toggle" key={item}>
+                  <span>{item}</span>
+                  <input type="checkbox" />
+                  <span className="switch" aria-hidden />
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
-};
-
-export default Settings;
+}
