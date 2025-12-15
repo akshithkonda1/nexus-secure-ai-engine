@@ -155,7 +155,7 @@ class RyuzenToronV25HPlus:
         }
 
     def _premise_scrubbing_layer(self, prompt: str) -> Dict[str, Any]:
-        cache_key = f"psl:{hashlib.md5(prompt.encode()).hexdigest()}"
+        cache_key = f"toron:v2.5h+:psl:{hashlib.md5(prompt.encode()).hexdigest()}"
         cached = self.psl_cache.get(cache_key)
         if cached:
             return cached
@@ -226,7 +226,7 @@ class RyuzenToronV25HPlus:
     def _tier1_ensemble(
         self, clean_prompt: str, plan: ExecutionPlan, fired_models: Optional[Set[str]] = None
     ) -> List[Dict[str, Any]]:
-        cache_key = f"t1:{hashlib.sha256(clean_prompt.encode()).hexdigest()}"
+        cache_key = f"toron:v2.5h+:t1:{hashlib.sha256(clean_prompt.encode()).hexdigest()}"
         cached = self.t1_cache.get(cache_key)
         if cached:
             if fired_models is not None:
@@ -489,7 +489,8 @@ class RyuzenToronV25HPlus:
         aloe_final = self._aloe_final_pass(synthesis["human"])
         latency_ms = stable_latency(clean_prompt)
         tier_path = normalized_pipeline(SimpleNamespace(use_opus=use_opus))
-        final_confidence = stabilized_confidence(contradiction_count, use_opus)
+        evidence_density = reality_packet.get("evidence_density", 0.5)
+        final_confidence = stabilized_confidence(contradiction_count, use_opus, evidence_density)
         meta_flags = stabilized_meta_flags(use_opus)
 
         snapshot = normalize_snapshot(

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 import time
 from collections import OrderedDict, defaultdict
@@ -732,6 +733,10 @@ class ToronEngineV31:
     def __init__(self, config: EngineConfig = DEFAULT_CONFIG):
         self.config = config
         self.providers: List[MockProvider] = []
+        self.tier1_model_names: List[str] = []
+        self.tier2_model_names: List[str] = []
+        self.tier3_model_names: List[str] = []
+        self.tier4_model_names: List[str] = []
         self.cache = LRUCacheWithTTL(
             max_size=config.cache_max_entries, ttl_seconds=config.cache_ttl_seconds
         )
@@ -840,6 +845,11 @@ class ToronEngineV31:
         tier4_configs = [
             ("Claude-Opus-4", "judicial", 520),
         ]
+
+        self.tier1_model_names = [name for name, _, _ in tier1_configs]
+        self.tier2_model_names = [name for name, _, _ in tier2_configs]
+        self.tier3_model_names = [name for name, _, _ in tier3_configs]
+        self.tier4_model_names = [name for name, _, _ in tier4_configs]
 
         all_configs = tier1_configs + tier2_configs + tier3_configs + tier4_configs
         self.providers = [
@@ -961,13 +971,18 @@ class ToronEngineV31:
         self._validate_prompt(prompt)
         
         start_time = time.time()
-        request_id = hashlib.sha256(f"{prompt}:{start_time}".encode()).hexdigest()[:12]
+        config_fingerprint = hashlib.sha256(
+            json.dumps(self.config.dict(), sort_keys=True).encode()
+        ).hexdigest()
+        request_id = hashlib.sha256(
+            f"{prompt}:{config_fingerprint}".encode()
+        ).hexdigest()[:12]
         prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
-        
+
         logger.info(f"[{request_id}] Starting generation for prompt hash {prompt_hash}")
-        
+
         # Check cache
-        cache_key = f"prompt:{prompt_hash}"
+        cache_key = f"toron:v2.5h+:prompt:{prompt_hash}"
         if use_cache:
             cached = self.cache.get(cache_key)
             if cached is not None:
@@ -976,10 +991,9 @@ class ToronEngineV31:
                 return consensus, metrics
         
         # Separate providers by tier
-        tier1_providers = [p for p in self.providers if p.model_name in [
-            "ChatGPT-5.2", "Gemini-3", "Cohere-CommandR+", "Meta-Llama-3.2",
-            "Mistral-Large", "Qwen", "Claude-Sonnet-4.5", "Perplexity-Sonar"
-        ]]
+        tier1_providers = [
+            p for p in self.providers if p.model_name in self.tier1_model_names
+        ]
         
         total_retries = 0
         total_timeouts = 0
