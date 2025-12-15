@@ -1,27 +1,38 @@
 export default function AuthPage() {
   return (
     <div className="auth-page">
-      <div className="aurora" aria-hidden />
       <div className="auth-card">
-        <div className="orb" aria-hidden />
-        <div className="auth-heading">Secure access to Ryuzen</div>
-        <p className="muted">Authenticate quietly with your provider or credentials.</p>
-        <button type="button" className="primary full">Continue with Provider</button>
+        <div className="orb" aria-hidden="true" />
+        <div className="auth-heading">Welcome to Ryuzen</div>
+        <p className="muted">Sign in to access Ryuzen</p>
+
+        <button type="button" className="primary full">
+          <span>Continue with Provider</span>
+        </button>
+
         <div className="divider">or</div>
+
         <form className="auth-form">
-          <label className="field">
-            <span>Email</span>
+          <div className="field">
+            <label>
+              <span>Email</span>
+            </label>
             <input type="email" placeholder="name@domain.com" />
-          </label>
-          <label className="field">
-            <span>Password</span>
+          </div>
+          <div className="field">
+            <label>
+              <span>Password</span>
+            </label>
             <input type="password" placeholder="••••••••" />
-          </label>
-          <button type="submit" className="secondary full">Continue</button>
+          </div>
+          <button type="submit" className="secondary full">
+            <span>Continue</span>
+          </button>
         </form>
+
         <div className="badge-row">
-          <div className="badge">No marketing. Just access.</div>
-          <div className="badge">SF Pro only</div>
+          <div className="badge">Secure Authentication</div>
+          <div className="badge">Privacy First</div>
         </div>
       </div>
     </div>
