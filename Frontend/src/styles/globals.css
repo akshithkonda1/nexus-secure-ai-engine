@@ -10,33 +10,33 @@
   --ryuzen-dodger: #009eff;
   --ryuzen-purple: #9360ff;
 
-  --layer-base: #f5f7fb;
-  --layer-surface: #ffffff;
-  --layer-muted: #f1f4f9;
-  --layer-active: #e6ecf6;
-  --text-primary: #161928;
-  --text-strong: #0f1222;
-  --text-muted: #5a6278;
-  --line-subtle: #e0e6f0;
-  --line-strong: #c8d1e0;
+  --layer-base: var(--ryuzen-alabaster);
+  --layer-surface: color-mix(in srgb, var(--ryuzen-alabaster) 96%, var(--ryuzen-cod-gray) 4%);
+  --layer-muted: color-mix(in srgb, var(--ryuzen-alabaster) 92%, var(--ryuzen-prelude) 8%);
+  --layer-active: color-mix(in srgb, var(--ryuzen-alabaster) 88%, var(--ryuzen-azure) 12%);
+  --text-primary: color-mix(in srgb, var(--ryuzen-cod-gray) 80%, var(--ryuzen-alabaster) 20%);
+  --text-strong: var(--ryuzen-cod-gray);
+  --text-muted: color-mix(in srgb, var(--ryuzen-cod-gray) 52%, var(--ryuzen-prelude) 48%);
+  --line-subtle: color-mix(in srgb, var(--ryuzen-prelude) 40%, var(--ryuzen-alabaster) 60%);
+  --line-strong: color-mix(in srgb, var(--ryuzen-prelude) 65%, var(--ryuzen-cod-gray) 35%);
   --accent: var(--ryuzen-azure);
-  --pill: #e9eef7;
+  --pill: color-mix(in srgb, var(--ryuzen-azure) 18%, var(--ryuzen-alabaster) 82%);
 }
 
 :root.dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --layer-base: var(--ryuzen-cod-gray);
-  --layer-surface: #0f1326;
-  --layer-muted: #12162c;
-  --layer-active: #161b33;
-  --text-primary: #dfe4f5;
-  --text-strong: #f3f6ff;
-  --text-muted: #949bb3;
-  --line-subtle: #1f263d;
-  --line-strong: #2d3550;
+  --layer-base: color-mix(in srgb, var(--ryuzen-cod-gray) 92%, var(--ryuzen-prelude) 8%);
+  --layer-surface: color-mix(in srgb, var(--ryuzen-cod-gray) 86%, var(--ryuzen-prelude) 14%);
+  --layer-muted: color-mix(in srgb, var(--ryuzen-cod-gray) 80%, var(--ryuzen-purple) 20%);
+  --layer-active: color-mix(in srgb, var(--ryuzen-cod-gray) 74%, var(--ryuzen-purple) 26%);
+  --text-primary: color-mix(in srgb, var(--ryuzen-prelude) 88%, var(--ryuzen-alabaster) 12%);
+  --text-strong: var(--ryuzen-prelude);
+  --text-muted: color-mix(in srgb, var(--ryuzen-prelude) 60%, var(--ryuzen-cod-gray) 40%);
+  --line-subtle: color-mix(in srgb, var(--ryuzen-cod-gray) 70%, var(--ryuzen-prelude) 30%);
+  --line-strong: color-mix(in srgb, var(--ryuzen-cod-gray) 60%, var(--ryuzen-purple) 40%);
   --accent: var(--ryuzen-purple);
-  --pill: #1b2037;
+  --pill: color-mix(in srgb, var(--ryuzen-purple) 22%, var(--ryuzen-cod-gray) 78%);
 }
 
 * {
@@ -48,9 +48,41 @@ body {
   min-height: 100vh;
   background: var(--layer-base);
   color: var(--text-primary);
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+label,
+small {
+  margin: 0;
+  font-weight: 400;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+p,
+span,
+label,
+small {
+  font-size: 0.9375rem;
 }
 
 a {
