@@ -418,6 +418,11 @@ button.full {
   gap: var(--spacing-2);
   flex-wrap: wrap;
   align-items: center;
+  gap: var(--space-2);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  padding: 8px 12px 8px 16px;
 }
 
 .icon-dot {
