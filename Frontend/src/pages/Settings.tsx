@@ -1,36 +1,65 @@
-const sections = [
-  { title: "Account", items: ["Profile", "Email", "Sessions"] },
-  { title: "Security", items: ["MFA", "API Keys", "Device Approvals"] },
-  { title: "Privacy", items: ["Data Retention", "Visibility", "Exports"] },
-  { title: "Preferences", items: ["Theme", "Language", "Notifications"] },
-  {title: "Toron", items: ["Default Mode", "Response Length", "Tone"] },
-  { title: "Workspace", items: ["Default Modules", "Layout", "Shortcuts"] },
+import { useTheme, ThemeMode } from "../theme/ThemeProvider";
+
+const toggles = [
+  { label: "Notifications", description: "Workspace updates" },
+  { label: "Session safety", description: "Strict" },
+  { label: "Logging", description: "Enabled for audit" },
 ];
 
 export default function SettingsPage() {
+  const { mode, resolved, setMode } = useTheme();
+
+  const handleThemeChange = (value: ThemeMode) => {
+    setMode(value);
+  };
+
   return (
-    <section className="page">
-      <div className="hero">
-        <div className="orb" aria-hidden="true" />
-        <div className="hero-title">Settings</div>
-        <p className="hero-subtitle">Customize your experience and manage your account preferences.</p>
-      </div>
-      
-      <div className="stack">
-        {sections.map((section) => (
-          <div className="panel" key={section.title}>
-            <div className="panel-title">{section.title}</div>
-            <div className="list">
-              {section.items.map((item) => (
-                <div className="toggle" key={item}>
-                  <span>{item}</span>
-                  <span className="text-muted">Enabled</span>
-                  <input type="checkbox" defaultChecked />
-                </div>
-              ))}
-            </div>
+    <section className="flex flex-col gap-8">
+      <header className="space-y-2">
+        <p className="text-sm uppercase tracking-[0.08em] text-[var(--text-muted)]">Settings</p>
+        <h1 className="text-2xl font-semibold text-[var(--text-strong)]">Controlled preferences</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+          Appearance and safety options stay in simple lists. No gradients or distractions.
+        </p>
+      </header>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
+          <div className="text-sm font-semibold text-[var(--text-primary)]">Appearance</div>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">Select light, dark, or follow the system.</p>
+          <div className="mt-4 flex gap-2 text-sm">
+            {["light", "dark", "system"].map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleThemeChange(value as ThemeMode)}
+                className={`rounded-lg border px-3 py-2 capitalize transition ${
+                  mode === value
+                    ? "border-[var(--line-strong)] bg-[var(--layer-active)] text-[var(--text-strong)]"
+                    : "border-[var(--line-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {value}
+              </button>
+            ))}
           </div>
-        ))}
+          <p className="mt-3 text-xs text-[var(--text-muted)]">Current: {resolved}</p>
+        </div>
+
+        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
+          <div className="text-sm font-semibold text-[var(--text-primary)]">Controls</div>
+          <div className="mt-3 space-y-3 text-sm">
+            {toggles.map((item) => (
+              <div key={item.label} className="flex items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-3 py-3">
+                <div>
+                  <div className="font-medium text-[var(--text-primary)]">{item.label}</div>
+                  <p className="text-[var(--text-muted)]">{item.description}</p>
+                </div>
+                <input type="checkbox" className="h-4 w-4 accent-[var(--accent)]" defaultChecked />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

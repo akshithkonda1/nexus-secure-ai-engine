@@ -1,57 +1,86 @@
-const sessionFeed = [
-  {
-    title: "Ready to start",
-    detail: "Your AI assistant is ready to help with any task. Start by typing your prompt below.",
-  },
+import { FormEvent, useMemo, useRef, useState } from "react";
+
+const initialMessages = [
+  { role: "system" as const, content: "Toron is ready. Keep prompts concise." },
+  { role: "user" as const, content: "Summarize yesterday's workspace updates." },
+  { role: "system" as const, content: "Workspace updates: research outline refined, notifications reviewed." },
 ];
 
-const modes = ["Create image", "Brainstorm", "Make a plan", "Generate Code"];
-
 export default function ToronPage() {
-  return (
-    <section className="page">
-      <div className="hero">
-        <div className="orb" aria-hidden="true" />
-        <div className="hero-title">Toron</div>
-        <p className="hero-subtitle">Your intelligent conversation partner for creative and analytical tasks.</p>
-      </div>
+  const [messages, setMessages] = useState(initialMessages);
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-      <div className="composer">
-        <div className="composer-top">
-          <span>Ask Anything...</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Attach</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Settings</span>
-          <div className="icon-dot" aria-hidden="true" />
-          <span>Options</span>
-        </div>
-        <div className="composer-input">
-          <input type="text" placeholder="Describe what you need..." />
-          <button type="button" className="primary">
-            <span>Send</span>
-          </button>
-        </div>
-        <div className="composer-actions">
-          {modes.map((item, index) => (
-            <button
-              key={item}
-              type="button"
-              className={index === 0 ? "chip-button active" : "chip-button"}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="feed">
-        {sessionFeed.map((entry) => (
-          <div className="feed-card" key={entry.title}>
-            <div className="feed-title">{entry.title}</div>
-            <p className="feed-body">{entry.detail}</p>
+  const thread = useMemo(
+    () =>
+      messages.map((message, index) => (
+        <div
+          key={message.content + index}
+          className={`rounded-xl border border-[var(--line-subtle)] px-4 py-3 text-sm leading-relaxed ${
+            message.role === "user"
+              ? "bg-[var(--layer-surface)] text-[var(--text-primary)]"
+              : "bg-[var(--layer-muted)] text-[var(--text-muted)]"
+          }`}
+        >
+          <div className="mb-1 text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            {message.role === "user" ? "User" : "System"}
           </div>
-        ))}
+          <p className="text-[var(--text-primary)]">{message.content}</p>
+        </div>
+      )),
+    [messages]
+  );
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const next = input.trim();
+    if (!next) return;
+    setMessages((prev) => [...prev, { role: "user" as const, content: next }]);
+    setInput("");
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  };
+
+  return (
+    <section className="flex flex-1 flex-col gap-6">
+      <header className="space-y-2">
+        <p className="text-sm uppercase tracking-[0.08em] text-[var(--text-muted)]">Toron</p>
+        <h1 className="text-2xl font-semibold text-[var(--text-strong)]">Chat without distractions</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+          Messages stay in one column. The input stays docked to the bottom of the canvas.
+        </p>
+      </header>
+
+      <div className="relative flex min-h-[60vh] flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto pb-28">
+          {thread}
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="absolute bottom-0 left-0 right-0 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-4"
+        >
+          <label className="sr-only" htmlFor="toron-input">
+            Toron prompt
+          </label>
+          <textarea
+            id="toron-input"
+            ref={inputRef}
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder="Type a prompt..."
+            className="h-24 w-full resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none"
+          />
+          <div className="flex items-center justify-between pt-3 text-xs text-[var(--text-muted)]">
+            <span>Press Enter to send</span>
+            <button
+              type="submit"
+              className="rounded-lg border border-[var(--line-strong)] bg-[var(--layer-active)] px-3 py-2 text-sm font-medium text-[var(--text-strong)] hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
+            >
+              Send
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   );

@@ -1,12 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import RootLayout from "./app/layout";
-import Page from "./app/page";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import { ThemeProvider } from "./theme/ThemeProvider";
+import "./styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <RootLayout>
-      <Page />
-    </RootLayout>
+    <BrowserRouter>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
