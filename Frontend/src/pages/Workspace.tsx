@@ -14,6 +14,13 @@ export default function WorkspacePage() {
         <div className="orb" aria-hidden />
         <div className="hero-title">Workspace</div>
         <p className="hero-subtitle">Modular surfaces for focused work. Arrange what matters, ignore the rest.</p>
+        <div className="hero-actions">
+          {modules.slice(0, 3).map((card) => (
+            <button key={card.title} type="button" className="chip-button">
+              {card.title}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid">

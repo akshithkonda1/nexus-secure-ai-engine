@@ -1,15 +1,15 @@
 const sessionFeed = [
   {
     title: "Session output",
-    detail: "Results will be listed here once generated. Keep the flow focused on the latest response.",
+    detail: "Results will appear here, flowing downward in order.",
   },
   {
     title: "Recent note",
-    detail: "Use this space for the next action without adding noise.",
+    detail: "Capture the next action without adding noise.",
   },
 ];
 
-const modes = ["Create image", "Brainstorm", "Make a plan", "Summarize", "Refine"];
+const modes = ["Prompt", "Plan", "Refine", "Summarize", "Image"];
 
 export default function ToronPage() {
   return (
@@ -18,20 +18,26 @@ export default function ToronPage() {
         <div className="orb" aria-hidden />
         <div className="hero-title">Toron</div>
         <p className="hero-subtitle">Calm input. Clear output. One decisive surface.</p>
+        <div className="hero-actions">
+          {modes.slice(0, 3).map((item, index) => (
+            <button
+              key={item}
+              type="button"
+              className={index === 0 ? "chip-button active" : "chip-button"}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="composer">
-        <div className="composer-top">
-          <span>Ask Anything…</span>
-          <div className="icon-dot" aria-hidden />
-          <span>Attach</span>
-          <div className="icon-dot" aria-hidden />
-          <span>Settings</span>
-          <div className="icon-dot" aria-hidden />
-          <span>Options</span>
-        </div>
         <div className="composer-input">
           <input type="text" placeholder="Describe what you need" />
+          <div className="composer-icons">
+            <button type="button" className="ghost pill">Attach</button>
+            <button type="button" className="ghost pill">System</button>
+          </div>
           <button type="button" className="primary">Send</button>
         </div>
         <div className="composer-actions">

@@ -7,18 +7,10 @@ const primaryNav = [
   { label: "Settings", to: "/settings" },
 ];
 
-const featureNav = [
-  { label: "New Chat", to: "/toron" },
-  { label: "Chat", to: "/toron" },
-  { label: "Archived", to: "/workspace" },
+const secondaryNav = [
+  { label: "Sessions", to: "/toron" },
   { label: "Library", to: "/workspace" },
-];
-
-const workspaceNav = [
-  { label: "New Project", to: "/workspace" },
-  { label: "Image", to: "/workspace" },
-  { label: "Presentation", to: "/workspace" },
-  { label: "Research", to: "/workspace" },
+  { label: "Archive", to: "/workspace" },
 ];
 
 export default function Sidebar() {
@@ -43,24 +35,9 @@ export default function Sidebar() {
         </div>
 
         <div className="nav-group">
-          <div className="nav-label">Features</div>
-          <nav className="nav" aria-label="Features">
-            {featureNav.map((item) => (
-              <NavLink
-                key={item.label + item.to}
-                to={item.to}
-                className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        <div className="nav-group">
-          <div className="nav-label">Workspaces</div>
-          <nav className="nav" aria-label="Workspaces">
-            {workspaceNav.map((item) => (
+          <div className="nav-label">Secondary</div>
+          <nav className="nav" aria-label="Secondary">
+            {secondaryNav.map((item) => (
               <NavLink
                 key={item.label + item.to}
                 to={item.to}
@@ -73,8 +50,8 @@ export default function Sidebar() {
         </div>
 
         <div className="upgrade-card">
-          <div className="upgrade-label">Upgrade to premium</div>
-          <div className="upgrade-note">Unlock faster models and richer sessions.</div>
+          <div className="upgrade-label">Upgrade</div>
+          <div className="upgrade-note">Access deeper context and faster Toron sessions.</div>
           <button type="button" className="secondary">Upgrade</button>
         </div>
       </div>
