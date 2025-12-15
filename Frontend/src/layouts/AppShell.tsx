@@ -19,7 +19,7 @@ export default function AppShell({ children, rightRail }: AppShellProps) {
             <div className="flex h-[calc(100vh-80px)] w-full max-w-[980px] flex-col overflow-hidden rounded-3xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-10 py-8 shadow-[0_18px_36px_-28px_var(--ryuzen-cod-gray)]">
               <TopBar />
               <main className="mt-8 flex flex-1 overflow-hidden">
-                <div className="mx-auto flex w-full max-w-4xl flex-col gap-12 overflow-y-auto pb-14 pr-1">
+                <div className="mx-auto flex max-w-4xl flex-col gap-12 overflow-y-auto pb-14 pr-1">
                   {children}
                 </div>
               </main>
