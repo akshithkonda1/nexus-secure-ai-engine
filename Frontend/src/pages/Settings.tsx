@@ -14,17 +14,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <section className="flex flex-col gap-10">
-      <header className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Settings</p>
-        <h1 className="text-[28px] font-semibold text-[var(--text-strong)]">Controlled preferences</h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+    <section className="flex flex-col">
+      <header className="mb-8 space-y-2">
+        <h1 className="text-3xl font-semibold leading-tight text-[var(--text-strong)]">Controlled preferences</h1>
+        <p className="text-sm leading-relaxed text-[var(--text-muted)]">
           Appearance and safety options stay in simple lists. No gradients or distractions.
         </p>
       </header>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
           <div className="text-sm font-semibold text-[var(--text-primary)]">Appearance</div>
           <p className="mt-2 text-sm text-[var(--text-muted)]">Select light, dark, or follow the system.</p>
           <div className="mt-4 flex gap-2 text-sm">
@@ -46,9 +45,9 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs text-[var(--text-muted)]">Current: {resolved}</p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-6">
+        <div className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-5">
           <div className="text-sm font-semibold text-[var(--text-primary)]">Controls</div>
-          <div className="mt-3 space-y-3 text-sm">
+          <div className="mt-3 space-y-2 text-sm">
             {toggles.map((item) => (
               <div key={item.label} className="flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3">
                 <div>
