@@ -10,9 +10,10 @@ const sections = [
 export default function SettingsPage() {
   return (
     <section className="page">
-      <div className="page-header">
-        <div className="headline">Settings</div>
-        <p className="muted">Plain controls without distraction.</p>
+      <div className="hero">
+        <div className="orb" aria-hidden />
+        <div className="hero-title">Settings</div>
+        <p className="hero-subtitle">Plain controls without distraction.</p>
       </div>
       <div className="stack">
         {sections.map((section) => (
@@ -22,7 +23,8 @@ export default function SettingsPage() {
               {section.items.map((item) => (
                 <label className="toggle" key={item}>
                   <span>{item}</span>
-                  <input type="checkbox" />
+                  <span className="text-muted">Enabled</span>
+                  <input type="checkbox" defaultChecked />
                   <span className="switch" aria-hidden />
                 </label>
               ))}
