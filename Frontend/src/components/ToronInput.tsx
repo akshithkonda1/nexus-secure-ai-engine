@@ -18,9 +18,9 @@ export default function ToronInput({ value, onChange, onSubmit }: ToronInputProp
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
       <textarea
-        className="min-h-[160px] w-full resize-none rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-base font-normal text-slate-100 outline-none shadow-inner shadow-black/20 transition focus:border-white/20"
+        className="min-h-[200px] w-full resize-none rounded-xl bg-white/5 px-5 py-4 text-base font-medium leading-relaxed text-slate-100 placeholder:text-slate-400/70 shadow-inner shadow-black/30 focus:outline-none"
         placeholder="Ask anything…"
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -31,7 +31,7 @@ export default function ToronInput({ value, onChange, onSubmit }: ToronInputProp
           type="button"
           onClick={onSubmit}
           disabled={!value.trim()}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#4c57d4] to-[#5b63ff] px-4 py-2 text-sm font-medium text-white shadow-soft transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/30 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-100/80 transition hover:border-white/20 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Submit
         </button>
