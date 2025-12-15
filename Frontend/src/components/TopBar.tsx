@@ -18,20 +18,24 @@ export default function TopBar() {
   const nextMode = resolved === "dark" ? "light" : "dark";
 
   return (
-    <header className="flex items-center justify-between border-b border-[var(--line-subtle)] pb-5">
-      <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-        <Link to="/" className="hover:opacity-80">
+    <header className="flex items-center justify-between border-b border-[var(--line-subtle)] pb-6">
+      <div className="flex items-center gap-2.5 text-sm text-[var(--text-muted)]">
+        <Link to="/" className="rounded-lg px-2 py-1 transition hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
           Home
         </Link>
-        <ChevronRight className="h-4 w-4" aria-hidden />
+        <ChevronRight className="h-[18px] w-[18px]" aria-hidden />
         <span className="text-[var(--text-primary)]">{title}</span>
       </div>
       <button
         type="button"
         onClick={() => setMode(nextMode)}
-        className="flex items-center gap-2 rounded-lg border border-[var(--line-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
+        className="flex items-center gap-2.5 rounded-xl border border-[var(--line-subtle)] px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-strong)]"
       >
-        {resolved === "dark" ? <Moon className="h-4 w-4" aria-hidden /> : <SunMedium className="h-4 w-4" aria-hidden />}
+        {resolved === "dark" ? (
+          <Moon className="h-[18px] w-[18px]" aria-hidden />
+        ) : (
+          <SunMedium className="h-[18px] w-[18px]" aria-hidden />
+        )}
         <span className="capitalize">{mode === "system" ? `${resolved} (system)` : resolved}</span>
       </button>
     </header>
