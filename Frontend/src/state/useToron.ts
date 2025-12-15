@@ -51,7 +51,10 @@ export function useToron<TData = unknown>(): UseToronApi<TData> {
     if (lastRequestId.current) {
       toronService.cancel(lastRequestId.current);
     }
+    lastRequestId.current = null;
     setIsGenerating(false);
+    setProgress(null);
+    setCurrentStage(null);
   }, []);
 
   const generate = useCallback(

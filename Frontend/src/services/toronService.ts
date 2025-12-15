@@ -170,17 +170,21 @@ export const toronService = {
         throw new Error(`Toron stream failed: ${response.status}`);
       }
 
-      const latest = await readStream<ToronResponse<TData>>(response, handlers);
+      const latest = await readStream<TData>(response, handlers);
       if (latest) {
         handlers.onComplete?.(latest);
       }
       return latest;
     } catch (error) {
-      handlers.onError?.(error as Error);
+      const err = error as Error;
+      if ((err as DOMException).name === "AbortError") {
+        return null;
+      }
+      handlers.onError?.(err);
       if (options.allowSimulation) {
         return simulateStream(payload, handlers);
       }
-      throw error;
+      throw err;
     } finally {
       activeControllers.delete(requestId);
     }
