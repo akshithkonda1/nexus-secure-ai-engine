@@ -3,20 +3,16 @@ import { useLocation } from "react-router-dom";
 import { Zap, HelpCircle, MoreVertical } from "lucide-react";
 
 const labels: Record<string, string> = {
-  "/": "AI Chat",
-  "/projects": "Projects",
-  "/templates": "Templates",
-  "/documents": "Documents",
-  "/community": "Community",
-  "/history": "History",
+  "/": "Home",
+  "/toron": "Toron",
+  "/workspace": "Workspace",
   "/settings": "Settings",
-  "/help": "Help",
 };
 
 export default function TopBar() {
   const location = useLocation();
 
-  const title = useMemo(() => labels[location.pathname] ?? "AI Chat", [location.pathname]);
+  const title = useMemo(() => labels[location.pathname] ?? "Home", [location.pathname]);
 
   return (
     <header className="flex items-center justify-between pb-6">
