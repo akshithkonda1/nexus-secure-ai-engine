@@ -321,12 +321,15 @@ class CircuitBreaker:
         provider_name: str,
         failure_threshold: int = 5,
         timeout_seconds: int = 60,
+        success_threshold: int = 3,
     ):
         self.provider_name = provider_name
         self.failure_threshold = failure_threshold
         self.timeout_seconds = timeout_seconds
+        self.success_threshold = max(3, success_threshold)
 
         self.failure_count = 0
+        self.success_streak = 0
         self.state = CircuitState.CLOSED
         self.last_failure_time: Optional[float] = None
         self._lock = RLock()
@@ -334,14 +337,29 @@ class CircuitBreaker:
     def record_success(self) -> None:
         """Record successful request."""
         with self._lock:
-            self.failure_count = 0
-            self.state = CircuitState.CLOSED
-            logger.debug(f"Circuit breaker reset for {self.provider_name}")
+            self.success_streak += 1
+
+            if self.success_streak >= self.success_threshold:
+                self.failure_count = 0
+                self.state = CircuitState.CLOSED
+                self.last_failure_time = None
+                self.success_streak = 0
+                logger.debug(
+                    f"Circuit breaker reset for {self.provider_name} after stable recovery"
+                )
+            else:
+                if self.state == CircuitState.OPEN:
+                    self.state = CircuitState.HALF_OPEN
+                logger.debug(
+                    f"Circuit breaker partial recovery for {self.provider_name}: "
+                    f"{self.success_streak}/{self.success_threshold} successes"
+                )
 
     def record_failure(self) -> None:
         """Record failed request and potentially open circuit."""
         with self._lock:
             self.failure_count += 1
+            self.success_streak = 0
             self.last_failure_time = time.time()
 
             if self.failure_count >= self.failure_threshold:
@@ -725,18 +743,18 @@ class ToronEngineV3:
         
         # Combine all tiers
         all_configs = tier1_configs + tier2_configs + tier3_configs + tier4_configs
-        
+
         self.providers = [
             MockProvider(name, style, latency)
             for name, style, latency in all_configs
         ]
-        
+
         # Store tier mappings for orchestration
         self.tier_mapping = {
-            "tier1": [p.model_name for p, _, _ in [MockProvider(*cfg) for cfg in tier1_configs]],
-            "tier2": [p.model_name for p, _, _ in [MockProvider(*cfg) for cfg in tier2_configs]],
-            "tier3": [p.model_name for p, _, _ in [MockProvider(*cfg) for cfg in tier3_configs]],
-            "tier4": [p.model_name for p, _, _ in [MockProvider(*cfg) for cfg in tier4_configs]],
+            "tier1": [name for name, _, _ in tier1_configs],
+            "tier2": [name for name, _, _ in tier2_configs],
+            "tier3": [name for name, _, _ in tier3_configs],
+            "tier4": [name for name, _, _ in tier4_configs],
         }
         
         logger.info(
@@ -811,15 +829,18 @@ class ToronEngineV3:
         self._validate_prompt(prompt)
 
         start_time = time.time()
+        config_fingerprint = hashlib.sha256(
+            self.config.json(sort_keys=True).encode()
+        ).hexdigest()
         request_id = hashlib.sha256(
-            f"{prompt}:{start_time}".encode()
+            f"{prompt}:{config_fingerprint}".encode()
         ).hexdigest()[:16]
         prompt_hash = SemanticSimilarity.compute_fingerprint(prompt)
 
         logger.info(f"🚀 8-Tier Generation request {request_id} started")
 
         # Check cache
-        cache_key = f"consensus:{prompt_hash}"
+        cache_key = f"toron:v2.5h+:consensus:{prompt_hash}"
         if use_cache:
             cached = self.cache.get(cache_key)
             if cached is not None:
@@ -901,8 +922,12 @@ class ToronEngineV3:
         ]
         tier3_results = await asyncio.gather(*tier3_tasks, return_exceptions=False)
         tier3_responses = [r for r in tier3_results if r is not None]
-        
+
         logger.info(f"   ✓ Tier 3 retrieved {len(tier3_responses)} knowledge sources")
+
+        tier2_consensus = self._apply_research_confidence_boost(
+            tier2_consensus, tier3_responses
+        )
 
         # ========== TIER 4: Judicial Review (conditional) ==========
         tier4_triggered = False
@@ -1063,8 +1088,23 @@ class ToronEngineV3:
             f"and {'judicial review' if tier4_judicial else 'standard consensus'}, "
             f"the logical synthesis is: {tier2.representative_output}"
         )
-        
+
         return "\n".join(logic_components)
+
+    def _apply_research_confidence_boost(
+        self, consensus: ConsensusResult, knowledge: List[ModelResponse]
+    ) -> ConsensusResult:
+        """Blend Tier 3 grounding into epistemic confidence without exceeding 1.0."""
+
+        if not knowledge:
+            return consensus
+
+        coverage_ratio = min(1.0, len(knowledge) / 5)
+        knowledge_confidence = sum(r.confidence for r in knowledge) / len(knowledge)
+        boost = min(0.1, knowledge_confidence * 0.1 * coverage_ratio)
+
+        consensus.avg_confidence = min(1.0, consensus.avg_confidence + boost)
+        return consensus
 
     def _generate_aloe_answer(
         self,
