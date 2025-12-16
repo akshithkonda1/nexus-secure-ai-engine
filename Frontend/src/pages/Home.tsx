@@ -30,7 +30,7 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 text-center"
         >
-          <h1 className="text-4xl font-semibold tracking-tight text-primary">Welcome to Ryuzen</h1>
+          <h1 className="text-4xl font-semibold tracking-tight text-primary">Welcome to Ryuzen (V4)</h1>
           <p className="mx-auto max-w-lg text-secondary">
             Get started by giving Ryuzen a task and Chat can do the rest. Not sure where to start?
           </p>
