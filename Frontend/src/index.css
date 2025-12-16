@@ -87,9 +87,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground antialiased selection:bg-zinc-800 selection:text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
