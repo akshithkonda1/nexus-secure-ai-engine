@@ -80,38 +80,38 @@ export default function ToronPage() {
       <div className="relative flex flex-1 flex-col overflow-hidden">
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-y-auto pb-6 pr-2">
           <AnimatePresence mode="popLayout">
-            {messages.map((message, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+            {messages.map((message, index) => {
+              const glassTone =
+                message.role === "user"
+                  ? "border-white/40 bg-white/75 text-[var(--text-strong)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5"
+                  : message.role === "system"
+                    ? "border-white/25 bg-white/55 text-[var(--text-muted)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/5"
+                    : "border-white/30 bg-white/65 text-[var(--text-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.07)] dark:border-white/10 dark:bg-white/5";
+
+              const textTone =
+                message.role === "user"
+                  ? "text-[var(--text-strong)]"
+                  : message.role === "system"
+                    ? "text-[var(--text-muted)]"
+                    : "text-[var(--text-primary)]";
+
+              return (
                 <motion.div
-                  className={`group relative w-full max-w-2xl rounded-2xl border px-5 py-4 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-transform ${
-                    message.role === "user"
-                      ? "border-[var(--line-subtle)] bg-[var(--layer-muted)] text-[var(--text-strong)]"
-                      : message.role === "system"
-                        ? "border-[var(--line-subtle)] bg-[var(--layer-surface)] text-[var(--text-muted)]"
-                        : "border-[var(--line-strong)] bg-[var(--layer-surface)] text-[var(--text-primary)]"
-                  }`}
+                  key={index}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <p
-                    className={`text-base leading-relaxed whitespace-pre-wrap ${
-                      message.role === "user"
-                        ? "text-[var(--text-strong)]"
-                        : message.role === "system"
-                          ? "text-[var(--text-muted)]"
-                          : "text-[var(--text-primary)]"
-                    }`}
+                  <motion.div
+                    className={`group relative w-full max-w-2xl rounded-2xl border px-5 py-4 backdrop-blur-md transition-all duration-200 ${glassTone}`}
                   >
-                    {message.content}
-                  </p>
+                    <p className={`whitespace-pre-wrap text-base leading-relaxed ${textTone}`}>{message.content}</p>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
 
           {isTyping && (
@@ -120,7 +120,7 @@ export default function ToronPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex justify-start"
             >
-              <div className="flex items-center gap-3 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/30 bg-white/65 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-white/5">
                 <motion.div
                   className="flex gap-1"
                   initial={{ opacity: 0.5 }}
@@ -140,7 +140,7 @@ export default function ToronPage() {
 
         <motion.form
           onSubmit={handleSubmit}
-          className="mx-auto mt-8 w-full max-w-3xl rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-5 shadow-[0_14px_46px_rgba(0,0,0,0.06)] transition-all focus-within:border-[var(--accent)]"
+          className="mx-auto mt-8 w-full max-w-3xl rounded-2xl border border-white/30 bg-white/70 p-5 shadow-[0_16px_48px_rgba(15,23,42,0.12)] backdrop-blur-lg transition-all focus-within:border-[var(--accent)] focus-within:shadow-[0_18px_52px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -148,7 +148,7 @@ export default function ToronPage() {
           <div className="flex items-start gap-3">
             <button
               type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] text-[var(--text-primary)] shadow-[0_4px_14px_rgba(0,0,0,0.04)] transition-colors hover:border-[var(--line-strong)]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/50 text-[var(--text-primary)] shadow-[0_8px_24px_rgba(15,23,42,0.1)] backdrop-blur-md transition-colors hover:border-white/50 dark:border-white/10 dark:bg-white/10"
               aria-label="Add context"
             >
               <Plus className="h-5 w-5" />
@@ -164,7 +164,7 @@ export default function ToronPage() {
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a directive for Toron"
-                className="w-full resize-none rounded-xl border border-transparent bg-[var(--layer-muted)] px-4 py-3 text-base leading-relaxed text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--line-subtle)]"
+                className="w-full resize-none rounded-xl border border-transparent bg-white/50 px-4 py-3 text-base leading-relaxed text-[var(--text-primary)] outline-none backdrop-blur-sm placeholder:text-[var(--text-muted)] focus:border-white/40 dark:bg-white/10"
                 rows={4}
               />
             </div>
