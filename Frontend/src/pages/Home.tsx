@@ -16,8 +16,8 @@ export default function HomePage() {
   const cards = [
     { label: "Write copy", icon: FileText, color: "text-amber-500", to: "/toron" },
     { label: "Image generation", icon: Image, color: "text-blue-500", to: "/toron" },
-    { label: "Create avatar", icon: Layout, color: "text-emerald-500", to: "/workspace" },
-    { label: "Write code", icon: Code, color: "text-pink-500", to: "/toron" },
+    { label: "Optimize Workflow", icon: Layout, color: "text-emerald-500", to: "/workspace" },
+    { label: "Write Code", icon: Code, color: "text-pink-500", to: "/toron" },
   ];
 
   return (
