@@ -51,6 +51,8 @@ body {
   font-family: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1,
@@ -96,17 +98,202 @@ textarea,
 select {
   font: inherit;
   color: inherit;
+  border: none;
+  background: none;
 }
 
+button {
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  outline: none;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--line-strong);
+  background: linear-gradient(
+    135deg,
+    var(--ryuzen-dodger) 0%,
+    var(--ryuzen-azure) 50%,
+    var(--ryuzen-purple) 100%
+  );
   border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    135deg,
+    var(--ryuzen-azure) 0%,
+    var(--ryuzen-purple) 100%
+  );
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--layer-muted);
+  border-radius: 999px;
+}
+
+/* Utility Classes */
+@layer utilities {
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      var(--ryuzen-dodger) 0%,
+      var(--ryuzen-azure) 50%,
+      var(--ryuzen-purple) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Gradient backgrounds */
+  .gradient-bg-primary {
+    background: linear-gradient(
+      135deg,
+      var(--ryuzen-dodger) 0%,
+      var(--ryuzen-purple) 100%
+    );
+  }
+
+  .gradient-bg-subtle {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ryuzen-dodger) 10%, transparent) 0%,
+      color-mix(in srgb, var(--ryuzen-purple) 10%, transparent) 100%
+    );
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Shimmer animation */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--ryuzen-dodger) 20%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 1000px 100%;
+  }
+
+  /* Pulse animation */
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--ryuzen-dodger) 40%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 8px color-mix(in srgb, var(--ryuzen-dodger) 0%, transparent);
+    }
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* Smooth scroll */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Focus visible styles */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background: color-mix(in srgb, var(--ryuzen-dodger) 30%, transparent);
+  color: var(--text-strong);
+}
+
+::-moz-selection {
+  background: color-mix(in srgb, var(--ryuzen-dodger) 30%, transparent);
+  color: var(--text-strong);
 }
