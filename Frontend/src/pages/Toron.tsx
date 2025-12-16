@@ -163,7 +163,7 @@ export default function ToronPage() {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a directive for Toron"
+                placeholder=" Ask me anything.... "
                 className="w-full resize-none rounded-xl border border-transparent bg-white/50 px-4 py-3 text-base leading-relaxed text-[var(--text-primary)] outline-none backdrop-blur-sm placeholder:text-[var(--text-muted)] focus:border-white/40 dark:bg-white/10"
                 rows={4}
               />
