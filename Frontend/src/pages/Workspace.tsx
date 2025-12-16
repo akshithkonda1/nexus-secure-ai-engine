@@ -167,52 +167,54 @@ export default function WorkspacePage() {
   );
 
   return (
-    <section className="flex flex-col gap-8">
-      <header className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--line-subtle)] bg-[var(--pill)] px-3 py-1 text-xs font-semibold text-[var(--text-strong)] shadow-inner">
+    <section className="flex flex-col gap-10">
+      <header className="space-y-4">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-[var(--text-strong)] shadow-[0_10px_40px_rgba(15,23,42,0.12)] backdrop-blur-md dark:border-white/10 dark:bg-white/5">
           <span className="flex h-2 w-2 rounded-full bg-[var(--ryuzen-azure)]" aria-hidden />
           Workspace OS — organized areas for ongoing work
         </div>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold leading-tight text-[var(--text-strong)]">Operate in quadrants, ship with Toron</h1>
-          <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+        <div className="space-y-3">
+          <h1 className="text-4xl font-semibold leading-tight text-[var(--text-strong)]">Operate in quadrants, ship with Toron</h1>
+          <p className="max-w-3xl text-base leading-relaxed text-[var(--text-muted)]">
             Intentions, time, actions, and systems stay synchronized. Choose a view to bring Pages, Notes, Boards, Flows, or Toron to the center surface.
           </p>
         </div>
       </header>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {postureCards.map((card) => (
           <div
             key={card.title}
-            className="flex items-start gap-3 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3 shadow-sm"
+            className="group relative flex min-h-[170px] flex-col justify-between rounded-3xl border border-white/15 bg-white/60 px-4 py-4 shadow-[0_20px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-colors dark:border-white/10 dark:bg-white/5"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--text-primary)] ring-1 ring-[var(--line-subtle)]">
-              <card.icon className="h-5 w-5" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/70 text-[var(--text-primary)] ring-1 ring-white/30 shadow-inner dark:bg-white/10 dark:ring-white/10">
+                <card.icon className="h-5 w-5" />
+              </div>
+              <span className="rounded-full border border-white/30 px-3 py-1 text-[11px] font-semibold text-[var(--text-muted)] shadow-sm backdrop-blur-sm dark:border-white/10">{card.title}</span>
             </div>
-            <div className="space-y-0.5">
-              <p className="text-xs uppercase tracking-wide text-[var(--text-muted)]">{card.title}</p>
-              <p className="text-lg font-semibold text-[var(--text-strong)]">{card.value}</p>
-              <p className="text-xs text-[var(--text-muted)]">{card.detail}</p>
+            <div className="space-y-1.5 pt-3">
+              <p className="text-2xl font-semibold text-[var(--text-strong)]">{card.value}</p>
+              <p className="text-sm leading-relaxed text-[var(--text-muted)]">{card.detail}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.35fr]">
-        <div className="space-y-4">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <div className="space-y-5">
           <Quadrants items={quadrantItems} />
-          <div className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-5 text-sm text-[var(--text-muted)]">
+          <div className="rounded-3xl border border-white/15 bg-white/50 p-6 text-sm text-[var(--text-muted)] shadow-[0_18px_60px_rgba(15,23,42,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[12px] uppercase tracking-wide">Structure</p>
-                <p className="text-base font-semibold text-[var(--text-strong)]">Quadrants + OS Bar</p>
+              <div className="space-y-1">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)]">Structure</p>
+                <p className="text-lg font-semibold text-[var(--text-strong)]">Quadrants + OS Bar</p>
               </div>
-              <div className="rounded-full bg-[var(--pill)] px-3 py-1 text-[11px] font-semibold text-[var(--text-strong)]">
+              <div className="rounded-full border border-white/20 bg-white/60 px-3 py-1 text-[11px] font-semibold text-[var(--text-strong)] shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
                 Real-time
               </div>
             </div>
-            <p className="mt-3 leading-relaxed">
+            <p className="mt-4 max-w-2xl leading-relaxed">
               Arrange modules as needed. Slide between quadrants, pin your OS Bar view, and let Toron watch for collisions across tasks, calendars, and connectors.
             </p>
           </div>
