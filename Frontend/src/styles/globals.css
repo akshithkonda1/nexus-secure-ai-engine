@@ -119,22 +119,13 @@ select {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    135deg,
-    var(--ryuzen-dodger) 0%,
-    var(--ryuzen-azure) 50%,
-    var(--ryuzen-purple) 100%
-  );
+  background: var(--line-strong);
   border-radius: 999px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    135deg,
-    var(--ryuzen-azure) 0%,
-    var(--ryuzen-purple) 100%
-  );
+  background: var(--accent);
 }
 
 ::-webkit-scrollbar-track {

@@ -62,11 +62,11 @@ export default function ToronPage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] shadow-md">
-            <Bot className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+            <Bot className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--text-strong)]">Toron AI Chat</h1>
+            <h1 className="text-2xl font-semibold text-[var(--text-strong)]">Toron AI Chat</h1>
             <p className="text-xs text-[var(--text-muted)]">Conversational AI assistant</p>
           </div>
         </div>
@@ -85,32 +85,30 @@ export default function ToronPage() {
                 className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.role === "assistant" && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] shadow-sm">
-                    <Bot className="h-4 w-4 text-white" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+                    <Bot className="h-4 w-4" />
                   </div>
                 )}
                 <motion.div
-                  className={`group relative max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${
+                  className={`group relative max-w-[80%] rounded-xl px-4 py-3 border ${
                     message.role === "user"
-                      ? "bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-azure)] text-white"
-                      : "border border-[var(--line-subtle)] bg-[var(--layer-surface)]"
+                      ? "border-[var(--accent)] bg-[var(--pill)] text-[var(--text-strong)]"
+                      : "border-[var(--line-subtle)] bg-[var(--layer-surface)] text-[var(--text-primary)]"
                   }`}
                   whileHover={{ scale: 1.01 }}
                 >
-                  <div className={`text-[10px] font-medium uppercase tracking-wider mb-1 ${
-                    message.role === "user" ? "text-white/70" : "text-[var(--text-muted)]"
-                  }`}>
+                  <div
+                    className={`mb-1 text-[10px] font-medium uppercase tracking-wide ${
+                      message.role === "user" ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
+                    }`}
+                  >
                     {message.role === "user" ? "You" : "Toron"}
                   </div>
-                  <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                    message.role === "user" ? "text-white" : "text-[var(--text-primary)]"
-                  }`}>
-                    {message.content}
-                  </p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 </motion.div>
                 {message.role === "user" && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--layer-active)] shadow-sm">
-                    <UserIcon className="h-4 w-4 text-[var(--text-muted)]" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+                    <UserIcon className="h-4 w-4" />
                   </div>
                 )}
               </motion.div>
@@ -123,10 +121,10 @@ export default function ToronPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-3"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] shadow-sm">
-                <Bot className="h-4 w-4 text-white" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+                <Bot className="h-4 w-4" />
               </div>
-              <div className="flex items-center gap-2 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3">
+              <div className="flex items-center gap-2 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3">
                 <motion.div
                   className="flex gap-1"
                   initial={{ opacity: 0.5 }}
@@ -146,14 +144,14 @@ export default function ToronPage() {
 
         <motion.form
           onSubmit={handleSubmit}
-          className="mt-4 rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-4 shadow-md transition-all focus-within:border-[var(--accent)] focus-within:shadow-lg"
+          className="mt-4 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-4 transition-all focus-within:border-[var(--accent)]"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <div className="flex gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)]">
-              <Sparkles className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <Sparkles className="h-5 w-5" />
             </div>
             <div className="flex-1">
               <label className="sr-only" htmlFor="toron-input">
@@ -173,9 +171,9 @@ export default function ToronPage() {
             <motion.button
               type="submit"
               disabled={!input.trim() || isTyping}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: input.trim() ? 1.05 : 1 }}
-              whileTap={{ scale: input.trim() ? 0.95 : 1 }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              whileHover={{ scale: input.trim() ? 1.03 : 1 }}
+              whileTap={{ scale: input.trim() ? 0.97 : 1 }}
             >
               <Send className="h-5 w-5" />
             </motion.button>
