@@ -24,7 +24,7 @@ export default function TopBar() {
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-3">
         {/* Sidebar Toggle placeholder if needed */}
-        <h2 className="text-lg font-semibold text-primary">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
       </div>
       <div className="flex items-center gap-3">
         <button
@@ -34,11 +34,11 @@ export default function TopBar() {
           <span>Upgrade</span>
         </button>
         <button
-          className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:text-gray-900"
+          className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <HelpCircle className="h-5 w-5" />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-900">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-900 dark:bg-slate-700 dark:text-slate-100">
           EC
         </div>
       </div>
