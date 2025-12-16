@@ -38,31 +38,23 @@ export default function SettingsPage() {
   };
 
   return (
-    <motion.section
-      className="flex flex-col"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.section className="flex flex-col" variants={containerVariants} initial="hidden" animate="visible">
       <motion.header className="mb-8 space-y-3" variants={itemVariants}>
-        <h1 className="bg-gradient-to-r from-[var(--text-strong)] to-[var(--text-primary)] bg-clip-text text-4xl font-bold text-transparent">
-          Settings
-        </h1>
+        <h1 className="text-3xl font-semibold text-[var(--text-strong)]">Settings</h1>
         <p className="text-sm leading-relaxed text-[var(--text-muted)]">
           Customize your Ryuzen experience with appearance, notifications, privacy, performance, and account preferences.
         </p>
       </motion.header>
 
-      <div className="space-y-6">
+      <div className="space-y-6 md:space-y-8">
         {/* Appearance Section */}
         <motion.div
-          className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 shadow-sm"
+          className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6"
           variants={itemVariants}
-          whileHover={{ scale: 1.01 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-dodger)] to-[var(--ryuzen-azure)]">
-              <Zap className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <Zap className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-strong)]">Appearance</h2>
@@ -72,19 +64,19 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Theme</label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {(["light", "dark", "system"] as ThemeMode[]).map((value) => (
                   <motion.button
                     key={value}
                     type="button"
                     onClick={() => handleThemeChange(value)}
-                    className={`flex-1 rounded-xl border px-4 py-3 text-sm font-medium capitalize transition-all ${
+                    className={`flex-1 min-w-[140px] rounded-lg border px-4 py-3 text-sm font-medium capitalize transition-colors ${
                       mode === value
-                        ? "border-[var(--accent)] bg-gradient-to-r from-[var(--ryuzen-dodger)]/10 to-[var(--ryuzen-purple)]/10 text-[var(--text-strong)] shadow-sm"
+                        ? "border-[var(--accent)] bg-[var(--layer-muted)] text-[var(--text-strong)]"
                         : "border-[var(--line-subtle)] text-[var(--text-muted)] hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
                     }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     {value}
                   </motion.button>
@@ -97,7 +89,7 @@ export default function SettingsPage() {
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 text-sm text-[var(--text-primary)] transition-all hover:border-[var(--accent)] focus:border-[var(--accent)] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3 text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none"
               >
                 <option value="en">English</option>
                 <option value="es">Español</option>
@@ -111,28 +103,27 @@ export default function SettingsPage() {
 
         {/* Notifications Section */}
         <motion.div
-          className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 shadow-sm"
+          className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6"
           variants={itemVariants}
-          whileHover={{ scale: 1.01 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-azure)] to-[var(--ryuzen-purple)]">
-              <Bell className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <Bell className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-strong)]">Notifications</h2>
-              <p className="text-xs text-[var(--text-muted)]">Control what notifications you receive</p>
+              <p className="text-xs text-[var(--text-muted)]">Fine-tune alerts and updates</p>
             </div>
           </div>
           <div className="space-y-3">
             {[
-              { key: "workspace", label: "Workspace Updates", description: "Get notified about project changes" },
-              { key: "mentions", label: "Mentions", description: "When someone mentions you in comments" },
-              { key: "updates", label: "Product Updates", description: "New features and improvements" },
+              { key: "workspace", label: "Workspace activity", description: "Mentions, assignments, and workspace changes" },
+              { key: "mentions", label: "Mentions", description: "Notify when someone mentions you" },
+              { key: "updates", label: "Product updates", description: "Release notes and announcements" },
             ].map((item) => (
               <motion.div
                 key={item.key}
-                className="flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 transition-all hover:border-[var(--accent)]"
+                className="flex items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 transition-colors hover:border-[var(--accent)]"
                 whileHover={{ x: 2 }}
               >
                 <div>
@@ -146,7 +137,7 @@ export default function SettingsPage() {
                     onChange={(e) => setNotifications({ ...notifications, [item.key]: e.target.checked })}
                     className="peer sr-only"
                   />
-                  <div className="peer h-6 w-11 rounded-full bg-[var(--layer-surface)] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-gradient-to-r peer-checked:from-[var(--ryuzen-dodger)] peer-checked:to-[var(--ryuzen-purple)] peer-checked:after:translate-x-full peer-focus:outline-none"></div>
+                  <div className="peer h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5" />
                 </label>
               </motion.div>
             ))}
@@ -155,13 +146,12 @@ export default function SettingsPage() {
 
         {/* Privacy & Security Section */}
         <motion.div
-          className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 shadow-sm"
+          className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6"
           variants={itemVariants}
-          whileHover={{ scale: 1.01 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--ryuzen-purple)] to-[var(--ryuzen-dodger)]">
-              <Shield className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <Shield className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-strong)]">Privacy & Security</h2>
@@ -176,7 +166,7 @@ export default function SettingsPage() {
             ].map((item) => (
               <motion.div
                 key={item.key}
-                className="flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 transition-all hover:border-[var(--accent)]"
+                className="flex items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 transition-colors hover:border-[var(--accent)]"
                 whileHover={{ x: 2 }}
               >
                 <div>
@@ -190,7 +180,7 @@ export default function SettingsPage() {
                     onChange={(e) => setPrivacy({ ...privacy, [item.key]: e.target.checked })}
                     className="peer sr-only"
                   />
-                  <div className="peer h-6 w-11 rounded-full bg-[var(--layer-surface)] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-gradient-to-r peer-checked:from-[var(--ryuzen-dodger)] peer-checked:to-[var(--ryuzen-purple)] peer-checked:after:translate-x-full peer-focus:outline-none"></div>
+                  <div className="peer h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5" />
                 </label>
               </motion.div>
             ))}
@@ -199,13 +189,12 @@ export default function SettingsPage() {
 
         {/* Performance Section */}
         <motion.div
-          className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 shadow-sm"
+          className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6"
           variants={itemVariants}
-          whileHover={{ scale: 1.01 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-orange-500">
-              <Database className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <Database className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-strong)]">Performance</h2>
@@ -214,19 +203,19 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="mb-3 block text-sm font-medium text-[var(--text-primary)]">Performance Mode</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
               {["eco", "balanced", "performance"].map((mode) => (
                 <motion.button
                   key={mode}
                   type="button"
                   onClick={() => setPerformance(mode)}
-                  className={`rounded-xl border px-4 py-3 text-sm font-medium capitalize transition-all ${
+                  className={`rounded-lg border px-4 py-3 text-sm font-medium capitalize transition-colors ${
                     performance === mode
-                      ? "border-[var(--accent)] bg-gradient-to-r from-[var(--ryuzen-dodger)]/10 to-[var(--ryuzen-purple)]/10 text-[var(--text-strong)] shadow-sm"
+                      ? "border-[var(--accent)] bg-[var(--layer-muted)] text-[var(--text-strong)]"
                       : "border-[var(--line-subtle)] text-[var(--text-muted)] hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
                   }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                 >
                   {mode}
                 </motion.button>
@@ -242,13 +231,12 @@ export default function SettingsPage() {
 
         {/* Account Section */}
         <motion.div
-          className="rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 shadow-sm"
+          className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6"
           variants={itemVariants}
-          whileHover={{ scale: 1.01 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-400 to-green-500">
-              <User className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
+              <User className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-[var(--text-strong)]">Account</h2>
@@ -264,7 +252,7 @@ export default function SettingsPage() {
             ].map((item, index) => (
               <motion.button
                 key={index}
-                className="flex w-full items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 text-left transition-all hover:border-[var(--accent)] hover:shadow-sm"
+                className="flex w-full items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 text-left transition-colors hover:border-[var(--accent)]"
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >

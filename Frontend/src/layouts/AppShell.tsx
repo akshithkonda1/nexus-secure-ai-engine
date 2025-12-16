@@ -16,10 +16,10 @@ export default function AppShell({ children, rightRail }: AppShellProps) {
         </div>
         <div className="flex flex-1 items-start gap-8 overflow-hidden">
           <div className="flex flex-1 justify-center overflow-hidden">
-            <div className="flex h-[calc(100vh-80px)] w-full max-w-[980px] flex-col overflow-hidden rounded-3xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-10 py-8 shadow-[0_18px_36px_-28px_var(--ryuzen-cod-gray)]">
+            <div className="flex h-[calc(100vh-80px)] w-full max-w-[980px] flex-col overflow-hidden rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-10 py-8">
               <TopBar />
-              <main className="mt-8 flex flex-1 overflow-hidden">
-                <div className="mx-auto flex max-w-4xl flex-col gap-12 overflow-y-auto pb-14 pr-1">
+              <main className="mt-6 flex flex-1 overflow-hidden">
+                <div className="mx-auto flex max-w-4xl flex-col gap-12 overflow-y-auto pb-12 pr-1">
                   {children}
                 </div>
               </main>
@@ -30,7 +30,7 @@ export default function AppShell({ children, rightRail }: AppShellProps) {
               <RightRail>{rightRail}</RightRail>
             ) : (
               <div
-                className="hidden h-[calc(100vh-80px)] rounded-3xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] xl:block"
+                className="hidden h-[calc(100vh-80px)] rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] xl:block"
                 aria-hidden
               />
             )}
