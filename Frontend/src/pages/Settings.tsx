@@ -77,6 +77,8 @@ export default function SettingsPage() {
                     }`}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
+                    aria-pressed={mode === value}
+                    aria-label={`Set theme to ${value} mode`}
                   >
                     {value}
                   </motion.button>
@@ -85,11 +87,13 @@ export default function SettingsPage() {
               <p className="mt-2 text-xs text-[var(--text-muted)]">Currently using: {resolved} mode</p>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Language</label>
+              <label htmlFor="language-select" className="mb-2 block text-sm font-medium text-[var(--text-primary)]">Language</label>
               <select
+                id="language-select"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 className="w-full rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-4 py-3 text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--line-strong)] focus:border-[var(--accent)] focus:outline-none"
+                aria-label="Select language"
               >
                 <option value="en">English</option>
                 <option value="es">Español</option>
@@ -136,8 +140,9 @@ export default function SettingsPage() {
                     checked={notifications[item.key as keyof typeof notifications]}
                     onChange={(e) => setNotifications({ ...notifications, [item.key]: e.target.checked })}
                     className="peer sr-only"
+                    aria-label={item.label}
                   />
-                  <div className="peer h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5" />
+                  <div className="peer relative h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-[var(--text-muted)] after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5 peer-checked:after:bg-white" />
                 </label>
               </motion.div>
             ))}
@@ -179,8 +184,9 @@ export default function SettingsPage() {
                     checked={privacy[item.key as keyof typeof privacy]}
                     onChange={(e) => setPrivacy({ ...privacy, [item.key]: e.target.checked })}
                     className="peer sr-only"
+                    aria-label={item.label}
                   />
-                  <div className="peer h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5" />
+                  <div className="peer relative h-6 w-11 rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-[var(--text-muted)] after:transition-transform peer-checked:border-[var(--accent)] peer-checked:bg-[var(--accent)] peer-checked:after:translate-x-5 peer-checked:after:bg-white" />
                 </label>
               </motion.div>
             ))}
@@ -216,6 +222,8 @@ export default function SettingsPage() {
                   }`}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
+                  aria-pressed={performance === mode}
+                  aria-label={`Set performance mode to ${mode}`}
                 >
                   {mode}
                 </motion.button>
@@ -255,6 +263,7 @@ export default function SettingsPage() {
                 className="flex w-full items-center justify-between rounded-lg border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-4 py-3 text-left transition-colors hover:border-[var(--accent)]"
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
+                aria-label={`Open ${item.label}`}
               >
                 <div>
                   <div className="font-medium text-[var(--text-primary)]">{item.label}</div>
