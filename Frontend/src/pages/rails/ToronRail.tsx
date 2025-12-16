@@ -12,7 +12,7 @@ export default function ToronRail() {
         {status.map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-3.5 py-2.5 text-sm"
+            className="flex items-center justify-between rounded-xl border border-white/30 bg-white/70 px-3.5 py-2.5 text-sm shadow-[0_12px_34px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-white/5"
           >
             <span className="text-[var(--text-muted)]">{item.label}</span>
             <span className="text-[var(--text-primary)]">{item.value}</span>
