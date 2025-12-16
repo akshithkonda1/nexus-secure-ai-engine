@@ -71,22 +71,22 @@ export default function HomeRail() {
     >
       <motion.div className="flex items-center justify-between" variants={itemVariants}>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-[var(--text-strong)]">Projects</span>
-          <span className="rounded-full bg-gradient-to-r from-[var(--ryuzen-dodger)]/20 to-[var(--ryuzen-purple)]/20 px-2 py-0.5 text-xs font-medium text-[var(--accent)]">
+          <span className="text-sm font-semibold text-primary">Projects</span>
+          <span className="rounded-full bg-cod-gray-100 px-2 py-0.5 text-xs font-medium text-secondary dark:bg-cod-gray-800 dark:text-gray-300">
             {projects.length}
           </span>
         </div>
         <motion.button
-          className="rounded-lg p-1 transition hover:bg-[var(--layer-muted)]"
+          className="rounded-lg p-1 transition hover:bg-panel-hover"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
         >
-          <MoreHorizontal className="h-4 w-4 text-[var(--text-muted)]" />
+          <MoreHorizontal className="h-4 w-4 text-muted" />
         </motion.button>
       </motion.div>
 
       <motion.button
-        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--layer-muted)] px-3.5 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-all hover:border-[var(--accent)] hover:bg-gradient-to-r hover:from-[var(--ryuzen-dodger)]/10 hover:to-[var(--ryuzen-purple)]/10 hover:text-[var(--text-strong)]"
+        className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-strong bg-panel-hover px-3.5 py-2.5 text-sm font-medium text-primary transition-all hover:border-cod-gray-400 hover:bg-cod-gray-100 dark:hover:bg-cod-gray-800"
         variants={itemVariants}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -99,21 +99,21 @@ export default function HomeRail() {
         {projects.map((project, index) => (
           <motion.div
             key={index}
-            className="group cursor-pointer rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] p-3.5 transition-all hover:border-[var(--accent)] hover:shadow-md"
+            className="group cursor-pointer rounded-xl border border-subtle bg-panel p-3.5 transition-all hover:border-strong hover:bg-panel-hover hover:shadow-sm"
             variants={itemVariants}
             whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
           >
             <div className="mb-2 flex items-start justify-between gap-2">
-              <h3 className="text-sm font-semibold text-[var(--text-strong)] line-clamp-1">{project.title}</h3>
-              <span className="shrink-0 text-[10px] text-[var(--text-muted)]">{project.progress}%</span>
+              <h3 className="text-sm font-semibold text-primary line-clamp-1">{project.title}</h3>
+              <span className="shrink-0 text-[10px] text-muted">{project.progress}%</span>
             </div>
-            <p className="mb-3 text-xs leading-relaxed text-[var(--text-muted)] line-clamp-2">{project.description}</p>
+            <p className="mb-3 text-xs leading-relaxed text-secondary line-clamp-2">{project.description}</p>
 
             {/* Progress bar */}
-            <div className="mb-2 overflow-hidden rounded-full bg-[var(--layer-surface)]">
+            <div className="mb-2 overflow-hidden rounded-full bg-cod-gray-100 dark:bg-cod-gray-800">
               <motion.div
-                className={`h-1.5 rounded-full bg-gradient-to-r ${project.color} shadow-sm`}
+                className={`h-1.5 rounded-full bg-gradient-to-r ${project.color}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${project.progress}%` }}
                 transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
@@ -121,7 +121,7 @@ export default function HomeRail() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted">
               <Clock className="h-3 w-3" />
               <span>Updated {project.updated}</span>
             </div>

@@ -15,10 +15,10 @@ export default function HomePage() {
   };
 
   const cards = [
-    { label: "Write copy", icon: FileText, color: "bg-yellow-100 text-yellow-600", to: "/toron" },
-    { label: "Image generation", icon: Image, color: "bg-blue-100 text-blue-600", to: "/toron" },
-    { label: "Create avatar", icon: Layout, color: "bg-green-100 text-green-600", to: "/workspace" },
-    { label: "Write code", icon: Code, color: "bg-pink-100 text-pink-600", to: "/toron" },
+    { label: "Write copy", icon: FileText, color: "text-amber-500", to: "/toron" },
+    { label: "Image generation", icon: Image, color: "text-blue-500", to: "/toron" },
+    { label: "Create avatar", icon: Layout, color: "text-emerald-500", to: "/workspace" },
+    { label: "Write code", icon: Code, color: "text-pink-500", to: "/toron" },
   ];
 
   return (
@@ -30,8 +30,8 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4 text-center"
         >
-          <h1 className="text-4xl font-semibold tracking-tight text-[var(--text-strong)]">Welcome to Ryuzen</h1>
-          <p className="mx-auto max-w-lg text-[var(--text-muted)]">
+          <h1 className="text-4xl font-semibold tracking-tight text-primary">Welcome to Ryuzen</h1>
+          <p className="mx-auto max-w-lg text-secondary">
             Get started by giving Ryuzen a task and Chat can do the rest. Not sure where to start?
           </p>
         </motion.div>
@@ -46,15 +46,15 @@ export default function HomePage() {
             <button
               key={card.label}
               onClick={() => navigate(card.to)}
-              className="group flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-base)] p-4 transition-all hover:border-[var(--accent)] hover:shadow-md"
+              className="group flex items-center justify-between rounded-xl border border-subtle bg-panel p-4 transition-all hover:border-strong hover:bg-panel-hover"
             >
               <div className="flex items-center gap-4">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${card.color}`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-cod-gray-100 dark:bg-cod-gray-800 ${card.color}`}>
                   <card.icon className="h-5 w-5" />
                 </div>
-                <span className="font-medium text-[var(--text-strong)]">{card.label}</span>
+                <span className="font-medium text-primary">{card.label}</span>
               </div>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--layer-muted)] opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cod-gray-100 text-secondary opacity-0 transition-opacity group-hover:opacity-100 dark:bg-cod-gray-800">
                 <ArrowUp className="h-4 w-4 rotate-45" />
               </span>
             </button>
@@ -71,44 +71,44 @@ export default function HomePage() {
       >
         <form 
           onSubmit={handlePrompt}
-          className="relative rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-base)] p-4 shadow-sm transition-all focus-within:ring-1 focus-within:ring-[var(--accent)]"
+          className="relative rounded-2xl border border-subtle bg-panel p-4 shadow-sm transition-all focus-within:ring-1 focus-within:ring-border-strong"
         >
           <input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Summarize the latest..."
-            className="mb-10 w-full bg-transparent text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+            className="mb-10 w-full bg-transparent text-base text-primary outline-none placeholder:text-muted"
           />
           
           <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted hover:bg-panel-hover hover:text-primary">
                 <Paperclip className="h-4 w-4" />
                 <span>Attach</span>
               </button>
-              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted hover:bg-panel-hover hover:text-primary">
                 <Mic className="h-4 w-4" />
                 <span>Voice Message</span>
               </button>
-              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted hover:bg-panel-hover hover:text-primary">
                 <Globe className="h-4 w-4" />
                 <span>Browse Prompts</span>
               </button>
             </div>
             
             <div className="flex items-center gap-3">
-              <span className="text-xs text-[var(--text-muted)]">{prompt.length} / 3,000</span>
+              <span className="text-xs text-muted">{prompt.length} / 3,000</span>
               <button 
                 type="submit"
                 disabled={!prompt.trim()}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-all disabled:opacity-50"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-cod-gray-900 text-white transition-all disabled:opacity-50 dark:bg-white dark:text-black"
               >
                 <ArrowUp className="h-5 w-5" />
               </button>
             </div>
           </div>
         </form>
-        <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
+        <p className="mt-4 text-center text-xs text-muted">
           Ryuzen may generate inaccurate information about people, places, or facts. Model: Ryuzen AI v1.3
         </p>
       </motion.div>

@@ -25,11 +25,11 @@ export default function TopBar() {
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-3">
         {/* Sidebar Toggle placeholder if needed */}
-        <h2 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h2>
+        <h2 className="text-lg font-semibold text-primary">{title}</h2>
       </div>
       <div className="flex items-center gap-3">
         <motion.button
-          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-[var(--text-strong)] px-4 py-1.5 text-sm font-semibold text-[var(--bg-app)] transition-all duration-150"
+          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-cod-gray-900 px-4 py-1.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-cod-gray-800 dark:bg-white dark:text-black dark:hover:bg-cod-gray-200"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
@@ -37,13 +37,13 @@ export default function TopBar() {
           <span>Upgrade</span>
         </motion.button>
         <motion.button
-          className="flex h-8 w-8 items-center justify-center text-[var(--text-muted)] transition-colors duration-150 hover:text-[var(--text-primary)]"
+          className="flex h-8 w-8 items-center justify-center text-muted transition-colors duration-150 hover:text-primary"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
           <HelpCircle className="h-5 w-5" />
         </motion.button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--layer-muted)] text-xs font-semibold text-[var(--text-strong)] ring-2 ring-[var(--bg-app)]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cod-gray-200 text-xs font-semibold text-cod-gray-900 ring-2 ring-bg-app dark:bg-cod-gray-800 dark:text-white">
           EC
         </div>
       </div>
