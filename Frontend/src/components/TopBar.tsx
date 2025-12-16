@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { Zap, HelpCircle, MoreVertical } from "lucide-react";
+import { Zap, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const labels: Record<string, string> = {
@@ -29,41 +29,30 @@ export default function TopBar() {
       className="flex items-center justify-between pb-6"
     >
       <div className="flex items-center gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--text-muted)]">{title}</h2>
-        <motion.div
-          className="h-1 w-12 rounded-full bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)]"
-          initial={{ width: 0 }}
-          animate={{ width: 48 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
+        <div>
+          <p className="text-xs text-[var(--text-muted)]">Dashboard</p>
+          <h2 className="text-2xl font-semibold text-[var(--text-strong)]">{title}</h2>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <motion.button
-          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] px-4 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:shadow-lg"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] px-4 py-2 text-sm font-semibold text-white transition-all duration-150"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
-          <motion.div
-            className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20"
-            transition={{ duration: 0.2 }}
-          />
           <Zap className="h-4 w-4" />
           <span>Upgrade</span>
         </motion.button>
         <motion.button
-          className="flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 hover:bg-[var(--layer-muted)]"
-          whileHover={{ scale: 1.1, rotate: 15 }}
-          whileTap={{ scale: 0.9 }}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] text-[var(--text-muted)] transition-colors duration-150 hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
-          <HelpCircle className="h-5 w-5 text-[var(--text-muted)]" />
+          <HelpCircle className="h-5 w-5" />
         </motion.button>
-        <motion.button
-          className="flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 hover:bg-[var(--layer-muted)]"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <MoreVertical className="h-5 w-5 text-[var(--text-muted)]" />
-        </motion.button>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-subtle)] bg-[var(--layer-muted)] text-sm font-semibold text-[var(--text-strong)]">
+          EC
+        </div>
       </div>
     </motion.header>
   );
