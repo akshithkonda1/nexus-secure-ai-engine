@@ -1,112 +1,107 @@
 @import "tailwindcss";
 
-/* Modern Glassmorphism & Mesh Gradient */
+@theme {
+  --color-cod-gray-50: #f6f6f7;
+  --color-cod-gray-100: #e3e3e5;
+  --color-cod-gray-200: #c5c5c9;
+  --color-cod-gray-300: #a2a2a8;
+  --color-cod-gray-400: #7f7f88;
+  --color-cod-gray-500: #62626b;
+  --color-cod-gray-600: #4c4c54;
+  --color-cod-gray-700: #3d3d44;
+  --color-cod-gray-800: #34343a;
+  --color-cod-gray-900: #2d2d32;
+  --color-cod-gray-950: #1a1a1d;
+  
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  --animate-shimmer: shimmer 2s linear infinite;
+  
+  @keyframes shimmer {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
 :root {
-  /* Refined Palette - cooler, more modern base */
-  --ryuzen-alabaster: #FAFAFA; /* Slightly purer white */
-  --ryuzen-cod-gray: #0F172A; /* Slate 900 - richer dark */
-  --ryuzen-prelude: #94A3B8; /* Slate 400 */
-  --ryuzen-azure: #3B82F6; /* Blue 500 */
-  --ryuzen-dodger: #0EA5E9; /* Sky 500 */
-  --ryuzen-purple: #8B5CF6; /* Violet 500 */
-  --ryuzen-obsidian: #020617; /* Slate 950 */
-
-  /* Light Mode (Clean & Airy) */
-  --layer-base: #F8FAFC; /* Slate 50 */
-  --layer-surface: rgba(255, 255, 255, 0.7);
-  --layer-muted: #F1F5F9; /* Slate 100 */
-  --layer-active: #E2E8F0; /* Slate 200 */
-  --text-primary: #1E293B; /* Slate 800 */
-  --text-strong: #0F172A; /* Slate 900 */
-  --text-muted: #64748B; /* Slate 500 */
-  --line-subtle: rgba(148, 163, 184, 0.2);
-  --line-strong: rgba(148, 163, 184, 0.4);
-  --accent: var(--ryuzen-azure);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  --bg-app: var(--layer-base);
+  /* Light Mode - Clean, crisp, almost paper-like */
+  --bg-app: #ffffff;
+  --bg-panel: #f9fafb; /* Gray 50 */
+  --bg-panel-hover: #f3f4f6; /* Gray 100 */
+  --border-subtle: #e5e7eb; /* Gray 200 */
+  --border-strong: #d1d5db; /* Gray 300 */
+  
+  --text-primary: #111827; /* Gray 900 */
+  --text-secondary: #4b5563; /* Gray 600 */
+  --text-muted: #9ca3af; /* Gray 400 */
+  
+  --accent-primary: #000000;
+  --accent-foreground: #ffffff;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
-:root.dark,
-[data-theme="dark"] {
-  color-scheme: dark;
-  /* Dark Mode (Deep & Glowing) */
-  --layer-base: var(--ryuzen-obsidian);
-  --layer-surface: rgba(15, 23, 42, 0.6);
-  --layer-muted: rgba(30, 41, 59, 0.5);
-  --layer-active: rgba(51, 65, 85, 0.5);
-  --text-primary: #E2E8F0; /* Slate 200 */
-  --text-strong: #F8FAFC; /* Slate 50 */
-  --text-muted: #94A3B8; /* Slate 400 */
-  --line-subtle: rgba(148, 163, 184, 0.1);
-  --line-strong: rgba(148, 163, 184, 0.2);
-  --accent: var(--ryuzen-purple);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+:root.dark {
+  /* Dark Mode - requested Cod Gray theme */
+  --bg-app: #0b0b0b; /* Deep Cod Gray / Almost Black */
+  --bg-panel: #161616; /* Slightly lighter Cod Gray */
+  --bg-panel-hover: #1f1f1f;
+  --border-subtle: #27272a; /* Zinc 800 */
+  --border-strong: #3f3f46; /* Zinc 700 */
+  
+  --text-primary: #ffffff; /* Pure White */
+  --text-secondary: #a1a1aa; /* Zinc 400 */
+  --text-muted: #52525b; /* Zinc 600 */
+  
+  --accent-primary: #ffffff;
+  --accent-foreground: #000000;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
 }
 
-* {
-  box-sizing: border-box;
-}
-
+/* Base Reset & Typography */
 body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--layer-base);
+  background-color: var(--bg-app);
   color: var(--text-primary);
-  font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1.6;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden;
 }
 
-/* Add a subtle background pattern */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.15) 0, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0, transparent 50%);
-  pointer-events: none;
+/* Utilities classes that map to variables */
+.bg-app { background-color: var(--bg-app); }
+.bg-panel { background-color: var(--bg-panel); }
+.bg-panel:hover { background-color: var(--bg-panel-hover); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+.border-subtle { border-color: var(--border-subtle); }
+.border-strong { border-color: var(--border-strong); }
+
+.glass-panel {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
 }
 
-h1,h2,h3,h4,h5,h6 {
-  margin: 0;
-  font-family: "Outfit", "Inter", sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.025em; 
-  color: var(--text-strong);
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: var(--text-secondary);
+  transition: all 0.2s;
 }
 
-h1 { font-size: 2.25rem; line-height: 1.2; }
-h2 { font-size: 1.75rem; line-height: 1.25; }
-
-p, span, label, small {
-  font-size: 0.9375rem;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-  transition: opacity 0.2s ease;
-}
-
-button { cursor: pointer; }
-button, input, textarea, select {
-  font: inherit;
-  color: inherit;
-  border: none;
-  background: none;
-  outline: none;
+.icon-button:hover {
+  background-color: var(--bg-panel-hover);
+  color: var(--text-primary);
 }
 
 /* Custom scrollbar */
@@ -115,64 +110,13 @@ button, input, textarea, select {
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
+  background: var(--color-cod-gray-300);
   border-radius: 999px;
   transition: background 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: var(--color-cod-gray-500);
 }
 ::-webkit-scrollbar-track {
   background: transparent;
-}
-
-@layer utilities {
-  .glass-panel {
-    background: var(--layer-surface);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-  }
-  
-  .gradient-text {
-    background: linear-gradient(135deg, var(--ryuzen-dodger) 0%, var(--ryuzen-azure) 50%, var(--ryuzen-purple) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .gradient-bg-primary {
-    background: linear-gradient(135deg, var(--ryuzen-dodger) 0%, var(--ryuzen-purple) 100%);
-  }
-
-  .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-  .shimmer {
-    animation: shimmer 2s infinite linear;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
-    background-size: 1000px 100%;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
-  }
-  .pulse-glow { animation: pulse-glow 2s infinite; }
-  
-  .smooth-scroll { scroll-behavior: smooth; }
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
