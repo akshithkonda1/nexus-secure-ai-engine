@@ -52,8 +52,17 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Custom app-specific colors
+        "bg-app": "hsl(var(--bg-app))",
+        "bg-surface": "hsl(var(--bg-surface))",
+        "bg-hover": "hsl(var(--bg-hover))",
+        "panel": "hsl(var(--bg-surface))",
+        "panel-hover": "hsl(var(--bg-hover))",
+        "subtle": "hsl(var(--border-subtle))",
+        "border-subtle": "hsl(var(--border-subtle))",
+        "border-strong": "hsl(var(--border-strong))",
         // Premium Cod Gray Palette
-        cod: {
+        "cod-gray": {
           50: '#f6f6f7',
           100: '#e3e3e5',
           200: '#c5c5c9',

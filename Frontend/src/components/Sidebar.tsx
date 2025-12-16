@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, MessageSquare, Layout, Settings, Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { Home, MessageSquare, Layout, Settings } from "lucide-react";
 
 const navItems = [
   { label: "Home", to: "/", icon: Home },
@@ -38,72 +37,57 @@ export default function Sidebar() {
       <div className="space-y-8">
         {/* Logo and Brand */}
         <div className="flex items-center gap-3 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cod-gray-950 text-white dark:bg-white dark:text-black">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
             <DragonLogo />
           </div>
           <span className="text-lg font-semibold tracking-tight text-primary">Ryuzen</span>
         </div>
 
         {/* Navigation */}
-        <div className="flex flex-col gap-6">
-          <div className="relative px-2">
-            <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input 
-              type="text" 
-              placeholder="Search" 
-              className="h-9 w-full rounded-lg bg-panel-hover pl-9 pr-3 text-sm text-primary outline-none ring-1 ring-transparent transition-all focus:ring-1 focus:ring-cod-gray-400"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted">⌘K</span>
-          </div>
-
-          <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
             return (
               <NavLink key={item.to} to={item.to}>
-                <motion.div
-                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                <div
+                  className={`group relative flex items-center gap-3 rounded-lg py-2.5 pr-3 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-panel-hover text-primary"
-                      : "text-muted hover:bg-panel-hover hover:text-primary"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
                 >
                   <span
-                    className={`h-10 w-1 rounded-full transition-colors ${active ? "bg-cod-gray-900 dark:bg-white" : "bg-transparent"}`}
+                    className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${active ? "bg-blue-600" : "bg-transparent"}`}
                     aria-hidden
                   />
-                  <Icon className={`h-5 w-5 ${active ? "text-primary" : "text-muted group-hover:text-primary"}`} aria-hidden />
+                  <Icon className={`ml-3 h-5 w-5 ${active ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900"}`} aria-hidden />
                   <span className="tracking-normal">{item.label}</span>
-                </motion.div>
+                </div>
               </NavLink>
             );
           })}
-          </nav>
-        </div>
+        </nav>
       </div>
 
-      <nav className="border-t border-subtle pt-6">
+      <nav className="border-t border-gray-200 pt-6">
         <NavLink to="/settings">
-          <motion.div
-            className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+          <div
+            className={`group relative flex items-center gap-3 rounded-lg py-2.5 pr-3 text-sm font-medium transition-colors ${
               location.pathname === "/settings"
-                ? "bg-panel-hover text-primary"
-                : "text-muted hover:bg-panel-hover hover:text-primary"
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
-            whileHover={{ x: 2 }}
           >
             <span
-              className={`h-10 w-1 rounded-full transition-colors ${
-                location.pathname === "/settings" ? "bg-cod-gray-900 dark:bg-white" : "bg-transparent"
+              className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${
+                location.pathname === "/settings" ? "bg-blue-600" : "bg-transparent"
               }`}
               aria-hidden
             />
-            <Settings className="h-5 w-5 text-muted group-hover:text-primary" aria-hidden />
+            <Settings className={`ml-3 h-5 w-5 ${location.pathname === "/settings" ? "text-gray-900" : "text-gray-500 group-hover:text-gray-900"}`} aria-hidden />
             <span>Settings</span>
-          </motion.div>
+          </div>
         </NavLink>
       </nav>
     </div>
