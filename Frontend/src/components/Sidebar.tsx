@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, MessageSquare, Layout, Settings } from "lucide-react";
+import { Home, MessageSquare, Layout, Settings, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -41,12 +41,7 @@ export default function Sidebar() {
   const location = useLocation();
 
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.2 }}
-      className="flex h-full w-60 flex-col justify-between border-r border-[var(--line-subtle)] bg-[var(--layer-surface)] px-5 py-8"
-    >
+    <div className="flex h-full w-full flex-col justify-between px-5 py-6">
       <div className="space-y-8">
         {/* Logo and Brand */}
         <div className="flex items-center gap-3 px-2">
@@ -57,7 +52,18 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-2">
+        <div className="flex flex-col gap-6">
+          <div className="relative px-2">
+            <Search className="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input 
+              type="text" 
+              placeholder="Search" 
+              className="h-9 w-full rounded-lg bg-[var(--layer-muted)] pl-9 pr-3 text-sm text-[var(--text-primary)] outline-none ring-1 ring-transparent transition-all focus:ring-[var(--accent)]"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">⌘K</span>
+          </div>
+
+          <nav className="flex flex-col gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
@@ -82,7 +88,8 @@ export default function Sidebar() {
               </NavLink>
             );
           })}
-        </nav>
+          </nav>
+        </div>
       </div>
 
       <nav className="border-t border-[var(--line-subtle)] pt-6">
@@ -106,6 +113,6 @@ export default function Sidebar() {
           </motion.div>
         </NavLink>
       </nav>
-    </motion.aside>
+    </div>
   );
 }

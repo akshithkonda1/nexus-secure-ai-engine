@@ -9,35 +9,41 @@ type AppShellProps = PropsWithChildren<{
 
 export default function AppShell({ children, rightRail }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[var(--layer-base)] text-[var(--text-primary)] transition-colors">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] px-8 py-10">
-        <div className="sticky top-10 h-[calc(100vh-80px)] w-64 shrink-0">
-          <Sidebar />
-        </div>
-        <div className="flex flex-1 items-start gap-8 overflow-hidden">
-          <div className="flex flex-1 justify-center overflow-hidden">
-            <div className="flex h-[calc(100vh-80px)] w-full max-w-[980px] flex-col overflow-hidden rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] px-10 py-8">
-              <TopBar />
-              <main className="mt-6 flex flex-1 overflow-hidden">
-                <div className="mx-auto flex max-w-4xl flex-col gap-12 overflow-y-auto pb-12 pr-1">
-                  {children}
-                </div>
-              </main>
-            </div>
-          </div>
-          <div className="w-0 shrink-0 xl:w-[18rem]">
-            {rightRail ? (
-              <RightRail>{rightRail}</RightRail>
-            ) : (
-              <div
-                className="hidden h-[calc(100vh-80px)] rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] xl:block"
-                aria-hidden
-              />
-            )}
-          </div>
-        </div>
+    <div className="flex h-screen w-full overflow-hidden text-[var(--text-primary)] transition-colors">
+      {/* Ambient Background - kept subtle */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[var(--bg-app)]">
+        <div className="absolute -left-[10%] -top-[10%] h-[50vw] w-[50vw] rounded-full bg-[var(--ryuzen-azure)] opacity-[0.03] blur-[100px]" />
+        <div className="absolute -right-[10%] bottom-[-10%] h-[50vw] w-[50vw] rounded-full bg-[var(--ryuzen-purple)] opacity-[0.03] blur-[100px]" />
       </div>
-      <RightRail>{rightRail}</RightRail>
+
+      {/* Main Layout */}
+      <div className="relative z-10 flex h-full w-full">
+        {/* Left Sidebar */}
+        <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-[var(--line-subtle)] bg-[var(--layer-base)] md:flex">
+          <Sidebar />
+        </aside>
+
+        {/* Center Content */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top Navigation Bar - Contextual per page */}
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--line-subtle)] bg-[var(--layer-base)/50] px-6 backdrop-blur-sm">
+             <TopBar />
+          </header>
+
+          <main className="flex-1 overflow-y-auto">
+             <div className="mx-auto flex h-full max-w-5xl flex-col px-8 py-8">
+               {children}
+             </div>
+          </main>
+        </div>
+
+        {/* Right Rail */}
+        {rightRail && (
+          <aside className="hidden w-80 shrink-0 border-l border-[var(--line-subtle)] bg-[var(--layer-base)] xl:block">
+            <RightRail>{rightRail}</RightRail>
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

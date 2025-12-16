@@ -1,173 +1,117 @@
-import { MessageSquare, Layout, Brain, Sparkles, Zap, Send, ArrowRight } from "lucide-react";
+import { Layout, Image, Code, FileText, Paperclip, Mic, Globe, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [quickPrompt, setQuickPrompt] = useState("");
+  const [prompt, setPrompt] = useState("");
 
-  const handleQuickPrompt = (e: React.FormEvent) => {
+  const handlePrompt = (e: React.FormEvent) => {
     e.preventDefault();
-    if (quickPrompt.trim()) {
-      navigate("/toron");
+    if (prompt.trim()) {
+      navigate("/toron", { state: { initialPrompt: prompt } });
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const cards = [
+    { label: "Write copy", icon: FileText, color: "bg-yellow-100 text-yellow-600", to: "/toron" },
+    { label: "Image generation", icon: Image, color: "bg-blue-100 text-blue-600", to: "/toron" },
+    { label: "Create avatar", icon: Layout, color: "bg-green-100 text-green-600", to: "/workspace" },
+    { label: "Write code", icon: Code, color: "bg-pink-100 text-pink-600", to: "/toron" },
+  ];
 
   return (
-    <motion.section
-      className="flex min-h-full flex-col items-center py-10"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="flex w-full max-w-5xl flex-col items-center gap-14">
-        {/* Hero Section */}
-        <motion.header className="flex max-w-3xl flex-col items-center space-y-4 text-center" variants={itemVariants}>
-          <span className="rounded-full bg-[var(--pill)] px-4 py-1.5 text-xs font-medium text-[var(--accent)]">Welcome to Ryuzen</span>
-          <h1 className="bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] bg-clip-text text-4xl font-semibold text-transparent md:text-5xl">
-            Your AI-Powered Workspace
-          </h1>
-          <p className="max-w-2xl text-base leading-relaxed text-[var(--text-muted)]">
-            Start in Toron to chat with AI, organize your projects in Workspace, or let ALOE enhance your workflow with intelligent automation.
+    <div className="flex h-full flex-col font-sans">
+      {/* Center Content */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-10 pb-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4 text-center"
+        >
+          <h1 className="text-4xl font-semibold tracking-tight text-[var(--text-strong)]">Welcome to Ryuzen</h1>
+          <p className="mx-auto max-w-lg text-[var(--text-muted)]">
+            Get started by giving Ryuzen a task and Chat can do the rest. Not sure where to start?
           </p>
-        </motion.header>
-
-        {/* Feature Cards */}
-        <motion.div className="grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-3" variants={itemVariants}>
-          {/* Toron Card */}
-          <motion.button
-            onClick={() => navigate("/toron")}
-            className="group relative rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-8 text-left transition-all duration-200 hover:border-[var(--accent)]"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-          >
-            <div className="space-y-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
-                <MessageSquare className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="mb-2 text-xl font-semibold text-[var(--text-strong)]">Toron</h3>
-                <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-                  Conversational AI assistant for deep, focused discussions and problem-solving.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-[var(--accent)]">
-                <span>Start chatting</span>
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </div>
-          </motion.button>
-
-          {/* Workspace Card */}
-          <motion.button
-            onClick={() => navigate("/workspace")}
-            className="group relative rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-8 text-left transition-all duration-200 hover:border-[var(--accent)]"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-          >
-            <div className="space-y-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
-                <Layout className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="mb-2 text-xl font-semibold text-[var(--text-strong)]">Workspace</h3>
-                <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-                  Organize projects, documents, and templates in one centralized hub.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-[var(--accent)]">
-                <span>Open workspace</span>
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </div>
-          </motion.button>
-
-          {/* ALOE Card */}
-          <motion.button
-            className="group relative rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-8 text-left transition-all duration-200 hover:border-[var(--accent)]"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-          >
-            <div className="space-y-5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
-                <Brain className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="mb-2 text-xl font-semibold text-[var(--text-strong)]">ALOE</h3>
-                <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-                  Autonomous Learning & Optimization Engine for intelligent workflow automation.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-muted)]">
-                <span>Coming soon</span>
-                <Sparkles className="h-4 w-4" />
-              </div>
-            </div>
-          </motion.button>
         </motion.div>
 
-        {/* Quick Prompt Section */}
-        <motion.div className="w-full max-w-3xl space-y-4" variants={itemVariants}>
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-[var(--text-strong)]">Quick Start</h2>
-            <motion.div
-              className="h-px flex-1 bg-[var(--line-subtle)]"
-              initial={{ width: 0 }}
-              animate={{ width: "100%" }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-            />
-          </div>
-
-          <motion.form
-            onSubmit={handleQuickPrompt}
-            className="rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-surface)] p-6 transition-all duration-200 hover:border-[var(--accent)]"
-            whileHover={{ scale: 1.005 }}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--pill)] text-[var(--accent)]">
-                  <Zap className="h-5 w-5" />
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-2"
+        >
+          {cards.map((card) => (
+            <button
+              key={card.label}
+              onClick={() => navigate(card.to)}
+              className="group flex items-center justify-between rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-base)] p-4 transition-all hover:border-[var(--accent)] hover:shadow-md"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${card.color}`}>
+                  <card.icon className="h-5 w-5" />
                 </div>
-                <input
-                  type="text"
-                  value={quickPrompt}
-                  onChange={(e) => setQuickPrompt(e.target.value)}
-                  placeholder="Ask anything... (routes to Toron)"
-                  className="flex-1 bg-transparent text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
-                />
-                <motion.button
-                  type="submit"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)] text-white transition-all duration-150 disabled:opacity-50"
-                  whileHover={{ scale: quickPrompt.trim() ? 1.05 : 1 }}
-                  whileTap={{ scale: quickPrompt.trim() ? 0.95 : 1 }}
-                  disabled={!quickPrompt.trim()}
-                >
-                  <Send className="h-5 w-5" />
-                </motion.button>
+                <span className="font-medium text-[var(--text-strong)]">{card.label}</span>
               </div>
-              <p className="text-xs text-[var(--text-muted)]">
-                Press Enter or click send to start a conversation in Toron
-              </p>
-            </div>
-          </motion.form>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--layer-muted)] opacity-0 transition-opacity group-hover:opacity-100">
+                <ArrowUp className="h-4 w-4 rotate-45" />
+              </span>
+            </button>
+          ))}
         </motion.div>
       </div>
-    </motion.section>
+
+      {/* Bottom Input Area */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mx-auto w-full max-w-4xl shrink-0"
+      >
+        <form 
+          onSubmit={handlePrompt}
+          className="relative rounded-2xl border border-[var(--line-subtle)] bg-[var(--layer-base)] p-4 shadow-sm transition-all focus-within:ring-1 focus-within:ring-[var(--accent)]"
+        >
+          <input
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Summarize the latest..."
+            className="mb-10 w-full bg-transparent text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+          />
+          
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+                <Paperclip className="h-4 w-4" />
+                <span>Attach</span>
+              </button>
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+                <Mic className="h-4 w-4" />
+                <span>Voice Message</span>
+              </button>
+              <button type="button" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--layer-muted)] hover:text-[var(--text-primary)]">
+                <Globe className="h-4 w-4" />
+                <span>Browse Prompts</span>
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[var(--text-muted)]">{prompt.length} / 3,000</span>
+              <button 
+                type="submit"
+                disabled={!prompt.trim()}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-all disabled:opacity-50"
+              >
+                <ArrowUp className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </form>
+        <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
+          Ryuzen may generate inaccurate information about people, places, or facts. Model: Ryuzen AI v1.3
+        </p>
+      </motion.div>
+    </div>
   );
 }

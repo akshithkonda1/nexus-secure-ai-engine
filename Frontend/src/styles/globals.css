@@ -1,42 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+/* Modern Glassmorphism & Mesh Gradient */
 :root {
-  --ryuzen-alabaster: #f9fafc;
-  --ryuzen-cod-gray: #090b1e;
-  --ryuzen-prelude: #c5b9da;
-  --ryuzen-azure: #0085ff;
-  --ryuzen-dodger: #009eff;
-  --ryuzen-purple: #9360ff;
+  /* Refined Palette - cooler, more modern base */
+  --ryuzen-alabaster: #FAFAFA; /* Slightly purer white */
+  --ryuzen-cod-gray: #0F172A; /* Slate 900 - richer dark */
+  --ryuzen-prelude: #94A3B8; /* Slate 400 */
+  --ryuzen-azure: #3B82F6; /* Blue 500 */
+  --ryuzen-dodger: #0EA5E9; /* Sky 500 */
+  --ryuzen-purple: #8B5CF6; /* Violet 500 */
+  --ryuzen-obsidian: #020617; /* Slate 950 */
 
-  --layer-base: var(--ryuzen-alabaster);
-  --layer-surface: color-mix(in srgb, var(--ryuzen-alabaster) 96%, var(--ryuzen-cod-gray) 4%);
-  --layer-muted: color-mix(in srgb, var(--ryuzen-alabaster) 92%, var(--ryuzen-prelude) 8%);
-  --layer-active: color-mix(in srgb, var(--ryuzen-alabaster) 88%, var(--ryuzen-azure) 12%);
-  --text-primary: color-mix(in srgb, var(--ryuzen-cod-gray) 80%, var(--ryuzen-alabaster) 20%);
-  --text-strong: var(--ryuzen-cod-gray);
-  --text-muted: color-mix(in srgb, var(--ryuzen-cod-gray) 52%, var(--ryuzen-prelude) 48%);
-  --line-subtle: color-mix(in srgb, var(--ryuzen-prelude) 40%, var(--ryuzen-alabaster) 60%);
-  --line-strong: color-mix(in srgb, var(--ryuzen-prelude) 65%, var(--ryuzen-cod-gray) 35%);
+  /* Light Mode (Clean & Airy) */
+  --layer-base: #F8FAFC; /* Slate 50 */
+  --layer-surface: rgba(255, 255, 255, 0.7);
+  --layer-muted: #F1F5F9; /* Slate 100 */
+  --layer-active: #E2E8F0; /* Slate 200 */
+  --text-primary: #1E293B; /* Slate 800 */
+  --text-strong: #0F172A; /* Slate 900 */
+  --text-muted: #64748B; /* Slate 500 */
+  --line-subtle: rgba(148, 163, 184, 0.2);
+  --line-strong: rgba(148, 163, 184, 0.4);
   --accent: var(--ryuzen-azure);
-  --pill: color-mix(in srgb, var(--ryuzen-azure) 18%, var(--ryuzen-alabaster) 82%);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --bg-app: var(--layer-base);
 }
 
 :root.dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --layer-base: color-mix(in srgb, var(--ryuzen-cod-gray) 92%, var(--ryuzen-prelude) 8%);
-  --layer-surface: color-mix(in srgb, var(--ryuzen-cod-gray) 86%, var(--ryuzen-prelude) 14%);
-  --layer-muted: color-mix(in srgb, var(--ryuzen-cod-gray) 80%, var(--ryuzen-purple) 20%);
-  --layer-active: color-mix(in srgb, var(--ryuzen-cod-gray) 74%, var(--ryuzen-purple) 26%);
-  --text-primary: color-mix(in srgb, var(--ryuzen-prelude) 88%, var(--ryuzen-alabaster) 12%);
-  --text-strong: var(--ryuzen-prelude);
-  --text-muted: color-mix(in srgb, var(--ryuzen-prelude) 60%, var(--ryuzen-cod-gray) 40%);
-  --line-subtle: color-mix(in srgb, var(--ryuzen-cod-gray) 70%, var(--ryuzen-prelude) 30%);
-  --line-strong: color-mix(in srgb, var(--ryuzen-cod-gray) 60%, var(--ryuzen-purple) 40%);
+  /* Dark Mode (Deep & Glowing) */
+  --layer-base: var(--ryuzen-obsidian);
+  --layer-surface: rgba(15, 23, 42, 0.6);
+  --layer-muted: rgba(30, 41, 59, 0.5);
+  --layer-active: rgba(51, 65, 85, 0.5);
+  --text-primary: #E2E8F0; /* Slate 200 */
+  --text-strong: #F8FAFC; /* Slate 50 */
+  --text-muted: #94A3B8; /* Slate 400 */
+  --line-subtle: rgba(148, 163, 184, 0.1);
+  --line-strong: rgba(148, 163, 184, 0.2);
   --accent: var(--ryuzen-purple);
-  --pill: color-mix(in srgb, var(--ryuzen-purple) 22%, var(--ryuzen-cod-gray) 78%);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -48,243 +54,125 @@ body {
   min-height: 100vh;
   background: var(--layer-base);
   color: var(--text-primary);
-  font-family: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-label,
-small {
+/* Add a subtle background pattern */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.15) 0, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.1) 0, transparent 50%);
+  pointer-events: none;
+}
+
+h1,h2,h3,h4,h5,h6 {
   margin: 0;
-  font-weight: 400;
-}
-
-h1 {
-  font-size: 2rem;
-  line-height: 1.2;
+  font-family: "Outfit", "Inter", sans-serif;
   font-weight: 600;
+  letter-spacing: -0.025em; 
+  color: var(--text-strong);
 }
 
-h2 {
-  font-size: 1.5rem;
-  line-height: 1.25;
-  font-weight: 600;
-}
+h1 { font-size: 2.25rem; line-height: 1.2; }
+h2 { font-size: 1.75rem; line-height: 1.25; }
 
-p,
-span,
-label,
-small {
+p, span, label, small {
   font-size: 0.9375rem;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+  transition: opacity 0.2s ease;
 }
 
-button,
-input,
-textarea,
-select {
+button { cursor: pointer; }
+button, input, textarea, select {
   font: inherit;
   color: inherit;
   border: none;
   background: none;
-}
-
-button {
-  cursor: pointer;
-}
-
-input,
-textarea,
-select {
   outline: none;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--line-strong);
   border-radius: 999px;
   transition: background 0.2s ease;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: var(--text-muted);
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--layer-muted);
-  border-radius: 999px;
+  background: transparent;
 }
 
-/* Utility Classes */
 @layer utilities {
-  /* Gradient text */
+  .glass-panel {
+    background: var(--layer-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+  
   .gradient-text {
-    background: linear-gradient(
-      135deg,
-      var(--ryuzen-dodger) 0%,
-      var(--ryuzen-azure) 50%,
-      var(--ryuzen-purple) 100%
-    );
+    background: linear-gradient(135deg, var(--ryuzen-dodger) 0%, var(--ryuzen-azure) 50%, var(--ryuzen-purple) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  /* Gradient backgrounds */
   .gradient-bg-primary {
-    background: linear-gradient(
-      135deg,
-      var(--ryuzen-dodger) 0%,
-      var(--ryuzen-purple) 100%
-    );
+    background: linear-gradient(135deg, var(--ryuzen-dodger) 0%, var(--ryuzen-purple) 100%);
   }
 
-  .gradient-bg-subtle {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--ryuzen-dodger) 10%, transparent) 0%,
-      color-mix(in srgb, var(--ryuzen-purple) 10%, transparent) 100%
-    );
-  }
+  .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-  /* Line clamp utilities */
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Shimmer animation */
   @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
   }
-
   .shimmer {
     animation: shimmer 2s infinite linear;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--ryuzen-dodger) 20%, transparent) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
     background-size: 1000px 100%;
   }
 
-  /* Pulse animation */
   @keyframes pulse-glow {
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 color-mix(in srgb, var(--ryuzen-dodger) 40%, transparent);
-    }
-    50% {
-      box-shadow: 0 0 0 8px color-mix(in srgb, var(--ryuzen-dodger) 0%, transparent);
-    }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
   }
-
-  .pulse-glow {
-    animation: pulse-glow 2s infinite;
-  }
-
-  /* Smooth scroll */
-  .smooth-scroll {
-    scroll-behavior: smooth;
-  }
+  .pulse-glow { animation: pulse-glow 2s infinite; }
+  
+  .smooth-scroll { scroll-behavior: smooth; }
 }
 
-/* Animation keyframes */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Focus visible styles */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-/* Selection styles */
-::selection {
-  background: color-mix(in srgb, var(--ryuzen-dodger) 30%, transparent);
-  color: var(--text-strong);
-}
-
-::-moz-selection {
-  background: color-mix(in srgb, var(--ryuzen-dodger) 30%, transparent);
-  color: var(--text-strong);
 }

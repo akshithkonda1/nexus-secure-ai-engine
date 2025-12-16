@@ -22,38 +22,31 @@ export default function TopBar() {
   const title = useMemo(() => labels[location.pathname] ?? "Home", [location.pathname]);
 
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center justify-between pb-6"
-    >
+    <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-3">
-        <div>
-          <p className="text-xs text-[var(--text-muted)]">Dashboard</p>
-          <h2 className="text-2xl font-semibold text-[var(--text-strong)]">{title}</h2>
-        </div>
+        {/* Sidebar Toggle placeholder if needed */}
+        <h2 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h2>
       </div>
       <div className="flex items-center gap-3">
         <motion.button
-          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--ryuzen-dodger)] to-[var(--ryuzen-purple)] px-4 py-2 text-sm font-semibold text-white transition-all duration-150"
+          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-[var(--text-strong)] px-4 py-1.5 text-sm font-semibold text-[var(--bg-app)] transition-all duration-150"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          <Zap className="h-4 w-4" />
+          <Zap className="h-3.5 w-3.5" />
           <span>Upgrade</span>
         </motion.button>
         <motion.button
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-subtle)] bg-[var(--layer-surface)] text-[var(--text-muted)] transition-colors duration-150 hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
+          className="flex h-8 w-8 items-center justify-center text-[var(--text-muted)] transition-colors duration-150 hover:text-[var(--text-primary)]"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
           <HelpCircle className="h-5 w-5" />
         </motion.button>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-subtle)] bg-[var(--layer-muted)] text-sm font-semibold text-[var(--text-strong)]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--layer-muted)] text-xs font-semibold text-[var(--text-strong)] ring-2 ring-[var(--bg-app)]">
           EC
         </div>
       </div>
-    </motion.header>
+    </div>
   );
 }
