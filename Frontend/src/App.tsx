@@ -75,11 +75,7 @@ export default function App() {
       />
       <Route
         path="/workspace"
-        element={
-          <AppShell>
-            <WorkspacePage />
-          </AppShell>
-        }
+        element={<WorkspacePage />}
       />
       <Route
         path="/settings"
