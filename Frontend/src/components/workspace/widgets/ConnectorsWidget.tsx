@@ -31,7 +31,7 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
           No alerts
         </span>
       </header>
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto">
         {connectors.map((connector) => (
           <div
             key={connector.name}

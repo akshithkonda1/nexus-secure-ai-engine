@@ -37,7 +37,7 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
           <Plus className="h-4 w-4" />
         </button>
       </header>
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto">
         {lists.map((list) => (
           <button
             key={list.name}

@@ -28,7 +28,7 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
         </div>
         <span className="rounded-full bg-[var(--bg-elev)] px-3 py-1 text-xs text-[var(--text-muted)]">Synced</span>
       </header>
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto">
         {agenda.map((item) => (
           <div
             key={item.title}
