@@ -34,7 +34,7 @@ export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
                   onClick={() => onChange(item.id)}
                   className={`flex flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] ${
                     active
-                      ? "bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-inner"
+                      ? "bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-[0_10px_36px_-24px_rgba(0,0,0,0.4)] ring-1 ring-[var(--line-subtle)]/70"
                       : "text-[var(--muted)] hover:bg-[var(--bg-elev)]/60 hover:text-[var(--text)]"
                   }`}
                 >
@@ -54,7 +54,7 @@ export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
             type="button"
             aria-label="Home"
             onClick={onHome}
-            className="flex items-center gap-2 rounded-xl bg-[var(--bg-elev)]/90 px-3 py-2 text-[var(--text)] shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] hover:brightness-110"
+            className="flex items-center gap-2 rounded-xl bg-[var(--bg-elev)]/90 px-3 py-2 text-[var(--text)] shadow-[0_12px_38px_-26px_rgba(0,0,0,0.5)] ring-1 ring-[var(--line-subtle)]/70 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] hover:brightness-110"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--bg-surface)] text-[var(--text)] shadow-sm ring-1 ring-[var(--line-subtle)]/70">
               <Home className="h-4 w-4" />

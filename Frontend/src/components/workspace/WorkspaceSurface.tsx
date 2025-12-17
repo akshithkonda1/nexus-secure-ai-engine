@@ -32,11 +32,11 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
 
       <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14 sm:px-6 lg:px-10 xl:px-16">
         <div
-          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(720px,1.2fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
+          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(760px,1fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
           style={{
             "--workspace-gap": "28px",
-            "--workspace-side": "minmax(300px,1fr)",
-            "--workspace-row": "minmax(0,1fr)",
+            "--workspace-side": "clamp(320px,24vw,360px)",
+            "--workspace-row": "minmax(320px,1fr)",
           } as CSSProperties}
         >
           <CenterCanvas
@@ -48,10 +48,10 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
 
           {!isCompact && (
             <>
-              <ListsWidget className="order-1 md:order-2 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:1]" />
-              <CalendarWidget className="order-3 md:order-3 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:1]" />
-              <ConnectorsWidget className="order-4 md:order-4 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:2]" />
-              <TasksWidget className="order-5 md:order-5 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:2]" />
+              <ListsWidget className="order-1 h-full md:order-2 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:1]" />
+              <CalendarWidget className="order-3 h-full md:order-3 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:1]" />
+              <ConnectorsWidget className="order-4 h-full md:order-4 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:2]" />
+              <TasksWidget className="order-5 h-full md:order-5 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:2]" />
             </>
           )}
 
