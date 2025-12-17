@@ -26,10 +26,10 @@ export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasM
   };
 
   return (
-    <div className="relative isolate min-h-screen w-full overflow-hidden bg-[var(--bg-app)]">
+    <div className="relative isolate min-h-[100svh] w-screen overflow-hidden bg-[var(--bg-app)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(132,106,255,0.16),transparent_36%),radial-gradient(circle_at_78%_6%,rgba(68,212,255,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
 
-      <div className="relative z-10 min-h-screen w-full" style={anchorStyles}>
+      <div className="relative z-10 min-h-[100svh] w-screen" style={anchorStyles}>
         {!isCompact && (
           <>
             <CenterCanvas
