@@ -38,15 +38,15 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
 
   return (
     <div
-      className={`flex h-full w-full flex-col justify-between bg-white px-5 py-6 transition-colors dark:bg-slate-900 ${collapsed ? "items-center" : ""}`}
+      className={`flex h-full w-full flex-col justify-between bg-[var(--layer-surface)] px-5 py-6 text-[var(--text)] transition-colors ${collapsed ? "items-center" : ""}`}
     >
       <div className="space-y-8">
         {/* Logo and Brand */}
         <div className={`flex items-center gap-3 px-2 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[var(--text-inverse)] shadow-sm">
             <DragonLogo />
           </div>
-          {!collapsed && <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-slate-100">Ryuzen</span>}
+          {!collapsed && <span className="text-lg font-semibold tracking-tight">Ryuzen</span>}
         </div>
 
         {/* Navigation */}
@@ -59,16 +59,16 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
                 <div
                   className={`group relative flex items-center gap-3 rounded-lg py-2.5 ${collapsed ? "px-3 justify-center" : "pr-3 pl-1"} text-sm font-medium transition-colors ${
                     active
-                      ? "bg-gray-100 text-gray-900 dark:bg-slate-800 dark:text-slate-100"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      ? "bg-[var(--layer-muted)] text-[var(--text)] shadow-inner"
+                      : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
                   }`}
                 >
                   <span
-                    className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${active ? "bg-blue-600" : "bg-transparent"}`}
+                    className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${active ? "bg-[var(--accent)]" : "bg-transparent"}`}
                     aria-hidden
                   />
                   <Icon
-                    className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${active ? "text-gray-900 dark:text-slate-100" : "text-gray-500 group-hover:text-gray-900 dark:text-slate-400 dark:group-hover:text-slate-100"}`}
+                    className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${active ? "text-[var(--text)]" : "text-[var(--muted)] group-hover:text-[var(--text)]"}`}
                     aria-hidden
                   />
                   {!collapsed && <span className="tracking-normal">{item.label}</span>}
@@ -79,23 +79,23 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
         </nav>
       </div>
 
-      <nav className={`border-t border-gray-200 pt-6 transition-colors dark:border-slate-700 ${collapsed ? "w-full" : ""}`}>
+      <nav className={`border-t border-[var(--line-subtle)] pt-6 transition-colors ${collapsed ? "w-full" : ""}`}>
         <NavLink to="/settings">
           <div
             className={`group relative flex items-center gap-3 rounded-lg py-2.5 ${collapsed ? "px-3 justify-center" : "pr-3 pl-1"} text-sm font-medium transition-colors ${
               location.pathname === "/settings"
-                ? "bg-gray-100 text-gray-900 dark:bg-slate-800 dark:text-slate-100"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                ? "bg-[var(--layer-muted)] text-[var(--text)] shadow-inner"
+                : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
             }`}
           >
             <span
               className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${
-                location.pathname === "/settings" ? "bg-blue-600" : "bg-transparent"
+                location.pathname === "/settings" ? "bg-[var(--accent)]" : "bg-transparent"
               }`}
               aria-hidden
             />
             <Settings
-              className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${location.pathname === "/settings" ? "text-gray-900 dark:text-slate-100" : "text-gray-500 group-hover:text-gray-900 dark:text-slate-400 dark:group-hover:text-slate-100"}`}
+              className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${location.pathname === "/settings" ? "text-[var(--text)]" : "text-[var(--muted)] group-hover:text-[var(--text)]"}`}
               aria-hidden
             />
             {!collapsed && <span>Settings</span>}
