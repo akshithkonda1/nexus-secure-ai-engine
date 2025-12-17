@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, MessageSquare, Layout, Settings } from "lucide-react";
+import { cn, bg, text, border, patterns } from "../utils/theme";
 
 const navItems = [
   { label: "Home", to: "/", icon: Home },
@@ -38,15 +39,24 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
 
   return (
     <div
-      className={`flex h-full w-full flex-col justify-between bg-[var(--layer-surface)] px-5 py-6 text-[var(--text)] transition-colors ${collapsed ? "items-center" : ""}`}
+      className={cn(
+        "flex h-full w-full flex-col justify-between px-5 py-6 transition-colors",
+        bg.surface,
+        text.primary,
+        collapsed && "items-center"
+      )}
     >
       <div className="space-y-8">
         {/* Logo and Brand */}
-        <div className={`flex items-center gap-3 px-2 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] text-[var(--text-inverse)] shadow-sm">
+        <div className={cn("flex items-center gap-3 px-2", collapsed && "justify-center")}>
+          <div className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-xl shadow-sm",
+            bg.accent,
+            text.inverse
+          )}>
             <DragonLogo />
           </div>
-          {!collapsed && <span className="text-lg font-semibold tracking-tight">Ryuzen</span>}
+          {!collapsed && <span className={cn("text-lg font-semibold tracking-tight", text.primary)}>Ryuzen</span>}
         </div>
 
         {/* Navigation */}
@@ -56,19 +66,19 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
             const active = location.pathname === item.to;
             return (
               <NavLink key={item.to} to={item.to} title={item.label} aria-label={item.label}>
-                <div
-                  className={`group relative flex items-center gap-3 rounded-lg py-2.5 ${collapsed ? "px-3 justify-center" : "pr-3 pl-1"} text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-[var(--layer-muted)] text-[var(--text)] shadow-inner"
-                      : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
-                  }`}
-                >
+                <div className={patterns.navItem(active)}>
                   <span
-                    className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${active ? "bg-[var(--accent)]" : "bg-transparent"}`}
+                    className={cn(
+                      "absolute left-0 h-full w-1 rounded-r-full transition-colors",
+                      active ? "bg-[var(--accent)]" : "bg-transparent"
+                    )}
                     aria-hidden
                   />
                   <Icon
-                    className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${active ? "text-[var(--text)]" : "text-[var(--muted)] group-hover:text-[var(--text)]"}`}
+                    className={cn(
+                      collapsed ? "h-5 w-5" : "ml-3 h-5 w-5",
+                      active ? text.primary : "text-[var(--muted)] group-hover:text-[var(--text)]"
+                    )}
                     aria-hidden
                   />
                   {!collapsed && <span className="tracking-normal">{item.label}</span>}
@@ -79,23 +89,21 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
         </nav>
       </div>
 
-      <nav className={`border-t border-[var(--line-subtle)] pt-6 transition-colors ${collapsed ? "w-full" : ""}`}>
+      <nav className={cn("border-t pt-6 transition-colors", border.subtle, collapsed && "w-full")}>
         <NavLink to="/settings">
-          <div
-            className={`group relative flex items-center gap-3 rounded-lg py-2.5 ${collapsed ? "px-3 justify-center" : "pr-3 pl-1"} text-sm font-medium transition-colors ${
-              location.pathname === "/settings"
-                ? "bg-[var(--layer-muted)] text-[var(--text)] shadow-inner"
-                : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
-            }`}
-          >
+          <div className={patterns.navItem(location.pathname === "/settings")}>
             <span
-              className={`absolute left-0 h-full w-1 rounded-r-full transition-colors ${
+              className={cn(
+                "absolute left-0 h-full w-1 rounded-r-full transition-colors",
                 location.pathname === "/settings" ? "bg-[var(--accent)]" : "bg-transparent"
-              }`}
+              )}
               aria-hidden
             />
             <Settings
-              className={`${collapsed ? "h-5 w-5" : "ml-3 h-5 w-5"} ${location.pathname === "/settings" ? "text-[var(--text)]" : "text-[var(--muted)] group-hover:text-[var(--text)]"}`}
+              className={cn(
+                collapsed ? "h-5 w-5" : "ml-3 h-5 w-5",
+                location.pathname === "/settings" ? text.primary : "text-[var(--muted)] group-hover:text-[var(--text)]"
+              )}
               aria-hidden
             />
             {!collapsed && <span>Settings</span>}

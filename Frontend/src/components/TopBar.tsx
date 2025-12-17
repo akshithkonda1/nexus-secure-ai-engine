@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { Zap, HelpCircle, PanelLeft, PanelRight } from "lucide-react";
+import { cn, bg, text, border } from "../utils/theme";
 
 const labels: Record<string, string> = {
   "/": "Home",
@@ -31,26 +32,44 @@ export default function TopBar({ onToggleSidebar, sidebarCollapsed = false }: To
         <button
           type="button"
           onClick={() => onToggleSidebar?.()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--muted)] shadow-sm backdrop-blur-sm transition hover:border-[var(--line-strong)] hover:text-[var(--text)]"
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm backdrop-blur-sm transition",
+            border.subtle,
+            bg.surface,
+            text.muted,
+            "hover:border-[var(--line-strong)] hover:text-[var(--text)]"
+          )}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </button>
-        <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
+        <h2 className={cn("text-lg font-semibold", text.primary)}>{title}</h2>
       </div>
       <div className="flex items-center gap-3">
         <button
-          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-4 py-1.5 text-sm font-semibold text-[var(--text-inverse)] shadow-sm transition-all hover:shadow-md"
+          className={cn(
+            "group relative flex items-center gap-2 overflow-hidden rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm transition-all hover:shadow-md",
+            bg.accent,
+            text.inverse
+          )}
         >
           <Zap className="h-3.5 w-3.5" />
           <span>Upgrade</span>
         </button>
         <button
-          className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--text)]"
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+            text.muted,
+            "hover:text-[var(--text)]"
+          )}
         >
           <HelpCircle className="h-5 w-5" />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--bg-elev)] text-xs font-semibold text-[var(--text)] shadow-inner">
+        <div className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold shadow-inner",
+          bg.elevated,
+          text.primary
+        )}>
           EC
         </div>
       </div>
