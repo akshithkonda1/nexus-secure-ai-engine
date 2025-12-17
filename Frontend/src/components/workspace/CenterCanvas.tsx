@@ -20,7 +20,7 @@ export default function CenterCanvas({ mode, className }: CenterCanvasProps) {
   return (
     <section
       aria-label="Center canvas"
-      className={`relative flex min-h-[60vh] flex-col justify-between rounded-[28px] bg-gradient-to-b from-[var(--bg-surface)]/45 via-[var(--bg-elev)]/20 to-[var(--bg-app)]/5 p-8 text-[var(--text)] transition-[background,transform] backdrop-blur-xl ${className ?? ""}`}
+      className={`relative flex h-full min-h-[60vh] flex-col justify-between overflow-hidden rounded-[28px] bg-gradient-to-b from-[var(--bg-surface)]/55 via-[var(--bg-elev)]/35 to-[var(--bg-app)]/15 p-8 text-[var(--text)] transition-[background,transform] backdrop-blur-xl ${className ?? ""}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -32,8 +32,8 @@ export default function CenterCanvas({ mode, className }: CenterCanvasProps) {
           <Sparkles className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-8 flex flex-1 items-center justify-center rounded-[22px] bg-gradient-to-b from-[var(--bg-elev)]/26 via-[var(--layer-muted)]/18 to-transparent px-8 py-12 text-[var(--muted)] backdrop-blur">
-        <div className="space-y-3 text-center">
+      <div className="mt-8 flex flex-1 items-center justify-center rounded-[22px] bg-gradient-to-b from-[var(--bg-elev)]/30 via-[var(--layer-muted)]/20 to-transparent px-8 py-12 text-[var(--muted)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur">
+        <div className="max-w-xl space-y-3 text-center">
           <p className="text-base font-semibold text-[var(--text)]">Center is clear</p>
           <p className="text-sm text-[var(--text-muted)]">
             Bring calm structure into this canvas. The bottom bar is your only switcher—everything else stays focused on its own space.
