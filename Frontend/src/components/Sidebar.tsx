@@ -68,26 +68,25 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle }: Si
           )}
         >
           <div className={cn(
-            "group relative flex items-center justify-center rounded-xl shadow-lg transition-all duration-300",
-            "bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600",
+            "group relative flex items-center justify-center rounded-full shadow-lg transition-all duration-300",
             "hover:shadow-xl hover:scale-105",
-            "ring-2 ring-blue-500/20 dark:ring-purple-500/20",
-            collapsed ? "h-11 w-11 p-2.5" : "h-11 w-11 p-2.5"
+            collapsed ? "h-12 w-12" : "h-12 w-12"
           )}>
             {/* Subtle glow effect */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/20 via-purple-400/20 to-orange-400/20 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-100" />
             
             <img 
               src={RyuzenLogo} 
               alt="Ryuzen" 
-              className="relative z-10 h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+              className="relative z-10 h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
           
           <span 
             className={cn(
               "text-xl font-bold tracking-tight transition-all duration-300",
-              "bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400",
+              "bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600 bg-clip-text text-transparent",
+              "dark:from-blue-400 dark:via-purple-400 dark:to-orange-400",
               collapsed ? "w-0 overflow-hidden opacity-0" : "w-auto opacity-100"
             )}
           >
