@@ -1,5 +1,4 @@
 import { PropsWithChildren, ReactNode, useEffect, useMemo, useState } from "react";
-import clsx from "clsx";
 import RightRail from "../pages/rails/RightRail";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
@@ -23,10 +22,12 @@ export default function AppShell({ children, rightRail, contentClassName }: AppS
 
   const mainContentClass = useMemo(
     () =>
-      clsx(
+      [
         "mx-auto flex h-full max-w-5xl flex-col px-6 py-6 text-[var(--text)]",
-        contentClassName
-      ),
+        contentClassName,
+      ]
+        .filter(Boolean)
+        .join(" "),
     [contentClassName]
   );
 
