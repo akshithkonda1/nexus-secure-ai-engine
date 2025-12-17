@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Home, MessageSquare, Layout, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn, bg, text, border, patterns } from "../utils/theme";
 import { useState } from "react";
-import RyuzenLogo from "../assets/ryuzen-logo.svg";
+import RyuzenLogo from "../assets/ryuzen-logo.png";
 
 const navItems = [
   { label: "Home", to: "/", icon: Home },
