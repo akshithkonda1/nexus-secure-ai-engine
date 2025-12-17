@@ -74,7 +74,7 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
         </button>
       </form>
 
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto">
         {tasks.map((task) => (
           <button
             key={task.id}

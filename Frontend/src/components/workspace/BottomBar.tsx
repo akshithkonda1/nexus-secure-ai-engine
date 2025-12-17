@@ -17,8 +17,8 @@ const items: { id: CanvasMode; label: string; description: string; icon: Element
 
 export default function BottomBar({ mode, onChange }: BottomBarProps) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 px-4 sm:px-6 lg:px-10">
-      <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-4 py-3 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
+    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 px-4 sm:px-6 lg:px-10">
+      <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-3 py-2 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
         <div className="flex items-center justify-between gap-2">
           {items.map((item) => {
             const Icon = item.icon;
@@ -30,18 +30,18 @@ export default function BottomBar({ mode, onChange }: BottomBarProps) {
                 aria-current={active ? "page" : undefined}
                 aria-label={`${item.label} mode`}
                 onClick={() => onChange(item.id)}
-                className={`flex flex-1 items-center gap-2 rounded-xl px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] ${
+                className={`flex flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] ${
                   active
                     ? "bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-inner"
                     : "text-[var(--muted)] hover:bg-[var(--bg-elev)]/60 hover:text-[var(--text)]"
                 }`}
               >
-                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${active ? "bg-[var(--bg-surface)]" : "bg-[var(--layer-muted)]/80"} text-[var(--text)] shadow-sm ring-1 ring-[var(--line-subtle)]/70`}>
-                  <Icon className="h-5 w-5" />
+                <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${active ? "bg-[var(--bg-surface)]" : "bg-[var(--layer-muted)]/80"} text-[var(--text)] shadow-sm ring-1 ring-[var(--line-subtle)]/70`}>
+                  <Icon className="h-4 w-4" />
                 </span>
                 <span className="flex flex-col">
-                  <span className="text-sm font-semibold leading-tight">{item.label}</span>
-                  <span className="text-xs text-[var(--text-muted)]">{item.description}</span>
+                  <span className="text-[11px] font-semibold leading-tight">{item.label}</span>
+                  <span className="text-[9px] text-[var(--text-muted)]">{item.description}</span>
                 </span>
               </button>
             );
