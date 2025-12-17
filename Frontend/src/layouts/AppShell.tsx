@@ -6,9 +6,10 @@ import TopBar from "../components/TopBar";
 type AppShellProps = PropsWithChildren<{
   rightRail?: ReactNode;
   contentClassName?: string;
+  fullBleed?: boolean;
 }>;
 
-export default function AppShell({ children, rightRail, contentClassName }: AppShellProps) {
+export default function AppShell({ children, rightRail, contentClassName, fullBleed }: AppShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("sidebar-collapsed") === "true";
@@ -23,12 +24,14 @@ export default function AppShell({ children, rightRail, contentClassName }: AppS
   const mainContentClass = useMemo(
     () =>
       [
-        "mx-auto flex h-full max-w-5xl flex-col px-6 py-6 text-[var(--text)]",
+        fullBleed
+          ? "flex h-full min-h-full w-full flex-col text-[var(--text)]"
+          : "mx-auto flex h-full max-w-5xl flex-col px-6 py-6 text-[var(--text)]",
         contentClassName,
       ]
         .filter(Boolean)
         .join(" "),
-    [contentClassName]
+    [contentClassName, fullBleed]
   );
 
   return (

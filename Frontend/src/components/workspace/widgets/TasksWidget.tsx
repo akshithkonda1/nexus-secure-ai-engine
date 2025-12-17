@@ -40,11 +40,11 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
   return (
     <section
       aria-label="Tasks widget"
-      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/90 p-4 text-[var(--text)] shadow-[var(--shadow-soft)] backdrop-blur-lg ${className ?? ""}`}
+      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 text-[var(--text)] shadow-[0_18px_60px_-65px_rgba(0,0,0,0.8)] backdrop-blur-xl ${className ?? ""}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]/50">
             <CheckSquare2 className="h-5 w-5" />
           </span>
           <div>
