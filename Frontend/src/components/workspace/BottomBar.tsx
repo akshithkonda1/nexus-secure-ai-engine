@@ -18,13 +18,14 @@ const items: { id: CanvasMode; label: string; description: string; icon: Element
 
 export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
   return (
-    <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 w-[min(1200px,_calc(100%_-_32px))] -translate-x-1/2 px-4 sm:w-[min(1200px,_calc(100%_-_48px))] sm:px-6 lg:w-[min(1200px,_calc(100%_-_80px))] lg:px-8">
-      <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-3 py-2 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
+    <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 w-[min(1024px,_calc(100%_-_56px))] -translate-x-1/2 px-4 sm:w-[min(1024px,_calc(100%_-_72px))] sm:px-6 lg:w-[min(1024px,_calc(100%_-_96px))] lg:px-7">
+      <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-2.5 py-1.5 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
         <div className="flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2">
             {items.map((item) => {
               const Icon = item.icon;
               const active = item.id === mode;
+              const analyze = item.id === "analyze";
               return (
                 <button
                   key={item.id}
@@ -32,13 +33,27 @@ export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
                   aria-current={active ? "page" : undefined}
                   aria-label={`${item.label} mode`}
                   onClick={() => onChange(item.id)}
-                  className={`flex flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] ${
+                  className={`flex flex-1 items-center gap-2 rounded-xl px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] ${
                     active
-                      ? "bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-[0_10px_36px_-24px_rgba(0,0,0,0.4)] ring-1 ring-[var(--line-subtle)]/70"
-                      : "text-[var(--muted)] hover:bg-[var(--bg-elev)]/60 hover:text-[var(--text)]"
+                      ? `${
+                          analyze
+                            ? "bg-[var(--accent)]/15 text-[var(--text)] shadow-[0_10px_36px_-24px_rgba(0,0,0,0.35)] ring-1 ring-[var(--accent)]/70"
+                            : "bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-[0_10px_36px_-24px_rgba(0,0,0,0.4)] ring-1 ring-[var(--line-subtle)]/70"
+                        }`
+                      : `${
+                          analyze
+                            ? "bg-[var(--accent)]/10 text-[var(--text)] ring-1 ring-[var(--accent)]/40 hover:bg-[var(--accent)]/18"
+                            : "text-[var(--muted)] hover:bg-[var(--bg-elev)]/60 hover:text-[var(--text)]"
+                        }`
                   }`}
                 >
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${active ? "bg-[var(--bg-surface)]" : "bg-[var(--layer-muted)]/80"} text-[var(--text)] shadow-sm ring-1 ring-[var(--line-subtle)]/70`}>
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                      analyze
+                        ? "bg-[var(--accent)]/15 text-[var(--text)] ring-[var(--accent)]/60"
+                        : "ring-[var(--line-subtle)]/70"
+                    } ${active ? "bg-[var(--bg-surface)]" : "bg-[var(--layer-muted)]/80"} text-[var(--text)] shadow-sm ring-1`}
+                  >
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="flex flex-col">
