@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import CenterCanvas from "./CenterCanvas";
 import BottomBar from "./BottomBar";
 import ListsWidget from "./widgets/ListsWidget";
@@ -19,24 +19,12 @@ export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasM
     return () => query.removeEventListener("change", update);
   }, []);
 
-  const widgets = useMemo(
-    () => (
-      <>
-        <ListsWidget className="sm:min-h-[clamp(180px,20vh,260px)] sm:min-w-0" />
-        <CalendarWidget className="sm:min-h-[clamp(180px,20vh,260px)] sm:min-w-0" />
-        <ConnectorsWidget className="sm:min-h-[clamp(180px,20vh,260px)] sm:min-w-0" />
-        <TasksWidget className="sm:min-h-[clamp(180px,20vh,260px)] sm:min-w-0" />
-      </>
-    ),
-    []
-  );
-
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(132,106,255,0.15),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(68,212,255,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,transparent_35%)]" />
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[var(--bg-app)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(132,106,255,0.16),transparent_36%),radial-gradient(circle_at_78%_6%,rgba(68,212,255,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-col gap-10 px-4 pb-28 pt-12 sm:px-6 lg:px-12">
-        <div className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-[clamp(240px,24vw,360px)_minmax(640px,1fr)_clamp(240px,24vw,360px)] lg:grid-rows-[auto_auto]">
+      <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14 sm:px-6 lg:px-10 xl:px-16">
+        <div className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-7 md:grid-cols-2 lg:grid-cols-[minmax(280px,1fr)_minmax(720px,1.2fr)_minmax(280px,1fr)] lg:grid-rows-[auto_auto]">
           <CenterCanvas mode={mode} className="order-2 w-full md:order-1 md:col-span-2 lg:order-none lg:[grid-column:2] lg:[grid-row:1/span_2]" />
 
           {!isCompact && (
@@ -49,7 +37,7 @@ export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasM
           )}
 
           {isCompact && (
-            <div className="order-3 -mx-1 flex gap-3 overflow-x-auto pb-1 sm:hidden snap-x snap-mandatory">
+            <div className="order-3 -mx-1 flex gap-4 overflow-x-auto pb-2 sm:hidden snap-x snap-mandatory">
               <ListsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
               <CalendarWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
               <ConnectorsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />

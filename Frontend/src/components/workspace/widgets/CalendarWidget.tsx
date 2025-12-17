@@ -14,11 +14,11 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
   return (
     <section
       aria-label="Calendar widget"
-      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-[24px] bg-[var(--bg-surface)]/80 p-4 text-[var(--text)] shadow-[0_24px_70px_-55px_rgba(0,0,0,0.8)] ring-1 ring-[var(--line-subtle)]/60 backdrop-blur-xl ${className ?? ""}`}
+      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 text-[var(--text)] shadow-[0_18px_60px_-65px_rgba(0,0,0,0.8)] backdrop-blur-xl ${className ?? ""}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]/50">
             <CalendarClock className="h-5 w-5" />
           </span>
           <div>
@@ -32,9 +32,9 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
         {agenda.map((item) => (
           <div
             key={item.title}
-            className="flex items-start gap-3 rounded-xl border border-[var(--line-subtle)] bg-[var(--layer-muted)] px-3 py-2 text-[var(--text)] shadow-inner"
+            className="flex items-start gap-3 rounded-xl bg-[var(--layer-muted)]/80 px-3 py-2 text-[var(--text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
           >
-            <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg-surface)] text-[var(--muted)] shadow-sm">
+            <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg-surface)] text-[var(--muted)] shadow-sm ring-1 ring-[var(--line-subtle)]/40">
               <Clock3 className="h-4 w-4" />
             </span>
             <div className="space-y-1">

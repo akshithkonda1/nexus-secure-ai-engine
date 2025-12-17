@@ -17,9 +17,9 @@ const items: { id: CanvasMode; label: string; description: string; icon: Element
 
 export default function BottomBar({ mode, onChange }: BottomBarProps) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30">
-      <div className="pointer-events-auto mx-auto w-full max-w-5xl px-4">
-        <div className="flex items-center justify-between gap-2 rounded-full bg-[var(--bg-surface)]/85 px-4 py-3 shadow-[0_24px_80px_-60px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/60 backdrop-blur-2xl">
+    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 px-4 sm:px-6 lg:px-10">
+      <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-4 py-3 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
+        <div className="flex items-center justify-between gap-2">
           {items.map((item) => {
             const Icon = item.icon;
             const active = item.id === mode;
