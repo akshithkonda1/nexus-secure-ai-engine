@@ -1,6 +1,8 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, MessageSquare, Layout, Settings } from "lucide-react";
+import { Home, MessageSquare, Layout, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn, bg, text, border, patterns } from "../utils/theme";
+import { useState } from "react";
+import RyuzenLogo from "../assets/ryuzen-logo.svg";
 
 const navItems = [
   { label: "Home", to: "/", icon: Home },
@@ -8,80 +10,135 @@ const navItems = [
   { label: "Workspace", to: "/workspace", icon: Layout },
 ];
 
-// Dragon logo SVG component with gradient
-function DragonLogo() {
-  return (
-    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-10">
-      <path
-        d="M20 4C18 4 16 5 15 7L12 12C11 14 10 16 11 18C11.5 19 12.5 19.5 14 19.5C14 20 14 21 15 22C16 23 17.5 23.5 19 23.5C19 25 19.5 27 21 28.5C22.5 30 25 31 27 30.5C28.5 30 29.5 28.5 30 27C30.5 25.5 30.5 24 30 22.5C31 22 32 21 32.5 19.5C33 18 33 16 31.5 14.5C30 13 28 12.5 26 13C26 11.5 25.5 10 24 9C22.5 8 21 7.5 20 4Z"
-        fill="currentColor"
-      />
-      {/* Dragon eye */}
-      <circle cx="23" cy="15" r="1.5" fill="var(--bg-app)" />
-      {/* Dragon details */}
-      <path
-        d="M15 19C15.5 18 16 17 17 16.5M20 23.5C21 24 22 24.5 23 24.5M27 28C28 27 28.5 26 29 25"
-        stroke="white"
-        strokeWidth="0.8"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-    </svg>
-  );
-}
-
 type SidebarProps = {
   collapsed?: boolean;
+  onToggle?: (collapsed: boolean) => void;
 };
 
-export default function Sidebar({ collapsed = false }: SidebarProps) {
+export default function Sidebar({ collapsed: controlledCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  
+  // Use controlled if provided, otherwise use internal state
+  const collapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+  
+  const handleToggle = () => {
+    const newCollapsed = !collapsed;
+    if (onToggle) {
+      onToggle(newCollapsed);
+    } else {
+      setInternalCollapsed(newCollapsed);
+    }
+  };
 
   return (
     <div
       className={cn(
-        "flex h-full w-full flex-col justify-between px-5 py-6 transition-colors",
+        "relative flex h-full flex-col justify-between py-6 transition-all duration-300",
         bg.surface,
         text.primary,
-        collapsed && "items-center"
+        collapsed ? "w-20 items-center px-3" : "w-64 px-5"
       )}
     >
-      <div className="space-y-8">
+      {/* Collapse Toggle Button */}
+      <button
+        onClick={handleToggle}
+        className={cn(
+          "absolute -right-3 top-8 z-10 flex h-6 w-6 items-center justify-center rounded-full border transition-all",
+          border.subtle,
+          bg.surface,
+          "hover:bg-gray-100 dark:hover:bg-slate-700",
+          "shadow-sm"
+        )}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {collapsed ? (
+          <ChevronRight className={cn("h-3.5 w-3.5", text.muted)} />
+        ) : (
+          <ChevronLeft className={cn("h-3.5 w-3.5", text.muted)} />
+        )}
+      </button>
+
+      <div className={cn("space-y-8", collapsed && "space-y-6")}>
         {/* Logo and Brand */}
-        <div className={cn("flex items-center gap-3 px-2", collapsed && "justify-center")}>
+        <div 
+          className={cn(
+            "flex items-center gap-3 px-2 transition-all duration-300",
+            collapsed && "justify-center px-0"
+          )}
+        >
           <div className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl shadow-sm",
-            bg.accent,
-            text.inverse
+            "flex items-center justify-center rounded-xl shadow-sm transition-all duration-300",
+            "bg-gradient-to-br from-blue-500 to-purple-600",
+            collapsed ? "h-10 w-10 p-2" : "h-10 w-10 p-2"
           )}>
-            <DragonLogo />
+            <img 
+              src={RyuzenLogo} 
+              alt="Ryuzen" 
+              className="h-full w-full object-contain"
+            />
           </div>
-          {!collapsed && <span className={cn("text-lg font-semibold tracking-tight", text.primary)}>Ryuzen</span>}
+          
+          <span 
+            className={cn(
+              "text-lg font-semibold tracking-tight transition-all duration-300",
+              text.primary,
+              collapsed ? "w-0 overflow-hidden opacity-0" : "w-auto opacity-100"
+            )}
+          >
+            Ryuzen
+          </span>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col gap-1">
+        <nav className={cn("flex flex-col gap-1", collapsed && "items-center")}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.to;
             return (
-              <NavLink key={item.to} to={item.to} title={item.label} aria-label={item.label}>
-                <div className={patterns.navItem(active)}>
+              <NavLink 
+                key={item.to} 
+                to={item.to} 
+                title={collapsed ? item.label : undefined}
+                aria-label={item.label}
+                className="w-full"
+              >
+                <div className={cn(
+                  patterns.navItem(active),
+                  collapsed && "justify-center px-3"
+                )}>
+                  {/* Active indicator */}
                   <span
                     className={cn(
-                      "absolute left-0 h-full w-1 rounded-r-full transition-colors",
-                      active ? "bg-[var(--accent)]" : "bg-transparent"
+                      "absolute left-0 h-full w-1 rounded-r-full transition-all duration-200",
+                      active ? "bg-gradient-to-b from-blue-600 to-purple-600 opacity-100" : "opacity-0"
                     )}
                     aria-hidden
                   />
+                  
+                  {/* Icon */}
                   <Icon
                     className={cn(
-                      collapsed ? "h-5 w-5" : "ml-3 h-5 w-5",
-                      active ? text.primary : "text-[var(--muted)] group-hover:text-[var(--text)]"
+                      "h-5 w-5 flex-shrink-0 transition-all duration-200",
+                      collapsed ? "" : "ml-3",
+                      active 
+                        ? cn(text.primary, "scale-110") 
+                        : cn(text.muted, "group-hover:text-[var(--text)] group-hover:scale-105")
                     )}
                     aria-hidden
                   />
-                  {!collapsed && <span className="tracking-normal">{item.label}</span>}
+                  
+                  {/* Label */}
+                  <span 
+                    className={cn(
+                      "tracking-normal transition-all duration-300 whitespace-nowrap",
+                      collapsed 
+                        ? "w-0 overflow-hidden opacity-0" 
+                        : "w-auto opacity-100"
+                    )}
+                  >
+                    {item.label}
+                  </span>
                 </div>
               </NavLink>
             );
@@ -89,24 +146,56 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
         </nav>
       </div>
 
-      <nav className={cn("border-t pt-6 transition-colors", border.subtle, collapsed && "w-full")}>
-        <NavLink to="/settings">
-          <div className={patterns.navItem(location.pathname === "/settings")}>
+      {/* Settings at Bottom */}
+      <nav className={cn(
+        "border-t pt-6 transition-all duration-300",
+        border.subtle,
+        collapsed && "w-full"
+      )}>
+        <NavLink 
+          to="/settings"
+          title={collapsed ? "Settings" : undefined}
+          aria-label="Settings"
+          className="w-full"
+        >
+          <div className={cn(
+            patterns.navItem(location.pathname === "/settings"),
+            collapsed && "justify-center px-3"
+          )}>
+            {/* Active indicator */}
             <span
               className={cn(
-                "absolute left-0 h-full w-1 rounded-r-full transition-colors",
-                location.pathname === "/settings" ? "bg-[var(--accent)]" : "bg-transparent"
+                "absolute left-0 h-full w-1 rounded-r-full transition-all duration-200",
+                location.pathname === "/settings" 
+                  ? "bg-gradient-to-b from-blue-600 to-purple-600 opacity-100" 
+                  : "opacity-0"
               )}
               aria-hidden
             />
+            
+            {/* Icon */}
             <Settings
               className={cn(
-                collapsed ? "h-5 w-5" : "ml-3 h-5 w-5",
-                location.pathname === "/settings" ? text.primary : "text-[var(--muted)] group-hover:text-[var(--text)]"
+                "h-5 w-5 flex-shrink-0 transition-all duration-200",
+                collapsed ? "" : "ml-3",
+                location.pathname === "/settings"
+                  ? cn(text.primary, "scale-110")
+                  : cn(text.muted, "group-hover:text-[var(--text)] group-hover:scale-105")
               )}
               aria-hidden
             />
-            {!collapsed && <span>Settings</span>}
+            
+            {/* Label */}
+            <span 
+              className={cn(
+                "tracking-normal transition-all duration-300 whitespace-nowrap",
+                collapsed 
+                  ? "w-0 overflow-hidden opacity-0" 
+                  : "w-auto opacity-100"
+              )}
+            >
+              Settings
+            </span>
           </div>
         </NavLink>
       </nav>
