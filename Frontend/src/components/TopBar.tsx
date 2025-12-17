@@ -31,26 +31,26 @@ export default function TopBar({ onToggleSidebar, sidebarCollapsed = false }: To
         <button
           type="button"
           onClick={() => onToggleSidebar?.()}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line-subtle)] bg-white/70 text-gray-600 backdrop-blur-sm transition hover:border-[var(--line-strong)] hover:text-gray-900 dark:bg-white/5 dark:text-slate-300"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--muted)] shadow-sm backdrop-blur-sm transition hover:border-[var(--line-strong)] hover:text-[var(--text)]"
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </button>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
+        <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
       </div>
       <div className="flex items-center gap-3">
         <button
-          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:from-blue-700 hover:to-purple-700"
+          className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] px-4 py-1.5 text-sm font-semibold text-[var(--text-inverse)] shadow-sm transition-all hover:shadow-md"
         >
           <Zap className="h-3.5 w-3.5" />
           <span>Upgrade</span>
         </button>
         <button
-          className="flex h-8 w-8 items-center justify-center text-gray-500 transition-colors hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-100"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:text-[var(--text)]"
         >
           <HelpCircle className="h-5 w-5" />
         </button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-900 dark:bg-slate-700 dark:text-slate-100">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--bg-elev)] text-xs font-semibold text-[var(--text)] shadow-inner">
           EC
         </div>
       </div>

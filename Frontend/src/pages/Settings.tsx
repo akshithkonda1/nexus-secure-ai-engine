@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Bell, Shield, Database, Zap, User, ChevronRight } from "lucide-react";
 
 export default function SettingsPage() {
-  const { mode, resolved, setMode } = useTheme();
+  const { mode, resolved, setTheme } = useTheme();
   const [notifications, setNotifications] = useState({
     workspace: true,
     mentions: true,
@@ -19,7 +19,7 @@ export default function SettingsPage() {
   const [language, setLanguage] = useState("en");
 
   const handleThemeChange = (value: ThemeMode) => {
-    setMode(value);
+    setTheme(value);
   };
 
   const containerVariants = {
@@ -63,7 +63,7 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">Theme</label>
+              <p className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">Theme</p>
               <div className="flex flex-wrap gap-2">
                 {(["light", "dark", "system"] as ThemeMode[]).map((value) => (
                   <motion.button
@@ -208,7 +208,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <label className="mb-3 block text-sm font-medium text-gray-700 dark:text-slate-300">Performance Mode</label>
+            <p className="mb-3 block text-sm font-medium text-gray-700 dark:text-slate-300">Performance Mode</p>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
               {["eco", "balanced", "performance"].map((mode) => (
                 <motion.button

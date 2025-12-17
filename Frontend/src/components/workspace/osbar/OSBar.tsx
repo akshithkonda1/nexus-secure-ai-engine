@@ -32,7 +32,7 @@ export default function OSBar({ items, activeId, onSelect }: OSBarProps) {
           >
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
               isActive
-                ? "bg-[var(--ryuzen-dodger)] text-white shadow-sm"
+                ? "bg-[var(--ryuzen-dodger)] text-[var(--text-inverse)] shadow-sm"
                 : "bg-white/80 text-[var(--text-muted)] ring-1 ring-white/40 shadow-inner dark:bg-white/10 dark:ring-white/10"
             }`}>
               <item.icon className="h-5 w-5" />

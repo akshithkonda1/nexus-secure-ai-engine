@@ -14,16 +14,16 @@ export default function AuthPage() {
 
         <form className="auth-form">
           <div className="field">
-            <label>
+            <label htmlFor="auth-email">
               <span>Email</span>
             </label>
-            <input type="email" placeholder="name@domain.com" />
+            <input id="auth-email" type="email" placeholder="name@domain.com" />
           </div>
           <div className="field">
-            <label>
+            <label htmlFor="auth-password">
               <span>Password</span>
             </label>
-            <input type="password" placeholder="••••••••" />
+            <input id="auth-password" type="password" placeholder="••••••••" />
           </div>
           <button type="submit" className="secondary full">
             <span>Continue</span>
