@@ -164,7 +164,7 @@ export default function HomePage() {
               AI as a Life Orchestration Engine
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-slate-400">
-              ALOE isn't just another AI framework—it's a complete paradigm for how AI integrates into your life and work
+              ALOE isn&apos;t just another AI framework—it&apos;s a complete paradigm for how AI integrates into your life and work
             </p>
           </div>
 
@@ -181,7 +181,7 @@ export default function HomePage() {
                   Autonomous Orchestration
                 </h3>
                 <p className="text-gray-600 dark:text-slate-400">
-                  ALOE doesn't just respond—it anticipates, plans, and executes complex multi-step workflows without constant guidance.
+                  ALOE doesn&apos;t just respond—it anticipates, plans, and executes complex multi-step workflows without constant guidance.
                 </p>
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function HomePage() {
                   Unified Integration
                 </h3>
                 <p className="text-gray-600 dark:text-slate-400">
-                  Seamlessly connects Toron's intelligence with Workspace's organization, creating a cohesive AI-powered environment.
+                  Seamlessly connects Toron&apos;s intelligence with Workspace&apos;s organization, creating a cohesive AI-powered environment.
                 </p>
               </div>
             </div>
