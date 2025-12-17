@@ -1,5 +1,26 @@
 import { FormEvent, useEffect, useRef, useState, useCallback } from "react";
-import { Send, StopCircle, Sparkles, Copy, RotateCcw, ThumbsUp, ThumbsDown, MoreVertical, Check } from "lucide-react";
+import { 
+  Send, 
+  StopCircle, 
+  Sparkles, 
+  Copy, 
+  RotateCcw, 
+  ThumbsUp, 
+  ThumbsDown, 
+  MoreVertical, 
+  Check,
+  Plus,
+  Paperclip,
+  Image as ImageIcon,
+  FileText,
+  X,
+  Github,
+  FolderOpen,
+  Link2,
+  Code,
+  Database,
+  Globe
+} from "lucide-react";
 import { cn, bg, text, border } from "../utils/theme";
 
 interface Message {
@@ -9,12 +30,24 @@ interface Message {
   timestamp: Date;
   isStreaming?: boolean;
   error?: boolean;
+  attachments?: Attachment[];
 }
 
-interface ToronAPIResponse {
-  message: string;
-  messageId: string;
-  conversationId: string;
+interface Attachment {
+  id: string;
+  name: string;
+  type: 'file' | 'image' | 'github' | 'drive' | 'url';
+  size?: number;
+  url?: string;
+  preview?: string;
+}
+
+interface Integration {
+  id: string;
+  name: string;
+  icon: any;
+  connected: boolean;
+  description: string;
 }
 
 export default function ToronPage() {
@@ -23,9 +56,61 @@ export default function ToronPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<string>("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+
+  // Available integrations
+  const [integrations, setIntegrations] = useState<Integration[]>([
+    {
+      id: 'github',
+      name: 'GitHub',
+      icon: Github,
+      connected: false,
+      description: 'Access repositories and code'
+    },
+    {
+      id: 'drive',
+      name: 'Google Drive',
+      icon: FolderOpen,
+      connected: false,
+      description: 'Search and attach files'
+    },
+    {
+      id: 'notion',
+      name: 'Notion',
+      icon: FileText,
+      connected: false,
+      description: 'Connect your workspace'
+    },
+    {
+      id: 'linear',
+      name: 'Linear',
+      icon: Code,
+      connected: false,
+      description: 'Access issues and projects'
+    },
+    {
+      id: 'database',
+      name: 'Database',
+      icon: Database,
+      connected: false,
+      description: 'Query your data'
+    },
+    {
+      id: 'web',
+      name: 'Web Search',
+      icon: Globe,
+      connected: true,
+      description: 'Search the internet'
+    }
+  ]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -35,6 +120,18 @@ export default function ToronPage() {
   // Auto-focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  // Close attach menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(event.target as Node)) {
+        setShowAttachMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Generate unique message ID
@@ -58,6 +155,83 @@ export default function ToronPage() {
     }
   };
 
+  // Handle file upload
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    files.forEach(file => {
+      const attachment: Attachment = {
+        id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: file.name,
+        type: file.type.startsWith('image/') ? 'image' : 'file',
+        size: file.size,
+        url: URL.createObjectURL(file)
+      };
+
+      // Generate preview for images
+      if (attachment.type === 'image') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          attachment.preview = e.target?.result as string;
+          setAttachments(prev => [...prev, attachment]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setAttachments(prev => [...prev, attachment]);
+      }
+    });
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setShowAttachMenu(false);
+  };
+
+  // Remove attachment
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  // Handle GitHub integration
+  const handleGitHubConnect = () => {
+    // TODO: Implement OAuth flow
+    console.log('Connecting to GitHub...');
+    // Example: window.location.href = '/api/auth/github';
+    setShowAttachMenu(false);
+  };
+
+  // Handle Google Drive integration
+  const handleDriveConnect = () => {
+    // TODO: Implement Google OAuth
+    console.log('Connecting to Google Drive...');
+    setShowAttachMenu(false);
+  };
+
+  // Handle URL attachment
+  const handleAttachURL = () => {
+    const url = prompt('Enter URL:');
+    if (url) {
+      const attachment: Attachment = {
+        id: `url_${Date.now()}`,
+        name: url,
+        type: 'url',
+        url: url
+      };
+      setAttachments(prev => [...prev, attachment]);
+    }
+    setShowAttachMenu(false);
+  };
+
+  // Toggle integration
+  const handleToggleIntegration = (integrationId: string) => {
+    setIntegrations(prev => prev.map(int => 
+      int.id === integrationId 
+        ? { ...int, connected: !int.connected }
+        : int
+    ));
+  };
+
   // Stop streaming response
   const handleStopStreaming = () => {
     if (abortControllerRef.current) {
@@ -71,7 +245,7 @@ export default function ToronPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const userMessage = input.trim();
-    if (!userMessage || isStreaming) return;
+    if ((!userMessage && attachments.length === 0) || isStreaming) return;
 
     // Add user message immediately
     const userMsgId = generateMessageId();
@@ -80,10 +254,12 @@ export default function ToronPage() {
       role: "user",
       content: userMessage,
       timestamp: new Date(),
+      attachments: [...attachments]
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
     setInput("");
+    setAttachments([]);
     setIsStreaming(true);
 
     // Reset textarea height
@@ -116,9 +292,11 @@ export default function ToronPage() {
         body: JSON.stringify({
           message: userMessage,
           conversationId: conversationId || undefined,
+          attachments: newUserMessage.attachments,
           messageHistory: messages.map(m => ({
             role: m.role,
             content: m.content,
+            attachments: m.attachments
           })),
         }),
         signal: abortControllerRef.current.signal,
@@ -244,32 +422,21 @@ export default function ToronPage() {
 
   // Regenerate response
   const handleRegenerate = useCallback((messageIndex: number) => {
-    // Find the user message before this assistant message
     const userMessage = messages[messageIndex - 1];
     if (userMessage && userMessage.role === 'user') {
-      // Remove the last assistant message and regenerate
       setMessages(prev => prev.slice(0, messageIndex));
       setInput(userMessage.content);
-      
-      // Trigger regeneration
-      setTimeout(() => {
-        inputRef.current?.focus();
-        // Optionally auto-submit
-        // handleSubmit(new Event('submit') as any);
-      }, 100);
+      if (userMessage.attachments) {
+        setAttachments(userMessage.attachments);
+      }
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [messages]);
 
-  // Handle feedback (thumbs up/down)
+  // Handle feedback
   const handleFeedback = useCallback((messageId: string, feedback: 'up' | 'down') => {
-    // TODO: Send feedback to backend
     console.log(`Feedback for ${messageId}: ${feedback}`);
-    
-    // Example API call:
-    // fetch('/api/toron/feedback', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ messageId, feedback }),
-    // });
+    // TODO: Send to backend
   }, []);
 
   // New conversation
@@ -277,8 +444,17 @@ export default function ToronPage() {
     setMessages([]);
     setConversationId("");
     setInput("");
+    setAttachments([]);
     inputRef.current?.focus();
   }, []);
+
+  // Format file size
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  };
 
   return (
     <section className="flex h-full flex-col">
@@ -297,9 +473,10 @@ export default function ToronPage() {
           </p>
         </div>
         
-        {messages.length > 0 && (
+        <div className="flex items-center gap-2">
+          {/* Integrations button */}
           <button
-            onClick={handleNewChat}
+            onClick={() => setShowIntegrations(!showIntegrations)}
             className={cn(
               'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
               'border',
@@ -308,10 +485,72 @@ export default function ToronPage() {
               'hover:bg-gray-100 dark:hover:bg-slate-800'
             )}
           >
-            New Chat
+            <Link2 className="mr-2 inline h-4 w-4" />
+            Integrations
           </button>
-        )}
+
+          {messages.length > 0 && (
+            <button
+              onClick={handleNewChat}
+              className={cn(
+                'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                'border',
+                border.subtle,
+                text.primary,
+                'hover:bg-gray-100 dark:hover:bg-slate-800'
+              )}
+            >
+              New Chat
+            </button>
+          )}
+        </div>
       </header>
+
+      {/* Integrations Panel */}
+      {showIntegrations && (
+        <div className={cn(
+          'mb-4 rounded-xl border p-4',
+          border.subtle,
+          bg.surface
+        )}>
+          <h3 className={cn('mb-3 text-sm font-semibold', text.primary)}>
+            Connected Integrations
+          </h3>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+            {integrations.map((integration) => {
+              const Icon = integration.icon;
+              return (
+                <button
+                  key={integration.id}
+                  onClick={() => handleToggleIntegration(integration.id)}
+                  className={cn(
+                    'flex flex-col items-center gap-2 rounded-lg border p-3 text-center transition-all',
+                    integration.connected
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : cn(border.subtle, 'hover:bg-gray-50 dark:hover:bg-slate-800')
+                  )}
+                  title={integration.description}
+                >
+                  <Icon className={cn(
+                    'h-5 w-5',
+                    integration.connected ? 'text-blue-600 dark:text-blue-400' : text.muted
+                  )} />
+                  <div className="flex flex-col">
+                    <span className={cn('text-xs font-medium', text.primary)}>
+                      {integration.name}
+                    </span>
+                    {integration.connected && (
+                      <span className="text-[10px] text-green-600 dark:text-green-400">
+                        Connected
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Messages Container */}
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -332,7 +571,7 @@ export default function ToronPage() {
                 How can I help you today?
               </h2>
               <p className={cn('mb-8 text-center text-sm', text.tertiary)}>
-                Ask me anything, and I'll provide precise, actionable responses.
+                Ask me anything, attach files, or connect your tools.
               </p>
               
               {/* Suggested prompts */}
@@ -411,18 +650,57 @@ export default function ToronPage() {
                       </span>
                     </div>
 
+                    {/* Attachments */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {message.attachments.map(attachment => (
+                          <div
+                            key={attachment.id}
+                            className={cn(
+                              'flex items-center gap-2 rounded-lg px-3 py-2 text-xs',
+                              message.role === 'user'
+                                ? 'bg-white/20 text-white'
+                                : 'bg-gray-100 dark:bg-slate-800'
+                            )}
+                          >
+                            {attachment.type === 'image' ? (
+                              <ImageIcon className="h-4 w-4" />
+                            ) : attachment.type === 'github' ? (
+                              <Github className="h-4 w-4" />
+                            ) : attachment.type === 'drive' ? (
+                              <FolderOpen className="h-4 w-4" />
+                            ) : attachment.type === 'url' ? (
+                              <Link2 className="h-4 w-4" />
+                            ) : (
+                              <FileText className="h-4 w-4" />
+                            )}
+                            <span className="max-w-[200px] truncate">
+                              {attachment.name}
+                            </span>
+                            {attachment.size && (
+                              <span className="opacity-70">
+                                ({formatFileSize(attachment.size)})
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Message content */}
-                    <div className={cn(
-                      'prose prose-sm max-w-none',
-                      message.role === 'user' && 'prose-invert'
-                    )}>
-                      <p className="whitespace-pre-wrap leading-relaxed">
-                        {message.content}
-                        {message.isStreaming && (
-                          <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-current" />
-                        )}
-                      </p>
-                    </div>
+                    {message.content && (
+                      <div className={cn(
+                        'prose prose-sm max-w-none',
+                        message.role === 'user' && 'prose-invert'
+                      )}>
+                        <p className="whitespace-pre-wrap leading-relaxed">
+                          {message.content}
+                          {message.isStreaming && (
+                            <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-current" />
+                          )}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Assistant message actions */}
                     {message.role === 'assistant' && !message.isStreaming && (
@@ -494,6 +772,66 @@ export default function ToronPage() {
           )}
         </div>
 
+        {/* Attachment Preview */}
+        {attachments.length > 0 && (
+          <div className={cn('mt-3 flex flex-wrap gap-2 rounded-xl border p-3', border.subtle, bg.surface)}>
+            {attachments.map(attachment => (
+              <div
+                key={attachment.id}
+                className="group relative"
+              >
+                {attachment.type === 'image' && attachment.preview ? (
+                  <div className="relative h-20 w-20 overflow-hidden rounded-lg">
+                    <img 
+                      src={attachment.preview} 
+                      alt={attachment.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                      className="absolute right-1 top-1 rounded-full bg-red-600 p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className={cn(
+                    'flex items-center gap-2 rounded-lg px-3 py-2',
+                    bg.muted
+                  )}>
+                    {attachment.type === 'github' ? (
+                      <Github className={cn('h-4 w-4', text.muted)} />
+                    ) : attachment.type === 'drive' ? (
+                      <FolderOpen className={cn('h-4 w-4', text.muted)} />
+                    ) : attachment.type === 'url' ? (
+                      <Link2 className={cn('h-4 w-4', text.muted)} />
+                    ) : (
+                      <FileText className={cn('h-4 w-4', text.muted)} />
+                    )}
+                    <span className={cn('max-w-[150px] truncate text-xs', text.primary)}>
+                      {attachment.name}
+                    </span>
+                    {attachment.size && (
+                      <span className={cn('text-xs', text.muted)}>
+                        ({formatFileSize(attachment.size)})
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                      className={cn(
+                        'rounded p-0.5 transition-colors',
+                        'hover:bg-red-100 dark:hover:bg-red-900/30'
+                      )}
+                    >
+                      <X className="h-3 w-3 text-red-600" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Input Area */}
         <form onSubmit={handleSubmit} className="mt-4">
           <div className={cn(
@@ -522,6 +860,98 @@ export default function ToronPage() {
             {/* Input actions */}
             <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-slate-700">
               <div className="flex items-center gap-2">
+                {/* Attach button with menu */}
+                <div className="relative" ref={attachMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAttachMenu(!showAttachMenu)}
+                    className={cn(
+                      'rounded-lg p-2 transition-colors',
+                      'hover:bg-gray-200 dark:hover:bg-slate-700',
+                      showAttachMenu && 'bg-gray-200 dark:bg-slate-700'
+                    )}
+                    title="Attach"
+                  >
+                    <Plus className={cn('h-5 w-5', text.primary)} />
+                  </button>
+
+                  {/* Attach menu */}
+                  {showAttachMenu && (
+                    <div className={cn(
+                      'absolute bottom-full left-0 mb-2 w-56 rounded-xl border p-2 shadow-lg',
+                      border.subtle,
+                      bg.surface
+                    )}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          'hover:bg-gray-100 dark:hover:bg-slate-800',
+                          text.primary
+                        )}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                        Upload Files
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          'hover:bg-gray-100 dark:hover:bg-slate-800',
+                          text.primary
+                        )}
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        Upload Images
+                      </button>
+
+                      <div className={cn('my-1 h-px', 'bg-gray-200 dark:bg-slate-700')} />
+
+                      <button
+                        type="button"
+                        onClick={handleGitHubConnect}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          'hover:bg-gray-100 dark:hover:bg-slate-800',
+                          text.primary
+                        )}
+                      >
+                        <Github className="h-4 w-4" />
+                        GitHub Repository
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDriveConnect}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          'hover:bg-gray-100 dark:hover:bg-slate-800',
+                          text.primary
+                        )}
+                      >
+                        <FolderOpen className="h-4 w-4" />
+                        Google Drive
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleAttachURL}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                          'hover:bg-gray-100 dark:hover:bg-slate-800',
+                          text.primary
+                        )}
+                      >
+                        <Link2 className="h-4 w-4" />
+                        Attach URL
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <span className={cn('text-xs', text.muted)}>
                   {isStreaming ? 'Toron is thinking...' : 'Press Enter to send, Shift+Enter for new line'}
                 </span>
@@ -543,7 +973,7 @@ export default function ToronPage() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={!input.trim()}
+                    disabled={!input.trim() && attachments.length === 0}
                     className={cn(
                       'flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2 text-sm font-semibold text-white transition-all',
                       'hover:shadow-lg hover:scale-[1.02]',
@@ -567,6 +997,16 @@ export default function ToronPage() {
             </div>
           )}
         </form>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="*/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
       </div>
     </section>
   );
