@@ -1,11 +1,5 @@
-import { useState } from 'react';
 import { 
   Calendar, 
-  Users, 
-  MessageSquare, 
-  Settings, 
-  PanelLeftClose,
-  PanelLeftOpen,
   Link2,
   Clock,
   CheckSquare
@@ -13,89 +7,64 @@ import {
 import { cn } from '../utils/theme';
 
 export default function Workspace() {
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  
   return (
     <div className="h-full overflow-hidden bg-[#0f1419] text-white">
       {/* Workspace Container */}
       <div className="mx-auto flex h-full">
-        {/* Left Sidebar - Collapsible */}
-        {!leftSidebarCollapsed && (
-          <aside 
-            className="group relative flex flex-col border-r border-slate-800 bg-[#0d1117]"
-            style={{ 
-              width: 280,
-              minWidth: 280,
-              flexShrink: 0,
-            }}
-          >
-            {/* Collapse Button - Only visible on hover */}
-            <button
-              onClick={() => setLeftSidebarCollapsed(true)}
-              className="absolute -right-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-[#0d1117] opacity-0 transition-opacity hover:bg-slate-800 group-hover:opacity-100"
-              title="Collapse sidebar (Cmd+B)"
-            >
-              <PanelLeftClose className="h-3.5 w-3.5 text-slate-400" />
-            </button>
-            
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Lists Section */}
-              <div className="mb-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    <span className="font-medium">Lists</span>
-                    <span className="text-xs">Semantic shelves</span>
-                  </div>
-                  <button className="rounded p-1 hover:bg-slate-800">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
+        {/* Left Sidebar - Always Visible */}
+        <aside 
+          className="relative flex flex-col border-r border-slate-800 bg-[#0d1117]"
+          style={{ 
+            width: 280,
+            minWidth: 280,
+            flexShrink: 0,
+          }}
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Lists Section */}
+            <div className="mb-6">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span className="font-medium">Lists</span>
+                  <span className="text-xs">Semantic shelves</span>
                 </div>
-                
-                <div className="space-y-1">
-                  <ListItem name="Research" count={12} active />
-                  <ListItem name="Delivery" count={8} />
-                  <ListItem name="Backlog" count={19} />
-                </div>
-                
-                <div className="mt-2 text-xs text-slate-500">
-                  Selected list: Research
-                </div>
+                <button className="rounded p-1 hover:bg-slate-800">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
               </div>
               
-              {/* Connectors Section */}
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-                  <Link2 className="h-4 w-4" />
-                  <span className="font-medium">Connectors</span>
-                  <span className="text-xs">Ecosystems linked</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <ConnectorItem name="GitHub" status="Healthy" color="blue" />
-                  <ConnectorItem name="Notion" status="Idle" color="gray" />
-                  <ConnectorItem name="Linear" status="Listening" color="blue" />
-                </div>
+              <div className="space-y-1">
+                <ListItem name="Research" count={12} active />
+                <ListItem name="Delivery" count={8} />
+                <ListItem name="Backlog" count={19} />
+              </div>
+              
+              <div className="mt-2 text-xs text-slate-500">
+                Selected list: Research
               </div>
             </div>
-          </aside>
-        )}
-        
-        {/* Collapsed Left Sidebar Trigger */}
-        {leftSidebarCollapsed && (
-          <button
-            onClick={() => setLeftSidebarCollapsed(false)}
-            className="group flex w-12 flex-col items-center justify-start border-r border-slate-800 bg-[#0d1117] pt-4 hover:bg-slate-900"
-            title="Expand sidebar"
-          >
-            <PanelLeftOpen className="h-5 w-5 text-slate-400 group-hover:text-slate-300" />
-          </button>
-        )}
+            
+            {/* Connectors Section */}
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
+                <Link2 className="h-4 w-4" />
+                <span className="font-medium">Connectors</span>
+                <span className="text-xs">Ecosystems linked</span>
+              </div>
+              
+              <div className="space-y-2">
+                <ConnectorItem name="GitHub" status="Healthy" color="blue" />
+                <ConnectorItem name="Notion" status="Idle" color="gray" />
+                <ConnectorItem name="Linear" status="Listening" color="blue" />
+              </div>
+            </div>
+          </div>
+        </aside>
         
         {/* Main Canvas - Focus Surface */}
         <main className="flex flex-1 flex-col bg-[#0f1419]">
@@ -158,74 +127,52 @@ export default function Workspace() {
           </div>
         </main>
         
-        {/* Right Panel - Collapsible */}
-        {!rightPanelCollapsed && (
-          <aside 
-            className="group relative flex flex-col border-l border-slate-800 bg-[#0d1117]"
-            style={{ 
-              width: 360,
-              minWidth: 360,
-              flexShrink: 0,
-            }}
-          >
-            {/* Collapse Button - Only visible on hover */}
-            <button
-              onClick={() => setRightPanelCollapsed(true)}
-              className="absolute -left-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-[#0d1117] opacity-0 transition-opacity hover:bg-slate-800 group-hover:opacity-100"
-              title="Collapse panel (Cmd+/)"
-            >
-              <PanelLeftOpen className="h-3.5 w-3.5 rotate-180 text-slate-400" />
-            </button>
-            
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Calendar Section */}
-              <div className="mb-6">
-                <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-                  <Calendar className="h-4 w-4" />
-                  <span className="font-medium">Calendar</span>
-                  <span className="text-xs">Time auth</span>
-                </div>
-                <div className="space-y-2">
-                  <EventItem title="Design" team="3 team" time="09:30" />
-                  <EventItem title="Client*" subtitle="Calm ch" time="12:00" />
-                  <EventItem title="Focus" subtitle="Reserve" time="15:30" />
-                </div>
+        {/* Right Panel - Always Visible */}
+        <aside 
+          className="relative flex flex-col border-l border-slate-800 bg-[#0d1117]"
+          style={{ 
+            width: 360,
+            minWidth: 360,
+            flexShrink: 0,
+          }}
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Calendar Section */}
+            <div className="mb-6">
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
+                <Calendar className="h-4 w-4" />
+                <span className="font-medium">Calendar</span>
+                <span className="text-xs">Time auth</span>
               </div>
-              
-              {/* Tasks Section */}
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-                  <CheckSquare className="h-4 w-4" />
-                  <span className="font-medium">Tasks</span>
-                  <span className="text-xs">Today</span>
-                </div>
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    placeholder="Quick add"
-                    className="w-full rounded bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="text-slate-300">Set next milest</div>
-                  <div className="text-slate-300">Review block</div>
-                  <div className="text-slate-300">Prep calm up</div>
-                </div>
+              <div className="space-y-2">
+                <EventItem title="Design" team="3 team" time="09:30" />
+                <EventItem title="Client*" subtitle="Calm ch" time="12:00" />
+                <EventItem title="Focus" subtitle="Reserve" time="15:30" />
               </div>
             </div>
-          </aside>
-        )}
-        
-        {/* Collapsed Right Panel Trigger */}
-        {rightPanelCollapsed && (
-          <button
-            onClick={() => setRightPanelCollapsed(false)}
-            className="group flex w-12 flex-col items-center justify-start border-l border-slate-800 bg-[#0d1117] pt-4 hover:bg-slate-900"
-            title="Expand panel"
-          >
-            <PanelLeftClose className="h-5 w-5 text-slate-400 group-hover:text-slate-300" />
-          </button>
-        )}
+            
+            {/* Tasks Section */}
+            <div>
+              <div className="mb-3 flex items-center gap-2 text-sm text-slate-400">
+                <CheckSquare className="h-4 w-4" />
+                <span className="font-medium">Tasks</span>
+                <span className="text-xs">Today</span>
+              </div>
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Quick add"
+                  className="w-full rounded bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="text-slate-300">Set next milest</div>
+                <div className="text-slate-300">Review block</div>
+                <div className="text-slate-300">Prep calm up</div>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
