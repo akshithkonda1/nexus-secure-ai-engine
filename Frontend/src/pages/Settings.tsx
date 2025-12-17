@@ -2,19 +2,7 @@ import { useTheme, ThemeMode } from "../theme/ThemeProvider";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Bell, Shield, Database, Zap, User, ChevronRight } from "lucide-react";
-import {
-  Card,
-  SectionHeader,
-  Toggle,
-  Button,
-  Select,
-  Label,
-  cn,
-  text,
-  bg,
-  border,
-  patterns,
-} from "../components/ui/ThemeComponents";
+import { Card, SectionHeader, Toggle, Select, Label, cn, text, bg, border } from "../components/ui/ThemeComponents";
 
 export default function SettingsPage() {
   const { mode, resolved, setTheme } = useTheme();

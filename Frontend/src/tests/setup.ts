@@ -23,3 +23,16 @@ if (!window.matchMedia) {
     writable: true,
   });
 }
+
+if (!window.ResizeObserver) {
+  class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  Object.defineProperty(window, "ResizeObserver", {
+    value: MockResizeObserver,
+    writable: true,
+  });
+}
