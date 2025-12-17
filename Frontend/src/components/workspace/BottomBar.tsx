@@ -18,7 +18,7 @@ const items: { id: CanvasMode; label: string; icon: ElementType }[] = [
 
 export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
   return (
-    <div className="pointer-events-none fixed bottom-4 right-[clamp(32px,6vw,104px)] z-30 w-[clamp(420px,42vw,620px)] px-4 sm:right-[clamp(40px,7vw,112px)] sm:px-6 lg:right-[clamp(48px,8vw,120px)] lg:px-7">
+    <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 w-[clamp(420px,40vw,560px)] -translate-x-1/2 px-4 sm:px-6 lg:px-7">
       <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-2 py-1.5 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
         <div className="flex items-center gap-1.5">
           <div className="flex flex-1 items-center gap-1.5">
