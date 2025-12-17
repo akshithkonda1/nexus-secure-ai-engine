@@ -21,7 +21,15 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto font-sans bg-[#FAFAFA] dark:bg-slate-950">
+    <div className="flex h-full flex-col overflow-y-auto font-sans bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div
+        aria-hidden
+        className="
+          pointer-events-none fixed inset-0
+          bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08),transparent_60%)]
+          dark:bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.06),transparent_60%)]
+        "
+      />
       {/* Hero Section */}
       <div className="flex flex-col items-center justify-center gap-12 pt-20 pb-16">
         {/* ALOE Badge */}
