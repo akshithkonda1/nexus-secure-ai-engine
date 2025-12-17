@@ -9,9 +9,12 @@ const items = [
   { key: "toron", label: "Analyze with Toron" },
 ];
 
-const OSBar = ({ activeMode, onSelect }) => {
+const OSBar = ({ activeMode, onSelect, width, offset = 0 }) => {
   return (
-    <div className="fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center rounded-3xl border border-[var(--border-card)] bg-[var(--bg-card)] px-4 py-2 shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-[var(--glass-blur)]">
+    <div
+      className="z-30 mt-2 flex items-center rounded-3xl border border-[var(--border-card)] bg-[var(--bg-card)] px-4 py-2 shadow-[0_0_60px_rgba(0,0,0,0.3)] backdrop-blur-[var(--glass-blur)]"
+      style={{ width, marginLeft: offset }}
+    >
       <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
         {items.map((item) => (
           <button
