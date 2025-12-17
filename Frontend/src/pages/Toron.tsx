@@ -881,10 +881,10 @@ export default function ToronPage() {
                 <Plus className={cn('h-5 w-5', text.muted)} />
               </button>
 
-              {/* Attach menu - appears below the button */}
+              {/* Attach menu - appears UP and to the RIGHT */}
               {showAttachMenu && (
                 <div className={cn(
-                  'absolute top-12 left-0 w-64 rounded-xl border shadow-xl z-50',
+                  'absolute bottom-12 left-0 w-64 rounded-xl border shadow-xl z-50',
                   border.subtle,
                   bg.surface,
                   'p-1'
@@ -1084,4 +1084,4 @@ export default function ToronPage() {
       </div>
     </section>
   );
-                        }
+}
