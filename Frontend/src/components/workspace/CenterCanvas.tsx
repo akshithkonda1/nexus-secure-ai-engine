@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { forwardRef } from "react";
 import { CanvasMode } from "./types";
 
 const copyByMode: Record<CanvasMode, { title: string; subtitle: string }> = {
@@ -20,12 +21,14 @@ type CenterCanvasProps = {
   isCleared?: boolean;
 };
 
-export default function CenterCanvas({ mode, className, isCleared = false }: CenterCanvasProps) {
+const CenterCanvas = forwardRef<HTMLElement, CenterCanvasProps>(
+  ({ mode, className, isCleared = false }: CenterCanvasProps, ref) => {
   const content = isCleared ? clearedCopy : copyByMode[mode];
 
   return (
     <section
       aria-label="Center canvas"
+      ref={ref}
       className={`relative flex h-full min-h-[60vh] flex-col justify-between overflow-hidden rounded-[28px] bg-gradient-to-b from-[var(--bg-surface)]/55 via-[var(--bg-elev)]/35 to-[var(--bg-app)]/15 p-8 text-[var(--text)] transition-[background,transform] backdrop-blur-xl ${className ?? ""}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -50,4 +53,9 @@ export default function CenterCanvas({ mode, className, isCleared = false }: Cen
       </div>
     </section>
   );
-}
+  }
+);
+
+CenterCanvas.displayName = "CenterCanvas";
+
+export default CenterCanvas;

@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import CenterCanvas from "./CenterCanvas";
 import BottomBar from "./BottomBar";
 import ListsWidget from "./widgets/ListsWidget";
@@ -15,6 +15,8 @@ type WorkspaceSurfaceProps = {
 };
 
 export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome }: WorkspaceSurfaceProps) {
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [canvasCenter, setCanvasCenter] = useState<number | null>(null);
   const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
@@ -24,6 +26,28 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateCenter = () => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      setCanvasCenter(rect ? rect.left + rect.width / 2 : null);
+    };
+
+    updateCenter();
+
+    const resizeObserver = new ResizeObserver(updateCenter);
+    if (canvasRef.current) {
+      resizeObserver.observe(canvasRef.current);
+    }
+
+    window.addEventListener("resize", updateCenter);
+    return () => {
+      window.removeEventListener("resize", updateCenter);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (
@@ -43,6 +67,7 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
             key={isCleared ? `${mode}-cleared` : mode}
             mode={mode}
             isCleared={isCleared}
+            ref={canvasRef}
             className="order-2 w-full md:order-1 md:col-span-2 lg:order-none lg:[grid-column:2] lg:[grid-row:1/span_2]"
           />
 
@@ -66,7 +91,7 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
         </div>
       </div>
 
-      <BottomBar mode={mode} onChange={onModeChange} onHome={onHome} />
+      <BottomBar mode={mode} onChange={onModeChange} onHome={onHome} anchorX={canvasCenter ?? undefined} />
     </div>
   );
 }

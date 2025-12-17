@@ -1,4 +1,4 @@
-import { ElementType } from "react";
+import { type CSSProperties, ElementType } from "react";
 import { Activity, BookOpen, Home, Kanban, NotebookPen, Workflow } from "lucide-react";
 import { CanvasMode } from "./types";
 
@@ -6,6 +6,7 @@ type BottomBarProps = {
   mode: CanvasMode;
   onChange: (mode: CanvasMode) => void;
   onHome: () => void;
+  anchorX?: number;
 };
 
 const items: { id: CanvasMode; label: string; icon: ElementType }[] = [
@@ -16,9 +17,15 @@ const items: { id: CanvasMode; label: string; icon: ElementType }[] = [
   { id: "analyze", label: "Analyze", icon: Activity },
 ];
 
-export default function BottomBar({ mode, onChange, onHome }: BottomBarProps) {
+export default function BottomBar({ mode, onChange, onHome, anchorX }: BottomBarProps) {
+  const anchorStyle: CSSProperties | undefined =
+    anchorX !== undefined ? { left: `${anchorX}px` } : { left: "50%" };
+
   return (
-    <div className="pointer-events-none fixed bottom-4 left-1/2 z-30 w-[clamp(420px,40vw,560px)] -translate-x-1/2 px-4 sm:px-6 lg:px-7">
+    <div
+      className="pointer-events-none fixed bottom-4 z-30 w-[clamp(420px,40vw,560px)] -translate-x-1/2 px-4 sm:px-6 lg:px-7"
+      style={anchorStyle}
+    >
       <div className="pointer-events-auto w-full rounded-full bg-[var(--bg-surface)]/85 px-2 py-1.5 shadow-[0_22px_70px_-58px_rgba(0,0,0,0.85)] ring-1 ring-[var(--line-subtle)]/40 backdrop-blur-2xl">
         <div className="flex items-center gap-1.5">
           <div className="flex flex-1 items-center gap-1.5">
