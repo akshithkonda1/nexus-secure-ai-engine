@@ -63,26 +63,31 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle }: Si
         {/* Logo and Brand */}
         <div 
           className={cn(
-            "flex items-center gap-3 px-2 transition-all duration-300",
-            collapsed && "justify-center px-0"
+            "flex items-center gap-3 transition-all duration-300",
+            collapsed ? "justify-center px-0" : "px-2"
           )}
         >
           <div className={cn(
-            "flex items-center justify-center rounded-xl shadow-sm transition-all duration-300",
-            "bg-gradient-to-br from-blue-500 to-purple-600",
-            collapsed ? "h-10 w-10 p-2" : "h-10 w-10 p-2"
+            "group relative flex items-center justify-center rounded-xl shadow-lg transition-all duration-300",
+            "bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600",
+            "hover:shadow-xl hover:scale-105",
+            "ring-2 ring-blue-500/20 dark:ring-purple-500/20",
+            collapsed ? "h-11 w-11 p-2.5" : "h-11 w-11 p-2.5"
           )}>
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+            
             <img 
               src={RyuzenLogo} 
               alt="Ryuzen" 
-              className="h-full w-full object-contain"
+              className="relative z-10 h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
             />
           </div>
           
           <span 
             className={cn(
-              "text-lg font-semibold tracking-tight transition-all duration-300",
-              text.primary,
+              "text-xl font-bold tracking-tight transition-all duration-300",
+              "bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400",
               collapsed ? "w-0 overflow-hidden opacity-0" : "w-auto opacity-100"
             )}
           >
