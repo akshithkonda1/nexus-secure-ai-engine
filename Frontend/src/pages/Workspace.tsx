@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useWorkspaceLayout } from './workspace-envelope';
 import { 
   Calendar, 
   Users, 
@@ -14,35 +13,24 @@ import {
 import { cn } from '../utils/theme';
 
 export default function Workspace() {
-  const layout = useWorkspaceLayout();
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   
-  // Calculate effective widths with collapse states
-  const effectiveLeftWidth = leftSidebarCollapsed ? 0 : layout.leftSidebar;
-  const effectiveRightWidth = rightPanelCollapsed ? 0 : layout.rightPanel;
-  const effectiveCanvasWidth = layout.operatingSpan - effectiveLeftWidth - effectiveRightWidth;
-  
   return (
     <div className="h-full overflow-hidden bg-[#0f1419] text-white">
-      {/* Workspace Container - Operating Envelope */}
-      <div 
-        className="mx-auto flex h-full"
-        style={{
-          maxWidth: layout.operatingSpan,
-        }}
-      >
+      {/* Workspace Container */}
+      <div className="mx-auto flex h-full">
         {/* Left Sidebar - Collapsible */}
-        {!leftSidebarCollapsed && layout.mode !== 'stacked' && (
+        {!leftSidebarCollapsed && (
           <aside 
             className="group relative flex flex-col border-r border-slate-800 bg-[#0d1117]"
             style={{ 
-              width: layout.leftSidebar,
-              minWidth: layout.leftSidebar,
+              width: 280,
+              minWidth: 280,
               flexShrink: 0,
             }}
           >
-            {/* Collapse Button - Only visible on hover or small screens */}
+            {/* Collapse Button - Only visible on hover */}
             <button
               onClick={() => setLeftSidebarCollapsed(true)}
               className="absolute -right-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-[#0d1117] opacity-0 transition-opacity hover:bg-slate-800 group-hover:opacity-100"
@@ -110,13 +98,7 @@ export default function Workspace() {
         )}
         
         {/* Main Canvas - Focus Surface */}
-        <main 
-          className="flex flex-1 flex-col bg-[#0f1419]"
-          style={{ 
-            width: effectiveCanvasWidth,
-            minWidth: 600, // Minimum readable width
-          }}
-        >
+        <main className="flex flex-1 flex-col bg-[#0f1419]">
           {/* Canvas Header */}
           <div className="border-b border-slate-800 px-8 py-6">
             <div className="mb-2 text-sm text-slate-400">FOCUS SURFACE</div>
@@ -177,12 +159,12 @@ export default function Workspace() {
         </main>
         
         {/* Right Panel - Collapsible */}
-        {!rightPanelCollapsed && layout.mode !== 'stacked' && (
+        {!rightPanelCollapsed && (
           <aside 
             className="group relative flex flex-col border-l border-slate-800 bg-[#0d1117]"
             style={{ 
-              width: layout.rightPanel,
-              minWidth: layout.rightPanel,
+              width: 360,
+              minWidth: 360,
               flexShrink: 0,
             }}
           >
