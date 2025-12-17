@@ -859,29 +859,32 @@ export default function ToronPage() {
         )}
 
         {/* Input Area */}
-        <form onSubmit={handleSubmit} className="mt-4 relative">
-          {/* Plus button - Claude style (positioned to the left of input) */}
-          <div className="absolute -left-14 bottom-4 z-10">
-            <div className="relative" ref={attachMenuRef}>
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className={cn(
+            'relative rounded-2xl border transition-colors',
+            border.subtle,
+            bg.surface,
+            'focus-within:border-blue-600 dark:focus-within:border-blue-500'
+          )}>
+            {/* Plus button - INSIDE the input on the left */}
+            <div className="absolute left-4 bottom-4 z-10" ref={attachMenuRef}>
               <button
                 type="button"
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl border transition-all',
-                  border.subtle,
-                  bg.surface,
-                  'hover:bg-gray-100 dark:hover:bg-slate-800',
-                  showAttachMenu && 'bg-gray-100 dark:bg-slate-800'
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+                  'hover:bg-gray-200 dark:hover:bg-slate-700',
+                  showAttachMenu && 'bg-gray-200 dark:bg-slate-700'
                 )}
                 title="Attach files"
               >
                 <Plus className={cn('h-5 w-5', text.primary)} />
               </button>
 
-              {/* Attach menu - Claude style (appears to the right) */}
+              {/* Attach menu - appears above the button */}
               {showAttachMenu && (
                 <div className={cn(
-                  'absolute bottom-0 left-14 w-64 rounded-xl border shadow-xl z-50',
+                  'absolute bottom-12 left-0 w-64 rounded-xl border shadow-xl z-50',
                   border.subtle,
                   bg.surface,
                   'p-1'
@@ -992,14 +995,7 @@ export default function ToronPage() {
                 </div>
               )}
             </div>
-          </div>
 
-          <div className={cn(
-            'relative overflow-visible rounded-2xl border transition-colors',
-            border.subtle,
-            bg.surface,
-            'focus-within:border-blue-600 dark:focus-within:border-blue-500'
-          )}>
             <textarea
               ref={inputRef}
               value={input}
@@ -1008,7 +1004,7 @@ export default function ToronPage() {
               rows={1}
               disabled={isStreaming}
               className={cn(
-                'w-full resize-none bg-transparent px-6 py-4 text-base outline-none',
+                'w-full resize-none bg-transparent pl-14 pr-6 py-4 text-base outline-none',
                 text.primary,
                 'placeholder:text-gray-400 dark:placeholder:text-slate-500',
                 'disabled:opacity-50'
