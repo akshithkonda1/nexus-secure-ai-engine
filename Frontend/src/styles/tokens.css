@@ -16,6 +16,8 @@
   --text-strong: var(--text);
   --text-primary: var(--text);
   --text-muted: #667085;
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--text-muted);
   --layer-surface: var(--bg-surface);
   --layer-muted: #eef2f7;
   --line-subtle: var(--border);
@@ -41,6 +43,8 @@
   --text-strong: var(--text);
   --text-primary: var(--text);
   --text-muted: #9fb2cc;
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--text-muted);
   --layer-surface: var(--bg-surface);
   --layer-muted: #0f1b30;
   --line-subtle: var(--border);

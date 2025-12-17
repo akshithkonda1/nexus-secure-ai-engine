@@ -102,7 +102,7 @@ export function Button({
 // INPUT COMPONENTS
 // ============================================================================
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 export function Input({ className, ...props }: InputProps) {
   return (
@@ -113,7 +113,7 @@ export function Input({ className, ...props }: InputProps) {
   );
 }
 
-export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export function Textarea({ className, ...props }: TextareaProps) {
   return (
@@ -128,7 +128,7 @@ export function Textarea({ className, ...props }: TextareaProps) {
   );
 }
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
 
 export function Select({ className, children, ...props }: SelectProps) {
   return (
@@ -145,7 +145,7 @@ export function Select({ className, children, ...props }: SelectProps) {
   );
 }
 
-export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>;
 
 export function Label({ className, children, ...props }: LabelProps) {
   return (

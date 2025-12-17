@@ -21,7 +21,15 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto font-sans bg-[#FAFAFA] dark:bg-slate-950">
+    <div className="flex h-full flex-col overflow-y-auto font-sans bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div
+        aria-hidden
+        className="
+          pointer-events-none fixed inset-0
+          bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.08),transparent_60%)]
+          dark:bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.06),transparent_60%)]
+        "
+      />
       {/* Hero Section */}
       <div className="flex flex-col items-center justify-center gap-12 pt-20 pb-16">
         {/* ALOE Badge */}
@@ -156,7 +164,7 @@ export default function HomePage() {
               AI as a Life Orchestration Engine
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-slate-400">
-              ALOE isn't just another AI framework—it's a complete paradigm for how AI integrates into your life and work
+              ALOE isn&apos;t just another AI framework—it&apos;s a complete paradigm for how AI integrates into your life and work
             </p>
           </div>
 
@@ -173,7 +181,7 @@ export default function HomePage() {
                   Autonomous Orchestration
                 </h3>
                 <p className="text-gray-600 dark:text-slate-400">
-                  ALOE doesn't just respond—it anticipates, plans, and executes complex multi-step workflows without constant guidance.
+                  ALOE doesn&apos;t just respond—it anticipates, plans, and executes complex multi-step workflows without constant guidance.
                 </p>
               </div>
             </div>
@@ -207,7 +215,7 @@ export default function HomePage() {
                   Unified Integration
                 </h3>
                 <p className="text-gray-600 dark:text-slate-400">
-                  Seamlessly connects Toron's intelligence with Workspace's organization, creating a cohesive AI-powered environment.
+                  Seamlessly connects Toron&apos;s intelligence with Workspace&apos;s organization, creating a cohesive AI-powered environment.
                 </p>
               </div>
             </div>

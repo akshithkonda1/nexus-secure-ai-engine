@@ -36,6 +36,8 @@ export const text = {
   primary: "text-[var(--text-primary)]",
   strong: "text-[var(--text-strong)]",
   muted: "text-[var(--text-muted)]",
+  secondary: "text-[var(--text-secondary)]",
+  tertiary: "text-[var(--text-tertiary)]",
   inverse: "text-[var(--text-inverse)]",
   accent: "text-[var(--accent)]",
 } as const;
