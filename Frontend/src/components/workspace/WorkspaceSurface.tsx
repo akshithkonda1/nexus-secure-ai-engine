@@ -1,16 +1,97 @@
-import React from "react";
-import DynamicWorkspace from "./center/DynamicWorkspace";
-import Quadrants from "./Quadrants";
-import OSBar from "./osbar/OSBar";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
+import CenterCanvas from "./CenterCanvas";
+import BottomBar from "./BottomBar";
+import ListsWidget from "./widgets/ListsWidget";
+import CalendarWidget from "./widgets/CalendarWidget";
+import ConnectorsWidget from "./widgets/ConnectorsWidget";
+import TasksWidget from "./widgets/TasksWidget";
+import { CanvasMode } from "./types";
 
-const WorkspaceSurface: React.FC = () => {
-  return (
-    <div className="workspace-surface">
-      <Quadrants />
-      <OSBar />
-      <DynamicWorkspace />
-    </div>
-  );
+type WorkspaceSurfaceProps = {
+  mode: CanvasMode;
+  onModeChange: (mode: CanvasMode) => void;
+  isCleared: boolean;
+  onHome: () => void;
 };
 
-export default WorkspaceSurface;
+export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome }: WorkspaceSurfaceProps) {
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [canvasCenter, setCanvasCenter] = useState<number | null>(null);
+  const [isCompact, setIsCompact] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const query = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateCenter = () => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      setCanvasCenter(rect ? rect.left + rect.width / 2 : null);
+    };
+
+    updateCenter();
+
+    const resizeObserver = new ResizeObserver(updateCenter);
+    if (canvasRef.current) {
+      resizeObserver.observe(canvasRef.current);
+    }
+
+    window.addEventListener("resize", updateCenter);
+    return () => {
+      window.removeEventListener("resize", updateCenter);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[var(--bg-app)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(132,106,255,0.16),transparent_36%),radial-gradient(circle_at_78%_6%,rgba(68,212,255,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
+
+      <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14 sm:px-6 lg:px-10 xl:px-16">
+        <div
+          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(760px,1fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
+          style={{
+            "--workspace-gap": "28px",
+            "--workspace-side": "clamp(320px,24vw,360px)",
+            "--workspace-row": "minmax(320px,1fr)",
+          } as CSSProperties}
+        >
+          <CenterCanvas
+            key={isCleared ? `${mode}-cleared` : mode}
+            mode={mode}
+            isCleared={isCleared}
+            ref={canvasRef}
+            className="order-2 w-full md:order-1 md:col-span-2 lg:order-none lg:[grid-column:2] lg:[grid-row:1/span_2]"
+          />
+
+          {!isCompact && (
+            <>
+              <ListsWidget className="order-1 h-full md:order-2 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:1]" />
+              <CalendarWidget className="order-3 h-full md:order-3 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:1]" />
+              <ConnectorsWidget className="order-4 h-full md:order-4 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:2]" />
+              <TasksWidget className="order-5 h-full md:order-5 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:2]" />
+            </>
+          )}
+
+          {isCompact && (
+            <div className="order-3 -mx-1 flex gap-4 overflow-x-auto pb-2 sm:hidden snap-x snap-mandatory">
+              <ListsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
+              <CalendarWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
+              <ConnectorsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
+              <TasksWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <BottomBar mode={mode} onChange={onModeChange} onHome={onHome} anchorX={canvasCenter ?? undefined} />
+    </div>
+  );
+}

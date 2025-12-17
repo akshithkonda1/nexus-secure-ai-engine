@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
+import time
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 from hashlib import sha256
 from typing import Callable, Dict, Generic, Iterable, List, Mapping, MutableMapping, Sequence, Tuple, TypeVar, TypedDict, cast
+
+from .aloe import ALOERequest, ALOESynthesiser
+from .executor import SafeExecutor
+from .mmre import MMREngine
+from .real_providers import load_real_providers
+from .semantic import SemanticContradictionDetector
 
 
 class StructuredPSL(TypedDict):
@@ -21,10 +30,11 @@ class TierOneEntry(TypedDict):
     score: float
 
 
-class TierTwoResult(TypedDict):
+class TierTwoResult(TypedDict, total=False):
     accepted: bool
     contradictions: Tuple[str, ...]
     score: float
+    disagreement_rate: float
 
 
 TierOneResults = Dict[str, Tuple[TierOneEntry, ...]]
@@ -41,6 +51,11 @@ RealityPacket = TypedDict(
         "graph": GraphSummary,
         "consensus_score": float,
         "adjudicated": bool,
+        "verified_facts": List[str],
+        "conflicts_detected": List[str],
+        "evidence_density": float,
+        "escalation_required": bool,
+        "aloe": str,
     },
 )
 JudicialDecision = TypedDict(
@@ -114,10 +129,19 @@ class PremiseStructureLayer:
 class ModelExecutionTier:
     """Tier 1 execution that deterministically scores each claim per model."""
 
-    def __init__(self, models: Sequence[str] | None = None) -> None:
+    def __init__(
+        self,
+        models: Sequence[str] | None = None,
+        providers: Mapping[str, object] | None = None,
+        error_budget: float = 0.3,
+        simulation_mode: bool = True,
+    ) -> None:
         self.models = tuple(models or ("synthetic-t1", "synthetic-t2"))
+        self.providers = providers or {}
+        self.error_budget = error_budget
+        self.simulation_mode = simulation_mode
 
-    def run(self, psl: StructuredPSL) -> TierOneResults:
+    def _run_simulation(self, psl: StructuredPSL) -> TierOneResults:
         claims: Iterable[Premise] = psl["claims"]
         tier_results: TierOneResults = {}
         for model in self.models:
@@ -135,6 +159,43 @@ class ModelExecutionTier:
                 )
             tier_results[model] = tuple(per_model)
         return tier_results
+
+    def _interpret_label(self, response_text: str, fallback: str) -> str:
+        lowered = response_text.lower()
+        if "false" in lowered or "not" in lowered:
+            return "false"
+        if "true" in lowered or "yes" in lowered:
+            return "true"
+        return fallback
+
+    def _run_providers(self, psl: StructuredPSL) -> TierOneResults:
+        claims: Iterable[Premise] = psl["claims"]
+        tier_results: TierOneResults = {}
+        if not self.providers:
+            return tier_results
+        executor = SafeExecutor(self.providers, error_budget=self.error_budget)
+        for premise in claims:
+            prompt = f"Assess the following claim and respond with true/false/uncertain: {premise.text}"
+            results = asyncio.run(executor.run(prompt))
+            for result in results:
+                label = self._interpret_label(result.response.content or "", premise.label)
+                score = max(0.0, min(100.0, 50.0 + (1000.0 - result.response.latency_ms) / 20.0))
+                per_model = list(tier_results.get(result.provider, ()))
+                per_model.append(
+                    {
+                        "model": result.provider,
+                        "claim": premise.text,
+                        "label": label,
+                        "score": float(score),
+                    }
+                )
+                tier_results[result.provider] = tuple(per_model)
+        return tier_results
+
+    def run(self, psl: StructuredPSL) -> TierOneResults:
+        if self.simulation_mode or not self.providers:
+            return self._run_simulation(psl)
+        return self._run_providers(psl)
 
 
 class CausalDirectedGraph:
@@ -157,15 +218,23 @@ class CausalDirectedGraph:
 class TierTwoValidator:
     """Tier 2 logic that checks for contradictions across models."""
 
+    def __init__(self, detector: SemanticContradictionDetector | None = None) -> None:
+        self.detector = detector or SemanticContradictionDetector()
+
     def evaluate(self, tier1: TierOneResults) -> TierTwoResult:
-        contradictions: List[str] = []
+        claims: List[Tuple[str, str]] = []
         for entries in tier1.values():
             for entry in entries:
-                if entry["label"] == "true" and entry["claim"].lower().startswith("not "):
-                    contradictions.append(entry["claim"])
+                claims.append((entry["claim"], entry.get("label", "uncertain")))
+        contradictions, rate = self.detector.find_disagreements(tuple(claims))
         accepted = not contradictions
-        score = max(0.0, 100.0 - (len(contradictions) * 12.5))
-        return {"accepted": accepted, "contradictions": tuple(contradictions), "score": score}
+        score = max(0.0, 100.0 - (len(contradictions) * 10.0) - (rate * 25.0))
+        return {
+            "accepted": accepted,
+            "contradictions": tuple(contradictions),
+            "score": score,
+            "disagreement_rate": rate,
+        }
 
 
 class ReliableWitnessLocator:
@@ -199,6 +268,11 @@ class RealityPacketBuilder:
         cdg: CausalDirectedGraph,
         tier2: TierTwoResult,
         consensus_score: float,
+        evidence_density: float,
+        verified_facts: List[str],
+        conflicts_detected: List[str],
+        aloe_summary: str,
+        escalation_required: bool,
     ) -> RealityPacket:
         return {
             "version": "v2.5H+",
@@ -206,6 +280,11 @@ class RealityPacketBuilder:
             "graph": cdg.summary(),
             "consensus_score": consensus_score,
             "adjudicated": bool(tier2.get("accepted")),
+            "verified_facts": verified_facts,
+            "conflicts_detected": conflicts_detected,
+            "evidence_density": evidence_density,
+            "escalation_required": escalation_required,
+            "aloe": aloe_summary,
         }
 
 
@@ -281,14 +360,27 @@ class SnapshotHasher:
 class RyuzenEngine:
     """End-to-end deterministic execution orchestrator."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        simulation_mode: bool = True,
+        error_budget: float = 0.3,
+        semantic_detector: SemanticContradictionDetector | None = None,
+        mmre_engine: MMREngine | None = None,
+        aloe_synthesiser: ALOESynthesiser | None = None,
+    ) -> None:
         self.psl = PremiseStructureLayer()
-        self.tier1 = ModelExecutionTier()
-        self.validator = TierTwoValidator()
+        providers = {} if simulation_mode else load_real_providers()
+        self.tier1 = ModelExecutionTier(providers=providers, error_budget=error_budget, simulation_mode=simulation_mode)
+        self.validator = TierTwoValidator(detector=semantic_detector)
         self.rwl = ReliableWitnessLocator()
         self.consensus = ConsensusComputer()
         self.packet_builder = RealityPacketBuilder()
         self.judicial = JudicialLogic()
+        self.mmre = mmre_engine or MMREngine()
+        self.aloe = aloe_synthesiser or ALOESynthesiser()
+        self.simulation_mode = simulation_mode
+        if not providers and not simulation_mode:
+            raise RuntimeError("No real providers available. Set API keys or enable simulation_mode.")
 
     def execute(self, passage: str, witnesses: Sequence[Witness]) -> StateSnapshot:
         psl = self.psl.structure(passage)
@@ -297,12 +389,26 @@ class RyuzenEngine:
         witness = self.rwl.select(witnesses)
         consensus_score = self.consensus.score(tier1, witness)
         tier2 = self.validator.evaluate(tier1)
-        packet = self.packet_builder.build(psl, cdg, tier2, consensus_score)
+        mmre_packet = self.mmre.evaluate_claims([premise.text for premise in psl["claims"]])
+        aloe_summary = self.aloe.synthesise(
+            ALOERequest(facts=mmre_packet.verified_facts, tone="supportive", detail_level="detailed")
+        )
+        packet = self.packet_builder.build(
+            psl,
+            cdg,
+            tier2,
+            consensus_score,
+            mmre_packet.evidence_density,
+            mmre_packet.verified_facts,
+            mmre_packet.conflicts_detected,
+            aloe_summary,
+            mmre_packet.escalation_required,
+        )
         judicial = self.judicial.deliberate(tier2, packet)
         plan = ExecutionPlan(
             stages=("psl", "tier1", "tier2", "reality_packet", "judicial"),
             version="v2.5H+",
-            parameters={"witness": witness["name"]},
+            parameters={"witness": witness["name"], "simulation": self.simulation_mode},
         )
         return StateSnapshot(
             psl=psl,

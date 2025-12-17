@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 
 from fastapi.testclient import TestClient
@@ -27,6 +28,18 @@ from ryuzen.toron_v25hplus.telemetry_stub import telemetry_buffer
 
 
 client = TestClient(app)
+
+
+class _DummyDetector:
+    def find_disagreements(self, claims):
+        return ([], 0.0)
+
+
+class _DummyMMRE:
+    def evaluate_claims(self, claims):
+        return SimpleNamespace(
+            verified_facts=list(claims), conflicts_detected=[], evidence_density=1.0, escalation_required=False
+        )
 
 
 def setup_function() -> None:  # type: ignore[override]
@@ -70,7 +83,7 @@ def test_load_metrics_present():
 
 
 def test_engine_snapshot_round_trip():
-    engine = RyuzenEngine()
+    engine = RyuzenEngine(semantic_detector=_DummyDetector(), mmre_engine=_DummyMMRE())
     snapshot: StateSnapshot = engine.execute("not safe but maybe acceptable.", [{"name": "qa", "reliability": 0.9}])
 
     payload = snapshot.as_dict()
@@ -79,7 +92,7 @@ def test_engine_snapshot_round_trip():
 
 
 def test_validator_contradiction_detection():
-    validator = TierTwoValidator()
+    validator = TierTwoValidator(detector=_DummyDetector())
     result = validator.evaluate({"demo": ({"model": "demo", "claim": "not allowed", "label": "true", "score": 99.0},)})
     assert not result["accepted"]
 

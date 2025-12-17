@@ -1,64 +1,51 @@
-import React from "react";
-import { Bell } from "lucide-react";
-import type { WorkspaceMode } from "../WorkspaceCanvas";
+import { LucideIcon } from "lucide-react";
 
-interface OSBarProps {
-  mode: WorkspaceMode;
-  setMode: (mode: WorkspaceMode) => void;
-}
-
-const OSBar: React.FC<OSBarProps> = ({ mode, setMode }) => {
-  const handleSelect = (nextMode: WorkspaceMode) => {
-    setMode(mode === nextMode ? null : nextMode);
-  };
-
-  const buttonStyle = (active: boolean) => ({
-    border: `1px solid var(--rz-border)`,
-    background: active ? "var(--rz-surface-glass)" : "var(--rz-surface)",
-    color: "var(--rz-text)",
-    transition: `all var(--rz-duration) ease`,
-  });
-
-  return (
-    <div
-      className="relative w-full px-4 py-3 rounded-3xl bg-white/85 dark:bg-neutral-900/85 border border-neutral-300/50 dark:border-neutral-700/50 text-neutral-800 dark:text-neutral-200 shadow-[0_4px_20px_rgba(0,0,0,0.12)] backdrop-blur-xl z-[10]"
-    >
-      <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          {["pages", "notes", "boards", "flows"].map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => handleSelect(item as WorkspaceMode)}
-              className="relative px-4 py-2 rounded-xl capitalize leading-relaxed text-neutral-800 dark:text-neutral-200"
-              style={buttonStyle(mode === item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handleSelect("toron")}
-            className="relative px-4 py-2 rounded-xl leading-relaxed text-neutral-800 dark:text-neutral-200"
-            style={buttonStyle(mode === "toron")}
-          >
-            Analyze with Toron
-          </button>
-          <button
-            type="button"
-            className="relative px-3 py-2 rounded-xl leading-relaxed text-neutral-800 dark:text-neutral-200"
-            style={buttonStyle(false)}
-            aria-label="Notifications"
-          >
-            <Bell size={18} strokeWidth={2} aria-hidden />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+export type OSBarItem = {
+  id: string;
+  label: string;
+  description: string;
+  hotkey?: string;
+  icon: LucideIcon;
 };
 
-export default OSBar;
+type OSBarProps = {
+  items: OSBarItem[];
+  activeId: string;
+  onSelect: (id: string) => void;
+};
+
+export default function OSBar({ items, activeId, onSelect }: OSBarProps) {
+  return (
+    <div className="flex flex-wrap items-stretch justify-center gap-4 rounded-[28px] border border-white/20 bg-white/60 p-4 shadow-[0_18px_60px_rgba(10,24,56,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/5">
+      {items.map((item) => {
+        const isActive = item.id === activeId;
+        return (
+          <button
+            key={item.id}
+            onClick={() => onSelect(item.id)}
+            className={`group flex min-w-[160px] flex-1 flex-col items-center gap-2 rounded-2xl px-4 py-3 text-sm transition-all ${
+              isActive
+                ? "border border-white/35 bg-white/85 text-[var(--text-strong)] shadow-inner backdrop-blur-lg dark:border-white/15 dark:bg-white/10"
+                : "border border-transparent text-[var(--text-primary)] hover:border-white/20 hover:bg-white/70 hover:backdrop-blur-sm dark:hover:border-white/10 dark:hover:bg-white/10"
+            }`}
+            aria-pressed={isActive}
+          >
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+              isActive
+                ? "bg-[var(--ryuzen-dodger)] text-[var(--text-inverse)] shadow-sm"
+                : "bg-white/80 text-[var(--text-muted)] ring-1 ring-white/40 shadow-inner dark:bg-white/10 dark:ring-white/10"
+            }`}>
+              <item.icon className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <span className="text-[13px] font-semibold leading-tight text-[var(--text-strong)]">{item.label}</span>
+              <span className={`text-[11px] leading-tight ${isActive ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"}`}>
+                {item.description}
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

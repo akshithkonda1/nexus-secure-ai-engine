@@ -1,36 +1,60 @@
-import React from "react";
+import { useState } from "react";
+import { ListChecks, Plus } from "lucide-react";
 
-interface WidgetProps {
-  active: boolean;
-  onClick: () => void;
-}
+const lists = [
+  { name: "Research", count: 12 },
+  { name: "Delivery", count: 8 },
+  { name: "Backlog", count: 19 },
+];
 
-const ListsWidget: React.FC<WidgetProps> = ({ active, onClick }) => {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`
-        relative w-full text-left
-        rounded-3xl
-        bg-white/85 dark:bg-neutral-900/85
-        border border-neutral-300/50 dark:border-neutral-700/50
-        text-neutral-800 dark:text-neutral-200
-        shadow-[0_4px_20px_rgba(0,0,0,0.12)]
-        backdrop-blur-xl
-        p-6
-        z-10 md:p-8
-        hover:scale-[1.01] transition-transform duration-300
-        ${active ? "ring-2 ring-black/10 dark:ring-white/10" : ""}
-      `}
-    >
-      <div className="absolute inset-0 rounded-3xl pointer-events-none backdrop-blur-xl" />
-      <div className="relative space-y-2 leading-relaxed">
-        <p className="text-sm">Lists</p>
-        <p className="text-lg font-semibold">Organize</p>
-      </div>
-    </button>
-  );
+type ListsWidgetProps = {
+  className?: string;
 };
 
-export default ListsWidget;
+export default function ListsWidget({ className }: ListsWidgetProps) {
+  const [selected, setSelected] = useState(lists[0].name);
+
+  return (
+    <section
+      aria-label="Lists widget"
+      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 text-[var(--text)] shadow-[0_18px_60px_-65px_rgba(0,0,0,0.8)] backdrop-blur-xl ${className ?? ""}`}
+    >
+      <header className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]/50">
+            <ListChecks className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold leading-tight">Lists</p>
+            <p className="text-xs text-[var(--text-muted)]">Semantic shelves</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line-subtle)]/60 bg-[var(--bg-elev)] text-[var(--text)] shadow-inner transition hover:border-[var(--line-strong)]/80"
+          aria-label="Add list"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </header>
+      <div className="space-y-2 overflow-y-auto">
+        {lists.map((list) => (
+          <button
+            key={list.name}
+            type="button"
+            className={`flex w-full items-center justify-between rounded-xl border border-transparent px-3 py-2 text-left text-sm transition ${
+              selected === list.name
+                ? "bg-[var(--bg-elev)]/80 text-[var(--text)] shadow-inner ring-1 ring-[var(--line-subtle)]/60"
+                : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
+            }`}
+            onClick={() => setSelected(list.name)}
+          >
+            <span className="font-medium">{list.name}</span>
+            <span className="rounded-full bg-[var(--layer-muted)] px-2 py-1 text-xs text-[var(--text-muted)]">{list.count}</span>
+          </button>
+        ))}
+      </div>
+      <footer className="text-xs text-[var(--text-muted)]">Selected list: {selected}</footer>
+    </section>
+  );
+}

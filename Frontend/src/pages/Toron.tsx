@@ -1,65 +1,25 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Copy,
-  Edit3,
-  FilePlus,
-  GitBranch,
-  Mic,
-  MicOff,
-  MoreHorizontal,
-  Pause,
-  Play,
-  Plus,
-  RefreshCw,
-  Send,
-  Flag,
-} from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Plus } from "lucide-react";
 
-type Role = "assistant" | "user";
-
-interface Message {
-  id: string;
-  role: Role;
-  content: string;
-}
-
-interface SessionMeta {
-  id: string;
-  title: string;
-  status: "Alive" | "Quiet" | "Paused";
-}
-
-interface DragState {
-  active: boolean;
-  offsetX: number;
-  offsetY: number;
-}
-
-const seedMessages: Message[] = [
+const initialMessages = [
+  { role: "assistant" as const, content: "Toron is active. State the objective." },
+  { role: "user" as const, content: "Summarize yesterday's workspace updates." },
   {
-    id: "seed-1",
-    role: "assistant",
-    content: "I'm present. What do you want to move today?",
-  },
-  {
-    id: "seed-2",
-    role: "user",
-    content: "Reprioritize the Q3 delivery plan and surface risks for transparency.",
-  },
-  {
-    id: "seed-3",
-    role: "assistant",
-    content: "I'll map milestones, annotate risk vectors, and draft a transparent update.",
+    role: "assistant" as const,
+    content:
+      "Review complete. Yesterday's workspace highlights:\n\n• Research outline refined with 3 new sections\n• Notifications system reviewed and optimized\n• Team collaboration features enhanced\n\nSpecify where you want to dive deeper.",
   },
 ];
 
-const sanitizeTitle = (content: string): string => {
-  const normalized = content
-    .replace(/[^a-zA-Z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!normalized) return "Focused Toron session";
+export default function ToronPage() {
+  const [messages, setMessages] = useState(initialMessages);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+const sanitizeTitle = (text: string) => {
   const words = normalized.split(" ").filter(Boolean);
   const clipped = words.slice(0, Math.min(8, Math.max(6, words.length)));
   const sentence = clipped.join(" ").toLowerCase();
@@ -86,10 +46,6 @@ const Toron: React.FC = () => {
   });
   const [sessionPosition, setSessionPosition] = useState<{ top: number; left: number }>({ top: 20, left: 20 });
   const [headerTucked, setHeaderTucked] = useState(false);
-<<<<<<< HEAD
-=======
-  const [newResponseHint, setNewResponseHint] = useState(false);
->>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const widgetRef = useRef<HTMLDivElement | null>(null);
@@ -124,8 +80,8 @@ const Toron: React.FC = () => {
       setMessages((prev) => [...prev, reply]);
       setSending(false);
     }, 480);
-<<<<<<< HEAD
-=======
+
+
   };
 
   const toggleMic = () => {
@@ -247,125 +203,60 @@ const Toron: React.FC = () => {
     if (!viewport) return;
     viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     setNewResponseHint(false);
->>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
+
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
   };
 
-  const toggleMic = () => {
-    setMicActive((prev) => !prev);
-    if (!micActive) {
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const next = input.trim();
+    if (!next) return;
+
+    setMessages((prev) => [...prev, { role: "user" as const, content: next }]);
+    setInput("");
+    setIsTyping(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant" as const,
+          content: "I understand your request. I'm processing this information and will provide a detailed response shortly.",
+        },
+      ]);
+      setIsTyping(false);
+      scrollToBottom();
+    }, 1500);
+
+    requestAnimationFrame(() => {
       inputRef.current?.focus();
-    }
-  };
-
-  const handleAddAttachment = (label: string) => {
-    setAttachments((prev) => {
-      if (prev.includes(label)) return prev;
-      return [...prev, label];
+      scrollToBottom();
     });
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      handleSend();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
-
-  const clampPosition = (top: number, left: number) => {
-    const widgetWidth = widgetRef.current?.offsetWidth ?? 320;
-    const widgetHeight = widgetRef.current?.offsetHeight ?? 260;
-    const maxLeft = Math.max(0, window.innerWidth - widgetWidth - 12);
-    const maxTop = Math.max(0, window.innerHeight - widgetHeight - 12);
-    return { top: Math.min(Math.max(12, top), maxTop), left: Math.min(Math.max(12, left), maxLeft) };
-  };
-
-  const startDrag = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    const rect = widgetRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setDragState({
-      active: true,
-      offsetX: event.clientX - rect.left,
-      offsetY: event.clientY - rect.top,
-    });
-  };
-
-  useEffect(() => {
-    const handleMove = (event: MouseEvent) => {
-      if (!dragState.active) return;
-      const nextTop = event.clientY - dragState.offsetY;
-      const nextLeft = event.clientX - dragState.offsetX;
-      setSessionPosition(clampPosition(nextTop, nextLeft));
-    };
-
-    const handleUp = () => {
-      if (!dragState.active) return;
-      setDragState((prev) => ({ ...prev, active: false }));
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-    };
-  }, [dragState]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("toron-session-position");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setSessionPosition(clampPosition(parsed.top, parsed.left));
-      } catch {
-        setSessionPosition(clampPosition(20, 20));
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const clamped = clampPosition(sessionPosition.top, sessionPosition.left);
-    if (clamped.top !== sessionPosition.top || clamped.left !== sessionPosition.left) {
-      setSessionPosition(clamped);
-      return;
-    }
-    localStorage.setItem("toron-session-position", JSON.stringify(clamped));
-  }, [sessionPosition.top, sessionPosition.left]);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const handleScroll = () => {
-      setHeaderTucked(viewport.scrollTop > 12);
-    };
-
-    viewport.addEventListener("scroll", handleScroll);
-    return () => {
-      viewport.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
-    if (distanceFromBottom < 140) {
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
-    }
-  }, [messages]);
 
   return (
-    <div className="toron-shell">
-      <aside
-        ref={widgetRef}
-        className={`toron-sessions${sessionsOpen ? "" : " collapsed"}`}
-        aria-label="Toron sessions"
-        style={{ top: sessionPosition.top, left: sessionPosition.left }}
-        onMouseDown={startDrag}
+    <section className="flex flex-1 flex-col">
+      <motion.header
+        className="mb-8 space-y-2"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
+<<<<<<< HEAD
         <div className="toron-sessions-header">
           <div className="toron-sessions-title">Sessions</div>
           <button
@@ -459,92 +350,113 @@ const Toron: React.FC = () => {
                 </article>
               ))}
             </div>
+=======
+        <div className="flex items-baseline justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-[var(--text-strong)]">Toron</h1>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Precision dialogue for decisive action.</p>
+>>>>>>> origin/main
           </div>
         </div>
+      </motion.header>
 
-        <div className="toron-directive" role="form" aria-label="Toron input">
-          <div className="toron-input-shell">
-            <div className="toron-control">
-              <div className="toron-more-group toron-plus" role="group" aria-label="Attachment options">
-                <button type="button" className="toron-action" aria-label="Add attachments">
-                  <Plus size={16} strokeWidth={2} aria-hidden />
-                </button>
-                <div className="toron-more-menu toron-plus-menu">
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from GitHub"
-                    onClick={() => handleAddAttachment("GitHub file")}
+      <div className="relative flex flex-1 flex-col overflow-hidden">
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-y-auto pb-6 pr-2">
+          <AnimatePresence mode="popLayout">
+            {messages.map((message, index) => {
+                const glassTone =
+                  message.role === "user"
+                    ? "border-white/40 bg-white/75 text-[var(--text-strong)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5"
+                    : "border-white/30 bg-white/65 text-[var(--text-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.07)] dark:border-white/10 dark:bg-white/5";
+
+                const textTone = message.role === "user" ? "text-[var(--text-strong)]" : "text-[var(--text-primary)]";
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <motion.div
+                    className={`group relative w-full max-w-2xl rounded-2xl border px-5 py-4 backdrop-blur-md transition-all duration-200 ${glassTone}`}
                   >
-                    <GitBranch size={14} strokeWidth={2} aria-hidden />
-                    Add file from GitHub
-                  </button>
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from Google Drive"
-                    onClick={() => handleAddAttachment("Google Drive file")}
-                  >
-                    <FilePlus size={14} strokeWidth={2} aria-hidden />
-                    Add file from Google Drive
-                  </button>
-                  <button
-                    type="button"
-                    className="toron-inline"
-                    aria-label="Add file from Dropbox"
-                    onClick={() => handleAddAttachment("Dropbox file")}
-                  >
-                    <FilePlus size={14} strokeWidth={2} aria-hidden />
-                    Add file from Dropbox
-                  </button>
-                </div>
+                    <p className={`whitespace-pre-wrap text-base leading-relaxed ${textTone}`}>{message.content}</p>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="flex items-center gap-3 rounded-2xl border border-white/30 bg-white/65 px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-white/5">
+                <motion.div
+                  className="flex gap-1"
+                  initial={{ opacity: 0.5 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ repeat: Infinity, duration: 1.5, repeatType: "reverse" }}
+                >
+                  <div className="h-2 w-2 rounded-full bg-[var(--ryuzen-dodger)]" />
+                  <div className="h-2 w-2 rounded-full bg-[var(--ryuzen-azure)]" />
+                  <div className="h-2 w-2 rounded-full bg-[var(--ryuzen-purple)]" />
+                </motion.div>
+                <span className="text-xs text-[var(--text-muted)]">Toron is processing</span>
               </div>
-            </div>
+            </motion.div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <motion.form
+          onSubmit={handleSubmit}
+          className="mx-auto mt-8 w-full max-w-3xl rounded-2xl border border-white/30 bg-white/70 p-5 shadow-[0_16px_48px_rgba(15,23,42,0.12)] backdrop-blur-lg transition-all focus-within:border-[var(--accent)] focus-within:shadow-[0_18px_52px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-white/5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex items-start gap-3">
             <button
               type="button"
-              className={`toron-action mic${micActive ? " active" : ""}`}
-              aria-pressed={micActive}
-              aria-label="Toggle microphone"
-              onClick={toggleMic}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/50 text-[var(--text-primary)] shadow-[0_8px_24px_rgba(15,23,42,0.1)] backdrop-blur-md transition-colors hover:border-white/50 dark:border-white/10 dark:bg-white/10"
+              aria-label="Add context"
             >
-              {micActive ? <MicOff size={16} strokeWidth={2} aria-hidden /> : <Mic size={16} strokeWidth={2} aria-hidden />}
+              <Plus className="h-5 w-5" />
             </button>
-            <div className="toron-input-field">
+            <div className="flex-1">
+              <label className="sr-only" htmlFor="toron-input">
+                Toron prompt
+              </label>
               <textarea
+                id="toron-input"
                 ref={inputRef}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask Toron anything…"
-                aria-label="Ask Toron"
-                rows={1}
+                placeholder=" Ask me anything.... "
+                className="w-full resize-none rounded-xl border border-transparent bg-white/50 px-4 py-3 text-base leading-relaxed text-[var(--text-primary)] outline-none backdrop-blur-sm placeholder:text-[var(--text-muted)] focus:border-white/40 dark:bg-white/10"
+                rows={4}
               />
-              {attachments.length > 0 && (
-                <div className="toron-attachments" aria-label="Attachments">
-                  {attachments.map((item) => (
-                    <span key={item} className="toron-attachment">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
-            <button
-              type="button"
-              className={`toron-send${sending ? " sending" : ""}`}
-              onClick={handleSend}
-              disabled={(draft.trim().length === 0 && attachments.length === 0) || sending}
-              aria-label="Send to Toron"
+            <motion.button
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--color-accent-foreground)] transition-all hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              whileHover={{ scale: input.trim() ? 1.03 : 1 }}
+              whileTap={{ scale: input.trim() ? 0.97 : 1 }}
             >
-              <Send size={16} strokeWidth={2} aria-hidden />
-              <span>{sending ? "Sending" : "Send"}</span>
-              {sending && <span className="toron-thinking" aria-hidden />}
-            </button>
+              <Send className="h-5 w-5" />
+            </motion.button>
           </div>
+
           <div className="toron-footer">Toron can make mistakes. Please verify important information.</div>
         </div>
-=======
-
       <section className={`toron-appframe${headerTucked ? " tucked" : ""}`} aria-label="Toron workspace">
         <header className={`toron-header${headerTucked ? " tucked" : ""}`} aria-label="Toron session header">
           <div className="toron-header-title">
@@ -699,10 +611,11 @@ const Toron: React.FC = () => {
             <div className="toron-footer">Toron can make mistakes. Please verify important information.</div>
           </div>
         </div>
->>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
       </section>
     </div>
+=======
+        </motion.form>
+      </div>
+    </section>
   );
-};
-
-export default Toron;
+}

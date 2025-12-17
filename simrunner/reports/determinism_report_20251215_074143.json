@@ -1,0 +1,258 @@
+{
+  "config_seed": 100,
+  "sample_size": 5,
+  "determinism_score": 100.0,
+  "tests": [
+    {
+      "prompt": "Solve the puzzle: an infinite hotel? Provide reasoning.",
+      "runs": [
+        {
+          "response": "Stubbed response for: Solve the puzzle: an infinite hotel? Pro...",
+          "latency_ms": 69,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.69
+        },
+        {
+          "response": "Stubbed response for: Solve the puzzle: an infinite hotel? Pro...",
+          "latency_ms": 69,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.69
+        },
+        {
+          "response": "Stubbed response for: Solve the puzzle: an infinite hotel? Pro...",
+          "latency_ms": 69,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.69
+        }
+      ],
+      "byte_match_rate": 1.0,
+      "semantic_match_rate": 1.0,
+      "determinism_score": 100.0
+    },
+    {
+      "prompt": "Simulate a debate between a cybersecurity analyst and a safety engineer about algorithmic fairness.",
+      "runs": [
+        {
+          "response": "Stubbed response for: Simulate a debate between a cybersecurit...",
+          "latency_ms": 74,
+          "tiers": [
+            "T1",
+            "T2"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.64
+        },
+        {
+          "response": "Stubbed response for: Simulate a debate between a cybersecurit...",
+          "latency_ms": 74,
+          "tiers": [
+            "T1",
+            "T2"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.64
+        },
+        {
+          "response": "Stubbed response for: Simulate a debate between a cybersecurit...",
+          "latency_ms": 74,
+          "tiers": [
+            "T1",
+            "T2"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.64
+        }
+      ],
+      "byte_match_rate": 1.0,
+      "semantic_match_rate": 1.0,
+      "determinism_score": 100.0
+    },
+    {
+      "prompt": "Provide a counterargument to the claim: 'security through obscurity is sufficient'.",
+      "runs": [
+        {
+          "response": "Stubbed response for: Provide a counterargument to the claim: ...",
+          "latency_ms": 56,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.51
+        },
+        {
+          "response": "Stubbed response for: Provide a counterargument to the claim: ...",
+          "latency_ms": 56,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.51
+        },
+        {
+          "response": "Stubbed response for: Provide a counterargument to the claim: ...",
+          "latency_ms": 56,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.51
+        }
+      ],
+      "byte_match_rate": 1.0,
+      "semantic_match_rate": 1.0,
+      "determinism_score": 100.0
+    },
+    {
+      "prompt": "What are the risks of training on synthetic data only and how to mitigate them?",
+      "runs": [
+        {
+          "response": "Stubbed response for: What are the risks of training on synthe...",
+          "latency_ms": 63,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.63
+        },
+        {
+          "response": "Stubbed response for: What are the risks of training on synthe...",
+          "latency_ms": 63,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.63
+        },
+        {
+          "response": "Stubbed response for: What are the risks of training on synthe...",
+          "latency_ms": 63,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 1,
+          "confidence": 0.63
+        }
+      ],
+      "byte_match_rate": 1.0,
+      "semantic_match_rate": 1.0,
+      "determinism_score": 100.0
+    },
+    {
+      "prompt": "Simulate a debate between a linguist and a cybersecurity analyst about planetary governance.",
+      "runs": [
+        {
+          "response": "Stubbed response for: Simulate a debate between a linguist and...",
+          "latency_ms": 66,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.61
+        },
+        {
+          "response": "Stubbed response for: Simulate a debate between a linguist and...",
+          "latency_ms": 66,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.61
+        },
+        {
+          "response": "Stubbed response for: Simulate a debate between a linguist and...",
+          "latency_ms": 66,
+          "tiers": [
+            "T1",
+            "T3"
+          ],
+          "opus": false,
+          "flags": [
+            "synthetic"
+          ],
+          "contradictions": 2,
+          "confidence": 0.61
+        }
+      ],
+      "byte_match_rate": 1.0,
+      "semantic_match_rate": 1.0,
+      "determinism_score": 100.0
+    }
+  ],
+  "generated_at": "20251215_074143"
+}

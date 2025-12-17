@@ -1,0 +1,75 @@
+@import "./styles/tokens.css";
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: Inter, sans-serif;
+  --font-family-display: Outfit, sans-serif;
+  --radius: 0.75rem;
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+
+  --color-bg-app: var(--bg-app);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-hover: color-mix(in srgb, var(--bg-surface) 92%, #000000 8%);
+  --color-bg-muted: var(--bg-elev);
+  --color-border: var(--border);
+  --color-border-subtle: var(--line-subtle);
+  --color-border-strong: var(--line-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-text-strong: var(--text-strong);
+  --accent: var(--accent);
+  --pill: var(--pill);
+  --layer-surface: var(--layer-surface);
+  --layer-muted: var(--layer-muted);
+  --line-subtle: var(--line-subtle);
+  --line-strong: var(--line-strong);
+  --bg-app: var(--bg-app);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: var(--text);
+    font-family: var(--font-family-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background-color: #27272a;
+    color: #ffffff;
+  }
+
+  /* Modern Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #27272a;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #3f3f46;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

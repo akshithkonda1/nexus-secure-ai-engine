@@ -1,5 +1,5 @@
-run_count: 1000
-seed: 42
+run_count: 10000
+seed: 100
 latency_tracking: true
 opus_tracking: true
 determinism_checks: true
