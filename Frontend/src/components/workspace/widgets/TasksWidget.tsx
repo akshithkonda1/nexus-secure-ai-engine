@@ -40,11 +40,11 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
   return (
     <section
       aria-label="Tasks widget"
-      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/90 p-4 text-[var(--text)] shadow-[var(--shadow-soft)] backdrop-blur-lg ${className ?? ""}`}
+      className={`flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/82 p-4 text-[var(--text)] shadow-[0_12px_36px_rgba(15,23,42,0.07)] backdrop-blur-lg transition-colors dark:shadow-[0_12px_36px_rgba(0,0,0,0.25)] ${className ?? ""}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)]/90 text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
             <CheckSquare2 className="h-5 w-5" />
           </span>
           <div>
@@ -52,13 +52,13 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
             <p className="text-xs text-[var(--text-muted)]">Today</p>
           </div>
         </div>
-        <span className="flex items-center gap-1 rounded-full bg-[var(--bg-elev)] px-3 py-1 text-xs text-[var(--text-muted)]">
+        <span className="flex items-center gap-1 rounded-full bg-[var(--bg-elev)]/90 px-3 py-1 text-xs text-[var(--text-muted)]">
           <Sparkle className="h-4 w-4" />
           {progress}%
         </span>
       </header>
 
-      <form onSubmit={handleAdd} className="flex items-center gap-2 rounded-xl border border-[var(--line-subtle)] bg-[var(--bg-elev)] px-3 py-2 shadow-inner">
+      <form onSubmit={handleAdd} className="flex items-center gap-2 rounded-xl border border-[var(--line-subtle)] bg-[var(--bg-elev)]/95 px-3 py-2 shadow-inner">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -82,8 +82,8 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
             onClick={() => toggleTask(task.id)}
             className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
               task.done
-                ? "bg-[var(--bg-elev)] text-[var(--muted)] line-through"
-                : "bg-[var(--layer-muted)] text-[var(--text)] shadow-inner"
+                ? "bg-[var(--bg-elev)]/90 text-[var(--muted)] line-through"
+                : "bg-[var(--layer-muted)]/88 text-[var(--text)] shadow-inner"
             }`}
           >
             <span>{task.title}</span>
