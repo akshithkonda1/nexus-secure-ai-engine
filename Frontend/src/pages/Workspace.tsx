@@ -80,8 +80,8 @@ export default function WorkspacePage() {
 
   return (
     <section className="relative">
-      <div className="relative min-h-[960px] overflow-hidden rounded-[48px] border border-white/15 bg-gradient-to-b from-[#eaf1fb] via-[#dfe5f3] to-[#0c1838] p-10 shadow-[0_26px_90px_rgba(12,25,64,0.18)] dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-slate-900">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,12,28,0.28),transparent_45%)]" />
+      <div className="relative min-h-[960px] overflow-hidden rounded-[48px] border border-white/10 bg-gradient-to-b from-[#eaf1fb] via-[#dfe5f3] to-[#0c1838] p-10 shadow-[0_18px_70px_rgba(12,25,64,0.12)] dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-slate-900">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,12,28,0.18),transparent_52%)]" />
         <div className="relative flex h-full flex-col">
           <div className="relative flex-1">
             <div className="absolute inset-0 flex items-center justify-center px-24">
@@ -91,11 +91,11 @@ export default function WorkspacePage() {
             {cornerApps.map((app) => (
               <div
                 key={app.id}
-                className={`absolute ${placement[app.id as keyof typeof placement]} ${hierarchy[app.id as keyof typeof hierarchy].container} max-w-full space-y-3 rounded-[30px] border border-white/15 bg-gradient-to-b from-white/65 to-white/45 p-6 shadow-[0_12px_40px_rgba(10,24,56,0.14)] backdrop-blur-md dark:border-white/10 dark:from-white/10 dark:to-white/5`}
+                className={`absolute ${placement[app.id as keyof typeof placement]} ${hierarchy[app.id as keyof typeof hierarchy].container} max-w-full space-y-3 rounded-[30px] border border-white/10 bg-gradient-to-b from-white/55 to-white/38 p-5 shadow-[0_10px_28px_rgba(10,24,56,0.1)] backdrop-blur-sm dark:border-white/10 dark:from-white/10 dark:to-white/5`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 text-[var(--text-strong)]">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/70 text-[var(--text-muted)] ring-1 ring-white/30 shadow-inner dark:bg-white/10 dark:ring-white/10">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/55 text-[var(--text-muted)] ring-1 ring-white/25 shadow-inner dark:bg-white/10 dark:ring-white/10">
                       <app.icon className="h-5 w-5" />
                     </div>
                     <div>
@@ -106,8 +106,8 @@ export default function WorkspacePage() {
                 </div>
                 <div className="space-y-3 text-sm text-[var(--text-muted)]">
                   {app.notes.map((note) => (
-                    <div key={note} className="flex items-start gap-3 rounded-2xl border border-white/20 bg-white/55 px-4 py-3 text-[13px] leading-relaxed shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                      <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-[#95a4c6]" aria-hidden />
+                    <div key={note} className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/45 px-4 py-3 text-[13px] leading-relaxed shadow-inner backdrop-blur-[2px] dark:border-white/10 dark:bg-white/5">
+                      <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-[#8f9ab5]" aria-hidden />
                       <span className={`${hierarchy[app.id as keyof typeof hierarchy].noteText}`}>{note}</span>
                     </div>
                   ))}
