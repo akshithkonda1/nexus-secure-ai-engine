@@ -1,12 +1,17 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+// Frontend/src/utils/theme.ts
+// Dynamic Theme Utilities for Easy Light/Dark Mode Switching
 
 /**
- * Utility function to merge Tailwind CSS classes safely
- * Handles conditional classes and removes conflicts
+ * Simple class name merger without external dependencies
+ * Handles conditional classes and merges them into a single string
  */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+export function cn(...inputs: (string | undefined | null | false | 0)[]): string {
+  return inputs
+    .filter(Boolean)
+    .join(" ")
+    .split(" ")
+    .filter((v, i, a) => Boolean(v) && a.indexOf(v) === i)
+    .join(" ");
 }
 
 /**
