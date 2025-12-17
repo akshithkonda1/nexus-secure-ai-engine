@@ -1013,10 +1013,9 @@ export default function ToronPage() {
               style={{ maxHeight: '200px' }}
             />
 
-            {/* Bottom info bar - NO BORDER */}
+            {/* Bottom info bar - NO BACKGROUND, NO BORDER */}
             <div className={cn(
-              'flex items-center justify-between px-4 py-3',
-              'bg-gray-50 dark:bg-slate-800/50'
+              'flex items-center justify-between px-4 py-3'
             )}>
               <div className="flex items-center gap-2">
                 <span className={cn('text-xs', text.muted)}>
