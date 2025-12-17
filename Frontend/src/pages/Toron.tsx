@@ -859,147 +859,147 @@ export default function ToronPage() {
         )}
 
         {/* Input Area */}
-        <form onSubmit={handleSubmit} className="mt-4">
+        <form onSubmit={handleSubmit} className="mt-4 relative">
+          {/* Plus button - Claude style (positioned to the left of input) */}
+          <div className="absolute -left-14 bottom-4 z-10">
+            <div className="relative" ref={attachMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowAttachMenu(!showAttachMenu)}
+                className={cn(
+                  'flex h-10 w-10 items-center justify-center rounded-xl border transition-all',
+                  border.subtle,
+                  bg.surface,
+                  'hover:bg-gray-100 dark:hover:bg-slate-800',
+                  showAttachMenu && 'bg-gray-100 dark:bg-slate-800'
+                )}
+                title="Attach files"
+              >
+                <Plus className={cn('h-5 w-5', text.primary)} />
+              </button>
+
+              {/* Attach menu - Claude style (appears to the right) */}
+              {showAttachMenu && (
+                <div className={cn(
+                  'absolute bottom-0 left-14 w-64 rounded-xl border shadow-xl z-50',
+                  border.subtle,
+                  bg.surface,
+                  'p-1'
+                )}>
+                  <div className="space-y-0.5">
+                    {/* Upload files */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                        'hover:bg-gray-100 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      <Paperclip className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
+                      <div className="flex-1">
+                        <div className={cn('text-sm font-medium', text.primary)}>
+                          Upload from computer
+                        </div>
+                        <div className={cn('text-xs', text.muted)}>
+                          Documents, spreadsheets, and more
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Upload images */}
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                        'hover:bg-gray-100 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      <ImageIcon className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
+                      <div className="flex-1">
+                        <div className={cn('text-sm font-medium', text.primary)}>
+                          Upload images
+                        </div>
+                        <div className={cn('text-xs', text.muted)}>
+                          PNG, JPG, GIF, and more
+                        </div>
+                      </div>
+                    </button>
+
+                    <div className={cn('my-1 h-px', 'bg-gray-200 dark:bg-slate-700')} />
+
+                    {/* GitHub */}
+                    <button
+                      type="button"
+                      onClick={handleGitHubConnect}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                        'hover:bg-gray-100 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      <Github className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
+                      <div className="flex-1">
+                        <div className={cn('text-sm font-medium', text.primary)}>
+                          From GitHub
+                        </div>
+                        <div className={cn('text-xs', text.muted)}>
+                          Link a repository or file
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Google Drive */}
+                    <button
+                      type="button"
+                      onClick={handleDriveConnect}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                        'hover:bg-gray-100 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      <FolderOpen className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
+                      <div className="flex-1">
+                        <div className={cn('text-sm font-medium', text.primary)}>
+                          From Google Drive
+                        </div>
+                        <div className={cn('text-xs', text.muted)}>
+                          Search and attach files
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* URL */}
+                    <button
+                      type="button"
+                      onClick={handleAttachURL}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                        'hover:bg-gray-100 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      <Link2 className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
+                      <div className="flex-1">
+                        <div className={cn('text-sm font-medium', text.primary)}>
+                          Paste a link
+                        </div>
+                        <div className={cn('text-xs', text.muted)}>
+                          Attach any URL
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className={cn(
             'relative overflow-visible rounded-2xl border transition-colors',
             border.subtle,
             bg.surface,
             'focus-within:border-blue-600 dark:focus-within:border-blue-500'
           )}>
-            {/* Plus button - Claude style (top-left, outside border) */}
-            <div className="absolute -left-12 bottom-4">
-              <div className="relative" ref={attachMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowAttachMenu(!showAttachMenu)}
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg border transition-all',
-                    border.subtle,
-                    bg.surface,
-                    'hover:bg-gray-100 dark:hover:bg-slate-800',
-                    showAttachMenu && 'bg-gray-100 dark:bg-slate-800'
-                  )}
-                  title="Attach files"
-                >
-                  <Plus className={cn('h-5 w-5', text.primary)} />
-                </button>
-
-                {/* Attach menu - Claude style (appears to the right) */}
-                {showAttachMenu && (
-                  <div className={cn(
-                    'absolute bottom-0 left-12 w-64 rounded-xl border shadow-lg',
-                    border.subtle,
-                    bg.surface,
-                    'p-1'
-                  )}>
-                    <div className="space-y-0.5">
-                      {/* Upload files */}
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          'hover:bg-gray-100 dark:hover:bg-slate-800'
-                        )}
-                      >
-                        <Paperclip className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
-                        <div className="flex-1">
-                          <div className={cn('text-sm font-medium', text.primary)}>
-                            Upload from computer
-                          </div>
-                          <div className={cn('text-xs', text.muted)}>
-                            Documents, spreadsheets, and more
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* Upload images */}
-                      <button
-                        type="button"
-                        onClick={() => imageInputRef.current?.click()}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          'hover:bg-gray-100 dark:hover:bg-slate-800'
-                        )}
-                      >
-                        <ImageIcon className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
-                        <div className="flex-1">
-                          <div className={cn('text-sm font-medium', text.primary)}>
-                            Upload images
-                          </div>
-                          <div className={cn('text-xs', text.muted)}>
-                            PNG, JPG, GIF, and more
-                          </div>
-                        </div>
-                      </button>
-
-                      <div className={cn('my-1 h-px', 'bg-gray-200 dark:bg-slate-700')} />
-
-                      {/* GitHub */}
-                      <button
-                        type="button"
-                        onClick={handleGitHubConnect}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          'hover:bg-gray-100 dark:hover:bg-slate-800'
-                        )}
-                      >
-                        <Github className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
-                        <div className="flex-1">
-                          <div className={cn('text-sm font-medium', text.primary)}>
-                            From GitHub
-                          </div>
-                          <div className={cn('text-xs', text.muted)}>
-                            Link a repository or file
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* Google Drive */}
-                      <button
-                        type="button"
-                        onClick={handleDriveConnect}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          'hover:bg-gray-100 dark:hover:bg-slate-800'
-                        )}
-                      >
-                        <FolderOpen className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
-                        <div className="flex-1">
-                          <div className={cn('text-sm font-medium', text.primary)}>
-                            From Google Drive
-                          </div>
-                          <div className={cn('text-xs', text.muted)}>
-                            Search and attach files
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* URL */}
-                      <button
-                        type="button"
-                        onClick={handleAttachURL}
-                        className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          'hover:bg-gray-100 dark:hover:bg-slate-800'
-                        )}
-                      >
-                        <Link2 className={cn('mt-0.5 h-5 w-5 flex-shrink-0', text.primary)} />
-                        <div className="flex-1">
-                          <div className={cn('text-sm font-medium', text.primary)}>
-                            Paste a link
-                          </div>
-                          <div className={cn('text-xs', text.muted)}>
-                            Attach any URL
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
             <textarea
               ref={inputRef}
               value={input}
@@ -1017,8 +1017,11 @@ export default function ToronPage() {
               style={{ maxHeight: '200px' }}
             />
 
-            {/* Input actions */}
-            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-slate-700">
+            {/* Bottom info bar - NO BORDER */}
+            <div className={cn(
+              'flex items-center justify-between px-4 py-3',
+              'bg-gray-50 dark:bg-slate-800/50'
+            )}>
               <div className="flex items-center gap-2">
                 <span className={cn('text-xs', text.muted)}>
                   {isStreaming ? 'Toron is thinking...' : 'Press Enter to send, Shift+Enter for new line'}
