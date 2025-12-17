@@ -20,16 +20,16 @@ const cornerApps = [
   {
     id: "tasks",
     title: "Tasks",
-    focus: "Short horizon",
+    focus: "Short horizon tasks",
     icon: CheckSquare2,
-    notes: ["Today only, no backlog", "Owners visible at a glance", "Deferral is acceptable"],
+    notes: ["Owners visible, not urgent", "Time checks ready", "Snoozes allowed"],
   },
   {
     id: "calendar",
     title: "Calendar",
     focus: "Time authority",
     icon: CalendarClock,
-    notes: ["Events anchor the day", "Tasks respect the clock", "Gaps stay breathable"],
+    notes: ["Day schedule synced", "Time guardrails active", "Tasks on hold by time"],
   },
 ];
 
@@ -42,10 +42,10 @@ const interfaceBar = [
 ];
 
 const placement = {
-  connectors: "top-8 left-8",
-  lists: "top-8 right-8",
-  tasks: "bottom-36 left-8",
-  calendar: "bottom-36 right-8",
+  connectors: "top-14 left-16",
+  lists: "top-14 right-16",
+  tasks: "bottom-32 left-20",
+  calendar: "bottom-32 right-20",
 };
 
 export default function WorkspacePage() {
@@ -53,13 +53,18 @@ export default function WorkspacePage() {
 
   return (
     <section className="relative">
-      <div className="relative min-h-[900px] overflow-hidden rounded-[40px] border border-white/20 bg-white/40 p-8 shadow-[0_28px_90px_rgba(15,23,42,0.14)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/5">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(0,158,255,0.06),transparent_34%),radial-gradient(circle_at_88%_14%,rgba(147,96,255,0.08),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.6)_0%,rgba(255,255,255,0.3)_18%,rgba(255,255,255,0)_46%)]" />
-        <div className="pointer-events-none absolute inset-6 rounded-[32px] border border-white/18" />
+      <div className="relative min-h-[960px] overflow-hidden rounded-[48px] border border-white/30 bg-gradient-to-b from-[#e8f2ff] via-[#dfe6f5] to-[#0f1f45] p-10 shadow-[0_30px_120px_rgba(12,25,64,0.24)] backdrop-blur-2xl dark:border-white/10 dark:from-white/10 dark:via-white/5 dark:to-slate-900">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(0,158,255,0.14),transparent_30%),radial-gradient(circle_at_82%_20%,rgba(171,141,255,0.12),transparent_30%),radial-gradient(circle_at_48%_86%,rgba(83,166,255,0.12),transparent_32%)]" />
+        <div className="pointer-events-none absolute inset-5 rounded-[40px] border border-white/30" />
+
+        <div className="pointer-events-none absolute left-20 top-24 h-96 w-[420px] rounded-[80px] bg-white/30 blur-3xl" />
+        <div className="pointer-events-none absolute right-16 top-16 h-80 w-[460px] rounded-[80px] bg-white/30 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-20 left-24 h-72 w-[460px] rounded-[88px] bg-white/25 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-16 right-24 h-72 w-[420px] rounded-[88px] bg-white/25 blur-3xl" />
 
         <div className="relative flex h-full flex-col">
           <div className="relative flex-1">
-            <div className="pointer-events-none absolute inset-20 rounded-[28px] border border-white/18 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:border-white/10 dark:bg-white/5" />
+            <div className="pointer-events-none absolute inset-16 rounded-[34px] border border-white/20 bg-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/5" />
             <div className="absolute inset-0 flex items-center justify-center px-24">
               <WorkspaceSurface items={interfaceBar} activeId={activeInterface} onSelect={setActiveInterface} />
             </div>
@@ -67,26 +72,26 @@ export default function WorkspacePage() {
             {cornerApps.map((app) => (
               <div
                 key={app.id}
-                className={`absolute ${placement[app.id as keyof typeof placement]} w-[320px] max-w-full space-y-3 rounded-3xl border border-white/20 bg-white/70 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10`}
+                className={`absolute ${placement[app.id as keyof typeof placement]} w-[360px] max-w-full space-y-4 rounded-[30px] border border-white/30 bg-gradient-to-b from-white/80 to-white/60 p-6 shadow-[0_22px_70px_rgba(10,24,56,0.22)] backdrop-blur-2xl dark:border-white/10 dark:from-white/10 dark:to-white/5`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-[var(--text-strong)]">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 text-[var(--text-primary)] ring-1 ring-white/30 shadow-inner dark:bg-white/10 dark:ring-white/10">
-                      <app.icon className="h-4 w-4" />
+                  <div className="flex items-center gap-3 text-[var(--text-strong)]">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-[var(--text-primary)] ring-1 ring-white/40 shadow-inner dark:bg-white/10 dark:ring-white/10">
+                      <app.icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{app.title}</p>
-                      <p className="text-[11px] text-[var(--text-muted)]">{app.focus}</p>
+                      <p className="text-base font-semibold tracking-tight">{app.title}</p>
+                      <p className="text-[12px] text-[var(--text-muted)]">{app.focus}</p>
                     </div>
                   </div>
-                  <span className="rounded-full border border-white/30 bg-white/70 px-3 py-1 text-[11px] font-semibold text-[var(--text-muted)] shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                  <span className="rounded-full border border-white/40 bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)] shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                     Status-only
                   </span>
                 </div>
-                <div className="space-y-2 text-sm text-[var(--text-primary)]">
+                <div className="space-y-3 text-sm text-[var(--text-primary)]">
                   {app.notes.map((note) => (
-                    <div key={note} className="flex items-start gap-2 rounded-2xl border border-white/30 bg-white/70 px-3 py-2 text-[13px] leading-relaxed shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                      <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-[var(--ryuzen-azure)]" aria-hidden />
+                    <div key={note} className="flex items-start gap-3 rounded-2xl border border-white/30 bg-white/70 px-4 py-3 text-[13px] leading-relaxed shadow-inner backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                      <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-[var(--ryuzen-azure)]" aria-hidden />
                       <span className="text-[var(--text-strong)]">{note}</span>
                     </div>
                   ))}
