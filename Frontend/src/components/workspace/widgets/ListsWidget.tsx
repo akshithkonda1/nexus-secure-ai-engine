@@ -17,11 +17,11 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
   return (
     <section
       aria-label="Lists widget"
-      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/82 p-4 text-[var(--text)] shadow-[0_12px_36px_rgba(15,23,42,0.07)] backdrop-blur-lg transition-colors dark:shadow-[0_12px_36px_rgba(0,0,0,0.25)] ${className ?? ""}`}
+      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/90 p-4 text-[var(--text)] shadow-[var(--shadow-soft)] backdrop-blur-lg ${className ?? ""}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)]/90 text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]">
             <ListChecks className="h-5 w-5" />
           </span>
           <div>
@@ -31,7 +31,7 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
         </div>
         <button
           type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line-subtle)] bg-[var(--bg-elev)]/90 text-[var(--text)] shadow-inner transition hover:border-[var(--line-strong)]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line-subtle)] bg-[var(--bg-elev)] text-[var(--text)] shadow-inner transition hover:border-[var(--line-strong)]"
           aria-label="Add list"
         >
           <Plus className="h-4 w-4" />
@@ -44,8 +44,8 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
             type="button"
             className={`flex w-full items-center justify-between rounded-xl border border-transparent px-3 py-2 text-left text-sm transition ${
               selected === list.name
-                ? "bg-[var(--bg-elev)]/95 text-[var(--text)] shadow-inner ring-1 ring-[var(--line-subtle)]"
-                : "text-[var(--muted)] hover:bg-[var(--bg-elev)]/90 hover:text-[var(--text)]"
+                ? "bg-[var(--bg-elev)] text-[var(--text)] shadow-inner ring-1 ring-[var(--line-subtle)]"
+                : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
             }`}
             onClick={() => setSelected(list.name)}
           >
