@@ -11,7 +11,7 @@ export default function Workspace() {
     <div className="h-full overflow-hidden bg-[#0f1419] text-white">
       {/* Workspace Container */}
       <div className="mx-auto flex h-full">
-        {/* Left Sidebar - Always Visible */}
+        {/* Left Sidebar - Lists & Connectors */}
         <aside 
           className="relative flex flex-col border-r border-slate-800 bg-[#0d1117]"
           style={{ 
@@ -127,7 +127,7 @@ export default function Workspace() {
           </div>
         </main>
         
-        {/* Right Panel - Always Visible */}
+        {/* Right Panel - Calendar & Tasks */}
         <aside 
           className="relative flex flex-col border-l border-slate-800 bg-[#0d1117]"
           style={{ 
