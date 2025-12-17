@@ -81,19 +81,12 @@ export default function ToronPage() {
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 overflow-y-auto pb-6 pr-2">
           <AnimatePresence mode="popLayout">
             {messages.map((message, index) => {
-              const glassTone =
-                message.role === "user"
-                  ? "border-white/40 bg-white/75 text-[var(--text-strong)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5"
-                  : message.role === "system"
-                    ? "border-white/25 bg-white/55 text-[var(--text-muted)] shadow-[0_10px_28px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-white/5"
+                const glassTone =
+                  message.role === "user"
+                    ? "border-white/40 bg-white/75 text-[var(--text-strong)] shadow-[0_14px_38px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-white/5"
                     : "border-white/30 bg-white/65 text-[var(--text-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.07)] dark:border-white/10 dark:bg-white/5";
 
-              const textTone =
-                message.role === "user"
-                  ? "text-[var(--text-strong)]"
-                  : message.role === "system"
-                    ? "text-[var(--text-muted)]"
-                    : "text-[var(--text-primary)]";
+                const textTone = message.role === "user" ? "text-[var(--text-strong)]" : "text-[var(--text-primary)]";
 
               return (
                 <motion.div
