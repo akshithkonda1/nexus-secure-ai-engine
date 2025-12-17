@@ -1,7 +1,7 @@
 @import "./theme.css";
 
 :root {
-  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
 }
 
 body {
@@ -556,6 +556,61 @@ a {
   overflow: hidden;
 }
 
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "lists lists lists canvas canvas canvas canvas canvas canvas calendar calendar calendar"
+    "connectors connectors connectors canvas canvas canvas canvas canvas canvas tasks tasks tasks";
+  gap: 16px;
+  align-items: stretch;
+}
+
+.workspace-grid__cell {
+  min-width: 0;
+}
+
+.workspace-grid__cell--lists {
+  grid-area: lists;
+}
+
+.workspace-grid__cell--calendar {
+  grid-area: calendar;
+}
+
+.workspace-grid__cell--connectors {
+  grid-area: connectors;
+}
+
+.workspace-grid__cell--tasks {
+  grid-area: tasks;
+}
+
+.workspace-grid__cell--canvas {
+  grid-area: canvas;
+}
+
+@media (max-width: 1200px) {
+  .workspace-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-areas:
+      "canvas canvas canvas canvas canvas canvas canvas canvas"
+      "lists lists calendar calendar connectors connectors tasks tasks";
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-areas:
+      "canvas"
+      "lists"
+      "calendar"
+      "connectors"
+      "tasks";
+  }
+}
+
 .stub-card {
   display: grid;
   gap: 8px;
@@ -640,6 +695,524 @@ table td,
 table th {
   padding: 10px 8px;
   border-bottom: 1px solid var(--border-strong);
+}
+
+/* Toron */
+.toron-shell {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 18px 24px;
+  background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent-purple) 14%, transparent), transparent 32%),
+    radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent-green) 16%, transparent), transparent 32%),
+    radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent-teal) 10%, transparent), transparent 28%),
+    color-mix(in srgb, var(--bg-canvas) 90%, transparent);
+  --toron-header-height: 72px;
+  --toron-header-height-compact: 56px;
+  --toron-header-active: var(--toron-header-height);
+  --toron-directive-space: 240px;
+  --toron-radius: 26px;
+}
+
+.toron-sessions {
+  position: fixed;
+  z-index: 8;
+  width: 320px;
+  cursor: grab;
+  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
+  box-shadow: var(--shadow-soft);
+  padding: 14px;
+  backdrop-filter: blur(var(--blur-strength));
+  transition: background var(--rz-duration) ease, border var(--rz-duration) ease;
+}
+
+.toron-sessions.collapsed .toron-sessions-list {
+  display: none;
+}
+
+.toron-sessions.collapsed {
+  width: 220px;
+}
+
+.toron-sessions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 10px;
+}
+
+.toron-sessions-title {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.toron-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+.toron-sessions-list {
+  display: grid;
+  gap: 12px;
+}
+
+.toron-session-card {
+  display: grid;
+  gap: 6px;
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+}
+
+.toron-session-card.active {
+  border-color: color-mix(in srgb, var(--accent-purple) 40%, var(--border-strong));
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.08);
+}
+
+.toron-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toron-session-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.toron-session-status {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.toron-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.toron-status-dot.alive {
+  background: var(--accent-green);
+  border-color: color-mix(in srgb, var(--accent-green) 65%, transparent);
+}
+
+.toron-status-dot.quiet {
+  background: color-mix(in srgb, var(--text-muted) 42%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 60%, transparent);
+}
+
+.toron-status-dot.paused {
+  background: #d2982b;
+  border-color: color-mix(in srgb, #d2982b 70%, transparent);
+}
+
+.toron-appframe {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: calc(100vh - 32px);
+  position: relative;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 6px 10px 0;
+  isolation: isolate;
+  transition: padding-top var(--rz-duration) ease;
+}
+
+.toron-appframe.tucked {
+  padding-top: 4px;
+  --toron-header-active: var(--toron-header-height-compact);
+}
+
+.toron-header {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  height: var(--toron-header-active);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
+  padding: 10px 6px;
+  transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
+    background var(--rz-duration) ease, opacity var(--rz-duration) ease, transform var(--rz-duration) ease;
+}
+
+.toron-header.tucked {
+  padding: 6px 6px;
+  border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  opacity: 0.9;
+  transform: translateY(-4px);
+}
+
+.toron-header-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.toron-name {
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+.toron-session-name {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+  max-width: 720px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.toron-viewport {
+  position: relative;
+  border-radius: var(--toron-radius);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
+  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 34%),
+    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 6%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 94%, transparent), color-mix(in srgb, var(--bg-glass) 82%, transparent));
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.1));
+  overflow: hidden;
+}
+
+.toron-viewport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 12%, transparent), transparent 32%),
+    linear-gradient(0deg, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 24%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 1));
+}
+
+.toron-viewport-scroll {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - var(--toron-header-active) - var(--toron-directive-space));
+  padding: 18px 16px calc(var(--toron-directive-space) + 18px);
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 24%, transparent) transparent;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity var(--rz-duration) ease;
+}
+
+.toron-viewport-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toron-viewport-scroll:hover::-webkit-scrollbar-thumb,
+.toron-viewport-scroll:focus-within::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+.toron-conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.toron-message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  border-radius: calc(var(--toron-radius) * 0.55);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
+}
+
+.toron-message.assistant {
+  border-color: color-mix(in srgb, var(--accent-green) 32%, var(--border-strong));
+}
+
+.toron-message.user {
+  border-color: color-mix(in srgb, var(--accent-purple) 32%, var(--border-strong));
+}
+
+.toron-message-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toron-label {
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.toron-message-body {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.toron-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.toron-message:hover .toron-actions,
+.toron-more-group:focus-within .toron-actions,
+.toron-more-group:hover .toron-actions {
+  opacity: 1;
+}
+
+.toron-action {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.toron-action.mic.active {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.toron-more-group {
+  position: relative;
+}
+
+.toron-more-menu {
+  position: absolute;
+  bottom: 36px;
+  right: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-strong);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.toron-plus .toron-more-menu {
+  bottom: calc(100% + 12px);
+  top: auto;
+  left: 0;
+  right: auto;
+}
+
+.toron-more-group:hover .toron-more-menu,
+.toron-more-group:focus-within .toron-more-menu {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toron-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toron-directive-shell {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  width: min(1040px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 7;
+}
+
+.toron-directive {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.toron-input-shell {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: calc(var(--toron-radius) * 0.7);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(var(--blur-strength));
+}
+
+.toron-control {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toron-input-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toron-input-field textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 15px;
+  padding: 8px 10px;
+  outline: none;
+  resize: none;
+  min-height: 48px;
+}
+
+.toron-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toron-attachment {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.toron-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-green) 60%, var(--border-strong));
+  background: color-mix(in srgb, var(--accent-green) 24%, var(--bg-surface));
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+  min-width: 110px;
+}
+
+.toron-send:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.toron-send.sending {
+  background: color-mix(in srgb, var(--accent-green) 16%, var(--bg-surface));
+}
+
+.toron-thinking {
+  width: 26px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent-green) 60%, transparent), color-mix(in srgb, var(--accent-purple) 50%, transparent));
+  background-size: 200% 100%;
+  animation: glide 1.4s ease-in-out infinite;
+}
+
+@keyframes glide {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.toron-footer {
+  text-align: center;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+}
+
+.toron-new-response {
+  position: sticky;
+  bottom: 12px;
+  align-self: flex-end;
+  margin-right: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 42%, var(--border-strong));
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 1080px) {
+  .toron-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .toron-sessions {
+    position: relative;
+    top: 0;
+    order: 2;
+  }
 }
 
 /* Workspace compatibility to enforce tokenized styling */

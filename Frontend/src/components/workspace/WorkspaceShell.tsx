@@ -34,27 +34,20 @@ const WorkspaceContent: React.FC = () => {
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
-            gap: 16,
-            alignItems: "stretch",
-          }}
-        >
-          <div style={{ gridColumn: "span 3" }}>
+        <div className="workspace-grid">
+          <div className="workspace-grid__cell workspace-grid__cell--lists">
             <ListsWidget active={currentWidget === "lists"} onClick={() => openWidget("lists")} />
           </div>
-          <div style={{ gridColumn: "span 6", gridRow: "span 2" }}>
+          <div className="workspace-grid__cell workspace-grid__cell--canvas">
             <WorkspaceCanvas mode={mode} />
           </div>
-          <div style={{ gridColumn: "span 3" }}>
+          <div className="workspace-grid__cell workspace-grid__cell--calendar">
             <CalendarWidget active={currentWidget === "calendar"} onClick={() => openWidget("calendar")} />
           </div>
-          <div style={{ gridColumn: "span 3" }}>
+          <div className="workspace-grid__cell workspace-grid__cell--connectors">
             <ConnectorsWidget active={currentWidget === "connectors"} onClick={() => openWidget("connectors")} />
           </div>
-          <div style={{ gridColumn: "span 3", gridColumnStart: 10 }}>
+          <div className="workspace-grid__cell workspace-grid__cell--tasks">
             <TasksWidget active={currentWidget === "tasks"} onClick={() => openWidget("tasks")} />
           </div>
         </div>
