@@ -17,7 +17,7 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
   return (
     <section
       aria-label="Lists widget"
-      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--bg-surface)]/90 p-4 text-[var(--text)] shadow-[var(--shadow-soft)] backdrop-blur-lg ${className ?? ""}`}
+      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-[24px] bg-[var(--bg-surface)]/80 p-4 text-[var(--text)] shadow-[0_24px_70px_-55px_rgba(0,0,0,0.8)] ring-1 ring-[var(--line-subtle)]/60 backdrop-blur-xl ${className ?? ""}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
