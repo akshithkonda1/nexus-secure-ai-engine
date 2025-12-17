@@ -873,12 +873,12 @@ export default function ToronPage() {
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-                  'hover:bg-gray-200 dark:hover:bg-slate-700',
-                  showAttachMenu && 'bg-gray-200 dark:bg-slate-700'
+                  'hover:bg-gray-100 dark:hover:bg-slate-700',
+                  showAttachMenu && 'bg-gray-100 dark:bg-slate-700'
                 )}
                 title="Attach files"
               >
-                <Plus className={cn('h-5 w-5', text.primary)} />
+                <Plus className={cn('h-5 w-5', text.muted)} />
               </button>
 
               {/* Attach menu - appears above the button */}
