@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import CenterCanvas from "./CenterCanvas";
 import BottomBar from "./BottomBar";
 import ListsWidget from "./widgets/ListsWidget";
@@ -7,7 +7,14 @@ import ConnectorsWidget from "./widgets/ConnectorsWidget";
 import TasksWidget from "./widgets/TasksWidget";
 import { CanvasMode } from "./types";
 
-export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasMode; onModeChange: (mode: CanvasMode) => void }) {
+type WorkspaceSurfaceProps = {
+  mode: CanvasMode;
+  onModeChange: (mode: CanvasMode) => void;
+  isCleared: boolean;
+  onHome: () => void;
+};
+
+export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome }: WorkspaceSurfaceProps) {
   const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
@@ -24,15 +31,27 @@ export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasM
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(132,106,255,0.16),transparent_36%),radial-gradient(circle_at_78%_6%,rgba(68,212,255,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
 
       <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14 sm:px-6 lg:px-10 xl:px-16">
-        <div className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-7 md:grid-cols-2 lg:grid-cols-[minmax(280px,1fr)_minmax(720px,1.2fr)_minmax(280px,1fr)] lg:grid-rows-[auto_auto]">
-          <CenterCanvas mode={mode} className="order-2 w-full md:order-1 md:col-span-2 lg:order-none lg:[grid-column:2] lg:[grid-row:1/span_2]" />
+        <div
+          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(760px,1fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
+          style={{
+            "--workspace-gap": "28px",
+            "--workspace-side": "clamp(320px,24vw,360px)",
+            "--workspace-row": "minmax(320px,1fr)",
+          } as CSSProperties}
+        >
+          <CenterCanvas
+            key={isCleared ? `${mode}-cleared` : mode}
+            mode={mode}
+            isCleared={isCleared}
+            className="order-2 w-full md:order-1 md:col-span-2 lg:order-none lg:[grid-column:2] lg:[grid-row:1/span_2]"
+          />
 
           {!isCompact && (
             <>
-              <ListsWidget className="order-1 md:order-2 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:1]" />
-              <CalendarWidget className="order-3 md:order-3 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:1]" />
-              <ConnectorsWidget className="order-4 md:order-4 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:2]" />
-              <TasksWidget className="order-5 md:order-5 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:2]" />
+              <ListsWidget className="order-1 h-full md:order-2 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:1]" />
+              <CalendarWidget className="order-3 h-full md:order-3 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:1]" />
+              <ConnectorsWidget className="order-4 h-full md:order-4 md:self-start lg:order-none lg:[grid-column:1] lg:[grid-row:2]" />
+              <TasksWidget className="order-5 h-full md:order-5 md:self-start lg:order-none lg:[grid-column:3] lg:[grid-row:2]" />
             </>
           )}
 
@@ -47,7 +66,7 @@ export default function WorkspaceSurface({ mode, onModeChange }: { mode: CanvasM
         </div>
       </div>
 
-      <BottomBar mode={mode} onChange={onModeChange} />
+      <BottomBar mode={mode} onChange={onModeChange} onHome={onHome} />
     </div>
   );
 }
