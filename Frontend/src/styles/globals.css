@@ -556,6 +556,61 @@ a {
   overflow: hidden;
 }
 
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "lists lists lists canvas canvas canvas canvas canvas canvas calendar calendar calendar"
+    "connectors connectors connectors canvas canvas canvas canvas canvas canvas tasks tasks tasks";
+  gap: 16px;
+  align-items: stretch;
+}
+
+.workspace-grid__cell {
+  min-width: 0;
+}
+
+.workspace-grid__cell--lists {
+  grid-area: lists;
+}
+
+.workspace-grid__cell--calendar {
+  grid-area: calendar;
+}
+
+.workspace-grid__cell--connectors {
+  grid-area: connectors;
+}
+
+.workspace-grid__cell--tasks {
+  grid-area: tasks;
+}
+
+.workspace-grid__cell--canvas {
+  grid-area: canvas;
+}
+
+@media (max-width: 1200px) {
+  .workspace-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-areas:
+      "canvas canvas canvas canvas canvas canvas canvas canvas"
+      "lists lists calendar calendar connectors connectors tasks tasks";
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-areas:
+      "canvas"
+      "lists"
+      "calendar"
+      "connectors"
+      "tasks";
+  }
+}
+
 .stub-card {
   display: grid;
   gap: 8px;
@@ -645,17 +700,32 @@ table th {
 /* Toron */
 .toron-shell {
   position: relative;
+<<<<<<< HEAD
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   padding: 14px 18px 42px;
+=======
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 18px 24px;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--accent-purple) 14%, transparent), transparent 32%),
     radial-gradient(circle at 86% 10%, color-mix(in srgb, var(--accent-green) 16%, transparent), transparent 32%),
     radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent-teal) 10%, transparent), transparent 28%),
     color-mix(in srgb, var(--bg-canvas) 90%, transparent);
   --toron-header-height: 72px;
   --toron-header-height-compact: 56px;
+<<<<<<< HEAD
   --toron-directive-space: 220px;
+=======
+  --toron-header-active: var(--toron-header-height);
+  --toron-directive-space: 240px;
+  --toron-radius: 26px;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-sessions {
@@ -764,7 +834,11 @@ table th {
   border-color: color-mix(in srgb, #d2982b 70%, transparent);
 }
 
+<<<<<<< HEAD
 .toron-main {
+=======
+.toron-appframe {
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -772,11 +846,22 @@ table th {
   position: relative;
   width: min(1180px, 100%);
   margin: 0 auto;
+<<<<<<< HEAD
   transition: padding-top var(--rz-duration) ease;
 }
 
 .toron-main.tucked {
   padding-top: 4px;
+=======
+  padding: 6px 10px 0;
+  isolation: isolate;
+  transition: padding-top var(--rz-duration) ease;
+}
+
+.toron-appframe.tucked {
+  padding-top: 4px;
+  --toron-header-active: var(--toron-header-height-compact);
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-header {
@@ -784,6 +869,7 @@ table th {
   z-index: 3;
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   height: var(--toron-header-height);
   border-bottom: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-glass) 90%, transparent);
@@ -798,6 +884,23 @@ table th {
   padding: 6px 6px;
   border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
   background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+=======
+  height: var(--toron-header-active);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  backdrop-filter: blur(calc(var(--blur-strength) * 0.8));
+  padding: 10px 6px;
+  transition: height var(--rz-duration) ease, padding var(--rz-duration) ease, border-color var(--rz-duration) ease,
+    background var(--rz-duration) ease, opacity var(--rz-duration) ease, transform var(--rz-duration) ease;
+}
+
+.toron-header.tucked {
+  padding: 6px 6px;
+  border-color: color-mix(in srgb, var(--border-strong) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 82%, transparent);
+  opacity: 0.9;
+  transform: translateY(-4px);
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-header-title {
@@ -824,6 +927,7 @@ table th {
 
 .toron-viewport {
   position: relative;
+<<<<<<< HEAD
   border-radius: 24px;
   border: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
@@ -831,16 +935,46 @@ table th {
   overflow: hidden;
 }
 
+=======
+  border-radius: var(--toron-radius);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 52%, transparent);
+  background: radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--accent-purple) 6%, transparent), transparent 34%),
+    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-green) 6%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 94%, transparent), color-mix(in srgb, var(--bg-glass) 82%, transparent));
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(calc(var(--blur-strength) * 1.1));
+  overflow: hidden;
+}
+
+.toron-viewport::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 12%, transparent), transparent 32%),
+    linear-gradient(0deg, color-mix(in srgb, var(--bg-surface) 10%, transparent), transparent 24%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 1));
+}
+
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 .toron-viewport-scroll {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+<<<<<<< HEAD
   max-height: calc(100vh - var(--toron-header-height) - var(--toron-directive-space));
   padding: 12px 12px calc(var(--toron-directive-space) + 18px);
   scroll-behavior: smooth;
   overscroll-behavior: contain;
+=======
+  max-height: calc(100vh - var(--toron-header-active) - var(--toron-directive-space));
+  padding: 18px 16px calc(var(--toron-directive-space) + 18px);
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 24%, transparent) transparent;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-viewport-scroll::-webkit-scrollbar {
@@ -848,14 +982,29 @@ table th {
 }
 
 .toron-viewport-scroll::-webkit-scrollbar-thumb {
+<<<<<<< HEAD
   background: color-mix(in srgb, var(--text-muted) 45%, transparent);
   border-radius: 999px;
+=======
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity var(--rz-duration) ease;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-viewport-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
+<<<<<<< HEAD
+=======
+.toron-viewport-scroll:hover::-webkit-scrollbar-thumb,
+.toron-viewport-scroll:focus-within::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 .toron-conversation {
   display: flex;
   flex-direction: column;
@@ -869,10 +1018,18 @@ table th {
   flex-direction: column;
   gap: 8px;
   padding: 14px 16px 12px;
+<<<<<<< HEAD
   border-radius: 14px;
   border: 1px solid var(--border-strong);
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
+=======
+  border-radius: calc(var(--toron-radius) * 0.55);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 85%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-message.assistant {
@@ -956,8 +1113,13 @@ table th {
 }
 
 .toron-plus .toron-more-menu {
+<<<<<<< HEAD
   bottom: auto;
   top: 42px;
+=======
+  bottom: calc(100% + 12px);
+  top: auto;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   left: 0;
   right: auto;
 }
@@ -980,16 +1142,35 @@ table th {
   cursor: pointer;
 }
 
+<<<<<<< HEAD
 .toron-directive {
   position: fixed;
   left: 50%;
   bottom: 24px;
+=======
+.toron-directive-shell {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   transform: translateX(-50%);
   width: min(1040px, calc(100% - 32px));
   display: flex;
   flex-direction: column;
   gap: 8px;
+<<<<<<< HEAD
   z-index: 9;
+=======
+  z-index: 7;
+}
+
+.toron-directive {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 }
 
 .toron-input-shell {
@@ -998,10 +1179,17 @@ table th {
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
+<<<<<<< HEAD
   border-radius: 16px;
   border: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--bg-glass) 95%, transparent);
   box-shadow: var(--shadow-soft);
+=======
+  border-radius: calc(var(--toron-radius) * 0.7);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 48%, transparent);
+  background: color-mix(in srgb, var(--bg-glass) 92%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.08);
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
   backdrop-filter: blur(var(--blur-strength));
 }
 
@@ -1096,6 +1284,23 @@ table th {
   color: color-mix(in srgb, var(--text-muted) 82%, transparent);
 }
 
+<<<<<<< HEAD
+=======
+.toron-new-response {
+  position: sticky;
+  bottom: 12px;
+  align-self: flex-end;
+  margin-right: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-purple) 42%, var(--border-strong));
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+>>>>>>> d6a0d6ddab5bf180799945392e451dbfc202a153
 @media (max-width: 1080px) {
   .toron-shell {
     grid-template-columns: 1fr;
