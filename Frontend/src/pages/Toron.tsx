@@ -866,8 +866,8 @@ export default function ToronPage() {
             bg.surface,
             'focus-within:border-blue-600 dark:focus-within:border-blue-500'
           )}>
-            {/* Plus button - INSIDE the input on the left */}
-            <div className="absolute left-4 bottom-4 z-10" ref={attachMenuRef}>
+            {/* Plus button - INSIDE the input on the left TOP */}
+            <div className="absolute left-4 top-4 z-10" ref={attachMenuRef}>
               <button
                 type="button"
                 onClick={() => setShowAttachMenu(!showAttachMenu)}
@@ -881,10 +881,10 @@ export default function ToronPage() {
                 <Plus className={cn('h-5 w-5', text.muted)} />
               </button>
 
-              {/* Attach menu - appears above the button */}
+              {/* Attach menu - appears below the button */}
               {showAttachMenu && (
                 <div className={cn(
-                  'absolute bottom-12 left-0 w-64 rounded-xl border shadow-xl z-50',
+                  'absolute top-12 left-0 w-64 rounded-xl border shadow-xl z-50',
                   border.subtle,
                   bg.surface,
                   'p-1'
