@@ -16,6 +16,7 @@ import pandas as pd
 from telemetry.audit import audit_logger
 from telemetry.scrubber.certificate_generator import generate_certificate
 from telemetry.bundles.manifest_validator import validate_manifest
+from telemetry.monitoring.metrics import get_metrics_client
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,16 @@ def build_bundle(partner: str, month: str) -> bytes:
         bundle_zip.writestr("manifest.json", json.dumps(manifest, indent=2))
         bundle_zip.writestr("zero_pii_certificate.json", json.dumps(certificate, indent=2))
 
+    bundle_bytes = zip_buffer.getvalue()
+
+    # Emit CloudWatch metrics
+    metrics = get_metrics_client()
+    metrics.emit_bundle_generated(
+        partner=partner,
+        record_count=record_count,
+        size_bytes=len(bundle_bytes)
+    )
+
     audit_logger.log_event(
         event_type="BUNDLE_CREATED",
         partner=partner,
@@ -129,7 +140,7 @@ def build_bundle(partner: str, month: str) -> bytes:
     logger.info(
         "Telemetry bundle built for partner=%s month=%s with %s records", partner, month, record_count
     )
-    return zip_buffer.getvalue()
+    return bundle_bytes
 
 
 __all__ = ["build_bundle"]

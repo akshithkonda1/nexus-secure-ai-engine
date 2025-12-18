@@ -32,6 +32,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from pydantic import BaseModel, Field
 
+# Telemetry integration
+from ryuzen.engine.telemetry_client import get_telemetry_client
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -780,6 +783,7 @@ class ToronEngineV31Enhanced:
         self.consensus_engine = ConsensusEngine(config)
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.calibrator = ConfidenceCalibrator()
+        self.telemetry_client = get_telemetry_client()
 
         self._initialized = False
         self._init_lock = RLock()
@@ -1135,16 +1139,22 @@ class ToronEngineV31Enhanced:
         return consensus, False, None
 
     async def generate(
-        self, prompt: str, use_cache: bool = True
+        self,
+        prompt: str,
+        use_cache: bool = True,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> Tuple[ConsensusResult, ExecutionMetrics]:
         """
         Generate a consensus response with A-grade reliability, epistemic rigor,
         and judicial failsafe.
-        
+
         Args:
             prompt: Input prompt
             use_cache: Whether to use cached results
-            
+            user_id: Optional user identifier for telemetry
+            session_id: Optional session identifier for telemetry
+
         Returns:
             Tuple of (ConsensusResult, ExecutionMetrics)
         """
@@ -1271,14 +1281,27 @@ class ToronEngineV31Enhanced:
         # Cache result
         if use_cache:
             self.cache.set(cache_key, (consensus, metrics))
-        
+
+        # Emit telemetry (fire-and-forget, non-blocking)
+        if self.telemetry_client.enabled:
+            asyncio.create_task(
+                self.telemetry_client.emit_query_event(
+                    prompt=prompt,
+                    consensus=consensus,
+                    metrics=metrics,
+                    all_responses=all_responses,
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+            )
+
         logger.info(
             f"[{request_id}] Complete: {consensus.output_grade.value} grade, "
             f"{consensus.agreement_count}/{consensus.total_responses} consensus, "
             f"{total_latency:.1f}ms, "
             f"arbitration={consensus.arbitration_source.value}"
         )
-        
+
         return consensus, metrics
     
     def get_health_status(self) -> Dict[str, Any]:

@@ -8,6 +8,7 @@ from typing import Optional
 import boto3
 
 from telemetry.audit import audit_logger
+from telemetry.monitoring.metrics import get_metrics_client
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +31,28 @@ def upload_bundle(partner: str, month: str, bundle_bytes: bytes) -> str:
     bucket = _bundle_bucket()
     key = _bundle_key(partner, month)
     logger.info("Uploading telemetry bundle to s3://%s/%s", bucket, key)
-    s3_client.put_object(Bucket=bucket, Key=key, Body=bundle_bytes)
-    audit_logger.log_event(
-        event_type="BUNDLE_DELIVERED",
-        partner=partner,
-        month=month,
-        details={"s3_key": key},
-    )
-    return key
+
+    try:
+        s3_client.put_object(Bucket=bucket, Key=key, Body=bundle_bytes)
+
+        # Emit success metric
+        metrics = get_metrics_client()
+        metrics.emit_delivery_status(partner=partner, success=True)
+
+        audit_logger.log_event(
+            event_type="BUNDLE_DELIVERED",
+            partner=partner,
+            month=month,
+            details={"s3_key": key},
+        )
+        return key
+
+    except Exception as e:
+        # Emit failure metric
+        metrics = get_metrics_client()
+        metrics.emit_delivery_status(partner=partner, success=False)
+        logger.error(f"Failed to upload bundle for {partner}: {e}")
+        raise
 
 
 def generate_signed_url(partner: str, month: str) -> str:
