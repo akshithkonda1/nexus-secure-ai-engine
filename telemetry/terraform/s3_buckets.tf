@@ -83,13 +83,20 @@ resource "aws_s3_bucket_lifecycle_configuration" "sanitized" {
   bucket = aws_s3_bucket.sanitized.id
 
   rule {
-    id     = "CleanupByLambda"
+    id     = "OptimizedCleanup"
     status = "Enabled"
 
     filter {}
 
+    # Transition to STANDARD_IA after 3 days for cost savings
+    transition {
+      days          = 3
+      storage_class = "STANDARD_IA"
+    }
+
+    # Delete after 7 days (reduced from 30 days)
     expiration {
-      days = var.sanitized_retention_days
+      days = 7
     }
 
     abort_incomplete_multipart_upload {
@@ -133,18 +140,36 @@ resource "aws_s3_bucket_lifecycle_configuration" "analytics" {
   bucket = aws_s3_bucket.analytics.id
 
   rule {
-    id     = "ExpireAnalyticsAfter30Days"
+    id     = "IntelligentTiering"
     status = "Enabled"
 
     filter {}
 
-    expiration {
-      days = var.analytics_retention_days
+    # Transition to Intelligent-Tiering for automatic optimization
+    transition {
+      days          = 0
+      storage_class = "INTELLIGENT_TIERING"
     }
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 1
     }
+  }
+}
+
+# Intelligent-Tiering configuration for analytics bucket
+resource "aws_s3_bucket_intelligent_tiering_configuration" "analytics" {
+  bucket = aws_s3_bucket.analytics.id
+  name   = "AnalyticsIntelligentTiering"
+
+  tiering {
+    access_tier = "ARCHIVE_ACCESS"
+    days        = 90
+  }
+
+  tiering {
+    access_tier = "DEEP_ARCHIVE_ACCESS"
+    days        = 180
   }
 }
 

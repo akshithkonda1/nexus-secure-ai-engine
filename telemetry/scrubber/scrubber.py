@@ -8,6 +8,8 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
+from telemetry.scrubber.llm_scrubber import get_llm_scrubber
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -65,17 +67,30 @@ def sanitize_with_llm(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def scrub_record(data: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
-    """Scrub a telemetry record for PII using regex and LLM sanitization."""
+    """
+    Scrub a telemetry record for PII using triple-layer scrubbing:
+    1. Regex patterns (fast, catches obvious PII)
+    2. LLM analysis (contextual PII detection)
+    3. Field-level filtering (suspect keys)
+    """
 
     sanitized_data = copy.deepcopy(data)
     violation_flag = False
 
+    # Layer 1: Regex scrubbing (existing code)
     for key, value in sanitized_data.items():
         scrubbed_value, violation_detected = _scrub_value(value)
         if violation_detected:
             violation_flag = True
         sanitized_data[key] = scrubbed_value
 
+    # Layer 2: LLM contextual scrubbing (NEW)
+    llm_scrubber = get_llm_scrubber()
+    sanitized_data, llm_violation = llm_scrubber.scrub_sync(sanitized_data)
+    if llm_violation:
+        violation_flag = True
+
+    # Layer 3: Legacy sanitize_with_llm call (kept for compatibility)
     sanitized_data = sanitize_with_llm(sanitized_data)
 
     if violation_flag:
