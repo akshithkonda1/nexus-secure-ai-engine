@@ -79,7 +79,7 @@ class EngineConfig(BaseModel):
         True, description="Allow partial results on failures"
     )
     min_acceptable_tier1_responses: int = Field(
-        4, ge=1, le=8, description="Minimum Tier 1 responses for Grade A"
+        5, ge=1, le=9, description="Minimum Tier 1 responses for Grade A"
     )
 
     # A-GRADE ENHANCEMENTS: Epistemic Rigor
@@ -185,6 +185,7 @@ class SourceReliability:
         "DeepSeek-R1": 0.88,  # Very high: Chain-of-thought expert
         
         # Tier 1: General Models
+        "Grok-4.1": 0.86,  # Very High: Enhanced reasoning + real-time data (v4.1 generation)
         "Claude-Sonnet-4.5": 0.85,  # High: Strong reasoning
         "ChatGPT-5.2": 0.83,  # High: Well-calibrated
         "Gemini-3": 0.82,  # High: Strong factual accuracy
@@ -312,10 +313,10 @@ class ConsensusQuality(Enum):
 class OutputGrade(Enum):
     """Quality grade for consumer-facing output."""
 
-    A = "A"  # 8/8 models, high consensus, verified sources
-    B = "B"  # 6-7/8 models, good consensus
-    C = "C"  # 4-5/8 models, acceptable consensus
-    D = "D"  # 3/8 models, weak consensus
+    A = "A"  # 7+/9 models, high consensus, verified sources
+    B = "B"  # 6/9 models, good consensus
+    C = "C"  # 4-5/9 models, acceptable consensus
+    D = "D"  # 3/9 models, weak consensus
     F = "F"  # < 3 models, fallback mode
 
 
@@ -736,14 +737,14 @@ class ConsensusEngine:
     ) -> OutputGrade:
         """Assign consumer-facing quality grade."""
         ratio = agreement / total
-        
-        if ratio >= 0.875 and quality == ConsensusQuality.HIGH:  # 7+/8
+
+        if ratio >= 0.78 and quality == ConsensusQuality.HIGH:  # 7+/9 models
             return OutputGrade.A
-        elif ratio >= 0.75 and quality in [ConsensusQuality.HIGH, ConsensusQuality.MEDIUM]:  # 6+/8
+        elif ratio >= 0.67 and quality in [ConsensusQuality.HIGH, ConsensusQuality.MEDIUM]:  # 6+/9 models
             return OutputGrade.B
-        elif ratio >= 0.5:  # 4+/8
+        elif ratio >= 0.44:  # 4+/9 models
             return OutputGrade.C
-        elif ratio >= 0.375:  # 3/8
+        elif ratio >= 0.33:  # 3/9 models
             return OutputGrade.D
         else:
             return OutputGrade.F
@@ -827,6 +828,7 @@ class ToronEngineV31Enhanced:
             ("Qwen", "multilingual", 310),
             ("Claude-Sonnet-4.5", "harmonious", 350),
             ("Perplexity-Sonar", "search", 260),
+            ("Grok-4.1", "real-time-reasoning", 340),  # Enhanced reasoning + real-time data
         ]
         
         tier2_configs = [
