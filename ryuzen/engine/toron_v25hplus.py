@@ -199,23 +199,61 @@ class SourceReliability:
         "Claude-Opus-4": 0.92,  # Very high: Most sophisticated reasoning
     }
 
+    # Context-adaptive weight multipliers for Grok-4.1
+    CONTEXT_MULTIPLIERS = {
+        "Grok-4.1": {
+            "formal": 0.85,      # Academic, legal, corporate (0.86 → 0.73)
+            "real-time": 1.1,    # Breaking news, trends (0.86 → 0.95, capped at 1.0)
+            "social": 1.05,      # Social sentiment, culture (0.86 → 0.90)
+            "political": 0.90,   # Political topics (0.86 → 0.77)
+            "technical": 1.0,    # Code, engineering (0.86 stays)
+            "casual": 1.0,       # General conversation (0.86 stays)
+        }
+    }
+
     @classmethod
-    def get_weight(cls, model_name: str) -> float:
-        """Get reliability weight for a model/source."""
-        return cls.WEIGHTS.get(model_name, 0.7)  # Default: moderate trust
+    def get_weight(cls, model_name: str, context: Optional[str] = None) -> float:
+        """
+        Get reliability weight for a model/source.
+
+        Args:
+            model_name: Name of the model
+            context: Optional context type for adaptive weighting
+
+        Returns:
+            Reliability weight (0.0-1.0)
+        """
+        base_weight = cls.WEIGHTS.get(model_name, 0.7)  # Default: moderate trust
+
+        # Apply context-adaptive multiplier if applicable
+        if context and model_name in cls.CONTEXT_MULTIPLIERS:
+            multiplier = cls.CONTEXT_MULTIPLIERS[model_name].get(context, 1.0)
+            adjusted_weight = base_weight * multiplier
+            return min(1.0, adjusted_weight)  # Cap at 1.0
+
+        return base_weight
 
     @classmethod
     def compute_weighted_confidence(
-        cls, responses: List["ModelResponse"]
+        cls, responses: List["ModelResponse"], context: Optional[str] = None
     ) -> float:
-        """Compute confidence weighted by source reliability."""
+        """
+        Compute confidence weighted by source reliability.
+
+        Args:
+            responses: List of model responses
+            context: Optional context type for adaptive weighting
+
+        Returns:
+            Weighted confidence score
+        """
         if not responses:
             return 0.0
 
         weighted_sum = sum(
-            r.confidence * cls.get_weight(r.model) for r in responses
+            r.confidence * cls.get_weight(r.model, context) for r in responses
         )
-        weight_sum = sum(cls.get_weight(r.model) for r in responses)
+        weight_sum = sum(cls.get_weight(r.model, context) for r in responses)
 
         return weighted_sum / weight_sum if weight_sum > 0 else 0.0
 
@@ -284,6 +322,303 @@ class ConfidenceCalibrator:
             f"Calibration curve updated: {len(self._calibration_curve)} buckets, "
             f"{len(self._history)} total samples"
         )
+
+
+# ============================================================================
+# CONTEXT DETECTION FOR ADAPTIVE WEIGHTING
+# ============================================================================
+
+
+class ContextDetector:
+    """
+    Detects query context to enable adaptive model weighting.
+
+    Determines whether a query is formal/academic, real-time, social,
+    political, technical, or casual to optimize model selection.
+    """
+
+    # Keyword patterns for context classification
+    FORMAL_KEYWORDS = [
+        "research", "study", "academic", "formal", "paper", "thesis",
+        "dissertation", "journal", "peer-reviewed", "analysis", "methodology",
+        "hypothesis", "experiment", "clinical", "trial", "patient", "medical",
+        "legal", "contract", "regulation", "statute", "compliance", "policy",
+        "corporate", "business", "professional", "enterprise", "organizational"
+    ]
+
+    REAL_TIME_KEYWORDS = [
+        "trending", "now", "today", "current", "latest", "breaking",
+        "just happened", "recent", "this week", "this month", "right now",
+        "at the moment", "ongoing", "live", "developing", "update"
+    ]
+
+    SOCIAL_KEYWORDS = [
+        "people think", "public opinion", "sentiment", "reaction",
+        "community", "discussion", "debate", "controversy", "viral",
+        "trending on", "social media", "twitter", "x platform", "reddit",
+        "discourse", "conversation", "what are people saying"
+    ]
+
+    POLITICAL_KEYWORDS = [
+        "regulation", "government", "policy", "election", "vote",
+        "politics", "political", "democrat", "republican", "liberal",
+        "conservative", "left", "right", "administration", "congress",
+        "senate", "legislation", "law", "rights", "freedom", "justice"
+    ]
+
+    TECHNICAL_KEYWORDS = [
+        "code", "programming", "algorithm", "function", "class",
+        "implementation", "debug", "error", "compile", "syntax",
+        "framework", "library", "api", "database", "server",
+        "architecture", "design pattern", "engineering", "technical"
+    ]
+
+    @classmethod
+    def detect_context(cls, prompt: str) -> str:
+        """
+        Detect the primary context of a query.
+
+        Args:
+            prompt: User query text
+
+        Returns:
+            Context type: 'formal', 'real-time', 'social', 'political', 'technical', or 'casual'
+        """
+        prompt_lower = prompt.lower()
+
+        # Count keyword matches for each category
+        scores = {
+            "formal": sum(1 for kw in cls.FORMAL_KEYWORDS if kw in prompt_lower),
+            "real-time": sum(1 for kw in cls.REAL_TIME_KEYWORDS if kw in prompt_lower),
+            "social": sum(1 for kw in cls.SOCIAL_KEYWORDS if kw in prompt_lower),
+            "political": sum(1 for kw in cls.POLITICAL_KEYWORDS if kw in prompt_lower),
+            "technical": sum(1 for kw in cls.TECHNICAL_KEYWORDS if kw in prompt_lower),
+        }
+
+        # Return highest-scoring context (requires at least 1 match)
+        max_score = max(scores.values())
+        if max_score > 0:
+            for context, score in scores.items():
+                if score == max_score:
+                    logger.info(f"Detected context: {context} (score: {score})")
+                    return context
+
+        # Default to casual if no strong signals
+        logger.info("Detected context: casual (no strong signals)")
+        return "casual"
+
+    @classmethod
+    def should_apply_grok_boost(cls, context: str) -> bool:
+        """Check if Grok should receive weight boost for this context."""
+        return context in ["real-time", "social"]
+
+    @classmethod
+    def should_apply_grok_penalty(cls, context: str) -> bool:
+        """Check if Grok should receive weight penalty for this context."""
+        return context in ["formal", "political"]
+
+
+# ============================================================================
+# TONE DETECTION & FILTERING
+# ============================================================================
+
+
+class ToneAnalyzer:
+    """
+    Analyzes response tone to detect informal/casual language.
+
+    Helps flag Grok responses that may be inappropriately casual
+    for formal contexts.
+    """
+
+    # Informal language markers
+    INFORMAL_MARKERS = [
+        "lol", "lmao", "tbh", "ngl", "honestly", "let's be real",
+        "no cap", "fr", "lowkey", "highkey", "literally",
+        "kinda", "sorta", "gonna", "wanna", "gotta",
+        "yeah", "yep", "nope", "yup", "uh", "um",
+        "basically", "pretty much", "like i said", "to be fair"
+    ]
+
+    # Sarcasm/humor indicators
+    SARCASM_MARKERS = [
+        "obviously", "clearly", "of course", "sure thing",
+        "right...", "yeah right", "as if", "totally",
+        "shocking", "surprising", "wow", "amazing"
+    ]
+
+    # Casual punctuation patterns
+    CASUAL_PATTERNS = [
+        "...", "!!", "???", "?!", "!?",  # Multiple punctuation
+        " ;)", " :)", " :(", " :D",      # Emoticons
+    ]
+
+    @classmethod
+    def analyze_tone(cls, text: str) -> Dict[str, Any]:
+        """
+        Analyze tone characteristics of text.
+
+        Args:
+            text: Response text to analyze
+
+        Returns:
+            Dict with tone metrics and flags
+        """
+        text_lower = text.lower()
+
+        # Count informal markers
+        informal_count = sum(1 for marker in cls.INFORMAL_MARKERS if marker in text_lower)
+        sarcasm_count = sum(1 for marker in cls.SARCASM_MARKERS if marker in text_lower)
+        casual_punct = sum(1 for pattern in cls.CASUAL_PATTERNS if pattern in text)
+
+        # Calculate formality score (0 = very casual, 1 = very formal)
+        total_markers = informal_count + sarcasm_count + casual_punct
+        word_count = len(text.split())
+
+        # Normalize by word count
+        marker_density = total_markers / max(word_count, 1) * 100
+        formality_score = max(0.0, 1.0 - (marker_density / 5.0))
+
+        # Determine tone category
+        if formality_score >= 0.8:
+            tone_category = "formal"
+        elif formality_score >= 0.6:
+            tone_category = "professional"
+        elif formality_score >= 0.4:
+            tone_category = "conversational"
+        else:
+            tone_category = "casual"
+
+        return {
+            "formality_score": formality_score,
+            "tone_category": tone_category,
+            "informal_markers": informal_count,
+            "sarcasm_markers": sarcasm_count,
+            "casual_punctuation": casual_punct,
+            "marker_density": marker_density,
+        }
+
+    @classmethod
+    def is_tone_appropriate(cls, text: str, expected_context: str) -> Tuple[bool, Optional[str]]:
+        """
+        Check if response tone is appropriate for context.
+
+        Args:
+            text: Response text
+            expected_context: Expected context ('formal', 'technical', etc.)
+
+        Returns:
+            (is_appropriate, warning_message)
+        """
+        analysis = cls.analyze_tone(text)
+        tone_category = analysis["tone_category"]
+
+        # Formal contexts require formal/professional tone
+        if expected_context == "formal":
+            if tone_category in ["casual", "conversational"]:
+                return False, f"Casual tone detected in formal context (formality: {analysis['formality_score']:.2f})"
+
+        # Political contexts should avoid sarcasm
+        if expected_context == "political":
+            if analysis["sarcasm_markers"] > 0:
+                return False, f"Sarcasm detected in political context ({analysis['sarcasm_markers']} markers)"
+
+        # Technical contexts tolerate conversational but not casual
+        if expected_context == "technical":
+            if tone_category == "casual":
+                return False, f"Overly casual tone for technical content (formality: {analysis['formality_score']:.2f})"
+
+        return True, None
+
+
+# ============================================================================
+# POLITICAL BALANCE VERIFICATION
+# ============================================================================
+
+
+class PoliticalBalanceChecker:
+    """
+    Monitors consensus quality on politically-charged topics.
+
+    Ensures Grok's libertarian leanings don't skew results on
+    sensitive political questions.
+    """
+
+    # Political ideology indicators (simplified)
+    LIBERTARIAN_SIGNALS = [
+        "free market", "individual freedom", "limited government",
+        "deregulation", "voluntary", "personal responsibility",
+        "government overreach", "taxation is theft", "property rights"
+    ]
+
+    PROGRESSIVE_SIGNALS = [
+        "social justice", "equity", "collective action",
+        "regulation", "public good", "systemic", "structural",
+        "government intervention", "safety net", "redistribution"
+    ]
+
+    CONSERVATIVE_SIGNALS = [
+        "traditional values", "law and order", "strong defense",
+        "fiscal responsibility", "family values", "national security",
+        "border security", "constitutional", "states' rights"
+    ]
+
+    @classmethod
+    def detect_political_lean(cls, text: str) -> Dict[str, float]:
+        """
+        Detect political lean signals in text.
+
+        Args:
+            text: Response text
+
+        Returns:
+            Dict with ideology scores (higher = stronger signal)
+        """
+        text_lower = text.lower()
+
+        libertarian_score = sum(1 for signal in cls.LIBERTARIAN_SIGNALS if signal in text_lower)
+        progressive_score = sum(1 for signal in cls.PROGRESSIVE_SIGNALS if signal in text_lower)
+        conservative_score = sum(1 for signal in cls.CONSERVATIVE_SIGNALS if signal in text_lower)
+
+        total_signals = libertarian_score + progressive_score + conservative_score
+
+        if total_signals == 0:
+            return {"libertarian": 0.0, "progressive": 0.0, "conservative": 0.0, "neutral": 1.0}
+
+        return {
+            "libertarian": libertarian_score / total_signals,
+            "progressive": progressive_score / total_signals,
+            "conservative": conservative_score / total_signals,
+            "neutral": 0.0,
+        }
+
+    @classmethod
+    def is_balanced(cls, text: str, threshold: float = 0.6) -> Tuple[bool, Optional[str]]:
+        """
+        Check if text shows balanced political perspective.
+
+        Args:
+            text: Response text
+            threshold: Max acceptable single-ideology ratio
+
+        Returns:
+            (is_balanced, warning_message)
+        """
+        leans = cls.detect_political_lean(text)
+
+        # Check if any single ideology dominates
+        max_lean = max(leans["libertarian"], leans["progressive"], leans["conservative"])
+
+        if max_lean > threshold:
+            dominant_ideology = max(leans, key=leans.get)
+            return False, f"Strong {dominant_ideology} lean detected ({max_lean:.0%} of signals)"
+
+        return True, None
+
+    @classmethod
+    def requires_higher_consensus(cls, prompt: str) -> bool:
+        """Check if query requires higher consensus threshold due to political nature."""
+        return ContextDetector.detect_context(prompt) == "political"
 
 
 # ============================================================================
