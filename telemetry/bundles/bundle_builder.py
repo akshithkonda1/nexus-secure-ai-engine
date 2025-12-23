@@ -1,4 +1,21 @@
-"""Partner bundle builder for Ryuzen Telemetry."""
+"""
+Partner bundle builder for Ryuzen Telemetry.
+
+Builds comprehensive telemetry bundles containing:
+- Sanitized telemetry data (Parquet format)
+- Manifest with bundle metadata
+- Zero-PII certificate
+- AI self-analysis reports from 11 TORON models
+
+Multi-Provider Support:
+The bundle builder integrates with the multi-provider report generator
+to produce AI self-analysis reports where each model analyzes its own
+performance data. Supports 11 models across 4 providers:
+- AWS Bedrock (8 models)
+- OpenAI API (1 model)
+- Google AI API (1 model)
+- Perplexity API (1 model)
+"""
 from __future__ import annotations
 
 import io
@@ -131,14 +148,58 @@ def _generate_executive_summary(reports: Dict[str, str], month: str) -> str:
 
 
 def build_bundle(partner: str, month: str) -> bytes:
-    """Build a partner telemetry bundle ZIP as bytes.
+    """
+    Build a partner telemetry bundle ZIP as bytes.
+
+    This function orchestrates the complete bundle generation process:
+    1. Loads and filters telemetry data for the partner and month
+    2. Generates AI self-analysis reports for each model found in the data
+    3. Creates a comprehensive ZIP bundle with all artifacts
+
+    Multi-Provider Report Generation:
+    For each unique model in the telemetry data, an AI self-analysis report
+    is generated using the model itself (authentic self-reflection). The
+    report generator automatically routes requests to the appropriate provider
+    based on model routing configuration. Each report is 2000+ words with
+    detailed performance analysis and actionable recommendations.
+
+    Bundle Contents:
+    - telemetry.parquet: Sanitized telemetry data
+    - manifest.json: Bundle metadata including report list
+    - zero_pii_certificate.json: PII scrubbing certificate
+    - reports/{model}_analysis.md: Individual model self-analysis reports
+    - EXECUTIVE_SUMMARY.md: Summary across all models
 
     Args:
         partner: Partner identifier.
         month: Target month in YYYY-MM format.
 
     Returns:
-        ZIP archive bytes containing telemetry.parquet, manifest.json, and a Zero-PII certificate.
+        ZIP archive bytes containing all bundle artifacts.
+
+    Example Bundle Structure:
+        bundle.zip/
+        ├── telemetry.parquet          # Telemetry data
+        ├── manifest.json              # Bundle metadata
+        ├── zero_pii_certificate.json  # PII certificate
+        ├── EXECUTIVE_SUMMARY.md       # Cross-model summary
+        └── reports/
+            ├── Claude-Sonnet-4.5_analysis.md
+            ├── Claude-Opus-4.5_analysis.md
+            ├── Cohere-Command-R-Plus_analysis.md
+            ├── Google-Gemini-3_analysis.md
+            ├── Meta-Llama-4_analysis.md
+            ├── Perplexity-Sonar_analysis.md
+            ├── ChatGPT-5.2_analysis.md
+            ├── Kimi-K2-Thinking_analysis.md
+            ├── DeepSeek-R1_analysis.md
+            ├── Mistral-Large_analysis.md
+            └── Qwen3_analysis.md
+
+    Note:
+        Report generation uses model routing configuration from
+        telemetry/bundles/model_routing_config.py. Each model analyzes
+        its own performance - not external analysis.
     """
 
     logger.info("Building telemetry bundle for partner=%s month=%s", partner, month)

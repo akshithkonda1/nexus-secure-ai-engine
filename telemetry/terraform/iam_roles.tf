@@ -324,6 +324,29 @@ data "aws_iam_policy_document" "bundle_task" {
     ]
     resources = [aws_kms_key.telemetry.arn, aws_kms_key.dynamodb.arn]
   }
+
+  statement {
+    sid    = "ReadAPIKeysFromSecretsManager"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret"
+    ]
+    resources = [
+      "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:ryuzen/telemetry/*"
+    ]
+  }
+
+  statement {
+    sid    = "InvokeBedrockModels"
+    effect = "Allow"
+    actions = [
+      "bedrock:InvokeModel"
+    ]
+    resources = [
+      "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "bundle_task" {
