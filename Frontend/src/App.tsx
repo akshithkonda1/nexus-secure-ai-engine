@@ -1,5 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AppShell from "./layouts/AppShell";
+import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from "./pages/auth/Login";
+import SignupPage from "./pages/auth/Signup";
 import HomePage from "./pages/Home";
 import ProjectsPage from "./pages/Projects";
 import TemplatesPage from "./pages/Templates";
@@ -12,87 +15,127 @@ import ToronPage from "./pages/Toron";
 import WorkspacePage from "./pages/Workspace";
 import HomeRail from "./pages/rails/HomeRail";
 import ToronRail from "./pages/rails/ToronRail";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <Routes>
-      <Route path="/auth" element={<Navigate to="/" replace />} />
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/toron" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/signup"
+        element={isAuthenticated ? <Navigate to="/toron" replace /> : <SignupPage />}
+      />
+
+      {/* Legacy auth route redirect */}
+      <Route path="/auth" element={<Navigate to="/login" replace />} />
+
+      {/* Protected Routes */}
       <Route
         path="/"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <HomePage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <HomePage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/projects"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <ProjectsPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <ProjectsPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/templates"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <TemplatesPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <TemplatesPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/documents"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <DocumentsPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <DocumentsPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/community"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <CommunityPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <CommunityPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/history"
         element={
-          <AppShell rightRail={<HomeRail />}>
-            <HistoryPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<HomeRail />}>
+              <HistoryPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/toron"
         element={
-          <AppShell rightRail={<ToronRail />}>
-            <ToronPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell rightRail={<ToronRail />}>
+              <ToronPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/workspace"
-        element={<WorkspacePage />}
+        element={
+          <ProtectedRoute>
+            <WorkspacePage />
+          </ProtectedRoute>
+        }
       />
       <Route
         path="/settings"
         element={
-          <AppShell>
-            <SettingsPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell>
+              <SettingsPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
       <Route
         path="/help"
         element={
-          <AppShell>
-            <HelpPage />
-          </AppShell>
+          <ProtectedRoute>
+            <AppShell>
+              <HelpPage />
+            </AppShell>
+          </ProtectedRoute>
         }
       />
+
+      {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

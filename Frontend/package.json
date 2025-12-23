@@ -11,6 +11,10 @@
     "lint": "eslint . --ext .ts,.tsx --config eslint.config.js",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:auth": "playwright test auth-e2e.spec.ts",
+    "test:auth:ui": "playwright test auth-e2e.spec.ts --ui",
     "test": "npm run test:unit && npm run test:e2e",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build"
   },
