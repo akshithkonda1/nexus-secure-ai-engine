@@ -1,58 +1,181 @@
 :root[data-theme="light"] {
-  --bg-app: #f4f7fb;
+  /* ===== BACKGROUNDS ===== */
+  --bg-app: #f8fafc;
   --bg-surface: #ffffff;
-  --bg-elev: #eef2f7;
-  --border: #d7deea;
-  --text: #0f172a;
-  --muted: #4b5563;
+  --bg-elevated: #fafbfc;
+  --bg-hover: #f1f5f9;
+  --bg-active: #e2e8f0;
+  --bg-elev: #eef2f7; /* Legacy compatibility */
+
+  /* ===== TEXT COLORS ===== */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-subtle: #94a3b8;
+  --text-ghost: #cbd5e1;
+  --text: #0f172a; /* Legacy */
+  --muted: #4b5563; /* Legacy */
   --text-inverse: #ffffff;
-  --accent: #2563eb;
+  --text-strong: #0f172a;
+  --text-muted: #667085;
+
+  /* ===== BORDERS ===== */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border: #d7deea; /* Legacy */
+  --line-subtle: #e2e8f0;
+  --line-strong: #94a3b8;
+
+  /* ===== ACCENTS ===== */
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-active: #1d4ed8;
+  --accent-subtle: rgba(59, 130, 246, 0.1);
+  --accent: #2563eb; /* Legacy */
   --accent-2: #8b5cf6;
+
+  /* ===== SHADOWS ===== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 64px rgba(0, 0, 0, 0.16);
+  --shadow-soft: 0 12px 40px rgba(15, 23, 42, 0.08); /* Legacy */
+  --shadow-med: 0 14px 48px rgba(15, 23, 42, 0.12); /* Legacy */
+
+  /* ===== GLASS EFFECTS ===== */
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(255, 255, 255, 0.45);
-  --shadow-soft: 0 12px 40px rgba(15, 23, 42, 0.08);
-  --shadow-med: 0 14px 48px rgba(15, 23, 42, 0.12);
 
-  --text-strong: var(--text);
-  --text-primary: var(--text);
-  --text-muted: #667085;
-  --text-secondary: var(--muted);
-  --text-tertiary: var(--text-muted);
+  /* ===== LEGACY COMPATIBILITY ===== */
   --layer-surface: var(--bg-surface);
   --layer-muted: #eef2f7;
-  --line-subtle: var(--border);
-  --line-strong: #b8c2d7;
   --pill: var(--bg-elev);
 }
 
 :root[data-theme="dark"] {
-  --bg-app: #0d1526;
-  --bg-surface: #101a2d;
-  --bg-elev: #15243b;
-  --border: #22314a;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
+  /* ===== BACKGROUNDS ===== */
+  --bg-app: #0a0f1a;
+  --bg-surface: #111827;
+  --bg-elevated: #1a2332;
+  --bg-hover: #1f2937;
+  --bg-active: #374151;
+  --bg-elev: #15243b; /* Legacy compatibility */
+
+  /* ===== TEXT COLORS ===== */
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-tertiary: #cbd5e1;
+  --text-subtle: #94a3b8;
+  --text-ghost: #64748b;
+  --text: #e2e8f0; /* Legacy */
+  --muted: #94a3b8; /* Legacy */
   --text-inverse: #f8fafc;
-  --accent: #5ea3ff;
+  --text-strong: #f8fafc;
+  --text-muted: #9fb2cc;
+
+  /* ===== BORDERS ===== */
+  --border-subtle: #1f2937;
+  --border-default: #374151;
+  --border-strong: #4b5563;
+  --border: #22314a; /* Legacy */
+  --line-subtle: #1f2937;
+  --line-strong: #4b5563;
+
+  /* ===== ACCENTS ===== */
+  --accent-primary: #60a5fa;
+  --accent-hover: #3b82f6;
+  --accent-active: #2563eb;
+  --accent-subtle: rgba(96, 165, 250, 0.15);
+  --accent: #5ea3ff; /* Legacy */
   --accent-2: #a78bfa;
+
+  /* ===== SHADOWS ===== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 16px 64px rgba(0, 0, 0, 0.7);
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.28); /* Legacy */
+  --shadow-med: 0 14px 48px rgba(0, 0, 0, 0.36); /* Legacy */
+
+  /* ===== GLASS EFFECTS ===== */
   --glass-bg: rgba(16, 26, 45, 0.75);
   --glass-border: rgba(255, 255, 255, 0.06);
-  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.28);
-  --shadow-med: 0 14px 48px rgba(0, 0, 0, 0.36);
 
-  --text-strong: var(--text);
-  --text-primary: var(--text);
-  --text-muted: #9fb2cc;
-  --text-secondary: var(--muted);
-  --text-tertiary: var(--text-muted);
+  /* ===== LEGACY COMPATIBILITY ===== */
   --layer-surface: var(--bg-surface);
   --layer-muted: #0f1b30;
-  --line-subtle: var(--border);
-  --line-strong: #34507a;
   --pill: #162439;
 }
 
+/* ===== TYPOGRAPHY SYSTEM ===== */
 :root {
+  /* Font Sizes */
+  --font-size-10: 0.625rem;   /* 10px */
+  --font-size-12: 0.75rem;    /* 12px */
+  --font-size-13: 0.8125rem;  /* 13px */
+  --font-size-15: 0.9375rem;  /* 15px */
+  --font-size-16: 1rem;       /* 16px */
+  --font-size-18: 1.125rem;   /* 18px */
+  --font-size-20: 1.25rem;    /* 20px */
+  --font-size-24: 1.5rem;     /* 24px */
+  --font-size-30: 1.875rem;   /* 30px */
+  --font-size-36: 2.25rem;    /* 36px */
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 1.75;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.01em;
+
+  /* Spacing Scale (4px grid) */
+  --spacing-0: 0;
+  --spacing-1: 0.125rem;   /* 2px */
+  --spacing-2: 0.25rem;    /* 4px */
+  --spacing-3: 0.375rem;   /* 6px */
+  --spacing-4: 0.5rem;     /* 8px */
+  --spacing-5: 0.625rem;   /* 10px */
+  --spacing-6: 0.75rem;    /* 12px */
+  --spacing-7: 0.875rem;   /* 14px */
+  --spacing-8: 1rem;       /* 16px */
+  --spacing-10: 1.25rem;   /* 20px */
+  --spacing-12: 1.5rem;    /* 24px */
+  --spacing-14: 1.75rem;   /* 28px */
+  --spacing-16: 2rem;      /* 32px */
+  --spacing-20: 2.5rem;    /* 40px */
+  --spacing-24: 3rem;      /* 48px */
+  --spacing-28: 3.5rem;    /* 56px */
+  --spacing-32: 4rem;      /* 64px */
+  --spacing-40: 5rem;      /* 80px */
+  --spacing-48: 6rem;      /* 96px */
+
+  /* Animation Timings */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* Animation Easing */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
   color-scheme: light;
 }
 

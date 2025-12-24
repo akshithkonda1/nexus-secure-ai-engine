@@ -33,6 +33,11 @@
     border-color: var(--color-border);
   }
 
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--bg-app);
     color: var(--text);
@@ -42,34 +47,57 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Selection */
   ::selection {
-    background-color: #27272a;
-    color: #ffffff;
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
   }
 
-  /* Modern Scrollbar */
+  /* World-class custom scrollbar (8px, theme-aware) */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-app);
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #27272a;
+    background-color: var(--border-default);
     border-radius: 9999px;
-    transition: background-color 0.2s;
+    transition: background-color var(--duration-fast);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #3f3f46;
+    background-color: var(--border-strong);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-default) var(--bg-app);
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Reduced motion support (accessibility) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    html {
+      scroll-behavior: auto !important;
+    }
   }
 }

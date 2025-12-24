@@ -1,6 +1,7 @@
 import { Layout, Image, Code, FileText, ArrowUp, MessageSquare, Zap, Sparkles, Workflow, Database, GitBranch, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { cn, bg, text, border, shadow, animations } from "../utils/theme";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -33,17 +34,31 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="flex flex-col items-center justify-center gap-12 pt-20 pb-16">
         {/* ALOE Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+        <div className={cn(
+          "inline-flex items-center gap-2 rounded-full border px-4 py-2",
+          "text-[length:var(--font-size-13)] font-[var(--font-weight-medium)]",
+          bg.accentSubtle,
+          border.subtle,
+          text.accent
+        )}>
           <Sparkles className="h-4 w-4" />
           Powered by ALOE Framework
         </div>
 
         {/* Main Heading */}
         <div className="space-y-6 text-center">
-          <h1 className="text-5xl font-semibold tracking-tight text-gray-900 dark:text-slate-100">
+          <h1 className={cn(
+            "text-[length:var(--font-size-36)] font-[var(--font-weight-semibold)]",
+            "tracking-[var(--letter-spacing-tight)] leading-[var(--line-height-tight)]",
+            text.primary
+          )}>
             Welcome to Ryuzen
           </h1>
-          <p className="mx-auto max-w-[500px] text-lg text-gray-600 dark:text-slate-400">
+          <p className={cn(
+            "mx-auto max-w-[500px]",
+            "text-[length:var(--font-size-18)] leading-[var(--line-height-relaxed)]",
+            text.secondary
+          )}>
             Unleash the power of autonomous AI agents. <br />
             What shall we build together today?
           </p>
@@ -55,7 +70,14 @@ export default function HomePage() {
             <button
               key={card.label}
               onClick={() => navigate(card.to)}
-              className="group relative flex flex-col items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-blue-500 hover:scale-[1.01] dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-500"
+              className={cn(
+                "group relative flex flex-col items-start gap-4 rounded-xl border p-5 text-left",
+                bg.surface,
+                border.subtle,
+                shadow.sm,
+                animations.fast,
+                "hover:border-[var(--border-default)] hover:shadow-md hover:scale-[1.01]"
+              )}
             >
               <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${
                 card.label === "Write copy" ? "bg-amber-100 dark:bg-amber-900/30" :
@@ -83,10 +105,17 @@ export default function HomePage() {
       <div className="px-6 py-16 bg-white dark:bg-slate-900">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-slate-100">
+            <h2 className={cn(
+              "text-[length:var(--font-size-30)] font-[var(--font-weight-semibold)] mb-4",
+              "tracking-[var(--letter-spacing-tight)]",
+              text.primary
+            )}>
               Three Powerful Tools, One Unified Platform
             </h2>
-            <p className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-slate-400">
+            <p className={cn(
+              "max-w-2xl mx-auto text-[length:var(--font-size-18)] leading-[var(--line-height-relaxed)]",
+              text.secondary
+            )}>
               Ryuzen combines conversational AI, project management, and automation into a seamless experience
             </p>
           </div>
@@ -95,15 +124,28 @@ export default function HomePage() {
             {/* Toron Card */}
             <button
               onClick={() => navigate("/toron")}
-              className="group text-left rounded-xl border border-gray-200 bg-[#FAFAFA] p-6 transition-all hover:shadow-lg hover:-translate-y-1 dark:border-slate-700 dark:bg-slate-800"
+              className={cn(
+                "group text-left rounded-xl border p-5",
+                bg.surface,
+                border.subtle,
+                shadow.sm,
+                animations.fast,
+                "hover:shadow-md hover:-translate-y-1"
+              )}
             >
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600">
                 <MessageSquare className="h-6 w-6 text-white" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-slate-100">
+              <h3 className={cn(
+                "mb-2 text-[length:var(--font-size-20)] font-[var(--font-weight-semibold)]",
+                text.primary
+              )}>
                 Toron AI
               </h3>
-              <p className="mb-4 text-gray-600 dark:text-slate-400">
+              <p className={cn(
+                "mb-4 text-[length:var(--font-size-15)] leading-[var(--line-height-relaxed)]",
+                text.secondary
+              )}>
                 Your autonomous AI assistant. Have natural conversations, get intelligent responses, and let AI handle complex tasks.
               </p>
               <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">
@@ -115,15 +157,28 @@ export default function HomePage() {
             {/* Workspace Card */}
             <button
               onClick={() => navigate("/workspace")}
-              className="group text-left rounded-xl border border-gray-200 bg-[#FAFAFA] p-6 transition-all hover:shadow-lg hover:-translate-y-1 dark:border-slate-700 dark:bg-slate-800"
+              className={cn(
+                "group text-left rounded-xl border p-5",
+                bg.surface,
+                border.subtle,
+                shadow.sm,
+                animations.fast,
+                "hover:shadow-md hover:-translate-y-1"
+              )}
             >
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600">
                 <Layout className="h-6 w-6 text-white" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-slate-100">
+              <h3 className={cn(
+                "mb-2 text-[length:var(--font-size-20)] font-[var(--font-weight-semibold)]",
+                text.primary
+              )}>
                 Workspace
               </h3>
-              <p className="mb-4 text-gray-600 dark:text-slate-400">
+              <p className={cn(
+                "mb-4 text-[length:var(--font-size-15)] leading-[var(--line-height-relaxed)]",
+                text.secondary
+              )}>
                 Organize projects, manage tasks, and collaborate with your team. Everything you need in one intelligent workspace.
               </p>
               <div className="flex items-center gap-2 text-sm font-medium text-purple-600 dark:text-purple-400">
@@ -137,10 +192,16 @@ export default function HomePage() {
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600">
                 <Zap className="h-6 w-6 text-white" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-slate-100">
+              <h3 className={cn(
+                "mb-2 text-[length:var(--font-size-20)] font-[var(--font-weight-semibold)]",
+                text.primary
+              )}>
                 ALOE Framework
               </h3>
-              <p className="mb-4 text-gray-600 dark:text-slate-400">
+              <p className={cn(
+                "mb-4 text-[length:var(--font-size-15)] leading-[var(--line-height-relaxed)]",
+                text.secondary
+              )}>
                 AI as a Life Orchestration Engine. The intelligent foundation that powers autonomous agents and seamless workflows.
               </p>
               <div className="flex items-center gap-2 text-sm font-medium text-orange-600 dark:text-orange-400">

@@ -23,63 +23,80 @@ export function cn(...inputs: (string | undefined | null | false | 0)[]): string
 export const bg = {
   app: "bg-[var(--bg-app)]",
   surface: "bg-[var(--bg-surface)]",
-  elevated: "bg-[var(--bg-elev)]",
-  hover: "bg-[var(--color-bg-hover)]",
+  elevated: "bg-[var(--bg-elevated)]",
+  hover: "bg-[var(--bg-hover)]",
+  active: "bg-[var(--bg-active)]",
   muted: "bg-[var(--layer-muted)]",
   glass: "bg-[var(--glass-bg)] backdrop-blur-xl",
-  accent: "bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)]",
-  accentSubtle: "bg-[var(--accent)]/10",
+  accent: "bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-2)]",
+  accentPrimary: "bg-[var(--accent-primary)]",
+  accentSubtle: "bg-[var(--accent-subtle)]",
+  // Legacy support
+  elev: "bg-[var(--bg-elev)]",
 } as const;
 
 // Text variants
 export const text = {
   primary: "text-[var(--text-primary)]",
-  strong: "text-[var(--text-strong)]",
-  muted: "text-[var(--text-muted)]",
   secondary: "text-[var(--text-secondary)]",
   tertiary: "text-[var(--text-tertiary)]",
+  subtle: "text-[var(--text-subtle)]",
+  ghost: "text-[var(--text-ghost)]",
+  strong: "text-[var(--text-strong)]",
   inverse: "text-[var(--text-inverse)]",
-  accent: "text-[var(--accent)]",
+  accent: "text-[var(--accent-primary)]",
+  // Legacy support
+  muted: "text-[var(--text-muted)]",
 } as const;
 
 // Border variants
 export const border = {
-  default: "border-[var(--border)]",
-  subtle: "border-[var(--line-subtle)]",
-  strong: "border-[var(--line-strong)]",
+  subtle: "border-[var(--border-subtle)]",
+  default: "border-[var(--border-default)]",
+  strong: "border-[var(--border-strong)]",
   glass: "border-[var(--glass-border)]",
-  accent: "border-[var(--accent)]",
+  accent: "border-[var(--accent-primary)]",
 } as const;
 
-// Shadow variants
+// Shadow variants (5-level system)
 export const shadow = {
+  xs: "shadow-[var(--shadow-xs)]",
+  sm: "shadow-[var(--shadow-sm)]",
+  md: "shadow-[var(--shadow-md)]",
+  lg: "shadow-[var(--shadow-lg)]",
+  xl: "shadow-[var(--shadow-xl)]",
+  none: "shadow-none",
+  // Legacy support
   soft: "shadow-[var(--shadow-soft)]",
   medium: "shadow-[var(--shadow-med)]",
-  none: "shadow-none",
 } as const;
 
 // Common patterns
 export const patterns = {
   /**
-   * Card container pattern
+   * Card container pattern (world-class quality)
    */
   card: (interactive = false) =>
     cn(
-      "rounded-xl border p-6 transition-colors",
+      "rounded-2xl border p-5 transition-all duration-[var(--duration-fast)]",
       bg.surface,
       border.subtle,
-      interactive && "hover:border-[var(--line-strong)] cursor-pointer"
+      shadow.sm,
+      interactive && cn(
+        "hover:border-[var(--border-default)] hover:shadow-md cursor-pointer",
+        "active:scale-[0.99]"
+      )
     ),
 
   /**
-   * Glass card pattern (for modals, overlays)
+   * Glass card pattern (for modals, overlays only)
    */
   glassCard: () =>
     cn(
-      "rounded-xl border backdrop-blur-xl p-6",
+      "rounded-2xl border backdrop-blur-xl p-6",
       bg.glass,
       border.glass,
-      shadow.soft
+      shadow.lg
     ),
 
   /**
@@ -87,56 +104,76 @@ export const patterns = {
    */
   navItem: (active = false) =>
     cn(
-      "group relative flex items-center gap-3 rounded-lg py-2.5 pr-3 pl-1 text-sm font-medium transition-colors",
+      "group relative flex items-center gap-3 rounded-lg py-2.5 pr-3 pl-1",
+      "text-[length:var(--font-size-13)] font-[var(--font-weight-medium)]",
+      "transition-all duration-[var(--duration-fast)]",
       active
-        ? cn("bg-[var(--layer-muted)] shadow-inner", text.primary)
-        : cn("text-[var(--muted)] hover:bg-[var(--bg-elev)]", "hover:text-[var(--text)]")
+        ? cn("bg-[var(--bg-elevated)] shadow-inner", text.primary)
+        : cn(text.secondary, "hover:bg-[var(--bg-elevated)]", "hover:text-[var(--text-primary)]")
     ),
 
   /**
-   * Button base pattern
+   * Button base pattern (5 states: default, hover, active, disabled, focus)
    */
   button: (variant: "primary" | "secondary" | "ghost" | "accent" = "primary") => {
     const variants = {
       primary: cn(
-        "bg-[var(--bg-surface)] border-[var(--border)] hover:bg-[var(--bg-elev)]",
+        bg.surface,
+        border.subtle,
         text.primary,
-        border.default
+        "border",
+        "hover:bg-[var(--bg-elevated)]",
+        "active:bg-[var(--bg-hover)]",
+        shadow.xs,
+        "hover:shadow-sm"
       ),
       secondary: cn(
-        "bg-[var(--layer-muted)] hover:bg-[var(--bg-hover)]",
-        text.muted,
-        "hover:text-[var(--text)]"
+        bg.elevated,
+        text.secondary,
+        "hover:bg-[var(--bg-hover)]",
+        "hover:text-[var(--text-primary)]",
+        "active:bg-[var(--bg-active)]"
       ),
       ghost: cn(
-        "hover:bg-[var(--bg-elev)]",
-        text.muted,
-        "hover:text-[var(--text)]"
+        text.secondary,
+        "hover:bg-[var(--bg-elevated)]",
+        "hover:text-[var(--text-primary)]",
+        "active:bg-[var(--bg-hover)]"
       ),
       accent: cn(
         bg.accent,
         text.inverse,
-        "shadow-lg hover:shadow-xl"
+        shadow.md,
+        "hover:shadow-lg",
+        "active:scale-[0.98]"
       ),
     };
 
     return cn(
-      "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+      "inline-flex items-center justify-center gap-2 rounded-lg",
+      "text-[length:var(--font-size-13)] font-[var(--font-weight-medium)]",
+      "transition-all duration-[var(--duration-fast)]",
+      "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+      focus.ring,
       variants[variant]
     );
   },
 
   /**
-   * Input field pattern
+   * Input field pattern (with proper focus states)
    */
   input: () =>
     cn(
-      "w-full rounded-lg border px-3 py-2 text-sm transition-colors",
-      "focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]",
+      "w-full rounded-lg border px-3 py-2",
+      "text-[length:var(--font-size-13)]",
+      "transition-all duration-[var(--duration-fast)]",
       bg.surface,
       border.subtle,
       text.primary,
-      "placeholder:text-[var(--text-muted)]"
+      "placeholder:text-[var(--text-subtle)]",
+      "hover:border-[var(--border-default)]",
+      "focus:outline-none focus:border-[var(--accent-primary)]",
+      "focus:ring-2 focus:ring-[var(--accent-subtle)]"
     ),
 
   /**
@@ -190,21 +227,65 @@ export function getBorderVariant(variant: keyof typeof border): string {
 }
 
 /**
- * Spacing utilities (consistent with design system)
+ * Spacing utilities (4px grid system)
  */
 export const spacing = {
-  xs: "gap-2",
-  sm: "gap-3",
-  md: "gap-4",
-  lg: "gap-6",
-  xl: "gap-8",
+  0: "gap-0",      /* 0px */
+  1: "gap-0.5",    /* 2px */
+  2: "gap-1",      /* 4px */
+  3: "gap-1.5",    /* 6px */
+  4: "gap-2",      /* 8px */
+  5: "gap-2.5",    /* 10px */
+  6: "gap-3",      /* 12px */
+  7: "gap-3.5",    /* 14px */
+  8: "gap-4",      /* 16px */
+  10: "gap-5",     /* 20px */
+  12: "gap-6",     /* 24px */
+  14: "gap-7",     /* 28px */
+  16: "gap-8",     /* 32px */
+  20: "gap-10",    /* 40px */
+  24: "gap-12",    /* 48px */
+  // Legacy names
+  xs: "gap-2",     /* 8px */
+  sm: "gap-3",     /* 12px */
+  md: "gap-4",     /* 16px */
+  lg: "gap-6",     /* 24px */
+  xl: "gap-8",     /* 32px */
 } as const;
 
 /**
- * Animation utilities
+ * Animation utilities with proper timing
  */
 export const animations = {
-  fadeIn: "animate-in fade-in duration-200",
-  slideIn: "animate-in slide-in-from-bottom-4 duration-300",
-  scaleIn: "animate-in zoom-in-95 duration-200",
+  // Hover states (fast with ease-out)
+  hoverFast: "transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)]",
+
+  // Transforms/slides (normal with ease-in-out)
+  slideNormal: "transition-transform duration-[var(--duration-normal)] ease-[var(--ease-in-out)]",
+
+  // Fades (slow with ease-in)
+  fadeSlow: "transition-opacity duration-[var(--duration-slow)] ease-[var(--ease-in)]",
+
+  // Playful interactions (normal with bounce)
+  bounce: "transition-all duration-[var(--duration-normal)] ease-[var(--ease-bounce)]",
+
+  // Generic transitions
+  instant: "transition-all duration-[var(--duration-instant)]",
+  fast: "transition-all duration-[var(--duration-fast)]",
+  normal: "transition-all duration-[var(--duration-normal)]",
+  slow: "transition-all duration-[var(--duration-slow)]",
+  slower: "transition-all duration-[var(--duration-slower)]",
+
+  // Legacy support
+  fadeIn: "animate-in fade-in duration-[var(--duration-normal)]",
+  slideIn: "animate-in slide-in-from-bottom-4 duration-[var(--duration-slow)]",
+  scaleIn: "animate-in zoom-in-95 duration-[var(--duration-normal)]",
+} as const;
+
+/**
+ * Focus ring utilities (accessible focus states)
+ */
+export const focus = {
+  ring: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-app)]",
+  ringSubtle: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-subtle)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-app)]",
 } as const;
