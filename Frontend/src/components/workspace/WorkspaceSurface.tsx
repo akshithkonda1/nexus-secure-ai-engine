@@ -56,11 +56,11 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
 
       <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14 sm:px-6 lg:px-10 xl:px-16">
         <div
-          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(760px,1fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
+          className="relative grid min-h-[70vh] w-full grid-cols-1 items-start gap-[var(--workspace-gap)] md:grid-cols-2 lg:grid-cols-[var(--workspace-side)_minmax(600px,1fr)_var(--workspace-side)] lg:grid-rows-[var(--workspace-row)_var(--workspace-row)]"
           style={{
-            "--workspace-gap": "28px",
-            "--workspace-side": "clamp(320px,24vw,360px)",
-            "--workspace-row": "minmax(320px,1fr)",
+            "--workspace-gap": "24px",
+            "--workspace-side": "clamp(280px,22vw,320px)",
+            "--workspace-row": "minmax(300px,1fr)",
           } as CSSProperties}
         >
           <CenterCanvas
@@ -82,10 +82,10 @@ export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome
 
           {isCompact && (
             <div className="order-3 -mx-1 flex gap-4 overflow-x-auto pb-2 sm:hidden snap-x snap-mandatory">
-              <ListsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
-              <CalendarWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
-              <ConnectorsWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
-              <TasksWidget className="min-w-[clamp(240px,70vw,320px)] snap-start" />
+              <ListsWidget className="min-w-[clamp(260px,70vw,300px)] snap-start" />
+              <CalendarWidget className="min-w-[clamp(260px,70vw,300px)] snap-start" />
+              <ConnectorsWidget className="min-w-[clamp(260px,70vw,300px)] snap-start" />
+              <TasksWidget className="min-w-[clamp(260px,70vw,300px)] snap-start" />
             </div>
           )}
         </div>
