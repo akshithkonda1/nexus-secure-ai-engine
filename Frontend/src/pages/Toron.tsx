@@ -23,7 +23,6 @@ import {
   MessageSquarePlus
 } from "lucide-react";
 import { cn, bg, text, border, shadow, animations } from "../utils/theme";
-import ToronSidebar from "../components/toron/ToronSidebar";
 
 interface Message {
   id: string;
@@ -1096,9 +1095,6 @@ export default function ToronPage() {
         />
       </div>
     </section>
-
-    {/* Sidebar */}
-    <ToronSidebar />
   </div>
   );
 }
