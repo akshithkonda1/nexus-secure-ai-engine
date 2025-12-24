@@ -1,5 +1,5 @@
 import React from "react";
-import { cn, bg, text, border, shadow, patterns, spacing } from "../../utils/theme";
+import { cn, bg, text, border, shadow, patterns, spacing, animations, focus } from "../../utils/theme";
 import { LucideIcon } from "lucide-react";
 
 /**
@@ -25,7 +25,7 @@ export function Card({ className, interactive = false, children, ...props }: Car
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("mb-4 flex flex-col gap-1.5", className)} {...props}>
+    <div className={cn("mb-4 flex flex-col gap-1", className)} {...props}>
       {children}
     </div>
   );
@@ -33,7 +33,12 @@ export function CardHeader({ className, children, ...props }: React.HTMLAttribut
 
 export function CardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-base font-semibold tracking-tight", text.primary, className)} {...props}>
+    <h3 className={cn(
+      "text-[length:var(--font-size-15)] font-[var(--font-weight-semibold)]",
+      "leading-[var(--line-height-snug)] tracking-[var(--letter-spacing-tight)]",
+      text.primary,
+      className
+    )} {...props}>
       {children}
     </h3>
   );
@@ -41,7 +46,11 @@ export function CardTitle({ className, children, ...props }: React.HTMLAttribute
 
 export function CardDescription({ className, children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-sm", text.muted, className)} {...props}>
+    <p className={cn(
+      "text-[length:var(--font-size-13)] leading-[var(--line-height-relaxed)]",
+      text.secondary,
+      className
+    )} {...props}>
       {children}
     </p>
   );
@@ -71,10 +80,11 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
+  // Precise sizing (h-8/10/12 with matching padding)
   const sizes = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base",
+    sm: "h-8 px-3 text-[length:var(--font-size-12)]",
+    md: "h-10 px-4 text-[length:var(--font-size-13)]",
+    lg: "h-12 px-6 text-[length:var(--font-size-15)]",
   };
 
   const variants = {
@@ -83,14 +93,24 @@ export function Button({
     ghost: patterns.button("ghost"),
     accent: patterns.button("accent"),
     danger: cn(
-      "bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl",
-      "inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      "bg-red-500 text-white border-red-600",
+      "hover:bg-red-600 active:bg-red-700",
+      shadow.xs,
+      "hover:shadow-sm",
+      "transition-all duration-[var(--duration-fast)]",
+      "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+      focus.ring
     ),
   };
 
   return (
     <button
-      className={cn(variants[variant], sizes[size], className)}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 rounded-lg font-[var(--font-weight-medium)]",
+        variants[variant],
+        sizes[size],
+        className
+      )}
       {...props}
     >
       {children}
@@ -107,7 +127,11 @@ export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 export function Input({ className, ...props }: InputProps) {
   return (
     <input
-      className={cn(patterns.input(), className)}
+      className={cn(
+        patterns.input(),
+        "h-10", // Precise height
+        className
+      )}
       {...props}
     />
   );
@@ -120,7 +144,7 @@ export function Textarea({ className, ...props }: TextareaProps) {
     <textarea
       className={cn(
         patterns.input(),
-        "min-h-[100px] resize-y",
+        "min-h-[100px] resize-y py-2.5", // Better vertical padding for textarea
         className
       )}
       {...props}
@@ -135,6 +159,7 @@ export function Select({ className, children, ...props }: SelectProps) {
     <select
       className={cn(
         patterns.input(),
+        "h-10", // Precise height matching Input
         "cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23667085%22%20d%3D%22M6%208.5L2%204.5h8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:12px] bg-[center_right_12px] bg-no-repeat pr-10",
         className
       )}
@@ -389,7 +414,7 @@ export function Skeleton({ variant = "text", className, ...props }: SkeletonProp
     <div
       className={cn(
         "animate-pulse",
-        bg.elevated,
+        bg.hover, // Use hover color for better skeleton effect
         variants[variant],
         className
       )}

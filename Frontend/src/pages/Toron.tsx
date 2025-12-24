@@ -22,7 +22,7 @@ import {
   Globe,
   MessageSquarePlus
 } from "lucide-react";
-import { cn, bg, text, border } from "../utils/theme";
+import { cn, bg, text, border, shadow, animations } from "../utils/theme";
 
 interface Message {
   id: string;
@@ -601,7 +601,7 @@ export default function ToronPage() {
               </p>
               
               {/* Suggested prompts */}
-              <div className="grid w-full max-w-2xl grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="grid w-full max-w-2xl grid-cols-1 gap-4 md:grid-cols-2">
                 {[
                   "Analyze yesterday's workspace updates",
                   "Create a project timeline for Q1",
@@ -612,11 +612,14 @@ export default function ToronPage() {
                     key={index}
                     onClick={() => setInput(prompt)}
                     className={cn(
-                      'rounded-xl border p-4 text-left text-sm transition-all',
+                      'rounded-xl border p-5 text-left',
+                      'text-[length:var(--font-size-13)]',
                       border.subtle,
-                      bg.muted,
+                      bg.elevated,
                       text.secondary,
-                      'hover:border-blue-500 hover:shadow-md'
+                      shadow.sm,
+                      animations.fast,
+                      'hover:border-[var(--border-default)] hover:shadow-md'
                     )}
                   >
                     {prompt}
@@ -626,7 +629,7 @@ export default function ToronPage() {
             </div>
           ) : (
             // Messages
-            <div className="space-y-6">
+            <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
                   key={message.id}
@@ -637,14 +640,19 @@ export default function ToronPage() {
                 >
                   <div
                     className={cn(
-                      'max-w-[85%] rounded-2xl px-5 py-4 transition-all',
+                      'max-w-[85%] rounded-2xl px-5 py-4',
+                      animations.fast,
                       message.role === 'user'
-                        ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
+                        ? cn(
+                            'bg-gradient-to-br from-blue-600 to-purple-600 text-white ml-auto',
+                            shadow.md
+                          )
                         : cn(
                             'border',
                             border.subtle,
-                            bg.muted,
+                            bg.elevated,
                             text.primary,
+                            shadow.sm,
                             message.error && 'border-red-500 bg-red-50 dark:bg-red-900/20'
                           )
                     )}
@@ -861,10 +869,12 @@ export default function ToronPage() {
         {/* Input Area */}
         <form onSubmit={handleSubmit} className="mt-4">
           <div className={cn(
-            'relative rounded-2xl border transition-colors',
+            'relative rounded-2xl border backdrop-blur-xl',
             border.subtle,
-            bg.surface,
-            'focus-within:border-blue-600 dark:focus-within:border-blue-500'
+            bg.glass,
+            shadow.lg,
+            animations.fast,
+            'focus-within:border-[var(--accent-primary)] focus-within:ring-2 focus-within:ring-[var(--accent-subtle)]'
           )}>
             {/* Plus button - INSIDE the input on the left TOP */}
             <div className="absolute left-4 top-4 z-10" ref={attachMenuRef}>
