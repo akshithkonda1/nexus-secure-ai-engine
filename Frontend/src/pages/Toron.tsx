@@ -1,13 +1,13 @@
 import { FormEvent, useEffect, useRef, useState, useCallback } from "react";
-import { 
-  Send, 
-  StopCircle, 
-  Sparkles, 
-  Copy, 
-  RotateCcw, 
-  ThumbsUp, 
-  ThumbsDown, 
-  MoreVertical, 
+import {
+  Send,
+  StopCircle,
+  Sparkles,
+  Copy,
+  RotateCcw,
+  ThumbsUp,
+  ThumbsDown,
+  MoreVertical,
   Check,
   Plus,
   Paperclip,
@@ -23,6 +23,7 @@ import {
   MessageSquarePlus
 } from "lucide-react";
 import { cn, bg, text, border, shadow, animations } from "../utils/theme";
+import ToronSidebar from "../components/toron/ToronSidebar";
 
 interface Message {
   id: string;
@@ -477,9 +478,11 @@ export default function ToronPage() {
   };
 
   return (
-    <section className="flex h-full flex-col">
-      {/* Header */}
-      <header className="mb-6 flex items-center justify-between">
+    <div className="flex h-full">
+      {/* Main chat area */}
+      <section className="flex flex-1 flex-col">
+        {/* Header */}
+        <header className="mb-6 flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className={cn('text-3xl font-semibold', text.primary)}>Toron</h1>
@@ -1093,5 +1096,9 @@ export default function ToronPage() {
         />
       </div>
     </section>
+
+    {/* Sidebar */}
+    <ToronSidebar />
+  </div>
   );
 }

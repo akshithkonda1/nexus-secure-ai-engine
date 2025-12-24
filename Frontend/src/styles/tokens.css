@@ -52,6 +52,12 @@
   --layer-surface: var(--bg-surface);
   --layer-muted: #eef2f7;
   --pill: var(--bg-elev);
+
+  /* ===== TORON SIDEBAR ALIASES ===== */
+  --bg-primary: var(--bg-surface);
+  --bg-secondary: var(--bg-elevated);
+  --bg-muted: var(--bg-elev);
+  --bg-glass: var(--glass-bg);
 }
 
 :root[data-theme="dark"] {
@@ -108,6 +114,12 @@
   --layer-surface: var(--bg-surface);
   --layer-muted: #0f1b30;
   --pill: #162439;
+
+  /* ===== TORON SIDEBAR ALIASES ===== */
+  --bg-primary: var(--bg-surface);
+  --bg-secondary: var(--bg-elevated);
+  --bg-muted: var(--bg-elev);
+  --bg-glass: var(--glass-bg);
 }
 
 /* ===== TYPOGRAPHY SYSTEM ===== */
