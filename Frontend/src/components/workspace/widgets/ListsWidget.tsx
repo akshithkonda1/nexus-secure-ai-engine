@@ -1,119 +1,60 @@
 import { useState } from "react";
-import { ListChecks, Plus, X } from "lucide-react";
-import { useWorkspace } from "../../../hooks/useWorkspace";
+import { ListChecks, Plus } from "lucide-react";
 
-export interface ListsWidgetProps {
+const lists = [
+  { name: "Research", count: 12 },
+  { name: "Delivery", count: 8 },
+  { name: "Backlog", count: 19 },
+];
+
+type ListsWidgetProps = {
   className?: string;
-}
+};
 
 export default function ListsWidget({ className }: ListsWidgetProps) {
-  const { lists, addListItem, toggleListItem, removeListItem } = useWorkspace();
-  const [selectedListId, setSelectedListId] = useState(lists[0]?.id);
-  const [newItemText, setNewItemText] = useState("");
-
-  const selectedList = lists.find((l) => l.id === selectedListId);
-
-  const handleAddItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newItemText.trim() && selectedListId) {
-      addListItem(selectedListId, newItemText.trim());
-      setNewItemText("");
-    }
-  };
+  const [selected, setSelected] = useState(lists[0].name);
 
   return (
     <section
-      className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
+      aria-label="Lists widget"
+      className={`relative flex min-w-[clamp(260px,22vw,360px)] flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 text-[var(--text)] shadow-[0_18px_60px_-65px_rgba(0,0,0,0.8)] backdrop-blur-xl ${className ?? ""}`}
     >
-      {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <ListChecks className="h-4 w-4 text-[var(--accent)]" />
-          <h2 className="text-sm font-semibold text-[var(--text)]">Lists</h2>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--layer-muted)] text-[var(--accent)] ring-1 ring-[var(--line-subtle)]/50">
+            <ListChecks className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold leading-tight">Lists</p>
+            <p className="text-xs text-[var(--text-muted)]">Semantic shelves</p>
+          </div>
         </div>
-        <span className="text-xs text-[var(--text-muted)]">Semantic shelves</span>
-      </header>
-
-      {/* List selector tabs */}
-      <div className="flex gap-2 overflow-x-auto">
-        {lists.map((list) => (
-          <button
-            key={list.id}
-            onClick={() => setSelectedListId(list.id)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              selectedListId === list.id
-                ? "bg-[var(--accent)] text-white"
-                : "bg-[var(--bg-elev)]/50 text-[var(--text-muted)] hover:bg-[var(--bg-elev)]"
-            }`}
-          >
-            {list.name}
-            <span className="ml-1.5 opacity-60">({list.items.length})</span>
-          </button>
-        ))}
-      </div>
-
-      {/* List items */}
-      {selectedList && (
-        <div className="space-y-2">
-          {selectedList.items.map((item) => (
-            <div
-              key={item.id}
-              className="group flex items-start gap-2 rounded-lg bg-[var(--bg-elev)]/40 p-2 transition-colors hover:bg-[var(--bg-elev)]/60"
-            >
-              <input
-                type="checkbox"
-                checked={item.done}
-                onChange={() => toggleListItem(selectedListId!, item.id)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-              />
-              <span
-                className={`flex-1 text-sm ${
-                  item.done
-                    ? "text-[var(--text-muted)] line-through"
-                    : "text-[var(--text)]"
-                }`}
-              >
-                {item.text}
-              </span>
-              <button
-                onClick={() => removeListItem(selectedListId!, item.id)}
-                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <X className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text)]" />
-              </button>
-            </div>
-          ))}
-
-          {selectedList.items.length === 0 && (
-            <div className="py-8 text-center text-xs text-[var(--text-muted)]">
-              No items yet. Add one below!
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Add new item form */}
-      <form onSubmit={handleAddItem} className="flex gap-2">
-        <input
-          type="text"
-          value={newItemText}
-          onChange={(e) => setNewItemText(e.target.value)}
-          placeholder="Add item..."
-          className="flex-1 rounded-lg border border-[var(--line-subtle)] bg-[var(--bg-surface)]/50 px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
-        />
         <button
-          type="submit"
-          disabled={!newItemText.trim()}
-          className="shrink-0 rounded-lg bg-[var(--accent)] p-2 text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+          type="button"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--line-subtle)]/60 bg-[var(--bg-elev)] text-[var(--text)] shadow-inner transition hover:border-[var(--line-strong)]/80"
+          aria-label="Add list"
         >
           <Plus className="h-4 w-4" />
         </button>
-      </form>
-
-      {/* Footer note */}
-      <p className="text-xs text-[var(--text-muted)] italic">
-        Selected list: {selectedList?.name}
-      </p>
+      </header>
+      <div className="space-y-2 overflow-y-auto">
+        {lists.map((list) => (
+          <button
+            key={list.name}
+            type="button"
+            className={`flex w-full items-center justify-between rounded-xl border border-transparent px-3 py-2 text-left text-sm transition ${
+              selected === list.name
+                ? "bg-[var(--bg-elev)]/80 text-[var(--text)] shadow-inner ring-1 ring-[var(--line-subtle)]/60"
+                : "text-[var(--muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
+            }`}
+            onClick={() => setSelected(list.name)}
+          >
+            <span className="font-medium">{list.name}</span>
+            <span className="rounded-full bg-[var(--layer-muted)] px-2 py-1 text-xs text-[var(--text-muted)]">{list.count}</span>
+          </button>
+        ))}
+      </div>
+      <footer className="text-xs text-[var(--text-muted)]">Selected list: {selected}</footer>
     </section>
   );
 }
