@@ -5,28 +5,20 @@
 
 import { FormEvent, useMemo, useState } from 'react';
 import { Plus, Sparkle } from 'lucide-react';
-
-type Task = {
-  id: number;
-  title: string;
-  done: boolean;
-};
-
-const starterTasks: Task[] = [
-  { id: 1, title: 'Set next milestone', done: false },
-  { id: 2, title: 'Review blockers', done: true },
-  { id: 3, title: 'Prep calm update', done: false },
-];
+import { useWorkspace } from '../../../hooks/useWorkspace';
 
 type TasksContentProps = {
   className?: string;
 };
 
 export default function TasksContent({ className }: TasksContentProps) {
-  const [tasks, setTasks] = useState<Task[]>(starterTasks);
+  const tasks = useWorkspace(state => state.tasks);
+  const addTask = useWorkspace(state => state.addTask);
+  const toggleTask = useWorkspace(state => state.toggleTask);
   const [draft, setDraft] = useState('');
 
   const progress = useMemo(() => {
+    if (tasks.length === 0) return 0;
     const completed = tasks.filter((task) => task.done).length;
     return Math.round((completed / tasks.length) * 100);
   }, [tasks]);
@@ -34,14 +26,17 @@ export default function TasksContent({ className }: TasksContentProps) {
   const handleAdd = (event: FormEvent) => {
     event.preventDefault();
     if (!draft.trim()) return;
-    setTasks((prev) => [...prev, { id: Date.now(), title: draft.trim(), done: false }]);
+    addTask({
+      title: draft.trim(),
+      done: false,
+      priority: 50,
+      type: 'work',
+    });
     setDraft('');
   };
 
-  const toggleTask = (id: number) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, done: !task.done } : task))
-    );
+  const handleToggleTask = (id: string) => {
+    toggleTask(id);
   };
 
   return (
@@ -78,7 +73,7 @@ export default function TasksContent({ className }: TasksContentProps) {
           <button
             key={task.id}
             type="button"
-            onClick={() => toggleTask(task.id)}
+            onClick={() => handleToggleTask(task.id)}
             className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
               task.done
                 ? 'bg-[var(--bg-elev)] text-[var(--muted)] line-through'
