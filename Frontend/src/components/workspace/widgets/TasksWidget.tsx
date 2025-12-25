@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckSquare, Plus, X } from "lucide-react";
 import { useWorkspace } from "../../../hooks/useWorkspace";
+import { useWindowManager } from "../../../hooks/useWindowManager";
 
 export interface TasksWidgetProps {
   className?: string;
@@ -8,6 +9,7 @@ export interface TasksWidgetProps {
 
 export default function TasksWidget({ className }: TasksWidgetProps) {
   const { tasks, addTask, toggleTask, removeTask } = useWorkspace();
+  const { openWindow } = useWindowManager();
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -39,7 +41,11 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
     >
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header
+        className="flex items-center justify-between cursor-pointer hover:bg-[var(--bg-elev)]/30 -mx-2 -mt-2 px-2 pt-2 pb-1 rounded-t-xl transition-colors"
+        onClick={() => openWindow('tasks')}
+        title="Click to expand"
+      >
         <div className="flex items-center gap-2">
           <CheckSquare className="h-4 w-4 text-[var(--accent)]" />
           <h2 className="text-sm font-semibold text-[var(--text)]">Tasks</h2>

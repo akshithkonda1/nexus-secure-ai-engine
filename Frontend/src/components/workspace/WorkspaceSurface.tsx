@@ -6,6 +6,7 @@ import ListsWidget from "./widgets/ListsWidget";
 import CalendarWidget from "./widgets/CalendarWidget";
 import ConnectorsWidget from "./widgets/ConnectorsWidget";
 import TasksWidget from "./widgets/TasksWidget";
+import WindowManager from "./windows/WindowManager";
 
 export interface WorkspaceSurfaceProps {
   mode: CanvasMode;
@@ -79,6 +80,9 @@ export default function WorkspaceSurface({
         onChange={onModeChange}
         onHome={onHome}
       />
+
+      {/* Floating Windows */}
+      <WindowManager />
     </div>
   );
 }
