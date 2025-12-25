@@ -5,12 +5,61 @@
 
 import { useEffect, useRef } from 'react';
 import { useWorkspace } from './useWorkspace';
+import type {
+  ActionPayload,
+  Suggestion,
+  SuggestionPayload,
+  WorkspaceData,
+  WorkspaceDataPayload,
+} from '../types/workspace';
 
 type WorkerMessage = {
   type: 'PATTERNS_DETECTED' | 'ERROR';
-  patterns?: unknown[];
+  patterns?: SuggestionPayload[];
   error?: string;
 };
+
+const serializeSuggestion = (suggestion: Suggestion): SuggestionPayload => ({
+  ...suggestion,
+  actions: suggestion.actions.map(({ id, type, label }) => ({ id, type, label })),
+});
+
+const serializeWorkspaceData = (data: WorkspaceData): WorkspaceDataPayload => ({
+  ...data,
+  suggestions: data.suggestions.map(serializeSuggestion),
+});
+
+const buildActionExecutor = (action: ActionPayload, suggestion: SuggestionPayload) => {
+  switch (action.type) {
+    case 'create-tasks':
+      return async () => {
+        console.log('Breaking down list item into tasks:', suggestion.source.trigger);
+        // TODO: Connect to workspace store to create tasks
+      };
+    case 'create-event':
+      return async () => {
+        console.log('Scheduling task to calendar:', suggestion.source.trigger);
+        // TODO: Connect to workspace store to create calendar event
+      };
+    case 'add-list-items':
+      return async () => {
+        console.log('Adding prep tasks to list:', suggestion.source.trigger);
+        // TODO: Connect to workspace store to add list items
+      };
+    default:
+      return async () => {
+        console.log('Executing suggestion action:', action.type);
+      };
+  }
+};
+
+const hydrateSuggestion = (suggestion: SuggestionPayload): Suggestion => ({
+  ...suggestion,
+  actions: suggestion.actions.map(action => ({
+    ...action,
+    execute: buildActionExecutor(action, suggestion),
+  })),
+});
 
 export function useBackgroundAnalysis(enabled = true) {
   const workerRef = useRef<Worker | null>(null);
@@ -58,7 +107,7 @@ export function useBackgroundAnalysis(enabled = true) {
           // Check if suggestion already exists
           const exists = workspaceData.suggestions.some(s => s.id === (pattern as { id: string }).id);
           if (!exists) {
-            addSuggestion(pattern as never);
+            addSuggestion(hydrateSuggestion(pattern));
           }
         });
       } else if (type === 'ERROR') {
@@ -72,7 +121,7 @@ export function useBackgroundAnalysis(enabled = true) {
       if (document.visibilityState === 'visible' && worker) {
         worker.postMessage({
           type: 'DETECT_PATTERNS',
-          data: workspaceData,
+          data: serializeWorkspaceData(workspaceData),
         });
       }
     };

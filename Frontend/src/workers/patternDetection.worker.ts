@@ -4,15 +4,15 @@
  */
 
 import { detectAllPatterns } from '../services/workspace/patterns';
-import type { WorkspaceData, Suggestion } from '../types/workspace';
+import type { WorkspaceDataPayload, SuggestionPayload } from '../types/workspace';
 
 // Message types
 type WorkerMessage =
-  | { type: 'DETECT_PATTERNS'; data: WorkspaceData }
+  | { type: 'DETECT_PATTERNS'; data: WorkspaceDataPayload }
   | { type: 'STOP' };
 
 type WorkerResponse =
-  | { type: 'PATTERNS_DETECTED'; patterns: Suggestion[] }
+  | { type: 'PATTERNS_DETECTED'; patterns: SuggestionPayload[] }
   | { type: 'ERROR'; error: string };
 
 // Listen for messages from main thread
