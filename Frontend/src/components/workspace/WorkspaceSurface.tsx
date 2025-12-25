@@ -3,6 +3,7 @@ import CenterCanvas from "./CenterCanvas";
 import BottomBar from "./BottomBar";
 import WindowManager from "./windows/WindowManager";
 import WindowQuickAccess from "./windows/WindowQuickAccess";
+import { useBackgroundAnalysis } from "../../hooks/useBackgroundAnalysis";
 import { CanvasMode } from "./types";
 
 type WorkspaceSurfaceProps = {
@@ -15,6 +16,9 @@ type WorkspaceSurfaceProps = {
 export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome }: WorkspaceSurfaceProps) {
   const canvasRef = useRef<HTMLElement | null>(null);
   const [canvasCenter, setCanvasCenter] = useState<number | null>(null);
+
+  // Enable background AI analysis for pattern detection
+  useBackgroundAnalysis(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
