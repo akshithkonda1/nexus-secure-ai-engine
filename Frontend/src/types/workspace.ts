@@ -186,6 +186,7 @@ export type Flow = {
   name: string;
   trigger: string;
   actions: FlowAction[];
+  enabled?: boolean;
 };
 
 export type FlowAction = {
@@ -323,6 +324,10 @@ export type WorkspaceData = {
   notes: Note[];
   boards: Board[];
   flows: Flow[];
+
+  // Current selections
+  currentPage: string | null;
+  currentBoard: string | null;
 
   // Intelligence
   suggestions: Suggestion[];
