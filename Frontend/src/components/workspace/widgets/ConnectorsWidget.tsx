@@ -10,6 +10,7 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
   const { connectors, toggleConnector } = useWorkspace();
   const { openWindow } = useWindowManager();
 
+export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "connected":
@@ -36,20 +37,7 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
     }
   };
 
-  const formatLastSync = (date?: Date) => {
-    if (!date) return "Never";
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  };
-
-  const hasAlerts = connectors.some(c => c.status === 'error');
+  const hasAlerts = false; // No errors in sample data
 
   return (
     <section
@@ -77,11 +65,10 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
 
       {/* Connectors list */}
       <div className="space-y-2">
-        {connectors.map((connector) => (
-          <button
+        {sampleConnectors.map((connector) => (
+          <div
             key={connector.id}
-            onClick={() => toggleConnector(connector.id)}
-            className="group w-full flex items-center justify-between rounded-lg bg-[var(--bg-elev)]/40 p-3 transition-colors hover:bg-[var(--bg-elev)]/60"
+            className="flex items-center justify-between rounded-lg bg-[var(--bg-elev)]/40 p-3 transition-colors hover:bg-[var(--bg-elev)]/60"
           >
             {/* Connector info */}
             <div className="flex items-center gap-3">
@@ -93,9 +80,7 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
                   {connector.name}
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">
-                  {connector.status === 'connected' && connector.lastSync
-                    ? `Synced ${formatLastSync(connector.lastSync)}`
-                    : getStatusText(connector.status)}
+                  {getStatusText(connector.status)}
                 </p>
               </div>
             </div>
@@ -104,20 +89,12 @@ export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
             <span className={`text-xs font-medium ${getStatusColor(connector.status)}`}>
               {getStatusText(connector.status)}
             </span>
-          </button>
-        ))}
-
-        {connectors.length === 0 && (
-          <div className="py-8 text-center text-xs text-[var(--text-muted)]">
-            No connectors configured
           </div>
-        )}
+        ))}
       </div>
 
       {/* Footer note */}
-      <p className="text-xs text-[var(--text-muted)] italic">
-        Ecosystems linked
-      </p>
+      <p className="text-xs text-[var(--text-muted)] italic">Ecosystems linked</p>
     </section>
   );
 }

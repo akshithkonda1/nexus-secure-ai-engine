@@ -12,6 +12,11 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
   const { openWindow } = useWindowManager();
   const [newTaskTitle, setNewTaskTitle] = useState("");
 
+  // Derived state
+  const incompleteTasks = tasks.filter((t) => !t.done);
+  const completedTasks = tasks.filter((t) => t.done);
+
+  // Handlers
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskTitle.trim()) {
@@ -20,9 +25,7 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
     }
   };
 
-  const incompleteTasks = tasks.filter((t) => !t.done);
-  const completedTasks = tasks.filter((t) => t.done);
-
+  // Helper
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
@@ -65,7 +68,7 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
         <button
           type="submit"
           disabled={!newTaskTitle.trim()}
-          className="shrink-0 rounded-lg bg-[var(--accent)] p-2 text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+          className="shrink-0 rounded-lg bg-[var(--accent)] p-2 text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4" />
         </button>
@@ -74,36 +77,44 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
       {/* Task list */}
       <div className="space-y-2">
         {/* Incomplete tasks */}
-        {incompleteTasks.map((task) => (
-          <div
-            key={task.id}
-            className="group flex items-start gap-2 rounded-lg bg-[var(--bg-elev)]/40 p-2 transition-colors hover:bg-[var(--bg-elev)]/60"
-          >
-            <input
-              type="checkbox"
-              checked={task.done}
-              onChange={() => toggleTask(task.id)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${getPriorityColor(task.priority)}`} />
-                <span className="text-sm text-[var(--text)]">{task.title}</span>
-              </div>
-            </div>
-            <button
-              onClick={() => removeTask(task.id)}
-              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+        {incompleteTasks.length > 0 &&
+          incompleteTasks.map((task) => (
+            <div
+              key={task.id}
+              className="group flex items-start gap-2 rounded-lg bg-[var(--bg-elev)]/40 p-2 transition-colors hover:bg-[var(--bg-elev)]/60"
             >
-              <X className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text)]" />
-            </button>
-          </div>
-        ))}
+              <input
+                type="checkbox"
+                checked={task.done}
+                onChange={() => toggleTask(task.id)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--accent)]"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${getPriorityColor(
+                      task.priority
+                    )}`}
+                  />
+                  <span className="text-sm text-[var(--text)]">{task.title}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => removeTask(task.id)}
+                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                type="button"
+              >
+                <X className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text)]" />
+              </button>
+            </div>
+          ))}
 
-        {/* Completed tasks (collapsible section) */}
+        {/* Completed tasks */}
         {completedTasks.length > 0 && (
           <div className="space-y-2 border-t border-[var(--line-subtle)] pt-2">
-            <p className="text-xs text-[var(--text-muted)]">Completed ({completedTasks.length})</p>
+            <p className="text-xs text-[var(--text-muted)]">
+              Completed ({completedTasks.length})
+            </p>
             {completedTasks.map((task) => (
               <div
                 key={task.id}
@@ -121,6 +132,7 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
                 <button
                   onClick={() => removeTask(task.id)}
                   className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  type="button"
                 >
                   <X className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                 </button>
@@ -141,12 +153,14 @@ export default function TasksWidget({ className }: TasksWidgetProps) {
         <button
           onClick={() => addTask("Set next milestone", "medium")}
           className="rounded-md bg-[var(--bg-elev)]/50 px-2 py-1 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
+          type="button"
         >
           Set next milestone
         </button>
         <button
           onClick={() => addTask("Review blockers", "low")}
           className="rounded-md bg-[var(--bg-elev)]/50 px-2 py-1 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-elev)] hover:text-[var(--text)]"
+          type="button"
         >
           Review blockers
         </button>

@@ -13,8 +13,10 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
   const [selectedListId, setSelectedListId] = useState(lists[0]?.id);
   const [newItemText, setNewItemText] = useState("");
 
+  // Derived state
   const selectedList = lists.find((l) => l.id === selectedListId);
 
+  // Handlers
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (newItemText.trim() && selectedListId) {
@@ -59,9 +61,9 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
       </div>
 
       {/* List items */}
-      {selectedList && (
-        <div className="space-y-2">
-          {selectedList.items.map((item) => (
+      <div className="space-y-2">
+        {selectedList && selectedList.items.length > 0 ? (
+          selectedList.items.map((item) => (
             <div
               key={item.id}
               className="group flex items-start gap-2 rounded-lg bg-[var(--bg-elev)]/40 p-2 transition-colors hover:bg-[var(--bg-elev)]/60"
@@ -69,8 +71,8 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
               <input
                 type="checkbox"
                 checked={item.done}
-                onChange={() => toggleListItem(selectedListId!, item.id)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                onChange={() => toggleListItem(selectedListId, item.id)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--accent)]"
               />
               <span
                 className={`flex-1 text-sm ${
@@ -82,21 +84,20 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
                 {item.text}
               </span>
               <button
-                onClick={() => removeListItem(selectedListId!, item.id)}
+                onClick={() => removeListItem(selectedListId, item.id)}
                 className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                type="button"
               >
                 <X className="h-3.5 w-3.5 text-[var(--text-muted)] hover:text-[var(--text)]" />
               </button>
             </div>
-          ))}
-
-          {selectedList.items.length === 0 && (
-            <div className="py-8 text-center text-xs text-[var(--text-muted)]">
-              No items yet. Add one below!
-            </div>
-          )}
-        </div>
-      )}
+          ))
+        ) : (
+          <div className="py-8 text-center text-xs text-[var(--text-muted)]">
+            No items yet. Add one below!
+          </div>
+        )}
+      </div>
 
       {/* Add new item form */}
       <form onSubmit={handleAddItem} className="flex gap-2">
@@ -110,16 +111,11 @@ export default function ListsWidget({ className }: ListsWidgetProps) {
         <button
           type="submit"
           disabled={!newItemText.trim()}
-          className="shrink-0 rounded-lg bg-[var(--accent)] p-2 text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+          className="shrink-0 rounded-lg bg-[var(--accent)] p-2 text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4" />
         </button>
       </form>
-
-      {/* Footer note */}
-      <p className="text-xs text-[var(--text-muted)] italic">
-        Selected list: {selectedList?.name}
-      </p>
     </section>
   );
 }

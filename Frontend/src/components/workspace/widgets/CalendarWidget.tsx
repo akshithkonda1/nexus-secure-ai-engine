@@ -27,6 +27,7 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
     return `${formatTime(start)}`;
   };
 
+export default function CalendarWidget({ className = "" }: CalendarWidgetProps) {
   return (
     <section
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
@@ -46,7 +47,7 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
 
       {/* Events list */}
       <div className="space-y-2">
-        {upcomingEvents.map((event) => (
+        {sampleEvents.map((event) => (
           <div
             key={event.id}
             className="flex items-start gap-3 rounded-lg bg-[var(--bg-elev)]/40 p-3 transition-colors hover:bg-[var(--bg-elev)]/60"
@@ -55,35 +56,23 @@ export default function CalendarWidget({ className }: CalendarWidgetProps) {
             <div className="flex flex-col items-center gap-1">
               <div
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: event.color || '#3b82f6' }}
+                style={{ backgroundColor: event.color }}
               />
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3 text-[var(--text-muted)]" />
-                <span className="text-xs text-[var(--text-muted)]">
-                  {formatEventTime(event.start)}
-                </span>
+                <span className="text-xs text-[var(--text-muted)]">{event.time}</span>
               </div>
             </div>
 
             {/* Event details */}
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-[var(--text)]">
-                {event.title}
-              </h3>
-              {event.description && (
-                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                  {event.description}
-                </p>
-              )}
+              <h3 className="text-sm font-medium text-[var(--text)]">{event.title}</h3>
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                {event.description}
+              </p>
             </div>
           </div>
         ))}
-
-        {calendarEvents.length === 0 && (
-          <div className="py-8 text-center text-xs text-[var(--text-muted)]">
-            No upcoming events
-          </div>
-        )}
       </div>
     </section>
   );
