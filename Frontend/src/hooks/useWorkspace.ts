@@ -12,6 +12,10 @@ import type {
   CalendarEvent,
   Page,
   Note,
+  Board,
+  BoardCard,
+  Flow,
+  FlowAction,
   Suggestion,
   AnalysisResult,
   PermissionScope,
@@ -76,11 +80,67 @@ const initialState: WorkspaceData = {
     { id: '3', name: 'Linear', type: 'linear', connected: true, lastSync: new Date() },
   ],
 
-  // Focus mode data (only for Analyze mode with permission)
-  pages: [],
-  notes: [],
-  boards: [],
-  flows: [],
+  // Focus mode data
+  pages: [
+    {
+      id: '1',
+      title: 'Welcome to Ryuzen',
+      content: '# Welcome\n\nStart writing here...',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
+  notes: [
+    {
+      id: '1',
+      content: 'Quick thoughts go here...',
+      createdAt: new Date(),
+    },
+  ],
+  boards: [
+    {
+      id: '1',
+      name: 'Project Board',
+      columns: [
+        {
+          id: 'col-1',
+          name: 'To Do',
+          cards: [
+            { id: 'card-1', title: 'Design mockups', description: 'Create initial wireframes' },
+          ],
+        },
+        {
+          id: 'col-2',
+          name: 'In Progress',
+          cards: [],
+        },
+        {
+          id: 'col-3',
+          name: 'Done',
+          cards: [],
+        },
+      ],
+    },
+  ],
+  flows: [
+    {
+      id: '1',
+      name: 'Daily Standup Reminder',
+      trigger: 'schedule:daily:9am',
+      actions: [
+        {
+          id: 'action-1',
+          type: 'create-task',
+          config: { title: 'Daily standup', priority: 80 },
+        },
+      ],
+      enabled: true,
+    },
+  ],
+
+  // Current selections
+  currentPage: '1',
+  currentBoard: '1',
 
   // Intelligence
   suggestions: [],
@@ -128,6 +188,23 @@ interface WorkspaceState extends WorkspaceData {
   addNote: (content: string) => void;
   updateNote: (id: string, content: string) => void;
   deleteNote: (id: string) => void;
+
+  // Board operations
+  currentPage: string | null;
+  currentBoard: string | null;
+  setCurrentPage: (id: string | null) => void;
+  setCurrentBoard: (id: string | null) => void;
+  addBoard: (name: string) => void;
+  addColumn: (boardId: string, title: string) => void;
+  addCard: (boardId: string, columnId: string, title: string) => void;
+  moveCard: (boardId: string, cardId: string, toColumnId: string) => void;
+  deleteBoard: (id: string) => void;
+
+  // Flow operations
+  addFlow: (name: string, trigger: string) => void;
+  toggleFlow: (flowId: string) => void;
+  deleteFlow: (flowId: string) => void;
+  addFlowAction: (flowId: string, action: Omit<FlowAction, 'id'>) => void;
 
   // Suggestion operations
   addSuggestion: (suggestion: Suggestion) => void;
@@ -338,6 +415,153 @@ export const useWorkspace = create<WorkspaceState>()(
       deleteNote: (id: string) => {
         set(state => ({
           notes: state.notes.filter(note => note.id !== id),
+        }));
+      },
+
+      // Current page/board
+      currentPage: '1',
+      currentBoard: '1',
+
+      setCurrentPage: (id: string | null) => {
+        set({ currentPage: id });
+      },
+
+      setCurrentBoard: (id: string | null) => {
+        set({ currentBoard: id });
+      },
+
+      // Board operations
+      addBoard: (name: string) => {
+        const newBoard: Board = {
+          id: generateId(),
+          name,
+          columns: [
+            { id: generateId(), name: 'To Do', cards: [] },
+            { id: generateId(), name: 'In Progress', cards: [] },
+            { id: generateId(), name: 'Done', cards: [] },
+          ],
+        };
+        set(state => ({
+          boards: [...state.boards, newBoard],
+          currentBoard: newBoard.id,
+        }));
+      },
+
+      addColumn: (boardId: string, title: string) => {
+        set(state => ({
+          boards: state.boards.map(board =>
+            board.id === boardId
+              ? {
+                  ...board,
+                  columns: [...board.columns, { id: generateId(), name: title, cards: [] }],
+                }
+              : board
+          ),
+        }));
+      },
+
+      addCard: (boardId: string, columnId: string, title: string) => {
+        const newCard: BoardCard = {
+          id: generateId(),
+          title,
+        };
+        set(state => ({
+          boards: state.boards.map(board =>
+            board.id === boardId
+              ? {
+                  ...board,
+                  columns: board.columns.map(col =>
+                    col.id === columnId
+                      ? { ...col, cards: [...col.cards, newCard] }
+                      : col
+                  ),
+                }
+              : board
+          ),
+        }));
+      },
+
+      moveCard: (boardId: string, cardId: string, toColumnId: string) => {
+        set(state => {
+          const board = state.boards.find(b => b.id === boardId);
+          if (!board) return state;
+
+          let cardToMove: BoardCard | undefined;
+          const updatedColumns = board.columns.map(col => ({
+            ...col,
+            cards: col.cards.filter(card => {
+              if (card.id === cardId) {
+                cardToMove = card;
+                return false;
+              }
+              return true;
+            }),
+          }));
+
+          if (!cardToMove) return state;
+
+          const finalColumns = updatedColumns.map(col =>
+            col.id === toColumnId
+              ? { ...col, cards: [...col.cards, cardToMove!] }
+              : col
+          );
+
+          return {
+            boards: state.boards.map(b =>
+              b.id === boardId ? { ...b, columns: finalColumns } : b
+            ),
+          };
+        });
+      },
+
+      deleteBoard: (id: string) => {
+        set(state => ({
+          boards: state.boards.filter(board => board.id !== id),
+          currentBoard: state.currentBoard === id
+            ? state.boards[0]?.id || null
+            : state.currentBoard,
+        }));
+      },
+
+      // Flow operations
+      addFlow: (name: string, trigger: string) => {
+        const newFlow: Flow = {
+          id: generateId(),
+          name,
+          trigger,
+          actions: [],
+          enabled: false,
+        };
+        set(state => ({ flows: [...state.flows, newFlow] }));
+      },
+
+      toggleFlow: (flowId: string) => {
+        set(state => ({
+          flows: state.flows.map(flow =>
+            flow.id === flowId
+              ? { ...flow, enabled: !flow.enabled }
+              : flow
+          ),
+        }));
+      },
+
+      deleteFlow: (flowId: string) => {
+        set(state => ({
+          flows: state.flows.filter(flow => flow.id !== flowId),
+        }));
+      },
+
+      addFlowAction: (flowId: string, actionData: Omit<FlowAction, 'id'>) => {
+        const newAction: FlowAction = {
+          ...actionData,
+          id: generateId(),
+        };
+        set(state => ({
+          flows: state.flows.map(flow =>
+            flow.id === flowId
+              ? { ...flow, actions: [...flow.actions, newAction] }
+              : flow
+          ),
         }));
       },
 
