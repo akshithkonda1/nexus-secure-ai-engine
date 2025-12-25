@@ -1,14 +1,14 @@
 import { Link2, Circle } from "lucide-react";
-import { useWorkspace } from "../../../hooks/useWorkspace";
-import { useWindowManager } from "../../../hooks/useWindowManager";
 
 export interface ConnectorsWidgetProps {
   className?: string;
 }
 
-export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
-  const { connectors, toggleConnector } = useWorkspace();
-  const { openWindow } = useWindowManager();
+const sampleConnectors = [
+  { id: '1', name: 'GitHub', status: 'connected' as const },
+  { id: '2', name: 'Notion', status: 'disconnected' as const },
+  { id: '3', name: 'Linear', status: 'connected' as const },
+];
 
 export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetProps) {
   const getStatusColor = (status: string) => {
@@ -37,18 +37,13 @@ export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetPro
     }
   };
 
-  const hasAlerts = false; // No errors in sample data
+  const hasAlerts = sampleConnectors.some((c) => c.status === 'error');
 
   return (
     <section
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
     >
-      {/* Header */}
-      <header
-        className="flex items-center justify-between cursor-pointer hover:bg-[var(--bg-elev)]/30 -mx-2 -mt-2 px-2 pt-2 pb-1 rounded-t-xl transition-colors"
-        onClick={() => openWindow('connectors')}
-        title="Click to expand"
-      >
+      <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-[var(--accent)]" />
           <h2 className="text-sm font-semibold text-[var(--text)]">Connectors</h2>
@@ -63,14 +58,12 @@ export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetPro
         </div>
       </header>
 
-      {/* Connectors list */}
       <div className="space-y-2">
         {sampleConnectors.map((connector) => (
           <div
             key={connector.id}
             className="flex items-center justify-between rounded-lg bg-[var(--bg-elev)]/40 p-3 transition-colors hover:bg-[var(--bg-elev)]/60"
           >
-            {/* Connector info */}
             <div className="flex items-center gap-3">
               <Circle
                 className={`h-2 w-2 fill-current ${getStatusColor(connector.status)}`}
@@ -85,7 +78,6 @@ export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetPro
               </div>
             </div>
 
-            {/* Status badge */}
             <span className={`text-xs font-medium ${getStatusColor(connector.status)}`}>
               {getStatusText(connector.status)}
             </span>
@@ -93,7 +85,6 @@ export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetPro
         ))}
       </div>
 
-      {/* Footer note */}
       <p className="text-xs text-[var(--text-muted)] italic">Ecosystems linked</p>
     </section>
   );
