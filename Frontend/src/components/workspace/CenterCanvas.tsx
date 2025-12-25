@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { forwardRef } from "react";
 import { CanvasMode } from "./types";
+import AnalyzeMode from "./analyze/AnalyzeMode";
 
 const copyByMode: Record<CanvasMode, { title: string; subtitle: string }> = {
   pages: { title: "Pages", subtitle: "Narratives, blueprints, and full context." },
@@ -25,6 +26,20 @@ const CenterCanvas = forwardRef<HTMLElement, CenterCanvasProps>(
   ({ mode, className, isCleared = false }: CenterCanvasProps, ref) => {
   const content = isCleared ? clearedCopy : copyByMode[mode];
 
+  // Render Analyze Mode with full functionality
+  if (mode === 'analyze' && !isCleared) {
+    return (
+      <section
+        aria-label="Center canvas"
+        ref={ref}
+        className={`relative flex h-full min-h-[60vh] flex-col overflow-hidden rounded-[28px] bg-gradient-to-b from-[var(--bg-surface)]/55 via-[var(--bg-elev)]/35 to-[var(--bg-app)]/15 text-[var(--text)] transition-[background,transform] backdrop-blur-xl ${className ?? ""}`}
+      >
+        <AnalyzeMode />
+      </section>
+    );
+  }
+
+  // Placeholder for other modes
   return (
     <section
       aria-label="Center canvas"

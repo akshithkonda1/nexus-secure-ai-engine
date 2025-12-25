@@ -3,7 +3,7 @@
  * Displays AI-powered suggestions with reasoning and actions
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, ChevronDown, ChevronUp, CheckCircle2, X } from 'lucide-react';
 import type { Suggestion } from '../../../types/workspace';
@@ -16,7 +16,7 @@ type SuggestionCardProps = {
   onCustomize?: () => void;
 };
 
-export default function SuggestionCard({
+const SuggestionCard = memo(function SuggestionCard({
   suggestion,
   onAccept,
   onDismiss,
@@ -199,4 +199,6 @@ export default function SuggestionCard({
       </div>
     </motion.div>
   );
-}
+});
+
+export default SuggestionCard;
