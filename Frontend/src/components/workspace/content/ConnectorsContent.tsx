@@ -17,7 +17,11 @@ export default function ConnectorsContent({ className }: ConnectorsContentProps)
   const getStatus = (connector: typeof connectors[0]) => {
     if (!connector.connected) return 'Disconnected';
     if (!connector.lastSync) return 'Idle';
-    const minutesSinceSync = (Date.now() - connector.lastSync.getTime()) / (1000 * 60);
+    // Handle both Date objects and serialized date strings from localStorage
+    const lastSyncDate = connector.lastSync instanceof Date
+      ? connector.lastSync
+      : new Date(connector.lastSync);
+    const minutesSinceSync = (Date.now() - lastSyncDate.getTime()) / (1000 * 60);
     if (minutesSinceSync < 5) return 'Syncing';
     return 'Healthy';
   };
