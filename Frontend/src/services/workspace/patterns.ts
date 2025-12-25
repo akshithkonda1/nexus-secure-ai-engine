@@ -8,10 +8,10 @@ import type {
   ListItem,
   Task,
   CalendarEvent,
-  Suggestion,
+  SuggestionPayload,
   SchedulingHistory,
   PrepHistory,
-  WorkspaceData,
+  WorkspaceDataPayload,
 } from '../../types/workspace';
 
 // Helper: Calculate text similarity (basic Levenshtein-based)
@@ -96,7 +96,7 @@ export function detectListToTaskPattern(
   listItem: ListItem,
   _list: List,
   historicalTasks: Task[]
-): Suggestion | null {
+): SuggestionPayload | null {
   // Find similar list items that were converted to tasks
   const similarTasks = historicalTasks.filter(
     task => task.sourceListItem && similarity(task.sourceListItem, listItem.text) > 0.7
@@ -146,10 +146,6 @@ export function detectListToTaskPattern(
         id: 'breakdown',
         type: 'create-tasks',
         label: 'Break down now',
-        execute: async () => {
-          console.log('Breaking down list item into tasks:', listItem.text);
-          // TODO: Connect to workspace store to create tasks
-        },
       },
     ],
   };
@@ -163,7 +159,7 @@ export function detectTaskToCalendarPattern(
   task: Task,
   calendarEvents: CalendarEvent[],
   historicalScheduling: SchedulingHistory[]
-): Suggestion | null {
+): SuggestionPayload | null {
   const taskType = classifyTaskType(task);
 
   // Find user's preferred time for this task type
@@ -216,10 +212,6 @@ export function detectTaskToCalendarPattern(
         id: 'schedule',
         type: 'create-event',
         label: 'Schedule now',
-        execute: async () => {
-          console.log('Scheduling task to calendar:', task.title);
-          // TODO: Connect to workspace store to create calendar event
-        },
       },
     ],
   };
@@ -233,7 +225,7 @@ export function detectCalendarToListPattern(
   event: CalendarEvent,
   lists: List[],
   historicalPrep: PrepHistory[]
-): Suggestion | null {
+): SuggestionPayload | null {
   // Find similar events from history
   const similarEvents = historicalPrep.filter(
     p => similarity(p.eventTitle, event.title) > 0.6
@@ -285,10 +277,6 @@ export function detectCalendarToListPattern(
         id: 'add-prep',
         type: 'add-list-items',
         label: 'Add prep tasks',
-        execute: async () => {
-          console.log('Adding prep tasks to list:', commonPrepTasks);
-          // TODO: Connect to workspace store to add list items
-        },
       },
     ],
   };
@@ -425,8 +413,8 @@ function findBestList(lists: List[], prepTasks: string[]): List | null {
 /**
  * Master function to detect all patterns
  */
-export function detectAllPatterns(workspace: WorkspaceData): Suggestion[] {
-  const suggestions: Suggestion[] = [];
+export function detectAllPatterns(workspace: WorkspaceDataPayload): SuggestionPayload[] {
+  const suggestions: SuggestionPayload[] = [];
 
   // List → Task patterns
   workspace.lists.forEach(list => {
