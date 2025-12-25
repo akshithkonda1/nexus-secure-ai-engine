@@ -208,6 +208,8 @@ export type Action = {
   execute: () => Promise<void>;
 };
 
+export type ActionPayload = Omit<Action, 'execute'>;
+
 export type Suggestion = {
   id: string;
   type: 'widget-intelligence' | 'integration-workflow' | 'cross-widget';
@@ -235,6 +237,10 @@ export type Suggestion = {
   lastObserved: Date;
 
   actions: Action[];
+};
+
+export type SuggestionPayload = Omit<Suggestion, 'actions'> & {
+  actions: ActionPayload[];
 };
 
 // Analyze Mode Types
@@ -327,6 +333,10 @@ export type WorkspaceData = {
     scheduling: SchedulingHistory[];
     preparation: PrepHistory[];
   };
+};
+
+export type WorkspaceDataPayload = Omit<WorkspaceData, 'suggestions'> & {
+  suggestions: SuggestionPayload[];
 };
 
 export type SchedulingHistory = {
