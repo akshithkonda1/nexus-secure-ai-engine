@@ -1,71 +1,84 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
+import { CanvasMode } from "./types";
 import CenterCanvas from "./CenterCanvas";
 import BottomBar from "./BottomBar";
-import WindowManager from "./windows/WindowManager";
-import WindowQuickAccess from "./windows/WindowQuickAccess";
-import { useBackgroundAnalysis } from "../../hooks/useBackgroundAnalysis";
-import { CanvasMode } from "./types";
+import ListsWidget from "./widgets/ListsWidget";
+import CalendarWidget from "./widgets/CalendarWidget";
+import ConnectorsWidget from "./widgets/ConnectorsWidget";
+import TasksWidget from "./widgets/TasksWidget";
 
-type WorkspaceSurfaceProps = {
+export interface WorkspaceSurfaceProps {
   mode: CanvasMode;
   onModeChange: (mode: CanvasMode) => void;
   isCleared: boolean;
   onHome: () => void;
-};
+}
 
-export default function WorkspaceSurface({ mode, onModeChange, isCleared, onHome }: WorkspaceSurfaceProps) {
-  const canvasRef = useRef<HTMLElement | null>(null);
-  const [canvasCenter, setCanvasCenter] = useState<number | null>(null);
-
-  // Enable background AI analysis for pattern detection
-  useBackgroundAnalysis(true);
+export default function WorkspaceSurface({
+  mode,
+  onModeChange,
+  isCleared,
+  onHome,
+}: WorkspaceSurfaceProps) {
+  const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const updateCenter = () => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      setCanvasCenter(rect ? rect.left + rect.width / 2 : null);
+    
+    const query = window.matchMedia("(max-width: 639px)");
+    
+    const update = () => {
+      console.log("Screen width check - isCompact:", query.matches);
+      setIsCompact(query.matches);
     };
-
-    updateCenter();
-
-    const resizeObserver = new ResizeObserver(updateCenter);
-    if (canvasRef.current) {
-      resizeObserver.observe(canvasRef.current);
-    }
-
-    window.addEventListener("resize", updateCenter);
-    return () => {
-      window.removeEventListener("resize", updateCenter);
-      resizeObserver.disconnect();
-    };
+    
+    update();
+    query.addEventListener("change", update);
+    
+    return () => query.removeEventListener("change", update);
   }, []);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[var(--bg-app)]">
       {/* Background gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(132,106,255,0.16),transparent_36%),radial-gradient(circle_at_78%_6%,rgba(68,212,255,0.14),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--bg-surface)/10_0%,_transparent_50%),_radial-gradient(ellipse_at_bottom,_var(--bg-elev)/5_0%,_transparent_50%)]" />
 
-      {/* Center Canvas (Focus Space) */}
+      {/* Main content area */}
       <div className="relative z-10 flex w-full flex-col gap-12 px-4 pb-28 pt-14">
-        <CenterCanvas
-          key={isCleared ? `${mode}-cleared` : mode}
-          mode={mode}
-          isCleared={isCleared}
-          ref={canvasRef}
-          className="w-full"
-        />
+        <div className="flex w-full gap-6">
+          {/* Left sidebar - Widgets (always visible unless mobile) */}
+          {!isCompact && (
+            <aside className="flex w-80 shrink-0 flex-col gap-4">
+              <ListsWidget className="w-full" />
+              <ConnectorsWidget className="w-full" />
+            </aside>
+          )}
+
+          {/* Center - Focus Canvas */}
+          <main className="flex-1">
+            <CenterCanvas
+              mode={mode}
+              isCleared={isCleared}
+              className="w-full"
+            />
+          </main>
+
+          {/* Right sidebar - Widgets (always visible unless mobile) */}
+          {!isCompact && (
+            <aside className="flex w-80 shrink-0 flex-col gap-4">
+              <CalendarWidget className="w-full" />
+              <TasksWidget className="w-full" />
+            </aside>
+          )}
+        </div>
       </div>
 
-      {/* Window Quick Access Toolbar */}
-      <WindowQuickAccess />
-
-      {/* Floating Windows */}
-      <WindowManager />
-
-      {/* Bottom Bar */}
-      <BottomBar mode={mode} onChange={onModeChange} onHome={onHome} anchorX={canvasCenter ?? undefined} />
+      {/* Bottom navigation bar */}
+      <BottomBar
+        mode={mode}
+        onChange={onModeChange}
+        onHome={onHome}
+      />
     </div>
   );
 }
