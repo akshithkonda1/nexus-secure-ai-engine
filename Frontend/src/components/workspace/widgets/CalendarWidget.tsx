@@ -1,33 +1,31 @@
 import { Calendar, Clock } from "lucide-react";
+import { useWorkspace } from "../../../hooks/useWorkspace";
+import { useWindowManager } from "../../../hooks/useWindowManager";
 
 export interface CalendarWidgetProps {
   className?: string;
 }
 
-// Hardcoded sample events (no store needed yet)
-const sampleEvents = [
-  {
-    id: '1',
-    title: 'Design sync',
-    time: '09:30',
-    description: '3 teammates',
-    color: '#8b5cf6',
-  },
-  {
-    id: '2',
-    title: 'Client window',
-    time: '12:00',
-    description: 'Calm check-in',
-    color: '#3b82f6',
-  },
-  {
-    id: '3',
-    title: 'Focus block',
-    time: '15:30',
-    description: 'Reserved',
-    color: '#10b981',
-  },
-];
+export default function CalendarWidget({ className }: CalendarWidgetProps) {
+  const { calendarEvents } = useWorkspace();
+  const { openWindow } = useWindowManager();
+
+  // Sort events by start time
+  const upcomingEvents = [...calendarEvents]
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .slice(0, 5); // Show next 5 events
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  const formatEventTime = (start: Date) => {
+    return `${formatTime(start)}`;
+  };
 
 export default function CalendarWidget({ className = "" }: CalendarWidgetProps) {
   return (
@@ -35,7 +33,11 @@ export default function CalendarWidget({ className = "" }: CalendarWidgetProps) 
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
     >
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header
+        className="flex items-center justify-between cursor-pointer hover:bg-[var(--bg-elev)]/30 -mx-2 -mt-2 px-2 pt-2 pb-1 rounded-t-xl transition-colors"
+        onClick={() => openWindow('calendar')}
+        title="Click to expand"
+      >
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-[var(--accent)]" />
           <h2 className="text-sm font-semibold text-[var(--text)]">Calendar</h2>

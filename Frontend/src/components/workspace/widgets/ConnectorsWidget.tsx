@@ -1,15 +1,14 @@
 import { Link2, Circle } from "lucide-react";
+import { useWorkspace } from "../../../hooks/useWorkspace";
+import { useWindowManager } from "../../../hooks/useWindowManager";
 
 export interface ConnectorsWidgetProps {
   className?: string;
 }
 
-// Hardcoded sample connectors (no store needed yet)
-const sampleConnectors = [
-  { id: '1', name: 'GitHub', status: 'connected' as const },
-  { id: '2', name: 'Notion', status: 'disconnected' as const },
-  { id: '3', name: 'Linear', status: 'connected' as const },
-];
+export default function ConnectorsWidget({ className }: ConnectorsWidgetProps) {
+  const { connectors, toggleConnector } = useWorkspace();
+  const { openWindow } = useWindowManager();
 
 export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetProps) {
   const getStatusColor = (status: string) => {
@@ -45,7 +44,11 @@ export default function ConnectorsWidget({ className = "" }: ConnectorsWidgetPro
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
     >
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header
+        className="flex items-center justify-between cursor-pointer hover:bg-[var(--bg-elev)]/30 -mx-2 -mt-2 px-2 pt-2 pb-1 rounded-t-xl transition-colors"
+        onClick={() => openWindow('connectors')}
+        title="Click to expand"
+      >
         <div className="flex items-center gap-2">
           <Link2 className="h-4 w-4 text-[var(--accent)]" />
           <h2 className="text-sm font-semibold text-[var(--text)]">Connectors</h2>

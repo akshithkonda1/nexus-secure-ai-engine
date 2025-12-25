@@ -1,20 +1,16 @@
 import { useState } from "react";
 import { ListChecks, Plus, X } from "lucide-react";
-import { useWorkspaceStore } from "../../../stores/workspaceStore";
+import { useWorkspace } from "../../../hooks/useWorkspace";
+import { useWindowManager } from "../../../hooks/useWindowManager";
 
 export interface ListsWidgetProps {
   className?: string;
 }
 
-export default function ListsWidget({ className = "" }: ListsWidgetProps) {
-  // Zustand selectors
-  const lists = useWorkspaceStore((state) => state.lists);
-  const addListItem = useWorkspaceStore((state) => state.addListItem);
-  const toggleListItem = useWorkspaceStore((state) => state.toggleListItem);
-  const removeListItem = useWorkspaceStore((state) => state.removeListItem);
-
-  // Local state
-  const [selectedListId, setSelectedListId] = useState(lists[0]?.id || '1');
+export default function ListsWidget({ className }: ListsWidgetProps) {
+  const { lists, addListItem, toggleListItem, removeListItem } = useWorkspace();
+  const { openWindow } = useWindowManager();
+  const [selectedListId, setSelectedListId] = useState(lists[0]?.id);
   const [newItemText, setNewItemText] = useState("");
 
   // Derived state
@@ -34,7 +30,11 @@ export default function ListsWidget({ className = "" }: ListsWidgetProps) {
       className={`flex flex-col gap-3 rounded-2xl bg-[var(--bg-surface)]/65 p-4 backdrop-blur-xl ${className}`}
     >
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header
+        className="flex items-center justify-between cursor-pointer hover:bg-[var(--bg-elev)]/30 -mx-2 -mt-2 px-2 pt-2 pb-1 rounded-t-xl transition-colors"
+        onClick={() => openWindow('lists')}
+        title="Click to expand"
+      >
         <div className="flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-[var(--accent)]" />
           <h2 className="text-sm font-semibold text-[var(--text)]">Lists</h2>
