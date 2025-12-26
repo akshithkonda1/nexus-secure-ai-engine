@@ -130,6 +130,16 @@ export type Task = {
   dueDate?: Date;
 };
 
+// Recurrence pattern for recurring events
+export type RecurrencePattern = {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;          // Every N days/weeks/months/years
+  daysOfWeek?: number[];     // 0-6 for weekly (0=Sunday)
+  dayOfMonth?: number;       // 1-31 for monthly
+  endDate?: Date;            // When recurrence ends
+  occurrences?: number;      // Max number of occurrences
+};
+
 export type CalendarEvent = {
   id: string;
   title: string;
@@ -141,8 +151,27 @@ export type CalendarEvent = {
   location?: string;
   description?: string;
   recurring?: boolean;
+  recurrence?: RecurrencePattern;  // Detailed recurrence config
   reminder?: number; // minutes before
   color?: string;
+  isAllDay?: boolean;              // All-day event flag
+  timezone?: string;               // IANA timezone (e.g., "America/New_York")
+  templateId?: string;             // Reference to event template
+};
+
+// Event template for quick creation
+export type EventTemplate = {
+  id: string;
+  name: string;                    // e.g., "Weekly Standup"
+  title: string;                   // Default event title
+  duration: number;                // Duration in minutes
+  type: 'work' | 'family' | 'personal' | 'meeting' | 'other';
+  location?: string;
+  description?: string;
+  attendees?: string[];
+  recurrence?: RecurrencePattern;
+  color?: string;
+  isDefault?: boolean;             // Built-in template
 };
 
 // Holiday Types

@@ -25,9 +25,18 @@ import {
   Plane,
   Info,
   Cake,
+  Zap,
+  AlertTriangle,
+  Copy,
+  Sun,
+  Moon,
+  Globe,
+  Layout,
+  Lightbulb,
+  Check,
 } from 'lucide-react';
 import { useWorkspace } from '../../../hooks/useWorkspace';
-import type { CalendarEvent, Holiday, ExtendedWeekend } from '../../../types/workspace';
+import type { CalendarEvent, Holiday, ExtendedWeekend, RecurrencePattern, EventTemplate } from '../../../types/workspace';
 import {
   getHolidaysForDate,
   getHolidaysForMonth,
@@ -38,6 +47,17 @@ import {
   getTripPlanningContext,
   getPersonalHolidays,
 } from '../../../services/calendar/holidays';
+import { parseEventString, formatParsedEvent, type ParsedEvent } from '../../../services/calendar/eventParser';
+import {
+  detectConflicts,
+  generateSmartSuggestions,
+  DEFAULT_TEMPLATES,
+  createEventFromTemplate,
+  formatRecurrence,
+  type EventConflict,
+  type SmartSuggestion,
+} from '../../../services/calendar/eventIntelligence';
+import CalendarSyncSettings from './CalendarSyncSettings';
 
 type ViewMode = 'day' | 'week' | 'month' | 'year';
 
@@ -62,6 +82,14 @@ type EventFormData = {
   attendees: string;
   reminder: string;
   recurring: boolean;
+  isAllDay: boolean;
+  timezone: string;
+  recurrenceFrequency: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  recurrenceInterval: number;
+  recurrenceDays: number[];
+  recurrenceEndType: 'never' | 'date' | 'count';
+  recurrenceEndDate: string;
+  recurrenceCount: number;
 };
 
 const MONTH_NAMES = [
@@ -72,6 +100,23 @@ const MONTH_NAMES = [
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const DAY_NAMES_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Common timezones for quick selection
+const COMMON_TIMEZONES = [
+  { value: 'local', label: 'Local Time' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Phoenix', label: 'Arizona (no DST)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+  { value: 'Asia/Kolkata', label: 'India (IST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'UTC', label: 'UTC' },
+];
 
 const INITIAL_FORM_DATA: EventFormData = {
   title: '',
@@ -84,6 +129,14 @@ const INITIAL_FORM_DATA: EventFormData = {
   attendees: '',
   reminder: '15',
   recurring: false,
+  isAllDay: false,
+  timezone: 'local',
+  recurrenceFrequency: 'none',
+  recurrenceInterval: 1,
+  recurrenceDays: [],
+  recurrenceEndType: 'never',
+  recurrenceEndDate: '',
+  recurrenceCount: 10,
 };
 
 export default function CalendarContent({ className }: CalendarContentProps) {
@@ -105,6 +158,24 @@ export default function CalendarContent({ className }: CalendarContentProps) {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [formData, setFormData] = useState<EventFormData>(INITIAL_FORM_DATA);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Quick add state
+  const [quickAddInput, setQuickAddInput] = useState('');
+  const [parsedEvent, setParsedEvent] = useState<ParsedEvent | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+
+  // Templates state
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
+
+  // Conflict detection state
+  const [currentConflicts, setCurrentConflicts] = useState<EventConflict[]>([]);
+
+  // Smart suggestions state
+  const [smartSuggestions, setSmartSuggestions] = useState<SmartSuggestion[]>([]);
+
+  // Sync settings state
+  const [showSyncSettings, setShowSyncSettings] = useState(false);
 
   // ============================================================
   // HELPER FUNCTIONS
@@ -377,11 +448,159 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       attendees: event.attendees?.join(', ') || '',
       reminder: String(event.reminder || 15),
       recurring: event.recurring || false,
+      isAllDay: event.isAllDay || false,
+      timezone: event.timezone || 'local',
+      recurrenceFrequency: event.recurrence?.frequency || 'none',
+      recurrenceInterval: event.recurrence?.interval || 1,
+      recurrenceDays: event.recurrence?.daysOfWeek || [],
+      recurrenceEndType: event.recurrence?.endDate ? 'date' :
+                         event.recurrence?.occurrences ? 'count' : 'never',
+      recurrenceEndDate: event.recurrence?.endDate ?
+                         formatDateForInput(new Date(event.recurrence.endDate)) : '',
+      recurrenceCount: event.recurrence?.occurrences || 10,
     });
     setEditingEventId(event.id);
     setFormError(null);
+    setCurrentConflicts([]);
+    setSmartSuggestions([]);
     setShowEventForm(true);
   };
+
+  // ============================================================
+  // QUICK ADD HANDLERS
+  // ============================================================
+
+  const handleQuickAddChange = (value: string) => {
+    setQuickAddInput(value);
+    if (value.trim().length >= 3) {
+      const parsed = parseEventString(value);
+      setParsedEvent(parsed);
+    } else {
+      setParsedEvent(null);
+    }
+  };
+
+  const handleQuickAddSubmit = () => {
+    if (!parsedEvent) return;
+
+    const startDateTime = new Date(parsedEvent.date);
+    startDateTime.setHours(parsedEvent.startTime.hour, parsedEvent.startTime.minute);
+
+    const endDateTime = new Date(parsedEvent.date);
+    endDateTime.setHours(parsedEvent.endTime.hour, parsedEvent.endTime.minute);
+
+    addCalendarEvent({
+      title: parsedEvent.title,
+      start: startDateTime,
+      end: endDateTime,
+      type: parsedEvent.type,
+      location: parsedEvent.location,
+      attendees: parsedEvent.attendees,
+      isAllDay: parsedEvent.isAllDay,
+    });
+
+    setQuickAddInput('');
+    setParsedEvent(null);
+    setShowQuickAdd(false);
+  };
+
+  const handleQuickAddEdit = () => {
+    if (!parsedEvent) return;
+
+    // Pre-fill the form with parsed data
+    const dateStr = formatDateForInput(parsedEvent.date);
+    const startTime = `${String(parsedEvent.startTime.hour).padStart(2, '0')}:${String(parsedEvent.startTime.minute).padStart(2, '0')}`;
+    const endTime = `${String(parsedEvent.endTime.hour).padStart(2, '0')}:${String(parsedEvent.endTime.minute).padStart(2, '0')}`;
+
+    setFormData({
+      ...INITIAL_FORM_DATA,
+      title: parsedEvent.title,
+      date: dateStr,
+      startTime,
+      endTime,
+      type: parsedEvent.type || 'work',
+      location: parsedEvent.location || '',
+      attendees: parsedEvent.attendees?.join(', ') || '',
+      isAllDay: parsedEvent.isAllDay || false,
+    });
+
+    setQuickAddInput('');
+    setParsedEvent(null);
+    setShowQuickAdd(false);
+    setShowEventForm(true);
+  };
+
+  // ============================================================
+  // TEMPLATE HANDLERS
+  // ============================================================
+
+  const handleTemplateSelect = (template: EventTemplate) => {
+    const eventData = createEventFromTemplate(template, currentDate);
+
+    setFormData({
+      ...INITIAL_FORM_DATA,
+      title: eventData.title,
+      date: formatDateForInput(eventData.start),
+      startTime: formatTimeForInput(eventData.start),
+      endTime: formatTimeForInput(eventData.end),
+      type: eventData.type || 'work',
+      location: eventData.location || '',
+      description: eventData.description || '',
+      attendees: eventData.attendees?.join(', ') || '',
+      recurring: eventData.recurring || false,
+      recurrenceFrequency: eventData.recurrence?.frequency || 'none',
+      recurrenceInterval: eventData.recurrence?.interval || 1,
+      recurrenceDays: eventData.recurrence?.daysOfWeek || [],
+    });
+
+    setSelectedTemplate(template);
+    setShowTemplates(false);
+    setShowEventForm(true);
+  };
+
+  // ============================================================
+  // CONFLICT DETECTION
+  // ============================================================
+
+  // Check for conflicts when form data changes
+  useEffect(() => {
+    if (!showEventForm || !formData.date || !formData.startTime || !formData.endTime) {
+      setCurrentConflicts([]);
+      return;
+    }
+
+    const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+    const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      setCurrentConflicts([]);
+      return;
+    }
+
+    const conflicts = detectConflicts(
+      { start: startDateTime, end: endDateTime, location: formData.location },
+      events,
+      { ignoreEventId: editingEventId || undefined, travelTimeMinutes: 15 }
+    );
+
+    setCurrentConflicts(conflicts);
+  }, [formData.date, formData.startTime, formData.endTime, formData.location, showEventForm, events, editingEventId]);
+
+  // Generate smart suggestions when form is opened
+  useEffect(() => {
+    if (!showEventForm || !formData.title) {
+      setSmartSuggestions([]);
+      return;
+    }
+
+    const suggestions = generateSmartSuggestions(
+      { title: formData.title, type: formData.type },
+      events,
+      { maxSuggestions: 3 }
+    );
+
+    setSmartSuggestions(suggestions);
+  }, [formData.title, formData.type, showEventForm, events]);
 
   const closeEventForm = () => {
     setShowEventForm(false);
@@ -409,14 +628,38 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       return;
     }
 
-    if (formData.endTime <= formData.startTime) {
+    if (!formData.isAllDay && formData.endTime <= formData.startTime) {
       setFormError('End time must be after start time');
       return;
     }
 
     // Create Date objects
-    const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
-    const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+    let startDateTime: Date;
+    let endDateTime: Date;
+
+    if (formData.isAllDay) {
+      startDateTime = new Date(`${formData.date}T00:00:00`);
+      endDateTime = new Date(`${formData.date}T23:59:59`);
+    } else {
+      startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+      endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+    }
+
+    // Build recurrence pattern if recurring
+    let recurrence: RecurrencePattern | undefined;
+    if (formData.recurrenceFrequency !== 'none') {
+      recurrence = {
+        frequency: formData.recurrenceFrequency,
+        interval: formData.recurrenceInterval,
+        daysOfWeek: formData.recurrenceDays.length > 0 ? formData.recurrenceDays : undefined,
+        endDate: formData.recurrenceEndType === 'date' && formData.recurrenceEndDate
+          ? new Date(formData.recurrenceEndDate)
+          : undefined,
+        occurrences: formData.recurrenceEndType === 'count'
+          ? formData.recurrenceCount
+          : undefined,
+      };
+    }
 
     // Prepare event data
     const eventData = {
@@ -430,7 +673,11 @@ export default function CalendarContent({ className }: CalendarContentProps) {
         ? formData.attendees.split(',').map(a => a.trim()).filter(Boolean)
         : undefined,
       reminder: parseInt(formData.reminder) || undefined,
-      recurring: formData.recurring,
+      recurring: formData.recurrenceFrequency !== 'none',
+      recurrence,
+      isAllDay: formData.isAllDay,
+      timezone: formData.timezone !== 'local' ? formData.timezone : undefined,
+      templateId: selectedTemplate?.id,
     };
 
     if (editingEventId) {
@@ -439,6 +686,7 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       addCalendarEvent(eventData);
     }
 
+    setSelectedTemplate(null);
     closeEventForm();
   };
 
@@ -867,22 +1115,154 @@ export default function CalendarContent({ className }: CalendarContentProps) {
   };
 
   // ============================================================
+  // QUICK ADD BAR
+  // ============================================================
+
+  const renderQuickAdd = () => {
+    if (!showQuickAdd) return null;
+
+    return (
+      <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-[var(--accent)]/10 to-purple-500/10 border border-[var(--accent)]/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Zap className="h-4 w-4 text-[var(--accent)]" />
+          <span className="text-sm font-semibold text-[var(--text)]">Quick Add</span>
+          <button
+            onClick={() => { setShowQuickAdd(false); setQuickAddInput(''); setParsedEvent(null); }}
+            className="ml-auto p-1 rounded hover:bg-[var(--bg-elev)] transition-colors"
+          >
+            <X className="h-3 w-3 text-[var(--text-muted)]" />
+          </button>
+        </div>
+
+        <input
+          type="text"
+          value={quickAddInput}
+          onChange={(e) => handleQuickAddChange(e.target.value)}
+          placeholder='Try "Team meeting tomorrow 2pm" or "Lunch with John next Friday"'
+          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-sm"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && parsedEvent) {
+              e.preventDefault();
+              handleQuickAddSubmit();
+            }
+          }}
+        />
+
+        {/* Parsed Preview */}
+        {parsedEvent && (
+          <div className="mt-2 p-2 rounded-lg bg-[var(--bg-elev)]/50">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-[var(--text)]">{parsedEvent.title}</p>
+                <p className="text-xs text-[var(--text-muted)]">
+                  {parsedEvent.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {!parsedEvent.isAllDay && (
+                    <> at {parsedEvent.startTime.hour % 12 || 12}:{String(parsedEvent.startTime.minute).padStart(2, '0')} {parsedEvent.startTime.hour < 12 ? 'AM' : 'PM'}</>
+                  )}
+                  {parsedEvent.isAllDay && ' (all day)'}
+                </p>
+                {parsedEvent.suggestions && parsedEvent.suggestions.length > 0 && (
+                  <p className="text-[10px] text-amber-500 mt-1">
+                    Tip: {parsedEvent.suggestions[0]}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-[var(--text-muted)] px-1.5 py-0.5 rounded bg-[var(--bg-surface)]">
+                  {Math.round(parsedEvent.confidence * 100)}% confident
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={handleQuickAddSubmit}
+                className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+              >
+                <Check className="h-3 w-3" />
+                Create Event
+              </button>
+              <button
+                onClick={handleQuickAddEdit}
+                className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+              >
+                Edit Details
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ============================================================
+  // TEMPLATES PANEL
+  // ============================================================
+
+  const renderTemplates = () => {
+    if (!showTemplates) return null;
+
+    return (
+      <div className="mb-3 p-3 rounded-xl bg-[var(--bg-elev)]/50 border border-[var(--line-subtle)]">
+        <div className="flex items-center gap-2 mb-3">
+          <Layout className="h-4 w-4 text-[var(--accent)]" />
+          <span className="text-sm font-semibold text-[var(--text)]">Event Templates</span>
+          <button
+            onClick={() => setShowTemplates(false)}
+            className="ml-auto p-1 rounded hover:bg-[var(--bg-surface)] transition-colors"
+          >
+            <X className="h-3 w-3 text-[var(--text-muted)]" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {DEFAULT_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              onClick={() => handleTemplateSelect(template)}
+              className="flex flex-col items-start p-2 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-surface)]/80 transition-colors text-left"
+            >
+              <span className="text-xs font-medium text-[var(--text)]">{template.name}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">
+                {template.duration} min • {template.type}
+                {template.recurrence && ' • Recurring'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================================
   // EVENT FORM MODAL
   // ============================================================
 
   const renderEventForm = () => {
     if (!showEventForm) return null;
 
+    const handleRecurrenceDayToggle = (day: number) => {
+      const newDays = formData.recurrenceDays.includes(day)
+        ? formData.recurrenceDays.filter(d => d !== day)
+        : [...formData.recurrenceDays, day];
+      handleFormChange('recurrenceDays', newDays as unknown as string);
+    };
+
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) closeEventForm(); }}
       >
-        <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-surface)] border border-[var(--line-subtle)] shadow-2xl">
+        <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-surface)] border border-[var(--line-subtle)] shadow-2xl">
           {/* Form Header */}
-          <div className="sticky top-0 flex items-center justify-between p-4 border-b border-[var(--line-subtle)] bg-[var(--bg-surface)]">
+          <div className="sticky top-0 flex items-center justify-between p-4 border-b border-[var(--line-subtle)] bg-[var(--bg-surface)] z-10">
             <h2 className="text-lg font-semibold text-[var(--text)]">
               {editingEventId ? 'Edit Event' : 'Add Event'}
+              {selectedTemplate && (
+                <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">
+                  from "{selectedTemplate.name}"
+                </span>
+              )}
             </h2>
             <button
               onClick={closeEventForm}
@@ -894,6 +1274,58 @@ export default function CalendarContent({ className }: CalendarContentProps) {
 
           {/* Form Content */}
           <form onSubmit={handleFormSubmit} className="p-4 space-y-4">
+            {/* Conflict Warnings */}
+            {currentConflicts.length > 0 && (
+              <div className="p-3 rounded-lg bg-amber-500/20 border border-amber-500/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                    {currentConflicts.length} Conflict{currentConflicts.length > 1 ? 's' : ''} Detected
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {currentConflicts.slice(0, 2).map((conflict) => (
+                    <p key={conflict.id} className="text-xs text-[var(--text-muted)]">
+                      • {conflict.message}
+                      {conflict.suggestion && (
+                        <span className="text-amber-500"> ({conflict.suggestion})</span>
+                      )}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Smart Suggestions */}
+            {smartSuggestions.length > 0 && !editingEventId && (
+              <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <Lightbulb className="h-3 w-3 text-blue-500" />
+                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Suggestions</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {smartSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion.id}
+                      type="button"
+                      onClick={() => {
+                        if (suggestion.type === 'location') {
+                          handleFormChange('location', suggestion.value);
+                        } else if (suggestion.type === 'attendee') {
+                          const current = formData.attendees;
+                          handleFormChange('attendees', current ? `${current}, ${suggestion.value}` : suggestion.value);
+                        }
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/30 transition-colors"
+                      title={suggestion.reason}
+                    >
+                      + {suggestion.value}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Error Message */}
             {formError && (
               <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-sm text-red-400">
@@ -915,6 +1347,20 @@ export default function CalendarContent({ className }: CalendarContentProps) {
               />
             </div>
 
+            {/* All-Day Toggle */}
+            <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-[var(--bg-elev)]/50 transition-colors">
+              <input
+                type="checkbox"
+                checked={formData.isAllDay}
+                onChange={(e) => handleFormChange('isAllDay', e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--line-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
+              />
+              <span className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                <Sun className="h-4 w-4 text-amber-500" />
+                All-day event
+              </span>
+            </label>
+
             {/* Date */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
@@ -929,32 +1375,51 @@ export default function CalendarContent({ className }: CalendarContentProps) {
               />
             </div>
 
-            {/* Time */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[var(--text-muted)]" />
-                  Start Time <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => handleFormChange('startTime', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                />
+            {/* Time (hidden for all-day events) */}
+            {!formData.isAllDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-[var(--text-muted)]" />
+                    Start Time <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => handleFormChange('startTime', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-[var(--text-muted)]" />
+                    End Time <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => handleFormChange('endTime', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[var(--text-muted)]" />
-                  End Time <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => handleFormChange('endTime', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                />
-              </div>
+            )}
+
+            {/* Timezone */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                <Globe className="h-4 w-4 text-[var(--text-muted)]" />
+                Time Zone
+              </label>
+              <select
+                value={formData.timezone}
+                onChange={(e) => handleFormChange('timezone', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>{tz.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Event Type */}
@@ -976,6 +1441,129 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Recurrence */}
+            <div className="space-y-2 p-3 rounded-lg bg-[var(--bg-elev)]/30">
+              <label className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                <Repeat className="h-4 w-4 text-[var(--text-muted)]" />
+                Repeat
+              </label>
+              <select
+                value={formData.recurrenceFrequency}
+                onChange={(e) => handleFormChange('recurrenceFrequency', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              >
+                <option value="none">Does not repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+
+              {/* Recurrence Options */}
+              {formData.recurrenceFrequency !== 'none' && (
+                <div className="space-y-3 pt-2 border-t border-[var(--line-subtle)]/30">
+                  {/* Interval */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[var(--text-muted)]">Every</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={formData.recurrenceInterval}
+                      onChange={(e) => handleFormChange('recurrenceInterval', parseInt(e.target.value) || 1)}
+                      className="w-16 px-2 py-1 rounded bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                    />
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {formData.recurrenceFrequency === 'daily' ? 'day(s)' :
+                       formData.recurrenceFrequency === 'weekly' ? 'week(s)' :
+                       formData.recurrenceFrequency === 'monthly' ? 'month(s)' : 'year(s)'}
+                    </span>
+                  </div>
+
+                  {/* Days of week for weekly */}
+                  {formData.recurrenceFrequency === 'weekly' && (
+                    <div className="space-y-1">
+                      <span className="text-xs text-[var(--text-muted)]">On days:</span>
+                      <div className="flex gap-1">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleRecurrenceDayToggle(idx)}
+                            className={`w-7 h-7 rounded-full text-xs font-medium transition-all ${
+                              formData.recurrenceDays.includes(idx)
+                                ? 'bg-[var(--accent)] text-white'
+                                : 'bg-[var(--bg-elev)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)]'
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* End condition */}
+                  <div className="space-y-2">
+                    <span className="text-xs text-[var(--text-muted)]">Ends:</span>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="recurrenceEnd"
+                          checked={formData.recurrenceEndType === 'never'}
+                          onChange={() => handleFormChange('recurrenceEndType', 'never')}
+                          className="text-[var(--accent)] focus:ring-[var(--accent)]"
+                        />
+                        <span className="text-xs text-[var(--text)]">Never</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="recurrenceEnd"
+                          checked={formData.recurrenceEndType === 'date'}
+                          onChange={() => handleFormChange('recurrenceEndType', 'date')}
+                          className="text-[var(--accent)] focus:ring-[var(--accent)]"
+                        />
+                        <span className="text-xs text-[var(--text)]">On date</span>
+                        {formData.recurrenceEndType === 'date' && (
+                          <input
+                            type="date"
+                            value={formData.recurrenceEndDate}
+                            onChange={(e) => handleFormChange('recurrenceEndDate', e.target.value)}
+                            className="ml-2 px-2 py-1 rounded bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                          />
+                        )}
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="recurrenceEnd"
+                          checked={formData.recurrenceEndType === 'count'}
+                          onChange={() => handleFormChange('recurrenceEndType', 'count')}
+                          className="text-[var(--accent)] focus:ring-[var(--accent)]"
+                        />
+                        <span className="text-xs text-[var(--text)]">After</span>
+                        {formData.recurrenceEndType === 'count' && (
+                          <>
+                            <input
+                              type="number"
+                              min="1"
+                              max="365"
+                              value={formData.recurrenceCount}
+                              onChange={(e) => handleFormChange('recurrenceCount', parseInt(e.target.value) || 10)}
+                              className="w-16 px-2 py-1 rounded bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                            />
+                            <span className="text-xs text-[var(--text)]">occurrences</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Location */}
@@ -1003,7 +1591,7 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                 value={formData.description}
                 onChange={(e) => handleFormChange('description', e.target.value)}
                 placeholder="Add event details..."
-                rows={3}
+                rows={2}
                 className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
               />
             </div>
@@ -1035,6 +1623,7 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                 onChange={(e) => handleFormChange('reminder', e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-[var(--bg-elev)] border border-[var(--line-subtle)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
+                <option value="0">No reminder</option>
                 <option value="5">5 minutes before</option>
                 <option value="10">10 minutes before</option>
                 <option value="15">15 minutes before</option>
@@ -1043,20 +1632,6 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                 <option value="1440">1 day before</option>
               </select>
             </div>
-
-            {/* Recurring */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.recurring}
-                onChange={(e) => handleFormChange('recurring', e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--line-subtle)] text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <span className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
-                <Repeat className="h-4 w-4 text-[var(--text-muted)]" />
-                Recurring event
-              </span>
-            </label>
 
             {/* Form Actions */}
             <div className="flex items-center justify-between pt-4 border-t border-[var(--line-subtle)]">
@@ -1082,9 +1657,14 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity ${
+                    currentConflicts.some(c => c.severity === 'high')
+                      ? 'bg-amber-500'
+                      : 'bg-[var(--accent)]'
+                  }`}
                 >
                   {editingEventId ? 'Save Changes' : 'Create Event'}
+                  {currentConflicts.some(c => c.severity === 'high') && ' (with conflicts)'}
                 </button>
               </div>
             </div>
@@ -1162,6 +1742,12 @@ export default function CalendarContent({ className }: CalendarContentProps) {
         )}
       </div>
 
+      {/* Quick Add Bar */}
+      {renderQuickAdd()}
+
+      {/* Templates Panel */}
+      {renderTemplates()}
+
       {/* Contextual Suggestions Panel */}
       {renderContextPanel()}
 
@@ -1179,6 +1765,27 @@ export default function CalendarContent({ className }: CalendarContentProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Quick Add Button */}
+          <button
+            onClick={() => { setShowQuickAdd(true); setShowTemplates(false); }}
+            className={`flex items-center gap-1 p-1.5 rounded-lg transition-colors ${
+              showQuickAdd ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--bg-elev)] text-[var(--text-muted)]'
+            }`}
+            title="Quick add with natural language"
+          >
+            <Zap className="h-4 w-4" />
+          </button>
+          {/* Templates Button */}
+          <button
+            onClick={() => { setShowTemplates(true); setShowQuickAdd(false); }}
+            className={`flex items-center gap-1 p-1.5 rounded-lg transition-colors ${
+              showTemplates ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--bg-elev)] text-[var(--text-muted)]'
+            }`}
+            title="Event templates"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          {/* Add Event Button */}
           <button
             onClick={() => openNewEventForm()}
             className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-[var(--bg-elev)] transition-colors text-[var(--accent)]"
@@ -1186,9 +1793,11 @@ export default function CalendarContent({ className }: CalendarContentProps) {
           >
             <Plus className="h-4 w-4" />
           </button>
+          {/* Sync Settings Button */}
           <button
+            onClick={() => setShowSyncSettings(true)}
             className="p-1.5 rounded-lg hover:bg-[var(--bg-elev)] transition-colors text-[var(--text-muted)]"
-            title="Settings"
+            title="Calendar Sync Settings"
           >
             <Settings className="h-4 w-4" />
           </button>
@@ -1197,6 +1806,26 @@ export default function CalendarContent({ className }: CalendarContentProps) {
 
       {/* Event Form Modal */}
       {renderEventForm()}
+
+      {/* Calendar Sync Settings Modal */}
+      <CalendarSyncSettings
+        isOpen={showSyncSettings}
+        onClose={() => setShowSyncSettings(false)}
+        onSync={(externalEvents) => {
+          // Import external events into local calendar
+          externalEvents.forEach(event => {
+            addCalendarEvent({
+              title: event.title,
+              start: event.start,
+              end: event.end,
+              isAllDay: event.isAllDay,
+              location: event.location,
+              description: event.description,
+              attendees: event.attendees?.map((a: { email: string }) => a.email),
+            });
+          });
+        }}
+      />
     </div>
   );
 }
