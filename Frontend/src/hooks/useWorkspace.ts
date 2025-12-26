@@ -10,6 +10,7 @@ import type {
   List,
   Task,
   CalendarEvent,
+  Connector,
   Page,
   Note,
   Board,
@@ -176,6 +177,9 @@ interface WorkspaceState extends WorkspaceData {
   deleteCalendarEvent: (id: string) => void;
 
   // Connector operations
+  addConnector: (connector: Partial<Connector>) => void;
+  removeConnector: (connectorId: string) => void;
+  updateConnectorPAT: (connectorId: string, token: string) => void;
   toggleConnector: (id: string) => void;
   syncConnector: (id: string) => void;
 
@@ -349,11 +353,49 @@ export const useWorkspace = create<WorkspaceState>()(
       },
 
       // Connector operations
+      addConnector: (connector: Partial<Connector>) => {
+        const newConnector: Connector = {
+          id: connector.id || generateId(),
+          name: connector.name || 'New Connector',
+          type: connector.type || 'custom',
+          connected: connector.connected ?? false,
+          lastSync: connector.lastSync || null,
+          token: connector.token || null,
+          metadata: connector.metadata || {},
+        };
+        set(state => ({
+          connectors: [...state.connectors, newConnector],
+        }));
+        console.log(`[Workspace] Added connector: ${newConnector.name}`);
+      },
+
+      removeConnector: (connectorId: string) => {
+        set(state => ({
+          connectors: state.connectors.filter(c => c.id !== connectorId),
+        }));
+        console.log(`[Workspace] Removed connector: ${connectorId}`);
+      },
+
+      updateConnectorPAT: (connectorId: string, token: string) => {
+        set(state => ({
+          connectors: state.connectors.map(c =>
+            c.id === connectorId
+              ? { ...c, token, connected: false }
+              : c
+          ),
+        }));
+        console.log(`[Workspace] Updated PAT for connector: ${connectorId}`);
+      },
+
       toggleConnector: (id: string) => {
         set(state => ({
           connectors: state.connectors.map(connector =>
             connector.id === id
-              ? { ...connector, connected: !connector.connected }
+              ? {
+                  ...connector,
+                  connected: !connector.connected,
+                  lastSync: !connector.connected ? new Date() : connector.lastSync,
+                }
               : connector
           ),
         }));
@@ -367,6 +409,7 @@ export const useWorkspace = create<WorkspaceState>()(
               : connector
           ),
         }));
+        console.log(`[Workspace] Syncing connector: ${id}`);
       },
 
       // Page operations
