@@ -130,6 +130,16 @@ export type Task = {
   dueDate?: Date;
 };
 
+// Recurrence pattern for recurring events
+export type RecurrencePattern = {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;          // Every N days/weeks/months/years
+  daysOfWeek?: number[];     // 0-6 for weekly (0=Sunday)
+  dayOfMonth?: number;       // 1-31 for monthly
+  endDate?: Date;            // When recurrence ends
+  occurrences?: number;      // Max number of occurrences
+};
+
 export type CalendarEvent = {
   id: string;
   title: string;
@@ -138,6 +148,69 @@ export type CalendarEvent = {
   priority?: number;
   type?: 'work' | 'family' | 'personal' | 'meeting' | 'other';
   attendees?: string[];
+  location?: string;
+  description?: string;
+  recurring?: boolean;
+  recurrence?: RecurrencePattern;  // Detailed recurrence config
+  reminder?: number; // minutes before
+  color?: string;
+  isAllDay?: boolean;              // All-day event flag
+  timezone?: string;               // IANA timezone (e.g., "America/New_York")
+  templateId?: string;             // Reference to event template
+};
+
+// Event template for quick creation
+export type EventTemplate = {
+  id: string;
+  name: string;                    // e.g., "Weekly Standup"
+  title: string;                   // Default event title
+  duration: number;                // Duration in minutes
+  type: 'work' | 'family' | 'personal' | 'meeting' | 'other';
+  location?: string;
+  description?: string;
+  attendees?: string[];
+  recurrence?: RecurrencePattern;
+  color?: string;
+  isDefault?: boolean;             // Built-in template
+};
+
+// Holiday Types
+export type HolidayCategory =
+  | 'federal'      // US Federal holidays (banks/gov closed)
+  | 'cultural'     // Cultural celebrations
+  | 'religious'    // Religious observances
+  | 'personal'     // Birthdays, anniversaries
+  | 'observance';  // Awareness days, unofficial
+
+export type Holiday = {
+  id: string;
+  name: string;
+  date: Date;
+  category: HolidayCategory;
+  isWorkOff?: boolean;       // Most people have day off
+  recurring?: boolean;       // Happens every year
+  emoji?: string;            // Display emoji
+  description?: string;      // Brief description
+};
+
+export type PersonalDate = {
+  id: string;
+  name: string;              // e.g., "Mom's Birthday"
+  type: 'birthday' | 'anniversary' | 'memorial' | 'custom';
+  month: number;             // 0-11
+  day: number;               // 1-31
+  year?: number;             // Optional birth/start year
+  person?: string;           // Person's name
+  reminder?: number;         // Days before to remind
+  notes?: string;
+};
+
+export type ExtendedWeekend = {
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;
+  holidays: Holiday[];
+  suggestion?: string;       // Contextual suggestion
 };
 
 // Connector Type - All 34 supported platforms
