@@ -138,6 +138,11 @@ export type CalendarEvent = {
   priority?: number;
   type?: 'work' | 'family' | 'personal' | 'meeting' | 'other';
   attendees?: string[];
+  location?: string;
+  description?: string;
+  recurring?: boolean;
+  reminder?: number; // minutes before
+  color?: string;
 };
 
 // Connector Type - All 34 supported platforms

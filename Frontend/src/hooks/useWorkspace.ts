@@ -59,20 +59,28 @@ const initialState: WorkspaceData = {
   ],
   calendarEvents: [
     {
-      id: '1',
+      id: 'event-sample-1',
       title: 'Design sync',
-      start: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-      end: new Date(Date.now() + 3 * 60 * 60 * 1000),
+      start: new Date(new Date().setHours(9, 30, 0, 0)),
+      end: new Date(new Date().setHours(10, 30, 0, 0)),
       type: 'meeting',
       priority: 70,
     },
     {
-      id: '2',
+      id: 'event-sample-2',
       title: 'Client window',
-      start: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours from now
-      end: new Date(Date.now() + 6 * 60 * 60 * 1000),
-      type: 'meeting',
+      start: new Date(new Date().setHours(12, 0, 0, 0)),
+      end: new Date(new Date().setHours(13, 0, 0, 0)),
+      type: 'work',
       priority: 90,
+    },
+    {
+      id: 'event-sample-3',
+      title: 'Focus block',
+      start: new Date(new Date().setHours(15, 30, 0, 0)),
+      end: new Date(new Date().setHours(17, 0, 0, 0)),
+      type: 'personal',
+      priority: 60,
     },
   ],
   connectors: [
@@ -331,7 +339,9 @@ export const useWorkspace = create<WorkspaceState>()(
       addCalendarEvent: (eventData) => {
         const newEvent: CalendarEvent = {
           ...eventData,
-          id: generateId(),
+          id: `event-${generateId()}`,
+          start: eventData.start instanceof Date ? eventData.start : new Date(eventData.start),
+          end: eventData.end instanceof Date ? eventData.end : new Date(eventData.end),
         };
         set(state => ({
           calendarEvents: [...state.calendarEvents, newEvent],
@@ -341,7 +351,18 @@ export const useWorkspace = create<WorkspaceState>()(
       updateCalendarEvent: (id: string, updates: Partial<CalendarEvent>) => {
         set(state => ({
           calendarEvents: state.calendarEvents.map(event =>
-            event.id === id ? { ...event, ...updates } : event
+            event.id === id
+              ? {
+                  ...event,
+                  ...updates,
+                  start: updates.start
+                    ? (updates.start instanceof Date ? updates.start : new Date(updates.start))
+                    : event.start,
+                  end: updates.end
+                    ? (updates.end instanceof Date ? updates.end : new Date(updates.end))
+                    : event.end,
+                }
+              : event
           ),
         }));
       },
@@ -687,7 +708,7 @@ export const useWorkspace = create<WorkspaceState>()(
       },
     }),
     {
-      name: 'workspace-storage',
+      name: 'ryuzen-workspace-storage',
       partialize: (state) => ({
         // Persist widget data
         lists: state.lists,
@@ -699,6 +720,31 @@ export const useWorkspace = create<WorkspaceState>()(
         // Don't persist analyses (ephemeral)
         // Don't persist permissions (must re-grant each session for 'session' scope)
       }),
+      // Custom storage with Date serialization
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+          try {
+            return JSON.parse(str, (key, value) => {
+              // Revive Date objects from ISO strings
+              if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) return date;
+              }
+              return value;
+            });
+          } catch {
+            return null;
+          }
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name);
+        },
+      },
     }
   )
 );
