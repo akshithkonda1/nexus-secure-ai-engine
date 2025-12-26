@@ -145,6 +145,45 @@ export type CalendarEvent = {
   color?: string;
 };
 
+// Holiday Types
+export type HolidayCategory =
+  | 'federal'      // US Federal holidays (banks/gov closed)
+  | 'cultural'     // Cultural celebrations
+  | 'religious'    // Religious observances
+  | 'personal'     // Birthdays, anniversaries
+  | 'observance';  // Awareness days, unofficial
+
+export type Holiday = {
+  id: string;
+  name: string;
+  date: Date;
+  category: HolidayCategory;
+  isWorkOff?: boolean;       // Most people have day off
+  recurring?: boolean;       // Happens every year
+  emoji?: string;            // Display emoji
+  description?: string;      // Brief description
+};
+
+export type PersonalDate = {
+  id: string;
+  name: string;              // e.g., "Mom's Birthday"
+  type: 'birthday' | 'anniversary' | 'memorial' | 'custom';
+  month: number;             // 0-11
+  day: number;               // 1-31
+  year?: number;             // Optional birth/start year
+  person?: string;           // Person's name
+  reminder?: number;         // Days before to remind
+  notes?: string;
+};
+
+export type ExtendedWeekend = {
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;
+  holidays: Holiday[];
+  suggestion?: string;       // Contextual suggestion
+};
+
 // Connector Type - All 34 supported platforms
 export type ConnectorType =
   // Development & Version Control (3)

@@ -20,6 +20,7 @@ import type {
   Suggestion,
   AnalysisResult,
   PermissionScope,
+  PersonalDate,
 } from '../types/workspace';
 
 // Helper to generate unique IDs
@@ -88,6 +89,29 @@ const initialState: WorkspaceData = {
     { id: '2', name: 'Notion', type: 'notion', connected: true, lastSync: new Date() },
     { id: '3', name: 'Linear', type: 'linear', connected: true, lastSync: new Date() },
   ],
+
+  // Personal dates (birthdays, anniversaries, etc.)
+  personalDates: [
+    {
+      id: 'pd-sample-1',
+      name: "Mom's Birthday",
+      type: 'birthday',
+      month: 2,  // March
+      day: 15,
+      year: 1960,
+      person: 'Mom',
+      reminder: 7,
+    },
+    {
+      id: 'pd-sample-2',
+      name: 'Wedding Anniversary',
+      type: 'anniversary',
+      month: 5,  // June
+      day: 20,
+      year: 2018,
+      reminder: 14,
+    },
+  ] as PersonalDate[],
 
   // Focus mode data
   pages: [
@@ -190,6 +214,12 @@ interface WorkspaceState extends WorkspaceData {
   updateConnectorPAT: (connectorId: string, token: string) => void;
   toggleConnector: (id: string) => void;
   syncConnector: (id: string) => void;
+
+  // Personal date operations
+  personalDates: PersonalDate[];
+  addPersonalDate: (date: Omit<PersonalDate, 'id'>) => void;
+  updatePersonalDate: (id: string, updates: Partial<PersonalDate>) => void;
+  deletePersonalDate: (id: string) => void;
 
   // Page operations (Analyze mode only)
   addPage: (page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -431,6 +461,31 @@ export const useWorkspace = create<WorkspaceState>()(
           ),
         }));
         console.log(`[Workspace] Syncing connector: ${id}`);
+      },
+
+      // Personal date operations
+      addPersonalDate: (dateData) => {
+        const newDate: PersonalDate = {
+          ...dateData,
+          id: `pd-${generateId()}`,
+        };
+        set(state => ({
+          personalDates: [...state.personalDates, newDate],
+        }));
+      },
+
+      updatePersonalDate: (id: string, updates: Partial<PersonalDate>) => {
+        set(state => ({
+          personalDates: state.personalDates.map(pd =>
+            pd.id === id ? { ...pd, ...updates } : pd
+          ),
+        }));
+      },
+
+      deletePersonalDate: (id: string) => {
+        set(state => ({
+          personalDates: state.personalDates.filter(pd => pd.id !== id),
+        }));
       },
 
       // Page operations
@@ -715,6 +770,7 @@ export const useWorkspace = create<WorkspaceState>()(
         tasks: state.tasks,
         calendarEvents: state.calendarEvents,
         connectors: state.connectors,
+        personalDates: state.personalDates,
         // Don't persist focus mode data (privacy)
         // Don't persist suggestions (ephemeral)
         // Don't persist analyses (ephemeral)

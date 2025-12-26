@@ -1,6 +1,7 @@
 /**
  * Calendar Content Component
- * Full-featured calendar with Month/Week/Day/Year views and complete CRUD operations
+ * Full-featured calendar with Month/Week/Day/Year views, CRUD operations,
+ * holiday intelligence, and contextual awareness
  */
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -18,9 +19,25 @@ import {
   FileText,
   Trash2,
   Settings,
+  Sparkles,
+  Gift,
+  Star,
+  Plane,
+  Info,
+  Cake,
 } from 'lucide-react';
 import { useWorkspace } from '../../../hooks/useWorkspace';
-import type { CalendarEvent } from '../../../types/workspace';
+import type { CalendarEvent, Holiday, ExtendedWeekend } from '../../../types/workspace';
+import {
+  getHolidaysForDate,
+  getHolidaysForMonth,
+  isFederalHoliday,
+  getExtendedWeekends,
+  getUpcomingExtendedWeekends,
+  getDateContext,
+  getTripPlanningContext,
+  getPersonalHolidays,
+} from '../../../services/calendar/holidays';
 
 type ViewMode = 'day' | 'week' | 'month' | 'year';
 
@@ -75,9 +92,11 @@ export default function CalendarContent({ className }: CalendarContentProps) {
   const addCalendarEvent = useWorkspace(state => state.addCalendarEvent);
   const updateCalendarEvent = useWorkspace(state => state.updateCalendarEvent);
   const deleteCalendarEvent = useWorkspace(state => state.deleteCalendarEvent);
+  const personalDates = useWorkspace(state => state.personalDates);
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [showContextPanel, setShowContextPanel] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -167,6 +186,55 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       return eventDate.getMonth() === month && eventDate.getFullYear() === year;
     });
   }, [events]);
+
+  // ============================================================
+  // HOLIDAY INTELLIGENCE
+  // ============================================================
+
+  // Get holidays for current month
+  const monthHolidays = useMemo(() => {
+    return getHolidaysForMonth(currentDate.getFullYear(), currentDate.getMonth());
+  }, [currentDate]);
+
+  // Get personal holidays for current year
+  const personalHolidays = useMemo(() => {
+    return getPersonalHolidays(personalDates, currentDate.getFullYear());
+  }, [personalDates, currentDate]);
+
+  // Get extended weekends for current month
+  const extendedWeekends = useMemo(() => {
+    return getExtendedWeekends(currentDate.getFullYear(), currentDate.getMonth());
+  }, [currentDate]);
+
+  // Get upcoming extended weekends (next 3 months)
+  const upcomingExtendedWeekends = useMemo(() => {
+    return getUpcomingExtendedWeekends(new Date(), 3);
+  }, []);
+
+  // Get context for selected date
+  const selectedDateContext = useMemo(() => {
+    if (!selectedDate) return null;
+    return getDateContext(selectedDate, personalDates);
+  }, [selectedDate, personalDates]);
+
+  // Helper to check if date is part of extended weekend
+  const isPartOfExtendedWeekend = useCallback((date: Date): ExtendedWeekend | null => {
+    for (const ew of extendedWeekends) {
+      if (date >= ew.startDate && date <= ew.endDate) {
+        return ew;
+      }
+    }
+    return null;
+  }, [extendedWeekends]);
+
+  // Get all holidays for a specific date (including personal)
+  const getAllHolidaysForDate = useCallback((date: Date): Holiday[] => {
+    const holidays = getHolidaysForDate(date);
+    const personal = personalHolidays.filter(h =>
+      h.date.getMonth() === date.getMonth() && h.date.getDate() === date.getDate()
+    );
+    return [...holidays, ...personal];
+  }, [personalHolidays]);
 
   // ============================================================
   // CALENDAR CALCULATIONS
@@ -414,19 +482,41 @@ export default function CalendarContent({ className }: CalendarContentProps) {
   };
 
   // ============================================================
-  // RENDER EVENT DOTS
+  // RENDER EVENT & HOLIDAY INDICATORS
   // ============================================================
 
   const renderEventDots = (date: Date) => {
     const dayEvents = getEventsForDate(date);
+    const holidays = getAllHolidaysForDate(date);
+    const extWeekend = isPartOfExtendedWeekend(date);
     const maxDots = 3;
     const displayEvents = dayEvents.slice(0, maxDots);
     const remainingCount = dayEvents.length - maxDots;
 
-    if (dayEvents.length === 0) return null;
+    const hasHoliday = holidays.length > 0;
+    const hasFederalHoliday = holidays.some(h => h.category === 'federal');
+    const hasPersonalDate = holidays.some(h => h.category === 'personal');
+
+    if (dayEvents.length === 0 && !hasHoliday && !extWeekend) return null;
 
     return (
       <div className="flex flex-wrap items-center justify-center gap-0.5 mt-0.5">
+        {/* Holiday indicator */}
+        {hasFederalHoliday && (
+          <span className="text-[10px]" title={holidays.find(h => h.category === 'federal')?.name}>
+            {holidays.find(h => h.category === 'federal')?.emoji || '🎉'}
+          </span>
+        )}
+        {hasPersonalDate && !hasFederalHoliday && (
+          <span className="text-[10px]" title={holidays.find(h => h.category === 'personal')?.name}>
+            {holidays.find(h => h.category === 'personal')?.emoji || '🎂'}
+          </span>
+        )}
+        {/* Extended weekend indicator */}
+        {extWeekend && !hasFederalHoliday && (
+          <div className="h-1.5 w-1.5 rounded-full bg-amber-400" title="Extended weekend" />
+        )}
+        {/* Event dots */}
         {displayEvents.map((event, idx) => (
           <div
             key={idx}
@@ -440,26 +530,77 @@ export default function CalendarContent({ className }: CalendarContentProps) {
     );
   };
 
+  // Render contextual suggestions panel
+  const renderContextPanel = () => {
+    if (!showContextPanel || upcomingExtendedWeekends.length === 0) return null;
+
+    return (
+      <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          <span className="text-sm font-semibold text-[var(--text)]">Trip Opportunities</span>
+          <button
+            onClick={() => setShowContextPanel(false)}
+            className="ml-auto p-1 rounded hover:bg-[var(--bg-elev)] transition-colors"
+          >
+            <X className="h-3 w-3 text-[var(--text-muted)]" />
+          </button>
+        </div>
+        <div className="space-y-2">
+          {upcomingExtendedWeekends.slice(0, 2).map((ew, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+              <Plane className="h-3 w-3 text-amber-500" />
+              <span>
+                <span className="font-medium text-[var(--text)]">{ew.holidays[0]?.name}</span>
+                {' - '}
+                {ew.totalDays}-day weekend ({ew.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // ============================================================
   // VIEW RENDERERS
   // ============================================================
 
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate);
+    const dayHolidays = getAllHolidaysForDate(currentDate);
+    const dateContext = getDateContext(currentDate, personalDates);
+    const extWeekend = isPartOfExtendedWeekend(currentDate);
 
     return (
       <div className="flex flex-col h-full">
         {/* Large Date Display */}
         <div className="flex items-center gap-4 mb-4 p-4 rounded-xl bg-[var(--bg-elev)]/50">
-          <div className="flex flex-col items-center justify-center w-20 h-20 rounded-xl bg-[var(--accent)]/20 ring-2 ring-[var(--accent)]/50">
-            <span className="text-3xl font-bold text-[var(--accent)]">{currentDate.getDate()}</span>
+          <div className={`flex flex-col items-center justify-center w-20 h-20 rounded-xl ring-2 ${
+            dayHolidays.some(h => h.category === 'federal')
+              ? 'bg-amber-500/20 ring-amber-500/50'
+              : 'bg-[var(--accent)]/20 ring-[var(--accent)]/50'
+          }`}>
+            <span className={`text-3xl font-bold ${
+              dayHolidays.some(h => h.category === 'federal') ? 'text-amber-500' : 'text-[var(--accent)]'
+            }`}>{currentDate.getDate()}</span>
             <span className="text-xs font-medium text-[var(--text-muted)]">{DAY_NAMES_FULL[currentDate.getDay()]}</span>
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-[var(--text)]">{MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
-            <p className="text-sm text-[var(--text-muted)]">
-              {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'} scheduled
-            </p>
+            {dayHolidays.length > 0 ? (
+              <div className="flex items-center gap-1.5 mt-1">
+                {dayHolidays.map((h, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    {h.emoji} {h.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">
+                {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'} scheduled
+              </p>
+            )}
           </div>
           <button
             onClick={() => openNewEventForm(currentDate)}
@@ -469,6 +610,36 @@ export default function CalendarContent({ className }: CalendarContentProps) {
             Add Event
           </button>
         </div>
+
+        {/* Holiday/Context Info */}
+        {(dayHolidays.length > 0 || extWeekend) && (
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+            {dayHolidays.map((holiday, idx) => (
+              <div key={idx} className="flex items-start gap-2 mb-2 last:mb-0">
+                <span className="text-lg">{holiday.emoji}</span>
+                <div>
+                  <p className="text-sm font-medium text-[var(--text)]">{holiday.name}</p>
+                  {holiday.description && (
+                    <p className="text-xs text-[var(--text-muted)]">{holiday.description}</p>
+                  )}
+                  {holiday.isWorkOff && (
+                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-green-600 dark:text-green-400">
+                      <Star className="h-3 w-3" /> Day off for most
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {extWeekend && (
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-amber-500/20">
+                <Plane className="h-4 w-4 text-amber-500" />
+                <p className="text-xs text-[var(--text-muted)]">
+                  Part of a <span className="font-medium text-[var(--text)]">{extWeekend.totalDays}-day weekend</span> - {extWeekend.suggestion}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Events List */}
         <div className="flex-1 overflow-y-auto space-y-2">
@@ -609,6 +780,9 @@ export default function CalendarContent({ className }: CalendarContentProps) {
           {calendarDays.map((calDay, idx) => {
             const today = isToday(calDay.date);
             const isSelected = selectedDate && isSameDay(calDay.date, selectedDate);
+            const dayHolidays = getAllHolidaysForDate(calDay.date);
+            const hasFederalHoliday = dayHolidays.some(h => h.category === 'federal');
+            const extWeekend = isPartOfExtendedWeekend(calDay.date);
 
             return (
               <div
@@ -617,14 +791,20 @@ export default function CalendarContent({ className }: CalendarContentProps) {
                   relative flex flex-col items-center p-1 rounded-lg cursor-pointer transition-all
                   aspect-square min-h-[48px]
                   ${!calDay.isCurrentMonth ? 'opacity-40' : ''}
-                  ${today ? 'bg-[var(--accent)]/20 ring-2 ring-[var(--accent)]/50' : 'hover:bg-[var(--bg-elev)]'}
-                  ${isSelected && !today ? 'bg-[var(--bg-elev)] ring-1 ring-[var(--line-subtle)]' : ''}
+                  ${today ? 'bg-[var(--accent)]/20 ring-2 ring-[var(--accent)]/50' : ''}
+                  ${hasFederalHoliday && !today ? 'bg-amber-500/15 ring-1 ring-amber-500/30' : ''}
+                  ${extWeekend && !hasFederalHoliday && !today ? 'bg-amber-500/5' : ''}
+                  ${!today && !hasFederalHoliday && !extWeekend ? 'hover:bg-[var(--bg-elev)]' : ''}
+                  ${isSelected && !today ? 'ring-2 ring-[var(--accent)]' : ''}
                 `}
                 onClick={() => handleDayClick(calDay.date)}
+                title={dayHolidays.length > 0 ? dayHolidays.map(h => h.name).join(', ') : undefined}
               >
                 <span className={`
                   text-sm font-medium
-                  ${today ? 'text-[var(--accent)] font-bold' : 'text-[var(--text)]'}
+                  ${today ? 'text-[var(--accent)] font-bold' : ''}
+                  ${hasFederalHoliday && !today ? 'text-amber-600 dark:text-amber-400 font-semibold' : ''}
+                  ${!today && !hasFederalHoliday ? 'text-[var(--text)]' : ''}
                   ${!calDay.isCurrentMonth ? 'text-[var(--text-muted)]' : ''}
                 `}>
                   {calDay.day}
@@ -645,6 +825,8 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       <div className="grid grid-cols-3 gap-4 h-full overflow-y-auto py-2">
         {MONTH_NAMES.map((monthName, monthIdx) => {
           const monthEvents = getEventsForMonth(year, monthIdx);
+          const monthHols = getHolidaysForMonth(year, monthIdx);
+          const federalHolidayCount = monthHols.filter(h => h.category === 'federal').length;
           const isCurrentMonth = new Date().getMonth() === monthIdx && new Date().getFullYear() === year;
 
           return (
@@ -662,6 +844,12 @@ export default function CalendarContent({ className }: CalendarContentProps) {
               <span className="text-xs text-[var(--text-muted)] mt-1">
                 {monthEvents.length} {monthEvents.length === 1 ? 'event' : 'events'}
               </span>
+              {federalHolidayCount > 0 && (
+                <span className="text-[10px] text-amber-500 mt-0.5 flex items-center gap-0.5">
+                  <Star className="h-2.5 w-2.5" />
+                  {federalHolidayCount} {federalHolidayCount === 1 ? 'holiday' : 'holidays'}
+                </span>
+              )}
             </div>
           );
         })}
@@ -947,23 +1135,35 @@ export default function CalendarContent({ className }: CalendarContentProps) {
       </div>
 
       {/* View Mode Selector */}
-      <div className="flex gap-1 rounded-lg bg-[var(--bg-elev)]/50 p-1 w-fit">
-        {(['day', 'week', 'month', 'year'] as ViewMode[]).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            className={`
-              px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all
-              ${viewMode === mode
-                ? 'bg-[var(--accent)] text-white shadow-sm'
-                : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-surface)]'
-              }
-            `}
-          >
-            {mode}
-          </button>
-        ))}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 rounded-lg bg-[var(--bg-elev)]/50 p-1 w-fit">
+          {(['day', 'week', 'month', 'year'] as ViewMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`
+                px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all
+                ${viewMode === mode
+                  ? 'bg-[var(--accent)] text-white shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-surface)]'
+                }
+              `}
+            >
+              {mode}
+            </button>
+          ))}
+        </div>
+        {/* Holiday count for month */}
+        {viewMode === 'month' && monthHolidays.length > 0 && (
+          <span className="text-xs text-amber-500 flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            {monthHolidays.filter(h => h.category === 'federal').length} holidays this month
+          </span>
+        )}
       </div>
+
+      {/* Contextual Suggestions Panel */}
+      {renderContextPanel()}
 
       {/* Calendar View */}
       <div className="flex-1 overflow-hidden">
