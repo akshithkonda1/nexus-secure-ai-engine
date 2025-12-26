@@ -4,17 +4,23 @@
  * Design Philosophy: Minimalist, precise, 60fps smooth
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { cn, bg, border } from '../../utils/theme';
-import { MenuType } from '../../types/toron';
+import { useToronStore } from '../../stores/useToronStore';
 import SidebarHeader from './SidebarHeader';
 import ChatsMenu from './ChatsMenu';
 import ProjectsMenu from './ProjectsMenu';
+
+type MenuType = 'chats' | 'projects';
 
 export default function ToronSidebar() {
   const [activeMenu, setActiveMenu] = useState<MenuType>('chats');
   const [isScrolled, setIsScrolled] = useState(false);
   const [previousMenu, setPreviousMenu] = useState<MenuType>('chats');
+
+  // Store actions
+  const createChat = useToronStore(state => state.createChat);
+  const createProject = useToronStore(state => state.createProject);
 
   const menuContainerRef = useRef<HTMLDivElement>(null);
   const chatsScrollPosition = useRef(0);
@@ -34,7 +40,7 @@ export default function ToronSidebar() {
   }, [activeMenu]);
 
   // Handle menu change with scroll position preservation
-  const handleMenuChange = (menu: MenuType) => {
+  const handleMenuChange = useCallback((menu: MenuType) => {
     if (menu === activeMenu) return;
 
     // Save current scroll position
@@ -60,24 +66,33 @@ export default function ToronSidebar() {
         }
       }
     });
-  };
+  }, [activeMenu]);
 
   // Handle new item creation
-  const handleNewItem = () => {
+  const handleNewItem = useCallback(() => {
     if (activeMenu === 'chats') {
-      const title = prompt('Enter chat title:');
-      if (title && title.trim()) {
-        // TODO: Create new chat via hook
-        console.log('Creating new chat:', title);
-      }
+      // Create a new chat directly without prompt
+      createChat();
     } else {
       const name = prompt('Enter project name:');
       if (name && name.trim()) {
-        // TODO: Create new project via hook
-        console.log('Creating new project:', name);
+        createProject(name.trim());
       }
     }
-  };
+  }, [activeMenu, createChat, createProject]);
+
+  // Handle new chat (passed to ChatsMenu)
+  const handleNewChat = useCallback(() => {
+    createChat();
+  }, [createChat]);
+
+  // Handle new project (passed to ProjectsMenu)
+  const handleNewProject = useCallback(() => {
+    const name = prompt('Enter project name:');
+    if (name && name.trim()) {
+      createProject(name.trim());
+    }
+  }, [createProject]);
 
   // Animation direction for menu transitions
   const isForward = activeMenu === 'projects' && previousMenu === 'chats';
@@ -85,7 +100,7 @@ export default function ToronSidebar() {
   return (
     <div
       className={cn(
-        'flex h-full w-[320px] flex-col border-l',
+        'flex h-full w-[320px] flex-col border-r',
         border.subtle,
         bg.surface
       )}
@@ -118,7 +133,7 @@ export default function ToronSidebar() {
             transitionProperty: 'opacity, transform',
           }}
         >
-          <ChatsMenu onNewChat={handleNewItem} />
+          <ChatsMenu onNewChat={handleNewChat} />
         </div>
 
         {/* Projects Menu */}
@@ -139,7 +154,7 @@ export default function ToronSidebar() {
             transitionProperty: 'opacity, transform',
           }}
         >
-          <ProjectsMenu onNewProject={handleNewItem} />
+          <ProjectsMenu onNewProject={handleNewProject} />
         </div>
       </div>
     </div>

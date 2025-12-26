@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { MessageSquare, MoreVertical, Pin, Trash2, Edit3 } from 'lucide-react';
+import { MoreVertical, Pin, Trash2, Edit3 } from 'lucide-react';
 import { cn, text } from '../../utils/theme';
 import { Chat, ContextMenuItem } from '../../types/toron';
 import ContextMenu from './ContextMenu';
