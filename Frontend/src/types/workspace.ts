@@ -140,12 +140,87 @@ export type CalendarEvent = {
   attendees?: string[];
 };
 
+// Connector Type - All 34 supported platforms
+export type ConnectorType =
+  // Development & Version Control (3)
+  | 'github'
+  | 'gitlab'
+  | 'bitbucket'
+  // Project Management (6)
+  | 'linear'
+  | 'jira'
+  | 'asana'
+  | 'trello'
+  | 'monday'
+  | 'clickup'
+  // Documentation & Knowledge (2)
+  | 'notion'
+  | 'airtable'
+  // Communication (5)
+  | 'slack'
+  | 'teams'
+  | 'discord'
+  | 'telegram'
+  | 'zoom'
+  // Design (1)
+  | 'figma'
+  // Cloud Storage (4)
+  | 'gdrive'
+  | 'dropbox'
+  | 'box'
+  | 'onedrive'
+  // Social & Identity (5)
+  | 'google'
+  | 'apple'
+  | 'microsoft'
+  | 'facebook'
+  | 'twitter'
+  // CRM & Sales (2)
+  | 'hubspot'
+  | 'salesforce'
+  // Commerce & Payments (2)
+  | 'stripe'
+  | 'shopify'
+  // Cloud Infrastructure (3)
+  | 'aws'
+  | 'gcp'
+  | 'azure'
+  // Education (1)
+  | 'canvas'
+  // Custom
+  | 'custom';
+
+// Connector Categories
+export const CONNECTOR_CATEGORIES = {
+  DEVELOPMENT: 'Development',
+  PROJECT_MANAGEMENT: 'Project Management',
+  DOCUMENTATION: 'Documentation',
+  COMMUNICATION: 'Communication',
+  DESIGN: 'Design',
+  STORAGE: 'Storage',
+  SOCIAL: 'Social',
+  CRM: 'CRM',
+  COMMERCE: 'Commerce',
+  CLOUD: 'Cloud',
+  EDUCATION: 'Education',
+} as const;
+
+export type ConnectorCategory = typeof CONNECTOR_CATEGORIES[keyof typeof CONNECTOR_CATEGORIES];
+
 export type Connector = {
   id: string;
   name: string;
-  type: 'github' | 'linear' | 'notion' | 'slack' | 'other';
+  type: ConnectorType;
   connected: boolean;
-  lastSync?: Date;
+  lastSync?: Date | null;
+  token?: string | null;
+  metadata?: {
+    workspace?: string;
+    organization?: string;
+    scopes?: string[];
+    expiresAt?: Date;
+    category?: string;
+  };
 };
 
 // Focus Mode Data (Private by default)
