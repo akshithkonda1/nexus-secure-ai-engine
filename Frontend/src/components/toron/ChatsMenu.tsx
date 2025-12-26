@@ -4,7 +4,7 @@
  * Design: Ultra-smooth scroll, custom scrollbar, precise spacing
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { Search, MessageSquare } from 'lucide-react';
 import { cn, text, bg, border } from '../../utils/theme';
 import { useChats } from '../../hooks/useChats';

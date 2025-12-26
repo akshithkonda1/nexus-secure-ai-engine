@@ -1,136 +1,76 @@
 /**
  * useProjects Hook
- * Manages project workspaces with realistic mock data
+ * Manages project workspaces connected to the Toron store
  * Design: Searchable, with CRUD operations
  */
 
-import { useState, useMemo } from 'react';
-import { Project } from '../types/toron';
+import { useCallback, useMemo } from 'react';
+import { useToronStore, type Project } from '../stores/useToronStore';
 
-// Realistic mock data for projects
-const generateMockProjects = (): Project[] => {
-  const now = new Date();
+interface UseProjectsReturn {
+  projects: Project[];
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  activeProject: string | null;
+  setActiveProject: (projectId: string | null) => void;
+  createProject: (name: string, description?: string, color?: string) => string;
+  deleteProject: (projectId: string) => void;
+  renameProject: (projectId: string, newName: string) => void;
+  archiveProject: (projectId: string) => void;
+  unarchiveProject: (projectId: string) => void;
+  addChatToProject: (projectId: string, chatId: string) => void;
+  removeChatFromProject: (projectId: string, chatId: string) => void;
+}
 
-  return [
-    {
-      id: 'project-1',
-      name: 'Customer Portal Redesign',
-      description: 'Complete overhaul of the customer-facing portal with modern UI/UX patterns and improved performance.',
-      chatIds: ['chat-1', 'chat-3', 'chat-7'],
-      createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-      color: '#3b82f6',
-      isActive: true,
-    },
-    {
-      id: 'project-2',
-      name: 'API Infrastructure Upgrade',
-      description: 'Migrate to microservices architecture with improved scalability and fault tolerance.',
-      chatIds: ['chat-2', 'chat-4', 'chat-6'],
-      createdAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 5 * 60 * 60 * 1000),
-      color: '#8b5cf6',
-    },
-    {
-      id: 'project-3',
-      name: 'Marketing Automation',
-      description: 'Build end-to-end marketing automation platform with campaign management and analytics.',
-      chatIds: ['chat-5', 'chat-13'],
-      createdAt: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
-      color: '#ef4444',
-    },
-    {
-      id: 'project-4',
-      name: 'Mobile App Development',
-      description: 'Native iOS and Android apps with offline-first architecture and push notifications.',
-      chatIds: ['chat-9'],
-      createdAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000),
-      color: '#10b981',
-    },
-    {
-      id: 'project-5',
-      name: 'Analytics & Reporting',
-      description: 'Real-time analytics dashboard with custom reporting and data visualization.',
-      chatIds: ['chat-11', 'chat-14'],
-      createdAt: new Date(now.getTime() - 75 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 27 * 24 * 60 * 60 * 1000),
-      color: '#f59e0b',
-    },
-    {
-      id: 'project-6',
-      name: 'Security & Compliance',
-      description: 'Implement SOC2 compliance requirements and enhance security infrastructure.',
-      chatIds: ['chat-6', 'chat-12'],
-      createdAt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
-      color: '#ec4899',
-    },
-    {
-      id: 'project-7',
-      name: 'Team Collaboration Tools',
-      description: 'Internal tools for team communication, knowledge sharing, and project management.',
-      chatIds: ['chat-8'],
-      createdAt: new Date(now.getTime() - 105 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
-      color: '#6366f1',
-    },
-  ];
-};
+export function useProjects(): UseProjectsReturn {
+  // Get state from store
+  const projects = useToronStore(state => state.projects);
+  const searchQuery = useToronStore(state => state.searchQuery);
+  const activeProject = useToronStore(state => state.activeProject);
 
-export function useProjects() {
-  const [projects, setProjects] = useState<Project[]>(generateMockProjects());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeProject, setActiveProject] = useState<string | null>('project-1');
+  // Get actions from store
+  const setSearchQuery = useToronStore(state => state.setSearchQuery);
+  const setActiveProject = useToronStore(state => state.setActiveProject);
+  const createProject = useToronStore(state => state.createProject);
+  const deleteProjectAction = useToronStore(state => state.deleteProject);
+  const updateProject = useToronStore(state => state.updateProject);
+  const archiveProjectAction = useToronStore(state => state.archiveProject);
+  const unarchiveProjectAction = useToronStore(state => state.unarchiveProject);
+  const addChatToProject = useToronStore(state => state.addChatToProject);
+  const removeChatFromProject = useToronStore(state => state.removeChatFromProject);
 
-  // Filter projects by search query
+  // Filter projects based on search (exclude archived)
   const filteredProjects = useMemo(() => {
-    if (!searchQuery.trim()) return projects;
+    const activeProjects = projects.filter(p => !p.archived);
+
+    if (!searchQuery.trim()) return activeProjects;
 
     const query = searchQuery.toLowerCase();
-    return projects.filter(
-      (project) =>
-        project.name.toLowerCase().includes(query) ||
-        project.description?.toLowerCase().includes(query)
+    return activeProjects.filter(project =>
+      project.name.toLowerCase().includes(query) ||
+      project.description?.toLowerCase().includes(query)
     );
   }, [projects, searchQuery]);
 
-  // CRUD operations
-  const deleteProject = (projectId: string) => {
-    setProjects((prev) => prev.filter((project) => project.id !== projectId));
-    if (activeProject === projectId) {
-      setActiveProject(null);
-    }
-  };
+  // Rename project handler
+  const renameProject = useCallback((projectId: string, newName: string) => {
+    updateProject(projectId, { name: newName });
+  }, [updateProject]);
 
-  const renameProject = (projectId: string, newName: string) => {
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === projectId ? { ...project, name: newName } : project
-      )
-    );
-  };
+  // Delete project handler
+  const deleteProject = useCallback((projectId: string) => {
+    deleteProjectAction(projectId);
+  }, [deleteProjectAction]);
 
-  const archiveProject = (projectId: string) => {
-    // For now, just remove it - could add an "archived" flag later
-    deleteProject(projectId);
-  };
+  // Archive project handler
+  const archiveProject = useCallback((projectId: string) => {
+    archiveProjectAction(projectId);
+  }, [archiveProjectAction]);
 
-  const createProject = (name: string, description?: string) => {
-    const newProject: Project = {
-      id: `project-${Date.now()}`,
-      name,
-      description,
-      chatIds: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    setProjects((prev) => [newProject, ...prev]);
-    setActiveProject(newProject.id);
-    return newProject;
-  };
+  // Unarchive project handler
+  const unarchiveProject = useCallback((projectId: string) => {
+    unarchiveProjectAction(projectId);
+  }, [unarchiveProjectAction]);
 
   return {
     projects: filteredProjects,
@@ -138,9 +78,14 @@ export function useProjects() {
     setSearchQuery,
     activeProject,
     setActiveProject,
+    createProject,
     deleteProject,
     renameProject,
     archiveProject,
-    createProject,
+    unarchiveProject,
+    addChatToProject,
+    removeChatFromProject,
   };
 }
+
+export default useProjects;
