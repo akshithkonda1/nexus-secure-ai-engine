@@ -1,6 +1,7 @@
-import { ArrowRight, MessageSquare, Layout, Zap, Sparkles, Target, Brain, Lock, Puzzle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, MessageSquare, Layout, Zap, Sparkles, Brain, Lock, Puzzle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn, bg, text, border, shadow } from "../utils/theme";
+import RyuzenLogo from "../assets/ryuzen-logo.png";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -93,11 +94,12 @@ export default function HomePage() {
       {/* Mission Statement */}
       <section className={cn("border-b px-6 py-16", border.subtle, bg.elevated)}>
         <div className="mx-auto max-w-4xl text-center">
-          <div className={cn(
-            "mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl",
-            "bg-gradient-to-br from-blue-500 to-purple-600"
-          )}>
-            <Target className="h-7 w-7 text-white" />
+          <div className="mb-6 inline-flex">
+            <img 
+              src={RyuzenLogo} 
+              alt="Ryuzen Logo" 
+              className="h-16 w-16 object-contain"
+            />
           </div>
 
           <h2 className={cn("mb-6 text-3xl font-bold", text.primary)}>
@@ -351,7 +353,7 @@ export default function HomePage() {
                 "mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl",
                 "bg-purple-100 dark:bg-purple-900/30"
               )}>
-                <Target className={cn(
+                <Sparkles className={cn(
                   "h-6 w-6",
                   "text-purple-600 dark:text-purple-400"
                 )} />
@@ -401,66 +403,6 @@ export default function HomePage() {
               </h3>
               <p className={cn("text-sm leading-relaxed", text.secondary)}>
                 TORON's intelligence flows seamlessly into Workspace's organization, creating coherent workflows and allowing the creation of a unified ecosystem.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Revenue Model */}
-      <section className="px-6 py-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-12 text-center">
-            <h2 className={cn("mb-4 text-3xl font-bold", text.primary)}>
-              Sustainable Business Model
-            </h2>
-            <p className={cn("text-lg", text.secondary)}>
-              Two revenue streams ensure long-term sustainability without compromising privacy
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Consumer SaaS */}
-            <div className={cn("rounded-xl border p-6", border.subtle, bg.surface)}>
-              <h3 className={cn("mb-4 text-xl font-bold", text.primary)}>
-                Consumer Subscriptions
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className={cn(
-                    "h-4 w-4",
-                    "text-blue-600 dark:text-blue-400"
-                  )} />
-                  <span className={text.secondary}><strong>Student:</strong> $9.99/mo</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className={cn(
-                    "h-4 w-4",
-                    "text-blue-600 dark:text-blue-400"
-                  )} />
-                  <span className={text.secondary}><strong>Pro:</strong> $19.99/mo</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className={cn(
-                    "h-4 w-4",
-                    "text-blue-600 dark:text-blue-400"
-                  )} />
-                  <span className={text.secondary}><strong>Premium:</strong> $49.99/mo (currently $99.99)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Telemetry Marketplace */}
-            <div className={cn("rounded-xl border p-6", border.subtle, bg.surface)}>
-              <h3 className={cn("mb-4 text-xl font-bold", text.primary)}>
-                Telemetry Marketplace
-              </h3>
-              <p className={cn("mb-4 text-sm leading-relaxed", text.secondary)}>
-                Anonymized multi-model comparison data sold to AI providers at <strong>$125K per provider annually</strong>.
-                Provides insights unavailable through internal data collection.
-              </p>
-              <p className={cn("text-xs italic", text.tertiary)}>
-                Always optional. Users control participation.
               </p>
             </div>
           </div>
