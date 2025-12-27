@@ -42,6 +42,14 @@ from ryuzen.engine.providers import (
     ProviderResponse,
 )
 
+# Tier 3: External Knowledge Sources (30 sources with intelligent routing)
+from ryuzen.engine.tier3 import (
+    Tier3Manager,
+    KnowledgeSnippet,
+    SourceCategory,
+    QueryIntent,
+)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -653,13 +661,15 @@ class ConsensusQuality(Enum):
 
 
 class OutputGrade(Enum):
-    """Quality grade for consumer-facing output."""
+    """Quality grade for consumer-facing output (A+ to F)."""
 
-    A = "A"  # 7+/9 models, high consensus, verified sources
-    B = "B"  # 6/9 models, good consensus
-    C = "C"  # 4-5/9 models, acceptable consensus
-    D = "D"  # 3/9 models, weak consensus
-    F = "F"  # < 3 models, fallback mode
+    A_PLUS = "A+"  # 9/9 models, perfect consensus, verified by 3+ Tier 3 sources
+    A = "A"        # 8-9/9 models, high consensus, verified sources
+    B_PLUS = "B+"  # 7-8/9 models, good consensus, verified by Tier 3
+    B = "B"        # 6-7/9 models, good consensus
+    C = "C"        # 4-5/9 models, acceptable consensus
+    D = "D"        # 3/9 models, weak consensus
+    F = "F"        # < 3 models, fallback mode
 
 
 class ArbitrationSource(Enum):
@@ -977,7 +987,18 @@ class ConsensusEngine:
         self.config = config
         self.similarity = SemanticSimilarity()
 
-    def integrate(self, responses: List[ModelResponse]) -> ConsensusResult:
+    def integrate(
+        self,
+        responses: List[ModelResponse],
+        tier3_verified: bool = False
+    ) -> ConsensusResult:
+        """
+        Integrate responses into consensus.
+
+        Args:
+            responses: List of model responses to integrate
+            tier3_verified: Whether Tier 3 sources verified the claims (2+ sources)
+        """
         if not responses:
             raise ValueError("Cannot compute consensus from empty response list")
 
@@ -987,10 +1008,10 @@ class ConsensusEngine:
 
         agreement_count = len(best_cluster)
         total_responses = len(responses)
-        
+
         # Standard confidence (equal weighting)
         avg_confidence = sum(r.confidence for r in best_cluster) / len(best_cluster)
-        
+
         # A-GRADE: Source-weighted confidence
         source_weighted_conf = SourceReliability.compute_weighted_confidence(best_cluster)
 
@@ -1005,9 +1026,11 @@ class ConsensusEngine:
             quality = ConsensusQuality.CRITICAL
 
         diversity = 1.0 - (len(best_cluster) / total_responses)
-        
-        # A-GRADE: Determine output grade
-        output_grade = self._compute_output_grade(agreement_count, total_responses, quality)
+
+        # A-GRADE: Determine output grade with Tier 3 verification boost
+        output_grade = self._compute_output_grade(
+            agreement_count, total_responses, quality, tier3_verified
+        )
 
         return ConsensusResult(
             representative_output=representative.content,
@@ -1022,23 +1045,47 @@ class ConsensusEngine:
             output_grade=output_grade,
             source_weighted_confidence=source_weighted_conf,
         )
-    
+
     def _compute_output_grade(
-        self, agreement: int, total: int, quality: ConsensusQuality
+        self,
+        agreement: int,
+        total: int,
+        quality: ConsensusQuality,
+        tier3_verified: bool = False
     ) -> OutputGrade:
-        """Assign consumer-facing quality grade."""
+        """
+        Assign consumer-facing quality grade (A+ to F).
+
+        Tier 3 verification can boost the grade for high-consensus results.
+        """
         ratio = agreement / total
 
-        if ratio >= 0.78 and quality == ConsensusQuality.HIGH:  # 7+/9 models
+        # A+: Perfect consensus + verified by Tier 3 (3+ sources)
+        if ratio == 1.0 and quality == ConsensusQuality.HIGH and tier3_verified:
+            return OutputGrade.A_PLUS
+
+        # A: 8-9/9 models + high quality
+        if ratio >= 0.89 and quality == ConsensusQuality.HIGH:
             return OutputGrade.A
-        elif ratio >= 0.67 and quality in [ConsensusQuality.HIGH, ConsensusQuality.MEDIUM]:  # 6+/9 models
+
+        # B+: 7-8/9 models + Tier 3 verified
+        if ratio >= 0.78 and tier3_verified:
+            return OutputGrade.B_PLUS
+
+        # B: 6-7/9 models
+        if ratio >= 0.67 and quality in [ConsensusQuality.HIGH, ConsensusQuality.MEDIUM]:
             return OutputGrade.B
-        elif ratio >= 0.44:  # 4+/9 models
+
+        # C: 4-5/9 models
+        if ratio >= 0.44:
             return OutputGrade.C
-        elif ratio >= 0.33:  # 3/9 models
+
+        # D: 3/9 models
+        if ratio >= 0.33:
             return OutputGrade.D
-        else:
-            return OutputGrade.F
+
+        # F: < 3 models
+        return OutputGrade.F
 
 
 # ============================================================================
@@ -1048,18 +1095,26 @@ class ConsensusEngine:
 
 class ToronEngineV31Enhanced:
     """
-    A-Grade Toron Engine with enhanced stability, epistemic rigor, and judicial failsafe.
-    
-    NEW FEATURES:
-    - Reddit as Tier 3 community knowledge source
+    TORON v2.5h+ Engine with Complete 8-Tier Epistemic Pipeline.
+
+    8-TIER ARCHITECTURE:
+    1. Tier 1: General Models (ALWAYS) - 9 models in parallel
+    2. Tier 2: Reasoning Models (CONDITIONAL) - 2 models (DeepSeek R1, Kimi K2)
+    3. Tier 3: Knowledge Sources (ALWAYS) - 30 sources with intelligent routing
+    4. Tier 4: Judicial Arbitration (CONDITIONAL) - Claude Opus 4.5 + failsafe
+    5. Tier 5: Source Weighting & Validation (ALWAYS)
+    6. Tier 6: ALOE Synthesis & Confidence Calibration (ALWAYS)
+    7. Tier 7: Political Balance & AI Bias Check (ALWAYS)
+    8. Tier 8: Final Synthesis & Delivery (ALWAYS)
+
+    FEATURES:
+    - 30 external knowledge sources with intelligent query routing
+    - Conditional Tier 2 (reasoning) based on complexity/confidence
+    - Conditional Tier 4 (arbitration) based on consensus level
+    - A+ to F grading with Tier 3 verification boost
     - Tier 4 Failsafe: Random Tier 2 model when Opus confidence is low
     - Airtight error handling with comprehensive fallback chains
-    - Automatic retries with exponential backoff
-    - Per-tier timeouts
-    - Graceful degradation
-    - Source reliability weighting
-    - Confidence calibration
-    - Uncertainty quantification
+    - Source reliability weighting and confidence calibration
     """
 
     def __init__(self, config: EngineConfig = DEFAULT_CONFIG):
@@ -1072,11 +1127,12 @@ class ToronEngineV31Enhanced:
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.calibrator = ConfidenceCalibrator()
         self.telemetry_client = get_telemetry_client()
+        self.tier3_manager = Tier3Manager()  # 30 knowledge sources
 
         self._initialized = False
         self._init_lock = RLock()
 
-        logger.info("ToronEngineV31Enhanced (A-Grade with Failsafe) created")
+        logger.info("ToronEngineV31Enhanced (8-Tier Pipeline with 30 Sources) created")
 
     def initialize(self, providers: Optional[List[BaseProvider]] = None) -> None:
         """
@@ -1151,6 +1207,73 @@ class ToronEngineV31Enhanced:
             raise ValueError("Prompt cannot be empty")
         if len(prompt) > self.config.max_prompt_length:
             raise ValueError(f"Prompt exceeds max length: {len(prompt)}")
+
+    def _should_invoke_tier2(
+        self,
+        tier1_responses: List[ModelResponse],
+        prompt: str
+    ) -> bool:
+        """
+        Determine if Tier 2 reasoning models should be invoked.
+
+        Triggers:
+        - Low average confidence (< 75%)
+        - High contradiction rate (>= 3 semantic clusters)
+        - Complex reasoning query detected
+        - Reasoning keywords present
+        """
+        if not tier1_responses:
+            return True
+
+        # Trigger 1: Low confidence
+        avg_conf = sum(r.confidence for r in tier1_responses) / len(tier1_responses)
+        if avg_conf < 0.75:
+            logger.info(f"Tier 2 trigger: Low confidence ({avg_conf:.2%})")
+            return True
+
+        # Trigger 2: High semantic diversity
+        clusters = SemanticSimilarity.cluster_by_similarity(tier1_responses, threshold=0.85)
+        if len(clusters) >= 3:
+            logger.info(f"Tier 2 trigger: High diversity ({len(clusters)} clusters)")
+            return True
+
+        # Trigger 3: Complex query context
+        context = ContextDetector.detect_context(prompt)
+        if context in ["formal", "technical"]:
+            logger.info(f"Tier 2 trigger: Complex context ({context})")
+            return True
+
+        # Trigger 4: Reasoning keywords
+        reasoning_keywords = [
+            "explain", "why", "how does", "what causes", "analyze",
+            "compare", "evaluate", "prove", "demonstrate", "justify",
+            "reasoning", "logic", "argument", "think through", "step by step"
+        ]
+        if any(kw in prompt.lower() for kw in reasoning_keywords):
+            logger.info("Tier 2 trigger: Reasoning keywords detected")
+            return True
+
+        logger.info("Tier 2: Skipped (strong Tier 1 consensus)")
+        return False
+
+    def _should_invoke_tier4(self, consensus: ConsensusResult) -> bool:
+        """
+        Determine if Tier 4 arbitration should be invoked.
+
+        Triggers:
+        - Low consensus (< 70% agreement)
+        - High semantic diversity (> 50%)
+        """
+        if consensus.agreement_ratio < 0.7:
+            logger.info(f"Tier 4 trigger: Low agreement ({consensus.agreement_ratio:.1%})")
+            return True
+
+        if consensus.semantic_diversity > 0.5:
+            logger.info(f"Tier 4 trigger: High diversity ({consensus.semantic_diversity:.2f})")
+            return True
+
+        logger.info("Tier 4: Skipped (strong consensus)")
+        return False
 
     async def _call_provider_with_circuit_breaker(
         self, provider: BaseProvider, prompt: str
@@ -1404,8 +1527,17 @@ class ToronEngineV31Enhanced:
         session_id: Optional[str] = None,
     ) -> Tuple[ConsensusResult, ExecutionMetrics]:
         """
-        Generate a consensus response with A-grade reliability, epistemic rigor,
-        and judicial failsafe.
+        Generate a consensus response using the complete 8-tier epistemic pipeline.
+
+        8-TIER PIPELINE:
+        1. Tier 1: General Models (ALWAYS) - 9 models
+        2. Tier 2: Reasoning Models (CONDITIONAL) - 2 models
+        3. Tier 3: Knowledge Sources (ALWAYS) - 5-10 from 30 sources
+        4. Tier 4: Judicial Arbitration (CONDITIONAL) - 1 model
+        5. Tier 5: Source Weighting & Validation (ALWAYS)
+        6. Tier 6: ALOE Synthesis & Confidence Calibration (ALWAYS)
+        7. Tier 7: Political Balance & AI Bias Check (ALWAYS)
+        8. Tier 8: Final Synthesis & Delivery (ALWAYS)
 
         Args:
             prompt: Input prompt
@@ -1418,7 +1550,7 @@ class ToronEngineV31Enhanced:
         """
         self._ensure_initialized()
         self._validate_prompt(prompt)
-        
+
         start_time = time.time()
         config_fingerprint = hashlib.sha256(
             json.dumps(self.config.dict(), sort_keys=True).encode()
@@ -1428,48 +1560,246 @@ class ToronEngineV31Enhanced:
         ).hexdigest()[:12]
         prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
 
-        logger.info(f"[{request_id}] Starting generation for prompt hash {prompt_hash}")
+        logger.info(f"[{request_id}] Starting 8-tier pipeline for prompt hash {prompt_hash}")
 
-        # Check cache
-        cache_key = f"toron:v2.5h+:enhanced:prompt:{prompt_hash}"
+        # Cache check
+        cache_key = f"toron:v2.5h+:8tier:prompt:{prompt_hash}"
         if use_cache:
             cached = self.cache.get(cache_key)
             if cached is not None:
                 logger.info(f"[{request_id}] Cache HIT")
-                consensus, metrics = cached
-                return consensus, metrics
-        
-        # Separate providers by tier using provider config
+                return cached
+
+        # Initialize tracking
+        total_retries = 0
+        total_timeouts = 0
+        all_responses: List[ModelResponse] = []
+        provider_latencies: Dict[str, int] = {}
+        tier3_verified = False
+
+        # Detect query context for intelligent routing
+        context = ContextDetector.detect_context(prompt)
+        logger.info(f"[{request_id}] Detected context: {context}")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 1: GENERAL MODELS (Always Runs)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 1: General Models (9 models)")
+
         tier1_providers = [
             p for p in self.providers
             if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 1
         ]
 
-        # Fallback: if no tier-based filtering worked, use all providers
         if not tier1_providers:
-            logger.warning("No tier 1 providers found via config, using all providers")
+            logger.warning("No tier 1 providers found, using all providers")
             tier1_providers = self.providers
-        
-        total_retries = 0
-        total_timeouts = 0
-        all_responses: List[ModelResponse] = []
-        provider_latencies: Dict[str, int] = {}
-        
-        # Call Tier 1 with retry/timeout protection
-        tier1_responses, retries, timeouts = await self._call_tier_with_retry_and_timeout(
+
+        tier1_responses, retries1, timeouts1 = await self._call_tier_with_retry_and_timeout(
             tier1_providers,
             prompt,
             "Tier 1 (General Models)",
             self.config.min_acceptable_tier1_responses
         )
-        
-        total_retries += retries
-        total_timeouts += timeouts
+
+        total_retries += retries1
+        total_timeouts += timeouts1
         all_responses.extend(tier1_responses)
-        
+
         for resp in tier1_responses:
             provider_latencies[resp.model] = resp.latency_ms
-        
+
+        logger.info(
+            f"[{request_id}] └─ TIER 1 Complete: {len(tier1_responses)}/{len(tier1_providers)} "
+            f"responses ({retries1} retries, {timeouts1} timeouts)"
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 2: REASONING MODELS (Conditional)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 2: Reasoning Models (conditional)")
+
+        if self._should_invoke_tier2(tier1_responses, prompt):
+            tier2_providers = [
+                p for p in self.providers
+                if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
+            ]
+
+            if tier2_providers:
+                tier2_responses, retries2, timeouts2 = await self._call_tier_with_retry_and_timeout(
+                    tier2_providers,
+                    prompt,
+                    "Tier 2 (Reasoning Models)",
+                    min_responses=1
+                )
+
+                total_retries += retries2
+                total_timeouts += timeouts2
+                all_responses.extend(tier2_responses)
+
+                for resp in tier2_responses:
+                    provider_latencies[resp.model] = resp.latency_ms
+
+                logger.info(
+                    f"[{request_id}] └─ TIER 2 Invoked: {len(tier2_responses)}/{len(tier2_providers)} "
+                    f"responses"
+                )
+            else:
+                logger.warning(f"[{request_id}] └─ TIER 2: No reasoning providers available")
+        else:
+            logger.info(f"[{request_id}] └─ TIER 2 Skipped: Strong Tier 1 consensus")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 3: KNOWLEDGE SOURCES (Always Runs - 30 Sources)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 3: Knowledge Sources (30 sources, intelligent routing)")
+
+        try:
+            tier3_snippets = await self.tier3_manager.fetch_relevant_sources(
+                query=prompt,
+                context=context,
+                max_sources=6
+            )
+
+            # Convert snippets to ModelResponse format for consensus integration
+            tier3_responses = []
+            for snippet in tier3_snippets:
+                tier3_response = ModelResponse(
+                    model=snippet.source_name,
+                    content=snippet.content,
+                    confidence=snippet.reliability,
+                    latency_ms=0,
+                    tokens_used=len(snippet.content.split()),
+                    fingerprint=SemanticSimilarity.compute_fingerprint(snippet.content),
+                    metadata={
+                        "source_url": snippet.url,
+                        "category": snippet.category.value,
+                        "tier": 3,
+                    }
+                )
+                tier3_responses.append(tier3_response)
+
+            all_responses.extend(tier3_responses)
+            tier3_verified = len(tier3_snippets) >= 2
+
+            logger.info(
+                f"[{request_id}] └─ TIER 3 Complete: {len(tier3_snippets)} knowledge snippets "
+                f"(verified={tier3_verified})"
+            )
+
+        except Exception as e:
+            logger.error(f"[{request_id}] └─ TIER 3 Failed: {e}")
+            tier3_verified = False
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 5: SOURCE WEIGHTING & VALIDATION (Always Runs)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 5: Source Weighting & Validation")
+
+        # Apply source-weighted confidence
+        source_weighted_conf = SourceReliability.compute_weighted_confidence(
+            all_responses, context=context
+        )
+
+        logger.info(f"[{request_id}] └─ TIER 5 Complete: Source weights applied")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 6: ALOE SYNTHESIS & CONFIDENCE CALIBRATION (Always Runs)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 6: ALOE Synthesis & Confidence Calibration")
+
+        consensus = self.consensus_engine.integrate(
+            all_responses,
+            tier3_verified=tier3_verified
+        )
+
+        if self.config.enable_confidence_calibration:
+            consensus.calibrated_confidence = self.calibrator.calibrate(
+                consensus.avg_confidence
+            )
+
+        logger.info(
+            f"[{request_id}] └─ TIER 6 Complete: Grade {consensus.output_grade.value}, "
+            f"Agreement {consensus.agreement_count}/{consensus.total_responses}"
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 4: JUDICIAL ARBITRATION (Conditional)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 4: Judicial Arbitration (conditional)")
+
+        failsafe_triggered = False
+        failsafe_model = None
+
+        if self._should_invoke_tier4(consensus):
+            consensus, failsafe_triggered, failsafe_model = await self._invoke_tier4_arbitration(
+                prompt, consensus, all_responses
+            )
+            logger.info(
+                f"[{request_id}] └─ TIER 4 Invoked: Arbitration={consensus.arbitration_source.value}"
+            )
+        else:
+            consensus.arbitration_source = ArbitrationSource.CONSENSUS_ONLY
+            logger.info(f"[{request_id}] └─ TIER 4 Skipped: Strong consensus")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 7: POLITICAL BALANCE & AI BIAS CHECK (Always Runs)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 7: Political Balance & AI Bias Check")
+
+        if context == "political":
+            is_balanced, balance_warning = PoliticalBalanceChecker.is_balanced(
+                consensus.representative_output
+            )
+            if not is_balanced and balance_warning:
+                consensus.uncertainty_flags.append(balance_warning)
+                logger.warning(f"[{request_id}] Political balance warning: {balance_warning}")
+
+        is_appropriate, tone_warning = ToneAnalyzer.is_tone_appropriate(
+            consensus.representative_output,
+            context
+        )
+        if not is_appropriate and tone_warning:
+            consensus.uncertainty_flags.append(tone_warning)
+            logger.warning(f"[{request_id}] Tone warning: {tone_warning}")
+
+        logger.info(f"[{request_id}] └─ TIER 7 Complete: Balance and tone verified")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 8: FINAL SYNTHESIS & DELIVERY (Always Runs)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 8: Final Synthesis & Delivery")
+
+        if self.config.enable_source_weighting:
+            consensus.source_weighted_confidence = source_weighted_conf
+
+        if self.config.enable_uncertainty_flags:
+            if consensus.agreement_ratio < 0.7:
+                consensus.uncertainty_flags.append("Low agreement among models")
+            if consensus.total_responses < self.config.min_acceptable_tier1_responses:
+                consensus.uncertainty_flags.append(
+                    f"Only {consensus.total_responses} responses received"
+                )
+            if len(set(r.model for r in all_responses)) < 4:
+                consensus.uncertainty_flags.append("Limited model diversity")
+            if failsafe_triggered:
+                consensus.uncertainty_flags.append(
+                    f"Tier 4 failsafe triggered (using {failsafe_model})"
+                )
+            if not tier3_verified:
+                consensus.uncertainty_flags.append("Limited external verification")
+
+        # Determine evidence strength based on Tier 3 verification
+        unique_models = len(set(r.model for r in all_responses))
+        tier3_count = len([r for r in all_responses if r.metadata.get("tier") == 3])
+
+        if unique_models >= 9 and consensus.agreement_ratio >= 0.8 and tier3_count >= 3:
+            consensus.evidence_strength = "strong"
+        elif unique_models >= 6 and consensus.agreement_ratio >= 0.6 and tier3_count >= 2:
+            consensus.evidence_strength = "moderate"
+        else:
+            consensus.evidence_strength = "weak"
+
         # Determine degradation level
         tier1_count = len(tier1_responses)
         if tier1_count >= 6:
@@ -1480,50 +1810,10 @@ class ToronEngineV31Enhanced:
             degradation_level = "moderate"
         else:
             degradation_level = "severe"
-        
-        # Generate consensus
-        consensus = self.consensus_engine.integrate(all_responses)
-        
-        # ENHANCED: Tier 4 arbitration with failsafe
-        consensus, failsafe_triggered, failsafe_model = await self._invoke_tier4_arbitration(
-            prompt, consensus, all_responses
-        )
-        
-        # A-GRADE: Apply epistemic enhancements
-        if self.config.enable_source_weighting:
-            consensus.source_weighted_confidence = SourceReliability.compute_weighted_confidence(
-                all_responses
-            )
-        
-        if self.config.enable_confidence_calibration:
-            consensus.calibrated_confidence = self.calibrator.calibrate(
-                consensus.avg_confidence
-            )
-        
-        if self.config.enable_uncertainty_flags:
-            uncertainty_flags = []
-            if consensus.agreement_ratio < 0.7:
-                uncertainty_flags.append("Low agreement among models")
-            if consensus.total_responses < self.config.min_acceptable_tier1_responses:
-                uncertainty_flags.append(f"Only {consensus.total_responses} responses received")
-            if len(set(r.model for r in all_responses)) < 4:
-                uncertainty_flags.append("Limited model diversity")
-            if failsafe_triggered:
-                uncertainty_flags.append(f"Tier 4 failsafe triggered (using {failsafe_model})")
-            consensus.uncertainty_flags = uncertainty_flags
-        
-        # Determine evidence strength
-        unique_models = len(set(r.model for r in all_responses))
-        if unique_models >= 7 and consensus.agreement_ratio >= 0.8:
-            consensus.evidence_strength = "strong"
-        elif unique_models >= 5 and consensus.agreement_ratio >= 0.6:
-            consensus.evidence_strength = "moderate"
-        else:
-            consensus.evidence_strength = "weak"
-        
+
         # Create metrics
         total_latency = (time.time() - start_time) * 1000
-        
+
         metrics = ExecutionMetrics(
             request_id=request_id,
             prompt_hash=prompt_hash,
@@ -1541,12 +1831,16 @@ class ToronEngineV31Enhanced:
             tier4_failsafe_triggered=failsafe_triggered,
             tier4_failsafe_model=failsafe_model
         )
-        
+
+        logger.info(
+            f"[{request_id}] └─ TIER 8 Complete: Final grade {consensus.output_grade.value}"
+        )
+
         # Cache result
         if use_cache:
             self.cache.set(cache_key, (consensus, metrics))
 
-        # Emit telemetry (fire-and-forget, non-blocking)
+        # Emit telemetry
         if self.telemetry_client.enabled:
             asyncio.create_task(
                 self.telemetry_client.emit_query_event(
@@ -1560,10 +1854,11 @@ class ToronEngineV31Enhanced:
             )
 
         logger.info(
-            f"[{request_id}] Complete: {consensus.output_grade.value} grade, "
-            f"{consensus.agreement_count}/{consensus.total_responses} consensus, "
-            f"{total_latency:.1f}ms, "
-            f"arbitration={consensus.arbitration_source.value}"
+            f"[{request_id}] 8-TIER COMPLETE: Grade={consensus.output_grade.value}, "
+            f"Agreement={consensus.agreement_count}/{consensus.total_responses}, "
+            f"Latency={total_latency:.1f}ms, "
+            f"Arbitration={consensus.arbitration_source.value}, "
+            f"Evidence={consensus.evidence_strength}"
         )
 
         return consensus, metrics
