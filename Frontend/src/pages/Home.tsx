@@ -43,12 +43,12 @@ export default function HomePage() {
               "mb-8 text-6xl font-bold tracking-tight lg:text-7xl",
               text.primary
             )}>
-              Human-Centric AI for
+              AI That Works
               <br />
               <span className={cn(
                 "bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent",
                 "dark:from-blue-400 dark:to-purple-400"
-              )}>Decisive Action</span>
+              )}>How You Think</span>
             </h1>
 
             {/* Subheading */}
@@ -56,8 +56,8 @@ export default function HomePage() {
               "mx-auto mb-12 max-w-2xl text-xl leading-relaxed",
               text.secondary
             )}>
-              A cognitive operating system built on epistemic honesty — preserving uncertainty, 
-              exposing model disagreement, and empowering better decision-making through transparency.
+              Stop getting one AI's opinion. See multiple perspectives, understand uncertainty, 
+              and make confident decisions — all in one place.
             </p>
 
             {/* CTA Buttons */}
@@ -71,7 +71,7 @@ export default function HomePage() {
                   "dark:from-blue-500 dark:to-purple-500 dark:hover:shadow-blue-400/25"
                 )}
               >
-                Start with Toron AI
+                Try Toron AI
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </button>
 
@@ -107,23 +107,22 @@ export default function HomePage() {
             </div>
 
             <h2 className={cn("mb-8 text-4xl font-bold lg:text-5xl", text.primary)}>
-              Why Ryuzen Exists
+              The Problem with AI Today
             </h2>
 
             <div className="space-y-6">
               <p className={cn("text-xl leading-relaxed", text.secondary)}>
-                Most AI systems project false confidence. They give you one answer without showing 
-                uncertainty or alternative perspectives, creating blind spots that can compromise 
-                decision-making entirely.
+                ChatGPT, Claude, Gemini — they all give you one answer and expect you to trust it. 
+                But what if that answer is wrong? What if there's a better perspective you're missing?
               </p>
 
               <p className={cn(
                 "text-xl font-semibold leading-relaxed",
                 text.primary
               )}>
-                Ryuzen takes a different approach. We show you when AI models agree, when they disagree, 
-                and where uncertainty exists — using external data sources so you can think critically 
-                and learn. This transparency enables both accurate answers and informed judgment.
+                Ryuzen shows you multiple AI perspectives side-by-side, highlights where they agree 
+                and disagree, and backs everything up with real sources — so you can make informed 
+                decisions instead of blind trust.
               </p>
             </div>
           </div>
@@ -136,10 +135,10 @@ export default function HomePage() {
           {/* Section Header */}
           <div className="mb-20 text-center">
             <h2 className={cn("mb-4 text-4xl font-bold lg:text-5xl", text.primary)}>
-              Two Products, One Philosophy
+              Two Products, One Mission
             </h2>
             <p className={cn("text-xl", text.secondary)}>
-              Built on ALOE — AI as a Life Orchestration Engine
+              Better decisions through complete information
             </p>
           </div>
 
@@ -173,15 +172,14 @@ export default function HomePage() {
                 "mb-6 text-lg font-semibold",
                 "text-blue-600 dark:text-blue-400"
               )}>
-                Multi-Model AI Reasoning Engine
+                Get answers from 11 AI models at once
               </p>
 
               {/* Description */}
               <p className={cn("mb-8 text-lg leading-relaxed", text.secondary)}>
-                TORON orchestrates <strong className={text.primary}>11 leading AI models with 40+ knowledge sources</strong> to 
-                deliver comprehensive, nuanced answers. Instead of hiding disagreement, TORON reveals 
-                where models align and where they diverge — drawing from Google, Bing, academic libraries, 
-                Reddit, and more to empower confident, informed decisions.
+                Stop switching between ChatGPT, Claude, and Gemini. TORON asks all 11 leading AI models 
+                your question simultaneously, shows you where they agree and disagree, and pulls in 
+                40+ trusted sources like Google Scholar, Reddit, and news sites — so you see the full picture.
               </p>
 
               {/* Features */}
@@ -192,9 +190,9 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>Your data, your choice</strong>
+                    <strong className={cn("text-base", text.primary)}>See all perspectives</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Complete control over sharing, even on free tiers
+                      Claude, ChatGPT, Gemini, Llama — compare all major AI models in one view
                     </p>
                   </div>
                 </div>
@@ -205,9 +203,9 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>No vendor lock-in</strong>
+                    <strong className={cn("text-base", text.primary)}>Backed by real sources</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Access Claude, ChatGPT, Gemini, Llama, and more in one place
+                      Every claim links to Google, academic papers, Reddit discussions, and verified sources
                     </p>
                   </div>
                 </div>
@@ -218,9 +216,9 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>Transparent reasoning</strong>
+                    <strong className={cn("text-base", text.primary)}>Your privacy protected</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      See how different models approach problems and refine them into actionable answers
+                      You control what's shared — even on the free tier
                     </p>
                   </div>
                 </div>
@@ -233,7 +231,7 @@ export default function HomePage() {
                   <div>
                     <strong className={cn("text-base", text.primary)}>Lightning fast</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Comprehensive answers delivered quickly and reliably
+                      Get comprehensive multi-model answers in seconds
                     </p>
                   </div>
                 </div>
@@ -282,14 +280,14 @@ export default function HomePage() {
                 "mb-6 text-lg font-semibold",
                 "text-purple-600 dark:text-purple-400"
               )}>
-                AI-Powered Productivity Environment
+                Your life, organized. AI-enhanced, not AI-controlled.
               </p>
 
               {/* Description */}
               <p className={cn("mb-8 text-lg leading-relaxed", text.secondary)}>
-                Your unified command center for everything that matters. Workspace brings together 
-                tasks, calendar, files, and collaboration — all enhanced by Toron intelligence that 
-                adapts to your connected ecosystems and workflow patterns.
+                Connect your calendar, tasks, GitHub, Google Drive, Notion — everything in one place. 
+                Workspace learns your workflow and helps eliminate busywork, but you stay in control. 
+                Your private notes stay private.
               </p>
 
               {/* Features */}
@@ -300,9 +298,9 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>Everything in one place</strong>
+                    <strong className={cn("text-base", text.primary)}>Everything unified</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Calendar, tasks, lists, and connectors unified for natural cognitive flow
+                      Calendar, tasks, files, and team tools in one clean interface
                     </p>
                   </div>
                 </div>
@@ -313,9 +311,9 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>Connect your tools</strong>
+                    <strong className={cn("text-base", text.primary)}>Connect 34 tools</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      34 integrations including GitHub, Google Drive, Notion, and Linear
+                      GitHub, Google Drive, Notion, Linear, Slack — all integrated seamlessly
                     </p>
                   </div>
                 </div>
@@ -326,9 +324,9 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>Your private workspace</strong>
+                    <strong className={cn("text-base", text.primary)}>You control the AI</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Focus modes (Pages, Notes, Boards) remain completely private
+                      AI suggests, you decide. Your private pages and notes stay completely private
                     </p>
                   </div>
                 </div>
@@ -339,9 +337,9 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <div>
-                    <strong className={cn("text-base", text.primary)}>AI-enhanced automation</strong>
+                    <strong className={cn("text-base", text.primary)}>Eliminate busywork</strong>
                     <p className={cn("text-sm", text.secondary)}>
-                      Toron eliminates redundant tasks while preserving your control and agency
+                      Automated summaries, smart scheduling, context from your tools — without the noise
                     </p>
                   </div>
                 </div>
@@ -381,17 +379,17 @@ export default function HomePage() {
             </div>
 
             <h2 className={cn("mb-4 text-4xl font-bold lg:text-5xl", text.primary)}>
-              Built on ALOE
+              Why Ryuzen Is Different
             </h2>
 
             <p className={cn("mx-auto max-w-3xl text-xl", text.secondary)}>
-              AI as a Life Orchestration Engine — the Human Centric cognitive framework powering Toron, Workspace and Ryuzen as a whole
+              Most AI tools treat you like a passenger. We put you in the driver's seat.
             </p>
           </div>
 
           {/* Principles Grid */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {/* Principle 1: Epistemic Honesty */}
+            {/* Principle 1: Honesty */}
             <div className={cn(
               "rounded-2xl border-2 p-8",
               border.subtle,
@@ -409,14 +407,15 @@ export default function HomePage() {
                 )} />
               </div>
               <h3 className={cn("mb-3 text-xl font-bold", text.primary)}>
-                Epistemic Honesty
+                Complete Transparency
               </h3>
               <p className={cn("text-base leading-relaxed", text.secondary)}>
-                Preserves uncertainty, exposes model disagreement, and separates claims from evidence-backed facts
+                See where AI models agree, where they disagree, and what sources back up each claim. 
+                No black boxes.
               </p>
             </div>
 
-            {/* Principle 2: User Agency */}
+            {/* Principle 2: Control */}
             <div className={cn(
               "rounded-2xl border-2 p-8",
               border.subtle,
@@ -434,15 +433,15 @@ export default function HomePage() {
                 )} />
               </div>
               <h3 className={cn("mb-3 text-xl font-bold", text.primary)}>
-                User Agency
+                You're In Control
               </h3>
               <p className={cn("text-base leading-relaxed", text.secondary)}>
-                You maintain complete control. TORON learns from conversations and widgets, 
-                but never accesses private focus modes without explicit permission
+                AI suggests, you decide. Your private workspace stays private. 
+                No AI reading your notes without permission.
               </p>
             </div>
 
-            {/* Principle 3: Privacy-First */}
+            {/* Principle 3: Privacy */}
             <div className={cn(
               "rounded-2xl border-2 p-8",
               border.subtle,
@@ -460,15 +459,15 @@ export default function HomePage() {
                 )} />
               </div>
               <h3 className={cn("mb-3 text-xl font-bold", text.primary)}>
-                Privacy-First
+                Privacy First
               </h3>
               <p className={cn("text-base leading-relaxed", text.secondary)}>
-                Your personal data is never sold. Optional telemetry for anonymized AI model improvement 
-                can be toggled anytime — participation helps advance both Toron and the broader AI ecosystem
+                Your personal data is never sold. Optional anonymous usage data helps improve AI, 
+                but it's always your choice to participate.
               </p>
             </div>
 
-            {/* Principle 4: Unified Integration */}
+            {/* Principle 4: Integration */}
             <div className={cn(
               "rounded-2xl border-2 p-8",
               border.subtle,
@@ -486,11 +485,11 @@ export default function HomePage() {
                 )} />
               </div>
               <h3 className={cn("mb-3 text-xl font-bold", text.primary)}>
-                Unified Integration
+                Everything Connected
               </h3>
               <p className={cn("text-base leading-relaxed", text.secondary)}>
-                TORON's intelligence flows seamlessly into Workspace, creating coherent workflows 
-                and a truly unified ecosystem
+                TORON's insights flow into Workspace. Your tools talk to each other. 
+                One seamless experience.
               </p>
             </div>
           </div>
@@ -501,11 +500,11 @@ export default function HomePage() {
       <section className={cn("border-t px-6 py-24", border.subtle)}>
         <div className="mx-auto max-w-3xl text-center">
           <h2 className={cn("mb-6 text-4xl font-bold lg:text-5xl", text.primary)}>
-            Ready to Experience Human Centric AI?
+            Ready to See AI Differently?
           </h2>
 
           <p className={cn("mb-12 text-xl", text.secondary)}>
-            Start with TORON or explore Workspace. Your journey toward better decision-making begins here.
+            Join thousands making better decisions with complete information.
           </p>
 
           <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center">
@@ -518,7 +517,7 @@ export default function HomePage() {
                 "dark:from-blue-500 dark:to-purple-500 dark:hover:shadow-blue-400/30"
               )}
             >
-              Launch Toron
+              Start with Toron
               <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
             </button>
 
@@ -533,7 +532,7 @@ export default function HomePage() {
                 "dark:hover:border-purple-400"
               )}
             >
-              Open Workspace
+              Try Workspace
               <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
