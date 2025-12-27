@@ -110,9 +110,9 @@ export default function HomePage() {
           </p>
 
           <p className={cn("text-lg font-semibold leading-relaxed", text.primary)}>
-            Ryuzen is different. We believe in <span className="text-blue-600 dark:text-blue-400">epistemic honesty</span> —
-            showing you when AI models agree, when they disagree, and where uncertainty exists.
-            This transparency enables both accurate answers <em>and</em> critical thinking.
+            Ryuzen is different. We believe in honesty when we know we are wrong and we will try to get the most reliable answers —
+            showing you when AI models agree, when they disagree, and where uncertainty exists so you can think for yourself.
+            This transparency enables both accurate answers and leaves room for critical thinking and the formation of different opinions.
           </p>
         </div>
       </section>
@@ -157,8 +157,8 @@ export default function HomePage() {
               </p>
 
               <p className={cn("mb-6 leading-relaxed", text.secondary)}>
-                TORON orchestrates <strong>11 leading AI models</strong> to give you more complete, nuanced answers.
-                Instead of hiding disagreement, TORON <em>shows you</em> where models agree and where they differ —
+                TORON orchestrates <strong>11 leading AI models and 40 sources for complex questions</strong> to give you more complete, nuanced answers.
+                Instead of hiding disagreement, TORON <em>shows you</em> where models agree and where they differ and uses external sources which include Google, Bing, Academic Libraries, Reddit and over 40 sources.
                 empowering you to make informed decisions with confidence.
               </p>
 
@@ -169,7 +169,7 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Your data, your choice:</strong> Complete control over what's shared, even on free tier
+                    <strong className={text.primary}>Your data, your choice:</strong> Complete control over what's shared, even on free tiers
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -178,7 +178,7 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>No vendor lock-in:</strong> Access to Claude, GPT, Gemini, Llama, and more in one place
+                    <strong className={text.primary}>No vendor lock-in:</strong> Access to Claude, ChatGPT, Gemini, Llama, and more in one place
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -187,7 +187,7 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Transparent reasoning:</strong> See how different AI models approach your question
+                    <strong className={text.primary}>Transparent reasoning:</strong> See how different AI models approach your question but also how your problem can be narrowed down into a good and usable answer
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -196,7 +196,7 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Lightning fast:</strong> Get comprehensive answers in 1.8-4 seconds
+                    <strong className={text.primary}>Lightning fast:</strong> Get comprehensive answers quickly and with reliability.
                   </span>
                 </div>
               </div>
