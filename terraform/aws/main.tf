@@ -66,8 +66,22 @@ resource "aws_route_table_association" "toron_assoc" {
 # Security group for ingress/egress control
 resource "aws_security_group" "toron" {
   name        = "toron-sg"
-  description = "Allow HTTP access to Toron service"
+  description = "Allow HTTP/HTTPS access to Toron service"
   vpc_id      = aws_vpc.toron.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   ingress {
     from_port   = var.container_port
@@ -160,16 +174,97 @@ resource "aws_ecs_task_definition" "toron" {
   ])
 }
 
+# Application Load Balancer for ECS
+resource "aws_lb" "toron" {
+  name               = "toron-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.toron.id]
+  subnets            = aws_subnet.toron_public[*].id
+
+  tags = { Name = "toron-alb" }
+}
+
+# Target group for ECS tasks
+resource "aws_lb_target_group" "toron" {
+  name        = "toron-tg"
+  port        = 8080
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.toron.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+  }
+}
+
+# HTTPS listener (requires certificate)
+resource "aws_lb_listener" "toron_https" {
+  count             = var.certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.toron.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = var.certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.toron.arn
+  }
+}
+
+# HTTP listener
+resource "aws_lb_listener" "toron_http" {
+  load_balancer_arn = aws_lb.toron.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.toron.arn
+  }
+}
+
+# Route 53 record: api.ryuzen.ai → ALB
+resource "aws_route53_record" "api" {
+  count   = var.route53_zone_id != "" ? 1 : 0
+  zone_id = var.route53_zone_id
+  name    = "${var.api_subdomain}.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.toron.dns_name
+    zone_id                = aws_lb.toron.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# ECS service with ALB integration
 resource "aws_ecs_service" "toron" {
   name            = "toron-service"
   cluster         = aws_ecs_cluster.toron.id
   task_definition = aws_ecs_task_definition.toron.arn
   desired_count   = var.replica_count
   launch_type     = "FARGATE"
+
   network_configuration {
-    subnets         = aws_subnet.toron_public[*].id
-    security_groups = [aws_security_group.toron.id]
+    subnets          = aws_subnet.toron_public[*].id
+    security_groups  = [aws_security_group.toron.id]
     assign_public_ip = true
   }
-  depends_on = [aws_iam_role_policy_attachment.task_execution]
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.toron.arn
+    container_name   = "toron"
+    container_port   = 8080
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.task_execution,
+    aws_lb_listener.toron_http
+  ]
 }
