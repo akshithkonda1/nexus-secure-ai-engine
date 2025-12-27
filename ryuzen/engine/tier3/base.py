@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Deque
+
+logger = logging.getLogger(__name__)
 
 
 class SourceCategory(Enum):
@@ -79,6 +84,62 @@ class Tier3Connector:
         self._error_count = 0
         self._last_call_time = 0.0
 
+        # Rate limiting tracking (sliding window) - Performance Optimization
+        self._call_timestamps: Deque[float] = deque(maxlen=rate_limit_per_minute)
+        self._rate_limit_window_seconds = 60.0
+        self._backoff_multiplier = 1.0
+        self._consecutive_rate_limits = 0
+
+    async def _enforce_rate_limit(self) -> None:
+        """
+        Enforce rate limiting using sliding window algorithm.
+
+        If we've hit the rate limit, sleep until we're under the limit.
+        Implements exponential backoff for repeated rate limit violations.
+        """
+        now = time.time()
+
+        # Remove timestamps outside the window
+        cutoff = now - self._rate_limit_window_seconds
+        while self._call_timestamps and self._call_timestamps[0] < cutoff:
+            self._call_timestamps.popleft()
+
+        # Check if we're at the limit
+        if len(self._call_timestamps) >= self.rate_limit:
+            # Calculate how long to wait
+            oldest_call = self._call_timestamps[0]
+            wait_time = self._rate_limit_window_seconds - (now - oldest_call)
+
+            # Apply exponential backoff if we've hit rate limits repeatedly
+            if self._consecutive_rate_limits > 0:
+                self._backoff_multiplier = min(
+                    8.0,  # Max 8x backoff
+                    2.0 ** self._consecutive_rate_limits
+                )
+                wait_time *= self._backoff_multiplier
+
+            self._consecutive_rate_limits += 1
+
+            logger.warning(
+                f"{self.source_name}: Rate limit reached "
+                f"({len(self._call_timestamps)}/{self.rate_limit} calls/min), "
+                f"sleeping {wait_time:.1f}s (backoff: {self._backoff_multiplier:.1f}x)"
+            )
+
+            await asyncio.sleep(wait_time)
+        else:
+            # Reset backoff if we're under the limit
+            if self._consecutive_rate_limits > 0:
+                logger.info(
+                    f"{self.source_name}: Rate limit pressure relieved, "
+                    f"resetting backoff"
+                )
+            self._consecutive_rate_limits = 0
+            self._backoff_multiplier = 1.0
+
+        # Record this call
+        self._call_timestamps.append(time.time())
+
     async def fetch(
         self,
         query: str,
@@ -110,6 +171,13 @@ class Tier3Connector:
     def get_stats(self) -> dict:
         """Get connector statistics."""
         error_rate = self._error_count / self._call_count if self._call_count > 0 else 0.0
+
+        # Calculate current rate limit usage (Performance Optimization)
+        now = time.time()
+        cutoff = now - self._rate_limit_window_seconds
+        recent_calls = sum(1 for ts in self._call_timestamps if ts >= cutoff)
+        rate_limit_usage = recent_calls / self.rate_limit if self.rate_limit > 0 else 0.0
+
         return {
             "source_name": self.source_name,
             "calls": self._call_count,
@@ -117,6 +185,14 @@ class Tier3Connector:
             "error_rate": error_rate,
             "enabled": self.enabled,
             "category": self.category.value,
+            # Rate limit stats
+            "rate_limit": {
+                "limit_per_minute": self.rate_limit,
+                "current_usage": recent_calls,
+                "usage_percent": rate_limit_usage * 100,
+                "backoff_multiplier": self._backoff_multiplier,
+                "consecutive_limits": self._consecutive_rate_limits,
+            }
         }
 
     async def close(self) -> None:

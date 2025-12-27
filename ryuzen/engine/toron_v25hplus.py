@@ -146,6 +146,8 @@ class SourceReliability:
         # Tier 3: External Knowledge Sources - General
         "Britannica-API": 1.0,  # Highest: Expert-written encyclopedia
         "MedicalLLM": 0.95,  # Very high: Domain-specific, trained on medical literature
+        "WHO-API": 0.96,  # Very high: Official global health authority
+        "CDC-API": 0.95,  # Very high: Official US health authority
         "Wikipedia-API": 0.85,  # High: Crowd-sourced but well-moderated
         "Google-Search": 0.75,  # Good: Aggregates many sources
         "Bing-Search": 0.75,  # Good: Similar to Google
@@ -1650,15 +1652,44 @@ class ToronEngineV31Enhanced:
             logger.info(f"[{request_id}] └─ TIER 2 Skipped: Strong Tier 1 consensus")
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 3: KNOWLEDGE SOURCES (Always Runs - 30 Sources)
+        # TIER 3: KNOWLEDGE SOURCES (Always Runs - 40 Sources)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 3: Knowledge Sources (30 sources, intelligent routing)")
+        logger.info(f"[{request_id}] ┌─ TIER 3: Knowledge Sources (40 sources, intelligent routing)")
+
+        # Adaptive source count based on Tier 1 consensus (Performance Optimization)
+        tier1_agreement_ratio = len(tier1_responses) / max(len(tier1_providers), 1)
+        tier1_avg_confidence = (
+            sum(r.confidence for r in tier1_responses) / len(tier1_responses)
+            if tier1_responses else 0.0
+        )
+
+        # Determine optimal source count
+        if tier1_agreement_ratio > 0.9 and tier1_avg_confidence > 0.85:
+            # High consensus + high confidence = simple query
+            adaptive_max_sources = 3
+            logger.info(
+                f"[{request_id}] Tier 3: Simple query detected "
+                f"(agreement={tier1_agreement_ratio:.1%}, conf={tier1_avg_confidence:.1%}), "
+                f"using {adaptive_max_sources} sources"
+            )
+        elif tier1_agreement_ratio < 0.7 or tier1_avg_confidence < 0.70:
+            # Low consensus or low confidence = complex query
+            adaptive_max_sources = 10
+            logger.info(
+                f"[{request_id}] Tier 3: Complex query detected "
+                f"(agreement={tier1_agreement_ratio:.1%}, conf={tier1_avg_confidence:.1%}), "
+                f"using {adaptive_max_sources} sources"
+            )
+        else:
+            # Default: moderate complexity
+            adaptive_max_sources = 6
+            logger.info(f"[{request_id}] Tier 3: Using default {adaptive_max_sources} sources")
 
         try:
             tier3_snippets = await self.tier3_manager.fetch_relevant_sources(
                 query=prompt,
                 context=context,
-                max_sources=6
+                max_sources=adaptive_max_sources  # Use adaptive count
             )
 
             # Convert snippets to ModelResponse format for consensus integration
