@@ -16,8 +16,10 @@ from .clinical_trials import ClinicalTrialsConnector
 from .openalex import OpenAlexConnector
 from .core import COREConnector
 
-# Medical (1)
+# Medical (3)
 from .medical_llm import MedicalLLMConnector
+from .who import WHOConnector
+from .cdc import CDCConnector
 
 # Technical (4)
 from .stackoverflow import StackOverflowConnector
@@ -59,8 +61,8 @@ __all__ = [
     # Academic (7)
     "ArxivConnector", "SemanticScholarConnector", "CrossRefConnector",
     "PubMedConnector", "ClinicalTrialsConnector", "OpenAlexConnector", "COREConnector",
-    # Medical (1)
-    "MedicalLLMConnector",
+    # Medical (3)
+    "MedicalLLMConnector", "WHOConnector", "CDCConnector",
     # Technical (4)
     "StackOverflowConnector", "GitHubSearchConnector", "MDNDocsConnector",
     "OpenSourceDocsConnector",
