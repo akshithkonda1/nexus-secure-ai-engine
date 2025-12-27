@@ -53,7 +53,7 @@ export default function HomePage() {
               "mb-10 text-xl leading-relaxed",
               text.secondary
             )}>
-              Ryuzen is a cognitive operating system that prioritizes <strong className={text.primary}>epistemic honesty</strong> —
+              Ryuzen is a cognitive operating system that prioritizes honesty and accuracy —
               preserving uncertainty, exposing model disagreement, and empowering you to make better decisions.
             </p>
 
