@@ -1,97 +1,118 @@
-import { Plus, MoreHorizontal, Clock } from "lucide-react";
-
-const projects = [
-  {
-    title: "AI Model Training Pipeline",
-    description: "Building scalable infrastructure for model training...",
-    color: "bg-blue-500",
-    progress: 75,
-    updated: "2 hours ago",
-  },
-  {
-    title: "Research Database",
-    description: "Comprehensive research papers and documentation...",
-    color: "bg-purple-500",
-    progress: 60,
-    updated: "5 hours ago",
-  },
-  {
-    title: "UI/UX Design System",
-    description: "Modern component library with accessibility...",
-    color: "bg-emerald-500",
-    progress: 90,
-    updated: "1 day ago",
-  },
-  {
-    title: "Customer Analytics",
-    description: "User behavior tracking and insights dashboard...",
-    color: "bg-amber-500",
-    progress: 45,
-    updated: "3 days ago",
-  },
-  {
-    title: "Mobile App Development",
-    description: "Cross-platform mobile application with React Native...",
-    color: "bg-pink-500",
-    progress: 30,
-    updated: "1 week ago",
-  },
-  {
-    title: "API Documentation",
-    description: "Comprehensive REST API documentation and examples...",
-    color: "bg-indigo-500",
-    progress: 85,
-    updated: "2 days ago",
-  },
-];
+import { MessageSquare, Layout, Compass, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { cn, text, bg, border } from "../../utils/theme";
 
 export default function HomeRail() {
+  const navigate = useNavigate();
+
+  const quickActions = [
+    {
+      title: "Start with Toron",
+      description: "Multi-model AI reasoning",
+      icon: MessageSquare,
+      gradient: "from-blue-500 to-blue-600",
+      path: "/toron",
+    },
+    {
+      title: "Open Workspace",
+      description: "Productivity environment",
+      icon: Layout,
+      gradient: "from-purple-500 to-purple-600",
+      path: "/workspace",
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900">Projects</span>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-            {projects.length}
-          </span>
-        </div>
-        <button className="rounded-lg p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
+    <div className="flex flex-col gap-6 p-4">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <Compass className={cn("h-5 w-5", text.accent)} />
+        <h2 className={cn("text-sm font-semibold", text.primary)}>
+          Quick Navigation
+        </h2>
       </div>
 
-      <button className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm font-medium text-gray-900 transition-all hover:border-gray-400 hover:bg-gray-100">
-        <Plus className="h-4 w-4" />
-        <span>New Project</span>
-      </button>
-
-      <div className="flex flex-col gap-3">
-        {projects.map((project, index) => (
-          <div
-            key={index}
-            className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-sm"
+      {/* Quick Actions */}
+      <div className="space-y-3">
+        {quickActions.map((action) => (
+          <button
+            key={action.path}
+            onClick={() => navigate(action.path)}
+            className={cn(
+              "group w-full rounded-xl border p-4 text-left transition-all",
+              border.subtle,
+              bg.surface,
+              "hover:border-[var(--accent-primary)] hover:shadow-md hover:-translate-y-0.5"
+            )}
           >
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <h3 className="text-sm font-medium text-gray-900 line-clamp-1">{project.title}</h3>
-              <span className="shrink-0 text-[10px] font-medium text-gray-500">{project.progress}%</span>
+            <div className="mb-3 flex items-center gap-3">
+              <div className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br",
+                action.gradient
+              )}>
+                <action.icon className="h-5 w-5 text-white" />
+              </div>
+              <ArrowRight className={cn(
+                "ml-auto h-4 w-4 transition-transform",
+                text.tertiary,
+                "group-hover:translate-x-1 group-hover:text-[var(--accent-primary)]"
+              )} />
             </div>
-            <p className="mb-3 text-xs leading-relaxed text-gray-600 line-clamp-2">{project.description}</p>
 
-            {/* Progress bar */}
-            <div className="mb-2 overflow-hidden rounded-full bg-gray-100">
-              <div
-                className={`h-1.5 rounded-full ${project.color} transition-all`}
-                style={{ width: `${project.progress}%` }}
-              />
-            </div>
+            <h3 className={cn("mb-1 text-sm font-semibold", text.primary)}>
+              {action.title}
+            </h3>
 
-            {/* Footer */}
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-              <Clock className="h-3 w-3" />
-              <span>Updated {project.updated}</span>
-            </div>
-          </div>
+            <p className={cn("text-xs", text.tertiary)}>
+              {action.description}
+            </p>
+          </button>
         ))}
+      </div>
+
+      {/* Info Card */}
+      <div className={cn(
+        "mt-4 rounded-xl border p-4",
+        "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50",
+        "dark:border-orange-800 dark:from-orange-950/20 dark:to-amber-950/20"
+      )}>
+        <div className="mb-2 flex items-center gap-2">
+          <Sparkles className={cn(
+            "h-4 w-4",
+            "text-orange-600 dark:text-orange-400"
+          )} />
+          <span className={cn(
+            "text-xs font-semibold",
+            "text-orange-700 dark:text-orange-300"
+          )}>
+            Powered by ALOE
+          </span>
+        </div>
+
+        <p className={cn(
+          "text-xs leading-relaxed",
+          "text-orange-600 dark:text-orange-400"
+        )}>
+          AI as a Life Orchestration Engine — built for epistemic honesty and user agency
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className={cn("mt-2 space-y-2 rounded-xl border p-4", border.subtle, bg.elevated)}>
+        <div className="flex items-center justify-between">
+          <span className={cn("text-xs", text.tertiary)}>AI Models</span>
+          <span className={cn("text-sm font-semibold", text.primary)}>11</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className={cn("text-xs", text.tertiary)}>Integrations</span>
+          <span className={cn("text-sm font-semibold", text.primary)}>34</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className={cn("text-xs", text.tertiary)}>Response Time</span>
+          <span className={cn("text-sm font-semibold", text.primary)}>1.8-4s</span>
+        </div>
       </div>
     </div>
   );
