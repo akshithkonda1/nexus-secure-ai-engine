@@ -105,14 +105,14 @@ export default function HomePage() {
           </h2>
 
           <p className={cn("mb-6 text-lg leading-relaxed", text.secondary)}>
-            Most AI systems project false confidence. They give you one answer without showing uncertainty or alternative perspectives.
-            This creates blind spots in your decision-making.
+            Most AI systems project false confidence, some will even persuade you as to why they are right. They give you one answer without showing uncertainty or alternative perspectives.
+            This creates blind spots in your decision-making, in some cases can destroy decision making entirely.
           </p>
 
           <p className={cn("text-lg font-semibold leading-relaxed", text.primary)}>
-            Ryuzen is different. We believe in honesty when we know we are wrong and we will try to get the most reliable answers —
-            showing you when AI models agree, when they disagree, and where uncertainty exists so you can think for yourself.
-            This transparency enables both accurate answers and leaves room for critical thinking and the formation of different opinions.
+            Ryuzen is different. We believe in honesty and we will try to get the most reliable answers —
+            showing you when AI models agree, when they disagree, and where uncertainty exists using external data so you can think for yourself and learn.
+            This transparency enables both accurate answers and leaves room for critical thinking and the formation of different opinions but also for learning.
           </p>
         </div>
       </section>
@@ -125,7 +125,7 @@ export default function HomePage() {
               Two Products, One Philosophy
             </h2>
             <p className={cn("text-lg", text.secondary)}>
-              Built on ALOE — AI as a Life Orchestration Engine
+              Built on ALOE Framework — AI as a Life Orchestration Engine
             </p>
           </div>
 
@@ -169,7 +169,7 @@ export default function HomePage() {
                     "text-blue-600 dark:text-blue-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Your data, your choice:</strong> Complete control over what's shared, even on free tiers
+                    <strong className={text.primary}>Your data, your choice:</strong> Complete control over what's shared even on free tiers
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -244,7 +244,7 @@ export default function HomePage() {
               <p className={cn("mb-6 leading-relaxed", text.secondary)}>
                 Your unified command center for managing everything that matters.
                 Workspace brings together your tasks, calendar, files, and team collaboration —
-                all enhanced by AI intelligence that learns your workflow.
+                all enhanced by Toron intelligence that learns your workflow based on the ecosystems you've connected into it.
               </p>
 
               <div className="mb-6 space-y-3">
@@ -254,7 +254,7 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Everything in one place:</strong> Calendar, tasks, lists, and connectors in a unified view
+                    <strong className={text.primary}>Everything in one place:</strong> Calendar, tasks, lists, and connectors in a unified view, designed for your cognitive flow, regardless of who you are.
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -263,7 +263,7 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>Connect your tools:</strong> 34 integrations including GitHub, Slack, Google Drive, and Linear
+                    <strong className={text.primary}>Connect your tools:</strong> 34 integrations including GitHub, Google Drive, Notion, Linear and Linear
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -281,7 +281,7 @@ export default function HomePage() {
                     "text-purple-600 dark:text-purple-400"
                   )} />
                   <span className={cn("text-sm", text.secondary)}>
-                    <strong className={text.primary}>AI-enhanced:</strong> Smart suggestions and automation without compromising your control
+                    <strong className={text.primary}>AI-enhanced:</strong> Enhanced by Toron, Toron looks through your day to see how you can be human eliminating redundant tasks but also by being the best human being possible.Smart suggestions and automation without compromising your control
                   </span>
                 </div>
               </div>
