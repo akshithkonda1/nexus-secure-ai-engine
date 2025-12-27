@@ -385,7 +385,7 @@ export default function HomePage() {
             </h2>
 
             <p className={cn("mx-auto max-w-3xl text-xl", text.secondary)}>
-              AI as a Life Orchestration Engine — the cognitive framework powering Ryuzen's epistemic honesty
+              AI as a Life Orchestration Engine — the Human Centric cognitive framework powering Toron, Workspace and Ryuzen as a whole
             </p>
           </div>
 
@@ -501,7 +501,7 @@ export default function HomePage() {
       <section className={cn("border-t px-6 py-24", border.subtle)}>
         <div className="mx-auto max-w-3xl text-center">
           <h2 className={cn("mb-6 text-4xl font-bold lg:text-5xl", text.primary)}>
-            Ready to Experience Epistemic Honesty?
+            Ready to Experience Human Centric AI?
           </h2>
 
           <p className={cn("mb-12 text-xl", text.secondary)}>
