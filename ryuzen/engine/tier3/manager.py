@@ -80,6 +80,34 @@ class Tier3Manager:
         ],
     }
 
+    # Domain-specific TTL configuration (seconds)
+    # Shorter TTL for fast-changing domains, longer for stable content
+    DOMAIN_TTL = {
+        "medical": 1800,      # 30 min - medical info updates frequently
+        "news": 300,          # 5 min - news changes rapidly
+        "legal": 7200,        # 2 hours - legal docs are stable
+        "code": 3600,         # 1 hour - code docs moderately stable
+        "science": 7200,      # 2 hours - research is stable
+        "finance": 600,       # 10 min - market data changes fast
+        "philosophy": 86400,  # 24 hours - philosophy is very stable
+        "academic": 7200,     # 2 hours - papers are stable
+        "default": 3600,      # 1 hour - default TTL
+    }
+
+    # Common queries for cache warming (pre-populated on init)
+    COMMON_QUERIES = [
+        ("What is machine learning?", "technical"),
+        ("How does COVID-19 spread?", "medical"),
+        ("What is climate change?", "science"),
+        ("How to learn Python programming?", "technical"),
+        ("What is artificial intelligence?", "technical"),
+        ("What are the symptoms of diabetes?", "medical"),
+        ("How does the stock market work?", "finance"),
+        ("What is quantum computing?", "science"),
+        ("What is blockchain technology?", "technical"),
+        ("How to improve mental health?", "medical"),
+    ]
+
     # Intent patterns
     INTENT_PATTERNS = {
         QueryIntent.RESEARCH: [
@@ -154,6 +182,65 @@ class Tier3Manager:
         cache_hash = hashlib.sha256(cache_input.encode()).hexdigest()[:16]
 
         return f"tier3:semantic:{cache_hash}"
+
+    def _get_ttl_for_domains(self, domains: Set[str]) -> int:
+        """
+        Get appropriate TTL based on detected domains.
+
+        Uses the shortest TTL if multiple domains detected (conservative approach).
+        Falls back to default TTL if no specific domain matched.
+        """
+        if not domains:
+            return self.DOMAIN_TTL["default"]
+
+        ttls = [
+            self.DOMAIN_TTL.get(domain, self.DOMAIN_TTL["default"])
+            for domain in domains
+        ]
+        return min(ttls)  # Use shortest TTL for safety
+
+    async def warm_cache(self) -> Dict[str, int]:
+        """
+        Pre-populate cache with common queries for faster initial responses.
+
+        Should be called after initialize() to warm the cache with
+        frequently asked questions.
+
+        Returns:
+            Dict with warming statistics
+        """
+        if not self._initialized:
+            self.initialize()
+
+        warmed = 0
+        skipped = 0
+
+        logger.info(f"Cache warming: Processing {len(self.COMMON_QUERIES)} common queries...")
+
+        for query, context in self.COMMON_QUERIES:
+            cache_key = self._compute_semantic_cache_key(query, context)
+
+            # Skip if already cached
+            if self.cache.get(cache_key) is not None:
+                skipped += 1
+                continue
+
+            try:
+                # Fetch and cache (this will auto-cache via fetch_relevant_sources)
+                await self.fetch_relevant_sources(
+                    query=query,
+                    context=context,
+                    max_sources=4  # Use fewer sources for warming
+                )
+                warmed += 1
+            except Exception as e:
+                logger.warning(f"Cache warming failed for '{query[:30]}...': {e}")
+
+        logger.info(
+            f"Cache warming complete: {warmed} warmed, {skipped} skipped (already cached)"
+        )
+
+        return {"warmed": warmed, "skipped": skipped, "total": len(self.COMMON_QUERIES)}
 
     def initialize(self) -> None:
         """Initialize all 40 connectors."""
@@ -306,12 +393,14 @@ class Tier3Manager:
         logger.info(f"Tier 3: Returning {final_count} snippets from {unique_sources} sources")
 
         # Cache results before returning (Performance Optimization)
+        # Use domain-specific TTL for smarter cache expiration
         result_snippets = snippets[:final_count]
-        self.cache.set(cache_key, result_snippets, ttl_seconds=3600)  # 1 hour TTL
+        ttl = self._get_ttl_for_domains(domains)
+        self.cache.set(cache_key, result_snippets, ttl_seconds=ttl)
 
         logger.debug(
             f"Tier 3: Cached {len(result_snippets)} snippets for query "
-            f"(cache size: {len(self.cache._store)})"
+            f"(TTL: {ttl}s, domains: {domains}, cache size: {len(self.cache._store)})"
         )
 
         return result_snippets
@@ -576,6 +665,13 @@ class Tier3Manager:
             self.cache_stats["hits"] / cache_total if cache_total > 0 else 0.0
         )
 
+        # Get eviction stats from cache
+        eviction_stats = (
+            self.cache.get_eviction_stats()
+            if hasattr(self.cache, 'get_eviction_stats')
+            else {}
+        )
+
         return {
             "total_connectors": len(self.connectors),
             "enabled_connectors": sum(1 for c in self.connectors.values() if c.enabled),
@@ -590,7 +686,10 @@ class Tier3Manager:
                 "misses": self.cache_stats["misses"],
                 "hit_rate": cache_hit_rate,
                 "size": len(self.cache._store) if hasattr(self.cache, '_store') else 0,
-            }
+                "eviction_stats": eviction_stats,
+            },
+            # Domain TTL configuration
+            "domain_ttl_config": self.DOMAIN_TTL,
         }
 
     async def close_all(self) -> None:
