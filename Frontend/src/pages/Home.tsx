@@ -321,7 +321,7 @@ export default function HomePage() {
             </h2>
 
             <p className={cn("mx-auto max-w-2xl text-lg", text.secondary)}>
-              AI as a Life Orchestration Engine — the cognitive operating system that powers Ryuzen's epistemic honesty
+              AI as a Life Orchestration Engine — the cognitive operating framework that powers Ryuzen's epistemic honesty
             </p>
           </div>
 
@@ -341,7 +341,7 @@ export default function HomePage() {
                 Epistemic Honesty
               </h3>
               <p className={cn("text-sm leading-relaxed", text.secondary)}>
-                Preserves uncertainty, exposes disagreement between models, separates claims from evidence
+                Preserves uncertainty, exposes disagreement between models, separates claims from facts backed by evidence
               </p>
             </div>
 
@@ -360,7 +360,7 @@ export default function HomePage() {
                 User Agency
               </h3>
               <p className={cn("text-sm leading-relaxed", text.secondary)}>
-                You maintain control. TORON learns from widgets but never accesses focus modes without permission
+                You maintain control. You are in Control when using Toron. TORON learns about you from conversations and widgets but never accesses focus modes without explicit permission.
               </p>
             </div>
 
@@ -379,7 +379,9 @@ export default function HomePage() {
                 Privacy-First
               </h3>
               <p className={cn("text-sm leading-relaxed", text.secondary)}>
-                Optional telemetry across all tiers. Even free users control what data is shared
+                Optional telemetry across all tiers. Even free users control what data is shared, Toron never sells USER data. 
+                We do collect, sell and store anonymized AI Telemetry Data. 
+                Participation is optional and can be changed at any time, but the data and interactions you provide make the models we use better but also make Toron better.
               </p>
             </div>
 
@@ -398,7 +400,7 @@ export default function HomePage() {
                 Unified Integration
               </h3>
               <p className={cn("text-sm leading-relaxed", text.secondary)}>
-                TORON's intelligence flows seamlessly into Workspace's organization, creating coherent workflows
+                TORON's intelligence flows seamlessly into Workspace's organization, creating coherent workflows and allowing the creation of a unified ecosystem.
               </p>
             </div>
           </div>
