@@ -1,4 +1,4 @@
-"""FastAPI service layer for Toron Engine v2."""
+"""FastAPI service layer for Toron Engine v2.5h+ Production."""
 from __future__ import annotations
 
 import os
@@ -12,9 +12,8 @@ from pydantic import BaseModel, Field
 from ryuzen.engine.health import check_engine_loaded, health_metadata
 from ryuzen.engine.logging_middleware import EngineLoggingMiddleware
 from ryuzen.engine.simulation_mode import SimulationMode
-from ryuzen.engine.toron_engine import ToronEngine
+from ryuzen.engine import ToronEngineV31Enhanced
 from ryuzen.utils.toron_logger import get_logger
-from backend.tests_master.master_router import router as master_tests_router
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT_DIR / "VERSION"
@@ -26,7 +25,11 @@ logger = get_logger("toron.api")
 
 app = FastAPI(title="Toron Engine", version=ENGINE_VERSION)
 
-allowed_origins = os.getenv("WORKSPACE_CORS_ORIGINS", "*").split(",")
+# Production CORS - allow app.ryuzen.ai
+allowed_origins = os.getenv(
+    "WORKSPACE_CORS_ORIGINS",
+    "https://app.ryuzen.ai,http://localhost:3000"
+).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in allowed_origins if origin.strip()],
@@ -35,9 +38,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(EngineLoggingMiddleware)
-app.include_router(master_tests_router)
 
-toron_engine: Optional[ToronEngine] = None
+toron_engine: Optional[ToronEngineV31Enhanced] = None
 engine_ready: bool = False
 
 
@@ -45,10 +47,18 @@ class GenerateRequest(BaseModel):
     prompt: str = Field(..., description="User prompt for the Toron Engine")
 
 
-def _ensure_engine_ready() -> ToronEngine:
+class QueryRequest(BaseModel):
+    """Request for TORON epistemic query."""
+    prompt: str = Field(..., description="User query")
+    user_id: Optional[str] = Field(None, description="Optional user ID for telemetry")
+    session_id: Optional[str] = Field(None, description="Optional session ID for telemetry")
+    use_cache: bool = Field(True, description="Whether to use cache")
+
+
+def _ensure_engine_ready() -> ToronEngineV31Enhanced:
     if not engine_ready or toron_engine is None:
         raise HTTPException(status_code=503, detail="Engine is not ready")
-    if not toron_engine.initialized:
+    if not toron_engine._initialized:
         raise HTTPException(status_code=503, detail="Engine is still initialising")
     return toron_engine
 
@@ -67,10 +77,10 @@ async def startup_event() -> None:
         logger.info("Simulation mode disabled via environment")
 
     try:
-        toron_engine = ToronEngine()
-        toron_engine.initialize()
+        toron_engine = ToronEngineV31Enhanced()
+        toron_engine.initialize()  # Now loads real providers from AWS Secrets Manager
         engine_ready = True
-        logger.info("Toron Engine initialized and ready")
+        logger.info("Toron Engine v2.5h+ initialized and ready")
     except Exception as exc:
         engine_ready = False
         toron_engine = None
@@ -91,13 +101,69 @@ async def generate(request: GenerateRequest):
     """Generate a Toron response for the provided prompt."""
     engine = _ensure_engine_ready()
     try:
-        return await engine.generate(request.prompt)
+        consensus, metrics = await engine.generate(request.prompt)
+        return {
+            "consensus": consensus.representative_output,
+            "model": consensus.representative_model,
+            "confidence": consensus.avg_confidence,
+            "grade": consensus.output_grade.value,
+        }
     except RuntimeError as exc:
         logger.warning("Generate called before initialization: %s", exc)
         raise HTTPException(status_code=503, detail="Engine initialization incomplete") from exc
     except Exception as exc:
         logger.exception("Generation failed: %s", exc)
         raise HTTPException(status_code=500, detail="Generation failed") from exc
+
+
+@app.post("/query")
+async def query(request: QueryRequest):
+    """
+    TORON epistemic query endpoint.
+
+    Returns consensus from 12 AI models with epistemic rigor.
+    """
+    engine = _ensure_engine_ready()
+
+    try:
+        consensus, metrics = await engine.generate(
+            prompt=request.prompt,
+            use_cache=request.use_cache,
+            user_id=request.user_id,
+            session_id=request.session_id
+        )
+
+        return {
+            "consensus": {
+                "output": consensus.representative_output,
+                "model": consensus.representative_model,
+                "confidence": consensus.avg_confidence,
+                "calibrated_confidence": consensus.calibrated_confidence,
+                "source_weighted_confidence": consensus.source_weighted_confidence,
+                "agreement": f"{consensus.agreement_count}/{consensus.total_responses}",
+                "quality": consensus.consensus_quality.value,
+                "grade": consensus.output_grade.value,
+                "evidence_strength": consensus.evidence_strength,
+                "arbitration_source": consensus.arbitration_source.value,
+                "arbitration_model": consensus.arbitration_model,
+                "uncertainty_flags": consensus.uncertainty_flags,
+            },
+            "metrics": {
+                "request_id": metrics.request_id,
+                "latency_ms": metrics.total_latency_ms,
+                "providers_called": metrics.providers_called,
+                "providers_failed": metrics.providers_failed,
+                "cache_hit": metrics.cache_hits > 0,
+                "tier_retries": metrics.tier_retries,
+                "tier_timeouts": metrics.tier_timeouts,
+                "degradation_level": metrics.degradation_level,
+                "tier4_failsafe_triggered": metrics.tier4_failsafe_triggered,
+            }
+        }
+
+    except Exception as exc:
+        logger.exception("Query failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(exc)}") from exc
 
 
 @app.get("/health")

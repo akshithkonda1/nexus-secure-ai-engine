@@ -12,3 +12,13 @@ output "image_uri" {
   description = "Fully qualified ECR image URI"
   value       = aws_ecr_repository.toron.repository_url
 }
+
+output "api_url" {
+  description = "TORON API URL"
+  value       = var.route53_zone_id != "" ? "https://${var.api_subdomain}.${var.domain_name}" : "http://${aws_lb.toron.dns_name}"
+}
+
+output "alb_dns_name" {
+  description = "ALB DNS name"
+  value       = aws_lb.toron.dns_name
+}

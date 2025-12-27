@@ -35,6 +35,13 @@ from pydantic import BaseModel, Field
 # Telemetry integration
 from ryuzen.engine.telemetry_client import get_telemetry_client
 
+# Real AI provider integrations
+from ryuzen.engine.providers import (
+    BaseProvider,
+    ProviderLoader,
+    ProviderResponse,
+)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -961,57 +968,6 @@ class LRUCacheWithTTL:
 
 
 # ============================================================================
-# MOCK PROVIDER
-# ============================================================================
-
-
-class MockProvider:
-    def __init__(
-        self,
-        model_name: str,
-        style: str,
-        base_latency_ms: int = 300,
-        error_rate: float = 0.02,
-    ):
-        self.model_name = model_name
-        self.style = style
-        self.base_latency_ms = base_latency_ms
-        self.error_rate = error_rate
-        self._call_count = 0
-
-    async def generate(self, prompt: str) -> ModelResponse:
-        self._call_count += 1
-
-        seed = int(
-            hashlib.sha256(f"{prompt}:{self._call_count}".encode()).hexdigest()[:8], 16
-        )
-        seed = seed % (2**32)  # Ensure seed is within valid range
-        rng = np.random.RandomState(seed)
-
-        if rng.random() < self.error_rate:
-            raise RuntimeError(f"Simulated failure for {self.model_name}")
-
-        jitter = rng.randint(-50, 50)
-        latency = max(100, self.base_latency_ms + jitter)
-
-        await asyncio.sleep(latency / 1000.0)
-
-        tokens = max(50, len(prompt.split()) + rng.randint(10, 50))
-        content = f"[{self.model_name} | {self.style}] Response to: {prompt[:100]}..."
-
-        fingerprint = SemanticSimilarity.compute_fingerprint(content)
-
-        return ModelResponse(
-            model=self.model_name,
-            content=content,
-            confidence=0.75 + rng.random() * 0.2,
-            latency_ms=latency,
-            tokens_used=tokens,
-            fingerprint=fingerprint,
-        )
-
-
-# ============================================================================
 # CONSENSUS ENGINE
 # ============================================================================
 
@@ -1108,11 +1064,7 @@ class ToronEngineV31Enhanced:
 
     def __init__(self, config: EngineConfig = DEFAULT_CONFIG):
         self.config = config
-        self.providers: List[MockProvider] = []
-        self.tier1_model_names: List[str] = []
-        self.tier2_model_names: List[str] = []
-        self.tier3_model_names: List[str] = []
-        self.tier4_model_names: List[str] = []
+        self.providers: List[BaseProvider] = []  # Real providers from ProviderLoader
         self.cache = LRUCacheWithTTL(
             max_size=config.cache_max_entries, ttl_seconds=config.cache_ttl_seconds
         )
@@ -1126,17 +1078,54 @@ class ToronEngineV31Enhanced:
 
         logger.info("ToronEngineV31Enhanced (A-Grade with Failsafe) created")
 
-    def initialize(self, providers: Optional[List[MockProvider]] = None) -> None:
+    def initialize(self, providers: Optional[List[BaseProvider]] = None) -> None:
+        """
+        Initialize TORON engine with real AI providers.
+
+        Args:
+            providers: Optional pre-configured providers (for testing)
+        """
         with self._init_lock:
             if self._initialized:
                 return
 
             try:
                 if providers:
+                    # Use provided providers (for testing/custom configs)
                     self.providers = providers
                 else:
-                    self._load_default_providers()
+                    # Load real providers from AWS Secrets Manager
+                    from ryuzen.engine.simulation_mode import SimulationMode
 
+                    loader = ProviderLoader(
+                        secrets_id="toron/api-keys",
+                        region="us-east-1",
+                        use_simulation=SimulationMode.is_enabled()
+                    )
+
+                    # Load providers (sync wrapper for async operation)
+                    import asyncio
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = None
+
+                    if loop and loop.is_running():
+                        # We're in an async context, create a new task
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(
+                                asyncio.run, loader.load_providers()
+                            )
+                            self.providers = future.result()
+                    else:
+                        # Not in async context, run directly
+                        self.providers = asyncio.run(loader.load_providers())
+
+                    if not self.providers:
+                        raise RuntimeError("No providers loaded - check API keys in Secrets Manager")
+
+                # Initialize circuit breakers for all providers
                 for provider in self.providers:
                     self.circuit_breakers[provider.model_name] = CircuitBreaker(
                         provider_name=provider.model_name,
@@ -1146,99 +1135,12 @@ class ToronEngineV31Enhanced:
 
                 self._initialized = True
                 logger.info(
-                    f"ToronEngineV31Enhanced initialized with {len(self.providers)} providers"
+                    f"ToronEngineV31Enhanced initialized with {len(self.providers)} real providers"
                 )
 
             except Exception as e:
                 logger.exception("Initialization failed")
                 raise RuntimeError(f"Engine initialization failed: {e}") from e
-
-    def _load_default_providers(self) -> None:
-        tier1_configs = [
-            ("ChatGPT-5.2", "balanced", 280),
-            ("Gemini-3", "creative", 320),
-            ("Cohere-CommandR+", "analytical", 340),
-            ("Meta-Llama-3.2", "technical", 290),
-            ("Mistral-Large", "precise", 300),
-            ("Qwen", "multilingual", 310),
-            ("Claude-Sonnet-4.5", "harmonious", 350),
-            ("Perplexity-Sonar", "search", 260),
-            ("Grok-4.1", "real-time-reasoning", 340),  # Enhanced reasoning + real-time data
-        ]
-        
-        tier2_configs = [
-            ("Kimi-K2-Thinking", "reasoning", 520),
-            ("DeepSeek-R1", "chain-of-thought", 480),
-        ]
-        
-        tier3_configs = [
-            # General Search & Knowledge Bases
-            ("Google-Search", "retrieval", 180),
-            ("Bing-Search", "retrieval", 190),
-            ("Britannica-API", "factual", 220),
-            ("Wikipedia-API", "encyclopedic", 200),
-            ("MedicalLLM", "domain-specific", 380),
-            
-            # Academic & Research
-            ("Arxiv-API", "academic", 260),
-            ("SemanticScholar-API", "academic", 255),
-            ("CrossRef-API", "bibliographic", 240),
-            ("PubMed-API", "medical-research", 300),
-            ("ClinicalTrials-API", "medical-evidence", 320),
-            ("OpenAlex-API", "research-graph", 250),
-            ("CORE-API", "open-access-research", 245),
-            
-            # Technical & Practical Knowledge
-            ("StackOverflow-API", "technical-practical", 230),
-            ("MDN-Web-Docs", "technical-reference", 210),
-            ("WolframAlpha-API", "computational-factual", 270),
-            
-            # Government & Regulatory
-            ("Government-Data-API", "regulatory", 260),
-            ("EU-Legislation-API", "legal-regulatory", 280),
-            
-            # News & Current Events
-            ("NewsAPI", "current-events", 190),
-            ("GDELT", "global-events-analysis", 210),
-            
-            # Patents & IP
-            ("PatentScope-API", "intellectual-property", 290),
-            ("USPTO-API", "patents-us", 285),
-            
-            # Financial & Business
-            ("FinancialTimes-API", "financial-analysis", 240),
-            ("SEC-EDGAR", "financial-filings", 260),
-            
-            # Code & Implementation
-            ("GitHub-Code-Search", "code-retrieval", 235),
-            ("OpenSource-Docs", "implementation-reference", 225),
-            
-            # Science & Environment
-            ("OpenWeather-API", "environmental-factual", 200),
-            ("NASA-API", "scientific-domain", 260),
-            
-            # Philosophy & Theory
-            ("Philosophy-Encyclopedia", "conceptual-theory", 215),
-            ("Stanford-SEP", "philosophical-reference", 230),
-            
-            # ENHANCED: Social & Community Knowledge
-            ("Reddit-API", "community-knowledge", 195),
-        ]
-        
-        tier4_configs = [
-            ("Claude-Opus-4", "judicial", 520),
-        ]
-
-        self.tier1_model_names = [name for name, _, _ in tier1_configs]
-        self.tier2_model_names = [name for name, _, _ in tier2_configs]
-        self.tier3_model_names = [name for name, _, _ in tier3_configs]
-        self.tier4_model_names = [name for name, _, _ in tier4_configs]
-
-        all_configs = tier1_configs + tier2_configs + tier3_configs + tier4_configs
-        self.providers = [
-            MockProvider(name, style, latency)
-            for name, style, latency in all_configs
-        ]
 
     def _ensure_initialized(self) -> None:
         if not self._initialized:
@@ -1251,7 +1153,7 @@ class ToronEngineV31Enhanced:
             raise ValueError(f"Prompt exceeds max length: {len(prompt)}")
 
     async def _call_provider_with_circuit_breaker(
-        self, provider: MockProvider, prompt: str
+        self, provider: BaseProvider, prompt: str
     ) -> Optional[ModelResponse]:
         """Call a provider with circuit breaker protection."""
         breaker = self.circuit_breakers[provider.model_name]
@@ -1261,9 +1163,21 @@ class ToronEngineV31Enhanced:
             return None
 
         try:
+            # Call real provider (returns ProviderResponse)
             response = await provider.generate(prompt)
             breaker.record_success()
-            return response
+
+            # Convert ProviderResponse to ModelResponse for compatibility
+            return ModelResponse(
+                model=response.model,
+                content=response.content,
+                confidence=response.confidence,
+                latency_ms=response.latency_ms,
+                tokens_used=response.tokens_used,
+                fingerprint=response.fingerprint,
+                timestamp=response.timestamp,
+                metadata=response.metadata
+            )
         except Exception as e:
             breaker.record_failure()
             logger.error(f"Provider {provider.model_name} failed: {e}")
@@ -1271,7 +1185,7 @@ class ToronEngineV31Enhanced:
 
     async def _call_tier_with_retry_and_timeout(
         self,
-        providers: List[MockProvider],
+        providers: List[BaseProvider],
         prompt: str,
         tier_name: str,
         min_responses: int,
@@ -1346,17 +1260,23 @@ class ToronEngineV31Enhanced:
     def _select_random_tier2_failsafe(self) -> Optional[str]:
         """
         ENHANCED: Select a random Tier 2 model for failsafe arbitration.
-        
+
         Uses cryptographically secure random selection to ensure unpredictability.
         """
-        if not self.tier2_model_names:
+        # Get tier 2 providers using config.tier attribute
+        tier2_providers = [
+            p for p in self.providers
+            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
+        ]
+
+        if not tier2_providers:
             logger.error("No Tier 2 models available for failsafe")
             return None
-        
+
         # Use secrets module for cryptographically secure randomness
-        selected = secrets.choice(self.tier2_model_names)
-        logger.info(f"Tier 4 Failsafe: Selected {selected} as backup arbiter")
-        return selected
+        selected = secrets.choice(tier2_providers)
+        logger.info(f"Tier 4 Failsafe: Selected {selected.model_name} as backup arbiter")
+        return selected.model_name
 
     async def _invoke_tier4_arbitration(
         self,
@@ -1374,10 +1294,11 @@ class ToronEngineV31Enhanced:
         """
         failsafe_triggered = False
         failsafe_model = None
-        
-        # Try primary arbiter (Opus)
+
+        # Try primary arbiter (Opus) - use tier attribute from provider config
         tier4_providers = [
-            p for p in self.providers if p.model_name in self.tier4_model_names
+            p for p in self.providers
+            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 4
         ]
         
         if not tier4_providers:
@@ -1518,10 +1439,16 @@ class ToronEngineV31Enhanced:
                 consensus, metrics = cached
                 return consensus, metrics
         
-        # Separate providers by tier
+        # Separate providers by tier using provider config
         tier1_providers = [
-            p for p in self.providers if p.model_name in self.tier1_model_names
+            p for p in self.providers
+            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 1
         ]
+
+        # Fallback: if no tier-based filtering worked, use all providers
+        if not tier1_providers:
+            logger.warning("No tier 1 providers found via config, using all providers")
+            tier1_providers = self.providers
         
         total_retries = 0
         total_timeouts = 0
@@ -1657,86 +1584,22 @@ class ToronEngineV31Enhanced:
         
         cache_stats = self.cache.get_stats()
         
+        # Count tier 2 providers
+        tier2_count = sum(
+            1 for p in self.providers
+            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
+        )
+
         return {
             "engine_initialized": self._initialized,
             "total_providers": len(self.providers),
             "healthy_providers": sum(
-                1 for p in provider_statuses.values() 
+                1 for p in provider_statuses.values()
                 if p["status"] == "healthy"
             ),
             "tier2_failsafe_enabled": self.config.enable_tier4_failsafe,
-            "tier2_models_available": len(self.tier2_model_names),
+            "tier2_models_available": tier2_count,
             "provider_statuses": provider_statuses,
             "cache_stats": cache_stats,
             "config": self.config.dict()
         }
-
-
-# ============================================================================
-# EXAMPLE USAGE
-# ============================================================================
-
-
-async def main():
-    """Example usage of ToronEngineV31Enhanced."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
-    
-    # Create and initialize engine
-    engine = ToronEngineV31Enhanced()
-    engine.initialize()
-    
-    # Generate response
-    prompt = "What are the key principles of quantum computing?"
-    
-    consensus, metrics = await engine.generate(prompt)
-    
-    print("\n" + "="*80)
-    print("CONSENSUS RESULT")
-    print("="*80)
-    print(f"Output Grade: {consensus.output_grade.value}")
-    print(f"Agreement: {consensus.agreement_count}/{consensus.total_responses} models")
-    print(f"Confidence: {consensus.avg_confidence:.2%}")
-    print(f"Source-Weighted Confidence: {consensus.source_weighted_confidence:.2%}")
-    print(f"Evidence Strength: {consensus.evidence_strength}")
-    print(f"Quality: {consensus.consensus_quality.value}")
-    print(f"\nArbitration Source: {consensus.arbitration_source.value}")
-    if consensus.arbitration_model:
-        print(f"Arbitration Model: {consensus.arbitration_model}")
-    print(f"\nRepresentative Model: {consensus.representative_model}")
-    print(f"Response: {consensus.representative_output[:200]}...")
-    
-    if consensus.uncertainty_flags:
-        print(f"\nUncertainty Flags:")
-        for flag in consensus.uncertainty_flags:
-            print(f"  - {flag}")
-    
-    print("\n" + "="*80)
-    print("EXECUTION METRICS")
-    print("="*80)
-    print(f"Request ID: {metrics.request_id}")
-    print(f"Total Latency: {metrics.total_latency_ms:.1f}ms")
-    print(f"Providers Called: {metrics.providers_called}")
-    print(f"Providers Failed: {metrics.providers_failed}")
-    print(f"Tier Retries: {metrics.tier_retries}")
-    print(f"Tier Timeouts: {metrics.tier_timeouts}")
-    print(f"Degradation Level: {metrics.degradation_level}")
-    if metrics.tier4_failsafe_triggered:
-        print(f"\n⚠️  Tier 4 Failsafe Triggered!")
-        print(f"Failsafe Model: {metrics.tier4_failsafe_model}")
-    
-    # Health check
-    health = engine.get_health_status()
-    print("\n" + "="*80)
-    print("HEALTH STATUS")
-    print("="*80)
-    print(f"Healthy Providers: {health['healthy_providers']}/{health['total_providers']}")
-    print(f"Cache Hit Rate: {health['cache_stats']['hit_rate']:.2%}")
-    print(f"Tier 2 Failsafe: {'Enabled' if health['tier2_failsafe_enabled'] else 'Disabled'}")
-    print(f"Tier 2 Models Available: {health['tier2_models_available']}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
