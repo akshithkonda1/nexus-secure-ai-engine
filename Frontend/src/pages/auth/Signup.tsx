@@ -30,7 +30,7 @@ export default function SignupPage() {
     }
 
     if (!agreedToTerms) {
-      setError('You must agree to the Terms of Service');
+      setError('You must agree to the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -55,7 +55,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleOAuthSignup = async (provider: 'google' | 'apple' | 'facebook' | 'microsoft') => {
+  const handleOAuthSignup = async (provider: 'google' | 'github' | 'facebook' | 'microsoft') => {
     setError('');
     setLoading(true);
 
@@ -82,43 +82,44 @@ export default function SignupPage() {
           {/* Signup Card */}
           <div
             className={cn(
-              'relative rounded-2xl border p-8 shadow-xl backdrop-blur-sm',
+              'relative rounded-3xl border-2 p-10 shadow-2xl backdrop-blur-sm',
               bg.surface,
               border.subtle
             )}
           >
             {/* Header */}
-            <div className="mb-8 text-center">
-              <h1 className={cn('mb-2 text-3xl font-bold', text.primary)}>
+            <div className="mb-10 text-center">
+              <h1 className={cn('mb-3 text-4xl font-bold tracking-tight', text.primary)}>
                 Create your account
               </h1>
-              <p className={cn('text-sm', text.muted)}>
-                Join Ryuzen and start building
+              <p className={cn('text-base', text.muted)}>
+                Join Ryuzen and supercharge your workflow
               </p>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-500">
+              <div className="mb-6 rounded-xl border-2 border-red-500/30 bg-red-500/10 px-4 py-3.5 text-sm font-medium text-red-500 backdrop-blur-sm">
                 {error}
               </div>
             )}
 
             {/* OAuth Buttons */}
-            <div className="mb-6 space-y-3">
+            <div className="mb-8 space-y-3">
+              {/* Google */}
               <button
                 type="button"
                 onClick={() => handleOAuthSignup('google')}
                 disabled={loading}
                 className={cn(
-                  'flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50',
+                  'group flex w-full items-center justify-center gap-3 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
                   bg.elevated,
                   border.subtle,
                   text.primary,
-                  'hover:border-[var(--line-strong)]'
+                  'hover:border-[var(--accent)]/30 hover:bg-[var(--bg-surface)]'
                 )}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -139,55 +140,58 @@ export default function SignupPage() {
                 <span>Continue with Google</span>
               </button>
 
+              {/* GitHub */}
               <button
                 type="button"
-                onClick={() => handleOAuthSignup('apple')}
+                onClick={() => handleOAuthSignup('github')}
                 disabled={loading}
                 className={cn(
-                  'flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50',
+                  'group flex w-full items-center justify-center gap-3 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
                   bg.elevated,
                   border.subtle,
                   text.primary,
-                  'hover:border-[var(--line-strong)]'
+                  'hover:border-[var(--accent)]/30 hover:bg-[var(--bg-surface)]'
                 )}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                <span>Continue with Apple</span>
+                <span>Continue with GitHub</span>
               </button>
 
+              {/* Facebook */}
               <button
                 type="button"
                 onClick={() => handleOAuthSignup('facebook')}
                 disabled={loading}
                 className={cn(
-                  'flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50',
+                  'group flex w-full items-center justify-center gap-3 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
                   bg.elevated,
                   border.subtle,
                   text.primary,
-                  'hover:border-[var(--line-strong)]'
+                  'hover:border-[var(--accent)]/30 hover:bg-[var(--bg-surface)]'
                 )}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#1877F2">
+                <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="#1877F2">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 <span>Continue with Facebook</span>
               </button>
 
+              {/* Microsoft */}
               <button
                 type="button"
                 onClick={() => handleOAuthSignup('microsoft')}
                 disabled={loading}
                 className={cn(
-                  'flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50',
+                  'group flex w-full items-center justify-center gap-3 rounded-xl border-2 px-5 py-3.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
                   bg.elevated,
                   border.subtle,
                   text.primary,
-                  'hover:border-[var(--line-strong)]'
+                  'hover:border-[var(--accent)]/30 hover:bg-[var(--bg-surface)]'
                 )}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                   <path fill="#f25022" d="M1 1h10v10H1z" />
                   <path fill="#00a4ef" d="M1 13h10v10H1z" />
                   <path fill="#7fba00" d="M13 1h10v10H13z" />
@@ -198,22 +202,22 @@ export default function SignupPage() {
             </div>
 
             {/* Divider */}
-            <div className="relative mb-6">
+            <div className="relative mb-8">
               <div className="absolute inset-0 flex items-center">
-                <div className={cn('w-full border-t', border.subtle)} />
+                <div className={cn('w-full border-t-2', border.subtle)} />
               </div>
-              <div className="relative flex justify-center text-xs">
-                <span className={cn('px-2', bg.surface, text.muted)}>
+              <div className="relative flex justify-center text-sm font-medium">
+                <span className={cn('px-4', bg.surface, text.muted)}>
                   Or continue with email
                 </span>
               </div>
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label htmlFor="name" className={cn('mb-1.5 block text-sm font-medium', text.primary)}>
-                  Full Name
+                <label htmlFor="name" className={cn('mb-2 block text-sm font-semibold', text.primary)}>
+                  Full name
                 </label>
                 <input
                   id="name"
@@ -224,18 +228,18 @@ export default function SignupPage() {
                   placeholder="John Doe"
                   disabled={loading}
                   className={cn(
-                    'w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50',
+                    'w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[var(--accent)]/20 disabled:cursor-not-allowed disabled:opacity-50',
                     bg.elevated,
                     border.subtle,
                     text.primary,
-                    'placeholder:text-[var(--text-muted)]'
+                    'placeholder:text-[var(--text-muted)] placeholder:font-normal'
                   )}
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className={cn('mb-1.5 block text-sm font-medium', text.primary)}>
-                  Email
+                <label htmlFor="email" className={cn('mb-2 block text-sm font-semibold', text.primary)}>
+                  Email address
                 </label>
                 <input
                   id="email"
@@ -246,17 +250,17 @@ export default function SignupPage() {
                   placeholder="name@domain.com"
                   disabled={loading}
                   className={cn(
-                    'w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50',
+                    'w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[var(--accent)]/20 disabled:cursor-not-allowed disabled:opacity-50',
                     bg.elevated,
                     border.subtle,
                     text.primary,
-                    'placeholder:text-[var(--text-muted)]'
+                    'placeholder:text-[var(--text-muted)] placeholder:font-normal'
                   )}
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className={cn('mb-1.5 block text-sm font-medium', text.primary)}>
+                <label htmlFor="password" className={cn('mb-2 block text-sm font-semibold', text.primary)}>
                   Password
                 </label>
                 <input
@@ -265,21 +269,21 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="••••••••"
+                  placeholder="At least 8 characters"
                   disabled={loading}
                   className={cn(
-                    'w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50',
+                    'w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[var(--accent)]/20 disabled:cursor-not-allowed disabled:opacity-50',
                     bg.elevated,
                     border.subtle,
                     text.primary,
-                    'placeholder:text-[var(--text-muted)]'
+                    'placeholder:text-[var(--text-muted)] placeholder:font-normal'
                   )}
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className={cn('mb-1.5 block text-sm font-medium', text.primary)}>
-                  Confirm Password
+                <label htmlFor="confirmPassword" className={cn('mb-2 block text-sm font-semibold', text.primary)}>
+                  Confirm password
                 </label>
                 <input
                   id="confirmPassword"
@@ -287,30 +291,34 @@ export default function SignupPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="••••••••"
+                  placeholder="Re-enter your password"
                   disabled={loading}
                   className={cn(
-                    'w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50',
+                    'w-full rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[var(--accent)]/20 disabled:cursor-not-allowed disabled:opacity-50',
                     bg.elevated,
                     border.subtle,
                     text.primary,
-                    'placeholder:text-[var(--text-muted)]'
+                    'placeholder:text-[var(--text-muted)] placeholder:font-normal'
                   )}
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-3 pt-2">
                 <input
                   id="terms"
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--line-subtle)] text-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]"
+                  className="mt-0.5 h-4 w-4 rounded border-2 border-[var(--line-subtle)] text-[var(--accent)] transition-colors focus:ring-2 focus:ring-[var(--accent)]/20"
                 />
-                <label htmlFor="terms" className={cn('text-sm', text.muted)}>
+                <label htmlFor="terms" className={cn('text-sm leading-tight', text.muted)}>
                   I agree to the{' '}
-                  <a href="/terms" className="text-[var(--accent)] hover:underline">
+                  <a href="/terms" className="font-semibold text-[var(--accent)] hover:underline">
                     Terms of Service
+                  </a>
+                  {' '}and{' '}
+                  <a href="/privacy" className="font-semibold text-[var(--accent)] hover:underline">
+                    Privacy Policy
                   </a>
                 </label>
               </div>
@@ -319,7 +327,7 @@ export default function SignupPage() {
                 type="submit"
                 disabled={loading}
                 className={cn(
-                  'w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50',
+                  'w-full rounded-xl px-4 py-3.5 text-sm font-bold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100',
                   bg.accent,
                   text.inverse
                 )}
@@ -329,26 +337,44 @@ export default function SignupPage() {
             </form>
 
             {/* Footer */}
-            <div className="mt-6 text-center">
-              <p className={cn('text-sm', text.muted)}>
+            <div className="mt-8 text-center">
+              <p className={cn('text-sm font-medium', text.muted)}>
                 Already have an account?{' '}
                 <Link
                   to="/login"
-                  className="font-medium text-[var(--accent)] hover:underline"
+                  className="font-bold text-[var(--accent)] transition-colors hover:text-[var(--accent)]/80"
                 >
                   Sign in
                 </Link>
               </p>
             </div>
 
-            {/* Badges */}
-            <div className="mt-6 flex justify-center gap-2">
-              <span className={cn('rounded-full border px-3 py-1 text-xs', border.subtle, text.muted)}>
-                Secure Authentication
-              </span>
-              <span className={cn('rounded-full border px-3 py-1 text-xs', border.subtle, text.muted)}>
-                Privacy First
-              </span>
+            {/* Trust Badges */}
+            <div className="mt-8 flex flex-wrap justify-center gap-2">
+              <div className={cn('flex items-center gap-2 rounded-full border-2 px-4 py-2', border.subtle)}>
+                <svg className="h-4 w-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span className={cn('text-xs font-semibold', text.muted)}>
+                  Secure
+                </span>
+              </div>
+              <div className={cn('flex items-center gap-2 rounded-full border-2 px-4 py-2', border.subtle)}>
+                <svg className="h-4 w-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className={cn('text-xs font-semibold', text.muted)}>
+                  Encrypted
+                </span>
+              </div>
+              <div className={cn('flex items-center gap-2 rounded-full border-2 px-4 py-2', border.subtle)}>
+                <svg className="h-4 w-4 text-[var(--accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className={cn('text-xs font-semibold', text.muted)}>
+                  Free Forever
+                </span>
+              </div>
             </div>
           </div>
         </div>
