@@ -16,18 +16,18 @@ Most AI systems smooth over disagreement and hallucinate confidence. We do the o
 
 ### TORON (Multi-Model Reasoning Engine)
 
-TORON orchestrates 11 AI models across 40 knowledge sources through an 8-tier epistemic pipeline, delivering responses in 1.8-4 seconds that show you not just what AI thinks, but where it disagrees.
+TORON orchestrates 12 AI models across 40 knowledge sources through an 8-tier epistemic pipeline, delivering responses in 1.8-4 seconds that show you not just what AI thinks, but where it disagrees.
 
 **Key Features**:
-- **Multi-model consensus**: Query 11 models simultaneously (8 via AWS Bedrock, 3 via direct APIs)
+- **Multi-model consensus**: Query 12 models simultaneously (8 via AWS Bedrock, 4 via direct APIs)
 - **Epistemic pipeline**: 8-tier processing that preserves uncertainty at each stage
 - **40 knowledge sources**: From real-time web search to academic databases
 - **1.8-4 second responses**: Despite complex multi-tier processing
 - **Transparent disagreement**: See where models diverge before synthesis
 
 **Supported Models**:
-- AWS Bedrock: Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku, Llama 3.1 (8B/70B), Mistral Large 2, Cohere Command R+, AI21 Jamba 1.5
-- Direct APIs: GPT-4o, Gemini 1.5 Pro, Perplexity Sonar
+- AWS Bedrock: Claude Sonnet, Claude Opus, Llama 4 Maverick, Cohere Command R+, Mistral Large 3, Moonshot Kimi K2 Thinking, DeepSeek R1 Thinking, Qwen 3
+- Direct APIs: ChatGPT 5.2, Gemini 3 Pro, Perplexity Sonar, Grok 4.1
 
 ### Workspace
 
@@ -80,47 +80,13 @@ Our dual revenue model includes selling anonymized telemetry data to AI provider
 - Opt-in across all subscription tiers
 - Full transparency on data collection and usage
 
-## Pricing
-
-**Free**: Workspace with limited TORON queries
-**Premium ($19/mo)**: Unlimited TORON, full Workspace features
-**Ultra ($39/mo)**: Priority processing, advanced analytics, API access
-
-*Strategy note*: Premium launches high then drops when Ultra releases, with automatic upgrades for existing subscribers.
-
-## Development Status
-
-**Current**: Active development toward January 20, 2026 beta launch
-**Completed**: 
-- TORON core architecture (11 models orchestrated)
-- Workspace interface (4 widgets, 5 focus modes)
-- Telemetry infrastructure (production-ready)
-- OAuth backend integration design
-
-**In Progress**:
-- Production-ready implementations
-- Error handling and fallback procedures
-- Launch readiness sprint (26 days)
-
-## Target Market
-
-**Initial**: University students in Texas (San Antonio → Austin → Houston → Dallas)
-**Near-term**: Everyday consumers seeking accurate answers + critical thinking development
-**Long-term**: Enterprise expansion (years 3-4)
-
 ## Mission
 
 To provide everyday consumers with AI tools that develop critical thinking rather than dependency. We position against single-model AI systems that smooth over complexity, offering instead a platform that respects user intelligence by preserving the uncertainty inherent in complex questions.
 
-## Sustainability Target
-
-$637K ARR by August 2026 through dual revenue streams:
-1. Consumer SaaS subscriptions
-2. Anonymized telemetry data sales to AI providers
-
 ## Why "Ryuzen"?
 
-The name combines concepts of flow (Ryu) and mindfulness (Zen)—reflecting our approach to AI interaction that balances rapid multi-model processing with thoughtful, honest synthesis.
+The name combines Japanese concepts: 竜/龍 (Ryu) meaning "dragon" or "flow" and 禅 (Zen) meaning "meditation/Buddhist philosophy" or "mindfulness"—reflecting our approach to AI interaction that balances rapid multi-model processing with thoughtful, honest synthesis.
 
 ## Contributing
 
@@ -133,7 +99,7 @@ The name combines concepts of flow (Ryu) and mindfulness (Zen)—reflecting our 
 ## Contact
 
 **Founder**: Akshith (Solo founder, UTSA alumni)
-**Company**: Human-centric AI company
+**Company**: Coming soon 
 **Mission**: Epistemic honesty in AI interaction
 
 ---
