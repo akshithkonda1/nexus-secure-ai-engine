@@ -1,58 +1,141 @@
-# This is Ryuzen, an AI ecosystem 
+# Ryuzen
 
+**A cognitive operating system for the age of AI uncertainty**
 
+Ryuzen is a human-centric AI platform that preserves uncertainty and exposes disagreement between AI models rather than projecting false confidence. We believe the future of AI isn't about hiding complexity—it's about equipping everyday users with the critical thinking tools to navigate it.
 
+## Philosophy
 
+Most AI systems smooth over disagreement and hallucinate confidence. We do the opposite.
 
+**Epistemic Honesty First**: We preserve natural variance in AI responses, expose when models disagree, and refuse to manufacture certainty where none exists. Our outputs are honest but not sugary—designed to develop critical thinking, not dependency.
 
+**Thinking, Not Posturing**: We preserve dissent until late synthesis, allowing you to see where AI models diverge and why. This isn't a bug—it's our core feature.
 
+## Products
 
+### TORON (Multi-Model Reasoning Engine)
 
+TORON orchestrates 11 AI models across 40 knowledge sources through an 8-tier epistemic pipeline, delivering responses in 1.8-4 seconds that show you not just what AI thinks, but where it disagrees.
 
-# Toron v1.6 — Ryuzen Engine
+**Key Features**:
+- **Multi-model consensus**: Query 11 models simultaneously (8 via AWS Bedrock, 3 via direct APIs)
+- **Epistemic pipeline**: 8-tier processing that preserves uncertainty at each stage
+- **40 knowledge sources**: From real-time web search to academic databases
+- **1.8-4 second responses**: Despite complex multi-tier processing
+- **Transparent disagreement**: See where models diverge before synthesis
 
-The Toron engine is a cloud-neutral orchestration layer that secures prompts and responses with AES-256, masks PII, and exposes connectors for AWS, Azure, and GCP model backends. This repo packages the engine with container tooling, Helm charts, Terraform plans, and a full pytest harness so you can ship the system with confidence.
+**Supported Models**:
+- AWS Bedrock: Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Haiku, Llama 3.1 (8B/70B), Mistral Large 2, Cohere Command R+, AI21 Jamba 1.5
+- Direct APIs: GPT-4o, Gemini 1.5 Pro, Perplexity Sonar
 
-## Repository layout
+### Workspace
+
+A productivity environment that serves as both a standalone tool and gateway to TORON's capabilities.
+
+**Learning Zones** (widgets that inform TORON):
+- Tasks: Project and task management
+- Notes: Quick capture and organization
+- Calendar: Schedule integration
+- Browser: Web research and bookmarking
+
+**Focus Modes** (private creative spaces):
+- Code: Development environment
+- Canvas: Visual workspace
+- Write: Long-form writing
+- Build: Project assembly
+- Learn: Educational content
+
+Focus modes remain private by default—AI access requires explicit user permission.
+
+## Architecture
+
+### Technical Stack
+
+**Frontend**: React/TypeScript with modular widget architecture
+**Backend**: AWS serverless (Lambda + API Gateway + Bedrock)
+**Infrastructure**: Terraform-managed, multi-region deployment
+**Caching**: DynamoDB with 40-70% hit rates
+**Authentication**: 34 platform OAuth integrations
+
+### Epistemic Pipeline
+
 ```
-.
-├── docker/                 # Dockerfile and compose for local runs
-├── k8s/                    # Raw Kubernetes manifests
-├── helm/toron/             # Helm chart for configurable releases
-├── terraform/              # AWS, Azure, and GCP infrastructure plans
-├── toron/                  # Python engine primitives
-├── src/backend/server.py   # Flask entrypoint for container images
-├── tests/                  # Unit tests, fixtures, and pytest config
-├── docs/                   # Architecture + deployment + testing guides
-└── .github/workflows/      # CI/CD automation
+Tier 1: Query Analysis & Routing
+Tier 2: Multi-Model Parallel Execution
+Tier 3: Source Integration (40 knowledge sources)
+Tier 4: Disagreement Detection
+Tier 5: Uncertainty Quantification
+Tier 6: Variance Preservation
+Tier 7: Transparent Synthesis
+Tier 8: User-Facing Response
 ```
 
-## Local development
-- **Python server**: `python src/backend/server.py`
-- **Docker image**: `docker build -f docker/Dockerfile -t toron-engine:latest .`
-- **Compose**: `cd docker && docker compose up -d` (loads `.env` and maps port 8080)
+### Privacy-First Telemetry
 
-## Deployments
-- **Kubernetes manifests**: `kubectl apply -f k8s/`
-- **Helm chart**: `helm upgrade --install toron ./helm/toron --set image.tag=$(git rev-parse --short HEAD)`
-- **Terraform**: initialize the target cloud under `terraform/aws`, `terraform/azure`, or `terraform/gcp`, then `terraform plan -var="image_tag=$(git rev-parse --short HEAD)"`
+Our dual revenue model includes selling anonymized telemetry data to AI providers, but participation is **always optional**:
 
-## Testing
-- `pip install -r requirements-dev.txt`
-- `pytest` (HTML report written to `reports/report.html`, coverage to `htmlcov/`)
-- `make test` shortcut for `pytest --cov=toron --cov-report=html`
+- Triple-layer PII scrubbing
+- AI self-analysis (each model analyzes its own performance)
+- Opt-in across all subscription tiers
+- Full transparency on data collection and usage
+
+## Pricing
+
+**Free**: Workspace with limited TORON queries
+**Premium ($19/mo)**: Unlimited TORON, full Workspace features
+**Ultra ($39/mo)**: Priority processing, advanced analytics, API access
+
+*Strategy note*: Premium launches high then drops when Ultra releases, with automatic upgrades for existing subscribers.
+
+## Development Status
+
+**Current**: Active development toward January 20, 2026 beta launch
+**Completed**: 
+- TORON core architecture (11 models orchestrated)
+- Workspace interface (4 widgets, 5 focus modes)
+- Telemetry infrastructure (production-ready)
+- OAuth backend integration design
+
+**In Progress**:
+- Production-ready implementations
+- Error handling and fallback procedures
+- Launch readiness sprint (26 days)
+
+## Target Market
+
+**Initial**: University students in Texas (San Antonio → Austin → Houston → Dallas)
+**Near-term**: Everyday consumers seeking accurate answers + critical thinking development
+**Long-term**: Enterprise expansion (years 3-4)
+
+## Mission
+
+To provide everyday consumers with AI tools that develop critical thinking rather than dependency. We position against single-model AI systems that smooth over complexity, offering instead a platform that respects user intelligence by preserving the uncertainty inherent in complex questions.
+
+## Sustainability Target
+
+$637K ARR by August 2026 through dual revenue streams:
+1. Consumer SaaS subscriptions
+2. Anonymized telemetry data sales to AI providers
+
+## Why "Ryuzen"?
+
+The name combines concepts of flow (Ryu) and mindfulness (Zen)—reflecting our approach to AI interaction that balances rapid multi-model processing with thoughtful, honest synthesis.
 
 ## Contributing
-1. Create a feature branch and include tests for new behaviour.
-2. Run `pytest` locally; CI enforces coverage ≥ 90%.
-3. Update docs in `docs/` when you change deployment or testing flows.
 
-## Security model
-- **Encryption**: AES-256-GCM helpers enforce authenticated encryption.
-- **PII pipeline**: deterministic redaction and masking for emails, phones, and names.
-- **Secrets**: inject via `.env` locally, Kubernetes Secrets in clusters, or Terraform variables; never commit plaintext credentials.
+[Coming with beta launch]
 
-## Documentation
-- [Architecture Mermaid](docs/architecture.mmd)
-- [Deployment Guide](docs/deployment_guide.md)
-- [Testing Guide](docs/testing_guide.md)
+## License
+
+[To be determined]
+
+## Contact
+
+**Founder**: Akshith (Solo founder, UTSA alumni)
+**Company**: Human-centric AI company
+**Mission**: Epistemic honesty in AI interaction
+
+---
+
+*Ryuzen: Because the complexity you see is the complexity that exists.*
