@@ -31,13 +31,13 @@ TORON orchestrates 12 AI models across 40 knowledge sources through an 8-tier ep
 
 ### Workspace
 
-A productivity environment that serves as both a standalone tool and gateway to TORON's capabilities.
+A productivity environment that serves as both a standalone tool and gateway to TORON's capabilities but also a tool for those who are neurodivergent as see productivity a bit differently.
 
 **Learning Zones** (widgets that inform TORON):
 - Tasks: Project and task management
 - Notes: Quick capture and organization
 - Calendar: Schedule integration
-- Browser: Web research and bookmarking
+- Lists: Tasks that need to be done that day
 
 **Focus Modes** (private creative spaces):
 - Code: Development environment
