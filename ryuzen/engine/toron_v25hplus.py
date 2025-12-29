@@ -676,7 +676,7 @@ class OutputGrade(Enum):
 class ArbitrationSource(Enum):
     """Source of final arbitration decision."""
     
-    OPUS_PRIMARY = "opus_primary"  # Claude Opus 4 (normal path)
+    OPUS_PRIMARY = "opus_primary"  # Claude Opus 4.5 (normal path)
     TIER2_FAILSAFE = "tier2_failsafe"  # Random Tier 2 model (backup)
     CONSENSUS_ONLY = "consensus_only"  # No arbitration needed
 
@@ -1102,7 +1102,7 @@ class ToronEngineV31Enhanced:
     1. Tier 1: General Models (ALWAYS) - 9 models in parallel
     2. Tier 2: Reasoning Models (CONDITIONAL) - 2 models (DeepSeek R1, Kimi K2)
     3. Tier 3: Knowledge Sources (ALWAYS) - 30 sources with intelligent routing
-    4. Tier 4: Judicial Arbitration (CONDITIONAL) - Claude Opus 4.5 + failsafe
+    4. Tier 4: Judicial Arbitration (CONDITIONAL) - Claude Opus 4.5.5 + failsafe
     5. Tier 5: Source Weighting & Validation (ALWAYS)
     6. Tier 6: ALOE Synthesis & Confidence Calibration (ALWAYS)
     7. Tier 7: Political Balance & AI Bias Check (ALWAYS)
@@ -1411,7 +1411,7 @@ class ToronEngineV31Enhanced:
         """
         ENHANCED: Invoke Tier 4 arbitration with failsafe mechanism.
         
-        Primary: Claude Opus 4
+        Primary: Claude Opus 4.5
         Failsafe: Random Tier 2 model if Opus confidence < threshold
         
         Returns: (updated_consensus, failsafe_triggered, failsafe_model)
