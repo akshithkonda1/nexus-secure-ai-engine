@@ -207,9 +207,9 @@ class SourceReliability:
         "ChatGPT-5.2": 0.83,  # High: Well-calibrated
         "Gemini-3": 0.82,  # High: Strong factual accuracy
         "Mistral-Large": 0.80,  # Good: Technical precision
-        "Cohere-CommandR+": 0.80,  # Good: Analytical strength
-        "Meta-Llama-3.2": 0.78,  # Good: Technical rigor
-        "Qwen": 0.75,  # Good: Multilingual accuracy
+        "Cohere-Command R+": 0.80,  # Good: Analytical strength
+        "Meta-Llama-4 Maverick": 0.78,  # Good: Technical rigor
+        "Qwen 3": 0.75,  # Good: Multilingual accuracy
         "Perplexity-Sonar": 0.85,  # High: Search-grounded
         
         # Tier 4: Judicial
