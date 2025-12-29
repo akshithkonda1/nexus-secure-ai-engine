@@ -145,7 +145,6 @@ class SourceReliability:
     WEIGHTS = {
         # Tier 3: External Knowledge Sources - General
         "Britannica-API": 1.0,  # Highest: Expert-written encyclopedia
-        "MedicalLLM": 0.95,  # Very high: Domain-specific, trained on medical literature
         "WHO-API": 0.96,  # Very high: Official global health authority
         "CDC-API": 0.95,  # Very high: Official US health authority
         "Wikipedia-API": 0.85,  # High: Crowd-sourced but well-moderated
@@ -206,14 +205,14 @@ class SourceReliability:
         "Claude-Sonnet-4.5": 0.85,  # High: Strong reasoning
         "ChatGPT-5.2": 0.83,  # High: Well-calibrated
         "Gemini-3": 0.82,  # High: Strong factual accuracy
-        "Mistral-Large": 0.80,  # Good: Technical precision
+        "Mistral-Large 3": 0.80,  # Good: Technical precision
         "Cohere-Command R+": 0.80,  # Good: Analytical strength
         "Meta-Llama-4 Maverick": 0.78,  # Good: Technical rigor
         "Qwen 3": 0.75,  # Good: Multilingual accuracy
         "Perplexity-Sonar": 0.85,  # High: Search-grounded
         
         # Tier 4: Judicial
-        "Claude-Opus-4": 0.92,  # Very high: Most sophisticated reasoning
+        "Claude-Opus-4.5": 0.92,  # Very high: Most sophisticated reasoning
     }
 
     # Context-adaptive weight multipliers for Grok-4.1
