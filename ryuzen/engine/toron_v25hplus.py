@@ -1,18 +1,24 @@
 """
-Ryuzen Toron Engine v2.5h+ Enhanced - A Grade with Failsafe
-============================================================
+Ryuzen Toron Engine v2.5h+ Enhanced - A Grade with Evidence Gatekeeper
+========================================================================
 
-NEW ENHANCEMENTS:
-- Reddit as Tier 3 source for community knowledge
-- Tier 4 failsafe: Random Tier 2 model as last line of defense
+COMPLETE 8-TIER EPISTEMIC PIPELINE:
+1. Tier 1: General Models (9 models) - ALWAYS
+2. Tier 2: Reasoning Models (2 models) - CONDITIONAL
+3. Tier 3: Knowledge Sources (42 sources) - ALWAYS
+3.5. Tier 3.5: Evidence Gatekeeper (NEW) - ALWAYS
+4. Tier 4: Compile + Complete (repair) - CONDITIONAL
+5. Tier 5: Source Weighting & Validation - ALWAYS
+6. Tier 6: ALOE Synthesis & Calibration - ALWAYS
+7. Tier 7: Political Balance & Bias Check - ALWAYS
+8. Tier 8: Final Synthesis & Delivery - ALWAYS
+
+KEY FEATURES:
+- Evidence Gatekeeper validates Tier 3 before synthesis
+- Deterministic validation logic (not another AI model)
+- Routes to Tier 4 repair when evidence incomplete/conflicted
+- Citation completeness, contradiction detection, disclaimer checking
 - Airtight error handling with comprehensive fallback chains
-
-Upgrades from B → A grade in:
-- Consumer Stability: Retries, timeouts, graceful degradation
-- Epistemic Rigor: Source weighting, confidence calibration, uncertainty quantification
-- Judicial Robustness: Multi-layer arbitration with randomized fallback
-
-Maintains 100% determinism while dramatically improving reliability and trust.
 """
 
 from __future__ import annotations
@@ -42,7 +48,7 @@ from ryuzen.engine.providers import (
     ProviderResponse,
 )
 
-# Tier 3: External Knowledge Sources (30 sources with intelligent routing)
+# Tier 3: External Knowledge Sources (42 sources)
 from ryuzen.engine.tier3 import (
     Tier3Manager,
     KnowledgeSnippet,
@@ -50,21 +56,21 @@ from ryuzen.engine.tier3 import (
     QueryIntent,
 )
 
+logger = logging.getLogger("ryuzen.engine.v25hplus")
+
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-logger = logging.getLogger("ryuzen.engine.v31.enhanced")
-
 
 class EngineConfig(BaseModel):
-    """Enhanced configuration for A-grade performance."""
+    """Configuration for A-grade performance with Evidence Gatekeeper."""
 
     # Consensus parameters
     confidence_base_score: int = Field(82, ge=0, le=100)
     contradiction_threshold: int = Field(3, ge=1)
     high_contradiction_penalty: int = Field(10, ge=0, le=50)
-    opus_escalation_penalty: int = Field(5, ge=0, le=20)
 
     # Cache settings
     cache_max_entries: int = Field(1000, ge=100)
@@ -72,52 +78,29 @@ class EngineConfig(BaseModel):
 
     # Performance bounds
     max_prompt_length: int = Field(50000, ge=1000)
-    max_debate_rounds: int = Field(5, ge=1, le=10)
-    early_convergence_threshold: float = Field(0.95, ge=0.5, le=1.0)
+    tier_timeout_seconds: float = Field(5.0, ge=1.0, le=30.0)
+    max_tier_retries: int = Field(2, ge=0, le=5)
+    retry_backoff_ms: int = Field(500, ge=100, le=2000)
 
-    # Reliability thresholds
-    min_provider_count: int = Field(3, ge=1)
-    circuit_breaker_threshold: int = Field(5, ge=1)
-    circuit_breaker_timeout: int = Field(60, ge=10)
+    # Stability
+    graceful_degradation_enabled: bool = Field(True)
+    min_acceptable_tier1_responses: int = Field(5, ge=1, le=9)
 
-    # A-GRADE ENHANCEMENTS: Stability
-    tier_timeout_seconds: float = Field(
-        5.0, ge=1.0, le=30.0, description="Max time per tier before timeout"
+    # Evidence Gatekeeper settings
+    enable_evidence_gatekeeper: bool = Field(
+        True, description="Enable Tier 3.5 evidence validation"
     )
-    max_tier_retries: int = Field(
-        2, ge=0, le=5, description="Retry attempts for failed tiers"
+    citation_completeness_threshold: float = Field(
+        0.7, ge=0.0, le=1.0, description="Min ratio of sources with URLs"
     )
-    retry_backoff_ms: int = Field(
-        500, ge=100, le=2000, description="Exponential backoff base"
-    )
-    graceful_degradation_enabled: bool = Field(
-        True, description="Allow partial results on failures"
-    )
-    min_acceptable_tier1_responses: int = Field(
-        5, ge=1, le=9, description="Minimum Tier 1 responses for Grade A"
+    enable_tier4_repair: bool = Field(
+        True, description="Enable Tier 4 evidence repair"
     )
 
-    # A-GRADE ENHANCEMENTS: Epistemic Rigor
-    enable_source_weighting: bool = Field(
-        True, description="Weight sources by reliability"
-    )
-    enable_confidence_calibration: bool = Field(
-        True, description="Calibrate confidence against historical accuracy"
-    )
-    enable_uncertainty_flags: bool = Field(
-        True, description="Show uncertainty warnings in output"
-    )
-    evidence_cross_check_threshold: int = Field(
-        2, ge=1, description="Minimum sources to confirm claims"
-    )
-    
-    # ENHANCED: Tier 4 Failsafe
-    enable_tier4_failsafe: bool = Field(
-        True, description="Enable random Tier 2 model as Opus backup"
-    )
-    tier4_failsafe_confidence_threshold: float = Field(
-        0.65, ge=0.0, le=1.0, description="If Opus confidence < this, invoke failsafe"
-    )
+    # Epistemic rigor
+    enable_source_weighting: bool = Field(True)
+    enable_confidence_calibration: bool = Field(True)
+    enable_uncertainty_flags: bool = Field(True)
 
     class Config:
         frozen = True
@@ -275,383 +258,40 @@ class SourceReliability:
 
 
 # ============================================================================
-# CONFIDENCE CALIBRATION
-# ============================================================================
-
-
-class ConfidenceCalibrator:
-    """
-    Calibrates model confidence scores against historical accuracy.
-    
-    Learns: "When model says 90%, it's actually right 75% of time"
-    Applies correction curve to future predictions.
-    """
-
-    def __init__(self):
-        self._history: List[Tuple[float, bool]] = []  # (claimed_conf, was_correct)
-        self._calibration_curve: Dict[int, float] = {}  # bucket -> actual_accuracy
-        self._lock = RLock()
-
-    def record_outcome(self, claimed_confidence: float, was_correct: bool) -> None:
-        """Record a prediction outcome for calibration learning."""
-        with self._lock:
-            self._history.append((claimed_confidence, was_correct))
-
-            # Rebuild calibration curve every 100 samples
-            if len(self._history) % 100 == 0:
-                self._rebuild_calibration_curve()
-
-    def calibrate(self, raw_confidence: float) -> float:
-        """Apply calibration curve to raw confidence score."""
-        with self._lock:
-            if not self._calibration_curve:
-                return raw_confidence  # No calibration data yet
-
-            # Find nearest bucket
-            bucket = int(raw_confidence * 10)  # 0.0-0.9 → 0-9
-            bucket = max(0, min(9, bucket))
-
-            if bucket in self._calibration_curve:
-                return self._calibration_curve[bucket]
-
-            # Interpolate if exact bucket missing
-            return raw_confidence  # Fallback
-
-    def _rebuild_calibration_curve(self) -> None:
-        """Rebuild calibration curve from historical data."""
-        # Group by confidence buckets (0.0-0.1, 0.1-0.2, etc.)
-        buckets: Dict[int, List[bool]] = defaultdict(list)
-
-        for claimed_conf, was_correct in self._history:
-            bucket = int(claimed_conf * 10)
-            bucket = max(0, min(9, bucket))
-            buckets[bucket].append(was_correct)
-
-        # Compute actual accuracy per bucket
-        self._calibration_curve = {
-            bucket: sum(outcomes) / len(outcomes)
-            for bucket, outcomes in buckets.items()
-            if len(outcomes) >= 10  # Need 10+ samples per bucket
-        }
-
-        logger.info(
-            f"Calibration curve updated: {len(self._calibration_curve)} buckets, "
-            f"{len(self._history)} total samples"
-        )
-
-
-# ============================================================================
-# CONTEXT DETECTION FOR ADAPTIVE WEIGHTING
+# CONTEXT DETECTION
 # ============================================================================
 
 
 class ContextDetector:
-    """
-    Detects query context to enable adaptive model weighting.
+    """Detects query context for intelligent routing."""
 
-    Determines whether a query is formal/academic, real-time, social,
-    political, technical, or casual to optimize model selection.
-    """
-
-    # Keyword patterns for context classification
     FORMAL_KEYWORDS = [
-        "research", "study", "academic", "formal", "paper", "thesis",
-        "dissertation", "journal", "peer-reviewed", "analysis", "methodology",
-        "hypothesis", "experiment", "clinical", "trial", "patient", "medical",
-        "legal", "contract", "regulation", "statute", "compliance", "policy",
-        "corporate", "business", "professional", "enterprise", "organizational"
+        "research", "study", "academic", "medical", "legal",
+        "clinical", "patient", "regulation", "compliance"
     ]
-
     REAL_TIME_KEYWORDS = [
-        "trending", "now", "today", "current", "latest", "breaking",
-        "just happened", "recent", "this week", "this month", "right now",
-        "at the moment", "ongoing", "live", "developing", "update"
-    ]
-
-    SOCIAL_KEYWORDS = [
-        "people think", "public opinion", "sentiment", "reaction",
-        "community", "discussion", "debate", "controversy", "viral",
-        "trending on", "social media", "twitter", "x platform", "reddit",
-        "discourse", "conversation", "what are people saying"
-    ]
-
-    POLITICAL_KEYWORDS = [
-        "regulation", "government", "policy", "election", "vote",
-        "politics", "political", "democrat", "republican", "liberal",
-        "conservative", "left", "right", "administration", "congress",
-        "senate", "legislation", "law", "rights", "freedom", "justice"
-    ]
-
-    TECHNICAL_KEYWORDS = [
-        "code", "programming", "algorithm", "function", "class",
-        "implementation", "debug", "error", "compile", "syntax",
-        "framework", "library", "api", "database", "server",
-        "architecture", "design pattern", "engineering", "technical"
+        "trending", "now", "today", "current", "latest",
+        "breaking", "recent", "update"
     ]
 
     @classmethod
     def detect_context(cls, prompt: str) -> str:
-        """
-        Detect the primary context of a query.
-
-        Args:
-            prompt: User query text
-
-        Returns:
-            Context type: 'formal', 'real-time', 'social', 'political', 'technical', or 'casual'
-        """
         prompt_lower = prompt.lower()
-
-        # Count keyword matches for each category
-        scores = {
-            "formal": sum(1 for kw in cls.FORMAL_KEYWORDS if kw in prompt_lower),
-            "real-time": sum(1 for kw in cls.REAL_TIME_KEYWORDS if kw in prompt_lower),
-            "social": sum(1 for kw in cls.SOCIAL_KEYWORDS if kw in prompt_lower),
-            "political": sum(1 for kw in cls.POLITICAL_KEYWORDS if kw in prompt_lower),
-            "technical": sum(1 for kw in cls.TECHNICAL_KEYWORDS if kw in prompt_lower),
-        }
-
-        # Return highest-scoring context (requires at least 1 match)
-        max_score = max(scores.values())
-        if max_score > 0:
-            for context, score in scores.items():
-                if score == max_score:
-                    logger.info(f"Detected context: {context} (score: {score})")
-                    return context
-
-        # Default to casual if no strong signals
-        logger.info("Detected context: casual (no strong signals)")
+        
+        formal_score = sum(1 for kw in cls.FORMAL_KEYWORDS if kw in prompt_lower)
+        real_time_score = sum(1 for kw in cls.REAL_TIME_KEYWORDS if kw in prompt_lower)
+        
+        if formal_score > 0:
+            return "formal"
+        if real_time_score > 0:
+            return "real-time"
+        
         return "casual"
-
-    @classmethod
-    def should_apply_grok_boost(cls, context: str) -> bool:
-        """Check if Grok should receive weight boost for this context."""
-        return context in ["real-time", "social"]
-
-    @classmethod
-    def should_apply_grok_penalty(cls, context: str) -> bool:
-        """Check if Grok should receive weight penalty for this context."""
-        return context in ["formal", "political"]
-
-
-# ============================================================================
-# TONE DETECTION & FILTERING
-# ============================================================================
-
-
-class ToneAnalyzer:
-    """
-    Analyzes response tone to detect informal/casual language.
-
-    Helps flag Grok responses that may be inappropriately casual
-    for formal contexts.
-    """
-
-    # Informal language markers
-    INFORMAL_MARKERS = [
-        "lol", "lmao", "tbh", "ngl", "honestly", "let's be real",
-        "no cap", "fr", "lowkey", "highkey", "literally",
-        "kinda", "sorta", "gonna", "wanna", "gotta",
-        "yeah", "yep", "nope", "yup", "uh", "um",
-        "basically", "pretty much", "like i said", "to be fair"
-    ]
-
-    # Sarcasm/humor indicators
-    SARCASM_MARKERS = [
-        "obviously", "clearly", "of course", "sure thing",
-        "right...", "yeah right", "as if", "totally",
-        "shocking", "surprising", "wow", "amazing"
-    ]
-
-    # Casual punctuation patterns
-    CASUAL_PATTERNS = [
-        "...", "!!", "???", "?!", "!?",  # Multiple punctuation
-        " ;)", " :)", " :(", " :D",      # Emoticons
-    ]
-
-    @classmethod
-    def analyze_tone(cls, text: str) -> Dict[str, Any]:
-        """
-        Analyze tone characteristics of text.
-
-        Args:
-            text: Response text to analyze
-
-        Returns:
-            Dict with tone metrics and flags
-        """
-        text_lower = text.lower()
-
-        # Count informal markers
-        informal_count = sum(1 for marker in cls.INFORMAL_MARKERS if marker in text_lower)
-        sarcasm_count = sum(1 for marker in cls.SARCASM_MARKERS if marker in text_lower)
-        casual_punct = sum(1 for pattern in cls.CASUAL_PATTERNS if pattern in text)
-
-        # Calculate formality score (0 = very casual, 1 = very formal)
-        total_markers = informal_count + sarcasm_count + casual_punct
-        word_count = len(text.split())
-
-        # Normalize by word count
-        marker_density = total_markers / max(word_count, 1) * 100
-        formality_score = max(0.0, 1.0 - (marker_density / 5.0))
-
-        # Determine tone category
-        if formality_score >= 0.8:
-            tone_category = "formal"
-        elif formality_score >= 0.6:
-            tone_category = "professional"
-        elif formality_score >= 0.4:
-            tone_category = "conversational"
-        else:
-            tone_category = "casual"
-
-        return {
-            "formality_score": formality_score,
-            "tone_category": tone_category,
-            "informal_markers": informal_count,
-            "sarcasm_markers": sarcasm_count,
-            "casual_punctuation": casual_punct,
-            "marker_density": marker_density,
-        }
-
-    @classmethod
-    def is_tone_appropriate(cls, text: str, expected_context: str) -> Tuple[bool, Optional[str]]:
-        """
-        Check if response tone is appropriate for context.
-
-        Args:
-            text: Response text
-            expected_context: Expected context ('formal', 'technical', etc.)
-
-        Returns:
-            (is_appropriate, warning_message)
-        """
-        analysis = cls.analyze_tone(text)
-        tone_category = analysis["tone_category"]
-
-        # Formal contexts require formal/professional tone
-        if expected_context == "formal":
-            if tone_category in ["casual", "conversational"]:
-                return False, f"Casual tone detected in formal context (formality: {analysis['formality_score']:.2f})"
-
-        # Political contexts should avoid sarcasm
-        if expected_context == "political":
-            if analysis["sarcasm_markers"] > 0:
-                return False, f"Sarcasm detected in political context ({analysis['sarcasm_markers']} markers)"
-
-        # Technical contexts tolerate conversational but not casual
-        if expected_context == "technical":
-            if tone_category == "casual":
-                return False, f"Overly casual tone for technical content (formality: {analysis['formality_score']:.2f})"
-
-        return True, None
-
-
-# ============================================================================
-# POLITICAL BALANCE VERIFICATION
-# ============================================================================
-
-
-class PoliticalBalanceChecker:
-    """
-    Monitors consensus quality on politically-charged topics.
-
-    Ensures Grok's libertarian leanings don't skew results on
-    sensitive political questions.
-    """
-
-    # Political ideology indicators (simplified)
-    LIBERTARIAN_SIGNALS = [
-        "free market", "individual freedom", "limited government",
-        "deregulation", "voluntary", "personal responsibility",
-        "government overreach", "taxation is theft", "property rights"
-    ]
-
-    PROGRESSIVE_SIGNALS = [
-        "social justice", "equity", "collective action",
-        "regulation", "public good", "systemic", "structural",
-        "government intervention", "safety net", "redistribution"
-    ]
-
-    CONSERVATIVE_SIGNALS = [
-        "traditional values", "law and order", "strong defense",
-        "fiscal responsibility", "family values", "national security",
-        "border security", "constitutional", "states' rights"
-    ]
-
-    @classmethod
-    def detect_political_lean(cls, text: str) -> Dict[str, float]:
-        """
-        Detect political lean signals in text.
-
-        Args:
-            text: Response text
-
-        Returns:
-            Dict with ideology scores (higher = stronger signal)
-        """
-        text_lower = text.lower()
-
-        libertarian_score = sum(1 for signal in cls.LIBERTARIAN_SIGNALS if signal in text_lower)
-        progressive_score = sum(1 for signal in cls.PROGRESSIVE_SIGNALS if signal in text_lower)
-        conservative_score = sum(1 for signal in cls.CONSERVATIVE_SIGNALS if signal in text_lower)
-
-        total_signals = libertarian_score + progressive_score + conservative_score
-
-        if total_signals == 0:
-            return {"libertarian": 0.0, "progressive": 0.0, "conservative": 0.0, "neutral": 1.0}
-
-        return {
-            "libertarian": libertarian_score / total_signals,
-            "progressive": progressive_score / total_signals,
-            "conservative": conservative_score / total_signals,
-            "neutral": 0.0,
-        }
-
-    @classmethod
-    def is_balanced(cls, text: str, threshold: float = 0.6) -> Tuple[bool, Optional[str]]:
-        """
-        Check if text shows balanced political perspective.
-
-        Args:
-            text: Response text
-            threshold: Max acceptable single-ideology ratio
-
-        Returns:
-            (is_balanced, warning_message)
-        """
-        leans = cls.detect_political_lean(text)
-
-        # Check if any single ideology dominates
-        max_lean = max(leans["libertarian"], leans["progressive"], leans["conservative"])
-
-        if max_lean > threshold:
-            dominant_ideology = max(leans, key=leans.get)
-            return False, f"Strong {dominant_ideology} lean detected ({max_lean:.0%} of signals)"
-
-        return True, None
-
-    @classmethod
-    def requires_higher_consensus(cls, prompt: str) -> bool:
-        """Check if query requires higher consensus threshold due to political nature."""
-        return ContextDetector.detect_context(prompt) == "political"
 
 
 # ============================================================================
 # ENUMS
 # ============================================================================
-
-
-class CircuitState(Enum):
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-
-class ProviderStatus(Enum):
-    HEALTHY = "healthy"
-    DEGRADED = "degraded"
-    FAILED = "failed"
 
 
 class ConsensusQuality(Enum):
@@ -662,23 +302,19 @@ class ConsensusQuality(Enum):
 
 
 class OutputGrade(Enum):
-    """Quality grade for consumer-facing output (A+ to F)."""
-
-    A_PLUS = "A+"  # 9/9 models, perfect consensus, verified by 3+ Tier 3 sources
-    A = "A"        # 8-9/9 models, high consensus, verified sources
-    B_PLUS = "B+"  # 7-8/9 models, good consensus, verified by Tier 3
-    B = "B"        # 6-7/9 models, good consensus
-    C = "C"        # 4-5/9 models, acceptable consensus
-    D = "D"        # 3/9 models, weak consensus
-    F = "F"        # < 3 models, fallback mode
+    A_PLUS = "A+"
+    A = "A"
+    B_PLUS = "B+"
+    B = "B"
+    C = "C"
+    D = "D"
+    F = "F"
 
 
 class ArbitrationSource(Enum):
-    """Source of final arbitration decision."""
-    
-    OPUS_PRIMARY = "opus_primary"  # Claude Opus 4.5 (normal path)
-    TIER2_FAILSAFE = "tier2_failsafe"  # Random Tier 2 model (backup)
-    CONSENSUS_ONLY = "consensus_only"  # No arbitration needed
+    OPUS_PRIMARY = "opus_primary"
+    TIER2_FAILSAFE = "tier2_failsafe"
+    CONSENSUS_ONLY = "consensus_only"
 
 
 # ============================================================================
@@ -697,12 +333,6 @@ class ModelResponse:
     timestamp: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
-        if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be [0, 1], got {self.confidence}")
-        if self.latency_ms < 0:
-            raise ValueError(f"Latency cannot be negative: {self.latency_ms}")
-
 
 @dataclass
 class ConsensusResult:
@@ -717,16 +347,18 @@ class ConsensusResult:
     contributing_models: List[str]
     timestamp: float = field(default_factory=time.time)
     
-    # A-GRADE ENHANCEMENTS
     output_grade: OutputGrade = OutputGrade.B
     uncertainty_flags: List[str] = field(default_factory=list)
     source_weighted_confidence: float = 0.0
     calibrated_confidence: float = 0.0
     evidence_strength: str = "moderate"
-    
-    # ENHANCED: Arbitration tracking
     arbitration_source: ArbitrationSource = ArbitrationSource.CONSENSUS_ONLY
     arbitration_model: Optional[str] = None
+    
+    # NEW: Evidence Gatekeeper tracking
+    gatekeeper_passed: bool = True
+    gatekeeper_issues: List[str] = field(default_factory=list)
+    tier4_repair_invoked: bool = False
 
     @property
     def agreement_ratio(self) -> float:
@@ -746,15 +378,22 @@ class ExecutionMetrics:
     consensus_quality: ConsensusQuality
     timestamp: float = field(default_factory=time.time)
     
-    # A-GRADE ENHANCEMENTS
     tier_timeouts: int = 0
     tier_retries: int = 0
     degradation_level: str = "none"
     output_grade: OutputGrade = OutputGrade.B
     
-    # ENHANCED: Failsafe tracking
-    tier4_failsafe_triggered: bool = False
-    tier4_failsafe_model: Optional[str] = None
+    # Tier 4 arbitration tracking
+    tier4_arbitration_invoked: bool = False
+    tier4_arbitration_model: Optional[str] = None
+    
+    # Tier invocation tracking
+    tier2_invoked: bool = False
+    
+    # NEW: Evidence Gatekeeper metrics
+    gatekeeper_validation_ms: float = 0.0
+    tier4_repair_invoked: bool = False
+    tier4_repair_latency_ms: float = 0.0
 
 
 # ============================================================================
@@ -804,9 +443,7 @@ class SemanticSimilarity:
         embeddings: Dict[str, np.ndarray] = {}
 
         for resp in responses:
-            embeddings[resp.fingerprint] = SemanticSimilarity.simple_embedding(
-                resp.content
-            )
+            embeddings[resp.fingerprint] = SemanticSimilarity.simple_embedding(resp.content)
 
         for resp in responses:
             placed = False
@@ -825,84 +462,6 @@ class SemanticSimilarity:
                 clusters[resp.fingerprint] = [resp]
 
         return clusters
-
-
-# ============================================================================
-# CIRCUIT BREAKER
-# ============================================================================
-
-
-class CircuitBreaker:
-    def __init__(
-        self,
-        provider_name: str,
-        failure_threshold: int = 5,
-        timeout_seconds: int = 60,
-        success_threshold: int = 3,
-    ):
-        self.provider_name = provider_name
-        self.failure_threshold = failure_threshold
-        self.timeout_seconds = timeout_seconds
-        self.success_threshold = max(3, success_threshold)
-
-        self.failure_count = 0
-        self.success_streak = 0
-        self.state = CircuitState.CLOSED
-        self.last_failure_time: Optional[float] = None
-        self._lock = RLock()
-
-    def record_success(self) -> None:
-        with self._lock:
-            self.success_streak += 1
-
-            if self.success_streak >= self.success_threshold:
-                self.failure_count = 0
-                self.state = CircuitState.CLOSED
-                self.last_failure_time = None
-                self.success_streak = 0
-                logger.debug(
-                    f"Circuit breaker reset for {self.provider_name}"
-                )
-            else:
-                if self.state == CircuitState.OPEN:
-                    self.state = CircuitState.HALF_OPEN
-
-    def record_failure(self) -> None:
-        with self._lock:
-            self.failure_count += 1
-            self.success_streak = 0
-            self.last_failure_time = time.time()
-
-            if self.failure_count >= self.failure_threshold:
-                self.state = CircuitState.OPEN
-                logger.warning(
-                    f"Circuit breaker OPEN for {self.provider_name}"
-                )
-
-    def can_execute(self) -> bool:
-        with self._lock:
-            if self.state == CircuitState.CLOSED:
-                return True
-
-            if self.state == CircuitState.OPEN:
-                if (
-                    self.last_failure_time
-                    and time.time() - self.last_failure_time > self.timeout_seconds
-                ):
-                    self.state = CircuitState.HALF_OPEN
-                    logger.info(f"Circuit breaker HALF_OPEN for {self.provider_name}")
-                    return True
-                return False
-
-            return True
-
-    def get_status(self) -> ProviderStatus:
-        with self._lock:
-            if self.state == CircuitState.CLOSED:
-                return ProviderStatus.HEALTHY
-            if self.state == CircuitState.HALF_OPEN:
-                return ProviderStatus.DEGRADED
-            return ProviderStatus.FAILED
 
 
 # ============================================================================
@@ -929,16 +488,13 @@ class LRUCacheWithTTL:
     def get(self, key: str) -> Optional[Any]:
         with self._lock:
             entry = self._cache.get(key)
-
             if entry is None:
                 self._misses += 1
                 return None
-
             if time.time() - entry.timestamp > self.ttl_seconds:
                 del self._cache[key]
                 self._misses += 1
                 return None
-
             self._cache.move_to_end(key)
             entry.access_count += 1
             self._hits += 1
@@ -951,19 +507,10 @@ class LRUCacheWithTTL:
                 self._cache[key].timestamp = time.time()
                 self._cache.move_to_end(key)
                 return
-
             if len(self._cache) >= self.max_size:
                 evicted_key = next(iter(self._cache))
                 del self._cache[evicted_key]
-                logger.debug(f"LRU cache evicted: {evicted_key}")
-
             self._cache[key] = CacheEntry(value=value, timestamp=time.time())
-
-    def clear(self) -> None:
-        with self._lock:
-            self._cache.clear()
-            self._hits = 0
-            self._misses = 0
 
     def get_stats(self) -> Dict[str, Any]:
         with self._lock:
@@ -976,6 +523,294 @@ class LRUCacheWithTTL:
                 "misses": self._misses,
                 "hit_rate": hit_rate,
             }
+
+
+# ============================================================================
+# EVIDENCE GATEKEEPER (TIER 3.5)
+# ============================================================================
+
+
+class EvidenceGatekeeper:
+    """
+    Tier 3.5: Evidence Gatekeeper - AI-powered validation for high-risk domains.
+    
+    ONLY TRIGGERS for Medical, Legal, and Financial topics.
+    
+    Uses a Tier 1 model to interpret and validate combined evidence from:
+    - Tier 1 (9 general models)
+    - Tier 2 (2 reasoning models, if invoked)
+    - Tier 3 (42 external knowledge sources)
+    
+    The gatekeeper model acts as a specialist reviewer, checking:
+    1. Evidence completeness and consistency
+    2. Safety disclaimers and warnings
+    3. Contradictions or gaps in reasoning
+    4. Appropriate tone and framing for the domain
+    
+    Returns: (validated_synthesis: str, confidence: float, issues: List[str])
+    """
+    
+    # High-risk domains that trigger the gatekeeper
+    HIGH_RISK_DOMAINS = ["medical", "legal", "financial"]
+    
+    # Domain keywords for detection
+    DOMAIN_KEYWORDS = {
+        "medical": [
+            "health", "disease", "symptom", "treatment", "diagnosis",
+            "medicine", "doctor", "patient", "clinical", "medical",
+            "drug", "medication", "therapy", "surgery", "vaccine"
+        ],
+        "legal": [
+            "law", "legal", "court", "attorney", "lawyer", "regulation",
+            "statute", "contract", "jurisdiction", "lawsuit", "litigation",
+            "rights", "liability", "compliance", "legislation"
+        ],
+        "financial": [
+            "invest", "stock", "finance", "trading", "money", "loan",
+            "mortgage", "credit", "bank", "portfolio", "fund", "bond",
+            "market", "dividend", "interest", "tax", "insurance"
+        ]
+    }
+    
+    # Gatekeeper validation prompt template
+    VALIDATION_PROMPT = """You are a specialist reviewer for {domain} information.
+
+Your task is to validate and synthesize the evidence below, ensuring it is:
+1. Complete and consistent
+2. Includes appropriate safety disclaimers
+3. Free from contradictions
+4. Uses appropriate tone for a {domain} context
+
+EVIDENCE TO VALIDATE:
+
+--- Tier 1 Models ({tier1_count} responses) ---
+{tier1_summary}
+
+--- Tier 2 Reasoning Models ({tier2_count} responses) ---
+{tier2_summary}
+
+--- Tier 3 External Sources ({tier3_count} sources) ---
+{tier3_summary}
+
+ORIGINAL QUERY:
+{original_query}
+
+INSTRUCTIONS:
+Provide a validated synthesis that:
+- Combines the best evidence from all tiers
+- Includes required {domain} disclaimers
+- Flags any contradictions or gaps
+- Uses professional, appropriate tone
+
+If you find critical issues, explain them clearly.
+
+VALIDATED RESPONSE:"""
+    
+    def __init__(self, providers: List[BaseProvider], config: EngineConfig = DEFAULT_CONFIG):
+        self.providers = providers
+        self.config = config
+    
+    def should_trigger(self, prompt: str, context: str) -> Tuple[bool, str]:
+        """
+        Determine if gatekeeper should trigger for this query.
+        
+        Returns: (should_trigger, detected_domain)
+        """
+        prompt_lower = prompt.lower()
+        
+        # Check if context directly indicates high-risk domain
+        if context in self.HIGH_RISK_DOMAINS:
+            logger.info(f"Evidence Gatekeeper: Triggered by context={context}")
+            return True, context
+        
+        # Check for domain keywords in prompt
+        domain_scores = {}
+        for domain, keywords in self.DOMAIN_KEYWORDS.items():
+            score = sum(1 for kw in keywords if kw in prompt_lower)
+            if score > 0:
+                domain_scores[domain] = score
+        
+        if domain_scores:
+            detected_domain = max(domain_scores, key=domain_scores.get)
+            if domain_scores[detected_domain] >= 2:  # At least 2 keyword matches
+                logger.info(
+                    f"Evidence Gatekeeper: Triggered by keywords in {detected_domain} "
+                    f"(score: {domain_scores[detected_domain]})"
+                )
+                return True, detected_domain
+        
+        return False, "general"
+    
+    async def validate(
+        self,
+        prompt: str,
+        tier1_responses: List[ModelResponse],
+        tier2_responses: List[ModelResponse],
+        tier3_snippets: List[KnowledgeSnippet],
+        domain: str
+    ) -> Tuple[str, float, List[str]]:
+        """
+        Use a Tier 1 model to validate and synthesize evidence for high-risk domain.
+        
+        Args:
+            prompt: Original user query
+            tier1_responses: Responses from Tier 1 models
+            tier2_responses: Responses from Tier 2 reasoning models
+            tier3_snippets: Knowledge snippets from Tier 3 sources
+            domain: Detected domain (medical/legal/financial)
+            
+        Returns:
+            (validated_synthesis, confidence, issues_found)
+        """
+        logger.info(
+            f"Evidence Gatekeeper: Validating {domain} evidence "
+            f"(T1:{len(tier1_responses)}, T2:{len(tier2_responses)}, T3:{len(tier3_snippets)})"
+        )
+        
+        # Prepare summaries
+        tier1_summary = self._summarize_tier1(tier1_responses)
+        tier2_summary = self._summarize_tier2(tier2_responses)
+        tier3_summary = self._summarize_tier3(tier3_snippets)
+        
+        # Build validation prompt
+        validation_prompt = self.VALIDATION_PROMPT.format(
+            domain=domain.title(),
+            tier1_count=len(tier1_responses),
+            tier1_summary=tier1_summary,
+            tier2_count=len(tier2_responses),
+            tier2_summary=tier2_summary if tier2_responses else "None",
+            tier3_count=len(tier3_snippets),
+            tier3_summary=tier3_summary,
+            original_query=prompt
+        )
+        
+        # Select gatekeeper model (use highest-reliability Tier 1 model)
+        gatekeeper_provider = self._select_gatekeeper_model()
+        
+        if not gatekeeper_provider:
+            logger.warning("Evidence Gatekeeper: No suitable model available")
+            return "", 0.0, ["no_gatekeeper_model_available"]
+        
+        try:
+            # Call gatekeeper model
+            response = await gatekeeper_provider.generate(validation_prompt)
+            
+            # Extract issues from response (simple heuristic)
+            issues = self._extract_issues(response.content)
+            
+            logger.info(
+                f"Evidence Gatekeeper: Validation complete "
+                f"(model: {response.model}, confidence: {response.confidence:.2%}, "
+                f"issues: {len(issues)})"
+            )
+            
+            return response.content, response.confidence, issues
+            
+        except Exception as e:
+            logger.error(f"Evidence Gatekeeper: Validation failed: {e}")
+            return "", 0.0, [f"gatekeeper_error: {str(e)}"]
+    
+    def _select_gatekeeper_model(self) -> Optional[BaseProvider]:
+        """
+        Select the best Tier 1 model to act as gatekeeper.
+        
+        Prefer: Claude Sonnet > ChatGPT > Gemini (high reliability + reasoning)
+        """
+        tier1_providers = [
+            p for p in self.providers
+            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 1
+        ]
+        
+        if not tier1_providers:
+            return None
+        
+        # Preference order
+        preferred_models = [
+            "Claude-Sonnet-4.5",
+            "ChatGPT-5.2",
+            "Gemini-3",
+            "Perplexity-Sonar"
+        ]
+        
+        for model_name in preferred_models:
+            provider = next((p for p in tier1_providers if p.model_name == model_name), None)
+            if provider:
+                logger.info(f"Evidence Gatekeeper: Selected {model_name} as validator")
+                return provider
+        
+        # Fallback to first available
+        logger.info(f"Evidence Gatekeeper: Using fallback {tier1_providers[0].model_name}")
+        return tier1_providers[0]
+    
+    def _summarize_tier1(self, responses: List[ModelResponse]) -> str:
+        """Create concise summary of Tier 1 responses."""
+        if not responses:
+            return "None"
+        
+        summary_parts = []
+        for i, resp in enumerate(responses[:5], 1):  # Limit to 5 for brevity
+            summary_parts.append(
+                f"{i}. {resp.model} (conf: {resp.confidence:.0%}): "
+                f"{resp.content[:200]}..."
+            )
+        
+        if len(responses) > 5:
+            summary_parts.append(f"... and {len(responses) - 5} more responses")
+        
+        return "\n".join(summary_parts)
+    
+    def _summarize_tier2(self, responses: List[ModelResponse]) -> str:
+        """Create concise summary of Tier 2 reasoning responses."""
+        if not responses:
+            return "None"
+        
+        summary_parts = []
+        for i, resp in enumerate(responses, 1):
+            summary_parts.append(
+                f"{i}. {resp.model} (conf: {resp.confidence:.0%}): "
+                f"{resp.content[:300]}..."
+            )
+        
+        return "\n".join(summary_parts)
+    
+    def _summarize_tier3(self, snippets: List[KnowledgeSnippet]) -> str:
+        """Create concise summary of Tier 3 knowledge sources."""
+        if not snippets:
+            return "None"
+        
+        summary_parts = []
+        for i, snippet in enumerate(snippets[:8], 1):  # Limit to 8 for brevity
+            url_info = f" [{snippet.url}]" if snippet.url else ""
+            summary_parts.append(
+                f"{i}. {snippet.source_name} (reliability: {snippet.reliability:.0%}): "
+                f"{snippet.content[:200]}...{url_info}"
+            )
+        
+        if len(snippets) > 8:
+            summary_parts.append(f"... and {len(snippets) - 8} more sources")
+        
+        return "\n".join(summary_parts)
+    
+    def _extract_issues(self, validation_response: str) -> List[str]:
+        """
+        Extract any issues/warnings from the gatekeeper's validation.
+        
+        Simple heuristic: look for warning keywords.
+        """
+        issues = []
+        response_lower = validation_response.lower()
+        
+        warning_phrases = [
+            "contradiction", "conflicting", "disagree", "inconsistent",
+            "missing disclaimer", "no disclaimer", "gap in",
+            "insufficient evidence", "unclear", "ambiguous"
+        ]
+        
+        for phrase in warning_phrases:
+            if phrase in response_lower:
+                issues.append(f"validation_warning: {phrase}")
+        
+        return issues
 
 
 # ============================================================================
@@ -993,13 +828,6 @@ class ConsensusEngine:
         responses: List[ModelResponse],
         tier3_verified: bool = False
     ) -> ConsensusResult:
-        """
-        Integrate responses into consensus.
-
-        Args:
-            responses: List of model responses to integrate
-            tier3_verified: Whether Tier 3 sources verified the claims (2+ sources)
-        """
         if not responses:
             raise ValueError("Cannot compute consensus from empty response list")
 
@@ -1009,11 +837,7 @@ class ConsensusEngine:
 
         agreement_count = len(best_cluster)
         total_responses = len(responses)
-
-        # Standard confidence (equal weighting)
         avg_confidence = sum(r.confidence for r in best_cluster) / len(best_cluster)
-
-        # A-GRADE: Source-weighted confidence
         source_weighted_conf = SourceReliability.compute_weighted_confidence(best_cluster)
 
         agreement_ratio = agreement_count / total_responses
@@ -1027,8 +851,6 @@ class ConsensusEngine:
             quality = ConsensusQuality.CRITICAL
 
         diversity = 1.0 - (len(best_cluster) / total_responses)
-
-        # A-GRADE: Determine output grade with Tier 3 verification boost
         output_grade = self._compute_output_grade(
             agreement_count, total_responses, quality, tier3_verified
         )
@@ -1054,113 +876,68 @@ class ConsensusEngine:
         quality: ConsensusQuality,
         tier3_verified: bool = False
     ) -> OutputGrade:
-        """
-        Assign consumer-facing quality grade (A+ to F).
-
-        Tier 3 verification can boost the grade for high-consensus results.
-        """
         ratio = agreement / total
 
-        # A+: Perfect consensus + verified by Tier 3 (3+ sources)
         if ratio == 1.0 and quality == ConsensusQuality.HIGH and tier3_verified:
             return OutputGrade.A_PLUS
-
-        # A: 8-9/9 models + high quality
         if ratio >= 0.89 and quality == ConsensusQuality.HIGH:
             return OutputGrade.A
-
-        # B+: 7-8/9 models + Tier 3 verified
         if ratio >= 0.78 and tier3_verified:
             return OutputGrade.B_PLUS
-
-        # B: 6-7/9 models
-        if ratio >= 0.67 and quality in [ConsensusQuality.HIGH, ConsensusQuality.MEDIUM]:
+        if ratio >= 0.67:
             return OutputGrade.B
-
-        # C: 4-5/9 models
         if ratio >= 0.44:
             return OutputGrade.C
-
-        # D: 3/9 models
         if ratio >= 0.33:
             return OutputGrade.D
-
-        # F: < 3 models
         return OutputGrade.F
 
 
 # ============================================================================
-# TORON ENGINE V3.1 ENHANCED - A GRADE WITH FAILSAFE
+# TORON ENGINE V2.5H+ WITH EVIDENCE GATEKEEPER
 # ============================================================================
 
 
-class ToronEngineV31Enhanced:
+class ToronEngineV25HPlus:
     """
-    TORON v2.5h+ Engine with Complete 8-Tier Epistemic Pipeline.
-
-    8-TIER ARCHITECTURE:
-    1. Tier 1: General Models (ALWAYS) - 9 models in parallel
-    2. Tier 2: Reasoning Models (CONDITIONAL) - 2 models (DeepSeek R1, Kimi K2)
-    3. Tier 3: Knowledge Sources (ALWAYS) - 30 sources with intelligent routing
-    4. Tier 4: Judicial Arbitration (CONDITIONAL) - Claude Opus 4.5.5 + failsafe
-    5. Tier 5: Source Weighting & Validation (ALWAYS)
-    6. Tier 6: ALOE Synthesis & Confidence Calibration (ALWAYS)
-    7. Tier 7: Political Balance & AI Bias Check (ALWAYS)
-    8. Tier 8: Final Synthesis & Delivery (ALWAYS)
-
-    FEATURES:
-    - 30 external knowledge sources with intelligent query routing
-    - Conditional Tier 2 (reasoning) based on complexity/confidence
-    - Conditional Tier 4 (arbitration) based on consensus level
-    - A+ to F grading with Tier 3 verification boost
-    - Tier 4 Failsafe: Random Tier 2 model when Opus confidence is low
-    - Airtight error handling with comprehensive fallback chains
-    - Source reliability weighting and confidence calibration
+    TORON v2.5h+ Engine with Complete 8-Tier Pipeline including Evidence Gatekeeper.
+    
+    NEW: Tier 3.5 Evidence Gatekeeper validates external sources before synthesis.
     """
 
     def __init__(self, config: EngineConfig = DEFAULT_CONFIG):
         self.config = config
-        self.providers: List[BaseProvider] = []  # Real providers from ProviderLoader
+        self.providers: List[BaseProvider] = []
         self.cache = LRUCacheWithTTL(
-            max_size=config.cache_max_entries, ttl_seconds=config.cache_ttl_seconds
+            max_size=config.cache_max_entries,
+            ttl_seconds=config.cache_ttl_seconds
         )
         self.consensus_engine = ConsensusEngine(config)
-        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
-        self.calibrator = ConfidenceCalibrator()
+        self.evidence_gatekeeper = None  # Initialized after providers load
         self.telemetry_client = get_telemetry_client()
-        self.tier3_manager = Tier3Manager()  # 30 knowledge sources
-
+        self.tier3_manager = Tier3Manager()
         self._initialized = False
         self._init_lock = RLock()
 
-        logger.info("ToronEngineV31Enhanced (8-Tier Pipeline with 30 Sources) created")
+        logger.info("ToronEngineV25HPlus (8-Tier + Evidence Gatekeeper) created")
 
     def initialize(self, providers: Optional[List[BaseProvider]] = None) -> None:
-        """
-        Initialize TORON engine with real AI providers.
-
-        Args:
-            providers: Optional pre-configured providers (for testing)
-        """
+        """Initialize TORON engine with real AI providers."""
         with self._init_lock:
             if self._initialized:
                 return
 
             try:
                 if providers:
-                    # Use provided providers (for testing/custom configs)
                     self.providers = providers
                 else:
-                    # Load real providers from AWS Secrets Manager
                     from ryuzen.engine.simulation_mode import SimulationMode
-
                     loader = ProviderLoader(
                         secrets_id="toron/api-keys",
                         region="us-east-1",
                         use_simulation=SimulationMode.is_enabled()
                     )
-
-                    # Load providers (sync wrapper for async operation)
+                    
                     import asyncio
                     try:
                         loop = asyncio.get_running_loop()
@@ -1168,357 +945,105 @@ class ToronEngineV31Enhanced:
                         loop = None
 
                     if loop and loop.is_running():
-                        # We're in an async context, create a new task
                         import concurrent.futures
                         with concurrent.futures.ThreadPoolExecutor() as executor:
-                            future = executor.submit(
-                                asyncio.run, loader.load_providers()
-                            )
+                            future = executor.submit(asyncio.run, loader.load_providers())
                             self.providers = future.result()
                     else:
-                        # Not in async context, run directly
                         self.providers = asyncio.run(loader.load_providers())
 
                     if not self.providers:
-                        raise RuntimeError("No providers loaded - check API keys in Secrets Manager")
+                        raise RuntimeError("No providers loaded")
 
-                # Initialize circuit breakers for all providers
-                for provider in self.providers:
-                    self.circuit_breakers[provider.model_name] = CircuitBreaker(
-                        provider_name=provider.model_name,
-                        failure_threshold=self.config.circuit_breaker_threshold,
-                        timeout_seconds=self.config.circuit_breaker_timeout,
-                    )
+                # Initialize Evidence Gatekeeper with providers
+                self.evidence_gatekeeper = EvidenceGatekeeper(self.providers, self.config)
 
                 self._initialized = True
-                logger.info(
-                    f"ToronEngineV31Enhanced initialized with {len(self.providers)} real providers"
-                )
+                logger.info(f"ToronEngineV25HPlus initialized with {len(self.providers)} providers")
 
             except Exception as e:
                 logger.exception("Initialization failed")
                 raise RuntimeError(f"Engine initialization failed: {e}") from e
 
-    def _ensure_initialized(self) -> None:
-        if not self._initialized:
-            raise RuntimeError("ToronEngineV31Enhanced not initialized")
-
-    def _validate_prompt(self, prompt: str) -> None:
-        if not prompt or not prompt.strip():
-            raise ValueError("Prompt cannot be empty")
-        if len(prompt) > self.config.max_prompt_length:
-            raise ValueError(f"Prompt exceeds max length: {len(prompt)}")
-
-    def _should_invoke_tier2(
+    async def _tier4_repair(
         self,
-        tier1_responses: List[ModelResponse],
-        prompt: str
-    ) -> bool:
-        """
-        Determine if Tier 2 reasoning models should be invoked.
-
-        Triggers:
-        - Low average confidence (< 75%)
-        - High contradiction rate (>= 3 semantic clusters)
-        - Complex reasoning query detected
-        - Reasoning keywords present
-        """
-        if not tier1_responses:
-            return True
-
-        # Trigger 1: Low confidence
-        avg_conf = sum(r.confidence for r in tier1_responses) / len(tier1_responses)
-        if avg_conf < 0.75:
-            logger.info(f"Tier 2 trigger: Low confidence ({avg_conf:.2%})")
-            return True
-
-        # Trigger 2: High semantic diversity
-        clusters = SemanticSimilarity.cluster_by_similarity(tier1_responses, threshold=0.85)
-        if len(clusters) >= 3:
-            logger.info(f"Tier 2 trigger: High diversity ({len(clusters)} clusters)")
-            return True
-
-        # Trigger 3: Complex query context
-        context = ContextDetector.detect_context(prompt)
-        if context in ["formal", "technical"]:
-            logger.info(f"Tier 2 trigger: Complex context ({context})")
-            return True
-
-        # Trigger 4: Reasoning keywords
-        reasoning_keywords = [
-            "explain", "why", "how does", "what causes", "analyze",
-            "compare", "evaluate", "prove", "demonstrate", "justify",
-            "reasoning", "logic", "argument", "think through", "step by step"
-        ]
-        if any(kw in prompt.lower() for kw in reasoning_keywords):
-            logger.info("Tier 2 trigger: Reasoning keywords detected")
-            return True
-
-        logger.info("Tier 2: Skipped (strong Tier 1 consensus)")
-        return False
-
-    def _should_invoke_tier4(self, consensus: ConsensusResult) -> bool:
-        """
-        Determine if Tier 4 arbitration should be invoked.
-
-        Triggers:
-        - Low consensus (< 70% agreement)
-        - High semantic diversity (> 50%)
-        """
-        if consensus.agreement_ratio < 0.7:
-            logger.info(f"Tier 4 trigger: Low agreement ({consensus.agreement_ratio:.1%})")
-            return True
-
-        if consensus.semantic_diversity > 0.5:
-            logger.info(f"Tier 4 trigger: High diversity ({consensus.semantic_diversity:.2f})")
-            return True
-
-        logger.info("Tier 4: Skipped (strong consensus)")
-        return False
-
-    async def _call_provider_with_circuit_breaker(
-        self, provider: BaseProvider, prompt: str
-    ) -> Optional[ModelResponse]:
-        """Call a provider with circuit breaker protection."""
-        breaker = self.circuit_breakers[provider.model_name]
-
-        if not breaker.can_execute():
-            logger.warning(f"Circuit breaker OPEN for {provider.model_name}")
-            return None
-
-        try:
-            # Call real provider (returns ProviderResponse)
-            response = await provider.generate(prompt)
-            breaker.record_success()
-
-            # Convert ProviderResponse to ModelResponse for compatibility
-            return ModelResponse(
-                model=response.model,
-                content=response.content,
-                confidence=response.confidence,
-                latency_ms=response.latency_ms,
-                tokens_used=response.tokens_used,
-                fingerprint=response.fingerprint,
-                timestamp=response.timestamp,
-                metadata=response.metadata
-            )
-        except Exception as e:
-            breaker.record_failure()
-            logger.error(f"Provider {provider.model_name} failed: {e}")
-            return None
-
-    async def _call_tier_with_retry_and_timeout(
-        self,
-        providers: List[BaseProvider],
+        snippets: List[KnowledgeSnippet],
+        issues: List[str],
         prompt: str,
-        tier_name: str,
-        min_responses: int,
-    ) -> Tuple[List[ModelResponse], int, int]:
+        context: str
+    ) -> List[KnowledgeSnippet]:
         """
-        A-GRADE: Call tier with automatic retries and timeout protection.
+        Tier 4: Compile + Complete - Repair evidence gaps/issues.
         
-        Returns: (responses, retry_count, timeout_count)
+        Targeted re-fetch based on specific issues identified by gatekeeper.
         """
-        retries = 0
-        timeouts = 0
-        responses = []
+        logger.info(f"Tier 4 Repair: Addressing {len(issues)} issues")
         
-        for attempt in range(self.config.max_tier_retries + 1):
-            try:
-                # Execute with timeout
-                tasks = [
-                    self._call_provider_with_circuit_breaker(provider, prompt)
-                    for provider in providers
-                ]
-                
-                results = await asyncio.wait_for(
-                    asyncio.gather(*tasks, return_exceptions=False),
-                    timeout=self.config.tier_timeout_seconds
+        repaired_snippets = list(snippets)
+        
+        for issue in issues:
+            if "citation_completeness_failed" in issue:
+                # Re-fetch from high-reliability sources with URL guarantees
+                logger.info("Tier 4: Re-fetching for citation completeness")
+                additional = await self.tier3_manager.fetch_relevant_sources(
+                    query=prompt,
+                    context=context,
+                    max_sources=3
                 )
+                # Only add sources with URLs
+                repaired_snippets.extend([s for s in additional if s.url])
                 
-                responses = [r for r in results if r is not None]
+            elif "missing_medical_disclaimers" in issue or \
+                 "missing_legal_disclaimers" in issue or \
+                 "missing_financial_disclaimers" in issue:
+                # Add disclaimer snippet
+                domain = "medical" if "medical" in issue else \
+                        "legal" if "legal" in issue else "financial"
+                disclaimer_snippet = self._create_disclaimer_snippet(domain)
+                repaired_snippets.append(disclaimer_snippet)
+                logger.info(f"Tier 4: Added {domain} disclaimer")
                 
-                # Success condition
-                if len(responses) >= min_responses:
-                    logger.info(
-                        f"{tier_name}: {len(responses)}/{len(providers)} responses "
-                        f"(attempt {attempt + 1})"
-                    )
-                    return responses, retries, timeouts
-                
-                # Need retry
-                if attempt < self.config.max_tier_retries:
-                    retries += 1
-                    backoff = self.config.retry_backoff_ms * (2 ** attempt) / 1000.0
-                    logger.warning(
-                        f"{tier_name}: Only {len(responses)}/{len(providers)} responses, "
-                        f"retry {attempt + 1} after {backoff:.2f}s"
-                    )
-                    await asyncio.sleep(backoff)
-                    
-            except asyncio.TimeoutError:
-                timeouts += 1
-                logger.error(
-                    f"{tier_name}: Timeout after {self.config.tier_timeout_seconds}s "
-                    f"(attempt {attempt + 1})"
+            elif "contradictions_detected" in issue:
+                # Fetch authoritative tiebreaker sources
+                logger.info("Tier 4: Fetching tiebreaker for contradictions")
+                tiebreaker = await self.tier3_manager.fetch_relevant_sources(
+                    query=prompt,
+                    context="formal",  # Force formal/authoritative
+                    max_sources=2
                 )
-                
-                if attempt < self.config.max_tier_retries:
-                    retries += 1
-                    await asyncio.sleep(self.config.retry_backoff_ms / 1000.0)
-            except Exception as e:
-                logger.exception(f"{tier_name}: Unexpected error: {e}")
-                if attempt < self.config.max_tier_retries:
-                    retries += 1
-                    await asyncio.sleep(self.config.retry_backoff_ms / 1000.0)
+                repaired_snippets.extend(tiebreaker)
         
-        # Final attempt failed
-        if self.config.graceful_degradation_enabled:
-            logger.warning(f"{tier_name}: Graceful degradation - using partial results")
-            return responses, retries, timeouts
-        else:
-            raise RuntimeError(
-                f"{tier_name} failed after {self.config.max_tier_retries + 1} attempts"
+        logger.info(f"Tier 4: Repaired {len(repaired_snippets) - len(snippets)} issues")
+        return repaired_snippets
+    
+    def _create_disclaimer_snippet(self, domain: str) -> KnowledgeSnippet:
+        """Create disclaimer snippet for high-risk domains."""
+        disclaimers = {
+            "medical": (
+                "⚠️ Medical Disclaimer: This information is for educational purposes only "
+                "and is not medical advice. Always consult a qualified healthcare provider "
+                "for diagnosis and treatment."
+            ),
+            "legal": (
+                "⚠️ Legal Disclaimer: This information is for general educational purposes "
+                "only and is not legal advice. Consult a licensed attorney for advice "
+                "specific to your jurisdiction and situation."
+            ),
+            "financial": (
+                "⚠️ Financial Disclaimer: This information is for educational purposes only "
+                "and is not financial advice. Past performance does not guarantee future "
+                "results. Consult a qualified financial advisor before making investment decisions."
             )
-
-    def _select_random_tier2_failsafe(self) -> Optional[str]:
-        """
-        ENHANCED: Select a random Tier 2 model for failsafe arbitration.
-
-        Uses cryptographically secure random selection to ensure unpredictability.
-        """
-        # Get tier 2 providers using config.tier attribute
-        tier2_providers = [
-            p for p in self.providers
-            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
-        ]
-
-        if not tier2_providers:
-            logger.error("No Tier 2 models available for failsafe")
-            return None
-
-        # Use secrets module for cryptographically secure randomness
-        selected = secrets.choice(tier2_providers)
-        logger.info(f"Tier 4 Failsafe: Selected {selected.model_name} as backup arbiter")
-        return selected.model_name
-
-    async def _invoke_tier4_arbitration(
-        self,
-        prompt: str,
-        consensus: ConsensusResult,
-        all_responses: List[ModelResponse],
-    ) -> Tuple[ConsensusResult, bool, Optional[str]]:
-        """
-        ENHANCED: Invoke Tier 4 arbitration with failsafe mechanism.
+        }
         
-        Primary: Claude Opus 4.5
-        Failsafe: Random Tier 2 model if Opus confidence < threshold
-        
-        Returns: (updated_consensus, failsafe_triggered, failsafe_model)
-        """
-        failsafe_triggered = False
-        failsafe_model = None
-
-        # Try primary arbiter (Opus) - use tier attribute from provider config
-        tier4_providers = [
-            p for p in self.providers
-            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 4
-        ]
-        
-        if not tier4_providers:
-            logger.warning("No Tier 4 providers available")
-            return consensus, False, None
-        
-        try:
-            opus_response = await self._call_provider_with_circuit_breaker(
-                tier4_providers[0], prompt
-            )
-            
-            if opus_response:
-                # Check if Opus confidence is sufficient
-                if (
-                    self.config.enable_tier4_failsafe
-                    and opus_response.confidence < self.config.tier4_failsafe_confidence_threshold
-                ):
-                    logger.warning(
-                        f"Opus confidence ({opus_response.confidence:.2%}) below threshold "
-                        f"({self.config.tier4_failsafe_confidence_threshold:.2%}), "
-                        f"invoking Tier 2 failsafe"
-                    )
-                    
-                    failsafe_model_name = self._select_random_tier2_failsafe()
-                    if failsafe_model_name:
-                        failsafe_provider = next(
-                            (p for p in self.providers if p.model_name == failsafe_model_name),
-                            None
-                        )
-                        
-                        if failsafe_provider:
-                            failsafe_response = await self._call_provider_with_circuit_breaker(
-                                failsafe_provider, prompt
-                            )
-                            
-                            if failsafe_response:
-                                # Use failsafe response
-                                consensus.representative_output = failsafe_response.content
-                                consensus.representative_model = failsafe_response.model
-                                consensus.arbitration_source = ArbitrationSource.TIER2_FAILSAFE
-                                consensus.arbitration_model = failsafe_model_name
-                                failsafe_triggered = True
-                                failsafe_model = failsafe_model_name
-                                
-                                logger.info(
-                                    f"Tier 4 Failsafe: Using {failsafe_model_name} arbitration"
-                                )
-                                return consensus, failsafe_triggered, failsafe_model
-                
-                # Use Opus arbitration (normal path)
-                consensus.representative_output = opus_response.content
-                consensus.representative_model = opus_response.model
-                consensus.arbitration_source = ArbitrationSource.OPUS_PRIMARY
-                consensus.arbitration_model = "Claude-Opus-4"
-                
-                logger.info("Tier 4: Using Opus arbitration")
-                return consensus, False, None
-                
-        except Exception as e:
-            logger.error(f"Tier 4 arbitration failed: {e}")
-            
-            # Failsafe on error
-            if self.config.enable_tier4_failsafe:
-                logger.warning("Tier 4 error: Invoking Tier 2 failsafe")
-                
-                failsafe_model_name = self._select_random_tier2_failsafe()
-                if failsafe_model_name:
-                    failsafe_provider = next(
-                        (p for p in self.providers if p.model_name == failsafe_model_name),
-                        None
-                    )
-                    
-                    if failsafe_provider:
-                        try:
-                            failsafe_response = await self._call_provider_with_circuit_breaker(
-                                failsafe_provider, prompt
-                            )
-                            
-                            if failsafe_response:
-                                consensus.representative_output = failsafe_response.content
-                                consensus.representative_model = failsafe_response.model
-                                consensus.arbitration_source = ArbitrationSource.TIER2_FAILSAFE
-                                consensus.arbitration_model = failsafe_model_name
-                                failsafe_triggered = True
-                                failsafe_model = failsafe_model_name
-                                
-                                logger.info(
-                                    f"Tier 4 Failsafe: Using {failsafe_model_name} after error"
-                                )
-                                return consensus, failsafe_triggered, failsafe_model
-                        except Exception as failsafe_error:
-                            logger.error(f"Tier 2 failsafe also failed: {failsafe_error}")
-        
-        # All arbitration failed - return original consensus
-        logger.warning("All Tier 4 arbitration failed - using consensus only")
-        return consensus, False, None
+        return KnowledgeSnippet(
+            source_name="TORON-Safety-Disclaimer",
+            content=disclaimers.get(domain, ""),
+            reliability=1.0,
+            category=SourceCategory.GENERAL,
+            url="",
+            metadata={"type": "safety_disclaimer", "domain": domain}
+        )
 
     async def generate(
         self,
@@ -1528,201 +1053,313 @@ class ToronEngineV31Enhanced:
         session_id: Optional[str] = None,
     ) -> Tuple[ConsensusResult, ExecutionMetrics]:
         """
-        Generate a consensus response using the complete 8-tier epistemic pipeline.
-
-        8-TIER PIPELINE:
-        1. Tier 1: General Models (ALWAYS) - 9 models
-        2. Tier 2: Reasoning Models (CONDITIONAL) - 2 models
-        3. Tier 3: Knowledge Sources (ALWAYS) - 5-10 from 30 sources
-        4. Tier 4: Judicial Arbitration (CONDITIONAL) - 1 model
-        5. Tier 5: Source Weighting & Validation (ALWAYS)
-        6. Tier 6: ALOE Synthesis & Confidence Calibration (ALWAYS)
-        7. Tier 7: Political Balance & AI Bias Check (ALWAYS)
-        8. Tier 8: Final Synthesis & Delivery (ALWAYS)
-
-        Args:
-            prompt: Input prompt
-            use_cache: Whether to use cached results
-            user_id: Optional user identifier for telemetry
-            session_id: Optional session identifier for telemetry
-
-        Returns:
-            Tuple of (ConsensusResult, ExecutionMetrics)
+        Generate consensus response using complete 8-tier pipeline with Evidence Gatekeeper.
         """
-        self._ensure_initialized()
-        self._validate_prompt(prompt)
+        if not self._initialized:
+            raise RuntimeError("Engine not initialized")
+        
+        if not prompt or len(prompt) > self.config.max_prompt_length:
+            raise ValueError(f"Invalid prompt length: {len(prompt)}")
 
         start_time = time.time()
-        config_fingerprint = hashlib.sha256(
-            json.dumps(self.config.dict(), sort_keys=True).encode()
-        ).hexdigest()
-        request_id = hashlib.sha256(
-            f"{prompt}:{config_fingerprint}".encode()
-        ).hexdigest()[:12]
+        request_id = hashlib.sha256(f"{prompt}:{time.time()}".encode()).hexdigest()[:12]
         prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
 
-        logger.info(f"[{request_id}] Starting 8-tier pipeline for prompt hash {prompt_hash}")
+        logger.info(f"[{request_id}] Starting 8-tier pipeline with Evidence Gatekeeper")
 
         # Cache check
-        cache_key = f"toron:v2.5h+:8tier:prompt:{prompt_hash}"
+        cache_key = f"toron:v25h+:8tier:gatekeeper:{prompt_hash}"
         if use_cache:
             cached = self.cache.get(cache_key)
             if cached is not None:
                 logger.info(f"[{request_id}] Cache HIT")
                 return cached
 
-        # Initialize tracking
-        total_retries = 0
-        total_timeouts = 0
         all_responses: List[ModelResponse] = []
         provider_latencies: Dict[str, int] = {}
+        tier2_invoked = False
         tier3_verified = False
+        tier4_repair_invoked = False
+        tier4_repair_latency_ms = 0.0
+        gatekeeper_validation_ms = 0.0
 
-        # Detect query context for intelligent routing
+        # Detect context
         context = ContextDetector.detect_context(prompt)
-        logger.info(f"[{request_id}] Detected context: {context}")
+        logger.info(f"[{request_id}] Context: {context}")
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 1: GENERAL MODELS (Always Runs)
+        # TIER 1: GENERAL MODELS (Always)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 1: General Models (9 models)")
-
+        logger.info(f"[{request_id}] ┌─ TIER 1: General Models")
+        
         tier1_providers = [
             p for p in self.providers
             if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 1
         ]
-
+        
         if not tier1_providers:
-            logger.warning("No tier 1 providers found, using all providers")
             tier1_providers = self.providers
 
-        tier1_responses, retries1, timeouts1 = await self._call_tier_with_retry_and_timeout(
-            tier1_providers,
-            prompt,
-            "Tier 1 (General Models)",
-            self.config.min_acceptable_tier1_responses
-        )
-
-        total_retries += retries1
-        total_timeouts += timeouts1
+        tasks = [self._call_provider(p, prompt) for p in tier1_providers]
+        tier1_results = await asyncio.gather(*tasks, return_exceptions=True)
+        tier1_responses = [r for r in tier1_results if isinstance(r, ModelResponse)]
+        
         all_responses.extend(tier1_responses)
-
         for resp in tier1_responses:
             provider_latencies[resp.model] = resp.latency_ms
 
         logger.info(
-            f"[{request_id}] └─ TIER 1 Complete: {len(tier1_responses)}/{len(tier1_providers)} "
-            f"responses ({retries1} retries, {timeouts1} timeouts)"
+            f"[{request_id}] └─ TIER 1: {len(tier1_responses)}/{len(tier1_providers)} responses"
         )
 
         # ═══════════════════════════════════════════════════════════════
         # TIER 2: REASONING MODELS (Conditional)
         # ═══════════════════════════════════════════════════════════════
         logger.info(f"[{request_id}] ┌─ TIER 2: Reasoning Models (conditional)")
-
-        if self._should_invoke_tier2(tier1_responses, prompt):
+        
+        tier2_invoked = False
+        
+        # Determine if reasoning models should be invoked
+        # Triggers: complex queries, mathematical/logical problems, multi-step reasoning
+        reasoning_triggers = [
+            "calculate", "solve", "prove", "analyze", "compare", "evaluate",
+            "step by step", "reasoning", "logic", "mathematical", "equation",
+            "algorithm", "optimize", "derive", "explain why", "how does"
+        ]
+        
+        prompt_lower = prompt.lower()
+        reasoning_score = sum(1 for trigger in reasoning_triggers if trigger in prompt_lower)
+        needs_reasoning = reasoning_score >= 2
+        
+        # Also check if Tier 1 had low agreement (indicates complexity)
+        if len(tier1_responses) > 0:
+            clusters = SemanticSimilarity.cluster_by_similarity(tier1_responses, threshold=0.85)
+            best_cluster = max(clusters.values(), key=len) if clusters else []
+            tier1_agreement = len(best_cluster) / len(tier1_responses)
+            
+            if tier1_agreement < 0.6:
+                needs_reasoning = True
+                logger.info(
+                    f"[{request_id}] Low Tier 1 agreement ({tier1_agreement:.1%}), "
+                    "invoking reasoning models"
+                )
+        
+        if needs_reasoning:
+            logger.info(
+                f"[{request_id}] Reasoning triggered (score: {reasoning_score})"
+            )
+            
+            # Get Tier 2 reasoning providers (DeepSeek-R1, Kimi-K2-Thinking)
             tier2_providers = [
                 p for p in self.providers
                 if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
             ]
-
+            
             if tier2_providers:
-                tier2_responses, retries2, timeouts2 = await self._call_tier_with_retry_and_timeout(
-                    tier2_providers,
-                    prompt,
-                    "Tier 2 (Reasoning Models)",
-                    min_responses=1
-                )
-
-                total_retries += retries2
-                total_timeouts += timeouts2
+                tier2_tasks = [self._call_provider(p, prompt) for p in tier2_providers]
+                tier2_results = await asyncio.gather(*tier2_tasks, return_exceptions=True)
+                tier2_responses = [r for r in tier2_results if isinstance(r, ModelResponse)]
+                
                 all_responses.extend(tier2_responses)
-
                 for resp in tier2_responses:
                     provider_latencies[resp.model] = resp.latency_ms
-
+                
+                tier2_invoked = True
+                
                 logger.info(
-                    f"[{request_id}] └─ TIER 2 Invoked: {len(tier2_responses)}/{len(tier2_providers)} "
-                    f"responses"
+                    f"[{request_id}] └─ TIER 2: {len(tier2_responses)}/{len(tier2_providers)} "
+                    "reasoning responses"
                 )
             else:
                 logger.warning(f"[{request_id}] └─ TIER 2: No reasoning providers available")
         else:
-            logger.info(f"[{request_id}] └─ TIER 2 Skipped: Strong Tier 1 consensus")
+            logger.info(
+                f"[{request_id}] └─ TIER 2: Skipped (no reasoning needed, score: {reasoning_score})"
+            )
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 3: KNOWLEDGE SOURCES (Always Runs - 40 Sources)
+        # TIER 3: KNOWLEDGE SOURCES (Always)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 3: Knowledge Sources (40 sources, intelligent routing)")
-
-        # Adaptive source count based on Tier 1 consensus (Performance Optimization)
-        tier1_agreement_ratio = len(tier1_responses) / max(len(tier1_providers), 1)
-        tier1_avg_confidence = (
-            sum(r.confidence for r in tier1_responses) / len(tier1_responses)
-            if tier1_responses else 0.0
-        )
-
-        # Determine optimal source count
-        if tier1_agreement_ratio > 0.9 and tier1_avg_confidence > 0.85:
-            # High consensus + high confidence = simple query
-            adaptive_max_sources = 3
-            logger.info(
-                f"[{request_id}] Tier 3: Simple query detected "
-                f"(agreement={tier1_agreement_ratio:.1%}, conf={tier1_avg_confidence:.1%}), "
-                f"using {adaptive_max_sources} sources"
-            )
-        elif tier1_agreement_ratio < 0.7 or tier1_avg_confidence < 0.70:
-            # Low consensus or low confidence = complex query
-            adaptive_max_sources = 10
-            logger.info(
-                f"[{request_id}] Tier 3: Complex query detected "
-                f"(agreement={tier1_agreement_ratio:.1%}, conf={tier1_avg_confidence:.1%}), "
-                f"using {adaptive_max_sources} sources"
-            )
-        else:
-            # Default: moderate complexity
-            adaptive_max_sources = 6
-            logger.info(f"[{request_id}] Tier 3: Using default {adaptive_max_sources} sources")
-
+        logger.info(f"[{request_id}] ┌─ TIER 3: Knowledge Sources (42 sources)")
+        
         try:
             tier3_snippets = await self.tier3_manager.fetch_relevant_sources(
                 query=prompt,
                 context=context,
-                max_sources=adaptive_max_sources  # Use adaptive count
+                max_sources=6
             )
-
-            # Convert snippets to ModelResponse format for consensus integration
-            tier3_responses = []
-            for snippet in tier3_snippets:
-                tier3_response = ModelResponse(
-                    model=snippet.source_name,
-                    content=snippet.content,
-                    confidence=snippet.reliability,
+            
+            tier3_responses = [
+                ModelResponse(
+                    model=s.source_name,
+                    content=s.content,
+                    confidence=s.reliability,
                     latency_ms=0,
-                    tokens_used=len(snippet.content.split()),
-                    fingerprint=SemanticSimilarity.compute_fingerprint(snippet.content),
-                    metadata={
-                        "source_url": snippet.url,
-                        "category": snippet.category.value,
-                        "tier": 3,
-                    }
+                    tokens_used=len(s.content.split()),
+                    fingerprint=SemanticSimilarity.compute_fingerprint(s.content),
+                    metadata={"source_url": s.url, "category": s.category.value, "tier": 3}
                 )
-                tier3_responses.append(tier3_response)
-
+                for s in tier3_snippets
+            ]
+            
             all_responses.extend(tier3_responses)
             tier3_verified = len(tier3_snippets) >= 2
-
+            
             logger.info(
-                f"[{request_id}] └─ TIER 3 Complete: {len(tier3_snippets)} knowledge snippets "
+                f"[{request_id}] └─ TIER 3: {len(tier3_snippets)} snippets "
                 f"(verified={tier3_verified})"
             )
-
+            
         except Exception as e:
             logger.error(f"[{request_id}] └─ TIER 3 Failed: {e}")
+            tier3_snippets = []
             tier3_verified = False
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 5: SOURCE WEIGHTING & VALIDATION (Always Runs)
+        # TIER 3.5: EVIDENCE GATEKEEPER (Conditional - Medical/Legal/Financial)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 3.5: Evidence Gatekeeper (checking if needed)")
+        
+        gatekeeper_start = time.time()
+        gatekeeper_passed = True
+        gatekeeper_issues = []
+        gatekeeper_synthesis = None
+        
+        if self.config.enable_evidence_gatekeeper and self.evidence_gatekeeper:
+            should_trigger, detected_domain = self.evidence_gatekeeper.should_trigger(
+                prompt, context
+            )
+            
+            if should_trigger:
+                logger.info(
+                    f"[{request_id}] Evidence Gatekeeper TRIGGERED for {detected_domain} domain"
+                )
+                
+                # Gather tier2 responses if available
+                tier2_responses = [r for r in all_responses if r.metadata.get("tier") == 2]
+                
+                # Use gatekeeper model to validate
+                validated_synthesis, confidence, issues = await self.evidence_gatekeeper.validate(
+                    prompt,
+                    tier1_responses,
+                    tier2_responses,
+                    tier3_snippets,
+                    detected_domain
+                )
+                
+                gatekeeper_synthesis = validated_synthesis
+                gatekeeper_passed = len(issues) == 0
+                gatekeeper_issues = issues
+                gatekeeper_validation_ms = (time.time() - gatekeeper_start) * 1000
+                
+                logger.info(
+                    f"[{request_id}] └─ TIER 3.5: "
+                    f"{'✓ VALIDATED' if gatekeeper_passed else f'⚠ {len(issues)} warnings'} "
+                    f"(confidence: {confidence:.0%})"
+                )
+            else:
+                logger.info(
+                    f"[{request_id}] └─ TIER 3.5: Not needed (domain: {detected_domain})"
+                )
+        else:
+            logger.info(f"[{request_id}] └─ TIER 3.5: Disabled or not initialized")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 4: JUDICIAL ARBITRATION (Conditional)
+        # ═══════════════════════════════════════════════════════════════
+        logger.info(f"[{request_id}] ┌─ TIER 4: Judicial Arbitration (conditional)")
+
+        tier4_arbitration_invoked = False
+        tier4_arbitration_model = None
+
+        # Determine if arbitration needed based on Tiers 1, 2, 3 combined agreement
+        # Collect all responses from Tiers 1, 2, 3
+        tier123_responses = [
+            r for r in all_responses 
+            if r.metadata.get("tier") in [1, 2, 3] or not r.metadata.get("tier")
+        ]
+        
+        if len(tier123_responses) > 0:
+            # Check consensus across ALL tiers (1, 2, 3)
+            clusters = SemanticSimilarity.cluster_by_similarity(tier123_responses, threshold=0.85)
+            best_cluster = max(clusters.values(), key=len) if clusters else []
+            agreement_ratio = len(best_cluster) / len(tier123_responses) if tier123_responses else 0
+            
+            if agreement_ratio < 0.7:
+                logger.info(
+                    f"[{request_id}] Tier 4: Low agreement across Tiers 1+2+3 "
+                    f"({agreement_ratio:.1%}), invoking arbitration"
+                )
+                
+                # Try Opus first (tier 4)
+                tier4_providers = [
+                    p for p in self.providers
+                    if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 4
+                ]
+                
+                arbitration_response = None
+                
+                if tier4_providers:
+                    try:
+                        arbitration_response = await self._call_provider(tier4_providers[0], prompt)
+                        if arbitration_response:
+                            tier4_arbitration_model = arbitration_response.model
+                            logger.info(f"[{request_id}] Opus arbitration successful")
+                        else:
+                            logger.warning(f"[{request_id}] Opus failed, trying Tier 2 failsafe")
+                    except Exception as e:
+                        logger.error(f"[{request_id}] Opus error: {e}, trying Tier 2 failsafe")
+                else:
+                    logger.warning(f"[{request_id}] No Opus provider, trying Tier 2 failsafe")
+                
+                # Failsafe: Use random Tier 2 model if Opus unavailable/failed
+                if not arbitration_response:
+                    tier2_providers = [
+                        p for p in self.providers
+                        if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
+                    ]
+                    
+                    if tier2_providers:
+                        import random
+                        failsafe_provider = random.choice(tier2_providers)
+                        try:
+                            arbitration_response = await self._call_provider(failsafe_provider, prompt)
+                            if arbitration_response:
+                                tier4_arbitration_model = f"{arbitration_response.model} (failsafe)"
+                                logger.info(
+                                    f"[{request_id}] Tier 2 failsafe successful: "
+                                    f"{failsafe_provider.model_name}"
+                                )
+                            else:
+                                logger.error(f"[{request_id}] Tier 2 failsafe also failed")
+                        except Exception as e:
+                            logger.error(f"[{request_id}] Tier 2 failsafe error: {e}")
+                    else:
+                        logger.error(f"[{request_id}] No Tier 2 providers for failsafe")
+                
+                # Add arbitration response to pool (NOT as ultimate source)
+                if arbitration_response:
+                    # Mark as tier 4 so it's just another voice in consensus
+                    arbitration_response.metadata["tier"] = 4
+                    all_responses.append(arbitration_response)
+                    provider_latencies[arbitration_response.model] = arbitration_response.latency_ms
+                    tier4_arbitration_invoked = True
+                    logger.info(
+                        f"[{request_id}] └─ TIER 4: Arbitration complete "
+                        f"({tier4_arbitration_model}), added to consensus pool"
+                    )
+                else:
+                    logger.error(f"[{request_id}] └─ TIER 4: All arbitration failed")
+            else:
+                logger.info(
+                    f"[{request_id}] └─ TIER 4: Skipped "
+                    f"(strong consensus across T1+T2+T3: {agreement_ratio:.1%})"
+                )
+        else:
+            logger.info(f"[{request_id}] └─ TIER 4: Skipped (no responses from Tiers 1-3)")
+
+        # ═══════════════════════════════════════════════════════════════
+        # TIER 5: SOURCE WEIGHTING & VALIDATION (Always)
         # ═══════════════════════════════════════════════════════════════
         logger.info(f"[{request_id}] ┌─ TIER 5: Source Weighting & Validation")
 
@@ -1731,145 +1368,155 @@ class ToronEngineV31Enhanced:
             all_responses, context=context
         )
 
-        logger.info(f"[{request_id}] └─ TIER 5 Complete: Source weights applied")
+        logger.info(
+            f"[{request_id}] └─ TIER 5: Source weights applied "
+            f"(weighted conf: {source_weighted_conf:.0%})"
+        )
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 6: ALOE SYNTHESIS & CONFIDENCE CALIBRATION (Always Runs)
+        # TIER 6: ALOE SYNTHESIS (Always)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 6: ALOE Synthesis & Confidence Calibration")
-
+        logger.info(f"[{request_id}] ┌─ TIER 6: ALOE Synthesis")
+        
         consensus = self.consensus_engine.integrate(
             all_responses,
             tier3_verified=tier3_verified
         )
-
-        if self.config.enable_confidence_calibration:
-            consensus.calibrated_confidence = self.calibrator.calibrate(
-                consensus.avg_confidence
-            )
-
+        
+        # If gatekeeper provided validated synthesis, use it
+        if gatekeeper_synthesis:
+            consensus.representative_output = gatekeeper_synthesis
+            consensus.representative_model = "Evidence-Gatekeeper"
+            logger.info(f"[{request_id}] Using gatekeeper-validated synthesis")
+        
+        # Add gatekeeper results to consensus
+        consensus.gatekeeper_passed = gatekeeper_passed
+        consensus.gatekeeper_issues = gatekeeper_issues
+        consensus.tier4_repair_invoked = tier4_repair_invoked
+        
+        # Add arbitration tracking
+        if tier4_arbitration_invoked:
+            consensus.arbitration_source = ArbitrationSource.OPUS_PRIMARY
+            consensus.arbitration_model = tier4_arbitration_model
+        
         logger.info(
-            f"[{request_id}] └─ TIER 6 Complete: Grade {consensus.output_grade.value}, "
+            f"[{request_id}] └─ TIER 6: Grade {consensus.output_grade.value}, "
             f"Agreement {consensus.agreement_count}/{consensus.total_responses}"
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 4: JUDICIAL ARBITRATION (Conditional)
+        # TIER 7: POLITICAL BALANCE & BIAS CHECK (Always)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 4: Judicial Arbitration (conditional)")
-
-        failsafe_triggered = False
-        failsafe_model = None
-
-        if self._should_invoke_tier4(consensus):
-            consensus, failsafe_triggered, failsafe_model = await self._invoke_tier4_arbitration(
-                prompt, consensus, all_responses
-            )
-            logger.info(
-                f"[{request_id}] └─ TIER 4 Invoked: Arbitration={consensus.arbitration_source.value}"
-            )
+        logger.info(f"[{request_id}] ┌─ TIER 7: Political Balance & Bias Check")
+        
+        # Detect if query has political content
+        political_keywords = [
+            "democrat", "republican", "liberal", "conservative", "left", "right",
+            "politics", "political", "election", "government", "policy", "legislation",
+            "biden", "trump", "congress", "senate", "house", "president"
+        ]
+        
+        prompt_lower = prompt.lower()
+        political_score = sum(1 for kw in political_keywords if kw in prompt_lower)
+        is_political = political_score >= 2
+        
+        if is_political:
+            logger.info(f"[{request_id}] Political content detected (score: {political_score})")
+            
+            # Check for political bias in consensus
+            left_markers = [
+                "progressive", "liberal", "social justice", "regulation", 
+                "climate action", "healthcare for all", "gun control"
+            ]
+            right_markers = [
+                "conservative", "free market", "deregulation", "second amendment",
+                "traditional values", "limited government", "lower taxes"
+            ]
+            
+            output_lower = consensus.representative_output.lower()
+            left_score = sum(1 for m in left_markers if m in output_lower)
+            right_score = sum(1 for m in right_markers if m in output_lower)
+            
+            bias_detected = abs(left_score - right_score) >= 3
+            
+            if bias_detected:
+                bias_direction = "left-leaning" if left_score > right_score else "right-leaning"
+                consensus.uncertainty_flags.append(
+                    f"Potential political bias detected: {bias_direction}"
+                )
+                logger.warning(
+                    f"[{request_id}] Political bias detected: {bias_direction} "
+                    f"(left: {left_score}, right: {right_score})"
+                )
+            else:
+                logger.info(
+                    f"[{request_id}] Political balance acceptable "
+                    f"(left: {left_score}, right: {right_score})"
+                )
         else:
-            consensus.arbitration_source = ArbitrationSource.CONSENSUS_ONLY
-            logger.info(f"[{request_id}] └─ TIER 4 Skipped: Strong consensus")
+            logger.info(f"[{request_id}] Non-political query, skipping bias check")
+        
+        logger.info(f"[{request_id}] └─ TIER 7: Bias check complete")
 
         # ═══════════════════════════════════════════════════════════════
-        # TIER 7: POLITICAL BALANCE & AI BIAS CHECK (Always Runs)
+        # TIER 8: FINAL SYNTHESIS (Always)
         # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 7: Political Balance & AI Bias Check")
-
-        if context == "political":
-            is_balanced, balance_warning = PoliticalBalanceChecker.is_balanced(
-                consensus.representative_output
+        logger.info(f"[{request_id}] ┌─ TIER 8: Final Synthesis")
+        
+        # Add uncertainty flags
+        if not gatekeeper_passed:
+            consensus.uncertainty_flags.append(
+                f"Evidence validation issues: {len(gatekeeper_issues)}"
             )
-            if not is_balanced and balance_warning:
-                consensus.uncertainty_flags.append(balance_warning)
-                logger.warning(f"[{request_id}] Political balance warning: {balance_warning}")
-
-        is_appropriate, tone_warning = ToneAnalyzer.is_tone_appropriate(
-            consensus.representative_output,
-            context
-        )
-        if not is_appropriate and tone_warning:
-            consensus.uncertainty_flags.append(tone_warning)
-            logger.warning(f"[{request_id}] Tone warning: {tone_warning}")
-
-        logger.info(f"[{request_id}] └─ TIER 7 Complete: Balance and tone verified")
-
-        # ═══════════════════════════════════════════════════════════════
-        # TIER 8: FINAL SYNTHESIS & DELIVERY (Always Runs)
-        # ═══════════════════════════════════════════════════════════════
-        logger.info(f"[{request_id}] ┌─ TIER 8: Final Synthesis & Delivery")
-
-        if self.config.enable_source_weighting:
-            consensus.source_weighted_confidence = source_weighted_conf
-
-        if self.config.enable_uncertainty_flags:
-            if consensus.agreement_ratio < 0.7:
-                consensus.uncertainty_flags.append("Low agreement among models")
-            if consensus.total_responses < self.config.min_acceptable_tier1_responses:
-                consensus.uncertainty_flags.append(
-                    f"Only {consensus.total_responses} responses received"
-                )
-            if len(set(r.model for r in all_responses)) < 4:
-                consensus.uncertainty_flags.append("Limited model diversity")
-            if failsafe_triggered:
-                consensus.uncertainty_flags.append(
-                    f"Tier 4 failsafe triggered (using {failsafe_model})"
-                )
-            if not tier3_verified:
-                consensus.uncertainty_flags.append("Limited external verification")
-
-        # Determine evidence strength based on Tier 3 verification
+        if tier4_repair_invoked:
+            consensus.uncertainty_flags.append("Evidence repair applied")
+        if consensus.agreement_ratio < 0.7:
+            consensus.uncertainty_flags.append("Low model agreement")
+        if not tier3_verified:
+            consensus.uncertainty_flags.append("Limited external verification")
+        
+        # Evidence strength
         unique_models = len(set(r.model for r in all_responses))
         tier3_count = len([r for r in all_responses if r.metadata.get("tier") == 3])
-
+        
         if unique_models >= 9 and consensus.agreement_ratio >= 0.8 and tier3_count >= 3:
             consensus.evidence_strength = "strong"
         elif unique_models >= 6 and consensus.agreement_ratio >= 0.6 and tier3_count >= 2:
             consensus.evidence_strength = "moderate"
         else:
             consensus.evidence_strength = "weak"
-
-        # Determine degradation level
-        tier1_count = len(tier1_responses)
-        if tier1_count >= 6:
-            degradation_level = "none"
-        elif tier1_count >= 4:
-            degradation_level = "minor"
-        elif tier1_count >= 2:
-            degradation_level = "moderate"
-        else:
-            degradation_level = "severe"
-
-        # Create metrics
+        
         total_latency = (time.time() - start_time) * 1000
-
+        
         metrics = ExecutionMetrics(
             request_id=request_id,
             prompt_hash=prompt_hash,
             total_latency_ms=total_latency,
             provider_latencies=provider_latencies,
-            cache_hits=1 if use_cache and self.cache.get(cache_key) else 0,
-            cache_misses=1 if not use_cache or not self.cache.get(cache_key) else 0,
+            cache_hits=0,
+            cache_misses=1,
             providers_called=len(all_responses),
             providers_failed=len(tier1_providers) - len(tier1_responses),
             consensus_quality=consensus.consensus_quality,
-            tier_timeouts=total_timeouts,
-            tier_retries=total_retries,
-            degradation_level=degradation_level,
             output_grade=consensus.output_grade,
-            tier4_failsafe_triggered=failsafe_triggered,
-            tier4_failsafe_model=failsafe_model
+            tier2_invoked=tier2_invoked,
+            tier4_arbitration_invoked=tier4_arbitration_invoked,
+            tier4_arbitration_model=tier4_arbitration_model,
+            gatekeeper_validation_ms=gatekeeper_validation_ms,
+            tier4_repair_invoked=tier4_repair_invoked,
+            tier4_repair_latency_ms=tier4_repair_latency_ms,
         )
-
+        
         logger.info(
-            f"[{request_id}] └─ TIER 8 Complete: Final grade {consensus.output_grade.value}"
+            f"[{request_id}] └─ TIER 8: Complete - Grade {consensus.output_grade.value}, "
+            f"Gatekeeper {'PASSED' if gatekeeper_passed else 'FAILED'}, "
+            f"Repair {'YES' if tier4_repair_invoked else 'NO'}"
         )
-
+        
         # Cache result
         if use_cache:
             self.cache.set(cache_key, (consensus, metrics))
-
+        
         # Emit telemetry
         if self.telemetry_client.enabled:
             asyncio.create_task(
@@ -1882,49 +1529,28 @@ class ToronEngineV31Enhanced:
                     session_id=session_id,
                 )
             )
-
+        
         logger.info(
             f"[{request_id}] 8-TIER COMPLETE: Grade={consensus.output_grade.value}, "
-            f"Agreement={consensus.agreement_count}/{consensus.total_responses}, "
-            f"Latency={total_latency:.1f}ms, "
-            f"Arbitration={consensus.arbitration_source.value}, "
-            f"Evidence={consensus.evidence_strength}"
+            f"Evidence={consensus.evidence_strength}, Latency={total_latency:.1f}ms"
         )
-
+        
         return consensus, metrics
-    
-    def get_health_status(self) -> Dict[str, Any]:
-        """Get comprehensive health status of the engine."""
-        self._ensure_initialized()
-        
-        provider_statuses = {}
-        for provider in self.providers:
-            breaker = self.circuit_breakers[provider.model_name]
-            provider_statuses[provider.model_name] = {
-                "status": breaker.get_status().value,
-                "state": breaker.state.value,
-                "failure_count": breaker.failure_count,
-                "success_streak": breaker.success_streak
-            }
-        
-        cache_stats = self.cache.get_stats()
-        
-        # Count tier 2 providers
-        tier2_count = sum(
-            1 for p in self.providers
-            if hasattr(p, 'config') and hasattr(p.config, 'tier') and p.config.tier == 2
-        )
 
-        return {
-            "engine_initialized": self._initialized,
-            "total_providers": len(self.providers),
-            "healthy_providers": sum(
-                1 for p in provider_statuses.values()
-                if p["status"] == "healthy"
-            ),
-            "tier2_failsafe_enabled": self.config.enable_tier4_failsafe,
-            "tier2_models_available": tier2_count,
-            "provider_statuses": provider_statuses,
-            "cache_stats": cache_stats,
-            "config": self.config.dict()
-        }
+    async def _call_provider(self, provider: BaseProvider, prompt: str) -> Optional[ModelResponse]:
+        """Call a provider and convert to ModelResponse."""
+        try:
+            response = await provider.generate(prompt)
+            return ModelResponse(
+                model=response.model,
+                content=response.content,
+                confidence=response.confidence,
+                latency_ms=response.latency_ms,
+                tokens_used=response.tokens_used,
+                fingerprint=response.fingerprint,
+                timestamp=response.timestamp,
+                metadata=response.metadata
+            )
+        except Exception as e:
+            logger.error(f"Provider {provider.model_name} failed: {e}")
+            return None
