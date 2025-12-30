@@ -17,12 +17,9 @@ import {
   Power,
   PowerOff,
   ChevronDown,
-  AlertCircle,
 } from 'lucide-react';
 import { useWorkspace } from '../../../hooks/useWorkspace';
 import type { ConnectorType } from '../../../types/workspace';
-import { encryptToken, validateToken, isPlaceholderToken } from '../../../utils/crypto';
-import { sanitizeInput } from '../../../utils/sanitize';
 
 type ConnectorsContentProps = {
   className?: string;
@@ -138,7 +135,6 @@ export default function ConnectorsContent({ className }: ConnectorsContentProps)
   const [patInput, setPATInput] = useState('');
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [isManagingPAT, setIsManagingPAT] = useState(false);
-  const [tokenError, setTokenError] = useState<string | null>(null);
 
   // Filter out already added connectors
   const existingTypes = new Set(connectors.map((c) => c.type));
@@ -231,44 +227,19 @@ export default function ConnectorsContent({ className }: ConnectorsContentProps)
   };
 
   const handleSavePAT = () => {
-    if (!selectedConnectorForPAT || !patInput.trim()) return;
-
-    const sanitizedToken = sanitizeInput(patInput.trim());
-
-    // Validate token format
-    if (!validateToken(sanitizedToken)) {
-      setTokenError('Invalid token format. Token must be at least 12 characters and contain only alphanumeric characters, hyphens, underscores, or dots.');
-      return;
+    if (selectedConnectorForPAT && patInput.trim()) {
+      updateConnectorPAT(selectedConnectorForPAT, patInput.trim());
+      toggleConnector(selectedConnectorForPAT);
+      setPATInput('');
+      setShowPATDialog(false);
+      setSelectedConnectorForPAT(null);
+      setIsManagingPAT(false);
     }
-
-    // Warn about placeholder tokens
-    if (isPlaceholderToken(sanitizedToken)) {
-      setTokenError('This looks like a placeholder token. Please enter your actual access token.');
-      return;
-    }
-
-    // Encrypt token before storing
-    const encryptedToken = encryptToken(sanitizedToken);
-
-    if (!encryptedToken) {
-      setTokenError('Failed to secure token. Please try again.');
-      return;
-    }
-
-    updateConnectorPAT(selectedConnectorForPAT, encryptedToken);
-    toggleConnector(selectedConnectorForPAT);
-    setPATInput('');
-    setTokenError(null);
-    setShowPATDialog(false);
-    setSelectedConnectorForPAT(null);
-    setIsManagingPAT(false);
   };
 
   const handleManagePAT = (connectorId: string) => {
     setSelectedConnectorForPAT(connectorId);
     setIsManagingPAT(true);
-    setTokenError(null);
-    // Don't prefill - user should enter new token for security
     setPATInput('');
     setShowPATDialog(true);
   };
@@ -294,7 +265,6 @@ export default function ConnectorsContent({ className }: ConnectorsContentProps)
       }
     }
     setPATInput('');
-    setTokenError(null);
     setShowPATDialog(false);
     setSelectedConnectorForPAT(null);
     setIsManagingPAT(false);
@@ -523,24 +493,11 @@ export default function ConnectorsContent({ className }: ConnectorsContentProps)
                 id="pat-input"
                 type="password"
                 value={patInput}
-                onChange={(e) => {
-                  setPATInput(e.target.value);
-                  setTokenError(null); // Clear error on input change
-                }}
+                onChange={(e) => setPATInput(e.target.value)}
                 placeholder={isManagingPAT ? '••••••••••••••••' : 'Enter your token...'}
-                className={`w-full rounded-lg border bg-[var(--bg-elev)] px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] transition focus:outline-none focus:ring-2 ${
-                  tokenError
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                    : 'border-[var(--border-subtle)] focus:border-[var(--accent)] focus:ring-[var(--accent)]/20'
-                }`}
+                className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-elev)] px-4 py-3 text-sm text-[var(--text)] placeholder-[var(--text-muted)] transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                 autoFocus
               />
-              {tokenError && (
-                <div className="mt-2 flex items-start gap-2 text-xs text-red-600 dark:text-red-400">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span>{tokenError}</span>
-                </div>
-              )}
             </div>
 
             {/* Security Notice */}
