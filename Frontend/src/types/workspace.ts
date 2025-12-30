@@ -61,22 +61,6 @@ export type Layout = {
   }[];
 };
 
-// Window State (for window manager compatibility)
-export type WindowState = {
-  id: string;
-  type: WindowType;
-  isOpen: boolean;
-  isMinimized: boolean;
-  isMaximized: boolean;
-  isPinned: boolean;
-  position: Position;
-  size: Size;
-  zIndex: number;
-  canDrag: boolean;
-  canResize: boolean;
-  canClose: boolean;
-};
-
 // Toron Types
 export type TierResult = {
   tier: number;
