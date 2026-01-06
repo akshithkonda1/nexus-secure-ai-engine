@@ -88,6 +88,10 @@ To provide everyday consumers with AI tools that develop critical thinking rathe
 
 The name combines Japanese concepts: 竜/龍 (Ryu) meaning "dragon" or "flow" and 禅 (Zen) meaning "meditation/Buddhist philosophy" or "mindfulness"—reflecting our approach to AI interaction that balances rapid multi-model processing with thoughtful, honest synthesis.
 
+## Licensing
+
+Please read the License.MD
+
 **Mission**: Epistemic honesty in AI interaction
 
 ---
